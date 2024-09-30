@@ -27,6 +27,10 @@ struct ListView: View {
                             }
                         }
                         .padding(.horizontal)
+                    }.onAppear {
+                        let TAG = "MainApp"
+                        let platform = getPlatform()
+                        print("\(TAG) Running Platform \(platform.name)")
                     }
                 }
             } else {

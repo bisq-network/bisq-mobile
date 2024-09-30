@@ -1,6 +1,7 @@
 package com.jetbrains.kmpapp
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -20,8 +21,14 @@ import com.jetbrains.kmpapp.screens.DetailScreen
 import com.jetbrains.kmpapp.screens.ListScreen
 
 class MainActivity : ComponentActivity() {
+    companion object {
+        const val TAG = "MyActivity"
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        val platform = getPlatform()
+        Log.i(TAG, "Running platform ${platform.name}")
         enableEdgeToEdge()
         setContent {
             // Remove when https://issuetracker.google.com/issues/364713509 is fixed
