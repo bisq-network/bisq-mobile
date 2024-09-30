@@ -1,22 +1,37 @@
+<p align="center">
+  <img src="https://bisq.network/images/bisq-logo.svg"/>
+</p>
+
 # Bisq Mobile
 
-This private project is (hopefully) the kick start project for the new comprehensive Bisq Mobile App.
+This project aims to make Bisq Network accesible in Mobile Platforms following the philosofy of Bisq2 - to make it
+easier for both, experienced and newcomers, to trade Bitcoin in a decentralized way.
 
-The selected technology to build it from is Kotlin MultiPlatform
-
-This project is a playground to start a POC with the following goals
+Currently, this project is a playground to start a POC with the following goals:
 
 - Focus on Android first
 - Have a general look and feel native to Android and respectful of Bisq2
-- Able to connect to Bisq Network using clearnet and/or Tor
+- Minimal usable functionality for the mobile world: focus on transacting in Bisq using Mobile and just that and its
+  UX (e.g. add push notifications).
+- Able to connect to Bisq Network using clearnet (and soon after, with Tor)
 
 For more info please refer to [Bisq Mobile Discussions](https://github.com/bisq-network/bisq2/discussions/2665)
+
+## How to contribute
+
+- As a general rule, please follow same Bisq guidelines for contributions
+- Please reachout on Matrix for questions, this project is kickstarting
+
+Once you downloaded the code and are ready to run it and play with it, we highly recommend that you
+install [Fleet IDE](https://www.jetbrains.com/fleet/).
+**This IDE makes it a breeze to download and install everything you need to run a KMP project**
+
+Of course you can stick to XCode for iOS and Android Studio for Android or whichever IDE you prefer.
 
 ## Why KMP
 
 - Native Performance
-- Allows us to focus on the "easiest" platform first (Because of Apple restrictions on Tor and networking in general),
-  being able to reusing much of the effort when we turn into iOS
+- Allows us to focus on the "easiest" platform first (Because of Apple restrictions on Tor and networking in general)
 - Flexibility without the security/privacy concerns of its competitors
 - JVM language allows us to port much of the optimised Bisq code already existing in the Desktop apps
 
@@ -24,7 +39,9 @@ For a reference to the sample code used to kickstart this POC, see below
 
 ## App Designs
 
-// TODO
+// TODO - link to doc folder with the selected initial design (figma?)
+
+<-################################################################################################################################################################################################################################->
 
 ## Kotlin Multiplatform app template
 
