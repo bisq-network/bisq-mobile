@@ -54,6 +54,10 @@ android {
 dependencies {
     //    implementation(project(":shared"))
     implementation(project(":sharedUI"))
+
+    // Bisq core dependencies
+    implementation(libs.node.common)
+
     debugImplementation(compose.uiTooling)
 }
 

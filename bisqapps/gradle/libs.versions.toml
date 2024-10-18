@@ -1,4 +1,5 @@
 [versions]
+bisq = "2.1.1"
 agp = "8.5.0"
 android-compileSdk = "34"
 android-targetSdk = "34"
@@ -29,6 +30,9 @@ androidx-constraintlayout = { group = "androidx.constraintlayout", name = "const
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+
+## Bisq Core (node)
+node-common = { group = "bisq", name = "common", version.ref = "bisq" }
 
 [plugins]
 kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
