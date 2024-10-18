@@ -33,12 +33,13 @@ If you are a mobile enthusiast and feel driven by Bisq goals, please reach out!
     1. If you are on a MacOS computer building the iOS app you can go ahead and open the subfolder [iosClient](./iosClient) with your Xcode, build the project and run it in your device or emulator. After that you can just do it from Fleet
     2. For Android it can run on any machine, just run the preconfigured configurations `androidClient` and/or `androidNode`
 
-Alternatively, you could run `./gradlew clean build` first from terminal and then open with your IDE of preference.
+Alternatively, you could run `./gradlew clean build` (1) first from terminal and then open with your IDE of preference.
 
 ### Configuring dev env: known issues
 
  - Some Apple M chips have trouble with cocoapods, follow [this guide](https://stackoverflow.com/questions/64901180/how-to-run-cocoapods-on-apple-silicon-m1/66556339#66556339) to fix it
- - In MacOS non-homebrew versions of Ruby will cause problems
+ - On MacOS: non-homebrew versions of Ruby will cause problems
+ - On MacOS: If Fleet Pre-flight gives error "Gradle not found" and running the (1) terminal command doesn't even run, you need to install gradle with `homebrew` and then run `gradle wrapper` on the root. Then reopen Fleet and try the Pre-flight again.
 
 ### Initial Project Structure
 
