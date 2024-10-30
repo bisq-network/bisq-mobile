@@ -17,6 +17,7 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.compose_multiplatform
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.koinInject
+import network.bisq.mobile.presentation.ui.screens.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.screens.SplashScreen
 
 interface AppPresenter {
@@ -35,8 +36,10 @@ interface AppPresenter {
 @Preview
 fun App() {
     val presenter: AppPresenter = koinInject()
+
     MaterialTheme {
-        SplashScreen()
+        //SplashScreen()
+        OnBoardingScreen()
     }
 
         // Collecting state from presenter
