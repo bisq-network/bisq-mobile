@@ -42,6 +42,7 @@ import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.model.OnBoardingPage
+import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.backgroundColor
 import network.bisq.mobile.presentation.ui.theme.grey1
 import network.bisq.mobile.presentation.ui.theme.grey2
@@ -113,7 +114,9 @@ fun OnBoardingScreen(rootNavController: NavController) {
                             },
                             onClick = {
                                 if (pagerState.currentPage == 2) {
-                                    // navigate to next page
+                                    rootNavController.navigate(Routes.CreateProfile.name) {
+                                        popUpTo(Routes.Onboarding.name) { inclusive = true }
+                                    }
                                 } else {
                                     coroutineScope.launch {
                                         pagerState.animateScrollToPage(

@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.koinInject
 import network.bisq.mobile.presentation.ui.screens.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.screens.SplashScreen
+import network.bisq.mobile.presentation.ui.navigation.Routes
 
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
-import network.bisq.mobile.presentation.ui.navigation.SplashRouteScreen
 
 interface AppPresenter {
     // Observables for state
@@ -34,7 +34,7 @@ fun App() {
     RootNavGraph(
         rootNavController = navController,
         innerPadding = PaddingValues(),
-        startDestination = SplashRouteScreen.Splash.route
+        startDestination = Routes.Splash.name
     )
 
     //MaterialTheme {
@@ -42,7 +42,7 @@ fun App() {
         //OnBoardingScreen()
     //}
 
-        // Collecting state from presenter
+// Collecting state from presenter
 //        val showContent by presenter.isContentVisible.collectAsState()
 //        val greeting by presenter.greetingText.collectAsState()
 //        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {

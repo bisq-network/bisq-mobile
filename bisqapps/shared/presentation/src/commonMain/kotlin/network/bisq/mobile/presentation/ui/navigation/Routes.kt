@@ -1,9 +1,19 @@
 package network.bisq.mobile.presentation.ui.navigation
 
-sealed class SplashRouteScreen(var route: String) {
-    object Splash : SplashRouteScreen("splash")
+import org.jetbrains.compose.resources.StringResource
+
+object Graph {
+    const val MainScreenGraph = "mainScreenGraph"
 }
 
-sealed class OnBoardingRouteScreen(var route: String) {
-    object OnBoard : OnBoardingRouteScreen("onboard")
+enum class Routes(val title: String) {
+    Splash(title = "splash"),
+    Onboarding(title = "onboarding"),
+    CreateProfile(title = "create_profile"),
+    BisqUrl(title = "bisq_url"),
+    TabContainer(title = "tab_container"),
+    TabHome(title = "tab_home"),
+    TabExchange(title = "tab_exchange"),
+    TabMyTrades(title = "tab_my_trades"),
+    TabSettings(title = "tab_settings"),
 }

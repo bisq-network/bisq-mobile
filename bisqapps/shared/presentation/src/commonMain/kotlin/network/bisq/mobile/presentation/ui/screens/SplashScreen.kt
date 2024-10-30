@@ -32,10 +32,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 import bisqapps.shared.presentation.generated.resources.Res
-import coil3.compose.LocalPlatformContext
-import coil3.request.ImageRequest
-import network.bisq.mobile.presentation.ui.navigation.OnBoardingRouteScreen
-import network.bisq.mobile.presentation.ui.navigation.SplashRouteScreen
+import network.bisq.mobile.presentation.ui.navigation.Routes
 
 //import bisqapps.shared.presentation.generated.resources.logo_with_slogan
 //import io.kamel.image.KamelImage
@@ -109,8 +106,8 @@ fun LoadingProgress(navController: NavController) {
                 loadProgress { progress ->
                     currentProgress = progress
                 }
-                navController.navigate(OnBoardingRouteScreen.OnBoard.route) {
-                    popUpTo(SplashRouteScreen.Splash.route) { inclusive = true }
+                navController.navigate(Routes.Onboarding.name) {
+                    popUpTo(Routes.Splash.name) { inclusive = true }
                 }
             }
         }

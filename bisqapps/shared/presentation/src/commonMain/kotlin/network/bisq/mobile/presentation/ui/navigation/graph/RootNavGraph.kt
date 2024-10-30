@@ -9,10 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import network.bisq.mobile.presentation.ui.navigation.OnBoardingRouteScreen
-import network.bisq.mobile.presentation.ui.navigation.SplashRouteScreen
-import network.bisq.mobile.presentation.ui.screens.OnBoardingScreen
-import network.bisq.mobile.presentation.ui.screens.SplashScreen
+import network.bisq.mobile.presentation.ui.navigation.*
+import network.bisq.mobile.presentation.ui.screens.*
 import network.bisq.mobile.presentation.ui.theme.backgroundColor
 
 @Composable
@@ -26,10 +24,10 @@ fun RootNavGraph(
         navController = rootNavController,
         startDestination = startDestination,
     ) {
-        composable(route = SplashRouteScreen.Splash.route) {
+        composable(route = Routes.Splash.name) {
             SplashScreen(rootNavController = rootNavController, innerPadding = innerPadding)
         }
-        composable(route = OnBoardingRouteScreen.OnBoard.route,enterTransition = {
+        composable(route = Routes.Onboarding.name, enterTransition = {
             slideIntoContainer(
                 AnimatedContentTransitionScope.SlideDirection.Left,
                 animationSpec = tween(300)
@@ -37,5 +35,25 @@ fun RootNavGraph(
         }) {
             OnBoardingScreen(rootNavController = rootNavController)
         }
+        composable(route = Routes.CreateProfile.name, enterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(300)
+            )
+        }) {
+            CreateProfileScreen(rootNavController = rootNavController)
+        }
+        composable(route = Routes.BisqUrl.name, enterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(300)
+            )
+        }) {
+            URLScreen(rootNavController = rootNavController)
+        }
+        composable(route = Routes.TabContainer.name) {
+            TabContainerScreen(rootNavController = rootNavController)
+        }
+        TabNavGraph(rootNavController, innerPadding)
     }
 }
