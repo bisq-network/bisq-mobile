@@ -93,6 +93,8 @@ kotlin {
             implementation("io.coil-kt.coil3:coil-compose:3.0.0-rc02")
             implementation("io.coil-kt.coil3:coil-svg:3.0.0-rc02")
 
+            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.7.0-alpha07")
+            //implementation("androidx.navigation:navigation-compose:2.8.3")
             //https://github.com/Kamel-Media/Kamel
             //implementation("media.kamel:kamel-image:1.0.0")
             //implementation("media.kamel:kamel-decoder-svg-std:1.0.0")

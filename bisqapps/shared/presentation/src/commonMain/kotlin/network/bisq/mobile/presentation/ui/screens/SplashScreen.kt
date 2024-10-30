@@ -19,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import network.bisq.mobile.presentation.ui.theme.backgroundColor
 import network.bisq.mobile.presentation.ui.theme.grey2
 import network.bisq.mobile.presentation.ui.theme.primaryStandard
@@ -33,6 +34,8 @@ import kotlinx.coroutines.launch
 import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.LocalPlatformContext
 import coil3.request.ImageRequest
+import network.bisq.mobile.presentation.ui.navigation.OnBoardingRouteScreen
+import network.bisq.mobile.presentation.ui.navigation.SplashRouteScreen
 
 //import bisqapps.shared.presentation.generated.resources.logo_with_slogan
 //import io.kamel.image.KamelImage
@@ -40,7 +43,8 @@ import coil3.request.ImageRequest
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun SplashScreen() {
+fun SplashScreen(rootNavController: NavController,
+                 innerPadding: PaddingValues) {
     Scaffold(
         containerColor = backgroundColor,
         ) {
@@ -88,14 +92,14 @@ fun SplashScreen() {
             //        Solution is to convert the SVG to VectorDrawable.
             //        But doing that makes it work only in Android, not with iOS
             //        Image(painterResource(Res.drawable.logo_with_slogan), null)
-            LoadingProgress()
+            LoadingProgress(rootNavController)
         }
     }
 }
 
 
 @Composable
-fun LoadingProgress() {
+fun LoadingProgress(navController: NavController) {
     var currentProgress by remember { mutableFloatStateOf(0f) }
     val scope = rememberCoroutineScope()
 
@@ -104,6 +108,9 @@ fun LoadingProgress() {
             scope.launch {
                 loadProgress { progress ->
                     currentProgress = progress
+                }
+                navController.navigate(OnBoardingRouteScreen.OnBoard.route) {
+                    popUpTo(SplashRouteScreen.Splash.route) { inclusive = true }
                 }
             }
         }

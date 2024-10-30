@@ -1,24 +1,17 @@
 package network.bisq.mobile.presentation.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Button
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.painterResource
+import androidx.navigation.compose.rememberNavController
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.compose_multiplatform
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.koinInject
 import network.bisq.mobile.presentation.ui.screens.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.screens.SplashScreen
+
+import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
+import network.bisq.mobile.presentation.ui.navigation.SplashRouteScreen
 
 interface AppPresenter {
     // Observables for state
@@ -37,10 +30,17 @@ interface AppPresenter {
 fun App() {
     val presenter: AppPresenter = koinInject()
 
-    MaterialTheme {
+    val navController = rememberNavController()
+    RootNavGraph(
+        rootNavController = navController,
+        innerPadding = PaddingValues(),
+        startDestination = SplashRouteScreen.Splash.route
+    )
+
+    //MaterialTheme {
         //SplashScreen()
-        OnBoardingScreen()
-    }
+        //OnBoardingScreen()
+    //}
 
         // Collecting state from presenter
 //        val showContent by presenter.isContentVisible.collectAsState()

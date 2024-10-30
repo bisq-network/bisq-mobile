@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 
 import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.AsyncImage
@@ -71,7 +72,7 @@ private lateinit var pagerState: PagerState
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun OnBoardingScreen() {
+fun OnBoardingScreen(rootNavController: NavController) {
     Scaffold(
         containerColor = backgroundColor,
     ) { innerPadding ->
