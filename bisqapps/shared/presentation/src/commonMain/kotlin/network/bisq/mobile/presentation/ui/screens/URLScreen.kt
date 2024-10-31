@@ -64,7 +64,7 @@ fun URLScreen(
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 AsyncImage(
-                    model = Res.getUri("drawable/log_with_slogan.svg"),
+                    model = Res.getUri("drawable/logo_with_slogan.svg"),
                     contentDescription = null,
                     modifier = Modifier.height(62.dp).width(200.dp),
                 )
