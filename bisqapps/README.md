@@ -37,6 +37,14 @@ If you are a mobile enthusiast and feel driven by Bisq goals, please reach out!
 
 Alternatively, you could run `./gradlew clean build` (1) first from terminal and then open with your IDE of preference.
 
+#### UI Designs
+androidNode + xClient screens are designed in Figma.
+Yet to differentiate between which screens goes into which.
+
+Figma link: https://www.figma.com/design/IPnuicxGKIZXq28gybxOgp/Xchange?node-id=7-759&t=LV9Gx9XgJRvXu5YQ-1
+
+Though the figma design captures most of the functionality, it's an evolving document. It will be updated with new screens, flow updates, based on discussions happening in GH issues / matrix.
+
 ### Configuring dev env: known issues
 
  - Some Apple M chips have trouble with cocoapods, follow [this guide](https://stackoverflow.com/questions/64901180/how-to-run-cocoapods-on-apple-silicon-m1/66556339#66556339) to fix it
