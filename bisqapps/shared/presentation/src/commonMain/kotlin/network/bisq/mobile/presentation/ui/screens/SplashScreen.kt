@@ -31,10 +31,9 @@ import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-import bisqapps.shared.presentation.generated.resources.Res
 import network.bisq.mobile.presentation.ui.navigation.Routes
-
-//import bisqapps.shared.presentation.generated.resources.logo_with_slogan
+import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.logo_with_slogan
 //import io.kamel.image.KamelImage
 //import io.kamel.image.asyncPainterResource
 
@@ -88,6 +87,7 @@ fun SplashScreen(rootNavController: NavController,
             //        1. Loading images from resources, doesn't work with SVG.
             //        Solution is to convert the SVG to VectorDrawable.
             //        But doing that makes it work only in Android, not with iOS
+            //        Image(painterResource(Res.drawable.logo_with_slogan), null)
             //        Image(painterResource(Res.drawable.logo_with_slogan), null)
             LoadingProgress(rootNavController)
         }
