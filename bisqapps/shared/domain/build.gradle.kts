@@ -4,6 +4,8 @@ plugins {
     alias(libs.plugins.androidLibrary)
 }
 
+version = project.findProperty("shared.version") as String
+
 kotlin {
     androidTarget {
         compilations.all {
@@ -19,7 +21,7 @@ kotlin {
     cocoapods {
         summary = "Shared Domain business logic and KOJOs"
         homepage = "X"
-        version = "0.0.1"
+        version = project.version.toString()
         ios.deploymentTarget = "16.0"
         podfile = project.file("../../iosClient/Podfile")
         framework {

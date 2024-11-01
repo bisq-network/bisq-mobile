@@ -8,6 +8,9 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+version = project.findProperty("node.android.version") as String
+val sharedVersion = project.findProperty("shared.version") as String
+
 kotlin {
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
@@ -33,7 +36,9 @@ android {
         minSdk = libs.versions.android.node.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
-        versionName = "0.0.1"
+        versionName = project.version.toString()
+        buildConfigField("String", "APP_VERSION", "\"${version}\"")
+        buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")
     }
     packaging {
         resources {
@@ -44,6 +49,9 @@ android {
         getByName("release") {
             isMinifyEnabled = false
         }
+    }
+    buildFeatures {
+        buildConfig = true
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
