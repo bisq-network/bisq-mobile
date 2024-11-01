@@ -84,7 +84,7 @@ kotlin {
 }
 
 android {
-    namespace = "network.bisq.mobile"
+    namespace = "network.bisq.mobile.shared.presentation"
     compileSdk = 34
     defaultConfig {
         minSdk = 24

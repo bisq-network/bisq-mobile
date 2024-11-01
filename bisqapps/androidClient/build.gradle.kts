@@ -46,11 +46,11 @@ kotlin {
 }
 
 android {
-    namespace = "network.bisq.mobile"
+    namespace = "network.bisq.mobile.client"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
     defaultConfig {
-        applicationId = "network.bisq.mobile.android"
+        applicationId = "network.bisq.mobile.client"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
