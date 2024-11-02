@@ -1,3 +1,7 @@
+import org.jetbrains.compose.compose
+import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
+
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.kotlinCocoapods)
@@ -5,6 +9,11 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.buildconfig)
+}
+
+dependencies {
+    androidTestImplementation(libs.androidx.test.compose)
+    androidTestImplementation(libs.androidx.test.manifest)
 }
 
 version = project.findProperty("shared.version") as String
@@ -44,6 +53,8 @@ kotlin {
                 jvmTarget = "1.8"
             }
         }
+        @OptIn(ExperimentalKotlinGradlePluginApi::class)
+        instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
     }
     iosX64()
     iosArm64()
@@ -77,9 +88,14 @@ kotlin {
             implementation(libs.logging.kermit)
             implementation(libs.kotlinx.coroutines)
         }
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-        }
+        val commonTest by getting {
+            dependencies {
+                implementation(libs.kotlin.test)
+//                implementation(kotlin("test"))
+                @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
+                implementation(compose.uiTest)
+            }
+      }
     }
 }
 
@@ -88,6 +104,7 @@ android {
     compileSdk = 34
     defaultConfig {
         minSdk = 24
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8

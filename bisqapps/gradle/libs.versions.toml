@@ -12,6 +12,7 @@ androidx-espresso-core = "3.6.1"
 androidx-lifecycle = "2.8.2"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
+androidx-test-compose-ver = "1.6.8"
 compose-plugin = "1.7.0"
 junit = "4.13.2"
 kotlin = "2.0.20"
@@ -26,6 +27,8 @@ kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core",
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core-ktx" }
 androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-junit" }
+androidx-test-compose = { group = "androidx.compose.ui", name = "ui-test-junit4-android", version.ref = "androidx-test-compose-ver" }
+androidx-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "androidx-test-compose-ver" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidx-espresso-core" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
 androidx-material = { group = "com.google.android.material", name = "material", version.ref = "androidx-material" }
