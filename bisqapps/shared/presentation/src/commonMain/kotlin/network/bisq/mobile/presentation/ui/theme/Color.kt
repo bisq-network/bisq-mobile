@@ -12,9 +12,11 @@ val secondaryHover = Color(0xFF525252)
 val secondaryDisabled = Color(0x642F2F2F)
 val grey1 = Color(0xFF999999)
 val grey2 = Color(0xFF747474)
+val grey3 = Color(0xFF6B6B6B)
 val White2 = Color(0xFFF8F8F8)
 val Black5 = Color(0xFF333333)
 val Black3 = Color(0xFF282828)
+val Black2 = Color(0xFF212121)
 val Danger1 = Color(0xFFDB0000)
 
 
