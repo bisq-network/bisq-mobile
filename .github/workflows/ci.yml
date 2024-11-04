@@ -13,7 +13,16 @@ on:
 jobs:
   build:
     name: Project Build & Test
-    runs-on: macos-14
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+#        os: [ubuntu-latest, macos-14, macos-latest]
+#        platform: [androidNode, androidClient, iosClient]
+#        TODO build fails on macos - might be an issue with the Pods compiled in MacOS 15 pushed to the repo (support for XCode 15 is still under dev for KMP)
+
+
+    runs-on: ${{ matrix.os }}
 
     steps:
       - name: Checkout code
@@ -53,9 +62,11 @@ jobs:
       # MacOS setup
       # needed for macos terminal build to not hang doing linkDebugFrameworkxxxxArm64 related tasks
       - name: Set up Xcode
+        if: startsWith(matrix.os, 'macos')
         run: |
           sudo xcode-select -s /Applications/Xcode_14.3.app
           xcodebuild -version
+#          sudo xcode-select -s /Applications/Xcode_15.0.app
 
       - name: Build project
         working-directory: ./bisqapps
@@ -65,28 +76,16 @@ jobs:
         working-directory: ./bisqapps
         run: ./gradlew test
 
-  platform:
-    name: Platform specific tasks
-    needs: build
-    runs-on: macos-latest
-
-    strategy:
-      matrix:
-        platform: [androidNode, androidClient, iosClient]
-
-    steps:
       - name: Run androidClient Tests
         working-directory: ./bisqapps
-        if: matrix.platform == 'androidClient'
         run: ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
 
       - name: Run androidNode Tests
         working-directory: ./bisqapps
-        if: matrix.platform == 'androidNode'
         run: ./gradlew androidNode:testDebugUnitTest androidNode:connectedDebugAndroidTest
 
-      # TODO ios specific and run on emulator
+      # TODO ios specific and run on emulator if needed
       - name: Run iOS Tests
         working-directory: ./bisqapps
-        if: matrix.platform == 'iosClient'
+        if: startsWith(matrix.os, 'macos')
         run: ./gradlew shared:presentation:iosSimulatorArm64Test
