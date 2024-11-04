@@ -60,9 +60,9 @@ jobs:
 
 #          ./gradlew ${{ matrix.app }}:build
 
-      - name: List contents of bisqapps
-        run: ls -la
-        working-directory: ./bisqapps
+#      - name: List contents of bisqapps
+#        run: ls -la
+#        working-directory: ./bisqapps
 
       - name: Print Platform
         run: |
@@ -70,27 +70,21 @@ jobs:
 
       - name: Build project
         working-directory: ./bisqapps
-        run: ./gradlew clean build --info
+        run: ./gradlew build --info
 
-      - name: Build androidClient
+      - name: Run all project tests
         working-directory: ./bisqapps
-        if: matrix.platform == 'androidClient'
-        run: ./gradlew androidClient:assembleDebug
+        run: ./gradlew test
 
       - name: Run androidClient Tests
         working-directory: ./bisqapps
         if: matrix.platform == 'androidClient'
-        run: ./gradlew androidClient:testDebugUnitTest
-
-      - name: Build androidNode
-        working-directory: ./bisqapps
-        if: matrix.platform == 'androidNode'
-        run: ./gradlew androidNode:assembleDebug
+        run: ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
 
       - name: Run androidNode Tests
         working-directory: ./bisqapps
         if: matrix.platform == 'androidNode'
-        run: ./gradlew androidNode:testDebugUnitTest
+        run: ./gradlew androidNode:testDebugUnitTest androidNode:connectedDebugAndroidTest
 
       # iOS setup
       - name: Set up Xcode
@@ -99,12 +93,8 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode_14.3.app
           xcodebuild -version
-#
-#      - name: Build iOS
-#        working-directory: ./bisqapps
-#        if: matrix.platform == 'iosClient'
-#        run: ./gradlew iosClient:build
-#
+
+# TODO ios specific and run on emulator
 #      - name: Run iOS Tests
 #        working-directory: ./bisqapps
 #        if: matrix.platform == 'iosClient'
