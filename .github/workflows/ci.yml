@@ -3,7 +3,6 @@ name: BisqApps
 on:
   push:
     branches:
-      - feature/testing_setup
       - main
   pull_request:
     branches:
