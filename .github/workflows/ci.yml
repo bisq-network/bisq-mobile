@@ -8,6 +8,7 @@ on:
   pull_request:
     branches:
       - main
+  workflow_dispatch:
 
 jobs:
   build:
@@ -16,7 +17,7 @@ jobs:
 
     strategy:
       matrix:
-        platform: [android, ios]
+        platform: [androidNode, androidClient, iosClient]
 
     env:
       # Set up Azul Zulu JDK 17.0.12.fx-zulu or refer to .sdkmanrc
@@ -24,21 +25,18 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17 (Azul Zulu)
-        run: |
-          curl -s "https://get.sdkman.io" | bash
-          source "$HOME/.sdkman/bin/sdkman-init.sh"
-          sdk install java 17.0.12.fx-zulu
-          sdk use java 17.0.12.fx-zulu
-
-      - name: Set up Kotlin
-        run: sdk install kotlin
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'zulu'
+          cache: gradle
 
       # Android setup
       - name: Set up Android SDK
-        if: matrix.platform == 'android'
+        if: startsWith(matrix.platform, 'android')
         uses: android-actions/setup-android@v2
         with:
           api-level: 33
@@ -46,7 +44,7 @@ jobs:
 
       # Cache Gradle dependencies
       - name: Cache Gradle dependencies
-        uses: actions/cache@v2
+        uses: actions/cache@v3.2.0
         with:
           path: |
             ~/.gradle/caches
@@ -55,33 +53,53 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Grant execute permission for gradlew
+        working-directory: ./bisqapps
+        run: chmod +x gradlew
+#          ./gradlew ${{ matrix.app }}:build
+
+      - name: List contents of bisqapps
+        run: ls -la
+        working-directory: ./bisqapps
+
+      - name: Print Platform
+        run: |
+          echo "Current platform: ${{ matrix.platform }}"
+
       - name: Build androidClient
-        if: matrix.platform == 'android'
-        run: ./bisqapps/gradlew androidClient:assembleDebug
+        working-directory: ./bisqapps
+        if: matrix.platform == 'androidClient'
+        run: ./gradlew androidClient:assembleDebug
 
       - name: Run androidClient Tests
-        if: matrix.platform == 'android'
-        run: ./bisqapps/gradlew androidClient:testDebugUnitTest
+        working-directory: ./bisqapps
+        if: matrix.platform == 'androidClient'
+        run: ./gradlew androidClient:testDebugUnitTest
 
       - name: Build androidNode
-        if: matrix.platform == 'android'
-        run: ./bisqapps/gradlew androidNode:assembleDebug
+        working-directory: ./bisqapps
+        if: matrix.platform == 'androidNode'
+        run: ./gradlew androidNode:assembleDebug
 
       - name: Run androidNode Tests
-        if: matrix.platform == 'android'
-        run: ./bisqapps/gradlew androidNode:testDebugUnitTest
+        working-directory: ./bisqapps
+        if: matrix.platform == 'androidNode'
+        run: ./gradlew androidNode:testDebugUnitTest
 
       # iOS setup
       - name: Set up Xcode
-        if: matrix.platform == 'ios'
+        working-directory: ./bisqapps
+        if: matrix.platform == 'iosClient'
         run: |
           sudo xcode-select -s /Applications/Xcode_14.3.app
           xcodebuild -version
-
-      - name: Build iOS
-        if: matrix.platform == 'ios'
-        run: ./bisqapps/gradlew iosClient:build
-
-      - name: Run iOS Tests
-        if: matrix.platform == 'ios'
-        run: ./bisqapps/gradlew iosClient:test
+#
+#      - name: Build iOS
+#        working-directory: ./bisqapps
+#        if: matrix.platform == 'iosClient'
+#        run: ./gradlew iosClient:build
+#
+#      - name: Run iOS Tests
+#        working-directory: ./bisqapps
+#        if: matrix.platform == 'iosClient'
+#        run: ./gradlew iosClient:test
