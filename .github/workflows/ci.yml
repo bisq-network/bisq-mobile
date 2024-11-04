@@ -3,6 +3,7 @@ name: BisqApps
 on:
   push:
     branches:
+      - feature/testing_setup
       - main
   pull_request:
     branches:
@@ -56,19 +57,19 @@ jobs:
 
       - name: Build androidClient
         if: matrix.platform == 'android'
-        run: ./gradlew androidClient:assembleDebug
+        run: ./bisqapps/gradlew androidClient:assembleDebug
 
       - name: Run androidClient Tests
         if: matrix.platform == 'android'
-        run: ./gradlew androidClient:testDebugUnitTest
+        run: ./bisqapps/gradlew androidClient:testDebugUnitTest
 
       - name: Build androidNode
         if: matrix.platform == 'android'
-        run: ./gradlew androidNode:assembleDebug
+        run: ./bisqapps/gradlew androidNode:assembleDebug
 
       - name: Run androidNode Tests
         if: matrix.platform == 'android'
-        run: ./gradlew androidNode:testDebugUnitTest
+        run: ./bisqapps/gradlew androidNode:testDebugUnitTest
 
       # iOS setup
       - name: Set up Xcode
@@ -79,8 +80,8 @@ jobs:
 
       - name: Build iOS
         if: matrix.platform == 'ios'
-        run: ./gradlew iosClient:build
+        run: ./bisqapps/gradlew iosClient:build
 
       - name: Run iOS Tests
         if: matrix.platform == 'ios'
-        run: ./gradlew iosClient:test
+        run: ./bisqapps/gradlew iosClient:test
