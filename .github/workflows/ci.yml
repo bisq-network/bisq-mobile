@@ -55,7 +55,9 @@ jobs:
 
       - name: Grant execute permission for gradlew
         working-directory: ./bisqapps
-        run: chmod +x gradlew
+        run: |
+            chmod +x gradlew
+
 #          ./gradlew ${{ matrix.app }}:build
 
       - name: List contents of bisqapps
@@ -65,6 +67,10 @@ jobs:
       - name: Print Platform
         run: |
           echo "Current platform: ${{ matrix.platform }}"
+
+      - name: Build project
+        working-directory: ./bisqapps
+        run: ./gradlew clean build --info
 
       - name: Build androidClient
         working-directory: ./bisqapps

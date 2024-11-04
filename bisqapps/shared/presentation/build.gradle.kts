@@ -21,7 +21,7 @@ version = project.findProperty("shared.version") as String
 // The following allow us to configure each app type independently and link for example with gradle.properties
 // TODO potentially to be refactored into a shared/common module
 buildConfig {
-    forClass("network.bisq.mobile.client", className = "BuildConfig") {
+    forClass("network.bisq.mobile.client.shared", className = "BuildConfig") {
         buildConfigField("APP_NAME", project.findProperty("client.name").toString())
         buildConfigField("ANDROID_APP_VERSION", project.findProperty("client.android.version").toString())
         buildConfigField("IOS_APP_VERSION", project.findProperty("client.ios.version").toString())

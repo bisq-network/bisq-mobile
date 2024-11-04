@@ -1,4 +1,4 @@
-package network.bisq.mobile
+package network.bisq.mobile.client
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

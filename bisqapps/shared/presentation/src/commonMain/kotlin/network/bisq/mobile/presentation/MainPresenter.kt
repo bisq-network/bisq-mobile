@@ -4,7 +4,7 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.BuildNodeConfig
-import network.bisq.mobile.client.BuildConfig
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.repository.GreetingRepository
 import network.bisq.mobile.presentation.ui.AppPresenter
 
