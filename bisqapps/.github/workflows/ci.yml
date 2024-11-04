@@ -1,0 +1,86 @@
+name: BisqApps
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build & Test
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        platform: [android, ios]
+
+    env:
+      # Set up Azul Zulu JDK 17.0.12.fx-zulu or refer to .sdkmanrc
+      JAVA_HOME: /usr/lib/jvm/zulu17.32.13-ca-fx-jdk17.0.12
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK 17 (Azul Zulu)
+        run: |
+          curl -s "https://get.sdkman.io" | bash
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+          sdk install java 17.0.12.fx-zulu
+          sdk use java 17.0.12.fx-zulu
+
+      - name: Set up Kotlin
+        run: sdk install kotlin
+
+      # Android setup
+      - name: Set up Android SDK
+        if: matrix.platform == 'android'
+        uses: android-actions/setup-android@v2
+        with:
+          api-level: 33
+          build-tools: 33.0.0
+
+      # Cache Gradle dependencies
+      - name: Cache Gradle dependencies
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build androidClient
+        if: matrix.platform == 'android'
+        run: ./gradlew androidClient:assembleDebug
+
+      - name: Run androidClient Tests
+        if: matrix.platform == 'android'
+        run: ./gradlew androidClient:testDebugUnitTest
+
+      - name: Build androidNode
+        if: matrix.platform == 'android'
+        run: ./gradlew androidNode:assembleDebug
+
+      - name: Run androidNode Tests
+        if: matrix.platform == 'android'
+        run: ./gradlew androidNode:testDebugUnitTest
+
+      # iOS setup
+      - name: Set up Xcode
+        if: matrix.platform == 'ios'
+        run: |
+          sudo xcode-select -s /Applications/Xcode_14.3.app
+          xcodebuild -version
+
+      - name: Build iOS
+        if: matrix.platform == 'ios'
+        run: ./gradlew iosClient:build
+
+      - name: Run iOS Tests
+        if: matrix.platform == 'ios'
+        run: ./gradlew iosClient:test
