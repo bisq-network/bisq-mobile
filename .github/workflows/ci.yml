@@ -12,16 +12,8 @@ on:
 
 jobs:
   build:
-    name: Build & Test
-    runs-on: macos-latest
-
-    strategy:
-      matrix:
-        platform: [androidNode, androidClient, iosClient]
-
-    env:
-      # Set up Azul Zulu JDK 17.0.12.fx-zulu or refer to .sdkmanrc
-      JAVA_HOME: /usr/lib/jvm/zulu17.32.13-ca-fx-jdk17.0.12
+    name: Project Build & Test
+    runs-on: macos-14
 
     steps:
       - name: Checkout code
@@ -33,14 +25,6 @@ jobs:
           java-version: '17'
           distribution: 'zulu'
           cache: gradle
-
-      # Android setup
-      - name: Set up Android SDK
-        if: startsWith(matrix.platform, 'android')
-        uses: android-actions/setup-android@v2
-        with:
-          api-level: 33
-          build-tools: 33.0.0
 
       # Cache Gradle dependencies
       - name: Cache Gradle dependencies
@@ -58,24 +42,39 @@ jobs:
         run: |
             chmod +x gradlew
 
-#          ./gradlew ${{ matrix.app }}:build
 
-#      - name: List contents of bisqapps
-#        run: ls -la
-#        working-directory: ./bisqapps
+      # Android setup
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v2
+        with:
+          api-level: 33
+          build-tools: 33.0.0
 
-      - name: Print Platform
+      # MacOS setup
+      # needed for macos terminal build to not hang doing linkDebugFrameworkxxxxArm64 related tasks
+      - name: Set up Xcode
         run: |
-          echo "Current platform: ${{ matrix.platform }}"
+          sudo xcode-select -s /Applications/Xcode_14.3.app
+          xcodebuild -version
 
       - name: Build project
         working-directory: ./bisqapps
-        run: ./gradlew build --info
+        run: ./gradlew clean build --info
 
       - name: Run all project tests
         working-directory: ./bisqapps
         run: ./gradlew test
 
+  platform:
+    name: Platform specific tasks
+    needs: build
+    runs-on: macos-latest
+
+    strategy:
+      matrix:
+        platform: [androidNode, androidClient, iosClient]
+
+    steps:
       - name: Run androidClient Tests
         working-directory: ./bisqapps
         if: matrix.platform == 'androidClient'
@@ -86,16 +85,8 @@ jobs:
         if: matrix.platform == 'androidNode'
         run: ./gradlew androidNode:testDebugUnitTest androidNode:connectedDebugAndroidTest
 
-      # iOS setup
-      - name: Set up Xcode
+      # TODO ios specific and run on emulator
+      - name: Run iOS Tests
         working-directory: ./bisqapps
         if: matrix.platform == 'iosClient'
-        run: |
-          sudo xcode-select -s /Applications/Xcode_14.3.app
-          xcodebuild -version
-
-# TODO ios specific and run on emulator
-#      - name: Run iOS Tests
-#        working-directory: ./bisqapps
-#        if: matrix.platform == 'iosClient'
-#        run: ./gradlew iosClient:test
+        run: ./gradlew shared:presentation:iosSimulatorArm64Test
