@@ -13,7 +13,7 @@
         android:theme="@style/Theme.Mobile"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name="bisq.android.MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Mobile">
@@ -24,5 +24,7 @@
             </intent-filter>
         </activity>
     </application>
+
+    <uses-permission android:name="android.permission.INTERNET" />
 
 </manifest>

@@ -1,5 +1,5 @@
 [versions]
-agp = "8.5.2"
+agp = "8.5.0"
 kotlin = "1.9.0"
 coreKtx = "1.13.1"
 junit = "4.13.2"
@@ -9,9 +9,71 @@ lifecycleRuntimeKtx = "2.8.6"
 activityCompose = "1.9.2"
 composeBom = "2024.09.03"
 
+annotations-lib = { strictly = '23.0.0' }
+
+apache-commons-lang-lib = { strictly = '3.14.0' }
+apache-httpcomponents-core-lib = { strictly = '4.4.16' }
+apache-httpcomponents-httpclient-lib = { strictly = '4.5.14' } # 5.3.1 would be better but has lot of API changes
+apache-tomcat-annotations-api = { strictly = '6.0.53' }
+
+assertj-core-lib = { strictly = '3.22.0' }
+bouncycastle-lib = { strictly = '1.78.1' }
+
+commons-codec = { strictly = '1.17.1' }
+
+chimp-jsocks-lib = { strictly = '567e1cd6' }
+chimp-jtorctl-lib = { strictly = '9b5ba203' }
+
+failsafe-lib = { strictly = '3.2.4' }
+
+fontawesomefx-lib = { strictly = '8.0.0' }
+fontawesomefx-commons-lib = { strictly = '9.1.2' }
+fontawesomefx-materialdesignfont-lib = { strictly = '2.0.26-9.1.2' }
+
+fxmisc-easybind-lib = { strictly = '1.0.3' }
+fxmisc-richtextfx-lib = { strictly = '0.10.9' }
+
+glassfish-jersey-lib = { strictly = '3.1.8' }
+glassfish-jaxb-runtime-lib = { strictly = '4.0.5' }
+
+google-gson-lib = { strictly = '2.9.0' }
+google-guava-lib = { strictly = '33.2.1-jre' }
+
+grpc = { strictly = '1.61.0' }
+
+i2p-lib = { strictly = '1.8.0' }
+i2p-v2 = { strictly = '2.4.0' }
+
+jackson-lib = { strictly = '2.17.2' }
+javacv = { strictly = '1.5.10' }
+java-dev-jna-lib = { strictly = '5.13.0' }
+jeromq-lib = { strictly = '0.5.2' }
+junit-jupiter-lib = { strictly = '5.8.2' }
+kotlindsl-plugin = { strictly = '2.1.7' }
+logback-lib = { strictly = '1.2.13' }
+lombok-lib = { strictly = '1.18.34' }
+mockito-lib = { strictly = '4.11.0' }
+openjfx-plugin = { strictly = '0.0.13' }
+openjfx-monocle-lib = { strictly = 'jdk-12.0.1+2'}
+
 protobuf-java-lib = { strictly = '3.25.4' }
 protobuf-gradle-plugin-lib = { strictly = '0.9.4' }
 
+sarxos-lib = { strictly = '0.3.12' }
+shadow-plugin = { strictly = '8.3.0' }
+slf4j-lib = { strictly = '1.7.36' }
+spring-boot-starter-web-lib = { strictly = '2.5.6' }
+springfox-lib = { strictly = '3.0.0' }
+
+square-moshi-lib = { strictly = '1.15.1' }
+square-okhttp-libs = { strictly = '4.12.0' }
+
+swagger-jaxrs2-jakarta-lib = { strictly = '2.2.0' }
+testfx-junit5-lib = { strictly = '4.0.16-alpha' }
+tukaani-lib = { strictly = '1.9' }
+typesafe-config-lib = { strictly = '1.4.3' }
+
+zxing-lib = { strictly = '3.5.3' }
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -29,9 +91,103 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
 
+apache-commons-lang = { module = 'org.apache.commons:commons-lang3', version.ref = 'apache-commons-lang-lib' }
+apache-httpcomponents-core = { module = 'org.apache.httpcomponents:httpcore', version.ref = 'apache-httpcomponents-core-lib' }
+apache-httpcomponents-httpclient = { module = 'org.apache.httpcomponents:httpclient', version.ref = 'apache-httpcomponents-httpclient-lib' }
+apache-tomcat-annotations-api = { module = 'org.apache.tomcat:annotations-api', version.ref = 'apache-tomcat-annotations-api' }
+assertj-core = { module = 'org.assertj:assertj-core', version.ref = 'assertj-core-lib' }
+
+annotations = { module = 'org.jetbrains:annotations', version.ref = 'annotations-lib' }
+
+bouncycastle = { module = 'org.bouncycastle:bcprov-jdk18on', version.ref = 'bouncycastle-lib' }
+bouncycastle-pg = { module = 'org.bouncycastle:bcpg-jdk18on', version.ref = 'bouncycastle-lib' }
+
+commons-codec = { module = "commons-codec:commons-codec", version.ref = "commons-codec" }
+
+chimp-jsocks = { module = 'com.github.chimp1984:jsocks', version.ref = 'chimp-jsocks-lib'  }
+chimp-jtorctl = { module = 'com.github.chimp1984:jtorctl', version.ref = 'chimp-jtorctl-lib' }
+
+failsafe = { module = 'dev.failsafe:failsafe', version.ref = 'failsafe-lib' }
+
+fontawesomefx = { module = 'de.jensd:fontawesomefx', version.ref = 'fontawesomefx-lib' }
+fontawesomefx-commons = { module = 'de.jensd:fontawesomefx-commons', version.ref = 'fontawesomefx-commons-lib' }
+fontawesomefx-materialdesignfont = { module = 'de.jensd:fontawesomefx-materialdesignfont', version.ref = 'fontawesomefx-materialdesignfont-lib' }
+
+fxmisc-easybind = { module = 'org.fxmisc.easybind:easybind', version.ref = 'fxmisc-easybind-lib' }
+fxmisc-richtextfx = { module = 'org.fxmisc.richtext:richtextfx', version.ref = 'fxmisc-richtextfx-lib' }
+
+glassfish-jersey-jdk-http = { module = 'org.glassfish.jersey.containers:jersey-container-jdk-http', version.ref = 'glassfish-jersey-lib' }
+glassfish-jersey-json-jackson = { module = 'org.glassfish.jersey.media:jersey-media-json-jackson', version.ref = 'glassfish-jersey-lib' }
+glassfish-jersey-inject-hk2 = { module = 'org.glassfish.jersey.inject:jersey-hk2', version.ref = 'glassfish-jersey-lib' }
+glassfish-jaxb-runtime = { module = 'org.glassfish.jaxb:jaxb-runtime', version.ref = 'glassfish-jaxb-runtime-lib' }
+
+google-gson = { module = 'com.google.code.gson:gson', version.ref = 'google-gson-lib' }
+google-guava = { module = 'com.google.guava:guava', version.ref = 'google-guava-lib' }
+
+grpc-netty-shaded = { module = 'io.grpc:grpc-netty-shaded', version.ref = 'grpc' }
+grpc-protobuf = { module = 'io.grpc:grpc-protobuf', version.ref = 'grpc' }
+grpc-services = { module = 'io.grpc:grpc-services', version.ref = 'grpc' }
+grpc-stub = { module = 'io.grpc:grpc-stub', version.ref = 'grpc' }
+
+i2p-core = { module = 'net.i2p:i2p', version.ref = 'i2p-lib' }
+i2p-core-v2 = { module = 'net.i2p:i2p', version.ref = 'i2p-v2' }
+i2p-streaming = { module = 'net.i2p.client:streaming', version.ref = 'i2p-lib' }
+i2p-streaming-v2 = { module = 'net.i2p.client:streaming', version.ref = 'i2p-v2' }
+i2p-router = { module = 'net.i2p:router', version.ref = 'i2p-lib' }
+
+jackson-core = { module = 'com.fasterxml.jackson.core:jackson-core', version.ref = 'jackson-lib' }
+jackson-annotations = { module = 'com.fasterxml.jackson.core:jackson-annotations', version.ref = 'jackson-lib' }
+jackson-databind = { module = 'com.fasterxml.jackson.core:jackson-databind', version.ref = 'jackson-lib' }
+
+javacv = { module = "org.bytedeco:javacv-platform", version.ref = "javacv" }
+java-dev-jna = { module = 'net.java.dev.jna:jna', version.ref = 'java-dev-jna-lib' }
+jeromq = { module = 'org.zeromq:jeromq', version.ref = 'jeromq-lib' }
+junit-jupiter = { module = 'org.junit.jupiter:junit-jupiter', version.ref = 'junit-jupiter-lib' }
+
+logback-core = { module = 'ch.qos.logback:logback-core', version.ref = 'logback-lib' }
+logback-classic = { module = 'ch.qos.logback:logback-classic', version.ref = 'logback-lib' }
+lombok = { module = 'org.projectlombok:lombok', version.ref = 'lombok-lib' }
+
+mockito = { module = 'org.mockito:mockito-core', version.ref = 'mockito-lib' }
+openjfx-monocle = { module = 'org.testfx:openjfx-monocle', version.ref = 'openjfx-monocle-lib' }
+
 protobuf-java = { module = 'com.google.protobuf:protobuf-java', version.ref = 'protobuf-java-lib' }
 protobuf-gradle-plugin = { module = 'com.google.protobuf:protobuf-gradle-plugin', version.ref = 'protobuf-gradle-plugin-lib' }
+protobuf-java-util = { module = 'com.google.protobuf:protobuf-java-util', version.ref = 'protobuf-java-lib' }
+
+sarxos = { module = 'com.github.sarxos:webcam-capture', version.ref = 'sarxos-lib' }
+slf4j-api = { module = 'org.slf4j:slf4j-api', version.ref = 'slf4j-lib' }
+spring-boot-starter-web = { module = 'org.springframework.boot:spring-boot-starter-web', version.ref = 'spring-boot-starter-web-lib' }
+
+springfox-boot-starter = { module = 'io.springfox:springfox-boot-starter', version.ref = 'springfox-lib' }
+springfox-swagger2 = { module = 'io.springfox:springfox-swagger2', version.ref = 'springfox-lib' }
+springfox-swagger-ui = { module = 'io.springfox:springfox-swagger-ui', version.ref = 'springfox-lib' }
+
+square-okhttp-bom =  { module = 'com.squareup.okhttp3:okhttp-bom', version.ref = 'square-okhttp-libs' }
+square-moshi =  { module = 'com.squareup.moshi:moshi', version.ref = 'square-moshi-lib' }
+
+swagger-jaxrs2-jakarta = { module = 'io.swagger.core.v3:swagger-jaxrs2-jakarta', version.ref = 'swagger-jaxrs2-jakarta-lib' }
+testfx-junit5 = { module = 'org.testfx:testfx-junit5', version.ref = 'testfx-junit5-lib' }
+tukaani = { module = 'org.tukaani:xz', version.ref = 'tukaani-lib' }
+typesafe-config = { module = 'com.typesafe:config', version.ref = 'typesafe-config-lib' }
+
+zxing = { module = 'com.google.zxing:javase', version.ref = 'zxing-lib' }
+
+[bundles]
+fontawesomefx = ['fontawesomefx', 'fontawesomefx-commons', 'fontawesomefx-materialdesignfont']
+fxmisc-libs = ['fxmisc-easybind', 'fxmisc-richtextfx']
+glassfish-jersey = ['glassfish-jersey-jdk-http', 'glassfish-jersey-json-jackson', 'glassfish-jersey-inject-hk2', 'glassfish-jaxb-runtime']
+grpc = ['grpc-protobuf', 'grpc-services', 'grpc-stub']
+i2p = ['i2p-core', 'i2p-router', 'i2p-streaming']
+i2p-v2 = ['i2p-core-v2', 'i2p-streaming-v2']
+jackson = ['jackson-core', 'jackson-annotations', 'jackson-databind']
+springfox-libs = ['springfox-boot-starter', 'springfox-swagger2', 'springfox-swagger-ui']
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+
+kotlindsl = { id = 'org.gradle.kotlin.kotlin-dsl', version.ref = 'kotlindsl-plugin' }
+openjfx = { id = 'org.openjfx.javafxplugin', version.ref = 'openjfx-plugin' }
+shadow = { id = 'com.gradleup.shadow', version.ref = 'shadow-plugin' }
+gradle-javacpp-platform = { id = "org.bytedeco.gradle-javacpp-platform", version.ref = "javacv" }

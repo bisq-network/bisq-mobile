@@ -1,0 +1,98 @@
+/*
+ * This file is part of Bisq.
+ *
+ * Bisq is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * Bisq is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+syntax = "proto3";
+
+package contract;
+option java_package = "bisq.mobile.contract.protobuf";
+option java_multiple_files = true;
+
+import "network_identity.proto";
+import "account.proto";
+import "offer.proto";
+import "user.proto";
+
+enum Role {
+  ROLE_UNSPECIFIED = 0;
+  ROLE_MAKER = 1;
+  ROLE_TAKER = 2;
+  ROLE_ESCROW_AGENT = 3;
+}
+
+message Party {
+  Role role = 1;
+  network.identity.NetworkId networkId = 2;
+}
+message Contract {
+  uint64 takeOfferDate = 1;
+  offer.Offer offer = 2;
+  account.TradeProtocolType tradeProtocolType = 3;
+  oneof message {
+    TwoPartyContract twoPartyContract = 10;
+    MultiPartyContract multiPartyContract = 12;
+  }
+}
+
+message TwoPartyContract {
+  Party taker = 1;
+  oneof message {
+    BisqEasyContract bisqEasyContract = 10;
+    BisqMuSigContract bisqMuSigContract = 11;
+    SubmarineContract submarineContract = 12;
+  }
+}
+
+message MultiPartyContract {
+  repeated Party parties = 1;
+}
+
+message ContractSignatureData {
+  bytes contractHash = 1;
+  bytes signature = 2;
+  bytes publicKeyBytes = 3;
+}
+message SignedTwoPartyContract {
+  Contract contract = 1;
+  ContractSignatureData makerSignatureData = 2;
+  ContractSignatureData takerSignatureData = 3;
+  oneof message {
+    SignedBisqEasyContract signedBisqEasyContract = 10;
+  }
+}
+message SignedBisqEasyContract {
+}
+
+// BisqEasy
+message BisqEasyContract {
+  uint64 baseSideAmount = 1;
+  uint64 quoteSideAmount = 2;
+  offer.PaymentMethodSpec baseSidePaymentMethodSpec = 3;
+  offer.PaymentMethodSpec quoteSidePaymentMethodSpec = 4;
+  optional user.UserProfile mediator = 12;
+  offer.PriceSpec agreedPriceSpec = 13;
+  uint64 marketPrice = 14;
+}
+
+
+// BisqMuSig
+message BisqMuSigContract {
+}
+
+
+// Submarine
+message SubmarineContract {
+}

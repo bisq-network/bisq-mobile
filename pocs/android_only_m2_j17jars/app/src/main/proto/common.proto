@@ -18,7 +18,7 @@
 syntax = "proto3";
 
 package common;
-option java_package = "bisq.common.protobuf";
+option java_package = "bisq.mobile.common.protobuf";
 option java_multiple_files = true;
 
 message ByteArray {
@@ -91,4 +91,13 @@ message ByteArrayMapEntry {
 message StringLongPair {
   string key = 1;
   sint64 value = 2;
+}
+
+message Address {
+  string host = 1;
+  sint32 port = 2;
+}
+
+message AddressByTransportTypeMap {
+  map<string, Address> addressByTransportType = 1;
 }
