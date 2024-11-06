@@ -75,6 +75,12 @@ android {
         buildConfigField("String", "APP_VERSION", "\"${version}\"")
         buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")
     }
+
+    // We don't want to use the protobuf coming in bisq2 core dependencies as we use protobuf-lite for mobile
+    configurations.all {
+        exclude(group = "com.google.protobuf", module = "protobuf-java")
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -124,15 +130,36 @@ dependencies {
     debugImplementation(compose.uiTooling)
 
     // bisq2 core dependencies
+    implementation(libs.bisq.core.common) {
+        exclude(group = "com.google.protobuf", module = "protobuf-java")
+    }
+    implementation(libs.bisq.core.i18n)
+    implementation(libs.bisq.core.persistence)
+    implementation(libs.bisq.core.security)
+    // # bisq:core:network#
+    implementation(libs.bisq.core.network.network)
+    implementation(libs.bisq.core.network.network.identity)
+    implementation(libs.bisq.core.network.socks5.socket.channel)
+    implementation(libs.bisq.core.network.i2p)
+    implementation(libs.chimp.jsocks)
+    implementation(libs.failsafe)
+    implementation(libs.apache.httpcomponents.httpclient)
+    // ##### network ######
+    implementation(libs.bisq.core.identity)
+    implementation(libs.bisq.core.account)
+    implementation(libs.bisq.core.settings)
+    implementation(libs.bisq.core.bonded.roles)
+    implementation(libs.bisq.core.user)
+    implementation(libs.bisq.core.contract)
+    implementation(libs.bisq.core.offer)
+    implementation(libs.bisq.core.trade)
+    implementation(libs.bisq.core.support)
+    implementation(libs.bisq.core.application)
+    implementation(libs.bisq.core.chat)
+    implementation(libs.bisq.core.presentation)
 
     // protobuf
     implementation(libs.protobuf.lite)
-
-//    implementation(libs.protobuf.java)
     implementation(libs.protobuf.gradle.plugin)
     implementation(libs.protoc)
 }
-
-//tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-//    dependsOn("generateProto")
-//}

@@ -1,16 +1,34 @@
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
-        google()
-        gradlePluginPortal()
+        google {
+            content {
+                includeGroupByRegex("com\\.android.*")
+                includeGroupByRegex("com\\.google.*")
+                includeGroupByRegex("androidx.*")
+            }
+        }
+        mavenLocal()
         mavenCentral()
+        gradlePluginPortal()
+        maven {
+            url = uri("https://jitpack.io")
+        }
     }
 }
 
 dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
         mavenCentral()
+        // for androidNode till we get bisq-core libs published to a public repo
+        mavenLocal()
+        maven {
+            url = uri("https://jitpack.io")
+        }
+    }
+    repositories {
     }
 }
 

@@ -13,6 +13,7 @@ androidx-lifecycle = "2.8.2"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
 androidx-test-compose-ver = "1.6.8"
+bisq-core = "2.1.2"
 compose-plugin = "1.7.0"
 junit = "4.13.2"
 kotlin = "2.0.20"
@@ -21,6 +22,29 @@ kermit = "2.0.4"
 buildconfig = "5.5.0"
 protobuf = "0.9.4"
 protoblite = "4.28.2"
+
+chimp-jsocks-lib = { strictly = '567e1cd6' }
+chimp-jtorctl-lib = { strictly = '9b5ba203' }
+failsafe-lib = { strictly = '3.2.4' }
+apache-commons-lang-lib = { strictly = '3.14.0' }
+apache-httpcomponents-core-lib = { strictly = '4.4.16' }
+apache-httpcomponents-httpclient-lib = { strictly = '4.5.14' } # 5.3.1 would be better but has lot of API changes
+apache-tomcat-annotations-api = { strictly = '6.0.53' }
+
+assertj-core-lib = { strictly = '3.22.0' }
+bouncycastle-lib = { strictly = '1.78.1' }
+
+glassfish-jersey-lib = { strictly = '3.1.8' }
+glassfish-jaxb-runtime-lib = { strictly = '4.0.5' }
+
+google-gson-lib = { strictly = '2.9.0' }
+google-guava-lib = { strictly = '33.2.1-jre' }
+
+grpc = { strictly = '1.61.0' }
+
+i2p-lib = { strictly = '1.8.0' }
+i2p-v2 = { strictly = '2.4.0' }
+jackson-lib = { strictly = '2.17.2' }
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -44,6 +68,68 @@ logging-kermit = { group = "co.touchlab", name = "kermit", version.ref = "kermit
 protobuf-lite = { group ="com.google.protobuf", name = "protobuf-javalite", version.ref = "protoblite"}
 protobuf-gradle-plugin = { module = 'com.google.protobuf:protobuf-gradle-plugin', version.ref = 'protobuf' }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protoblite" }
+
+
+bisq-core-common = { module = "bisq:common", version.ref = "bisq-core" }
+bisq-core-security = { module = "bisq:security", version.ref = "bisq-core" }
+bisq-core-settings = { module = "bisq:settings", version.ref = "bisq-core" }
+bisq-core-support = { module = "bisq:support", version.ref = "bisq-core" }
+bisq-core-trade = { module = "bisq:trade", version.ref = "bisq-core" }
+bisq-core-user = { module = "bisq:user", version.ref = "bisq-core" }
+bisq-core-network-network = { module = "network:network", version.ref = "bisq-core" }
+bisq-core-network-network-identity = { module = "network:network-identity", version.ref = "bisq-core" }
+bisq-core-network-socks5-socket-channel = { module = "network:socks5-socket-channel", version.ref = "bisq-core" }
+bisq-core-network-i2p = { module = "network:i2p", version.ref = "bisq-core" }
+bisq-core-offer = { module = "bisq:offer", version.ref = "bisq-core" }
+bisq-core-persistence = { module = "bisq:persistence", version.ref = "bisq-core" }
+bisq-core-presentation = { module = "bisq:presentation", version.ref = "bisq-core" }
+bisq-core-account = { module = "bisq:account", version.ref = "bisq-core" }
+bisq-core-application = { module = "bisq:application", version.ref = "bisq-core" }
+bisq-core-bonded-roles = { module = "bisq:bonded-roles", version.ref = "bisq-core" }
+bisq-core-chat = { module = "bisq:chat", version.ref = "bisq-core" }
+bisq-core-contract = { module = "bisq:contract", version.ref = "bisq-core" }
+bisq-core-i18n = { module = "bisq:i18n", version.ref = "bisq-core" }
+bisq-core-identity = { module = "bisq:identity", version.ref = "bisq-core" }
+
+# bisq core transitive dependencies
+chimp-jsocks = { module = 'com.github.chimp1984:jsocks', version.ref = 'chimp-jsocks-lib'  }
+chimp-jtorctl = { module = 'com.github.chimp1984:jtorctl', version.ref = 'chimp-jtorctl-lib' }
+failsafe = { module = 'dev.failsafe:failsafe', version.ref = 'failsafe-lib' }
+apache-commons-lang = { module = 'org.apache.commons:commons-lang3', version.ref = 'apache-commons-lang-lib' }
+apache-httpcomponents-core = { module = 'org.apache.httpcomponents:httpcore', version.ref = 'apache-httpcomponents-core-lib' }
+apache-httpcomponents-httpclient = { module = 'org.apache.httpcomponents:httpclient', version.ref = 'apache-httpcomponents-httpclient-lib' }
+apache-tomcat-annotations-api = { module = 'org.apache.tomcat:annotations-api', version.ref = 'apache-tomcat-annotations-api' }
+assertj-core = { module = 'org.assertj:assertj-core', version.ref = 'assertj-core-lib' }
+glassfish-jersey-jdk-http = { module = 'org.glassfish.jersey.containers:jersey-container-jdk-http', version.ref = 'glassfish-jersey-lib' }
+glassfish-jersey-json-jackson = { module = 'org.glassfish.jersey.media:jersey-media-json-jackson', version.ref = 'glassfish-jersey-lib' }
+glassfish-jersey-inject-hk2 = { module = 'org.glassfish.jersey.inject:jersey-hk2', version.ref = 'glassfish-jersey-lib' }
+glassfish-jaxb-runtime = { module = 'org.glassfish.jaxb:jaxb-runtime', version.ref = 'glassfish-jaxb-runtime-lib' }
+
+google-gson = { module = 'com.google.code.gson:gson', version.ref = 'google-gson-lib' }
+google-guava = { module = 'com.google.guava:guava', version.ref = 'google-guava-lib' }
+
+grpc-netty-shaded = { module = 'io.grpc:grpc-netty-shaded', version.ref = 'grpc' }
+grpc-protobuf = { module = 'io.grpc:grpc-protobuf', version.ref = 'grpc' }
+grpc-services = { module = 'io.grpc:grpc-services', version.ref = 'grpc' }
+grpc-stub = { module = 'io.grpc:grpc-stub', version.ref = 'grpc' }
+
+
+i2p-core = { module = 'net.i2p:i2p', version.ref = 'i2p-lib' }
+i2p-core-v2 = { module = 'net.i2p:i2p', version.ref = 'i2p-v2' }
+i2p-streaming = { module = 'net.i2p.client:streaming', version.ref = 'i2p-lib' }
+i2p-streaming-v2 = { module = 'net.i2p.client:streaming', version.ref = 'i2p-v2' }
+i2p-router = { module = 'net.i2p:router', version.ref = 'i2p-lib' }
+
+jackson-core = { module = 'com.fasterxml.jackson.core:jackson-core', version.ref = 'jackson-lib' }
+jackson-annotations = { module = 'com.fasterxml.jackson.core:jackson-annotations', version.ref = 'jackson-lib' }
+jackson-databind = { module = 'com.fasterxml.jackson.core:jackson-databind', version.ref = 'jackson-lib' }
+
+[bundles]
+glassfish-jersey = ['glassfish-jersey-jdk-http', 'glassfish-jersey-json-jackson', 'glassfish-jersey-inject-hk2', 'glassfish-jaxb-runtime']
+grpc = ['grpc-protobuf', 'grpc-services', 'grpc-stub']
+i2p = ['i2p-core', 'i2p-router', 'i2p-streaming']
+i2p-v2 = ['i2p-core-v2', 'i2p-streaming-v2']
+jackson = ['jackson-core', 'jackson-annotations', 'jackson-databind']
 
 [plugins]
 kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }
