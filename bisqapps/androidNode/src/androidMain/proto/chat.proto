@@ -1,0 +1,211 @@
+/*
+ * This file is part of Bisq.
+ *
+ * Bisq is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * Bisq is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+syntax = "proto3";
+
+package chat;
+option java_package = "bisq.mobile.chat.protobuf";
+option java_multiple_files = true;
+import "common.proto";
+import "network_identity.proto";
+import "security.proto";
+import "offer.proto";
+import "user.proto";
+
+enum ChatMessageType {
+  CHATMESSAGETYPE_UNSPECIFIED = 0;
+  CHATMESSAGETYPE_TEXT = 1;
+  CHATMESSAGETYPE_LEAVE = 2;
+  CHATMESSAGETYPE_TAKE_BISQ_EASY_OFFER = 3;
+  CHATMESSAGETYPE_PROTOCOL_LOG_MESSAGE = 4;
+}
+
+enum ChatChannelNotificationType {
+  CHATCHANNELNOTIFICATIONTYPE_UNSPECIFIED = 0;
+  CHATCHANNELNOTIFICATIONTYPE_GLOBAL_DEFAULT = 1;
+  CHATCHANNELNOTIFICATIONTYPE_ALL = 2;
+  CHATCHANNELNOTIFICATIONTYPE_MENTION = 3;
+  CHATCHANNELNOTIFICATIONTYPE_OFF = 4;
+}
+
+enum ChatChannelDomain {
+  CHATCHANNELDOMAIN_UNSPECIFIED = 0;
+  CHATCHANNELDOMAIN_BISQ_EASY_OFFERBOOK = 1;
+  CHATCHANNELDOMAIN_BISQ_EASY_OPEN_TRADES = 2;
+  CHATCHANNELDOMAIN_BISQ_EASY_PRIVATE_CHAT = 3  [deprecated = true]; // Dropped in 2.1.1, all messages will fall back on domain DISCUSSION,
+  CHATCHANNELDOMAIN_DISCUSSION = 4;
+  CHATCHANNELDOMAIN_EVENTS = 5 [deprecated = true]; // Dropped in 2.1.1, all messages will fall back on domain DISCUSSION
+  CHATCHANNELDOMAIN_SUPPORT = 6;
+}
+
+message Citation {
+  string authorUserProfileId = 1;
+  string text = 2;
+}
+
+message ChatMessage {
+  string id = 1;
+  ChatChannelDomain chatChannelDomain = 2;
+  string channelId = 3;
+  optional string text = 4;
+  string authorUserProfileId = 5;
+  optional Citation citation = 6;
+  sint64 date = 7;
+  bool wasEdited = 8;
+  ChatMessageType chatMessageType = 9;
+  oneof message {
+    TwoPartyPrivateChatMessage twoPartyPrivateChatMessage = 20;
+    CommonPublicChatMessage commonPublicChatMessage = 21;
+    BisqEasyOpenTradeMessage bisqEasyOpenTradeMessage = 22;
+    BisqEasyOfferbookMessage bisqEasyOfferbookMessage = 23;
+  }
+}
+
+message ChatChannel {
+  string id = 1;
+  ChatChannelDomain chatChannelDomain = 2;
+  ChatChannelNotificationType chatChannelNotificationType = 3;
+  oneof message{
+    TwoPartyPrivateChatChannel twoPartyPrivateChatChannel = 10;
+    CommonPublicChatChannel commonPublicChatChannel = 11;
+    BisqEasyOpenTradeChannel bisqEasyOpenTradeChannel = 12;
+    BisqEasyOfferbookChannel bisqEasyOfferbookChannel = 13;
+  }
+}
+
+// TwoPartyPrivateChat
+message TwoPartyPrivateChatMessage {
+  string receiverUserProfileId = 1;
+  user.UserProfile sender = 2;
+  network.identity.NetworkId receiverNetworkId = 3;
+  repeated ChatMessageReaction chatMessageReactions = 4;
+}
+message TwoPartyPrivateChatChannel {
+  user.UserIdentity myUserIdentity = 1;
+  user.UserProfile peer = 2;
+  repeated ChatMessage chatMessages = 3;
+}
+message TwoPartyPrivateChatChannelStore {
+  repeated ChatChannel channels = 1;
+}
+
+// CommonPublicChat
+message CommonPublicChatMessage {
+}
+
+message CommonPublicChatChannel {
+  string channelTitle = 1;
+  optional string channelAdminId = 2;
+  repeated string channelModeratorIds = 3;
+  bool isVisible = 4;
+}
+message CommonPublicChatChannelStore {
+  repeated ChatChannel channels = 1;
+}
+
+// BisqEasy
+message BisqEasyOpenTradeMessage {
+  string tradeId = 1;
+  string receiverUserProfileId = 2;
+  network.identity.NetworkId receiverNetworkId = 3;
+  user.UserProfile sender = 4;
+  optional user.UserProfile mediator = 5;
+  optional offer.Offer bisqEasyOffer = 6;
+  repeated ChatMessageReaction chatMessageReactions = 7;
+}
+message BisqEasyOpenTradeChannel {
+  string tradeId = 1;
+  offer.Offer bisqEasyOffer = 2;
+  user.UserIdentity myUserIdentity = 3;
+  repeated user.UserProfile traders = 4;
+  optional user.UserProfile mediator = 5;
+  repeated ChatMessage chatMessages = 6;
+  bool isInMediation = 7;
+}
+message BisqEasyOpenTradeChannelStore {
+  repeated ChatChannel channels = 1;
+}
+
+message BisqEasyOfferbookMessage {
+  optional offer.Offer bisqEasyOffer = 1;
+}
+message BisqEasyOfferbookChannel {
+  common.Market market = 1;
+}
+message BisqEasyOfferbookChannelStore {
+  repeated ChatChannel channels = 1;
+}
+
+// ChatChannelSelection
+message ChatChannelSelectionStore {
+  optional string selectedChannelId = 1;
+}
+
+message ChatNotification {
+  string id = 1;
+  string title = 2;
+  string message = 3;
+  sint64 date = 4;
+  string chatChannelId = 5;
+  ChatChannelDomain chatChannelDomain = 6;
+  string chatMessageId = 7;
+  optional string tradeId = 8;
+  optional user.UserProfile senderUserProfile = 9;
+  optional user.UserProfile mediator = 10;
+  bool isConsumed = 11;
+}
+
+message ChatNotificationsStore {
+  repeated ChatNotification chatNotifications = 1;
+}
+
+// Reactions
+message ChatMessageReaction {
+  string id = 1;
+  string userProfileId = 2;
+  string chatChannelId = 3;
+  ChatChannelDomain chatChannelDomain = 4;
+  string chatMessageId = 5;
+  sint32 reactionId = 6;
+  sint64 date = 8;
+  oneof message {
+    CommonPublicChatMessageReaction commonPublicChatMessageReaction = 20;
+    BisqEasyOfferbookMessageReaction bisqEasyOfferbookMessageReaction = 21;
+    TwoPartyPrivateChatMessageReaction twoPartyPrivateChatMessageReaction = 22;
+    BisqEasyOpenTradeMessageReaction bisqEasyOpenTradeMessageReaction = 23;
+  }
+}
+
+message CommonPublicChatMessageReaction {
+}
+
+message BisqEasyOfferbookMessageReaction {
+}
+
+message TwoPartyPrivateChatMessageReaction {
+  string receiverUserProfileId = 1;
+  user.UserProfile sender = 2;
+  network.identity.NetworkId receiverNetworkId = 3;
+  bool isRemoved = 4;
+}
+
+message BisqEasyOpenTradeMessageReaction {
+  string receiverUserProfileId = 1;
+  user.UserProfile sender = 2;
+  network.identity.NetworkId receiverNetworkId = 3;
+  bool isRemoved = 4;
+}

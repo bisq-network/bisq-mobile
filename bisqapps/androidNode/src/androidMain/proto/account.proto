@@ -1,0 +1,303 @@
+/*
+ * This file is part of Bisq.
+ *
+ * Bisq is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * Bisq is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+syntax = "proto3";
+
+package account;
+option java_package = "bisq.mobile.account.protobuf";
+option java_multiple_files = true;
+
+import "common.proto";
+
+// ProtocolType
+enum TradeProtocolType {
+  TRADEPROTOCOLTYPE_UNSPECIFIED = 0;
+  TRADEPROTOCOLTYPE_BISQ_EASY = 1;
+  TRADEPROTOCOLTYPE_BISQ_MU_SIG = 2;
+  TRADEPROTOCOLTYPE_SUBMARINE = 3;
+  TRADEPROTOCOLTYPE_LIQUID_MU_SIG = 4;
+  TRADEPROTOCOLTYPE_BISQ_LIGHTNING = 5;
+  TRADEPROTOCOLTYPE_LIQUID_SWAP = 6;
+  TRADEPROTOCOLTYPE_BSQ_SWAP = 7;
+  TRADEPROTOCOLTYPE_LIGHTNING_ESCROW = 8;
+  TRADEPROTOCOLTYPE_MONERO_SWAP = 9;
+}
+enum LoanProtocolType {
+  LOANPROTOCOLTYPE_UNSPECIFIED = 0;
+  LOANPROTOCOLTYPE_COLLATERALIZED = 1;
+  LOANPROTOCOLTYPE_REPUTATION = 2;
+}
+message ProtocolType {
+  oneof message {
+    TradeProtocolType tradeProtocolType = 10;
+    LoanProtocolType loanProtocolType = 11;
+  }
+}
+
+// PaymentMethod
+message PaymentMethod {
+  string name = 1;
+  oneof message {
+    FiatPaymentMethod fiatPaymentMethod = 10;
+    BitcoinPaymentMethod bitcoinPaymentMethod = 11;
+    CryptoPaymentMethod cryptoPaymentMethod = 12;
+  }
+}
+message FiatPaymentMethod {
+}
+message BitcoinPaymentMethod {
+}
+message CryptoPaymentMethod {
+  string currencyCode = 1;
+}
+
+// AccountPayload
+message AccountPayload {
+  string id = 1;
+  string paymentMethodName = 2;
+  oneof message {
+    ZelleAccountPayload zelleAccountPayload = 19;
+    UserDefinedFiatAccountPayload userDefinedFiatAccountPayload = 20;
+    RevolutAccountPayload RevolutAccountPayload = 21;
+    CountryBasedAccountPayload countryBasedAccountPayload = 22;
+    FasterPaymentsAccountPayload fasterPaymentsAccountPayload = 23;
+    PayIDAccountPayload payIDAccountPayload = 24;
+    USPostalMoneyOrderAccountPayload usPostalMoneyOrderAccountPayload = 25;
+    CashByMailAccountPayload cashByMailAccountPayload = 26;
+    InteracETransferAccountPayload interacETransferAccountPayload = 27;
+    CashAppAccountPayload cashAppAccountPayload = 28;
+  }
+}
+message UserDefinedFiatAccountPayload {
+  string accountData = 2;
+}
+message RevolutAccountPayload {
+  string email = 2;
+}
+message CountryBasedAccountPayload {
+  string countryCode = 1;
+  oneof message {
+    BankAccountPayload bankAccountPayload = 2;
+    SepaAccountPayload sepaAccountPayload = 10;
+    F2FAccountPayload f2fAccountPayload = 11;
+    PixAccountPayload pixAccountPayload = 12;
+    StrikeAccountPayload strikeAccountPayload = 13;
+    AmazonGiftCardAccountPayload amazonGiftCardAccountPayload = 14;
+    UpiAccountPayload upiAccountPayload = 15;
+    BizumAccountPayload bizumAccountPayload = 16;
+  }
+}
+message SepaAccountPayload {
+  string holderName = 1;
+  string iban = 2;
+  string bic = 3;
+
+}
+
+message F2FAccountPayload {
+  string contact = 1;
+  string city = 2;
+  string extra_info = 3;
+}
+
+message AchTransferAccountPayload {
+  string holder_address = 1;
+}
+
+message NationalBankAccountPayload {
+}
+
+message BankAccountPayload {
+  string holder_name = 1;
+  string bank_name = 2;
+  string bank_id = 3;
+  string branch_id = 4;
+  string account_nr = 5;
+  string account_type = 6;
+  string holder_tax_id = 7;
+  string national_account_id = 12;
+  oneof message {
+    AchTransferAccountPayload achTransferAccountPayload = 13;
+    NationalBankAccountPayload nationalBankAccountPayload = 14;
+    CashDepositAccountPayload cashDepositAccountPayload = 15;
+  }
+}
+
+message ZelleAccountPayload {
+  string holderName = 1;
+  string emailOrMobileNr = 2;
+}
+
+message PixAccountPayload {
+  string pix_key = 1;
+}
+
+message FasterPaymentsAccountPayload {
+  string sort_code = 1;
+  string account_nr = 2;
+}
+
+message PayIDAccountPayload {
+  string bank_account_name = 1;
+  string pay_id = 2;
+}
+
+message USPostalMoneyOrderAccountPayload {
+  string postal_address = 1;
+  string holder_name = 2;
+}
+
+message CashByMailAccountPayload {
+  string postal_address = 1;
+  string contact = 2;
+  string extra_info = 3;
+}
+
+message StrikeAccountPayload {
+  string holderName = 1;
+}
+
+message InteracETransferAccountPayload {
+  string email = 1;
+  string holder_name = 2;
+  string question = 3;
+  string answer = 4;
+}
+
+message AmazonGiftCardAccountPayload {
+  string email_or_mobile_nr = 1;
+}
+
+message CashDepositAccountPayload {
+  string requirements = 1;
+}
+
+message UpiAccountPayload {
+  string virtual_payment_address = 1;
+}
+
+message BizumAccountPayload {
+  string mobileNr = 1;
+}
+
+message CashAppAccountPayload {
+  string cashTag = 1;
+}
+
+// Account
+message Account {
+  sint64 creationDate = 1;
+  string accountName = 2;
+  AccountPayload accountPayload = 3;
+  PaymentMethod paymentMethod = 4;
+  common.TradeCurrency selectedTradeCurrency = 6;
+
+  oneof message {
+    ZelleAccount zelleAccount = 19;
+    UserDefinedFiatAccount userDefinedFiatAccount = 20;
+    RevolutAccount revolutAccount = 21;
+    CountryBasedAccount countryBasedAccount = 22;
+    FasterPaymentsAccount fasterPaymentsAccount = 23;
+    PayIDAccount payIDAccount = 24;
+    USPostalMoneyOrderAccount usPostalMoneyOrderAccount = 25;
+    CashByMailAccount cashByMailAccount = 26;
+    InteracETransferAccount interacETransferAccount = 27;
+    CashAppAccount cashAppAccount = 28;
+  }
+}
+
+message UserDefinedFiatAccount {
+}
+message RevolutAccount {
+}
+message CountryBasedAccount {
+  common.Country country = 1;
+  oneof message {
+    BankAccount bankAccount = 19;
+    SepaAccount sepaAccount = 20;
+    F2FAccount f2fAccount = 21;
+    PixAccount pixAccount = 22;
+    StrikeAccount strikeAccount = 23;
+    AmazonGiftCardAccount amazonGiftCardAccount = 24;
+    UpiAccount upiAccount = 25;
+    BizumAccount bizumAccount = 26;
+  }
+}
+message SepaAccount {
+}
+
+message F2FAccount {
+}
+
+message BankAccount {
+  oneof message {
+    AchTransferAccount achTransferAccount = 1;
+    NationalBankAccount nationalBankAccount = 2;
+    CashDepositAccount cashDepositAccount = 3;
+  }
+}
+
+message AchTransferAccount {
+}
+
+message ZelleAccount {
+}
+
+message NationalBankAccount {
+}
+
+message PixAccount {
+}
+
+message FasterPaymentsAccount {
+}
+
+message PayIDAccount {
+}
+
+message USPostalMoneyOrderAccount {
+}
+
+message CashByMailAccount {
+}
+
+message StrikeAccount {
+}
+
+message InteracETransferAccount {
+}
+
+message AmazonGiftCardAccount {
+}
+
+message CashDepositAccount {
+}
+
+message UpiAccount {
+}
+
+message BizumAccount {
+}
+
+message CashAppAccount {
+}
+
+message AccountStore {
+  map<string, Account> accountByName = 1;
+  optional Account selectedAccount = 2;
+}
+

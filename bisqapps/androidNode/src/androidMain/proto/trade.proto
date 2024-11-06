@@ -1,0 +1,166 @@
+/*
+ * This file is part of Bisq.
+ *
+ * Bisq is free software: you can redistribute it and/or modify it
+ * under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or (at
+ * your option) any later version.
+ *
+ * Bisq is distributed in the hope that it will be useful, but WITHOUT
+ * ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+ * FITNESS FOR A PARTICULAR PURPOSE. See the GNU Affero General Public
+ * License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
+ */
+
+syntax = "proto3";
+
+package trade;
+option java_package = "bisq.mobile.trade.protobuf";
+option java_multiple_files = true;
+
+import "offer.proto";
+import "network_identity.proto";
+import "contract.proto";
+import "identity.proto";
+
+message TradeParty {
+  network.identity.NetworkId networkId = 1;
+  optional contract.ContractSignatureData contractSignatureData = 2;
+  oneof message {
+    BisqEasyTradeParty bisqEasyTradeParty = 20;
+    BisqMuSigTradeParty bisqMuSigTradeParty = 21;
+    SubmarineTradeParty submarineTradeParty = 22;
+  }
+}
+
+enum TradeRole{
+  TRADEROLE_UNSPECIFIED = 0;
+  TRADEROLE_BUYER_AS_TAKER = 1;
+  TRADEROLE_BUYER_AS_MAKER = 2;
+  TRADEROLE_SELLER_AS_TAKER = 3;
+  TRADEROLE_SELLER_AS_MAKER = 4;
+}
+message Trade {
+  string state = 1;
+  string id = 2;
+  TradeRole tradeRole = 3;
+  identity.Identity myIdentity = 4;
+  optional contract.Contract contract = 5;
+  TradeParty taker = 6;
+  TradeParty maker = 7;
+  optional string errorMessage = 8;
+  optional string errorStackTrace = 9;
+  optional string peersErrorMessage = 10;
+  optional string peersErrorStackTrace = 11;
+
+  oneof message {
+    BisqEasyTrade bisqEasyTrade = 30;
+    BisqMuSigTrade bisqMuSigTrade = 31;
+    SubmarineTrade submarineTrade = 32;
+  }
+}
+message TradeMessage {
+  string id = 1;
+  string tradeId = 2;
+  string protocolVersion = 3;
+  network.identity.NetworkId sender = 4;
+  network.identity.NetworkId receiver = 5;
+  oneof message {
+    BisqEasyTradeMessage bisqEasyTradeMessage = 20;
+    SubmarineTradeMessage submarineTradeMessage = 21;
+    BisqMuSigTradeMessage bisqMuSigTradeMessage = 23;
+  }
+}
+
+// BisqEasy
+message BisqEasyTradeParty {
+}
+
+message BisqEasyTrade {
+  optional string paymentAccountData = 1;
+  optional string bitcoinPaymentData = 2;
+  optional string paymentProof = 3;
+  optional contract.Role interruptTradeInitiator = 4;
+}
+
+message BisqEasyTradeStore {
+  repeated Trade trades = 1;
+  repeated string tradeIds = 2;
+}
+
+// BisqEasy messages
+message BisqEasyTradeMessage {
+  oneof message {
+    BisqEasyTakeOfferRequest bisqEasyTakeOfferRequest = 20;
+    BisqEasyTakeOfferResponse bisqEasyTakeOfferResponse = 21;
+    BisqEasyAccountDataMessage bisqEasyAccountDataMessage = 22;
+    BisqEasyConfirmFiatSentMessage bisqEasyConfirmFiatSentMessage = 23;
+    BisqEasyBtcAddressMessage bisqEasyBtcAddressMessage = 24;
+    BisqEasyConfirmFiatReceiptMessage bisqEasyConfirmFiatReceiptMessage = 25;
+    BisqEasyConfirmBtcSentMessage bisqEasyConfirmBtcSentMessage = 26;
+    BisqEasyRejectTradeMessage bisqEasyRejectTradeMessage = 27;
+    BisqEasyCancelTradeMessage bisqEasyCancelTradeMessage = 28;
+    BisqEasyReportErrorMessage bisqEasyReportErrorMessage = 29;
+  }
+}
+message BisqEasyTakeOfferRequest {
+  contract.Contract bisqEasyContract = 1;
+  contract.ContractSignatureData contractSignatureData = 2;
+}
+message BisqEasyTakeOfferResponse {
+  contract.ContractSignatureData contractSignatureData = 1;
+}
+message BisqEasyAccountDataMessage {
+  string paymentAccountData = 1;
+  offer.Offer bisqEasyOffer = 2;
+}
+message BisqEasyConfirmFiatSentMessage {
+}
+message BisqEasyBtcAddressMessage {
+  string bitcoinPaymentData = 1;
+  offer.Offer bisqEasyOffer = 2;
+}
+message BisqEasyConfirmFiatReceiptMessage {
+}
+message BisqEasyConfirmBtcSentMessage {
+  optional string paymentProof = 1;
+}
+message BisqEasyRejectTradeMessage {
+}
+message BisqEasyCancelTradeMessage {
+}
+message BisqEasyReportErrorMessage {
+  string errorMessage = 1;
+  string stackTrace = 2;
+}
+
+
+// BisqMuSig
+message BisqMuSigTradeMessage{
+}
+message BisqMuSigTradeParty {
+}
+
+message BisqMuSigTrade {
+}
+
+message BisqMuSigTradeStore {
+  map<string, Trade> tradeById = 1;
+}
+
+
+// Submarine
+message SubmarineTradeMessage {
+}
+message SubmarineTradeParty {
+}
+
+message SubmarineTrade {
+}
+
+message SubmarineTradeStore {
+  map<string, Trade> tradeById = 1;
+}
