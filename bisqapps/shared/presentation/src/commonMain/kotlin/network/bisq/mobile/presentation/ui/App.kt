@@ -12,6 +12,7 @@ import network.bisq.mobile.presentation.ui.screens.SplashScreen
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 interface AppPresenter {
     // Observables for state
@@ -31,11 +32,14 @@ fun App() {
     val presenter: AppPresenter = koinInject()
 
     val navController = rememberNavController()
-    RootNavGraph(
-        rootNavController = navController,
-        innerPadding = PaddingValues(),
-        startDestination = Routes.Splash.name
-    )
+
+    BisqTheme(darkTheme = true) {
+        RootNavGraph(
+            rootNavController = navController,
+            innerPadding = PaddingValues(),
+            startDestination = Routes.Splash.name
+        )
+    }
 
     //MaterialTheme {
         //SplashScreen()
@@ -55,7 +59,6 @@ fun App() {
 //                    Text("Compose: $greeting")
 //                }
 //            }
-//        }
 
 
 }
