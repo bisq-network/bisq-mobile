@@ -22,6 +22,7 @@ import androidx.navigation.NavController
 import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.AsyncImage
 import network.bisq.mobile.components.MaterialTextField
+import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -35,7 +36,7 @@ fun CreateProfileScreen(
 ) {
     textState = remember { mutableStateOf("") }
     Scaffold(
-        containerColor = backgroundColor,
+        containerColor = BisqTheme.colors.backgroundColor,
     ) { innerPadding ->
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
@@ -52,25 +53,25 @@ fun CreateProfileScreen(
                     modifier = Modifier.height(62.dp).width(200.dp),
                 )
                 Spacer(modifier = Modifier.height(32.dp))
-                Text(
+                BisqText.h1Light(
                     text = "Create your profile",
-                    fontSize = 36.sp,
-                    color = grey1
+                    color = BisqTheme.colors.grey1,
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(
+                BisqText.largeRegular(
                     text = "Your public profile consists of a nickname (picked by you) and bot icon (generated cryptographically)",
-                    color = grey2,
-                    fontSize = 16.sp,
+                    color = BisqTheme.colors.grey3,
                     modifier = Modifier.padding(horizontal = 24.dp),
                     textAlign = TextAlign.Center,
                 )
                 Spacer(modifier = Modifier.height(40.dp))
                 Column(modifier = Modifier.padding(horizontal = 54.dp)) {
-                    Text(text = "Profile nickname", color = White2)
+                    BisqText.h6Regular(
+                        text = "Profile nickname",
+                        color = BisqTheme.colors.light2,
+                    )
                     MaterialTextField(textState.value, onValueChanged = { textState.value = it })
                 }
-
                 Spacer(modifier = Modifier.height(36.dp))
                 AsyncImage(
                     model = Res.getUri("drawable/bot_image.svg"),
@@ -78,22 +79,22 @@ fun CreateProfileScreen(
                     modifier = Modifier.size(120.dp),
                 )
                 Spacer(modifier = Modifier.height(32.dp))
-                Text(
+                BisqText.largeRegular(
                     text = "Sleepily-Distracted-Zyophyte-257",
-                    fontSize = 18.sp,
-                    color = Color.White
+                    color = BisqTheme.colors.light1,
                 )
                 Spacer(modifier = Modifier.height(12.dp))
-                Text(
+                BisqText.largeRegular(
                     text = "BOT ID",
-                    fontSize = 18.sp,
-                    color = grey2
+                    color = BisqTheme.colors.grey2,
                 )
                 Spacer(modifier = Modifier.height(38.dp))
-                Text(
+                BisqText.baseMedium(
+                    text = "Generate new bot icon",
+                    color = BisqTheme.colors.light1,
                     modifier = Modifier
                         .clip(shape = RoundedCornerShape(8.dp))
-                        .background(color = Black5)
+                        .background(color = BisqTheme.colors.dark5)
                         .clickable(
                             indication = null,
                             interactionSource = remember {
@@ -101,14 +102,14 @@ fun CreateProfileScreen(
                             },
                             onClick = {})
                         .padding(horizontal = 64.dp, vertical = 12.dp),
-                    text = "Generate new bot icon",
-                    color = Color.White,
                 )
                 Spacer(modifier = Modifier.height(40.dp))
-                Text(
+                BisqText.largeMedium(
+                    text = "Next",
+                    color = BisqTheme.colors.light1,
                     modifier = Modifier
                         .clip(shape = RoundedCornerShape(8.dp))
-                        .background(color = if (textState.value.isEmpty()) primaryDisabled else primaryStandard)
+                        .background(color = if (textState.value.isEmpty()) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary)
                         .clickable(
                             indication = null,
                             interactionSource = remember {
@@ -124,8 +125,6 @@ fun CreateProfileScreen(
                                 }
                             })
                         .padding(horizontal = 64.dp, vertical = 12.dp),
-                    text = "Next",
-                    color = if (textState.value.isEmpty()) grey2 else Color.White
                 )
             }
         }

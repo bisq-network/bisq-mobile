@@ -20,10 +20,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import network.bisq.mobile.presentation.ui.theme.backgroundColor
-import network.bisq.mobile.presentation.ui.theme.grey2
-import network.bisq.mobile.presentation.ui.theme.primaryStandard
-import network.bisq.mobile.presentation.ui.theme.secondaryHover
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
@@ -33,20 +29,22 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.bisq_logo
+import network.bisq.mobile.presentation.ui.components.foundation.BisqText
+import network.bisq.mobile.presentation.ui.theme.*
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun SplashScreen(rootNavController: NavController,
                  innerPadding: PaddingValues) {
     Scaffold(
-        containerColor = backgroundColor,
+        containerColor = BisqTheme.colors.backgroundColor,
         ) {
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxSize()
-                .background(color = backgroundColor)
+                .background(color = BisqTheme.colors.backgroundColor)
                 .padding(top = 48.dp, bottom = 30.dp)
         ) {
             Image(painterResource(Res.drawable.bisq_logo), "Bisq Logo")
@@ -72,9 +70,11 @@ fun LoadingProgress(navController: NavController) {
             }
         }
 
+        val grey2Color = BisqTheme.colors.grey2
+
         LinearProgressIndicator(
-            trackColor = grey2,
-            color = primaryStandard,
+            trackColor = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.primary,
             progress = { currentProgress },
             gapSize = 0.dp,
             modifier = Modifier
@@ -86,16 +86,17 @@ fun LoadingProgress(navController: NavController) {
                 drawStopIndicator(
                     drawScope = this,
                     stopSize = 0.dp,
-                    color = grey2,
+                    color = grey2Color,
                     strokeCap = ProgressIndicatorDefaults.LinearStrokeCap
                 )
             }
         )
-        Text(
+
+        BisqText.smallRegular(
             text = "Connecting to Tor Network...",
-            color = secondaryHover,
+            color = BisqTheme.colors.secondaryHover,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         )
 
     }

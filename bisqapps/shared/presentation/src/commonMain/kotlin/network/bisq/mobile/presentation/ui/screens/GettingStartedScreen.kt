@@ -20,6 +20,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,24 +34,29 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ui.components.TopBar
+import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.Font
 
 @Composable
-fun HomeScreen(
+fun GettingStartedScreen(
     rootNavController: NavController,
-    innerPadding: PaddingValues
+    innerPadding: PaddingValues,
 ) {
-    val originDirection = LocalLayoutDirection.current
     Column(
-        modifier = Modifier.fillMaxSize().padding(
-            start = innerPadding.calculateStartPadding(originDirection),
-            end = innerPadding.calculateEndPadding(originDirection),
-            bottom = innerPadding.calculateBottomPadding(),
-        ),
+//        modifier = Modifier.fillMaxSize().padding(
+//            start = innerPadding.calculateStartPadding(originDirection),
+//            end = innerPadding.calculateEndPadding(originDirection),
+//            bottom = innerPadding.calculateBottomPadding(),
+//        ),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(innerPadding),
     ) {
+        // Should be a child of Scaffold, in TabContainerScreen
         TopBar(isHome = true)
         Column(
             modifier = Modifier.padding(horizontal = 32.dp, vertical = 15.dp)
@@ -79,7 +85,6 @@ fun HomeScreen(
                     }
                 }
             }
-
             WelcomeCard(
                 title = "Get your first BTC",
                 buttonText = "Enter Bisq Easy"
@@ -108,18 +113,17 @@ fun WelcomeCard(title: String, buttonText: String) {
     NeumorphicCard{
         Column(
             modifier = Modifier.shadow(
-                ambientColor = Color.Blue, spotColor = primaryStandard,
+                ambientColor = Color.Blue, spotColor = BisqTheme.colors.primary,
                 elevation = 2.dp,
                 shape = RoundedCornerShape(5.dp),
 
-                ).clip(shape = RoundedCornerShape(5.dp)).background(color = Black2)
+                ).clip(shape = RoundedCornerShape(5.dp)).background(color = BisqTheme.colors.dark2)
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
-            Text(
+            BisqText.h3Regular(
                 text = title,
-                color = Color.White,
-                fontSize = 28.sp
+                color = BisqTheme.colors.light1,
             )
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 FeatureCard(
@@ -135,16 +139,15 @@ fun WelcomeCard(title: String, buttonText: String) {
                     title = "Security is based on seller’s reputation"
                 )
             }
-            Text(
+            BisqText.baseMedium(
+                text = buttonText,
+                color = BisqTheme.colors.light1,
+                textAlign = TextAlign.Center,
                 modifier = Modifier
                     .clip(shape = RoundedCornerShape(4.dp))
-                    .background(color = primaryStandard)
+                    .background(color = BisqTheme.colors.primary)
                     .fillMaxWidth()
                     .padding(vertical = 12.dp),
-                textAlign = TextAlign.Center,
-                text = buttonText,
-                fontSize = 16.sp,
-                color = Color.White
             )
         }
     }
@@ -156,22 +159,22 @@ fun PriceProfileCard(price: String, priceText: String) {
     Column(
         modifier = Modifier
             .clip(shape = RoundedCornerShape(4.dp))
-            .background(color = Black3)
+            .background(color = BisqTheme.colors.dark3)
             .padding(vertical = 12.dp).fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            textAlign = TextAlign.Center,
+        BisqText.largeRegular(
             text = price,
-            fontSize = 18.sp,
-            color = Color.White
-        )
-        Spacer(modifier = Modifier.height(18.dp))
-        Text(
+            color = BisqTheme.colors.light1,
             textAlign = TextAlign.Center,
+        )
+
+        Spacer(modifier = Modifier.height(18.dp))
+
+        BisqText.smallRegular(
             text = priceText,
-            fontSize = 14.sp,
-            color = grey1
+            color = BisqTheme.colors.grey1,
+            textAlign = TextAlign.Center,
         )
     }
 }
@@ -186,11 +189,11 @@ fun FeatureCard(imagePath: String, title: String) {
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(9.dp))
-        Text(
+        BisqText.baseRegular(
             text = title,
-            color = Color.White,
-            fontSize = 16.sp
+            color = BisqTheme.colors.light1,
         )
+
     }
 }
 
@@ -199,7 +202,7 @@ fun FeatureCard(imagePath: String, title: String) {
 fun InstructionCard(imagePath: String, title: String, description: String, buttonText: String) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clip(shape = RoundedCornerShape(8.dp)).background(color = Black3)
+        modifier = Modifier.clip(shape = RoundedCornerShape(8.dp)).background(color = BisqTheme.colors.dark3)
             .padding(vertical = 18.dp, horizontal = 12.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
@@ -208,25 +211,22 @@ fun InstructionCard(imagePath: String, title: String, description: String, butto
             contentDescription = null,
             modifier = Modifier.size(50.dp)
         )
-        Text(
+        BisqText.baseRegular(
             text = title,
-            fontSize = 16.sp,
-            color = Color.White
+            color = BisqTheme.colors.light1,
         )
-        Text(
+        BisqText.smallRegular(
             text = description,
-            fontSize = 14.sp,
+            color = BisqTheme.colors.grey3,
             textAlign = TextAlign.Center,
-            color = grey3
         )
-        Text(
+        BisqText.xsmallRegular(
+            text = buttonText,
+            color = BisqTheme.colors.light1,
             modifier = Modifier
                 .clip(shape = RoundedCornerShape(4.dp))
-                .background(color = Black5)
+                .background(color = BisqTheme.colors.dark5)
                 .padding(horizontal = 18.dp, vertical = 6.dp),
-            text = buttonText,
-            fontSize = 12.sp,
-            color = Color.White
         )
     }
 }
@@ -239,7 +239,7 @@ fun NeumorphicCard(
 
         Box(
             modifier = modifier
-                .shadow(elevation = 8.dp, shape = RoundedCornerShape(5.dp), spotColor = primaryStandard)
+                .shadow(elevation = 8.dp, shape = RoundedCornerShape(5.dp), spotColor = BisqTheme.colors.primary)
                 .padding(2.dp)
         ) {
             content()

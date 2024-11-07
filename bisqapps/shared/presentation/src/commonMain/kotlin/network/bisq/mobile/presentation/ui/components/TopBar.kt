@@ -19,7 +19,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.AsyncImage
-import network.bisq.mobile.presentation.ui.theme.backgroundColor
+import network.bisq.mobile.presentation.ui.components.foundation.BisqText
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
@@ -28,7 +29,7 @@ fun TopBar(title: String = "",isHome:Boolean = false) {
     TopAppBar(
         modifier = Modifier.padding(horizontal = 16.dp).padding(end = 16.dp),
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = backgroundColor,
+            containerColor = BisqTheme.colors.backgroundColor,
         ),
         title = {
             if (isHome) {
@@ -38,7 +39,10 @@ fun TopBar(title: String = "",isHome:Boolean = false) {
                     modifier = Modifier.height(34.dp).width(100.dp),
                 )
             } else {
-                Text(title, color = Color.White)
+                BisqText.h4Medium(
+                    text = title,
+                    color = BisqTheme.colors.light1,
+                )
             }
         },
         actions = {

@@ -41,13 +41,10 @@ import androidx.navigation.NavController
 import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
+import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.model.OnBoardingPage
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import network.bisq.mobile.presentation.ui.theme.backgroundColor
-import network.bisq.mobile.presentation.ui.theme.grey1
-import network.bisq.mobile.presentation.ui.theme.grey2
-import network.bisq.mobile.presentation.ui.theme.primaryStandard
-import network.bisq.mobile.presentation.ui.theme.secondaryColor
+import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.Font
 
@@ -75,7 +72,7 @@ private lateinit var pagerState: PagerState
 @Composable
 fun OnBoardingScreen(rootNavController: NavController) {
     Scaffold(
-        containerColor = backgroundColor,
+        containerColor = BisqTheme.colors.backgroundColor,
     ) { innerPadding ->
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
@@ -92,10 +89,9 @@ fun OnBoardingScreen(rootNavController: NavController) {
                     modifier = Modifier.height(62.dp).width(200.dp),
                 )
                 Spacer(modifier = Modifier.height(32.dp))
-                Text(
+                BisqText.h1Light(
                     text = "Welcome to Bisq",
-                    fontSize = 32.sp,
-                    color = grey1
+                    color = BisqTheme.colors.grey1,
                 )
             }
 
@@ -103,10 +99,12 @@ fun OnBoardingScreen(rootNavController: NavController) {
             Column {
                 val coroutineScope = rememberCoroutineScope()
 
-                Text(
+                BisqText.largeMedium(
+                    text = if (pagerState.currentPage == 2) "Create profile" else "Next",
+                    color = BisqTheme.colors.light1,
                     modifier = Modifier
                         .clip(shape = RoundedCornerShape(8.dp))
-                        .background(color = primaryStandard)
+                        .background(color = BisqTheme.colors.primary)
                         .clickable(
                             indication = null,
                             interactionSource = remember {
@@ -127,10 +125,7 @@ fun OnBoardingScreen(rootNavController: NavController) {
 
                         })
                         .padding(horizontal = 64.dp, vertical = 12.dp),
-                    text = if (pagerState.currentPage == 2) "Create profile" else "Next",
-                    color = Color.White,
                 )
-
             }
         }
     }
@@ -189,7 +184,7 @@ fun BannerItem(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(color = secondaryColor)
+                .background(color = BisqTheme.colors.dark3)
                 .padding(vertical = 56.dp)
         ) {
 
@@ -202,16 +197,14 @@ fun BannerItem(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Text(
+                BisqText.h4Regular(
                     text = title,
-                    color = Color.White,
-                    fontSize = 22.sp,
+                    color = BisqTheme.colors.light1,
                 )
                 Spacer(modifier = Modifier.height(24.dp))
-                Text(
+                BisqText.largeRegular(
                     text = desc,
-                    color = grey2,
-                    fontSize = 14.sp,
+                    color = BisqTheme.colors.grey2,
                     modifier = Modifier.padding(horizontal = 16.dp),
                     textAlign = TextAlign.Center,
                 )
@@ -233,7 +226,7 @@ fun LineIndicator(pagerState: PagerState) {
                     modifier = Modifier
                         .size(width = 76.dp, height = 2.dp)
                         .background(
-                            color = grey2,
+                            color = BisqTheme.colors.grey2,
                         )
                 )
             }
@@ -246,7 +239,7 @@ fun LineIndicator(pagerState: PagerState) {
                 )
                 .size(width = 76.dp, height = 3.dp)
                 .background(
-                    color = primaryStandard,
+                    color = BisqTheme.colors.primary,
                     shape = RoundedCornerShape(4.dp),
                 )
         )

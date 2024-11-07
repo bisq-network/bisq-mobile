@@ -13,7 +13,7 @@ import network.bisq.mobile.presentation.ui.navigation.BottomNavigation
 import network.bisq.mobile.presentation.ui.navigation.Graph
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
-import network.bisq.mobile.presentation.ui.theme.secondaryColor
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 val navigationListItem = listOf(
     BottomNavigationItem("Home", Routes.TabHome.name, "drawable/home.svg"),
@@ -34,7 +34,7 @@ fun TabContainerScreen( rootNavController: NavController) {
     }
 
     Scaffold(
-        containerColor = secondaryColor,
+        containerColor = BisqTheme.colors.dark3,
         bottomBar = {
             BottomNavigation(
                 items = navigationListItem,

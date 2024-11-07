@@ -38,6 +38,7 @@ import androidx.navigation.NavController
 import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.AsyncImage
 import network.bisq.mobile.components.MaterialTextField
+import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -52,7 +53,7 @@ fun URLScreen(
     textState = remember { mutableStateOf("") }
     val isConnected by remember { mutableStateOf(false) }
     Scaffold(
-        containerColor = backgroundColor,
+        containerColor = BisqTheme.colors.backgroundColor,
     ) { innerPadding ->
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
@@ -75,10 +76,9 @@ fun URLScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
+                        BisqText.h3Regular(
                             text = "Bisq URL",
-                            fontSize = 28.sp,
-                            color = Color.White
+                            color = BisqTheme.colors.light1,
                         )
                         AsyncImage(
                             model = Res.getUri("drawable/question_mark.svg"),
@@ -96,7 +96,7 @@ fun URLScreen(
                         Row(
                             modifier = Modifier
                                 .clip(shape = RoundedCornerShape(8.dp))
-                                .background(color = Black5)
+                                .background(color = BisqTheme.colors.dark5)
                                 .padding(horizontal = 46.dp, vertical = 12.dp)
 
                         ) {
@@ -106,16 +106,15 @@ fun URLScreen(
                                 modifier = Modifier.size(20.dp),
                             )
                             Spacer(modifier = Modifier.width(10.dp))
-                            Text(
+                            BisqText.baseMedium(
                                 text = "Paste",
-                                fontSize = 16.sp,
-                                color = Color.White
+                                color = BisqTheme.colors.light1,
                             )
                         }
                         Row(
                             modifier = Modifier
                                 .clip(shape = RoundedCornerShape(8.dp))
-                                .background(color = primaryStandard)
+                                .background(color = BisqTheme.colors.primary)
                                 .padding(horizontal = 46.dp, vertical = 12.dp)
                         ) {
                             AsyncImage(
@@ -124,32 +123,29 @@ fun URLScreen(
                                 modifier = Modifier.size(20.dp),
                             )
                             Spacer(modifier = Modifier.width(10.dp))
-                            Text(
+                            BisqText.baseMedium(
                                 text = "Scan",
-                                fontSize = 16.sp,
-                                color = Color.White
+                                color = BisqTheme.colors.light1,
                             )
                         }
                     }
                     Spacer(modifier = Modifier.height(36.dp))
-                    Text(
+                    BisqText.largeRegular(
                         text = "STATUS",
-                        fontSize = 18.sp,
-                        color = grey2
+                        color = BisqTheme.colors.grey2,
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        Text(
+                        BisqText.h5Regular(
                             text = if(isConnected) "Connected" else "Not Connected",
-                            fontSize = 22.sp,
-                            color = Color.White
+                            color = BisqTheme.colors.light1,
                         )
                         Spacer(modifier = Modifier.width(12.dp))
-                        Text(
+                        BisqText.baseRegular(
                             text = "",
                             modifier = Modifier.clip(
                                 RoundedCornerShape(5.dp)
-                            ).background(color =if(isConnected) primaryStandard else Danger1).size(10.dp),
+                            ).background(color =if(isConnected) BisqTheme.colors.primary else BisqTheme.colors.danger).size(10.dp),
                         )
                     }
 
@@ -162,10 +158,12 @@ fun URLScreen(
 
 
             if (!visible) {
-                Text(
+                BisqText.baseMedium(
+                    text = "Test Connection",
+                    color = if (textState.value.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
                     modifier = Modifier
                         .clip(shape = RoundedCornerShape(8.dp))
-                        .background(color = if (textState.value.isEmpty()) primaryDisabled else primaryStandard)
+                        .background(color = if (textState.value.isEmpty()) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary)
                         .clickable(
                             indication = null,
                             interactionSource = remember {
@@ -175,8 +173,6 @@ fun URLScreen(
                                 visible = !visible
                             })
                         .padding(horizontal = 32.dp, vertical = 12.dp),
-                    text = "Test Connection",
-                    color = if (textState.value.isEmpty()) grey2 else Color.White,
                 )
             } else {
                 Row (modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)){
@@ -184,22 +180,22 @@ fun URLScreen(
                         visible = visible,
                         enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(700)),
                         ) {
-                        Text(
-                            modifier = Modifier
+                        BisqText.baseMedium(
+                                text = "Test Connection",
+                                color = if (textState.value.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
+                                modifier = Modifier
 
-                                .clip(shape = RoundedCornerShape(8.dp))
-                                .background(color = Black5)
-                                .clickable(
-                                    indication = null,
-                                    interactionSource = remember {
-                                        MutableInteractionSource()
-                                    },
-                                    onClick = {
+                                    .clip(shape = RoundedCornerShape(8.dp))
+                                    .background(color = BisqTheme.colors.dark5)
+                                    .clickable(
+                                        indication = null,
+                                        interactionSource = remember {
+                                            MutableInteractionSource()
+                                        },
+                                        onClick = {
 
-                                    })
-                                .padding(horizontal = 32.dp, vertical = 12.dp),
-                            text = "Test Connection",
-                            color = if (textState.value.isEmpty()) grey2 else Color.White,
+                                        })
+                                    .padding(horizontal = 32.dp, vertical = 12.dp),
                         )
                     }
                     Spacer(modifier = Modifier.width(20.dp))
@@ -208,27 +204,27 @@ fun URLScreen(
                         enter = fadeIn(animationSpec = tween(300)),
 
                         ) {
-                        Text(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clip(shape = RoundedCornerShape(8.dp))
-                                .background(color = primaryStandard)
-                                .clickable(
-                                    indication = null,
-                                    interactionSource = remember {
-                                        MutableInteractionSource()
-                                    },
-                                    onClick = {
-                                        rootNavController.navigate(Routes.TabContainer.name) {
-                                            popUpTo(Routes.BisqUrl.name) {
-                                                inclusive = true
+                        BisqText.baseMedium(
+                                text = "Next",
+                                color = BisqTheme.colors.light1,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(shape = RoundedCornerShape(8.dp))
+                                    .background(color = BisqTheme.colors.primary)
+                                    .clickable(
+                                        indication = null,
+                                        interactionSource = remember {
+                                            MutableInteractionSource()
+                                        },
+                                        onClick = {
+                                            rootNavController.navigate(Routes.TabContainer.name) {
+                                                popUpTo(Routes.BisqUrl.name) {
+                                                    inclusive = true
+                                                }
                                             }
-                                        }
-                                    })
-                                .padding(horizontal = 32.dp, vertical = 12.dp),
-                            text = "Next",
-                            textAlign = TextAlign.Center,
-                            color = Color.White,
+                                        })
+                                    .padding(horizontal = 32.dp, vertical = 12.dp),
                         )
                     }
                 }

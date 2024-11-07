@@ -12,6 +12,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import network.bisq.mobile.presentation.ui.components.foundation.BisqText
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 @OptIn(ExperimentalResourceApi::class)
@@ -25,10 +27,9 @@ fun MyTradesScreen(rootNavController: NavController,
             .padding(innerPadding), // Applies the inner padding if necessary
         contentAlignment = Alignment.Center // Centers the content within the Box
     ) {
-        Text(
+        BisqText.h2Regular(
             text = "My Trades",
-            fontSize = 32.sp, // Increases font size
-            color = Color.White // Sets font color to white
+            color = BisqTheme.colors.light1,
         )
     }
 }

@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import bisqapps.shared.presentation.generated.resources.Res
+import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.Font
 
@@ -37,7 +38,7 @@ fun MaterialTextField(text: String,onValueChanged: (String) -> Unit) {
             .fillMaxWidth()
             .padding(vertical = 12.dp)
             .clip(shape = RoundedCornerShape(6.dp))
-            .background(color = secondaryStandard)
+            .background(color = BisqTheme.colors.secondary)
     ) {
         TextField(
             value = text,
@@ -49,18 +50,18 @@ fun MaterialTextField(text: String,onValueChanged: (String) -> Unit) {
             textStyle = TextStyle(fontSize = 22.sp),
             onValueChange = onValueChanged,
             colors = TextFieldDefaults.colors(
-                focusedTextColor = primaryTextColor,
-                unfocusedTextColor = secondaryHover,
-                unfocusedIndicatorColor = secondaryStandard,
+                focusedTextColor = BisqTheme.colors.light3,
+                unfocusedTextColor = BisqTheme.colors.secondaryHover,
+                unfocusedIndicatorColor = BisqTheme.colors.secondary,
                 focusedIndicatorColor = Color.Transparent,
-                focusedContainerColor = secondaryStandard,
+                focusedContainerColor = BisqTheme.colors.secondary,
                 cursorColor = Color.Blue,
-                unfocusedContainerColor = secondaryStandard
+                unfocusedContainerColor = BisqTheme.colors.secondary
             ),
             placeholder = {
-                Text(
+                BisqText.h5Regular(
                     text = "Choose your nickname",
-                    fontSize = 16.sp
+                    color = BisqTheme.colors.secondaryHover,
                 )
             }
         )
@@ -70,7 +71,7 @@ fun MaterialTextField(text: String,onValueChanged: (String) -> Unit) {
                     .fillMaxWidth()
                     .height(2.dp)
                     .align(Alignment.BottomCenter)
-                    .background(primaryStandard)
+                    .background(BisqTheme.colors.primary)
             )
         }
     }

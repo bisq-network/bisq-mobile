@@ -2,10 +2,12 @@ package network.bisq.mobile.presentation.ui.components.foundation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_thin
@@ -42,6 +44,8 @@ object BisqText {
         color: Color = BisqTheme.colors.light1,
         fontSize: FontSize = FontSize.BASE,
         fontWeight: FontWeight = FontWeight.REGULAR,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
     ) {
 
         val fontFamily = when(fontWeight) {
@@ -56,415 +60,697 @@ object BisqText {
             color = color,
             fontSize = fontSize.size,
             fontFamily = fontFamily,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun xsmallLight(text: String, color: Color = BisqTheme.colors.light1) {
+    fun xsmallLight(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.XSMALL,
             fontWeight = FontWeight.LIGHT,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun xsmallRegular(text: String, color: Color = BisqTheme.colors.light1) {
+    fun xsmallRegular(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.XSMALL,
             fontWeight = FontWeight.REGULAR,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun xsmallMedium(text: String, color: Color = BisqTheme.colors.light1) {
+    fun xsmallMedium(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.XSMALL,
             fontWeight = FontWeight.MEDIUM,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun xsmallBold(text: String, color: Color = BisqTheme.colors.light1) {
+    fun xsmallBold(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.XSMALL,
             fontWeight = FontWeight.BOLD,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
 
     @Composable
-    fun smallLight(text: String, color: Color = BisqTheme.colors.light1) {
+    fun smallLight(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.SMALL,
             fontWeight = FontWeight.LIGHT,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun smallRegular(text: String, color: Color = BisqTheme.colors.light1) {
+    fun smallRegular(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.SMALL,
             fontWeight = FontWeight.REGULAR,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun smallMedium(text: String, color: Color = BisqTheme.colors.light1) {
+    fun smallMedium(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.SMALL,
             fontWeight = FontWeight.MEDIUM,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun smallBold(text: String, color: Color = BisqTheme.colors.light1) {
+    fun smallBold(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.SMALL,
             fontWeight = FontWeight.BOLD,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
 
     @Composable
-    fun baseLight(text: String, color: Color = BisqTheme.colors.light1) {
+    fun baseLight(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.BASE,
             fontWeight = FontWeight.LIGHT,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun baseRegular(text: String, color: Color = BisqTheme.colors.light1) {
+    fun baseRegular(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.BASE,
             fontWeight = FontWeight.REGULAR,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun baseMedium(text: String, color: Color = BisqTheme.colors.light1) {
+    fun baseMedium(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.BASE,
             fontWeight = FontWeight.MEDIUM,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun baseBold(text: String, color: Color = BisqTheme.colors.light1) {
+    fun baseBold(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.BASE,
             fontWeight = FontWeight.BOLD,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
 
     @Composable
-    fun largeLight(text: String, color: Color = BisqTheme.colors.light1) {
+    fun largeLight(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.LARGE,
             fontWeight = FontWeight.LIGHT,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun largeRegular(text: String, color: Color = BisqTheme.colors.light1) {
+    fun largeRegular(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.LARGE,
             fontWeight = FontWeight.REGULAR,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun largeMedium(text: String, color: Color = BisqTheme.colors.light1) {
+    fun largeMedium(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.LARGE,
             fontWeight = FontWeight.MEDIUM,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun largeBold(text: String, color: Color = BisqTheme.colors.light1) {
+    fun largeBold(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.LARGE,
             fontWeight = FontWeight.BOLD,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
 
     @Composable
-    fun h6Light(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h6Light(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H6,
             fontWeight = FontWeight.LIGHT,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h6Regular(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h6Regular(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H6,
             fontWeight = FontWeight.REGULAR,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h6Medium(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h6Medium(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H6,
             fontWeight = FontWeight.MEDIUM,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h6Bold(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h6Bold(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H6,
             fontWeight = FontWeight.BOLD,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
 
     @Composable
-    fun h5Light(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h5Light(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H5,
             fontWeight = FontWeight.LIGHT,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h5Regular(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h5Regular(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H5,
             fontWeight = FontWeight.REGULAR,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h5Medium(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h5Medium(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H5,
             fontWeight = FontWeight.MEDIUM,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h5Bold(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h5Bold(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H5,
             fontWeight = FontWeight.BOLD,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
 
     @Composable
-    fun h4Light(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h4Light(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H4,
             fontWeight = FontWeight.LIGHT,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h4Regular(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h4Regular(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H4,
             fontWeight = FontWeight.REGULAR,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h4Medium(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h4Medium(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H4,
             fontWeight = FontWeight.MEDIUM,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h4Bold(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h4Bold(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H4,
             fontWeight = FontWeight.BOLD,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
 
     @Composable
-    fun h3Light(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h3Light(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H3,
             fontWeight = FontWeight.LIGHT,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h3Regular(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h3Regular(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H3,
             fontWeight = FontWeight.REGULAR,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h3Medium(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h3Medium(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H3,
             fontWeight = FontWeight.MEDIUM,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h3Bold(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h3Bold(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H3,
             fontWeight = FontWeight.BOLD,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
 
     @Composable
-    fun h2Light(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h2Light(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H2,
             fontWeight = FontWeight.LIGHT,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h2Regular(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h2Regular(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H2,
             fontWeight = FontWeight.REGULAR,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h2Medium(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h2Medium(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H2,
             fontWeight = FontWeight.MEDIUM,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h2Bold(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h2Bold(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H2,
             fontWeight = FontWeight.BOLD,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
 
     @Composable
-    fun h1Light(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h1Light(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H1,
             fontWeight = FontWeight.LIGHT,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h1Regular(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h1Regular(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H1,
             fontWeight = FontWeight.REGULAR,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h1Medium(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h1Medium(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H1,
             fontWeight = FontWeight.MEDIUM,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 
     @Composable
-    fun h1Bold(text: String, color: Color = BisqTheme.colors.light1) {
+    fun h1Bold(
+        text: String,
+        color: Color = BisqTheme.colors.light1,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
         styledText(
             text = text,
             fontSize = FontSize.H1,
             fontWeight = FontWeight.BOLD,
             color=color,
+            textAlign = textAlign,
+            modifier = modifier,
         )
     }
 }

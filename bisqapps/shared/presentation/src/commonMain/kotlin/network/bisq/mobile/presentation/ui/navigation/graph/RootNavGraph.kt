@@ -11,7 +11,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import network.bisq.mobile.presentation.ui.navigation.*
 import network.bisq.mobile.presentation.ui.screens.*
-import network.bisq.mobile.presentation.ui.theme.backgroundColor
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun RootNavGraph(
@@ -20,7 +20,7 @@ fun RootNavGraph(
     startDestination: String
 ) {
     NavHost(
-        modifier = Modifier.background(color = backgroundColor),
+        modifier = Modifier.background(color = BisqTheme.colors.backgroundColor),
         navController = rootNavController,
         startDestination = startDestination,
     ) {

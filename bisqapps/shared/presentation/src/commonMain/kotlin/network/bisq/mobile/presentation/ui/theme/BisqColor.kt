@@ -34,6 +34,7 @@ data class BisqColors (
     val warning: Color,
     val warningHover: Color,
     val warningDisabled: Color,
+    val backgroundColor: Color,
 )
 
 
@@ -67,6 +68,7 @@ val LocalBisqColors = staticCompositionLocalOf {
         warning = Color.Unspecified,
         warningHover = Color.Unspecified,
         warningDisabled = Color.Unspecified,
+        backgroundColor = Color.Unspecified,
     )
 }
 
@@ -99,6 +101,7 @@ val lightColors = BisqColors(
     warning = Color(0xFFFF9823),
     warningHover = Color(0xFFFFAC4E),
     warningDisabled = Color(0xB3FF9823),
+    backgroundColor = Color(0xFF1C1C1C),
 )
 
 val darkColors = BisqColors(
@@ -130,4 +133,5 @@ val darkColors = BisqColors(
     warning = Color(0xFFFF9823),
     warningHover = Color(0xFFFFAC4E),
     warningDisabled = Color(0xB3FF9823),
+    backgroundColor = Color(0xFF1C1C1C),
 )

@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.AsyncImage
-import network.bisq.mobile.presentation.ui.theme.primaryStandard
-import network.bisq.mobile.presentation.ui.theme.secondaryTextColor
+import network.bisq.mobile.presentation.ui.components.foundation.BisqText
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 @OptIn(ExperimentalResourceApi::class)
@@ -39,11 +39,20 @@ fun CurrencyProfileCard(currencyName: String, currencyShort: String, imagePath: 
             )
             Spacer(modifier = Modifier.width(8.dp))
             Column {
-                Text(text = currencyName, color = Color.White)
+                BisqText.baseRegular(
+                    text = currencyName,
+                    color = BisqTheme.colors.light1,
+                )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = currencyShort, color = secondaryTextColor)
+                BisqText.baseRegular(
+                    text = currencyShort,
+                    color = BisqTheme.colors.grey2,
+                )
             }
         }
-        Text(text = "43 offers", color = primaryStandard)
+        BisqText.smallRegular(
+            text = "43 offers",
+            color = BisqTheme.colors.primary,
+        )
     }
 }

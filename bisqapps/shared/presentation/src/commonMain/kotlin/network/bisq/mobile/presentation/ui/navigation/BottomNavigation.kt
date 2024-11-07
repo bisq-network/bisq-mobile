@@ -15,10 +15,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.AsyncImage
+import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.model.BottomNavigationItem
-import network.bisq.mobile.presentation.ui.theme.backgroundColor
-import network.bisq.mobile.presentation.ui.theme.primaryGreenColor
-import network.bisq.mobile.presentation.ui.theme.primaryStandard
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 @OptIn(ExperimentalResourceApi::class)
@@ -30,14 +29,14 @@ fun BottomNavigation(
 ) {
 
     NavigationBar(
-        containerColor = backgroundColor
+        containerColor = BisqTheme.colors.backgroundColor
     ) {
         items.forEach { navigationItem ->
             NavigationBarItem(
                 colors = NavigationBarItemColors(
-                    selectedIndicatorColor = backgroundColor,
-                    selectedIconColor = primaryStandard,
-                    selectedTextColor = primaryStandard,
+                    selectedIndicatorColor = BisqTheme.colors.backgroundColor,
+                    selectedIconColor = BisqTheme.colors.primary,
+                    selectedTextColor = BisqTheme.colors.primary,
                     unselectedIconColor = Color.White,
                     unselectedTextColor = Color.White,
                     disabledIconColor = Color.Red,
@@ -51,14 +50,13 @@ fun BottomNavigation(
                         model = Res.getUri(navigationItem.icon),
                         contentDescription = null,
                         modifier = Modifier.size(32.dp),
-                        colorFilter = ColorFilter.tint(color = if (navigationItem.route == currentRoute) primaryGreenColor else Color.White )
+                        colorFilter = ColorFilter.tint(color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else Color.White )
                     )
                 },
                 label = {
-                    Text(
+                    BisqText.baseRegular(
                         text = navigationItem.title,
-                        fontSize = 14.sp,
-                        color = if (navigationItem.route == currentRoute) primaryGreenColor else Color.White
+                        color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else BisqTheme.colors.light1,
                     )
                 }
             )
