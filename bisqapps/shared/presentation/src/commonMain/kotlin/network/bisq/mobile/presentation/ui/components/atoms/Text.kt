@@ -25,16 +25,16 @@ enum class FontWeight {
 }
 
 enum class FontSize(val size: TextUnit) {
-    XSMALL(12.sp),
-    SMALL(14.sp),
-    BASE(16.sp),
-    LARGE(18.sp),
-    H6(20.sp),
-    H5(22.sp),
-    H4(25.sp),
-    H3(28.sp),
-    H2(32.sp),
-    H1(36.sp);
+    XSMALL(10.sp),
+    SMALL(12.sp),
+    BASE(14.sp),
+    LARGE(16.sp),
+    H6(18.sp),
+    H5(20.sp),
+    H4(22.sp),
+    H3(25.sp),
+    H2(28.sp),
+    H1(32.sp);
 }
 
 object BisqText {

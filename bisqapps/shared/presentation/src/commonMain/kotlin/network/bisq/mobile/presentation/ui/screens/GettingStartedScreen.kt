@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -7,8 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.calculateEndPadding
-import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,28 +17,25 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.img_fiat_btc
+import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
 import coil3.compose.AsyncImage
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ui.components.TopBar
 import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.theme.*
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.Font
+import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun GettingStartedScreen(
@@ -47,22 +43,20 @@ fun GettingStartedScreen(
     innerPadding: PaddingValues,
 ) {
     Column(
-//        modifier = Modifier.fillMaxSize().padding(
-//            start = innerPadding.calculateStartPadding(originDirection),
-//            end = innerPadding.calculateEndPadding(originDirection),
-//            bottom = innerPadding.calculateBottomPadding(),
-//        ),
         modifier = Modifier
             .fillMaxSize()
             .padding(innerPadding),
     ) {
-        // Should be a child of Scaffold, in TabContainerScreen
+        // TODO: Should be a child of Scaffold, in TabContainerScreen
         TopBar(isHome = true)
+
+        // TODO: Should use BisqScrollLayout. But it has Scaffold inside it already!
         Column(
             modifier = Modifier.padding(horizontal = 32.dp, vertical = 15.dp)
                 .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(42.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
+
             Column {
                 PriceProfileCard(
                     price = "$ 60,000.00",
@@ -91,14 +85,14 @@ fun GettingStartedScreen(
             )
             Column {
                 InstructionCard(
-                    imagePath = "drawable/fiat_btc.svg",
+                    image = Res.drawable.img_fiat_btc,
                     title = "Multiple trade protocols",
                     description = "Checkout the roadmap for upcoming trade protocols. Get an overview about the features of the different protocols.",
                     buttonText = "Explore trade protocols"
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 InstructionCard(
-                    imagePath = "drawable/learn_and_discover.svg",
+                    image = Res.drawable.img_learn_and_discover,
                     title = "Learn & discover",
                     description = "Learn about Bitcoin and checkout upcoming events. Meet other Bisq users in the discussion chat.",
                     buttonText = "Learn more"
@@ -121,7 +115,7 @@ fun WelcomeCard(title: String, buttonText: String) {
                 .padding(24.dp),
             verticalArrangement = Arrangement.spacedBy(32.dp)
         ) {
-            BisqText.h3Regular(
+            BisqText.h4Regular(
                 text = title,
                 color = BisqTheme.colors.light1,
             )
@@ -169,7 +163,7 @@ fun PriceProfileCard(price: String, priceText: String) {
             textAlign = TextAlign.Center,
         )
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         BisqText.smallRegular(
             text = priceText,
@@ -189,7 +183,7 @@ fun FeatureCard(imagePath: String, title: String) {
             modifier = Modifier.size(20.dp)
         )
         Spacer(modifier = Modifier.width(9.dp))
-        BisqText.baseRegular(
+        BisqText.smallRegular(
             text = title,
             color = BisqTheme.colors.light1,
         )
@@ -199,28 +193,29 @@ fun FeatureCard(imagePath: String, title: String) {
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun InstructionCard(imagePath: String, title: String, description: String, buttonText: String) {
+fun InstructionCard(image: DrawableResource, title: String, description: String, buttonText: String) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clip(shape = RoundedCornerShape(8.dp)).background(color = BisqTheme.colors.dark3)
             .padding(vertical = 18.dp, horizontal = 12.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-        AsyncImage(
-            model = Res.getUri(imagePath),
-            contentDescription = null,
-            modifier = Modifier.size(50.dp)
-        )
+//        AsyncImage(
+//            model = Res.getUri(imagePath),
+//            contentDescription = null,
+//            modifier = Modifier.size(50.dp)
+//        )
+        Image(painterResource(image), "")
         BisqText.baseRegular(
             text = title,
             color = BisqTheme.colors.light1,
         )
-        BisqText.smallRegular(
+        BisqText.baseRegular(
             text = description,
             color = BisqTheme.colors.grey3,
             textAlign = TextAlign.Center,
         )
-        BisqText.xsmallRegular(
+        BisqText.smallRegular(
             text = buttonText,
             color = BisqTheme.colors.light1,
             modifier = Modifier

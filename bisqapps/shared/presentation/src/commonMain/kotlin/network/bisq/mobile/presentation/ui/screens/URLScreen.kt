@@ -4,19 +4,11 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInHorizontally
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -36,12 +28,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.icon_copy
+import bisqapps.shared.presentation.generated.resources.icon_question_mark
 import coil3.compose.AsyncImage
 import network.bisq.mobile.components.MaterialTextField
+import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
+import network.bisq.mobile.presentation.ui.components.foundation.BisqButton
 import network.bisq.mobile.presentation.ui.components.foundation.BisqText
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 
 private lateinit var textState: MutableState<String>
 
@@ -52,187 +50,114 @@ fun URLScreen(
 ) {
     textState = remember { mutableStateOf("") }
     val isConnected by remember { mutableStateOf(false) }
-    Scaffold(
-        containerColor = BisqTheme.colors.backgroundColor,
-    ) { innerPadding ->
+
+    BisqScrollLayout() {
+        BisqLogo()
+        Spacer(modifier = Modifier.height(24.dp))
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(bottom = 20.dp)
+            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp)
         ) {
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                AsyncImage(
-                    model = Res.getUri("drawable/logo_with_slogan.svg"),
-                    contentDescription = null,
-                    modifier = Modifier.height(62.dp).width(200.dp),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                BisqText.baseRegular(
+                    text = "Bisq URL",
+                    color = BisqTheme.colors.light1,
                 )
-                Spacer(modifier = Modifier.height(32.dp))
-                Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        BisqText.h3Regular(
-                            text = "Bisq URL",
-                            color = BisqTheme.colors.light1,
-                        )
-                        AsyncImage(
-                            model = Res.getUri("drawable/question_mark.svg"),
-                            contentDescription = null,
-                            modifier = Modifier.size(24.dp)
-                        )
-                    }
-
-                    MaterialTextField(textState.value, onValueChanged = { textState.value = it })
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .clip(shape = RoundedCornerShape(8.dp))
-                                .background(color = BisqTheme.colors.dark5)
-                                .padding(horizontal = 46.dp, vertical = 12.dp)
-
-                        ) {
-                            AsyncImage(
-                                model = Res.getUri("drawable/copy.svg"),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            BisqText.baseMedium(
-                                text = "Paste",
-                                color = BisqTheme.colors.light1,
-                            )
-                        }
-                        Row(
-                            modifier = Modifier
-                                .clip(shape = RoundedCornerShape(8.dp))
-                                .background(color = BisqTheme.colors.primary)
-                                .padding(horizontal = 46.dp, vertical = 12.dp)
-                        ) {
-                            AsyncImage(
-                                model = Res.getUri("drawable/qr.svg"),
-                                contentDescription = null,
-                                modifier = Modifier.size(20.dp),
-                            )
-                            Spacer(modifier = Modifier.width(10.dp))
-                            BisqText.baseMedium(
-                                text = "Scan",
-                                color = BisqTheme.colors.light1,
-                            )
-                        }
-                    }
-                    Spacer(modifier = Modifier.height(36.dp))
-                    BisqText.largeRegular(
-                        text = "STATUS",
-                        color = BisqTheme.colors.grey2,
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        BisqText.h5Regular(
-                            text = if(isConnected) "Connected" else "Not Connected",
-                            color = BisqTheme.colors.light1,
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        BisqText.baseRegular(
-                            text = "",
-                            modifier = Modifier.clip(
-                                RoundedCornerShape(5.dp)
-                            ).background(color =if(isConnected) BisqTheme.colors.primary else BisqTheme.colors.danger).size(10.dp),
-                        )
-                    }
-
-                }
-
-            }
-            var visible by remember {
-                mutableStateOf(false)
+                Image(painterResource(Res.drawable.icon_question_mark), "Question mark")
             }
 
+            MaterialTextField(textState.value, onValueChanged = { textState.value = it })
 
-            if (!visible) {
-                BisqText.baseMedium(
-                    text = "Test Connection",
-                    color = if (textState.value.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
-                    modifier = Modifier
-                        .clip(shape = RoundedCornerShape(8.dp))
-                        .background(color = if (textState.value.isEmpty()) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary)
-                        .clickable(
-                            indication = null,
-                            interactionSource = remember {
-                                MutableInteractionSource()
-                            },
-                            onClick = {
-                                visible = !visible
-                            })
-                        .padding(horizontal = 32.dp, vertical = 12.dp),
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                BisqButton(
+                    text = "Paste",
+                    onClick = {},
+                    backgroundColor = BisqTheme.colors.dark5,
+                    color = BisqTheme.colors.light1,
+                    //leftIcon=Image(painterResource(Res.drawable.icon_copy), "Copy button")
                 )
-            } else {
-                Row (modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)){
-                    AnimatedVisibility(
-                        visible = visible,
-                        enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(700)),
-                        ) {
-                        BisqText.baseMedium(
-                                text = "Test Connection",
-                                color = if (textState.value.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
-                                modifier = Modifier
 
-                                    .clip(shape = RoundedCornerShape(8.dp))
-                                    .background(color = BisqTheme.colors.dark5)
-                                    .clickable(
-                                        indication = null,
-                                        interactionSource = remember {
-                                            MutableInteractionSource()
-                                        },
-                                        onClick = {
-
-                                        })
-                                    .padding(horizontal = 32.dp, vertical = 12.dp),
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(20.dp))
-                    AnimatedVisibility(
-                        visible = visible,
-                        enter = fadeIn(animationSpec = tween(300)),
-
-                        ) {
-                        BisqText.baseMedium(
-                                text = "Next",
-                                color = BisqTheme.colors.light1,
-                                textAlign = TextAlign.Center,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(shape = RoundedCornerShape(8.dp))
-                                    .background(color = BisqTheme.colors.primary)
-                                    .clickable(
-                                        indication = null,
-                                        interactionSource = remember {
-                                            MutableInteractionSource()
-                                        },
-                                        onClick = {
-                                            rootNavController.navigate(Routes.TabContainer.name) {
-                                                popUpTo(Routes.BisqUrl.name) {
-                                                    inclusive = true
-                                                }
-                                            }
-                                        })
-                                    .padding(horizontal = 32.dp, vertical = 12.dp),
-                        )
-                    }
-                }
-
+                BisqButton(
+                    text = "Scan",
+                    onClick = {},
+                    //leftIcon=Image(painterResource(Res.drawable.icon_qr), "Scan button")
+                )
             }
-
-
+            Spacer(modifier = Modifier.height(36.dp))
+            BisqText.baseRegular(
+                text = "STATUS",
+                color = BisqTheme.colors.grey2,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                BisqText.largeRegular(
+                    text = if (isConnected) "Connected" else "Not Connected",
+                    color = BisqTheme.colors.light1,
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                BisqText.baseRegular(
+                    text = "",
+                    modifier = Modifier.clip(
+                        RoundedCornerShape(5.dp)
+                    ).background(color = if (isConnected) BisqTheme.colors.primary else BisqTheme.colors.danger)
+                        .size(10.dp),
+                )
+            }
         }
 
+        Spacer(modifier = Modifier.height(56.dp))
+
+        var visible by remember {
+            mutableStateOf(false)
+        }
+
+        if (!visible) {
+            BisqButton(
+                text = "Test Connection",
+                color = if (textState.value.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
+                onClick = { visible = !visible },
+                padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
+            )
+        } else {
+            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(700)),
+                ) {
+                    BisqButton(
+                        text = "Test Connection",
+                        color = if (textState.value.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
+                        onClick = { },
+                        padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
+                    )
+                }
+                Spacer(modifier = Modifier.width(20.dp))
+                AnimatedVisibility(
+                    visible = visible,
+                    enter = fadeIn(animationSpec = tween(300)),
+
+                    ) {
+                    BisqButton(
+                        text = "Next",
+                        color = BisqTheme.colors.light1,
+                        onClick = {
+                            rootNavController.navigate(Routes.TabContainer.name) {
+                                popUpTo(Routes.BisqUrl.name) {
+                                    inclusive = true
+                                }
+                            }
+                        },
+                        padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
+                    )
+                }
+            }
+        }
     }
 }
