@@ -24,16 +24,16 @@ import lombok.extern.slf4j.Slf4j
 
 @Slf4j
 class MainActivity : ComponentActivity() {
-    var logViewModel = LogViewModel()
+    private var logViewModel = LogViewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val userDataDir = getFilesDir().toPath()
-        var controller = MainController(userDataDir)
+        val userDataDir = filesDir.toPath()
+        val controller = MainController(userDataDir)
 
         // Map observable log message from java model to logViewModel
-        controller.getLogMessage().addObserver { info ->
+        controller.logMessage.addObserver { info ->
             logViewModel.setLogMessage(info)
         }
         controller.initialize()

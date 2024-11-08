@@ -2,8 +2,11 @@ package bisq.android.main;
 
 import com.google.common.base.Joiner;
 
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 import java.nio.file.Path;
 import java.security.KeyPair;
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -27,7 +30,11 @@ import bisq.chat.two_party.TwoPartyPrivateChatChannel;
 import bisq.chat.two_party.TwoPartyPrivateChatMessage;
 import bisq.common.currency.MarketRepository;
 import bisq.common.encoding.Hex;
+import bisq.common.facades.FacadeProvider;
+import bisq.common.facades.android.AndroidGuavaFacade;
+import bisq.common.facades.android.AndroidJdkFacade;
 import bisq.common.locale.LanguageRepository;
+import bisq.common.network.AndroidEmulatorLocalhostFacade;
 import bisq.common.network.TransportType;
 import bisq.common.observable.Observable;
 import bisq.common.observable.Pin;
@@ -58,6 +65,14 @@ public class MainController {
     private final UserIdentityService userIdentityService;
 
     public MainController(Path userDataDir) {
+        FacadeProvider.setLocalhostFacade(new AndroidEmulatorLocalhostFacade());
+        FacadeProvider.setJdkFacade(new AndroidJdkFacade(android.os.Process.myPid()));
+        FacadeProvider.setGuavaFacade(new AndroidGuavaFacade());
+
+        // Androids default BC version does not support all algorithms we need, thus we remove
+        // it and add our BC provider
+        Security.removeProvider("BC");
+        Security.addProvider(new BouncyCastleProvider());
         applicationService = new AndroidApplicationService(userDataDir);
         model = new MainModel();
         view = new MainView(this, model);
@@ -77,17 +92,19 @@ public class MainController {
             printDefaultKeyId();
             printLanguageCode();
 
+            // At the moment is nor persisting the profile so it will create one on each run
             if (userIdentityService.getUserIdentities().isEmpty()) {
                 //createUserIfNoneExist();
                 userProfileController.initialize();
 
                 // mock profile creation and wait until done.
                 userProfileController.createUserProfile().join();
-            } else {
-                printUserProfiles();
-            }
+                appendLog("Created profile for user", "");
 
-            observeNetworkState();
+            }
+            printUserProfiles();
+
+            observeNetworkState(); // prints to screen
             observeNumConnections();
             printMarketPrice();
 

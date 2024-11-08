@@ -24,10 +24,6 @@ import bisq.application.State;
 import bisq.bonded_roles.BondedRolesService;
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService;
 import bisq.chat.ChatService;
-import bisq.common.facades.FacadeProvider;
-import bisq.common.facades.android.AndroidGuavaFacade;
-import bisq.common.facades.android.AndroidJdkFacade;
-import bisq.common.network.AndroidEmulatorLocalhostFacade;
 import bisq.common.observable.Observable;
 import bisq.common.util.ExceptionUtil;
 import bisq.contract.ContractService;
@@ -47,7 +43,6 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 import java.nio.file.Path;
-import java.security.Security;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -55,7 +50,6 @@ import java.util.concurrent.TimeUnit;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 /**
  * Creates domain specific options from program arguments and application options.
@@ -95,15 +89,6 @@ public class AndroidApplicationService extends ApplicationService {
 
     public AndroidApplicationService(Path userDataDir) {
         super("android", new String[]{}, userDataDir);
-
-        FacadeProvider.setLocalhostFacade(new AndroidEmulatorLocalhostFacade());
-        FacadeProvider.setJdkFacade(new AndroidJdkFacade(android.os.Process.myPid()));
-        FacadeProvider.setGuavaFacade(new AndroidGuavaFacade());
-
-        // Androids default BC version does not support all algorithms we need, thus we remove
-        // it and add our BC provider
-        Security.removeProvider("BC");
-        Security.addProvider(new BouncyCastleProvider());
         securityService = new SecurityService(persistenceService, SecurityService.Config.from(getConfig("security")));
         networkService = new NetworkService(NetworkServiceConfig.from(config.getBaseDir(),
                 getConfig("network")),
