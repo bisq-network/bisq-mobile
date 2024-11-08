@@ -1,6 +1,6 @@
 PODS:
-  - domain (0.0.1)
-  - presentation (0.0.1)
+  - domain (0.0.2)
+  - presentation (0.0.2)
 
 DEPENDENCIES:
   - domain (from `../shared/domain`)
@@ -13,8 +13,8 @@ EXTERNAL SOURCES:
     :path: "../shared/presentation"
 
 SPEC CHECKSUMS:
-  domain: 398a8494649d845aa57f022a9ffb8be987298e80
-  presentation: afb0cb7a678bc1771eb3882a43a82f0acdff0258
+  domain: 47abf0eea12f1e6f5b4f15c05dd23f437ec5478f
+  presentation: 55df2024e1ee347459ecf9349d6e1fde59450eef
 
 PODFILE CHECKSUM: e4e5bb187d8247572973af90a35b57b84c96b4c6
 

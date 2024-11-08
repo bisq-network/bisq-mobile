@@ -87,6 +87,10 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.logging.kermit)
             implementation(libs.kotlinx.coroutines)
+
+            implementation(libs.koin.core)
+            implementation(libs.koin.compose)
+            implementation(libs.koin.compose.viewModel)
         }
         val commonTest by getting {
             dependencies {
