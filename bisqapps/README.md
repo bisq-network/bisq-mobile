@@ -37,7 +37,17 @@ If you are a mobile enthusiast and feel driven by Bisq goals, please reach out!
 
 Alternatively, you could run `./gradlew clean build` (1) first from terminal and then open with your IDE of preference.
 
-#### UI Designs
+### `Getting started for Android Node`
+
+Addicionally, for the `androidNode` module to build you need to have its dependent Bisq2 jars in your local maven2 repository ('~/.m2/repository`). Here are the steps to do that
+
+1. download [Bisq2](https://github.com/bisq-network/bisq2) if you don't have it already
+2. follow Bisq2 root `README.md` steps to build the project
+3. run `./gradlew publishAll` // this will install all the jars you need in your m2 repo
+
+Done! Alternatively if you are interested only in contributing for the `xClients` you can just build them individually instead of building the whole project.
+
+### UI Designs
 androidNode + xClient screens are designed in Figma.
 Yet to differentiate between which screens goes into which.
 
