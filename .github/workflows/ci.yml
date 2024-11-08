@@ -67,21 +67,23 @@ jobs:
           xcodebuild -version
 #          sudo xcode-select -s /Applications/Xcode_15.0.app
 
+#      TODO: restore androidNode once dependant bisq2 jars get published in a public maven repo
       - name: Build project
         working-directory: ./bisqapps
-        run: ./gradlew clean build --info
+        run: ./gradlew clean build -x androidNode:build --info
 
       - name: Run all project tests
         working-directory: ./bisqapps
-        run: ./gradlew test
+        run: ./gradlew test -x androidNode:test
 
       - name: Run androidClient Tests
         working-directory: ./bisqapps
         run: ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
 
-      - name: Run androidNode Tests
-        working-directory: ./bisqapps
-        run: ./gradlew androidNode:testDebugUnitTest androidNode:connectedDebugAndroidTest
+#      TODO: restore androidNode once dependant bisq2 jars get published in a public maven repo
+#      - name: Run androidNode Tests
+#        working-directory: ./bisqapps
+#        run: ./gradlew androidNode:testDebugUnitTest androidNode:connectedDebugAndroidTest
 
       # TODO ios specific and run on emulator if needed
       - name: Run iOS Tests

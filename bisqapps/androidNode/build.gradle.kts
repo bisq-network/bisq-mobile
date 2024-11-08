@@ -56,15 +56,6 @@ android {
             )
         }
     }
-//    sourceSets {
-//        getByName("main") {
-//            proto {
-//                srcDir("src/androidMain/proto")
-//            }
-//            println("proto files generated in ${protobuf.generatedFilesBaseDir}/java")
-//            java.srcDir("build/generated/source/proto/release/java")
-//        }
-//    }
 
     defaultConfig {
         applicationId = "network.bisq.mobile.node"
