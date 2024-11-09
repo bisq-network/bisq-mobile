@@ -1,3 +1,5 @@
+import com.google.protobuf.gradle.proto
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.kotlin.android)
@@ -11,22 +13,8 @@ protobuf {
 
     generateProtoTasks {
         all().forEach { task ->
-            // Set the source of the .proto files to the "src/main/proto" directory
-            //task.source("src/main/proto")
-
-            // Use standard Java classes (not lite) for Protobuf generation
+            task.inputs.dir("$buildDir/extracted-include-protos/debug")
             task.builtins {
-                java {
-                   // outputSubDir = "java"  // Specify output directory for Java files
-                }  // Generates standard Protobuf Java classes
-            }
-        }
-    }
-
-    generateProtoTasks {
-        all().forEach { task ->
-            task.builtins {
-                // Generate standard (non-lite) Java classes
                 create("java")
             }
         }
@@ -43,6 +31,7 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        multiDexEnabled = true
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -69,9 +58,13 @@ android {
 
     sourceSets {
         getByName("main") {
-            java.srcDir("src/main/resources")
-            java.srcDir("src/main/proto")
-            java.srcDir("build/generated/source/proto/main/java")
+            java {
+                srcDir("src/main/resources")
+                srcDir("build/generated/source/proto/debug/java")
+                proto {
+                    srcDir("build/extracted-include-protos/debug")
+                }
+            }
         }
     }
 
@@ -93,12 +86,6 @@ android {
         }
     }
 }
-
-//configurations {
-//    all {
-//        exclude(group = "com.google.protobuf")
-//    }
-//}
 
 dependencies {
 
@@ -152,9 +139,7 @@ dependencies {
 
     implementation("bisq:identity:2.1.2") // cannot be used until network dependencies are fixed. -> Could not find network:network-common:.
 
-    implementation("bisq:account:2.1.2") {
-        exclude(group = "com.google.protobuf", module = "*")
-    }
+    implementation("bisq:account:2.1.2")
 
     implementation("bisq:settings:2.1.2")
 
@@ -182,5 +167,6 @@ dependencies {
     implementation(libs.protobuf.java)
     implementation(libs.protobuf.gradle.plugin)
     implementation("com.google.protobuf:protoc:3.25.4")
+    implementation("androidx.multidex:multidex:2.0.1")
 }
 
