@@ -48,7 +48,7 @@ jackson-lib = { strictly = '2.17.2' }
 
 koin = "4.0.0"
 koin-compose = "4.0.0"
-koin-compose-viewmodel = "4.0.0"
+koin-android = "4.0.0"
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
@@ -131,7 +131,7 @@ jackson-databind = { module = 'com.fasterxml.jackson.core:jackson-databind', ver
 # koin
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
 koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin-compose" }
-koin-compose-viewModel = { module = "io.insert-koin:koin-compose-viewmodel", version.ref = "koin-compose-viewmodel" }
+koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin-android" }
 
 [bundles]
 glassfish-jersey = ['glassfish-jersey-jdk-http', 'glassfish-jersey-json-jackson', 'glassfish-jersey-inject-hk2', 'glassfish-jaxb-runtime']
