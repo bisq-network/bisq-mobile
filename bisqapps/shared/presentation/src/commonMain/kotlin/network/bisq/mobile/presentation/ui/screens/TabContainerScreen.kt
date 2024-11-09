@@ -8,6 +8,11 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import bisqapps.shared.presentation.generated.resources.*
+import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.home
+import bisqapps.shared.presentation.generated.resources.icon_question_mark
+import bisqapps.shared.presentation.generated.resources.trades
 import network.bisq.mobile.presentation.ui.model.BottomNavigationItem
 import network.bisq.mobile.presentation.ui.navigation.BottomNavigation
 import network.bisq.mobile.presentation.ui.navigation.Graph
@@ -16,10 +21,10 @@ import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 val navigationListItem = listOf(
-    BottomNavigationItem("Home", Routes.TabHome.name, "drawable/home.svg"),
-    BottomNavigationItem("Buy/Sell", Routes.TabExchange.name, "drawable/market.svg"),
-    BottomNavigationItem("My Trades", Routes.TabMyTrades.name, "drawable/trades.svg"),
-    BottomNavigationItem("Settings", Routes.TabSettings.name, "drawable/settings.svg"),
+    BottomNavigationItem("Home", Routes.TabHome.name, Res.drawable.home),
+    BottomNavigationItem("Buy/Sell", Routes.TabExchange.name, Res.drawable.market),
+    BottomNavigationItem("My Trades", Routes.TabMyTrades.name, Res.drawable.trades),
+    BottomNavigationItem("Settings", Routes.TabSettings.name, Res.drawable.settings),
 )
 
 

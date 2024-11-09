@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,6 +31,7 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_fiat_btc
 import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ui.components.TopBar
 import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.theme.*
@@ -37,11 +39,21 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
+interface IGettingStarted {
+    val btcPrice: StateFlow<String>
+    val offersOnline: StateFlow<Number>
+    val publishedProfiles: StateFlow<Number>
+}
+
 @Composable
 fun GettingStartedScreen(
+    presenter: IGettingStarted,
     rootNavController: NavController,
     innerPadding: PaddingValues,
 ) {
+    val btcPrice:String = presenter.btcPrice.collectAsState().value
+    val offersOnline:Number = presenter.offersOnline.collectAsState().value
+    val publishedProfiles:Number = presenter.publishedProfiles.collectAsState().value
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -59,21 +71,21 @@ fun GettingStartedScreen(
 
             Column {
                 PriceProfileCard(
-                    price = "$ 60,000.00",
+                    price = btcPrice,
                     priceText = "Market price"
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Box(modifier = Modifier.weight(1f)) {
                         PriceProfileCard(
-                            price = "101",
+                            price = offersOnline.toString(),
                             priceText = "Offers online"
                         )
                     }
                     Spacer(modifier = Modifier.width(16.dp))
                     Box(modifier = Modifier.weight(1f)) {
                         PriceProfileCard(
-                            price = "4,223",
+                            price = publishedProfiles.toString(),
                             priceText = "Published profiles"
                         )
                     }

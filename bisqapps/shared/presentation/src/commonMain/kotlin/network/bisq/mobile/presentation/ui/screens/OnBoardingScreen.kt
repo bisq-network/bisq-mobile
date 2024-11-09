@@ -19,6 +19,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,28 +46,13 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
-val list = listOf(
-    OnBoardingPage(
-        title = "Introducing Bisq Easy",
-        image = Res.drawable.img_bisq_Easy,
-        desc = "Getting your first Bitcoin privately has never been easier"
-    ),
-    OnBoardingPage(
-        title = "Learn & Discover",
-        image = Res.drawable.img_learn_and_discover,
-        desc = "Get a gentle introduction into Bitcoin through our guides and community chat"
-    ),
-    OnBoardingPage(
-        title = "Coming soon",
-        image = Res.drawable.img_fiat_btc,
-        desc = "Choose how to trade: Bisq MuSig, Lightning, Submarine Swaps,..."
-    )
-)
-private lateinit var pagerState: PagerState
-
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun OnBoardingScreen(rootNavController: NavController) {
+    val coroutineScope = rememberCoroutineScope()
+    val pagerState = rememberPagerState(pageCount = { onBoardingPages.size })
+    val presenter = remember { OnBoardingPresenter(rootNavController, pagerState, coroutineScope) }
+
     BisqScrollLayout() {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
@@ -75,8 +61,15 @@ fun OnBoardingScreen(rootNavController: NavController) {
             color = BisqTheme.colors.grey1,
             )
         Spacer(modifier = Modifier.height(56.dp))
-        PagerView()
+        PagerView(presenter)
         Spacer(modifier = Modifier.height(56.dp))
+
+        BisqButton(
+            text = if (pagerState.currentPage == onBoardingPages.lastIndex) "Create profile" else "Next",
+            onClick = { presenter.onNextButtonClick() }
+        )
+
+        /*
         Column {
             val coroutineScope = rememberCoroutineScope()
             BisqButton(
@@ -95,14 +88,13 @@ fun OnBoardingScreen(rootNavController: NavController) {
             )
 
         }
+        */
     }
 
 }
 
 @Composable
-fun PagerView() {
-
-    pagerState = rememberPagerState(pageCount = { list.size })
+fun PagerView(presenter: OnBoardingPresenter) {
 
     CompositionLocalProvider(values = arrayOf()) {
         Column(
@@ -114,10 +106,10 @@ fun PagerView() {
                 contentPadding = PaddingValues(horizontal = 36.dp),
                 pageSize = PageSize.Fill,
                 verticalAlignment = Alignment.CenterVertically,
-                state = pagerState
+                state = presenter.pagerState
             ) { index ->
-                list.getOrNull(
-                    index % (list.size)
+                onBoardingPages.getOrNull(
+                    index % (onBoardingPages.size)
                 )?.let { item ->
                     BannerItem(
                         image = item.image,
@@ -127,7 +119,7 @@ fun PagerView() {
                     )
                 }
             }
-            LineIndicator(pagerState = pagerState)
+            LineIndicator(pagerState = presenter.pagerState)
         }
     }
 }

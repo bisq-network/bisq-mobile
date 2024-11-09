@@ -1,24 +1,22 @@
 package network.bisq.mobile.presentation.ui.navigation
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemColors
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import bisqapps.shared.presentation.generated.resources.Res
-import coil3.compose.AsyncImage
 import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.model.BottomNavigationItem
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -46,11 +44,10 @@ fun BottomNavigation(
                 selected = currentRoute == navigationItem.route,
                 onClick = { onItemClick(navigationItem) },
                 icon = {
-                    AsyncImage(
-                        model = Res.getUri(navigationItem.icon),
-                        contentDescription = null,
-                        modifier = Modifier.size(32.dp),
-                        colorFilter = ColorFilter.tint(color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else Color.White )
+                    Image(
+                        painterResource(navigationItem.icon), "",
+                        modifier = Modifier.size(24.dp),
+                        colorFilter = ColorFilter.tint(color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else Color.White)
                     )
                 },
                 label = {

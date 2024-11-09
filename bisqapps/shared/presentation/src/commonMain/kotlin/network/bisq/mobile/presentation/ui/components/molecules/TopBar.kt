@@ -19,6 +19,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.AsyncImage
+import network.bisq.mobile.presentation.ui.components.atoms.icons.BellIcon
+import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
+import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -33,11 +36,7 @@ fun TopBar(title: String = "",isHome:Boolean = false) {
         ),
         title = {
             if (isHome) {
-                AsyncImage(
-                    model = Res.getUri("drawable/logo.svg"),
-                    contentDescription = null,
-                    modifier = Modifier.height(34.dp).width(100.dp),
-                )
+                BisqLogoSmall(modifier = Modifier.height(34.dp).width(100.dp),)
             } else {
                 BisqText.h4Medium(
                     text = title,
@@ -48,19 +47,21 @@ fun TopBar(title: String = "",isHome:Boolean = false) {
         actions = {
             Row(verticalAlignment = Alignment.CenterVertically) {
 
-                AsyncImage(
-                    model = Res.getUri("drawable/bell.svg"),
-                    contentDescription = null,
-                    modifier = Modifier.size(30.dp),
-                )
+//                AsyncImage(
+//                    model = Res.getUri("drawable/bell.svg"),
+//                    contentDescription = null,
+//                    modifier = Modifier.size(30.dp),
+//                )
+                BellIcon(modifier = Modifier.size(30.dp))
 
                 Spacer(modifier = Modifier.width(12.dp))
 
-                AsyncImage(
-                    model = Res.getUri("drawable/bot_image.svg"),
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                )
+//                AsyncImage(
+//                    model = Res.getUri("drawable/bot_image.svg"),
+//                    contentDescription = null,
+//                    modifier = Modifier.size(40.dp),
+//                )
+                UserIcon(modifier = Modifier.size(30.dp))
 
             }
 

@@ -27,46 +27,39 @@ import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.ui.theme.*
 
+// TODO: Remove innerPadding once StaticLayout, ScrollLayout are fully done.
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun SplashScreen(rootNavController: NavController,
-                 innerPadding: PaddingValues) {
-    BisqStaticLayout() {
-        BisqLogo()
-        LoadingProgress(rootNavController)
-    }
-}
+fun SplashScreen(
+    rootNavController: NavController,
+    innerPadding: PaddingValues
+) {
 
-@Composable
-fun LoadingProgress(navController: NavController) {
     var currentProgress by remember { mutableFloatStateOf(0f) }
-    val scope = rememberCoroutineScope()
 
-    Column {
-        LaunchedEffect(true) {
-            scope.launch {
-                loadProgress { progress ->currentProgress = progress }
-                navController.navigate(Routes.BisqUrl.name) {
-                    popUpTo(Routes.Splash.name) { inclusive = true }
-                }
-            }
+    val presenter = remember {
+        SplashPresenter(rootNavController) { progress ->
+            currentProgress = progress
         }
-
-        BisqProgressBar(progress = currentProgress)
-
-        BisqText.baseRegular(
-            text = "Connecting to Tor Network...",
-            color = BisqTheme.colors.secondaryHover,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
-        )
-
     }
-}
 
-suspend fun loadProgress(updateProgress: (Float) -> Unit) {
-    for (i in 1..100) {
-        updateProgress(i.toFloat() / 100)
-        delay(25)
+    LaunchedEffect(Unit) {
+        presenter.startLoading()
+    }
+
+    // Render the layout
+    BisqStaticLayout {
+        BisqLogo()
+
+        Column {
+            BisqProgressBar(progress = currentProgress)
+
+            BisqText.baseRegular(
+                text = "Connecting to Tor Network...",
+                color = BisqTheme.colors.secondaryHover,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+                )
+        }
     }
 }

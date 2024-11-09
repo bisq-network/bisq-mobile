@@ -1,6 +1,10 @@
 package network.bisq.mobile.presentation
 
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 
 /**
  * Presenter for any type of view.
@@ -15,6 +19,8 @@ abstract class BasePresenter {
      * This can be used as initialization method AFTER view gets attached (so view is available)
      */
     open fun onViewAttached() { }
+    // Coroutine scope for the presenter
+    protected val presenterScope = CoroutineScope(Dispatchers.Main + Job())
 
     /**
      * This can be used as cleanup BEFORE unattaching a view
@@ -36,6 +42,7 @@ abstract class BasePresenter {
 
     open fun onDestroy() {
         log.i { "Lifecycle: DESTROY" }
+        presenterScope.cancel()
     }
 
     fun attachView(view: Any) {

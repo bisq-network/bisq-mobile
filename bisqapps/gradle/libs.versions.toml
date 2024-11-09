@@ -48,6 +48,7 @@ grpc = { strictly = '1.61.0' }
 i2p-lib = { strictly = '1.8.0' }
 i2p-v2 = { strictly = '2.4.0' }
 jackson-lib = { strictly = '2.17.2' }
+ktorClientCore = "3.0.0"
 
 koin = "4.0.0"
 lombok-lib = { strictly = '1.18.34' }
@@ -73,6 +74,7 @@ androidx-activity-compose = { module = "androidx.activity:activity-compose", ver
 androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
 
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCore" }
 logging-kermit = { group = "co.touchlab", name = "kermit", version.ref = "kermit" }
 
 lombok = { module = 'org.projectlombok:lombok', version.ref = 'lombok-lib' }
