@@ -189,7 +189,7 @@ class AndroidApplicationService(userDataDir: Path?) :
                         log.error(startupErrorMessage.get())
                     }
                 } else {
-                    AndroidApplicationService.log.error(
+                    log.error(
                         "Initializing applicationService failed",
                         throwable
                     )

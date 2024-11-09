@@ -35,6 +35,7 @@ import bisq.user.profile.UserProfile
 import com.google.common.base.Joiner
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -46,7 +47,6 @@ import java.nio.file.Path
 import java.security.Security
 import java.util.Optional
 import java.util.Random
-import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.math.max
@@ -62,6 +62,8 @@ class MainController(userDataDir: Path?) {
     private val applicationService: AndroidApplicationService
     private val userProfileController: UserProfileController
     private val userIdentityService: UserIdentityService
+
+    private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
     init {
         FacadeProvider.setLocalhostFacade(AndroidEmulatorLocalhostFacade())
@@ -85,7 +87,7 @@ class MainController(userDataDir: Path?) {
     }
 
     fun initialize() {
-        CompletableFuture.runAsync {
+        coroutineScope.launch {
             observeAppState()
             applicationService.readAllPersisted().join()
             applicationService.initialize().join()
@@ -113,7 +115,7 @@ class MainController(userDataDir: Path?) {
             observeChatMessages(5)
             maybeRemoveMyOldChatMessages()
 
-            sendRandomMessagesEvery(60 * 1000)
+            sendRandomMessagesEvery(60 * 100)
         }
 
         view.initialize()
