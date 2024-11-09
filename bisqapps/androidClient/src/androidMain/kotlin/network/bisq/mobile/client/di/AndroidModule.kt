@@ -4,5 +4,5 @@ import network.bisq.mobile.presentation.MainPresenter
 import org.koin.dsl.module
 
 val androidModule = module {
-    single { MainPresenter(get()) }
+    // add your own modules
 }
