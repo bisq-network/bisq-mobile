@@ -21,13 +21,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import bisqapps.shared.presentation.generated.resources.Res
-import network.bisq.mobile.presentation.ui.components.foundation.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.*
-import org.jetbrains.compose.resources.Font
 
 @Composable
 fun MaterialTextField(text: String,onValueChanged: (String) -> Unit) {

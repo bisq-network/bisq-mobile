@@ -20,17 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.currency_euro
 import bisqapps.shared.presentation.generated.resources.currency_gpb
 import bisqapps.shared.presentation.generated.resources.currency_usd
-import coil3.compose.AsyncImage
 import network.bisq.mobile.presentation.ui.components.CurrencyProfileCard
 import network.bisq.mobile.components.MaterialTextField
-import network.bisq.mobile.presentation.ui.components.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SortIcon
-import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 @OptIn(ExperimentalResourceApi::class)

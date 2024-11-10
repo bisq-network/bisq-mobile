@@ -36,8 +36,8 @@ import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
 
 import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
-import network.bisq.mobile.presentation.ui.components.foundation.BisqButton
-import network.bisq.mobile.presentation.ui.components.foundation.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.model.OnBoardingPage
 import network.bisq.mobile.presentation.ui.navigation.Routes

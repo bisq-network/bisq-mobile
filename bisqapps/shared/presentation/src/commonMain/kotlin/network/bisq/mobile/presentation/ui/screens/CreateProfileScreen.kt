@@ -14,8 +14,8 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bot_image
 import network.bisq.mobile.components.MaterialTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
-import network.bisq.mobile.presentation.ui.components.foundation.BisqButton
-import network.bisq.mobile.presentation.ui.components.foundation.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.*

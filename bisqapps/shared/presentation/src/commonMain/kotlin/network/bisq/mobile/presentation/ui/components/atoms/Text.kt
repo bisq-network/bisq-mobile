@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.components.foundation
+package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text

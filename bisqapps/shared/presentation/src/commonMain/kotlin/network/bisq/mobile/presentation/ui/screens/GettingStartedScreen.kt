@@ -27,13 +27,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.icon_tag_outlined
 import bisqapps.shared.presentation.generated.resources.img_fiat_btc
 import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
-import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.presentation.ui.components.TopBar
-import network.bisq.mobile.presentation.ui.components.foundation.BisqText
+import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -133,15 +134,15 @@ fun WelcomeCard(title: String, buttonText: String) {
             )
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 FeatureCard(
-                    imagePath = "drawable/rounded_browser.svg",
+                    image = Res.drawable.icon_tag_outlined,
                     title = "Start trading or browser open offers in the offerbook"
                 )
                 FeatureCard(
-                    imagePath = "drawable/rounded_chat.svg",
+                    image = Res.drawable.icon_chat_outlined,
                     title = "Chat based and guided user interface for trading"
                 )
                 FeatureCard(
-                    imagePath = "drawable/rounded_star.svg",
+                    image = Res.drawable.icon_star_outlined,
                     title = "Security is based on seller’s reputation"
                 )
             }
@@ -187,13 +188,14 @@ fun PriceProfileCard(price: String, priceText: String) {
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun FeatureCard(imagePath: String, title: String) {
+fun FeatureCard(image: DrawableResource, title: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-        AsyncImage(
-            model = Res.getUri(imagePath),
-            contentDescription = null,
-            modifier = Modifier.size(20.dp)
-        )
+//        AsyncImage(
+//            model = Res.getUri(imagePath),
+//            contentDescription = null,
+//            modifier = Modifier.size(20.dp)
+//        )
+        Image(painterResource(image), null, Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(9.dp))
         BisqText.smallRegular(
             text = title,
