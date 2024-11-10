@@ -8,7 +8,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import cafe.adriel.lyricist.Lyricist
+import cafe.adriel.lyricist.ProvideStrings
+import cafe.adriel.lyricist.rememberStrings
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.i18n.Strings
 
 @Composable
 fun BisqStaticLayout(
@@ -26,7 +30,7 @@ fun BisqStaticLayout(
                 .background(color = BisqTheme.colors.backgroundColor)
                 .padding(innerPadding)
         ) {
-            content()
+                content()
         }
     }
 }

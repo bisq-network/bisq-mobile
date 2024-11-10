@@ -22,6 +22,8 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.bisq_logo
+import cafe.adriel.lyricist.LocalStrings
+import cafe.adriel.lyricist.rememberStrings
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
@@ -43,6 +45,8 @@ fun SplashScreen(
         }
     }
 
+    val strings = LocalStrings.current
+
     LaunchedEffect(Unit) {
         presenter.startLoading()
     }
@@ -55,7 +59,7 @@ fun SplashScreen(
             BisqProgressBar(progress = currentProgress)
 
             BisqText.baseRegular(
-                text = "Connecting to Tor Network...",
+                text = strings.splash_loading_text, // "Connecting to Tor Network...",
                 color = BisqTheme.colors.secondaryHover,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),

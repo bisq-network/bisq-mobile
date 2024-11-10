@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.buildconfig)
+    id("com.google.devtools.ksp") version "2.0.20-1.0.25"
 }
 
 dependencies {
@@ -94,11 +95,9 @@ kotlin {
             implementation("io.coil-kt.coil3:coil-svg:3.0.0-rc02")
 
             implementation("org.jetbrains.androidx.navigation:navigation-compose:2.7.0-alpha07")
-            //implementation("androidx.navigation:navigation-compose:2.8.3")
-            //https://github.com/Kamel-Media/Kamel
-            //implementation("media.kamel:kamel-image:1.0.0")
-            //implementation("media.kamel:kamel-decoder-svg-std:1.0.0")
-            //implementation("io.ktor:ktor-server-netty:3.0.0")
+
+            implementation("cafe.adriel.lyricist:lyricist:1.7.0")
+
         }
         val commonTest by getting {
             dependencies {
@@ -123,22 +122,17 @@ android {
         targetCompatibility = JavaVersion.VERSION_1_8
     }
 }
-    dependencies {
-        //implementation("io.coil-kt.coil3:coil-network-okhttp:3.0.0-rc02")
-        //implementation("io.ktor:ktor-client-android:3.0.0")
+
+dependencies {
+    add("kspCommonMainMetadata", "cafe.adriel.lyricist:lyricist-processor:1.7.0")
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().all {
+    if(name != "kspCommonMainKotlinMetadata") {
+        dependsOn("kspCommonMainKotlinMetadata")
     }
-//    dependencies {
-//        implementation("media.kamel:kamel-fetcher-resources-android:1.0.0")
-//    }
+}
 
-
-//appleMain {
-//    dependencies {
-//        implementation("io.ktor:ktor-client-darwin:3.0.0")
-//    }
-//}
-//jvmMain {
-//    dependencies {
-//        implementation("io.ktor:ktor-client-java:3.0.0>")
-//    }
-//}
+kotlin.sourceSets.commonMain {
+    kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
+}

@@ -3,12 +3,15 @@ package network.bisq.mobile.presentation.ui
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.*
 import androidx.navigation.compose.rememberNavController
+import cafe.adriel.lyricist.ProvideStrings
+import cafe.adriel.lyricist.rememberStrings
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import kotlinx.coroutines.flow.StateFlow
 import org.koin.compose.koinInject
 import network.bisq.mobile.presentation.ui.screens.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.screens.SplashScreen
+import network.bisq.mobile.presentation.i18n.Locales
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
@@ -32,33 +35,17 @@ fun App() {
     val presenter: AppPresenter = koinInject()
 
     val navController = rememberNavController()
+    val lyricist = rememberStrings()
+    lyricist.languageTag = Locales.FR
 
     BisqTheme(darkTheme = true) {
-        RootNavGraph(
-            rootNavController = navController,
-            innerPadding = PaddingValues(),
-            startDestination = Routes.Splash.name
-        )
+        ProvideStrings(lyricist) {
+            RootNavGraph(
+                rootNavController = navController,
+                innerPadding = PaddingValues(),
+                startDestination = Routes.Splash.name
+            )
+        }
     }
-
-    //MaterialTheme {
-        //SplashScreen()
-        //OnBoardingScreen()
-    //}
-
-// Collecting state from presenter
-//        val showContent by presenter.isContentVisible.collectAsState()
-//        val greeting by presenter.greetingText.collectAsState()
-//        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-//            Button(onClick = { presenter.toggleContentVisibility() }) {
-//                Text("Click me!")
-//            }
-//            AnimatedVisibility(showContent) {
-//                Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-//                    Image(painterResource(Res.drawable.compose_multiplatform), null)
-//                    Text("Compose: $greeting")
-//                }
-//            }
-
 
 }
