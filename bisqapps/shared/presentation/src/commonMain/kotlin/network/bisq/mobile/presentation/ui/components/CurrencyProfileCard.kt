@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,15 +16,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import bisqapps.shared.presentation.generated.resources.Res
-import coil3.compose.AsyncImage
 import network.bisq.mobile.presentation.ui.components.foundation.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun CurrencyProfileCard(currencyName: String, currencyShort: String, imagePath: String) {
+fun CurrencyProfileCard(currencyName: String, currencyShort: String, image: DrawableResource) {
     Row(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -32,11 +33,7 @@ fun CurrencyProfileCard(currencyName: String, currencyShort: String, imagePath: 
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            AsyncImage(
-                model = Res.getUri(imagePath),
-                contentDescription = null,
-                modifier = Modifier.size(36.dp),
-            )
+            Image(painterResource(image), null, modifier = Modifier.size(36.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Column {
                 BisqText.baseRegular(

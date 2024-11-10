@@ -46,23 +46,9 @@ fun TopBar(title: String = "",isHome:Boolean = false) {
         },
         actions = {
             Row(verticalAlignment = Alignment.CenterVertically) {
-
-//                AsyncImage(
-//                    model = Res.getUri("drawable/bell.svg"),
-//                    contentDescription = null,
-//                    modifier = Modifier.size(30.dp),
-//                )
                 BellIcon(modifier = Modifier.size(30.dp))
-
                 Spacer(modifier = Modifier.width(12.dp))
-
-//                AsyncImage(
-//                    model = Res.getUri("drawable/bot_image.svg"),
-//                    contentDescription = null,
-//                    modifier = Modifier.size(40.dp),
-//                )
                 UserIcon(modifier = Modifier.size(30.dp))
-
             }
 
         },

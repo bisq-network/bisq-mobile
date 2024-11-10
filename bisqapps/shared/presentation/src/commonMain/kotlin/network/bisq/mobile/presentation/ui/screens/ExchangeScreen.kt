@@ -20,11 +20,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.currency_euro
+import bisqapps.shared.presentation.generated.resources.currency_gpb
+import bisqapps.shared.presentation.generated.resources.currency_usd
 import coil3.compose.AsyncImage
 import network.bisq.mobile.presentation.ui.components.CurrencyProfileCard
 import network.bisq.mobile.components.MaterialTextField
 import network.bisq.mobile.presentation.ui.components.TopBar
+import network.bisq.mobile.presentation.ui.components.atoms.icons.SortIcon
+import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 @OptIn(ExperimentalResourceApi::class)
@@ -51,17 +57,13 @@ fun ExchangeScreen(
                 Box(modifier = Modifier.width(250.dp)) {
                     MaterialTextField(text = "Search", onValueChanged = {})
                 }
-                AsyncImage(
-                    model = Res.getUri("drawable/sort.svg"),
-                    contentDescription = null,
-                    modifier = Modifier.size(24.dp),
-                )
+                SortIcon(modifier = Modifier.size(24.dp))
             }
             Spacer(modifier = Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                CurrencyProfileCard("US Dollars", "USD", "drawable/usd.svg")
-                CurrencyProfileCard("Euro", "EUR", "drawable/euro.svg")
-                CurrencyProfileCard("British Pounds", "GPB", "drawable/gpb.svg")
+                CurrencyProfileCard("US Dollars", "USD", Res.drawable.currency_usd)
+                CurrencyProfileCard("Euro", "EUR", Res.drawable.currency_euro)
+                CurrencyProfileCard("British Pounds", "GPB", Res.drawable.currency_gpb)
             }
         }
     }
