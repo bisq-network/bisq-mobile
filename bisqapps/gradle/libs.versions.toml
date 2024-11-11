@@ -52,6 +52,7 @@ koin-compose = "4.0.0"
 koin-android = "4.0.0"
 lombok-lib = { strictly = '1.18.34' }
 typesafe-config-lib = { strictly = '1.4.3' }
+
 koin = "4.0.0"
 koin-compose = "4.0.0"
 koin-android = "4.0.0"
