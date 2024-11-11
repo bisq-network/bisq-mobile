@@ -11,7 +11,7 @@ import network.bisq.mobile.presentation.ui.AppPresenter
 /**
  * Main Presenter as an example of implementation for now.
  */
-class MainPresenter(private val greetingRepository: GreetingRepository) : BasePresenter(), AppPresenter {
+open class MainPresenter(private val greetingRepository: GreetingRepository) : BasePresenter(), AppPresenter {
     private val log = Logger.withTag("MainPresenter")
     // Observable state
     private val _isContentVisible = MutableStateFlow(false)

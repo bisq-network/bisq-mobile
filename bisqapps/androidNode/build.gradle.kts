@@ -128,6 +128,11 @@ dependencies {
 
     // bisq2 core dependencies
     implementation(libs.androidx.multidex)
+    implementation(libs.google.guava)
+    compileOnly(libs.lombok)
+    annotationProcessor(libs.lombok)
+    implementation(libs.typesafe.config)
+
     implementation(libs.bisq.core.common)
     implementation(libs.bisq.core.i18n)
     implementation(libs.bisq.core.persistence)
