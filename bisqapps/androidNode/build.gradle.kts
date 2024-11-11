@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import com.google.protobuf.gradle.*
+import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -96,13 +97,16 @@ android {
     }
 }
 
+// Compatible with macOS on Apple Silicon
+val archSuffix = if (Os.isFamily(Os.FAMILY_MAC)) ":osx-x86_64" else ""
+
 protobuf {
     protoc {
-        artifact = "com.google.protobuf:protoc:4.28.2"
+        artifact = "com.google.protobuf:protoc:4.28.2$archSuffix"
     }
     plugins {
         create("javalite") {
-            artifact = "com.google.protobuf:protoc-gen-javalite:3.0.0"
+            artifact = "com.google.protobuf:protoc-gen-javalite:3.0.0$archSuffix"
         }
     }
     generateProtoTasks {
