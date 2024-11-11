@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import com.google.protobuf.gradle.*
 import org.apache.tools.ant.taskdefs.condition.Os
+import com.google.protobuf.gradle.proto
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -47,14 +47,14 @@ android {
 
     sourceSets {
         getByName("main") {
-            proto {
-                srcDir("src/androidMain/proto")
+            java {
+                srcDir("src/androidMain/res")
+                srcDir("${layout.buildDirectory}/generated/source/proto/debug/java")
+                srcDir("${layout.buildDirectory}/generated/source/proto/release/java")
+                proto {
+                    srcDir("${layout.buildDirectory}/extracted-include-protos/debug")
+                }
             }
-            java.srcDirs(
-                "src/layout.buildDirectory/kotlin",
-                "${layout.buildDirectory}/generated/source/proto/debug/java",
-                "${layout.buildDirectory}/generated/source/proto/release/java"
-            )
         }
     }
 
@@ -62,6 +62,7 @@ android {
         applicationId = "network.bisq.mobile.node"
         minSdk = libs.versions.android.node.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
+        multiDexEnabled = true
         versionCode = 1
         versionName = project.version.toString()
         buildConfigField("String", "APP_VERSION", "\"${version}\"")
@@ -111,6 +112,7 @@ protobuf {
     }
     generateProtoTasks {
         all().forEach { task ->
+            task.inputs.dir("${layout.buildDirectory.get()}/extracted-include-protos/debug")
             task.builtins {
                 create("java") {
                     option("lite")
@@ -125,9 +127,8 @@ dependencies {
     debugImplementation(compose.uiTooling)
 
     // bisq2 core dependencies
-    implementation(libs.bisq.core.common) {
-        exclude(group = "com.google.protobuf", module = "protobuf-java")
-    }
+    implementation(libs.androidx.multidex)
+    implementation(libs.bisq.core.common)
     implementation(libs.bisq.core.i18n)
     implementation(libs.bisq.core.persistence)
     implementation(libs.bisq.core.security)
