@@ -13,7 +13,7 @@ protobuf {
 
     generateProtoTasks {
         all().forEach { task ->
-            task.inputs.dir("$buildDir/extracted-include-protos/debug")
+            task.inputs.dir("${layout.buildDirectory.get()}/extracted-include-protos/debug")
             task.builtins {
                 create("java")
             }
