@@ -8,11 +8,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import network.bisq.mobile.domain.data.repository.GreetingRepository
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.App
+import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
-    // TODO use a DI framework to provide implementations
-    private val greetingRepository = GreetingRepository(AndroidNodeGreetingFactory())
-    private val presenter = MainPresenter(greetingRepository)
+    private val presenter : MainPresenter by inject()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         presenter.attachView(this)

@@ -157,4 +157,7 @@ dependencies {
     implementation(libs.protobuf.lite)
     implementation(libs.protobuf.gradle.plugin)
     implementation(libs.protoc)
+
+    implementation(libs.koin.core)
+    implementation(libs.koin.android)
 }
