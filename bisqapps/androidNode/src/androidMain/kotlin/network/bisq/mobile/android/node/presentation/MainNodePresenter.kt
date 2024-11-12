@@ -19,9 +19,14 @@ import bisq.user.identity.UserIdentityService
 import bisq.application.State
 import bisq.bonded_roles.market_price.MarketPrice
 import bisq.chat.ChatChannelDomain
+import bisq.chat.ChatMessageType
+import bisq.chat.two_party.TwoPartyPrivateChatChannel
+import bisq.chat.two_party.TwoPartyPrivateChatMessage
 import bisq.common.currency.MarketRepository
 import bisq.common.locale.LanguageRepository
 import bisq.common.network.TransportType
+import bisq.common.observable.Pin
+import bisq.common.observable.collection.CollectionObserver
 import bisq.common.timer.Scheduler
 import bisq.common.util.MathUtils
 import bisq.network.p2p.node.Node
@@ -110,15 +115,15 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
 
                 // mock profile creation and wait until done.
                 createUserProfile("Android user " + Random(4234234).nextInt(100)).join()
-                logMessage.set("Created profile for user")
+                log("Created profile for user")
             }
             printUserProfiles()
 
             observeNetworkState()
             observeNumConnections()
             fetchMarketPrice(500L)
-//
-//            observePrivateMessages()
+
+            observePrivateMessages()
 //            // publishRandomChatMessage();
 //            observeChatMessages(5)
 //            maybeRemoveMyOldChatMessages()
@@ -133,7 +138,7 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
         applicationService.userService.userIdentityService.userIdentities.stream()
             .map { obj: UserIdentity -> obj.userProfile }
             .map { userProfile: UserProfile -> userProfile.userName + " [" + userProfile.nym + "]" }
-            .forEach { userName: String -> logMessage.set("My profile $userName") }
+            .forEach { userName: String -> log("My profile $userName") }
     }
 
     private fun createUserProfile(nickName: String): CompletableFuture<UserIdentity> {
@@ -162,7 +167,7 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
         } else {
             // If we have already a user profile we don't do anything. Leave it to the parent
             // controller to skip and not even create initialize controller.
-            logMessage.set("We have already a user profile.")
+            log("We have already a user profile.")
         }
     }
 
@@ -197,12 +202,82 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
 
     /////// USE CASES
 
+    /**
+     * This is key to bisq androidNode. Trading will happen through private messaging for us.
+     */
+    private fun observePrivateMessages() {
+        val pinByChannelId: MutableMap<String, Pin> = HashMap()
+        applicationService.chatService.twoPartyPrivateChatChannelService.channels
+            .addObserver(object : CollectionObserver<TwoPartyPrivateChatChannel> {
+                override fun add(channel: TwoPartyPrivateChatChannel) {
+                    log("Private channel: ${channel.displayString}")
+                    pinByChannelId.computeIfAbsent(
+                        channel.id
+                    ) { _: String? ->
+                        channel.chatMessages.addObserver(object :
+                            CollectionObserver<TwoPartyPrivateChatMessage> {
+                            override fun add(message: TwoPartyPrivateChatMessage) {
+                                if (message.chatMessageType == null) {
+                                    return
+                                }
+                                var text = ""
+                                @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
+                                text = when (message.chatMessageType) {
+                                    ChatMessageType.TEXT -> {
+                                        message.text
+                                    }
+
+                                    ChatMessageType.LEAVE -> {
+                                        "PEER LEFT " + message.text
+                                        // leave handling not working yet correctly
+                                        /* Scheduler.run(()->applicationService.chatService.getTwoPartyPrivateChatChannelService().leaveChannel(channel))
+                                                        .after(500);*/
+                                    }
+
+                                    ChatMessageType.TAKE_BISQ_EASY_OFFER -> {
+                                        "TAKE_BISQ_EASY_OFFER " + message.text
+                                    }
+
+                                    ChatMessageType.PROTOCOL_LOG_MESSAGE -> {
+                                        "PROTOCOL_LOG_MESSAGE " + message.text
+                                    }
+                                }
+                                val displayString = "[" + channel.displayString + "] " + text
+                                log("Private message $displayString")
+                            }
+
+                            override fun remove(o: Any) {
+                                // We do not support remove of PM
+                            }
+
+                            override fun clear() {
+                            }
+                        })
+                    }
+                }
+
+                override fun remove(o: Any) {
+                    if (o is TwoPartyPrivateChatChannel) {
+                        val id: String = o.id
+                        if (pinByChannelId.containsKey(id)) {
+                            pinByChannelId[id]!!.unbind()
+                            pinByChannelId.remove(id)
+                        }
+                        log("Closed private channel ${o.displayString}")
+                    }
+                }
+
+                override fun clear() {
+                }
+            })
+    }
+
     private fun observeNetworkState() {
         Optional.ofNullable(
             applicationService.networkService.defaultNodeStateByTransportType[TransportType.CLEAR]
         )
             .orElseGet { null }
-            .addObserver { state: Node.State -> logMessage.set("Network state: $state") }
+            .addObserver { state: Node.State -> log("Network state: $state") }
     }
 
     private fun observeNumConnections() {
@@ -219,7 +294,7 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
                 if (currentNumConnections != null) {
                     numConnections.set(currentNumConnections)
                 }
-                logMessage.set("Number of connections: $currentNumConnections")
+                log("Number of connections: $currentNumConnections")
             }
         }.periodically(100)
     }
@@ -237,7 +312,7 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
         if (!priceQuote.isPresent) {
             Scheduler.run { this.fetchMarketPrice(retryDelay) }.after(retryDelay)
         } else {
-            logMessage.set("Market price: ${priceQuote.get()}")
+            log("Market price: ${priceQuote.get()}")
         }
     }
 
