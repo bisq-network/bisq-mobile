@@ -8,3 +8,4 @@ import org.koin.dsl.module
 val domainModule = module {
     single<GreetingFactory> { DefaultGreetingFactory() }
     single { GreetingRepository(get()) }
+}
