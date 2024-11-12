@@ -20,6 +20,7 @@ import bisq.application.State
 import bisq.bonded_roles.market_price.MarketPrice
 import bisq.chat.ChatChannelDomain
 import bisq.chat.ChatMessageType
+import bisq.chat.common.CommonPublicChatMessage
 import bisq.chat.two_party.TwoPartyPrivateChatChannel
 import bisq.chat.two_party.TwoPartyPrivateChatMessage
 import bisq.common.currency.MarketRepository
@@ -29,6 +30,7 @@ import bisq.common.observable.Pin
 import bisq.common.observable.collection.CollectionObserver
 import bisq.common.timer.Scheduler
 import bisq.common.util.MathUtils
+import bisq.common.util.StringUtils
 import bisq.network.p2p.node.Node
 import bisq.network.p2p.services.data.BroadcastResult
 import bisq.security.DigestUtil
@@ -42,8 +44,10 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.service.AndroidApplicationService
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.jvm.optionals.getOrElse
+import kotlin.math.max
 import kotlin.random.Random
 
 class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(greetingRepository) {
@@ -124,11 +128,11 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
             fetchMarketPrice(500L)
 
             observePrivateMessages()
-//            // publishRandomChatMessage();
-//            observeChatMessages(5)
-//            maybeRemoveMyOldChatMessages()
-//
-//            sendRandomMessagesEvery(60 * 100)
+            publishRandomChatMessage();
+            observeChatMessages(5)
+            maybeRemoveMyOldChatMessages()
+            //
+            sendRandomMessagesEvery(60L * 100L)
         }
     }
 
@@ -346,5 +350,81 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
         ).whenComplete { result: BroadcastResult?, _: Throwable? ->
             log("publishChatMessage result $result")
         }
+    }
+
+    private fun observeChatMessages(numLastMessages: Int) {
+        val userService = applicationService.userService
+        val chatService = applicationService.chatService
+        val chatChannelDomain = ChatChannelDomain.DISCUSSION
+        val discussionChannelService =
+            chatService.commonPublicChatChannelServices[chatChannelDomain]
+        val channel = discussionChannelService!!.channels.stream().findFirst().orElseGet { null }
+        val toSkip = max(0.0, (channel.chatMessages.size - numLastMessages).toDouble())
+            .toInt()
+        val displayedMessages: MutableList<String> = ArrayList()
+        channel.chatMessages.stream()
+            .sorted(Comparator.comparingLong { obj: CommonPublicChatMessage -> obj.date })
+            .map { message: CommonPublicChatMessage ->
+                displayedMessages.add(message.id)
+                val authorUserProfileId = message.authorUserProfileId
+                val userName = userService.userProfileService.findUserProfile(authorUserProfileId)
+                    .map { obj: UserProfile -> obj.userName }
+                    .orElse("N/A")
+                maybeRemoveMyOldChatMessages()
+                "{" + userName + "} " + message.text
+            }
+            .skip(toSkip.toLong())
+            .forEach { e: String -> log("Chat message $e") }
+
+        channel.chatMessages.addObserver(object : CollectionObserver<CommonPublicChatMessage> {
+            override fun add(message: CommonPublicChatMessage) {
+                if (displayedMessages.contains(message.id)) {
+                    return
+                }
+                displayedMessages.add(message.id)
+                val authorUserProfileId = message.authorUserProfileId
+                val userName = userService.userProfileService.findUserProfile(authorUserProfileId)
+                    .map { obj: UserProfile -> obj.userName }
+                    .orElse("N/A")
+                val text = message.text
+                val displayString = "{$userName} $text"
+                log("Chat message: $displayString")
+                maybeRemoveMyOldChatMessages()
+            }
+
+            override fun remove(o: Any) {
+                if (o is CommonPublicChatMessage) log("Removed chat message: ${o.text}")
+            }
+
+            override fun clear() {
+            }
+        })
+    }
+
+    private fun maybeRemoveMyOldChatMessages() {
+        val userService = applicationService.userService
+        val userIdentityService = userService.userIdentityService
+        val userIdentity = userIdentityService.selectedUserIdentity
+        val chatService = applicationService.chatService
+        val chatChannelDomain = ChatChannelDomain.DISCUSSION
+        val discussionChannelService =
+            chatService.commonPublicChatChannelServices[chatChannelDomain]
+        val channel = discussionChannelService!!.channels.stream().findFirst().orElseGet { null }
+        val myProfileId = userIdentity.userProfile.id
+        log("Number of chat messages: ${channel.chatMessages.size}")
+        val expireDate = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(30)
+        channel.chatMessages.stream()
+            .filter { message: CommonPublicChatMessage -> message.date < expireDate }
+            .filter { message: CommonPublicChatMessage -> myProfileId == message.authorUserProfileId }
+            .forEach { message: CommonPublicChatMessage ->
+                log("Remove my old chat message: ${StringUtils.truncate(message.text, 10)}")
+                discussionChannelService.deleteChatMessage(
+                    message,
+                    userIdentity.networkIdWithKeyPair
+                ).whenComplete { r: BroadcastResult, t: Throwable? ->
+                    log("Remove message result: ${t == null}")
+                    log("Error: $r")
+                }
+            }
     }
 }
