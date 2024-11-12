@@ -12,7 +12,9 @@ import network.bisq.mobile.presentation.ui.App
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
-    private val presenter : MainPresenter by inject()
+    //    private val presenter : MainPresenter by inject()
+    private var presenter : MainPresenter = MainNodePresenter(GreetingRepository(AndroidNodeGreetingFactory()))
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         presenter.attachView(this)
