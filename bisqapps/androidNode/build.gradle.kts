@@ -48,7 +48,7 @@ android {
     sourceSets {
         getByName("main") {
             java {
-                srcDir("src/androidMain/res")
+                srcDir("src/main/resources")
                 srcDir("${layout.buildDirectory}/generated/source/proto/debug/java")
                 srcDir("${layout.buildDirectory}/generated/source/proto/release/java")
                 proto {
@@ -132,6 +132,9 @@ dependencies {
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
     implementation(libs.typesafe.config)
+
+    implementation(libs.bouncycastle)
+    implementation(libs.bouncycastle.pg)
 
     implementation(libs.bisq.core.common)
     implementation(libs.bisq.core.i18n)

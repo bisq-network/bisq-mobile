@@ -77,6 +77,9 @@ lombok = { module = 'org.projectlombok:lombok', version.ref = 'lombok-lib' }
 
 typesafe-config = { module = 'com.typesafe:config', version.ref = 'typesafe-config-lib' }
 
+bouncycastle = { module = 'org.bouncycastle:bcprov-jdk18on', version.ref = 'bouncycastle-lib' }
+bouncycastle-pg = { module = 'org.bouncycastle:bcpg-jdk18on', version.ref = 'bouncycastle-lib' }
+
 protobuf-lite = { group ="com.google.protobuf", name = "protobuf-javalite", version.ref = "protoblite"}
 protobuf-gradle-plugin = { module = 'com.google.protobuf:protobuf-gradle-plugin', version.ref = 'protobuf' }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protoblite" }
