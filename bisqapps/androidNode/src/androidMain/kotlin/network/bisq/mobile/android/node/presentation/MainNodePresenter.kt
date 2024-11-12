@@ -17,8 +17,14 @@ import bisq.android.main.user_profile.UserProfileModel
 import bisq.common.observable.Observable
 import bisq.user.identity.UserIdentityService
 import bisq.application.State
+import bisq.bonded_roles.market_price.MarketPrice
 import bisq.chat.ChatChannelDomain
+import bisq.common.currency.MarketRepository
 import bisq.common.locale.LanguageRepository
+import bisq.common.network.TransportType
+import bisq.common.timer.Scheduler
+import bisq.common.util.MathUtils
+import bisq.network.p2p.node.Node
 import bisq.network.p2p.services.data.BroadcastResult
 import bisq.security.DigestUtil
 import bisq.security.SecurityService
@@ -31,6 +37,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.service.AndroidApplicationService
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.atomic.AtomicLong
 import kotlin.jvm.optionals.getOrElse
 import kotlin.random.Random
 
@@ -107,9 +114,9 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
             }
             printUserProfiles()
 
-//            observeNetworkState() // prints to screen
-//            observeNumConnections()
-//            printMarketPrice()
+            observeNetworkState()
+            observeNumConnections()
+            fetchMarketPrice(500L)
 //
 //            observePrivateMessages()
 //            // publishRandomChatMessage();
@@ -120,6 +127,8 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
         }
     }
 
+
+    ///// SETUP
     private fun printUserProfiles() {
         applicationService.userService.userIdentityService.userIdentities.stream()
             .map { obj: UserIdentity -> obj.userProfile }
@@ -184,6 +193,52 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
         log(
             "Language: ${LanguageRepository.getDisplayLanguage(applicationService.settingsService.languageCode.get())}"
         )
+    }
+
+    /////// USE CASES
+
+    private fun observeNetworkState() {
+        Optional.ofNullable(
+            applicationService.networkService.defaultNodeStateByTransportType[TransportType.CLEAR]
+        )
+            .orElseGet { null }
+            .addObserver { state: Node.State -> logMessage.set("Network state: $state") }
+    }
+
+    private fun observeNumConnections() {
+        val serviceNode =
+            applicationService.networkService.serviceNodesByTransport.findServiceNode(TransportType.CLEAR)
+                .orElseGet { null }
+        val defaultNode = serviceNode?.defaultNode
+        val peerGroupManager = serviceNode?.peerGroupManager?.orElseGet { null }
+        val peerGroupService = peerGroupManager?.peerGroupService
+        val numConnections = AtomicLong()
+        Scheduler.run {
+            val currentNumConnections = peerGroupService?.getAllConnectedPeers(defaultNode)?.count()
+            if (numConnections.get() != currentNumConnections) {
+                if (currentNumConnections != null) {
+                    numConnections.set(currentNumConnections)
+                }
+                logMessage.set("Number of connections: $currentNumConnections")
+            }
+        }.periodically(100)
+    }
+
+    /**
+     * Fetch the market price, if not avail it will retry every delay ms.
+     * TODO: change to fetch continously updating an observable that can be printed with each change
+     */
+    private fun fetchMarketPrice(retryDelay: Long) {
+        val priceQuote = applicationService.bondedRolesService.marketPriceService
+            .findMarketPrice(MarketRepository.getUSDBitcoinMarket())
+            .map { e: MarketPrice ->
+                MathUtils.roundDouble(e.priceQuote.value / 10000.0, 2).toString() + " BTC/USD"
+            }
+        if (!priceQuote.isPresent) {
+            Scheduler.run { this.fetchMarketPrice(retryDelay) }.after(retryDelay)
+        } else {
+            logMessage.set("Market price: ${priceQuote.get()}")
+        }
     }
 
     private fun sendRandomMessagesEvery(delayMs: Long) {
