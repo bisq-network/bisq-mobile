@@ -42,8 +42,7 @@ buildConfig {
 //    buildConfigField("MAP", mapOf("a" to 1, "b" to 2))
 //    buildConfigField("FILE", File("aFile"))
 //    buildConfigField("URI", uri("https://example.io"))
-//    buildConfigField("com.github.gmazzo.buildconfig.demos.kts.SomeData", "DATA",
-// "SomeData(\"a\", 1)")
+//    buildConfigField("com.github.gmazzo.buildconfig.demos.kts.SomeData", "DATA", "SomeData(\"a\", 1)")
 
 }
 
