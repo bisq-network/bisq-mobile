@@ -18,16 +18,12 @@ dependencies {
 
 version = project.findProperty("shared.version") as String
 
-// The following allow us to configure each app type independently and link for example with
-// gradle.properties
+// The following allow us to configure each app type independently and link for example with gradle.properties
 // TODO potentially to be refactored into a shared/common module
 buildConfig {
     forClass("network.bisq.mobile.client.shared", className = "BuildConfig") {
         buildConfigField("APP_NAME", project.findProperty("client.name").toString())
-        buildConfigField(
-                "ANDROID_APP_VERSION",
-                project.findProperty("client.android.version").toString()
-        )
+        buildConfigField("ANDROID_APP_VERSION", project.findProperty("client.android.version").toString())
         buildConfigField("IOS_APP_VERSION", project.findProperty("client.ios.version").toString())
         buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
         buildConfigField("BUILD_TS", System.currentTimeMillis())
@@ -38,22 +34,26 @@ buildConfig {
         buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
         buildConfigField("BUILD_TS", System.currentTimeMillis())
     }
-    //    buildConfigField("APP_SECRET", "Z3JhZGxlLWphdmEtYnVpbGRjb25maWctcGx1Z2lu")
-    //    buildConfigField<String>("OPTIONAL", null)
-    //    buildConfigField("FEATURE_ENABLED", true)
-    //    buildConfigField("MAGIC_NUMBERS", intArrayOf(1, 2, 3, 4))
-    //    buildConfigField("STRING_LIST", arrayOf("a", "b", "c"))
-    //    buildConfigField("MAP", mapOf("a" to 1, "b" to 2))
-    //    buildConfigField("FILE", File("aFile"))
-    //    buildConfigField("URI", uri("https://example.io"))
-    //    buildConfigField("com.github.gmazzo.buildconfig.demos.kts.SomeData", "DATA",
-    // "SomeData(\"a\", 1)")
+//    buildConfigField("APP_SECRET", "Z3JhZGxlLWphdmEtYnVpbGRjb25maWctcGx1Z2lu")
+//    buildConfigField<String>("OPTIONAL", null)
+//    buildConfigField("FEATURE_ENABLED", true)
+//    buildConfigField("MAGIC_NUMBERS", intArrayOf(1, 2, 3, 4))
+//    buildConfigField("STRING_LIST", arrayOf("a", "b", "c"))
+//    buildConfigField("MAP", mapOf("a" to 1, "b" to 2))
+//    buildConfigField("FILE", File("aFile"))
+//    buildConfigField("URI", uri("https://example.io"))
+//    buildConfigField("com.github.gmazzo.buildconfig.demos.kts.SomeData", "DATA",
+// "SomeData(\"a\", 1)")
 
 }
 
 kotlin {
     androidTarget {
-        compilations.all { kotlinOptions { jvmTarget = "1.8" } }
+        compilations.all {
+            kotlinOptions {
+                jvmTarget = "1.8"
+            }
+        }
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         instrumentedTestVariant.sourceSetTree.set(KotlinSourceSetTree.test)
     }
@@ -75,7 +75,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
-            // put your multiplatform dependencies here
+            //put your multiplatform dependencies here
             implementation(project(":shared:domain"))
 
             implementation(compose.runtime)
@@ -95,7 +95,7 @@ kotlin {
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
-                //                implementation(kotlin("test"))
+//                implementation(kotlin("test"))
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
                 implementation(compose.uiTest)
             }
