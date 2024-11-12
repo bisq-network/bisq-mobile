@@ -69,11 +69,6 @@ android {
         buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")
     }
 
-    // We don't want to use the protobuf coming in bisq2 core dependencies as we use protobuf-lite for mobile
-    configurations.all {
-        exclude(group = "com.google.protobuf", module = "protobuf-java")
-    }
-
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -105,18 +100,11 @@ protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:4.28.2$archSuffix"
     }
-    plugins {
-        create("javalite") {
-            artifact = "com.google.protobuf:protoc-gen-javalite:3.0.0$archSuffix"
-        }
-    }
     generateProtoTasks {
         all().forEach { task ->
             task.inputs.dir("${layout.buildDirectory.get()}/extracted-include-protos/debug")
             task.builtins {
-                create("java") {
-                    option("lite")
-                }
+                create("java")
             }
         }
     }
@@ -163,7 +151,6 @@ dependencies {
     implementation(libs.bisq.core.presentation)
 
     // protobuf
-    implementation(libs.protobuf.lite)
     implementation(libs.protobuf.gradle.plugin)
     implementation(libs.protoc)
 
