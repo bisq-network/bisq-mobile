@@ -17,4 +17,3 @@ class MainApplication: Application() {
             modules(listOf(domainModule, presentationModule, androidModule)) 
         }
     }
-}
