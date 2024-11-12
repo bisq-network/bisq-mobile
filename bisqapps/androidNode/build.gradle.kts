@@ -32,6 +32,11 @@ kotlin {
                 implementation(compose.preview)
                 implementation(libs.androidx.activity.compose)
             }
+            androidUnitTest.dependencies {
+                implementation(libs.mock.io)
+                implementation(libs.kotlin.test.junit.v180)
+                implementation(libs.junit)
+            }
             kotlin.srcDirs(
                 "src/androidMain/kotlin",
                 "${layout.buildDirectory}/generated/source/proto/debug/java",
@@ -156,4 +161,13 @@ dependencies {
 
     implementation(libs.koin.core)
     implementation(libs.koin.android)
+}
+
+// ensure tests run on J17
+tasks.withType<Test> {
+    javaLauncher.set(
+        javaToolchains.launcherFor {
+            languageVersion.set(JavaLanguageVersion.of(17))
+        }
+    )
 }

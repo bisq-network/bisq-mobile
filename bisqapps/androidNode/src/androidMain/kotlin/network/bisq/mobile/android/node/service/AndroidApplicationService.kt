@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit
  */
 @Slf4j
 @Getter
-class AndroidApplicationService(userDataDir: Path?) :
+class AndroidApplicationService(val androidMemoryService: AndroidMemoryReportService, userDataDir: Path?) :
     ApplicationService("android", arrayOf<String>(), userDataDir) {
     companion object {
         const val STARTUP_TIMEOUT_SEC: Long = 300
@@ -79,7 +79,7 @@ class AndroidApplicationService(userDataDir: Path?) :
         securityService.keyBundleService,
         securityService.hashCashProofOfWorkService,
         securityService.equihashProofOfWorkService,
-        AndroidMemoryReportService()
+        androidMemoryService
     )
     private val identityService = IdentityService(
         persistenceService,

@@ -9,8 +9,6 @@ import bisq.common.facades.android.AndroidGuavaFacade
 import bisq.common.facades.android.AndroidJdkFacade
 import bisq.common.network.AndroidEmulatorLocalhostFacade
 import org.bouncycastle.jce.provider.BouncyCastleProvider
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import java.security.Security
 import android.os.Process
 import bisq.android.main.user_profile.UserProfileModel
@@ -39,9 +37,8 @@ import bisq.user.identity.NymIdGenerator
 import bisq.user.identity.UserIdentity
 import bisq.user.profile.UserProfile
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.service.AndroidApplicationService
+import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -88,9 +85,11 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
         }
 
         // TODO this should be injected to the presenter
+        val context = (view as Activity).applicationContext
         val filesDirsPath = (view as Activity).filesDir.toPath()
+        val androidMemoryService = AndroidMemoryReportService(context)
         log("Path for files dir $filesDirsPath")
-        applicationService = AndroidApplicationService(filesDirsPath)
+        applicationService = AndroidApplicationService(androidMemoryService, filesDirsPath)
         userIdentityService = applicationService.userService.userIdentityService
         securityService = applicationService.securityService
 

@@ -17,7 +17,9 @@ androidx-multidex = "2.0.1"
 bisq-core = "2.1.2"
 compose-plugin = "1.7.0"
 junit = "4.13.2"
+mockio = "1.12.0"
 kotlin = "2.0.20"
+kotlinTestJunit = "2.0.20"
 kotlinx = "1.9.0"
 kermit = "2.0.4"
 buildconfig = "5.5.0"
@@ -53,14 +55,12 @@ koin-android = "4.0.0"
 lombok-lib = { strictly = '1.18.34' }
 typesafe-config-lib = { strictly = '1.4.3' }
 
-koin = "4.0.0"
-koin-compose = "4.0.0"
-koin-android = "4.0.0"
-
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+kotlin-test-junit-v180 = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlinTestJunit" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx" }
+mock-io = { module = "io.mockk:mockk", version.ref = "mockio" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core-ktx" }
 androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-junit" }
