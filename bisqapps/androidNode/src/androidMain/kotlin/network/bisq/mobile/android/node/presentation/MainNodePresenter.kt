@@ -96,6 +96,11 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
         launchServices()
     }
 
+    override fun onDestroy() {
+        applicationService.shutdown()
+        super.onDestroy()
+    }
+
     private fun log(message: String) {
         loggingScope.launch {
             logMessage.set(message)
