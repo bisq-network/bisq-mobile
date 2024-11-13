@@ -5,15 +5,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import network.bisq.mobile.android.node.presentation.MainNodePresenter
 import network.bisq.mobile.domain.data.repository.GreetingRepository
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.App
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
-    //    private val presenter : MainPresenter by inject()
-    private var presenter : MainPresenter = MainNodePresenter(GreetingRepository(AndroidNodeGreetingFactory()))
+    private val presenter : MainPresenter by inject()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

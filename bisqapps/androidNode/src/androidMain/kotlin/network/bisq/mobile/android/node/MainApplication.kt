@@ -13,7 +13,8 @@ class MainApplication : Application() {
 
         startKoin {
             androidContext(this@MainApplication)
-            modules(listOf(androidNodeModule, domainModule, presentationModule)) 
+            // order is important, last one is picked for each interface/class key
+            modules(listOf(domainModule, presentationModule, androidNodeModule))
         }
     }
 }
