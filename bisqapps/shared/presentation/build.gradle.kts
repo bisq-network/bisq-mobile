@@ -9,7 +9,7 @@ plugins {
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.buildconfig)
-    id("com.google.devtools.ksp") version "2.0.20-1.0.25"
+    alias(libs.plugins.ksp)
 }
 
 dependencies {
@@ -91,11 +91,8 @@ kotlin {
 
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
-            implementation("io.coil-kt.coil3:coil-compose:3.0.0-rc02")
-            implementation("io.coil-kt.coil3:coil-svg:3.0.0-rc02")
-
-            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.7.0-alpha07")
-            implementation("cafe.adriel.lyricist:lyricist:1.7.0")
+            implementation(libs.navigation.compose)
+            implementation(libs.lyricist)
 
         }
         val commonTest by getting {
