@@ -16,6 +16,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.compose_multiplatform
 import kotlinx.coroutines.flow.StateFlow
+import org.koin.compose.koinInject
 
 interface AppPresenter {
     // Observables for state
@@ -31,7 +32,8 @@ interface AppPresenter {
  */
 @Composable
 @Preview
-fun App(presenter: AppPresenter) {
+fun App() {
+    val presenter: AppPresenter = koinInject()
     MaterialTheme {
         // Collecting state from presenter
         val showContent by presenter.isContentVisible.collectAsState()

@@ -37,8 +37,11 @@ import bisq.user.identity.UserIdentity
 import bisq.user.profile.UserProfile
 import kotlinx.coroutines.*
 import network.bisq.mobile.android.node.AndroidNodeGreeting
+import network.bisq.mobile.android.node.domain.data.repository.NodeGreetingRepository
 import network.bisq.mobile.android.node.service.AndroidApplicationService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
+import network.bisq.mobile.domain.data.model.Greeting
+import network.bisq.mobile.domain.data.repository.GreetingRepository
 import network.bisq.mobile.domain.data.repository.SingleObjectRepository
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
@@ -48,7 +51,8 @@ import kotlin.jvm.optionals.getOrElse
 import kotlin.math.max
 import kotlin.random.Random
 
-class MainNodePresenter(greetingRepository: SingleObjectRepository<AndroidNodeGreeting>): MainPresenter(greetingRepository) {
+@Suppress("UNCHECKED_CAST")
+class MainNodePresenter(greetingRepository: NodeGreetingRepository): MainPresenter(greetingRepository as GreetingRepository<Greeting>) {
     companion object {
         private const val AVATAR_VERSION = 0
     }

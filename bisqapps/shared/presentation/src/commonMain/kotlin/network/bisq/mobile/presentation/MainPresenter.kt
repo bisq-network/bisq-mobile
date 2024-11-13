@@ -9,13 +9,13 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.model.Greeting
-import network.bisq.mobile.domain.data.repository.SingleObjectRepository
+import network.bisq.mobile.domain.data.repository.GreetingRepository
 import network.bisq.mobile.presentation.ui.AppPresenter
 
 /**
  * Main Presenter as an example of implementation for now.
  */
-open class MainPresenter(private val greetingRepository: SingleObjectRepository<Greeting>) : BasePresenter(), AppPresenter {
+open class MainPresenter(private val greetingRepository: GreetingRepository<Greeting>) : BasePresenter(), AppPresenter {
     private val log = Logger.withTag("MainPresenter")
     // Observable state
     private val _isContentVisible = MutableStateFlow(false)

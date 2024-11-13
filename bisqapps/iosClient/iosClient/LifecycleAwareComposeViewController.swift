@@ -40,7 +40,7 @@ class LifecycleAwareComposeViewController: UIViewController {
         super.loadView()
 
         // Instantiate the Kotlin-based MainViewController
-        let mainViewController = MainViewControllerKt.MainViewController(presenter: presenter)
+        let mainViewController = MainViewControllerKt.MainViewController()
         // Add MainViewController as a child
         addChild(mainViewController)
 

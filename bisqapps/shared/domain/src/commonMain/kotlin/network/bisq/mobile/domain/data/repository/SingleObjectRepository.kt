@@ -4,16 +4,19 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.model.BaseModel
+import network.bisq.mobile.domain.data.model.Greeting
 import network.bisq.mobile.domain.data.persistance.PersistenceSource
+import kotlin.jvm.JvmStatic
 
 /**
  * Repository implementation for a single object. Allows for persistance if the persistance source if provided, otherwise is mem-only.
  *
  * TODO: create a map-based multi object repository when needed (might need to leverage some kind of id generation on the base model)
  */
-class SingleObjectRepository<out T : BaseModel>(
+abstract class SingleObjectRepository<out T : BaseModel>(
     private val persistenceSource: PersistenceSource<T>? = null
 ) : Repository<T> {
+
     private val _data = MutableStateFlow<T?>(null)
     override val data: StateFlow<T?> = _data
 

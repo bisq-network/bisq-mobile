@@ -17,7 +17,7 @@ class MainActivity : ComponentActivity() {
         presenter.attachView(this)
 
         setContent {
-            App(presenter)
+            App()
         }
     }
 
@@ -51,5 +51,5 @@ class MainActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AppAndroidPreview() {
-    App(MainPresenter(SingleObjectRepository()))
+    App()
 }
