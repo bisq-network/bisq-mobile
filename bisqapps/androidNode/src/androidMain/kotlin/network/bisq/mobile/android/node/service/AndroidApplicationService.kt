@@ -55,7 +55,7 @@ import java.util.concurrent.TimeUnit
  */
 @Slf4j
 @Getter
-class AndroidApplicationService(val androidMemoryService: AndroidMemoryReportService, userDataDir: Path?) :
+class AndroidApplicationService(androidMemoryService: AndroidMemoryReportService, userDataDir: Path?) :
     ApplicationService("android", arrayOf<String>(), userDataDir) {
     companion object {
         const val STARTUP_TIMEOUT_SEC: Long = 300

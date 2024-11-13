@@ -104,7 +104,7 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
 
     private fun launchServices() {
         coroutineScope.launch {
-//            observeAppState()
+            observeAppState()
             applicationService.readAllPersisted().join()
             applicationService.initialize().join()
 
@@ -204,6 +204,12 @@ class MainNodePresenter(greetingRepository: GreetingRepository): MainPresenter(g
     }
 
     /////// USE CASES
+
+    private fun observeAppState() {
+        applicationService.state.addObserver { state: State ->
+            log("Application state: ${state.name}")
+        }
+    }
 
     /**
      * This is key to bisq androidNode. Trading will happen through private messaging for us.
