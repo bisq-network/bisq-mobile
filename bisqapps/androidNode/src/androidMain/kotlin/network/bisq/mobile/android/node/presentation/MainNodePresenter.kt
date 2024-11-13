@@ -11,7 +11,7 @@ import bisq.common.network.AndroidEmulatorLocalhostFacade
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import java.security.Security
 import android.os.Process
-import bisq.android.main.user_profile.UserProfileModel
+import network.bisq.mobile.android.node.domain.model.UserProfileModel
 import bisq.common.observable.Observable
 import bisq.user.identity.UserIdentityService
 import bisq.application.State

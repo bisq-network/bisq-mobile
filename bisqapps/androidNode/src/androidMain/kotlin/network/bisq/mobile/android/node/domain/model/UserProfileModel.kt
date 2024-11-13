@@ -1,4 +1,4 @@
-package bisq.android.main.user_profile
+package network.bisq.mobile.android.node.domain.model
 
 import bisq.common.observable.Observable
 import bisq.security.pow.ProofOfWork
