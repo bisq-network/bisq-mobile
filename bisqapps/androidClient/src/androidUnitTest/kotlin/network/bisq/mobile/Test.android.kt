@@ -1,6 +1,6 @@
 package network.bisq.mobile
 
-import network.bisq.mobile.domain.Greeting
+import network.bisq.mobile.domain.data.model.Greeting
 import org.junit.Assert.assertTrue
 import org.junit.Test
 

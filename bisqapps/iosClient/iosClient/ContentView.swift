@@ -5,7 +5,11 @@ import presentation
 import domain
 
 struct ComposeView: UIViewControllerRepresentable {
-    private let presenter = MainPresenter(greetingRepository: DomainGreetingRepository()) // Initialize the presenter for iOS
+
+    private let presenter: MainPresenter = {
+        let koin = KoinKt.koin
+        return koin.get() as MainPresenter
+    }()
 
     func makeUIViewController(context: Context) -> UIViewController {
         return LifecycleAwareComposeViewController(presenter: presenter)
