@@ -23,6 +23,9 @@ class SplashPresenter(
     }
 
     private fun navigateToNextScreen() {
+        // TODO: Conditional nav
+        // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
+        // If not, goto TabContainerScreen
         navController.navigate(Routes.Onboarding.name) {
             popUpTo(Routes.Splash.name) { inclusive = true }
         }

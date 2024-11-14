@@ -10,7 +10,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqProgressBar
@@ -20,12 +19,14 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.ui.theme.*
 
 // TODO: Remove innerPadding once StaticLayout, ScrollLayout are fully done.
+// (or) innerPadding as a param is how it's done / best practice in Compose
 @Composable
 fun SplashScreen(
     rootNavController: NavController,
     innerPadding: PaddingValues
 ) {
 
+    val strings = LocalStrings.current
     var currentProgress by remember { mutableFloatStateOf(0f) }
 
     val presenter = remember {
@@ -33,8 +34,6 @@ fun SplashScreen(
             currentProgress = progress
         }
     }
-
-    val strings = LocalStrings.current
 
     LaunchedEffect(Unit) {
         presenter.startLoading()
@@ -47,8 +46,11 @@ fun SplashScreen(
         Column {
             BisqProgressBar(progress = currentProgress)
 
+            // TODO: Get this from presenter
+            val networkType = strings.splash_bootstrapState_network_TOR
+
             BisqText.baseRegular(
-                text = strings.splash_loading_text, // "Connecting to Tor Network...",
+                text = strings.splash_bootstrapState_BOOTSTRAP_TO_NETWORK(networkType),
                 color = BisqTheme.colors.secondaryHover,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),

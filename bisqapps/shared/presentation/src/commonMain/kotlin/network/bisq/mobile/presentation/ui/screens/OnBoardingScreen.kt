@@ -33,6 +33,7 @@ import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bisq_Easy
 import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
+import cafe.adriel.lyricist.LocalStrings
 
 import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
@@ -49,6 +50,7 @@ import org.jetbrains.compose.resources.painterResource
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun OnBoardingScreen(rootNavController: NavController) {
+    val strings = LocalStrings.current
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { onBoardingPages.size })
     val presenter = remember { OnBoardingPresenter(rootNavController, pagerState, coroutineScope) }
@@ -57,7 +59,7 @@ fun OnBoardingScreen(rootNavController: NavController) {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
         BisqText.h1Light(
-            text = "Welcome to Bisq",
+            text = strings.onboarding_bisq2_headline,
             color = BisqTheme.colors.grey1,
             )
         Spacer(modifier = Modifier.height(56.dp))
@@ -65,30 +67,10 @@ fun OnBoardingScreen(rootNavController: NavController) {
         Spacer(modifier = Modifier.height(56.dp))
 
         BisqButton(
-            text = if (pagerState.currentPage == onBoardingPages.lastIndex) "Create profile" else "Next",
+            text = if (pagerState.currentPage == onBoardingPages.lastIndex) strings.onboarding_button_create_profile else strings.buttons_next,
             onClick = { presenter.onNextButtonClick() }
         )
 
-        /*
-        Column {
-            val coroutineScope = rememberCoroutineScope()
-            BisqButton(
-                text = if (pagerState.currentPage == 2) "Create profile" else "Next",
-                onClick = {
-                    if (pagerState.currentPage == 2) {
-                        rootNavController.navigate(Routes.CreateProfile.name) {
-                            popUpTo(Routes.Onboarding.name) { inclusive = true }
-                        }
-                    } else {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                        }
-                    }
-                }
-            )
-
-        }
-        */
     }
 
 }

@@ -8,10 +8,8 @@ import cafe.adriel.lyricist.rememberStrings
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.i18n.Locales
 import org.koin.compose.koinInject
-import network.bisq.mobile.presentation.ui.screens.OnBoardingScreen
-import network.bisq.mobile.presentation.ui.screens.SplashScreen
-import network.bisq.mobile.presentation.i18n.Locales
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
