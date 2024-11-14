@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.screens
+package network.bisq.mobile.presentation.ui.uicases.startup
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,10 +17,7 @@ import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,22 +27,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import bisqapps.shared.presentation.generated.resources.*
-import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.img_bisq_Easy
-import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
 import cafe.adriel.lyricist.LocalStrings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.StateFlow
 
 import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
-import network.bisq.mobile.presentation.ui.model.OnBoardingPage
-import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
+
+interface IOnboardingPresenter {
+
+    val pagerState: StateFlow<PagerState?>
+    // Actions
+    fun onNextButtonClick(coroutineScope: CoroutineScope)
+}
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
@@ -53,7 +56,12 @@ fun OnBoardingScreen(rootNavController: NavController) {
     val strings = LocalStrings.current
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { onBoardingPages.size })
-    val presenter = remember { OnBoardingPresenter(rootNavController, pagerState, coroutineScope) }
+    val presenter: IOnboardingPresenter = koinInject { parametersOf(rootNavController) }
+
+    // TODO: Any other better way to do this?
+    LaunchedEffect(pagerState) {
+        (presenter as? OnBoardingPresenter)?.setPagerState(pagerState)
+    }
 
     BisqScrollLayout() {
         BisqLogo()
@@ -68,7 +76,7 @@ fun OnBoardingScreen(rootNavController: NavController) {
 
         BisqButton(
             text = if (pagerState.currentPage == onBoardingPages.lastIndex) strings.onboarding_button_create_profile else strings.buttons_next,
-            onClick = { presenter.onNextButtonClick() }
+            onClick = { presenter.onNextButtonClick(coroutineScope) }
         )
 
     }
@@ -76,32 +84,36 @@ fun OnBoardingScreen(rootNavController: NavController) {
 }
 
 @Composable
-fun PagerView(presenter: OnBoardingPresenter) {
+fun PagerView(presenter: IOnboardingPresenter) {
 
-    CompositionLocalProvider(values = arrayOf()) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(36.dp, Alignment.CenterVertically),
-        ) {
-            HorizontalPager(
-                pageSpacing = 56.dp,
-                contentPadding = PaddingValues(horizontal = 36.dp),
-                pageSize = PageSize.Fill,
-                verticalAlignment = Alignment.CenterVertically,
-                state = presenter.pagerState
-            ) { index ->
-                onBoardingPages.getOrNull(
-                    index % (onBoardingPages.size)
-                )?.let { item ->
-                    BannerItem(
-                        image = item.image,
-                        title = item.title,
-                        desc = item.desc,
-                        index = index,
-                    )
+    val pagerState = presenter.pagerState.collectAsState().value
+
+    pagerState?.let {
+        CompositionLocalProvider(values = arrayOf()) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(36.dp, Alignment.CenterVertically),
+                ) {
+                HorizontalPager(
+                    pageSpacing = 56.dp,
+                    contentPadding = PaddingValues(horizontal = 36.dp),
+                    pageSize = PageSize.Fill,
+                    verticalAlignment = Alignment.CenterVertically,
+                    state = it
+                ) { index ->
+                    onBoardingPages.getOrNull(
+                        index % (onBoardingPages.size)
+                    )?.let { item ->
+                        BannerItem(
+                            image = item.image,
+                            title = item.title,
+                            desc = item.desc,
+                            index = index,
+                            )
+                    }
                 }
+                    LineIndicator(pagerState = it)
             }
-            LineIndicator(pagerState = presenter.pagerState)
         }
     }
 }

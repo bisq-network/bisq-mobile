@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.screens
+package network.bisq.mobile.presentation.ui.uicases.startup
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
@@ -33,6 +33,7 @@ import org.jetbrains.compose.resources.painterResource
 
 private lateinit var textState: MutableState<String>
 
+//TODO: Rename this to BisqConnectScreen?
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun URLScreen(

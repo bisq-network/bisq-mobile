@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.screens
+package network.bisq.mobile.presentation.ui.uicases.startup
 
 
 import androidx.compose.foundation.pager.PagerState
@@ -9,7 +9,10 @@ import bisqapps.shared.presentation.generated.resources.img_fiat_btc
 import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.ui.model.OnBoardingPage
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
@@ -31,21 +34,26 @@ val onBoardingPages = listOf(
     )
 )
 
-class OnBoardingPresenter(
-    private val navController: NavController,
-    val pagerState: PagerState,
-    private val coroutineScope: CoroutineScope,
-) {
-    // private val coroutineScope = CoroutineScope(Dispatchers.Main)
+open class OnBoardingPresenter(private val navController: NavController) : BasePresenter(), IOnboardingPresenter {
 
-    fun onNextButtonClick() {
+    private val _pagerState = MutableStateFlow<PagerState?>(null)
+    override val pagerState: StateFlow<PagerState?> = _pagerState
+
+    fun setPagerState(pagerState: PagerState) {
+        _pagerState.value = pagerState
+    }
+
+    override fun onNextButtonClick(coroutineScope: CoroutineScope) {
         coroutineScope.launch {
-            if (pagerState.currentPage == onBoardingPages.lastIndex) {
-                navController.navigate(Routes.CreateProfile.name) {
-                    popUpTo(Routes.Onboarding.name) { inclusive = true }
+            val state = pagerState.value
+            if (state != null) {
+                if (state.currentPage == onBoardingPages.lastIndex) {
+                    navController.navigate(Routes.CreateProfile.name) {
+                        popUpTo(Routes.Onboarding.name) { inclusive = true }
+                    }
+                } else {
+                    state.animateScrollToPage(state.currentPage + 1)
                 }
-            } else {
-                pagerState.animateScrollToPage(pagerState.currentPage + 1)
             }
         }
     }

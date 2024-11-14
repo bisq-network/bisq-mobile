@@ -1,19 +1,18 @@
-package network.bisq.mobile.presentation.ui.screens
+package network.bisq.mobile.presentation.ui.uicases.startup
 
 import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.repository.NetworkRepository
+import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-class SplashPresenter(
-    private val navController: NavController,
-    private val onProgressUpdate: (Float) -> Unit
-) {
+// open class MainPresenter(private val greetingRepository: GreetingRepository<Greeting>) : BasePresenter(), AppPresenter {
+open class SplashPresenter(private val navController: NavController) : BasePresenter(), ISplashPresenter {
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
-    fun startLoading() {
+    override fun startLoading(onProgressUpdate: (Float) -> Unit) {
         coroutineScope.launch {
             NetworkRepository.initializeNetwork { progress ->
                 onProgressUpdate(progress)

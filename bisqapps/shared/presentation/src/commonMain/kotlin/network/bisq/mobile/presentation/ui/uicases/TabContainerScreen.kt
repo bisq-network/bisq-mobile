@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.screens
+package network.bisq.mobile.presentation.ui.uicases
 
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable

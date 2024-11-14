@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.screens
+package network.bisq.mobile.presentation.ui.uicases.startup
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
@@ -17,6 +17,13 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.ui.theme.*
+import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
+
+interface ISplashPresenter {
+    // Actions
+    fun startLoading(onProgressUpdate: (Float) -> Unit)
+}
 
 // TODO: Remove innerPadding once StaticLayout, ScrollLayout are fully done.
 // (or) innerPadding as a param is how it's done / best practice in Compose
@@ -28,15 +35,12 @@ fun SplashScreen(
 
     val strings = LocalStrings.current
     var currentProgress by remember { mutableFloatStateOf(0f) }
-
-    val presenter = remember {
-        SplashPresenter(rootNavController) { progress ->
-            currentProgress = progress
-        }
-    }
+    val presenter: ISplashPresenter = koinInject { parametersOf(rootNavController) }
 
     LaunchedEffect(Unit) {
-        presenter.startLoading()
+        presenter.startLoading  { progress ->
+            currentProgress = progress
+        }
     }
 
     // Render the layout

@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.screens
+package network.bisq.mobile.presentation.ui.uicases.exchange
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

@@ -1,5 +1,5 @@
 
-package network.bisq.mobile.presentation.ui.screens
+package network.bisq.mobile.presentation.ui.uicases.trades
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -15,7 +15,7 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun SettingsScreen(rootNavController: NavController,
+fun MyTradesScreen(rootNavController: NavController,
                innerPadding: PaddingValues
 ) {
     Box(
@@ -25,7 +25,7 @@ fun SettingsScreen(rootNavController: NavController,
         contentAlignment = Alignment.Center // Centers the content within the Box
     ) {
         BisqText.h2Regular(
-            text = "Settings",
+            text = "My Trades",
             color = BisqTheme.colors.light1,
         )
     }

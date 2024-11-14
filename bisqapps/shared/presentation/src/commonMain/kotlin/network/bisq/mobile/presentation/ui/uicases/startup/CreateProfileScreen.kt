@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.screens
+package network.bisq.mobile.presentation.ui.uicases.startup
 
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*

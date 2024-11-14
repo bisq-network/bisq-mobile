@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.screens
+package network.bisq.mobile.presentation.ui.uicases
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -39,6 +39,7 @@ import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
 
 interface IGettingStarted {
     val btcPrice: StateFlow<String>
@@ -48,10 +49,10 @@ interface IGettingStarted {
 
 @Composable
 fun GettingStartedScreen(
-    presenter: IGettingStarted,
     rootNavController: NavController,
     innerPadding: PaddingValues,
 ) {
+    val presenter: IGettingStarted = koinInject()
     val btcPrice:String = presenter.btcPrice.collectAsState().value
     val offersOnline:Number = presenter.offersOnline.collectAsState().value
     val publishedProfiles:Number = presenter.publishedProfiles.collectAsState().value

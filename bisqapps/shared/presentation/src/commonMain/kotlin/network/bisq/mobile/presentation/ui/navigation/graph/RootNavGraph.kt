@@ -10,8 +10,12 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import network.bisq.mobile.presentation.ui.navigation.*
-import network.bisq.mobile.presentation.ui.screens.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.uicases.*
+import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
+import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
+import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
+import network.bisq.mobile.presentation.ui.uicases.startup.URLScreen
 
 @Composable
 fun RootNavGraph(
