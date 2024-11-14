@@ -13,9 +13,8 @@ struct ComposeView: UIViewControllerRepresentable {
     private let presenter: MainPresenter
 
     init() {
-        let repository = GreetingRepository()
+        let repository = DomainGreetingRepository<DomainGreeting>()
         self.presenter = MainPresenter(greetingRepository: repository)
-        super()
     }
 
     func makeUIViewController(context: Context) -> UIViewController {
