@@ -87,9 +87,12 @@ Though this can evolve, this is the initial structure of this KMP project:
 
 This project uses the [MVP](https://en.wikipedia.org/wiki/Model%E2%80%93view%E2%80%93presenter) (Model-View-Presenter) Design Pattern with small variations (introducing Repositories) in the following way:
 
- - Each View will define (or reuse) what's the presenter logic it is looking for, including which data its interested in observing in an interface. The view will react to changes in the presenter observed data, and call the methods it needs to inform the presenter about user actions. In this way **each view can be created idependently without strictly needing anything else**
- - Same goes for the Models, they can be built (and unit tested) without needing anything else, simple KOJOs.
- - When you want to bring interaction to life, create a presenter (or reuse one) and implement the interface you defined when doing the view. That presenter will generally modify/fetch the models through a repository.
+ - Each View will define it's desired presenter behaviour. For example, for the `AppView` it would define the `AppPresenter` interface. This includes which data its interested in observing.
+ - The view will react to changes in the presenter observed data, and call the methods it needs to inform the presenter about user actions. In this way **each view can be created idependently without strictly needing anything else**
+ - Same goes for the Models, they can be built (and unit tested) without needing anything else, simple POKOs (Plain Old Kotlin Objects - meaning no external deps).
+ - When you want to bring interaction to life, create a presenter (or reuse one if the view is small enough) and implement the interface you defined when doing the view (`AppPresenter` interface). That presenter will generally modify/fetch the models through a repository.
+ - Now for the presenter to connect to the domain models we use repositories which is basically a storage of data (that abstracts where that data is stored in). The repositories also expose the data in an observable way, so the presenter can satisfy the requested data from the view from the data of the domain model in the ways it see fit. Sometimes it would just be a pathrough.
+ - `TODO: Talk about Services and Netwroking`
  - Networking is a crucial part of this project and the networking used and shared by the `xClients` are not the ones used by the `androidNode` but the idea is to have a comprehensive **facade** so that from the point of view of repository/service it just works regardless on how and what objs are being used under the hood to fetch/save data. More on this soon...
 
 

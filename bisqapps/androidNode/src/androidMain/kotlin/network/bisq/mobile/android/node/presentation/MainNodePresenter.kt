@@ -2,7 +2,6 @@ package network.bisq.mobile.android.node.presentation
 
 import android.app.Activity
 import android.os.Build
-import android.os.Process
 import bisq.application.State
 import bisq.bonded_roles.market_price.MarketPrice
 import bisq.chat.ChatChannelDomain
@@ -11,11 +10,7 @@ import bisq.chat.common.CommonPublicChatMessage
 import bisq.chat.two_party.TwoPartyPrivateChatChannel
 import bisq.chat.two_party.TwoPartyPrivateChatMessage
 import bisq.common.currency.MarketRepository
-import bisq.common.facades.FacadeProvider
-import bisq.common.facades.android.AndroidGuavaFacade
-import bisq.common.facades.android.AndroidJdkFacade
 import bisq.common.locale.LanguageRepository
-import bisq.common.network.AndroidEmulatorLocalhostFacade
 import bisq.common.network.TransportType
 import bisq.common.observable.Observable
 import bisq.common.observable.Pin
@@ -40,8 +35,6 @@ import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.data.model.Greeting
 import network.bisq.mobile.domain.data.repository.GreetingRepository
 import network.bisq.mobile.presentation.MainPresenter
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import java.security.Security
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -51,10 +44,12 @@ import kotlin.math.max
 import kotlin.random.Random
 
 @Suppress("UNCHECKED_CAST")
-class MainNodePresenter(greetingRepository: NodeGreetingRepository): MainPresenter(greetingRepository as GreetingRepository<Greeting>) {
+class MainNodePresenter(greetingRepository: NodeGreetingRepository) :
+    MainPresenter(greetingRepository as GreetingRepository<Greeting>) {
     companion object {
         private const val AVATAR_VERSION = 0
     }
+
     private val logMessage: Observable<String> = Observable("")
     val state = Observable(State.INITIALIZE_APP)
     private val shutDownErrorMessage = Observable<String>()
@@ -71,21 +66,11 @@ class MainNodePresenter(greetingRepository: NodeGreetingRepository): MainPresent
 
 
     init {
-        // TODO move to application once DI setup gets merged
-        FacadeProvider.setLocalhostFacade(AndroidEmulatorLocalhostFacade())
-        FacadeProvider.setJdkFacade(AndroidJdkFacade(Process.myPid()))
-        FacadeProvider.setGuavaFacade(AndroidGuavaFacade())
-
-        // Androids default BC version does not support all algorithms we need, thus we remove
-        // it and add our BC provider
-        Security.removeProvider("BC")
-        Security.addProvider(BouncyCastleProvider())
-        log("Static Bisq core setup ready")
-
         CoroutineScope(Dispatchers.IO).launch {
             greetingRepository.create(AndroidNodeGreeting())
         }
     }
+
     override fun onViewAttached() {
         super.onViewAttached()
         logMessage.addObserver {
@@ -124,7 +109,6 @@ class MainNodePresenter(greetingRepository: NodeGreetingRepository): MainPresent
             printDefaultKeyId()
             printLanguageCode()
 
-            // At the moment is nor persisting the profile so it will create one on each run
             if (userIdentityService.userIdentities.isEmpty()) {
                 //createUserIfNoneExist();
                 initializeUserService()
@@ -133,17 +117,22 @@ class MainNodePresenter(greetingRepository: NodeGreetingRepository): MainPresent
                 createUserProfile("Android user " + Random(4234234).nextInt(100)).join()
                 log("Created profile for user")
             }
+
+            // User profile data
             printUserProfiles()
 
+            // network metadata
             observeNetworkState()
             observeNumConnections()
             fetchMarketPrice(500L)
 
+            // trading
             observePrivateMessages()
+
+            // Less priority for MVP
             publishRandomChatMessage();
             observeChatMessages(5)
             maybeRemoveMyOldChatMessages()
-            //
             sendRandomMessagesEvery(60L * 100L)
         }
     }

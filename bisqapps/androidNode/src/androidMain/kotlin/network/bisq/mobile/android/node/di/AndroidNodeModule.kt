@@ -1,9 +1,7 @@
 package network.bisq.mobile.android.node.di
 
-import network.bisq.mobile.android.node.AndroidNodeGreeting
 import network.bisq.mobile.android.node.domain.data.repository.NodeGreetingRepository
 import network.bisq.mobile.android.node.presentation.MainNodePresenter
-import network.bisq.mobile.domain.data.repository.SingleObjectRepository
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import org.koin.dsl.bind
