@@ -31,11 +31,12 @@ import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SortIcon
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.koin.compose.koinInject
+import org.koin.core.qualifier.named
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun ExchangeScreen() {
-    val navController: NavHostController = koinInject()
+    val navController: NavHostController = koinInject(named("RootNavController"))
     val originDirection = LocalLayoutDirection.current
     Column(
         modifier = Modifier.fillMaxSize()

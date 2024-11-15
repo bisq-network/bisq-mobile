@@ -14,12 +14,13 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.koin.compose.koinInject
+import org.koin.core.qualifier.named
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun SettingsScreen(
 ) {
-    val navController: NavHostController = koinInject()
+    val navController: NavHostController = koinInject(named("RootNavController"))
     Box(
         modifier = Modifier
             .fillMaxSize(),
