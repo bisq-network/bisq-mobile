@@ -26,8 +26,8 @@ class GettingStartedPresenter(private val priceRepository: BtcPriceRepository<Bt
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val bisqStats = bisqStatsRepository.fetch()
-                _offersOnline.value = bisqStats?.getOffersOnline() ?: 0
-                _publishedProfiles.value = bisqStats?.getPublishedProfiles() ?: 0
+                _offersOnline.value = bisqStats?.offersOnline ?: 0
+                _publishedProfiles.value = bisqStats?.publishedProfiles ?: 0
 
                 val btcPrice = priceRepository.fetch()
                 val priceList = btcPrice?.getBtcPrice()
