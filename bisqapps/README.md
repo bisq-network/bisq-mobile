@@ -47,13 +47,20 @@ Addicionally, for the `androidNode` module to build you need to have its depende
 
 Done! Alternatively if you are interested only in contributing for the `xClients` you can just build them individually instead of building the whole project.
 
-### UI Designs
+### UI
+
+**Designs**
+
 androidNode + xClient screens are designed in Figma.
 Yet to differentiate between which screens goes into which.
 
 Figma link: https://www.figma.com/design/IPnuicxGKIZXq28gybxOgp/Xchange?node-id=7-759&t=LV9Gx9XgJRvXu5YQ-1
 
 Though the figma design captures most of the functionality, it's an evolving document. It will be updated with new screens, flow updates, based on discussions happening in GH issues / matrix.
+
+**Navigation Implementation**
+
+Please refer to [this README](shared/presentation/src/commonMain/kotlin/network/bisq/mobile/presentation/ui/navigation/README.md)
 
 ### Configuring dev env: known issues
 
