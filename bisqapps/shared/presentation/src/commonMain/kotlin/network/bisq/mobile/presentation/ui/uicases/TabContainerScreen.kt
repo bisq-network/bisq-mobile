@@ -1,21 +1,22 @@
 package network.bisq.mobile.presentation.ui.uicases
 
 import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
-import network.bisq.mobile.presentation.ui.model.BottomNavigationItem
+import network.bisq.mobile.presentation.ui.composeModels.BottomNavigationItem
 import network.bisq.mobile.presentation.ui.navigation.BottomNavigation
 import network.bisq.mobile.presentation.ui.navigation.Graph
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import org.koin.compose.koinInject
+import org.koin.core.qualifier.named
+import org.koin.mp.KoinPlatform.getKoin
 
 val navigationListItem = listOf(
     BottomNavigationItem("Home", Routes.TabHome.name, Res.drawable.icon_home),
@@ -26,8 +27,8 @@ val navigationListItem = listOf(
 
 
 @Composable
-fun TabContainerScreen( rootNavController: NavController) {
-    val navController = rememberNavController()
+fun TabContainerScreen() {
+    val navController: NavHostController = koinInject(named("TabNavController"))
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute by remember(navBackStackEntry) {
         derivedStateOf {
@@ -55,6 +56,6 @@ fun TabContainerScreen( rootNavController: NavController) {
         }
 
     ) { innerPadding ->
-        RootNavGraph(rootNavController = navController,innerPadding = innerPadding, startDestination = Graph.MainScreenGraph)
+        RootNavGraph(startDestination = Graph.MainScreenGraph)
     }
 }

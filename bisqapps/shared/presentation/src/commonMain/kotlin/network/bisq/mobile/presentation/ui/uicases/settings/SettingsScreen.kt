@@ -9,19 +9,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun SettingsScreen(rootNavController: NavController,
-               innerPadding: PaddingValues
+fun SettingsScreen(
 ) {
+    val navController: NavHostController = koinInject()
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding), // Applies the inner padding if necessary
+            .fillMaxSize(),
         contentAlignment = Alignment.Center // Centers the content within the Box
     ) {
         BisqText.h2Regular(

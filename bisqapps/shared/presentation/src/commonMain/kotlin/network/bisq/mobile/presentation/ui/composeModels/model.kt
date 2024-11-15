@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.model
+package network.bisq.mobile.presentation.ui.composeModels
 
 import org.jetbrains.compose.resources.DrawableResource
 

@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.currency_euro
 import bisqapps.shared.presentation.generated.resources.currency_gpb
@@ -29,20 +30,15 @@ import network.bisq.mobile.components.MaterialTextField
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SortIcon
 import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.koin.compose.koinInject
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun ExchangeScreen(
-    rootNavController: NavController,
-    innerPadding: PaddingValues
-) {
+fun ExchangeScreen() {
+    val navController: NavHostController = koinInject()
     val originDirection = LocalLayoutDirection.current
     Column(
-        modifier = Modifier.fillMaxSize().padding(
-            start = innerPadding.calculateStartPadding(originDirection),
-            end = innerPadding.calculateEndPadding(originDirection),
-            bottom = innerPadding.calculateBottomPadding(),
-        ),
+        modifier = Modifier.fillMaxSize()
     ) {
         TopBar("Buy/Sell")
         Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 32.dp)) {

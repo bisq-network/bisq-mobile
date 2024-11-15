@@ -10,7 +10,7 @@ enum class Routes(val title: String) {
     Splash(title = "splash"),
     Onboarding(title = "onboarding"),
     CreateProfile(title = "create_profile"),
-    BisqUrl(title = "bisq_url"),
+    TrustedNodeSetup(title = "trusted_node_setup"),
     TabContainer(title = "tab_container"),
     TabHome(title = "tab_home"),
     TabExchange(title = "tab_exchange"),

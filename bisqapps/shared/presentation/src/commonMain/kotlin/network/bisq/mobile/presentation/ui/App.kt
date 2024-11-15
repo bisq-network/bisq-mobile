@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui
 
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.*
+import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import cafe.adriel.lyricist.ProvideStrings
 import cafe.adriel.lyricist.rememberStrings
@@ -14,6 +15,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import org.koin.mp.KoinPlatform.getKoin
 
 interface AppPresenter {
     // Observables for state
@@ -30,19 +32,30 @@ interface AppPresenter {
 @Composable
 @Preview
 fun App() {
+
+    val rootNavController = rememberNavController()
+    val tabNavController = rememberNavController()
+
+    var isNavControllerSet by remember { mutableStateOf(false) }
+
+    LaunchedEffect(rootNavController) {
+        getKoin().setProperty("RootNavController", rootNavController)
+        getKoin().setProperty("TabNavController", tabNavController)
+        isNavControllerSet = true
+    }
+
     val presenter: AppPresenter = koinInject()
 
-    val navController = rememberNavController()
     val lyricist = rememberStrings()
     lyricist.languageTag = Locales.FR
 
     BisqTheme(darkTheme = true) {
         ProvideStrings(lyricist) {
-            RootNavGraph(
-                rootNavController = navController,
-                innerPadding = PaddingValues(),
-                startDestination = Routes.Splash.name
-            )
+            if (isNavControllerSet) {
+                RootNavGraph(
+                    startDestination = Routes.Splash.name
+                )
+            }
         }
     }
 

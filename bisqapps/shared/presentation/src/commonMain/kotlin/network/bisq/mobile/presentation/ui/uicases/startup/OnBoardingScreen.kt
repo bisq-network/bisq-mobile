@@ -25,13 +25,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import bisqapps.shared.presentation.generated.resources.*
 import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 
-import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -42,6 +41,7 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
+import org.koin.core.qualifier.named
 
 interface IOnboardingPresenter {
 
@@ -52,11 +52,12 @@ interface IOnboardingPresenter {
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun OnBoardingScreen(rootNavController: NavController) {
+fun OnBoardingScreen() {
     val strings = LocalStrings.current
+    val navController: NavHostController = koinInject(named("RootNavController"))
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { onBoardingPages.size })
-    val presenter: IOnboardingPresenter = koinInject { parametersOf(rootNavController) }
+    val presenter: IOnboardingPresenter = koinInject { parametersOf(navController) }
 
     // TODO: Any other better way to do this?
     LaunchedEffect(pagerState) {

@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.BasePresenter
-import network.bisq.mobile.presentation.ui.model.OnBoardingPage
+import network.bisq.mobile.presentation.ui.composeModels.OnBoardingPage
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 val onBoardingPages = listOf(

@@ -8,7 +8,6 @@ import network.bisq.mobile.domain.data.repository.NetworkRepository
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-// open class MainPresenter(private val greetingRepository: GreetingRepository<Greeting>) : BasePresenter(), AppPresenter {
 open class SplashPresenter(private val navController: NavController) : BasePresenter(), ISplashPresenter {
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 

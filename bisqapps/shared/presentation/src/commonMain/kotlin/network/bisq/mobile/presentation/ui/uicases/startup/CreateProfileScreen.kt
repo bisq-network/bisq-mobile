@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bot_image
 import network.bisq.mobile.components.MaterialTextField
@@ -21,14 +22,16 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
+import org.koin.core.qualifier.named
 
 private lateinit var textState: MutableState<String>
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun CreateProfileScreen(
-    rootNavController: NavController
 ) {
+    val navController: NavHostController = koinInject(named("RootNavController"))
     textState = remember { mutableStateOf("") }
     BisqScrollLayout() {
         BisqLogo()
@@ -77,7 +80,7 @@ fun CreateProfileScreen(
             "Next",
             onClick = {
                 if (textState.value.isNotEmpty()) {
-                    rootNavController.navigate(Routes.BisqUrl.name) {
+                    navController.navigate(Routes.TrustedNodeSetup.name) {
                         popUpTo(Routes.CreateProfile.name) {
                             inclusive = true
                         }

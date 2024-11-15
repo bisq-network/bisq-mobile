@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.icon_question_mark
 import network.bisq.mobile.components.MaterialTextField
@@ -30,15 +31,17 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
+import org.koin.compose.koinInject
+import org.koin.core.qualifier.named
 
 private lateinit var textState: MutableState<String>
 
 //TODO: Rename this to BisqConnectScreen?
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun URLScreen(
-    rootNavController: NavController
+fun TrustedNodeSetupScreen(
 ) {
+    val navController: NavHostController = koinInject(named("RootNavController"))
     textState = remember { mutableStateOf("") }
     val isConnected by remember { mutableStateOf(false) }
 
@@ -139,8 +142,8 @@ fun URLScreen(
                         text = "Next",
                         color = BisqTheme.colors.light1,
                         onClick = {
-                            rootNavController.navigate(Routes.TabContainer.name) {
-                                popUpTo(Routes.BisqUrl.name) {
+                            navController.navigate(Routes.TabContainer.name) {
+                                popUpTo(Routes.TrustedNodeSetup.name) {
                                     inclusive = true
                                 }
                             }

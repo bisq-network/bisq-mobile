@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.icon_tag_outlined
@@ -48,18 +49,13 @@ interface IGettingStarted {
 }
 
 @Composable
-fun GettingStartedScreen(
-    rootNavController: NavController,
-    innerPadding: PaddingValues,
-) {
+fun GettingStartedScreen() {
     val presenter: IGettingStarted = koinInject()
     val btcPrice:String = presenter.btcPrice.collectAsState().value
     val offersOnline:Number = presenter.offersOnline.collectAsState().value
     val publishedProfiles:Number = presenter.publishedProfiles.collectAsState().value
     Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(innerPadding),
+        modifier = Modifier.fillMaxSize(),
     ) {
         // TODO: Should be a child of Scaffold, in TabContainerScreen
         TopBar(isHome = true)

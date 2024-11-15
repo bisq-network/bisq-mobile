@@ -86,13 +86,11 @@ typesafe-config = { module = 'com.typesafe:config', version.ref = 'typesafe-conf
 bouncycastle = { module = 'org.bouncycastle:bcprov-jdk18on', version.ref = 'bouncycastle-lib' }
 bouncycastle-pg = { module = 'org.bouncycastle:bcpg-jdk18on', version.ref = 'bouncycastle-lib' }
 
-#protobuf-lite = { group ="com.google.protobuf", name = "protobuf-javalite", version.ref = "protoblite"}
 lyricist = { module = "cafe.adriel.lyricist:lyricist", version.ref = "lyricist" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 protobuf-lite = { group ="com.google.protobuf", name = "protobuf-javalite", version.ref = "protoblite"}
 protobuf-gradle-plugin = { module = 'com.google.protobuf:protobuf-gradle-plugin', version.ref = 'protobuf' }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protob" }
-
 
 bisq-core-common = { module = "bisq:common", version.ref = "bisq-core" }
 bisq-core-security = { module = "bisq:security", version.ref = "bisq-core" }

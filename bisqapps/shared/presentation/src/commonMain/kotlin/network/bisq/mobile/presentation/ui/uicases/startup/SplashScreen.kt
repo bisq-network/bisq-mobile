@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.navigation.NavController
+import androidx.navigation.NavHostController
 
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqProgressBar
@@ -19,6 +20,7 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.ui.theme.*
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
+import org.koin.core.qualifier.named
 
 interface ISplashPresenter {
     // Actions
@@ -29,13 +31,12 @@ interface ISplashPresenter {
 // (or) innerPadding as a param is how it's done / best practice in Compose
 @Composable
 fun SplashScreen(
-    rootNavController: NavController,
-    innerPadding: PaddingValues
 ) {
-
+    // val rootNavController: NavHostController = koinInject()
+    val navController: NavHostController = koinInject(named("RootNavController"))
     val strings = LocalStrings.current
     var currentProgress by remember { mutableFloatStateOf(0f) }
-    val presenter: ISplashPresenter = koinInject { parametersOf(rootNavController) }
+    val presenter: ISplashPresenter = koinInject { parametersOf(navController) }
 
     LaunchedEffect(Unit) {
         presenter.startLoading  { progress ->
