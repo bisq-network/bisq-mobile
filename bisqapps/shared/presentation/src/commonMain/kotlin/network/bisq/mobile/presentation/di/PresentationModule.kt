@@ -16,8 +16,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val presentationModule = module {
-
-    single<NavHostController> { error("NavController has not been initialized yet") }
+    
     single(named("RootNavController")) { getKoin().getProperty<NavHostController>("RootNavController") }
     single(named("TabNavController")) { getKoin().getProperty<NavHostController>("TabNavController") }
 
@@ -25,7 +24,12 @@ val presentationModule = module {
 
     // TODO: Since NavController will be required for almost all Presenters for basic navigation
     // Added this as top constructor level param. Is this okay?
-    single { (navController: NavController) -> SplashPresenter(navController) } bind ISplashPresenter::class
+    single {
+        (navController: NavController) -> SplashPresenter(
+            navController = navController,
+            networkRepository = get()
+        )
+    } bind ISplashPresenter::class
 
     single { (navController: NavController) -> OnBoardingPresenter(navController) } bind IOnboardingPresenter::class
 
