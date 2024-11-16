@@ -47,7 +47,7 @@ fun App() {
     val presenter: AppPresenter = koinInject()
 
     val lyricist = rememberStrings()
-    lyricist.languageTag = Locales.FR
+    // lyricist.languageTag = Locales.FR
 
     BisqTheme(darkTheme = true) {
         ProvideStrings(lyricist) {
