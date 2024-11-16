@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,24 +33,39 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
+import org.koin.core.parameter.parametersOf
+import cafe.adriel.lyricist.LocalStrings
 
-private lateinit var textState: MutableState<String>
+import kotlinx.coroutines.flow.StateFlow
 
-//TODO: Rename this to BisqConnectScreen?
+interface ITrustedNodeSetupPresenter {
+    val bisqUrl: StateFlow<String>
+    val isConnected: StateFlow<Boolean>
+
+    fun updateBisqUrl(newUrl: String)
+
+    fun testConnection(isTested: Boolean)
+
+    fun navigateToNextScreen()
+}
+
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun TrustedNodeSetupScreen(
 ) {
+    val strings = LocalStrings.current
     val navController: NavHostController = koinInject(named("RootNavController"))
-    textState = remember { mutableStateOf("") }
-    val isConnected by remember { mutableStateOf(false) }
+    val presenter: ITrustedNodeSetupPresenter = koinInject { parametersOf(navController) }
+
+    val bisqUrl = presenter.bisqUrl.collectAsState().value
+    val isConnected = presenter.isConnected.collectAsState().value
 
     BisqScrollLayout() {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxSize().padding(horizontal = 24.dp)
+            modifier = Modifier.fillMaxSize().padding(horizontal = 0.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -63,7 +79,7 @@ fun TrustedNodeSetupScreen(
                 Image(painterResource(Res.drawable.icon_question_mark), "Question mark")
             }
 
-            MaterialTextField(textState.value, onValueChanged = { textState.value = it })
+            MaterialTextField(bisqUrl, onValueChanged = { presenter.updateBisqUrl(it) })
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -107,46 +123,41 @@ fun TrustedNodeSetupScreen(
 
         Spacer(modifier = Modifier.height(56.dp))
 
-        var visible by remember {
-            mutableStateOf(false)
-        }
-
-        if (!visible) {
+        if (!isConnected) {
             BisqButton(
                 text = "Test Connection",
-                color = if (textState.value.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
-                onClick = { visible = !visible },
+                color = if (bisqUrl.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
+                onClick = {
+                    presenter.testConnection(true)
+                          },
                 padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
-            )
+                )
         } else {
-            Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 0.dp)
+            ) {
                 AnimatedVisibility(
-                    visible = visible,
+                    visible = isConnected,
                     enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(700)),
                 ) {
                     BisqButton(
                         text = "Test Connection",
-                        color = if (textState.value.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
-                        onClick = { },
+                        color = if (bisqUrl.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
+                        onClick = { presenter.testConnection(true) },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )
                 }
-                Spacer(modifier = Modifier.width(20.dp))
+                //Spacer(modifier = Modifier.width(20.dp))
                 AnimatedVisibility(
-                    visible = visible,
+                    visible = isConnected,
                     enter = fadeIn(animationSpec = tween(300)),
 
                     ) {
                     BisqButton(
                         text = "Next",
                         color = BisqTheme.colors.light1,
-                        onClick = {
-                            navController.navigate(Routes.TabContainer.name) {
-                                popUpTo(Routes.TrustedNodeSetup.name) {
-                                    inclusive = true
-                                }
-                            }
-                        },
+                        onClick = { presenter.navigateToNextScreen() },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )
                 }

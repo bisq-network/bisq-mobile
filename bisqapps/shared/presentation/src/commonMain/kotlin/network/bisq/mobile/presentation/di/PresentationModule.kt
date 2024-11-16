@@ -8,9 +8,11 @@ import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.ICreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.ISplashPresenter
+import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
+import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.IGettingStarted
 import org.koin.core.qualifier.named
@@ -48,4 +50,11 @@ val presentationModule = module {
             userProfileRepository = get()
         )
     } bind ICreateProfilePresenter::class
+
+    single {
+        (navController: NavController) -> TrustedNodeSetupPresenter(
+            navController = navController,
+            settingsRepository = get()
+        )
+    } bind ITrustedNodeSetupPresenter::class
 }

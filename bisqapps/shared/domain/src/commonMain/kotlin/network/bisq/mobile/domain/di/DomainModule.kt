@@ -10,4 +10,5 @@ val domainModule = module {
     single<BtcPriceRepository<BtcPrice>> { BtcPriceRepository() }
     single<NetworkRepository<NetworkModel>> { NetworkRepository() }
     single<UserProfileRepository<UserProfile>> { UserProfileRepository() }
+    single<SettingsRepository<Settings>> { SettingsRepository() }
 }

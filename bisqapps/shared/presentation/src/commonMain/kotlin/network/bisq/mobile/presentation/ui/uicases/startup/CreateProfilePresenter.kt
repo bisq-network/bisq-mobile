@@ -22,6 +22,7 @@ open class CreateProfilePresenter(
     private val _profileName = MutableStateFlow("")
     override val profileName: StateFlow<String> = _profileName
 
+    // TODO: Not working
     init {
         CoroutineScope(Dispatchers.IO).launch {
             userProfileRepository.data.collectLatest { userProfile ->
