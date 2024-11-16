@@ -1,6 +1,6 @@
 PODS:
-  - domain (0.0.2)
-  - presentation (0.0.2)
+  - domain (0.0.9)
+  - presentation (0.0.9)
 
 DEPENDENCIES:
   - domain (from `../shared/domain`)
