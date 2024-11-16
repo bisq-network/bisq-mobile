@@ -1,12 +1,11 @@
 package network.bisq.mobile.domain.data.repository
 
+import co.touchlab.kermit.Logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.model.BaseModel
-import network.bisq.mobile.domain.data.model.Greeting
 import network.bisq.mobile.domain.data.persistance.PersistenceSource
-import kotlin.jvm.JvmStatic
 
 /**
  * Repository implementation for a single object. Allows for persistance if the persistance source if provided, otherwise is mem-only.
@@ -16,6 +15,8 @@ import kotlin.jvm.JvmStatic
 abstract class SingleObjectRepository<out T : BaseModel>(
     private val persistenceSource: PersistenceSource<T>? = null
 ) : Repository<T> {
+
+    private val logger = Logger.withTag(SingleObjectRepository::class.simpleName ?: "SingleObjectRepository")
 
     private val _data = MutableStateFlow<T?>(null)
     override val data: StateFlow<T?> = _data
@@ -53,12 +54,12 @@ abstract class SingleObjectRepository<out T : BaseModel>(
 
     override suspend fun clear() {
         try {
+            persistenceSource?.clear()
             scope.cancel()
         } catch (e: Exception) {
-            // TODO log error
+            logger.e("Failed to cancel repository coroutine scope", e)
         } finally {
             _data.value = null
-            persistenceSource?.clear()
         }
     }
 }

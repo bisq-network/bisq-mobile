@@ -35,7 +35,7 @@ kotlin {
             //put your multiplatform dependencies here
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines)
-
+            implementation(libs.logging.kermit)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
