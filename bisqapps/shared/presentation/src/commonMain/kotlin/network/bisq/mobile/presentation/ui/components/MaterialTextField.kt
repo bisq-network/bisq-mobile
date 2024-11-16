@@ -27,7 +27,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.*
 
 @Composable
-fun MaterialTextField(text: String,onValueChanged: (String) -> Unit) {
+fun MaterialTextField(text: String, placeholder: String = "", onValueChanged: (String) -> Unit) {
     var isFocused by remember { mutableStateOf(false) }
 
     Box(
@@ -57,7 +57,7 @@ fun MaterialTextField(text: String,onValueChanged: (String) -> Unit) {
             ),
             placeholder = {
                 BisqText.h5Regular(
-                    text = "Choose your nickname",
+                    text = placeholder,
                     color = BisqTheme.colors.secondaryHover,
                 )
             }

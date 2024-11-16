@@ -25,7 +25,6 @@ open class SplashPresenter(
         }
     }
 
-
     private fun navigateToNextScreen() {
         // TODO: Conditional nav
         // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)

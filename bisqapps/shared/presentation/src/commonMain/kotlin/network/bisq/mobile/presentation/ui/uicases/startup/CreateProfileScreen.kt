@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -24,25 +25,37 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
+import kotlinx.coroutines.flow.StateFlow
+import cafe.adriel.lyricist.LocalStrings
+import org.koin.core.parameter.parametersOf
 
-private lateinit var textState: MutableState<String>
+interface ICreateProfilePresenter {
+    val profileName: StateFlow<String>
+
+    fun onProfileNameChanged(newName: String)
+    fun navigateToNextScreen()
+}
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun CreateProfileScreen(
 ) {
+    val strings = LocalStrings.current
     val navController: NavHostController = koinInject(named("RootNavController"))
-    textState = remember { mutableStateOf("") }
+    val presenter: ICreateProfilePresenter = koinInject { parametersOf(navController) }
+
+    val profileName = presenter.profileName.collectAsState().value
+
     BisqScrollLayout() {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
         BisqText.h1Light(
-            text = "Create your profile",
+            text = strings.onboarding_createProfile_headline,
             color = BisqTheme.colors.grey1,
         )
         Spacer(modifier = Modifier.height(12.dp))
         BisqText.baseRegular(
-            text = "Your public profile consists of a nickname (picked by you) and bot icon (generated cryptographically)",
+            text = strings.onboarding_createProfile_subTitle,
             color = BisqTheme.colors.grey3,
             modifier = Modifier.padding(horizontal = 24.dp),
             textAlign = TextAlign.Center,
@@ -51,13 +64,16 @@ fun CreateProfileScreen(
         Column(modifier = Modifier.padding(horizontal = 24.dp)) {
             //TODO: Convert this into a Form field component, which is Label + TextField
             BisqText.baseRegular(
-                text = "Profile nickname",
+                text = strings.onboarding_createProfile_nickName,
                 color = BisqTheme.colors.light2,
             )
-            MaterialTextField(textState.value, onValueChanged = { textState.value = it })
+            MaterialTextField(
+                text = profileName,
+                placeholder = strings.onboarding_createProfile_nickName_prompt,
+                onValueChanged = { presenter.onProfileNameChanged(it) })
         }
         Spacer(modifier = Modifier.height(36.dp))
-        Image(painterResource(Res.drawable.img_bot_image), "Crypto generated image (PoW)")
+        Image(painterResource(Res.drawable.img_bot_image), "Crypto generated image (PoW)") // TODO: Translation
         Spacer(modifier = Modifier.height(32.dp))
         BisqText.baseRegular(
             text = "Sleepily-Distracted-Zyophyte-257",
@@ -65,29 +81,21 @@ fun CreateProfileScreen(
         )
         Spacer(modifier = Modifier.height(12.dp))
         BisqText.baseRegular(
-            text = "BOT ID",
+            text = strings.onboarding_createProfile_nym,
             color = BisqTheme.colors.grey2,
         )
         Spacer(modifier = Modifier.height(38.dp))
         BisqButton(
-            text ="Generate new bot iconnn",
+            text = strings.onboarding_createProfile_regenerate,
             backgroundColor = BisqTheme.colors.dark5,
             padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp),
             onClick = {}
         )
         Spacer(modifier = Modifier.height(40.dp))
         BisqButton(
-            "Next",
-            onClick = {
-                if (textState.value.isNotEmpty()) {
-                    navController.navigate(Routes.TrustedNodeSetup.name) {
-                        popUpTo(Routes.CreateProfile.name) {
-                            inclusive = true
-                        }
-                    }
-                }
-            },
-            backgroundColor = if (textState.value.isEmpty()) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
+            strings.buttons_next,
+            onClick = { presenter.navigateToNextScreen() },
+            backgroundColor = if (profileName.isEmpty()) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
         )
     }
 }

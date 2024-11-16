@@ -5,8 +5,10 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
+import network.bisq.mobile.presentation.ui.uicases.startup.ICreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.ISplashPresenter
+import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
@@ -39,4 +41,11 @@ val presentationModule = module {
             bisqStatsRepository = get()
         )
     } bind IGettingStarted::class
+
+    single {
+        (navController: NavController) -> CreateProfilePresenter(
+            navController = navController,
+            userProfileRepository = get()
+        )
+    } bind ICreateProfilePresenter::class
 }

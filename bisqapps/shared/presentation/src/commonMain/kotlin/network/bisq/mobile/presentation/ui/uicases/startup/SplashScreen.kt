@@ -23,28 +23,24 @@ import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 
 interface ISplashPresenter {
-    // Actions
     fun startLoading(onProgressUpdate: (Float) -> Unit)
 }
 
-// TODO: Remove innerPadding once StaticLayout, ScrollLayout are fully done.
-// (or) innerPadding as a param is how it's done / best practice in Compose
 @Composable
 fun SplashScreen(
 ) {
-    // val rootNavController: NavHostController = koinInject()
-    val navController: NavHostController = koinInject(named("RootNavController"))
     val strings = LocalStrings.current
-    var currentProgress by remember { mutableFloatStateOf(0f) }
+    val navController: NavHostController = koinInject(named("RootNavController"))
     val presenter: ISplashPresenter = koinInject { parametersOf(navController) }
+    
+    var currentProgress by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(Unit) {
-        presenter.startLoading  { progress ->
+        presenter.startLoading { progress ->
             currentProgress = progress
         }
     }
 
-    // Render the layout
     BisqStaticLayout {
         BisqLogo()
 

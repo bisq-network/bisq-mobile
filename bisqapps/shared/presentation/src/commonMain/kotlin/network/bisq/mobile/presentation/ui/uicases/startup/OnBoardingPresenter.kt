@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-
 import androidx.compose.foundation.pager.PagerState
 import androidx.navigation.NavController
 import bisqapps.shared.presentation.generated.resources.Res
@@ -34,7 +33,9 @@ val onBoardingPages = listOf(
     )
 )
 
-open class OnBoardingPresenter(private val navController: NavController) : BasePresenter(), IOnboardingPresenter {
+open class OnBoardingPresenter(
+    private val navController: NavController
+) : BasePresenter(), IOnboardingPresenter {
 
     private val _pagerState = MutableStateFlow<PagerState?>(null)
     override val pagerState: StateFlow<PagerState?> = _pagerState

@@ -44,9 +44,8 @@ import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 
 interface IOnboardingPresenter {
-
     val pagerState: StateFlow<PagerState?>
-    // Actions
+
     fun onNextButtonClick(coroutineScope: CoroutineScope)
 }
 
@@ -55,9 +54,10 @@ interface IOnboardingPresenter {
 fun OnBoardingScreen() {
     val strings = LocalStrings.current
     val navController: NavHostController = koinInject(named("RootNavController"))
+    val presenter: IOnboardingPresenter = koinInject { parametersOf(navController) }
+
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { onBoardingPages.size })
-    val presenter: IOnboardingPresenter = koinInject { parametersOf(navController) }
 
     // TODO: Any other better way to do this?
     LaunchedEffect(pagerState) {

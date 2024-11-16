@@ -12,7 +12,10 @@ import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.data.repository.BtcPriceRepository
 import network.bisq.mobile.presentation.BasePresenter
 
-class GettingStartedPresenter(private val priceRepository: BtcPriceRepository<BtcPrice>, private val bisqStatsRepository: BisqStatsRepository<BisqStats>) : BasePresenter(), IGettingStarted {
+class GettingStartedPresenter(
+    private val priceRepository: BtcPriceRepository<BtcPrice>,
+    private val bisqStatsRepository: BisqStatsRepository<BisqStats>
+) : BasePresenter(), IGettingStarted {
     private val _btcPrice = MutableStateFlow("Loading...")//("$75,000")
     override val btcPrice: StateFlow<String> = _btcPrice
 
