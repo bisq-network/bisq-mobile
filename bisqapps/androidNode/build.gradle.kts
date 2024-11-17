@@ -1,7 +1,8 @@
+
+import com.google.protobuf.gradle.proto
+import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import org.apache.tools.ant.taskdefs.condition.Os
-import com.google.protobuf.gradle.proto
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -161,6 +162,7 @@ dependencies {
 
     implementation(libs.koin.core)
     implementation(libs.koin.android)
+    implementation(libs.logging.kermit)
 }
 
 // ensure tests run on J17
