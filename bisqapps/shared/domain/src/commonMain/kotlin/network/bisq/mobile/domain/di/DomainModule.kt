@@ -6,9 +6,8 @@ import org.koin.dsl.module
 
 val domainModule = module {
     single<GreetingRepository<Greeting>> { GreetingRepository() }
-    single<BisqStatsRepository<BisqStats>> { BisqStatsRepository() }
-    single<BtcPriceRepository<BtcPrice>> { BtcPriceRepository() }
-    single<NetworkRepository<NetworkModel>> { NetworkRepository() }
-    single<UserProfileRepository<UserProfile>> { UserProfileRepository() }
-    single<SettingsRepository<Settings>> { SettingsRepository() }
+    single<BisqStatsRepository> { BisqStatsRepository() }
+    single<BtcPriceRepository> { BtcPriceRepository() }
+    single<UserProfileRepository> { UserProfileRepository() }
+    single<SettingsRepository> { SettingsRepository() }
 }

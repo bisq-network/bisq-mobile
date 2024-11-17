@@ -30,15 +30,16 @@ val presentationModule = module {
     // Added this as top constructor level param. Is this okay?
     single {
         (navController: NavController) -> SplashPresenter(
-            navController = navController,
-            networkRepository = get()
+            get(),
+            navController = navController
         )
     } bind ISplashPresenter::class
 
-    single { (navController: NavController) -> OnBoardingPresenter(navController) } bind IOnboardingPresenter::class
+    single { (navController: NavController) -> OnBoardingPresenter(get(), navController) } bind IOnboardingPresenter::class
 
     single<GettingStartedPresenter> {
         GettingStartedPresenter(
+            get(),
             priceRepository = get(),
             bisqStatsRepository = get()
         )
@@ -46,6 +47,7 @@ val presentationModule = module {
 
     single {
         (navController: NavController) -> CreateProfilePresenter(
+            get(),
             navController = navController,
             userProfileRepository = get()
         )
@@ -53,6 +55,7 @@ val presentationModule = module {
 
     single {
         (navController: NavController) -> TrustedNodeSetupPresenter(
+            get(),
             navController = navController,
             settingsRepository = get()
         )

@@ -2,17 +2,7 @@ package network.bisq.mobile.android.node.presentation
 
 import android.app.Activity
 import android.os.Build
-import network.bisq.mobile.presentation.MainPresenter
-import bisq.common.facades.FacadeProvider
-import bisq.common.facades.android.AndroidGuavaFacade
-import bisq.common.facades.android.AndroidJdkFacade
-import bisq.common.network.AndroidEmulatorLocalhostFacade
-import org.bouncycastle.jce.provider.BouncyCastleProvider
-import java.security.Security
 import android.os.Process
-import network.bisq.mobile.android.node.domain.model.UserProfileModel
-import bisq.common.observable.Observable
-import bisq.user.identity.UserIdentityService
 import bisq.application.State
 import bisq.bonded_roles.market_price.MarketPrice
 import bisq.chat.ChatChannelDomain
@@ -21,8 +11,13 @@ import bisq.chat.common.CommonPublicChatMessage
 import bisq.chat.two_party.TwoPartyPrivateChatChannel
 import bisq.chat.two_party.TwoPartyPrivateChatMessage
 import bisq.common.currency.MarketRepository
+import bisq.common.facades.FacadeProvider
+import bisq.common.facades.android.AndroidGuavaFacade
+import bisq.common.facades.android.AndroidJdkFacade
 import bisq.common.locale.LanguageRepository
+import bisq.common.network.AndroidEmulatorLocalhostFacade
 import bisq.common.network.TransportType
+import bisq.common.observable.Observable
 import bisq.common.observable.Pin
 import bisq.common.observable.collection.CollectionObserver
 import bisq.common.timer.Scheduler
@@ -34,16 +29,20 @@ import bisq.security.DigestUtil
 import bisq.security.SecurityService
 import bisq.user.identity.NymIdGenerator
 import bisq.user.identity.UserIdentity
+import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfile
 import kotlinx.coroutines.*
 import network.bisq.mobile.android.node.AndroidNodeGreeting
 import network.bisq.mobile.android.node.domain.data.repository.NodeGreetingRepository
+import network.bisq.mobile.android.node.domain.model.UserProfileModel
 import network.bisq.mobile.android.node.service.AndroidApplicationService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.data.model.Greeting
 import network.bisq.mobile.domain.data.repository.GreetingRepository
-import network.bisq.mobile.domain.data.repository.SingleObjectRepository
-import java.util.Optional
+import network.bisq.mobile.presentation.MainPresenter
+import org.bouncycastle.jce.provider.BouncyCastleProvider
+import java.security.Security
+import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
@@ -105,9 +104,9 @@ class MainNodePresenter(greetingRepository: NodeGreetingRepository): MainPresent
         launchServices()
     }
 
-    override fun onDestroy() {
+    override fun onDestroying() {
         applicationService.shutdown()
-        super.onDestroy()
+        super.onDestroying()
     }
 
     private fun log(message: String) {

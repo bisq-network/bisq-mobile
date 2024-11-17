@@ -3,7 +3,7 @@ package network.bisq.mobile.presentation.ui.navigation
 import org.jetbrains.compose.resources.StringResource
 
 object Graph {
-    const val MainScreenGraph = "mainScreenGraph"
+    const val MAIN_SCREEN_GRAPH_KEY = "mainScreenGraph"
 }
 
 enum class Routes(val title: String) {

@@ -54,6 +54,9 @@ fun GettingStartedScreen() {
     val btcPrice:String = presenter.btcPrice.collectAsState().value
     val offersOnline:Number = presenter.offersOnline.collectAsState().value
     val publishedProfiles:Number = presenter.publishedProfiles.collectAsState().value
+
+    // TODO attach view should happen here to let the presenter know?
+
     Column(
         modifier = Modifier.fillMaxSize(),
     ) {

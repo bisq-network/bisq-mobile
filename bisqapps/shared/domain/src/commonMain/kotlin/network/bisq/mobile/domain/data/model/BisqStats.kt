@@ -1,10 +1,10 @@
 
 package network.bisq.mobile.domain.data.model
 
-open class BisqStats: BaseModel() {
-    open val offersOnline = 150
+class BisqStats: BaseModel() {
+    val offersOnline = 150
 
-    open val publishedProfiles = 1275
+    val publishedProfiles = 1275
 }
 
 interface BisqStatsFactory {

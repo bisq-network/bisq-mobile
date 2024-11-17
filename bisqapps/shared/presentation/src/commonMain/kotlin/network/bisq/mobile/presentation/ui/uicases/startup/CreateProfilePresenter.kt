@@ -13,11 +13,13 @@ import network.bisq.mobile.domain.data.model.UserProfile
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import kotlinx.coroutines.delay
+import network.bisq.mobile.presentation.MainPresenter
 
 open class CreateProfilePresenter(
+    mainPresenter: MainPresenter,
     private val navController: NavController,
-    private val userProfileRepository: UserProfileRepository<UserProfile>
-) : BasePresenter(), ICreateProfilePresenter {
+    private val userProfileRepository: UserProfileRepository
+) : BasePresenter(mainPresenter), ICreateProfilePresenter {
 
     private val _profileName = MutableStateFlow("")
     override val profileName: StateFlow<String> = _profileName

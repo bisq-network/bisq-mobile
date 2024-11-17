@@ -5,13 +5,15 @@ android-targetSdk = "34"
 android-minSdk = "24"
 android-node-minSdk = "31"
 androidx-activityCompose = "1.9.2"
+
 androidx-appcompat = "1.7.0"
 androidx-constraintlayout = "2.1.4"
 androidx-core-ktx = "1.13.1"
 androidx-espresso-core = "3.6.1"
-androidx-lifecycle = "2.8.2"
 androidx-material = "1.12.0"
 androidx-test-junit = "1.2.1"
+
+androidx-lifecycle = "2.8.2"
 androidx-test-compose-ver = "1.6.8"
 androidx-multidex = "2.0.1"
 bisq-core = "2.1.2"
@@ -26,31 +28,30 @@ buildconfig = "5.5.0"
 navigationCompose = "2.7.0-alpha07"
 protobuf = "0.9.4"
 protob = "4.28.2"
-protoblite = "4.28.2"
 ksp = "2.0.20-1.0.25"
 
 chimp-jsocks-lib = { strictly = '567e1cd6' }
-chimp-jtorctl-lib = { strictly = '9b5ba203' }
 failsafe-lib = { strictly = '3.2.4' }
-apache-commons-lang-lib = { strictly = '3.14.0' }
-apache-httpcomponents-core-lib = { strictly = '4.4.16' }
-apache-httpcomponents-httpclient-lib = { strictly = '4.5.14' } # 5.3.1 would be better but has lot of API changes
-apache-tomcat-annotations-api = { strictly = '6.0.53' }
 
-assertj-core-lib = { strictly = '3.22.0' }
 bouncycastle-lib = { strictly = '1.78.1' }
 
-glassfish-jersey-lib = { strictly = '3.1.8' }
-glassfish-jaxb-runtime-lib = { strictly = '4.0.5' }
-
-google-gson-lib = { strictly = '2.9.0' }
 google-guava-lib = { strictly = '33.2.1-jre' }
 
-grpc = { strictly = '1.61.0' }
+apache-httpcomponents-httpclient-lib = { strictly = '4.5.14' } # 5.3.1 would be better but has lot of API changes
 
+chimp-jtorctl-lib = { strictly = '9b5ba203' }
+apache-commons-lang-lib = { strictly = '3.14.0' }
+apache-httpcomponents-core-lib = { strictly = '4.4.16' }
+apache-tomcat-annotations-api = { strictly = '6.0.53' }
+assertj-core-lib = { strictly = '3.22.0' }
+glassfish-jersey-lib = { strictly = '3.1.8' }
+glassfish-jaxb-runtime-lib = { strictly = '4.0.5' }
+google-gson-lib = { strictly = '2.9.0' }
+grpc = { strictly = '1.61.0' }
 i2p-lib = { strictly = '1.8.0' }
 i2p-v2 = { strictly = '2.4.0' }
 jackson-lib = { strictly = '2.17.2' }
+
 lyricist = "1.7.0"
 
 koin = "4.0.0"
@@ -59,20 +60,22 @@ typesafe-config-lib = { strictly = '1.4.3' }
 
 [libraries]
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
-kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 kotlin-test-junit-v180 = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlinTestJunit" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx" }
 mock-io = { module = "io.mockk:mockk", version.ref = "mockio" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
-androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core-ktx" }
-androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-junit" }
 androidx-multidex = { group = "androidx.multidex", name = "multidex", version.ref = "androidx-multidex" }
 androidx-test-compose = { group = "androidx.compose.ui", name = "ui-test-junit4-android", version.ref = "androidx-test-compose-ver" }
 androidx-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest", version.ref = "androidx-test-compose-ver" }
-androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidx-espresso-core" }
-androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
-androidx-material = { group = "com.google.android.material", name = "material", version.ref = "androidx-material" }
-androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "androidx-constraintlayout" }
+
+#kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+#androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core-ktx" }
+#androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidx-test-junit" }
+#androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidx-espresso-core" }
+#androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "androidx-appcompat" }
+#androidx-material = { group = "com.google.android.material", name = "material", version.ref = "androidx-material" }
+#androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "androidx-constraintlayout" }
+
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
@@ -88,7 +91,6 @@ bouncycastle-pg = { module = 'org.bouncycastle:bcpg-jdk18on', version.ref = 'bou
 
 lyricist = { module = "cafe.adriel.lyricist:lyricist", version.ref = "lyricist" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
-protobuf-lite = { group ="com.google.protobuf", name = "protobuf-javalite", version.ref = "protoblite"}
 protobuf-gradle-plugin = { module = 'com.google.protobuf:protobuf-gradle-plugin', version.ref = 'protobuf' }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protob" }
 
@@ -115,36 +117,37 @@ bisq-core-identity = { module = "bisq:identity", version.ref = "bisq-core" }
 
 # bisq core transitive dependencies
 chimp-jsocks = { module = 'com.github.chimp1984:jsocks', version.ref = 'chimp-jsocks-lib'  }
-chimp-jtorctl = { module = 'com.github.chimp1984:jtorctl', version.ref = 'chimp-jtorctl-lib' }
 failsafe = { module = 'dev.failsafe:failsafe', version.ref = 'failsafe-lib' }
-apache-commons-lang = { module = 'org.apache.commons:commons-lang3', version.ref = 'apache-commons-lang-lib' }
-apache-httpcomponents-core = { module = 'org.apache.httpcomponents:httpcore', version.ref = 'apache-httpcomponents-core-lib' }
 apache-httpcomponents-httpclient = { module = 'org.apache.httpcomponents:httpclient', version.ref = 'apache-httpcomponents-httpclient-lib' }
-apache-tomcat-annotations-api = { module = 'org.apache.tomcat:annotations-api', version.ref = 'apache-tomcat-annotations-api' }
-assertj-core = { module = 'org.assertj:assertj-core', version.ref = 'assertj-core-lib' }
-glassfish-jersey-jdk-http = { module = 'org.glassfish.jersey.containers:jersey-container-jdk-http', version.ref = 'glassfish-jersey-lib' }
-glassfish-jersey-json-jackson = { module = 'org.glassfish.jersey.media:jersey-media-json-jackson', version.ref = 'glassfish-jersey-lib' }
-glassfish-jersey-inject-hk2 = { module = 'org.glassfish.jersey.inject:jersey-hk2', version.ref = 'glassfish-jersey-lib' }
-glassfish-jaxb-runtime = { module = 'org.glassfish.jaxb:jaxb-runtime', version.ref = 'glassfish-jaxb-runtime-lib' }
-
-google-gson = { module = 'com.google.code.gson:gson', version.ref = 'google-gson-lib' }
 google-guava = { module = 'com.google.guava:guava', version.ref = 'google-guava-lib' }
 
-grpc-netty-shaded = { module = 'io.grpc:grpc-netty-shaded', version.ref = 'grpc' }
-grpc-protobuf = { module = 'io.grpc:grpc-protobuf', version.ref = 'grpc' }
-grpc-services = { module = 'io.grpc:grpc-services', version.ref = 'grpc' }
-grpc-stub = { module = 'io.grpc:grpc-stub', version.ref = 'grpc' }
+#chimp-jtorctl = { module = 'com.github.chimp1984:jtorctl', version.ref = 'chimp-jtorctl-lib' }
+#apache-commons-lang = { module = 'org.apache.commons:commons-lang3', version.ref = 'apache-commons-lang-lib' }
+#apache-httpcomponents-core = { module = 'org.apache.httpcomponents:httpcore', version.ref = 'apache-httpcomponents-core-lib' }
+#apache-tomcat-annotations-api = { module = 'org.apache.tomcat:annotations-api', version.ref = 'apache-tomcat-annotations-api' }
+#assertj-core = { module = 'org.assertj:assertj-core', version.ref = 'assertj-core-lib' }
+#glassfish-jersey-jdk-http = { module = 'org.glassfish.jersey.containers:jersey-container-jdk-http', version.ref = 'glassfish-jersey-lib' }
+#glassfish-jersey-json-jackson = { module = 'org.glassfish.jersey.media:jersey-media-json-jackson', version.ref = 'glassfish-jersey-lib' }
+#glassfish-jersey-inject-hk2 = { module = 'org.glassfish.jersey.inject:jersey-hk2', version.ref = 'glassfish-jersey-lib' }
+#glassfish-jaxb-runtime = { module = 'org.glassfish.jaxb:jaxb-runtime', version.ref = 'glassfish-jaxb-runtime-lib' }
+#
+#google-gson = { module = 'com.google.code.gson:gson', version.ref = 'google-gson-lib' }
 
-
-i2p-core = { module = 'net.i2p:i2p', version.ref = 'i2p-lib' }
-i2p-core-v2 = { module = 'net.i2p:i2p', version.ref = 'i2p-v2' }
-i2p-streaming = { module = 'net.i2p.client:streaming', version.ref = 'i2p-lib' }
-i2p-streaming-v2 = { module = 'net.i2p.client:streaming', version.ref = 'i2p-v2' }
-i2p-router = { module = 'net.i2p:router', version.ref = 'i2p-lib' }
-
-jackson-core = { module = 'com.fasterxml.jackson.core:jackson-core', version.ref = 'jackson-lib' }
-jackson-annotations = { module = 'com.fasterxml.jackson.core:jackson-annotations', version.ref = 'jackson-lib' }
-jackson-databind = { module = 'com.fasterxml.jackson.core:jackson-databind', version.ref = 'jackson-lib' }
+#grpc-netty-shaded = { module = 'io.grpc:grpc-netty-shaded', version.ref = 'grpc' }
+#grpc-protobuf = { module = 'io.grpc:grpc-protobuf', version.ref = 'grpc' }
+#grpc-services = { module = 'io.grpc:grpc-services', version.ref = 'grpc' }
+#grpc-stub = { module = 'io.grpc:grpc-stub', version.ref = 'grpc' }
+#
+#
+#i2p-core = { module = 'net.i2p:i2p', version.ref = 'i2p-lib' }
+#i2p-core-v2 = { module = 'net.i2p:i2p', version.ref = 'i2p-v2' }
+#i2p-streaming = { module = 'net.i2p.client:streaming', version.ref = 'i2p-lib' }
+#i2p-streaming-v2 = { module = 'net.i2p.client:streaming', version.ref = 'i2p-v2' }
+#i2p-router = { module = 'net.i2p:router', version.ref = 'i2p-lib' }
+#
+#jackson-core = { module = 'com.fasterxml.jackson.core:jackson-core', version.ref = 'jackson-lib' }
+#jackson-annotations = { module = 'com.fasterxml.jackson.core:jackson-annotations', version.ref = 'jackson-lib' }
+#jackson-databind = { module = 'com.fasterxml.jackson.core:jackson-databind', version.ref = 'jackson-lib' }
 
 # koin
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
@@ -152,11 +155,11 @@ koin-compose = { module = "io.insert-koin:koin-compose", version.ref = "koin" }
 koin-android = { module = "io.insert-koin:koin-android", version.ref = "koin" }
 
 [bundles]
-glassfish-jersey = ['glassfish-jersey-jdk-http', 'glassfish-jersey-json-jackson', 'glassfish-jersey-inject-hk2', 'glassfish-jaxb-runtime']
-grpc = ['grpc-protobuf', 'grpc-services', 'grpc-stub']
-i2p = ['i2p-core', 'i2p-router', 'i2p-streaming']
-i2p-v2 = ['i2p-core-v2', 'i2p-streaming-v2']
-jackson = ['jackson-core', 'jackson-annotations', 'jackson-databind']
+#glassfish-jersey = ['glassfish-jersey-jdk-http', 'glassfish-jersey-json-jackson', 'glassfish-jersey-inject-hk2', 'glassfish-jaxb-runtime']
+#grpc = ['grpc-protobuf', 'grpc-services', 'grpc-stub']
+#i2p = ['i2p-core', 'i2p-router', 'i2p-streaming']
+#i2p-v2 = ['i2p-core-v2', 'i2p-streaming-v2']
+#jackson = ['jackson-core', 'jackson-annotations', 'jackson-databind']
 
 [plugins]
 kotlinCocoapods = { id = "org.jetbrains.kotlin.native.cocoapods", version.ref = "kotlin" }

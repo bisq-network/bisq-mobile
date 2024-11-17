@@ -56,6 +56,6 @@ fun TabContainerScreen() {
         }
 
     ) { innerPadding ->
-        RootNavGraph(startDestination = Graph.MainScreenGraph)
+        RootNavGraph(startDestination = Graph.MAIN_SCREEN_GRAPH_KEY)
     }
 }

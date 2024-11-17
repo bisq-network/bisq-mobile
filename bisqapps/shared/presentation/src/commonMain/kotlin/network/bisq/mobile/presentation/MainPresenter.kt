@@ -15,13 +15,13 @@ import network.bisq.mobile.presentation.ui.AppPresenter
 /**
  * Main Presenter as an example of implementation for now.
  */
-open class MainPresenter(private val greetingRepository: GreetingRepository<Greeting>) : BasePresenter(), AppPresenter {
+open class MainPresenter(private val greetingRepository: GreetingRepository<Greeting>) : BasePresenter(null), AppPresenter {
     private val log = Logger.withTag("MainPresenter")
     // Observable state
     private val _isContentVisible = MutableStateFlow(false)
     override val isContentVisible: StateFlow<Boolean> = _isContentVisible
 
-    // The following bounds the specific field I want to grab from the model using the stateflow to automatically observe updates
+    // TODO remove we don't need all the gretting example stuff anymore - but this code to passthrough should be a helper for presentation
     private val _greetingText: StateFlow<String> = greetingRepository.data
         .map { it?.greet() ?: "" } // Transform Greeting to String, we don't want the null
         .stateIn(
@@ -29,6 +29,7 @@ open class MainPresenter(private val greetingRepository: GreetingRepository<Gree
             started = SharingStarted.Lazily,
             initialValue = "Welcome!"
         )
+
     override val greetingText: StateFlow<String> = _greetingText
 
     init {
@@ -48,5 +49,9 @@ open class MainPresenter(private val greetingRepository: GreetingRepository<Gree
         log.i { "iOS Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Node Version: ${BuildNodeConfig.APP_VERSION}" }
+    }
+
+    override fun onPause() {
+        super.onPause()
     }
 }

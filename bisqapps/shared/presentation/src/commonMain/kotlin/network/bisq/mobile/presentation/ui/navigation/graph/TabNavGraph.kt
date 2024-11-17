@@ -13,7 +13,7 @@ import network.bisq.mobile.presentation.ui.uicases.trades.MyTradesScreen
 fun NavGraphBuilder.TabNavGraph() {
     navigation(
         startDestination = Routes.TabHome.name,
-        route = Graph.MainScreenGraph
+        route = Graph.MAIN_SCREEN_GRAPH_KEY
     ) {
         composable(route = Routes.TabHome.name) {
             GettingStartedScreen()

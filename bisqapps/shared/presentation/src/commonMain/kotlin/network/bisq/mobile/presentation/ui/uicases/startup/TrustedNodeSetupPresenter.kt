@@ -7,17 +7,17 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.collectLatest
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.presentation.BasePresenter
+import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import kotlinx.coroutines.delay
 
 class TrustedNodeSetupPresenter(
+    mainPresenter: MainPresenter,
     private val navController: NavController,
-    private val settingsRepository: SettingsRepository<Settings>
-) : BasePresenter(), ITrustedNodeSetupPresenter {
+    private val settingsRepository: SettingsRepository
+) : BasePresenter(mainPresenter), ITrustedNodeSetupPresenter {
 
     private val _bisqUrl = MutableStateFlow("")
     override val bisqUrl: StateFlow<String> = _bisqUrl
