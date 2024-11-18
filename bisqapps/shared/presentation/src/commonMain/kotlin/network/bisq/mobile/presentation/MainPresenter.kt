@@ -21,14 +21,12 @@ open class MainPresenter(private val greetingRepository: GreetingRepository<Gree
     private val _isContentVisible = MutableStateFlow(false)
     override val isContentVisible: StateFlow<Boolean> = _isContentVisible
 
-    // TODO remove we don't need all the gretting example stuff anymore - but this code to passthrough should be a helper for presentation
-    private val _greetingText: StateFlow<String> = greetingRepository.data
-        .map { it?.greet() ?: "" } // Transform Greeting to String, we don't want the null
-        .stateIn(
-            scope = CoroutineScope(Dispatchers.Main), // Use an appropriate CoroutineScope for lifecycle control
-            started = SharingStarted.Lazily,
-            initialValue = "Welcome!"
-        )
+    // passthrough example
+    private val _greetingText: StateFlow<String> = stateFlowFromRepository(
+        repositoryFlow = greetingRepository.data,
+        transform = { it?.greet() ?: "" },
+        initialValue = "Welcome!"
+    )
 
     override val greetingText: StateFlow<String> = _greetingText
 

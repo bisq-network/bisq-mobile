@@ -5,6 +5,11 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import network.bisq.mobile.domain.data.model.BaseModel
 
 /**
  * Presenter for any type of view.
@@ -94,6 +99,34 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) {
             throw IllegalStateException("You can't unregister to a non root presenter")
         }
         this.dependants!!.remove(child)
+    }
+
+    /**
+     * Pass through function that allows you to link the requested type the view is asking for in its view presenter interface
+     * with the field in the domain model of the repository.
+     *
+     * @param M base model from where to extract the requested type T
+     * @param T the requested view type T
+     * @param repositoryFlow
+     * @param transform the transformation function from the
+     * @param initialValue
+     * @param scope defaults to Coroutine.Main (view thread)
+     * @param started defaults to Lazy loading
+     */
+    protected fun <M: BaseModel, T> stateFlowFromRepository(
+        repositoryFlow: StateFlow<M?>,
+        transform: (M?) -> T,
+        initialValue: T,
+        scope: CoroutineScope = CoroutineScope(Dispatchers.Main),
+        started: SharingStarted = SharingStarted.Lazily
+    ): StateFlow<T> {
+        return repositoryFlow
+            .map { transform(it) }
+            .stateIn(
+                scope = scope,
+                started = started,
+                initialValue = initialValue
+            )
     }
 
     private fun isRoot() = rootPresenter == null
