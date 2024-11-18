@@ -7,8 +7,9 @@ import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
 import bisq.user.identity.UserIdentity
 import co.touchlab.kermit.Logger
-import network.bisq.mobile.domain.user_profile.UserProfileFacade
+import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.user_profile.UserProfileModel
+import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
 import java.util.Random
 import kotlin.math.max
 import kotlin.math.min
@@ -19,18 +20,24 @@ import kotlin.math.min
  * It uses in a in-memory model for the relevant data required for the presenter to reflect the domains state.
  * Persistence is done inside the Bisq 2 libraries.
  */
-class NodeUserProfileFacade(
+class NodeUserProfileServiceFacade(
     override val model: UserProfileModel,
-    val securityService: SecurityService,
-    val userService: UserService
+    private val applicationServiceSupplier: AndroidApplicationService.Supplier
 ) :
-    UserProfileFacade {
+    UserProfileServiceFacade {
 
     companion object {
         private const val AVATAR_VERSION = 0
     }
 
-    val log = Logger.withTag("NodeUserProfileFacade")
+    private val log = Logger.withTag("NodeUserProfileFacade")
+
+
+    private val securityService: SecurityService
+        get() = applicationServiceSupplier.securityServiceSupplier.get()
+
+    private val userService: UserService
+        get() = applicationServiceSupplier.userServiceSupplier.get()
 
 
     override fun hasUserProfile(): Boolean {
@@ -39,6 +46,7 @@ class NodeUserProfileFacade(
 
     override suspend fun generateKeyPair() {
         model as NodeUserProfileModel
+        model.setGenerateKeyPairInProgress(true)
         val keyPair = securityService.keyBundleService.generateKeyPair()
         model.keyPair = keyPair
         val pubKeyHash = DigestUtil.hash(keyPair.public.encoded)
@@ -59,11 +67,13 @@ class NodeUserProfileFacade(
         //                                powSolution,
         //                                CURRENT_AVATARS_VERSION,
         //                                CreateProfileModel.CAT_HASH_IMAGE_SIZE);
+
+        model.setGenerateKeyPairInProgress(false)
     }
 
     override suspend fun createAndPublishNewUserProfile() {
         model as NodeUserProfileModel
-        model.setIsBusy(true)  // UI should start busy animation based on that property
+        model.setCreateAndPublishInProgress(true)  // UI should start busy animation based on that property
         userService.userIdentityService.createAndPublishNewUserProfile(
             model.nickName.value,
             model.keyPair,
@@ -75,7 +85,7 @@ class NodeUserProfileFacade(
         )
             .whenComplete { userIdentity: UserIdentity?, throwable: Throwable? ->
                 // UI should stop busy animation and show `next` button
-                model.setIsBusy(false)
+                model.setCreateAndPublishInProgress(false)
             }
     }
 
@@ -102,15 +112,15 @@ class NodeUserProfileFacade(
     private fun createSimulatedDelay(powDuration: Long) {
         try {
             // Proof of work creation for difficulty 65536 takes about 50 ms to 100 ms on a 4 GHz Intel Core i7.
-            // Target duration would be 500-2000 ms, but it is hard to find the right difficulty that works
+            // Target duration would be 200-1000 ms, but it is hard to find the right difficulty that works
             // well also for low-end CPUs. So we take a rather safe lower difficulty value and add here some
             // delay to not have a too fast flicker-effect in the UI when recreating the nym.
             // We add a min delay of 200 ms with some randomness to make the usage of the proof of work more
             // visible.
-            val random: Int = Random().nextInt(100)
+            val random: Int = Random().nextInt(800)
             // Limit to 200-2000 ms
             Thread.sleep(
-                min(2000.0, max(200.0, (200 + random - powDuration).toDouble()))
+                min(1000.0, max(200.0, (200 + random - powDuration).toDouble()))
                     .toLong()
             )
         } catch (e: InterruptedException) {

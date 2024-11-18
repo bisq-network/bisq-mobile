@@ -22,10 +22,16 @@ open class UserProfileModel {
         _nym.value = value
     }
 
-    private val _isBusy = MutableStateFlow(false)
-    val isBusy: StateFlow<Boolean> get() = _isBusy
-    fun setIsBusy(value: Boolean) {
-        _isBusy.value = value
+    private val _generateKeyPairInProgress = MutableStateFlow(false)
+    val generateKeyPairInProgress: StateFlow<Boolean> get() = _generateKeyPairInProgress
+    fun setGenerateKeyPairInProgress(value: Boolean) {
+        _generateKeyPairInProgress.value = value
+    }
+
+    private val _createAndPublishInProgress = MutableStateFlow(false)
+    val createAndPublishInProgress: StateFlow<Boolean> get() = _createAndPublishInProgress
+    fun setCreateAndPublishInProgress(value: Boolean) {
+        _createAndPublishInProgress.value = value
     }
 
     lateinit var pubKeyHash: ByteArray

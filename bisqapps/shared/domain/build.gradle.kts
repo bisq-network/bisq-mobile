@@ -63,6 +63,7 @@ kotlin {
                 exclude(group = "org.slf4j", module = "slf4j-api")
             }
             implementation("com.squareup.okio:okio:3.9.1")
+            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.4.0")
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
