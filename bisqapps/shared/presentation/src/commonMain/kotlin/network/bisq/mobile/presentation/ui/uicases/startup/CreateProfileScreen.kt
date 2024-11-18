@@ -10,6 +10,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bot_image
@@ -23,8 +24,10 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
-import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
+import kotlinx.coroutines.flow.StateFlow
+import cafe.adriel.lyricist.LocalStrings
+import org.koin.core.parameter.parametersOf
 
 interface ICreateProfilePresenter: ViewPresenter {
     val profileName: StateFlow<String>
@@ -81,12 +84,12 @@ fun CreateProfileScreen(
         Image(painterResource(Res.drawable.img_bot_image), "Crypto geHostnerated image (PoW)") // TODO: Translation
         Spacer(modifier = Modifier.height(32.dp))
         BisqText.baseRegular(
-            text = presenter.nym.collectAsState().value,
+            text = "Sleepily-Distracted-Zyophyte-257",
             color = BisqTheme.colors.light1,
         )
         Spacer(modifier = Modifier.height(12.dp))
         BisqText.baseRegular(
-            text = presenter.id.collectAsState().value,
+            text = strings.onboarding_createProfile_nym,
             color = BisqTheme.colors.grey2,
         )
         Spacer(modifier = Modifier.height(38.dp))
@@ -94,12 +97,12 @@ fun CreateProfileScreen(
             text = strings.onboarding_createProfile_regenerate,
             backgroundColor = BisqTheme.colors.dark5,
             padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp),
-            onClick = {presenter.onGenerateKeyPair() }
+            onClick = {}
         )
         Spacer(modifier = Modifier.height(40.dp))
         BisqButton(
             strings.buttons_next,
-            onClick = { presenter.onCreateAndPublishNewUserProfile() },
+            onClick = { presenter.navigateToNextScreen() },
             backgroundColor = if (profileName.isEmpty()) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
         )
    }
