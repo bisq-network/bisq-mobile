@@ -107,6 +107,7 @@ class AndroidApplicationService(context: Context, userDataDir: Path?) :
         var dontShowAgainServiceSupplier: androidx.core.util.Supplier<DontShowAgainService> =
             Supplier { applicationService.dontShowAgainService }
     }
+
     companion object {
         const val STARTUP_TIMEOUT_SEC: Long = 300
         const val SHUTDOWN_TIMEOUT_SEC: Long = 10
@@ -215,6 +216,14 @@ class AndroidApplicationService(context: Context, userDataDir: Path?) :
     }
 
     override fun initialize(): CompletableFuture<Boolean> {
+        var ts = System.currentTimeMillis()
+        pruneAllBackups().join()
+        log.info("pruneAllBackups took {} ms", System.currentTimeMillis() - ts)
+
+        ts = System.currentTimeMillis()
+        readAllPersisted().join()
+        log.info("readAllPersisted took {} ms", System.currentTimeMillis() - ts)
+
         return securityService.initialize()
             .thenCompose<Boolean> { result: Boolean? ->
                 setState(State.INITIALIZE_NETWORK)
