@@ -63,6 +63,9 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes.add("META-INF/LICENSE.md")
+            excludes.add("META-INF/NOTICE.md")
+            excludes.add("META-INF/NOTICE.markdown")
         }
     }
     buildTypes {
@@ -82,6 +85,8 @@ android {
 dependencies {
     implementation(project(":shared:presentation"))
     implementation(project(":shared:domain"))
+    // FIXME hack to avoid the issue that org.slf4j is not found as we exclude it in shared
+    implementation("io.ktor:ktor-client-cio:3.0.1")
     debugImplementation(compose.uiTooling)
 }
 

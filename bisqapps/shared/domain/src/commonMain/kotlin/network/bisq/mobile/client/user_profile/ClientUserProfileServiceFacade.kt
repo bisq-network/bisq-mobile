@@ -7,6 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.user_profile.UserProfileResponse
+import network.bisq.mobile.domain.user.profile.UserProfile
 import network.bisq.mobile.domain.user_profile.UserProfileModel
 import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
 import kotlin.math.max
@@ -23,8 +24,8 @@ class ClientUserProfileServiceFacade(
     // TODO Dispatchers.IO is not supported on iOS. Either customize or find whats on iOS appropriate.
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
-    override fun hasUserProfile(): Boolean {
-        TODO("Not yet implemented")
+    override suspend fun hasUserProfile(): Boolean {
+        return getUserIdentityIds().isNotEmpty()
     }
 
     override suspend fun generateKeyPair() {
@@ -33,9 +34,9 @@ class ClientUserProfileServiceFacade(
             try {
                 model.setGenerateKeyPairInProgress(true)
                 val ts = Clock.System.now().toEpochMilliseconds()
-                val result = apiGateway.requestPreparedData()
-                model.preparedDataAsJson = result.first
-                val preparedData = result.second
+                val response = apiGateway.requestPreparedData()
+                model.preparedDataAsJson = response.first
+                val preparedData = response.second
 
                 createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
 
@@ -56,12 +57,12 @@ class ClientUserProfileServiceFacade(
         coroutineScope.launch {
             try {
                 model.setCreateAndPublishInProgress(true)
-                val userProfileResponse: UserProfileResponse =
+                val response: UserProfileResponse =
                     apiGateway.createAndPublishNewUserProfile(
                         model.nickName.value,
                         model.preparedDataAsJson
                     )
-                require(model.id.value == userProfileResponse.userProfileId)
+                require(model.id.value == response.userProfileId)
                 { "userProfileId from model does not match userProfileId from response" }
             } catch (e: Exception) {
                 log.e { e.toString() }
@@ -71,11 +72,32 @@ class ClientUserProfileServiceFacade(
         }
     }
 
-    override fun getUserProfiles(): Sequence<UserProfileModel> {
-        TODO("Not yet implemented")
+
+    override suspend fun getUserIdentityIds(): List<String> {
+        return try {
+            apiGateway.getUserIdentityIds()
+        } catch (e: Exception) {
+            log.e { e.toString() }
+            emptyList()
+        }
     }
 
-    override fun findUserProfile(id: String): UserProfileModel? {
+    override suspend fun applySelectedUserProfile() {
+        try {
+            val userProfile = getSelectedUserProfile()
+            model.setNickName(userProfile.nickName)
+            model.setNym(userProfile.nym)
+            model.setId(userProfile.id)
+        } catch (e: Exception) {
+            log.e { e.toString() }
+        }
+    }
+
+    private suspend fun getSelectedUserProfile(): UserProfile {
+        return apiGateway.getSelectedUserProfile()
+    }
+
+    private suspend fun findUserProfile(id: String): UserProfileModel? {
         TODO("Not yet implemented")
     }
 

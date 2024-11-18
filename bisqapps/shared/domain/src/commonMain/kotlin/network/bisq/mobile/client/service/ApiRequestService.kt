@@ -15,7 +15,7 @@ import kotlinx.serialization.json.Json
 
 class ApiRequestService(host: String) {
     private val log = Logger.withTag("RequestService")
-    var baseUrl = "http://$host:8082/api/v1/"
+    private var baseUrl = "http://$host:8082/api/v1/"
 
     suspend fun get(path: String): String {
         val client = HttpClient(CIO) {

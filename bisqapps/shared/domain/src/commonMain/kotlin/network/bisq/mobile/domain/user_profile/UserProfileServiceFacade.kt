@@ -11,7 +11,7 @@ interface UserProfileServiceFacade {
      * This should be used to detect a first time user who has no identity created yet and where
      * we display the create user profile screen.
      */
-    fun hasUserProfile(): Boolean
+    suspend fun hasUserProfile(): Boolean
 
     /**
      * Generates a key pair and derived data as well as proof of work which is used to strengthen
@@ -37,12 +37,12 @@ interface UserProfileServiceFacade {
     suspend fun createAndPublishNewUserProfile()
 
     /**
-     * Find a UserProfileModel based on the give user profile ID
-     */
-    fun findUserProfile(id: String): UserProfileModel?
-
-    /**
      * Create UserProfileModels from the userIdentities.
      */
-    fun getUserProfiles(): Sequence<UserProfileModel>
+    suspend fun getUserIdentityIds(): List<String>
+
+    /**
+     * Applies the selected user identity to the user profile model
+     */
+    suspend fun applySelectedUserProfile()
 }

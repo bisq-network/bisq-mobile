@@ -6,6 +6,7 @@ import bisq.security.SecurityService
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
 import bisq.user.identity.UserIdentity
+import bisq.user.profile.UserProfile
 import co.touchlab.kermit.Logger
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.user_profile.UserProfileModel
@@ -40,8 +41,8 @@ class NodeUserProfileServiceFacade(
         get() = applicationServiceSupplier.userServiceSupplier.get()
 
 
-    override fun hasUserProfile(): Boolean {
-        return userService.userIdentityService.userIdentities.isEmpty()
+    override suspend fun hasUserProfile(): Boolean {
+        return userService.userIdentityService.userIdentities.isNotEmpty()
     }
 
     override suspend fun generateKeyPair() {
@@ -89,24 +90,42 @@ class NodeUserProfileServiceFacade(
             }
     }
 
-    override fun findUserProfile(id: String): UserProfileModel? {
-        return getUserProfiles().find { model -> model.id.equals(id) }
+    override suspend fun getUserIdentityIds(): List<String> {
+        return userService.userIdentityService.userIdentities
+            .map { userIdentity -> userIdentity.id }
     }
 
-    override fun getUserProfiles(): Sequence<UserProfileModel> {
+    override suspend fun applySelectedUserProfile() {
+        val userProfile = getSelectedUserProfile()
+        if (userProfile != null) {
+            model.setNickName(userProfile.nickName)
+            model.setNym(userProfile.nym)
+            model.setId(userProfile.id)
+        }
+    }
+
+    private fun getSelectedUserProfile(): UserProfile? {
+        val userIdentity = userService.userIdentityService.selectedUserIdentity ?: return null
+        return userIdentity.userProfile
+
+    }
+
+    private fun findUserProfile(id: String): UserProfileModel? {
         return userService.userIdentityService.userIdentities
-            .asSequence()
-            .map { userIdentity ->
-                val userProfile = userIdentity.userProfile
-                val model = NodeUserProfileModel()
-                model.setNickName(userProfile.nickName)
-                model.setNym(userProfile.nym)
-                model.setId(userProfile.id)
-                model.keyPair = userIdentity.identity.keyBundle.keyPair
-                model.pubKeyHash = userIdentity.userProfile.pubKeyHash
-                model.proofOfWork = userIdentity.userProfile.proofOfWork
-                model
-            }
+            .map { userIdentity -> getNodeUserProfileModel(userIdentity) }
+            .find { model -> model.id.equals(id) }
+    }
+
+    private fun getNodeUserProfileModel(userIdentity: UserIdentity): UserProfileModel {
+        val userProfile = userIdentity.userProfile
+        val model = NodeUserProfileModel()
+        model.setNickName(userProfile.nickName)
+        model.setNym(userProfile.nym)
+        model.setId(userProfile.id)
+        model.keyPair = userIdentity.identity.keyBundle.keyPair
+        model.pubKeyHash = userIdentity.userProfile.pubKeyHash
+        model.proofOfWork = userIdentity.userProfile.proofOfWork
+        return model
     }
 
     private fun createSimulatedDelay(powDuration: Long) {

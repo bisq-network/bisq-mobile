@@ -35,4 +35,13 @@ open class UserProfileModel {
     }
 
     lateinit var pubKeyHash: ByteArray
+
+    override fun toString(): String {
+        return "UserProfileModel(_nickName=${_nickName.value}, " +
+                "_id=${_id.value}, " +
+                "_nym=${_nym.value}, " +
+                "_generateKeyPairInProgress=${_generateKeyPairInProgress.value}, " +
+                "_createAndPublishInProgress=${_createAndPublishInProgress.value}, " +
+                "pubKeyHash=${pubKeyHash.contentToString()})"
+    }
 }
