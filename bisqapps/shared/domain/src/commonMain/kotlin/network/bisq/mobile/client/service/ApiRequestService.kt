@@ -13,8 +13,9 @@ import io.ktor.http.contentType
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 
-class ApiRequestService(val baseUrl: String) {
+class ApiRequestService(host: String) {
     private val log = Logger.withTag("RequestService")
+    var baseUrl = "http://$host:8082/api/v1/"
 
     suspend fun get(path: String): String {
         val client = HttpClient(CIO) {
