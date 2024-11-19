@@ -19,6 +19,9 @@ androidx-multidex = "2.0.1"
 bisq-core = "2.1.2"
 compose-plugin = "1.7.0"
 junit = "4.13.2"
+kotlinxDatetime = "0.4.0"
+kotlinxSerializationCore = "1.7.3"
+ktorClientCio = "3.0.1"
 mockio = "1.12.0"
 kotlin = "2.0.20"
 kotlinTestJunit = "2.0.20"
@@ -26,6 +29,8 @@ kotlinx = "1.9.0"
 kermit = "2.0.4"
 buildconfig = "5.5.0"
 navigationCompose = "2.7.0-alpha07"
+okio = "3.9.1"
+orgJetbrainsKotlinPluginSerializationGradlePlugin = "2.0.21"
 protobuf = "0.9.4"
 protob = "4.28.2"
 ksp = "2.0.20-1.0.25"
@@ -62,6 +67,14 @@ typesafe-config-lib = { strictly = '1.4.3' }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit-v180 = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlinTestJunit" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx" }
+kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
+kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerializationCore" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClientCio" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClientCio" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClientCio" }
+ktor-client-json = { module = "io.ktor:ktor-client-json", version.ref = "ktorClientCio" }
+ktor-client-serialization = { module = "io.ktor:ktor-client-serialization", version.ref = "ktorClientCio" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorClientCio" }
 mock-io = { module = "io.mockk:mockk", version.ref = "mockio" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-multidex = { group = "androidx.multidex", name = "multidex", version.ref = "androidx-multidex" }
@@ -84,6 +97,8 @@ logging-kermit = { group = "co.touchlab", name = "kermit", version.ref = "kermit
 
 lombok = { module = 'org.projectlombok:lombok', version.ref = 'lombok-lib' }
 
+okio = { module = "com.squareup.okio:okio", version.ref = "okio" }
+jetbrains-serialization-gradle-plugin = { module = "org.jetbrains.kotlin.plugin.serialization:org.jetbrains.kotlin.plugin.serialization.gradle.plugin", version.ref = "orgJetbrainsKotlinPluginSerializationGradlePlugin" }
 typesafe-config = { module = 'com.typesafe:config', version.ref = 'typesafe-config-lib' }
 
 bouncycastle = { module = 'org.bouncycastle:bcprov-jdk18on', version.ref = 'bouncycastle-lib' }

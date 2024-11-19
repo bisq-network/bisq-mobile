@@ -86,7 +86,7 @@ dependencies {
     implementation(project(":shared:presentation"))
     implementation(project(":shared:domain"))
     // FIXME hack to avoid the issue that org.slf4j is not found as we exclude it in shared
-    implementation("io.ktor:ktor-client-cio:3.0.1")
+    implementation(libs.ktor.client.cio)
     debugImplementation(compose.uiTooling)
 }
 
