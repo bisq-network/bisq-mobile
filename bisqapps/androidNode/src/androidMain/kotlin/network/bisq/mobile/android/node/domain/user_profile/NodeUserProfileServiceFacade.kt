@@ -31,7 +31,7 @@ class NodeUserProfileServiceFacade(
         private const val AVATAR_VERSION = 0
     }
 
-    private val log = Logger.withTag("NodeUserProfileFacade")
+    private val log = Logger.withTag(this::class.simpleName ?: "NodeUserProfileServiceFacade")
 
 
     private val securityService: SecurityService

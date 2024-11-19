@@ -10,7 +10,7 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.contentType
 
 class ApiRequestService(private val httpClient: HttpClient, host: String) {
-    private val log = Logger.withTag("RequestService")
+    private val log = Logger.withTag(this::class.simpleName ?: "ApiRequestService")
     private var baseUrl = "http://$host:8082/api/v1/"
 
     suspend fun get(path: String): String {

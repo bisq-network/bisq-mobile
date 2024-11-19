@@ -1,13 +1,10 @@
 package network.bisq.mobile.domain.client.main.user_profile
 
 import co.touchlab.kermit.Logger
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
-import network.bisq.mobile.client.user_profile.UserProfileResponse
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
+import network.bisq.mobile.client.user_profile.UserProfileResponse
 import network.bisq.mobile.domain.user_profile.UserProfileModel
 import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
 import kotlin.math.max
@@ -19,10 +16,8 @@ class ClientUserProfileServiceFacade(
     private val apiGateway: UserProfileApiGateway
 ) :
     UserProfileServiceFacade {
-    private val log = Logger.withTag("IosClientUserProfileController")
+    private val log = Logger.withTag(this::class.simpleName ?: "UserProfileServiceFacade")
 
-    // TODO Dispatchers.IO is not supported on iOS. Either customize or find whats on iOS appropriate.
-    private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
     override suspend fun hasUserProfile(): Boolean {
         return getUserIdentityIds().isNotEmpty()
@@ -30,45 +25,41 @@ class ClientUserProfileServiceFacade(
 
     override suspend fun generateKeyPair() {
         model as ClientUserProfileModel
-        coroutineScope.launch {
-            try {
-                model.setGenerateKeyPairInProgress(true)
-                val ts = Clock.System.now().toEpochMilliseconds()
-                val response = apiGateway.requestPreparedData()
-                model.preparedDataAsJson = response.first
-                val preparedData = response.second
+        try {
+            model.setGenerateKeyPairInProgress(true)
+            val ts = Clock.System.now().toEpochMilliseconds()
+            val response = apiGateway.requestPreparedData()
+            model.preparedDataAsJson = response.first
+            val preparedData = response.second
 
-                createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
+            createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
 
-                model.keyPair = preparedData.keyPair
-                model.proofOfWork = preparedData.proofOfWork
-                model.setNym(preparedData.nym)
-                model.setId(preparedData.id)
-            } catch (e: Exception) {
-                log.e { e.toString() }
-            } finally {
-                model.setGenerateKeyPairInProgress(false)
-            }
+            model.keyPair = preparedData.keyPair
+            model.proofOfWork = preparedData.proofOfWork
+            model.setNym(preparedData.nym)
+            model.setId(preparedData.id)
+        } catch (e: Exception) {
+            log.e { e.toString() }
+        } finally {
+            model.setGenerateKeyPairInProgress(false)
         }
     }
 
     override suspend fun createAndPublishNewUserProfile() {
         model as ClientUserProfileModel
-        coroutineScope.launch {
-            try {
-                model.setCreateAndPublishInProgress(true)
-                val response: UserProfileResponse =
-                    apiGateway.createAndPublishNewUserProfile(
-                        model.nickName.value,
-                        model.preparedDataAsJson
-                    )
-                require(model.id.value == response.userProfileId)
-                { "userProfileId from model does not match userProfileId from response" }
-            } catch (e: Exception) {
-                log.e { e.toString() }
-            } finally {
-                model.setCreateAndPublishInProgress(false)
-            }
+        try {
+            model.setCreateAndPublishInProgress(true)
+            val response: UserProfileResponse =
+                apiGateway.createAndPublishNewUserProfile(
+                    model.nickName.value,
+                    model.preparedDataAsJson
+                )
+            require(model.id.value == response.userProfileId)
+            { "userProfileId from model does not match userProfileId from response" }
+        } catch (e: Exception) {
+            log.e { e.toString() }
+        } finally {
+            model.setCreateAndPublishInProgress(false)
         }
     }
 

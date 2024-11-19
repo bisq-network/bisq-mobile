@@ -18,7 +18,7 @@ open class CreateProfilePresenter(
     private val userProfileRepository: UserProfileRepository
 ) : BasePresenter(mainPresenter) {
 
-    private val log = Logger.withTag("CreateProfilePresenter")
+    private val log = Logger.withTag(this::class.simpleName ?: "CreateProfilePresenter")
     private val userProfileModel = userProfileRepository.model
 
     val nickName: StateFlow<String> = userProfileModel.nickName

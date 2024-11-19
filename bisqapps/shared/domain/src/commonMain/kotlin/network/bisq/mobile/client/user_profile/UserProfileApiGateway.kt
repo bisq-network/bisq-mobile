@@ -13,7 +13,7 @@ import network.bisq.mobile.utils.ByteArrayAsBase64Serializer
 class UserProfileApiGateway(
     private val apiRequestService: ApiRequestService
 ) {
-    private val log = Logger.withTag("UserProfileApiGateway")
+    private val log = Logger.withTag(this::class.simpleName ?: "UserProfileApiGateway")
 
     suspend fun requestPreparedData(): Pair<String, PreparedData> {
         val response = apiRequestService.get("user-identity/prepared-data")
