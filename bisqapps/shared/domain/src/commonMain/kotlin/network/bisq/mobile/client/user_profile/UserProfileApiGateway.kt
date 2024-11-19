@@ -15,14 +15,17 @@ class UserProfileApiGateway(
 ) {
     private val log = Logger.withTag(this::class.simpleName ?: "UserProfileApiGateway")
 
+    private val json = Json { ignoreUnknownKeys = true }
+    private val jsonWithByteArraySerializer = Json {
+        serializersModule = SerializersModule {
+            contextual(ByteArrayAsBase64Serializer)
+        }
+        ignoreUnknownKeys = true
+    }
+
     suspend fun requestPreparedData(): Pair<String, PreparedData> {
         val response = apiRequestService.get("user-identity/prepared-data")
-        val json = Json {
-            serializersModule = SerializersModule {
-                contextual(ByteArrayAsBase64Serializer)
-            }
-        }
-        return Pair(response, json.decodeFromString<PreparedData>(response))
+        return Pair(response, jsonWithByteArraySerializer.decodeFromString<PreparedData>(response))
     }
 
     suspend fun createAndPublishNewUserProfile(
@@ -37,21 +40,17 @@ class UserProfileApiGateway(
         )
         val response =
             apiRequestService.post("user-identity/user-identities", createUserIdentityRequest)
-        return Json.decodeFromString(response)
+        return json.decodeFromString(response)
     }
 
     suspend fun getUserIdentityIds(): List<String> {
         val response = apiRequestService.get("user-identity/ids")
-        return Json.decodeFromString(response)
+        return json.decodeFromString(response)
     }
+
 
     suspend fun getSelectedUserProfile(): UserProfile {
         val response = apiRequestService.get("user-identity/selected/user-profile")
-        val json = Json {
-            serializersModule = SerializersModule {
-                contextual(ByteArrayAsBase64Serializer)
-            }
-        }
-        return  json.decodeFromString<UserProfile>(response)
+        return jsonWithByteArraySerializer.decodeFromString<UserProfile>(response)
     }
 }
