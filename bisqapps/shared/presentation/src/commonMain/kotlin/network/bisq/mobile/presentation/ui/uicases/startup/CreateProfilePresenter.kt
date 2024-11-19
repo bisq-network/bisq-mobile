@@ -23,6 +23,8 @@ open class CreateProfilePresenter(
 
     private val _profileName = MutableStateFlow("")
     override val profileName: StateFlow<String> = _profileName
+    override val nym: StateFlow<String> = MutableStateFlow("")
+    override val id: StateFlow<String> = MutableStateFlow("")
 
     // TODO: Not working
     init {
@@ -46,6 +48,14 @@ open class CreateProfilePresenter(
                 popUpTo(Routes.CreateProfile.name) { inclusive = true }
             }
         }
+    }
+
+    override fun onGenerateKeyPair() {
+
+    }
+
+    override fun onCreateAndPublishNewUserProfile() {
+        this.navigateToNextScreen()
     }
 
     fun saveUserProfile() {

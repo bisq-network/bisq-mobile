@@ -30,6 +30,7 @@ import bisqapps.shared.presentation.generated.resources.*
 import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.presentation.ViewPresenter
 
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -43,10 +44,11 @@ import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 
-interface IOnboardingPresenter {
+interface IOnboardingPresenter: ViewPresenter {
     val pagerState: StateFlow<PagerState?>
 
     fun onNextButtonClick(coroutineScope: CoroutineScope)
+    fun setPagerState(pagerState: PagerState)
 }
 
 @OptIn(ExperimentalResourceApi::class)
@@ -59,9 +61,9 @@ fun OnBoardingScreen() {
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { onBoardingPages.size })
 
-    // TODO: Any other better way to do this?
     LaunchedEffect(pagerState) {
-        (presenter as? OnBoardingPresenter)?.setPagerState(pagerState)
+        presenter.onViewAttached()
+        presenter.setPagerState(pagerState)
     }
 
     BisqScrollLayout() {

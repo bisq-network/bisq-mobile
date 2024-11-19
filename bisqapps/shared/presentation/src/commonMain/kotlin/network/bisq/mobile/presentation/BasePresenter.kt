@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation
 
+import androidx.annotation.CallSuper
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -10,6 +11,28 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.model.BaseModel
+import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
+
+/**
+ * Presenter methods accesible by all views. Views should extend this interface when defining the behaviour expected for their presenter.
+ */
+interface ViewPresenter {
+    /**
+     * This can be used as initialization method AFTER view gets attached (so view is available)
+     */
+    fun onViewAttached()
+
+    /**
+     * This can be used as cleanup BEFORE unattaching a view
+     */
+    fun onViewUnattaching()
+
+    /**
+     * This can be used to do cleanup when the view is getting destroyed
+     * Base Presenter corouting scope gets cancelled right before this method is called
+     */
+    fun onDestroying()
+}
 
 /**
  * Presenter for any type of view.
@@ -19,9 +42,9 @@ import network.bisq.mobile.domain.data.model.BaseModel
  * Base class allows to have a tree hierarchy of presenters. If the rootPresenter is null, this presenter acts as root
  * if root present is passed, this present attach itself to the root to get updates (consequently its dependants will be always empty
  */
-abstract class BasePresenter(private val rootPresenter: MainPresenter?) {
+abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPresenter {
     protected var view: Any? = null
-    private val log = Logger.withTag("BasePresenter")
+    private val log = Logger.withTag(this::class.simpleName ?: "BasePresenter")
     // Coroutine scope for the presenter
     protected val presenterScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -31,45 +54,55 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) {
         rootPresenter?.registerChild(child = this)
     }
 
-    /**
-     * This can be used as initialization method AFTER view gets attached (so view is available)
-     */
-    open fun onViewAttached() { }
+    @CallSuper
+    override fun onViewAttached() {
+        log.i { "Lifecycle: View Attached from Presenter" }
+    }
 
-    /**
-     * This can be used as cleanup BEFORE unattaching a view
-     */
-    open fun onViewUnattaching() { }
+    @CallSuper
+    override fun onViewUnattaching() {
+        log.i { "Lifecycle: View Unattached from Presenter" }
+    }
 
-    /**
-     * This can be used to do cleanup when the view is getting destroyed
-     * Base Presenter corouting scope gets cancelled right before this method is called
-     */
-    open fun onDestroying() { }
+    @CallSuper
+    override fun onDestroying() {
+        // default impl
+    }
 
+    @CallSuper
     open fun onStart() {
         log.i { "Lifecycle: START" }
         this.dependants?.forEach { it.onStart() }
     }
+
+    @CallSuper
     open fun onResume() {
         log.i { "Lifecycle: RESUME" }
         this.dependants?.forEach { it.onResume() }
     }
+
+    @CallSuper
     open fun onPause() {
         log.i { "Lifecycle: PAUSE" }
         this.dependants?.forEach { it.onPause() }
     }
+
+    @CallSuper
     open fun onStop() {
         log.i { "Lifecycle: STOP" }
         this.dependants?.forEach { it.onStop() }
     }
 
     fun onDestroy() {
-        log.i { "Lifecycle: DESTROY" }
-        dependants?.forEach { it.onDestroy() }
-        rootPresenter?.unregisterChild(this)
-        presenterScope.cancel()
-        onDestroying()
+        try {
+            log.i { "Lifecycle: DESTROY" }
+            cleanup()
+            onDestroying()
+        } catch (e: Exception) {
+            log.e("Custom cleanup failed", e)
+        } finally {
+            rootPresenter?.unregisterChild(this)
+        }
     }
 
     fun attachView(view: Any) {
@@ -127,6 +160,15 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) {
                 started = started,
                 initialValue = initialValue
             )
+    }
+
+    private fun cleanup() {
+        try {
+            presenterScope.cancel()
+            dependants?.forEach { it.onDestroy() }
+        } catch (e: Exception) {
+            log.e("Failed cleanup", e)
+        }
     }
 
     private fun isRoot() = rootPresenter == null

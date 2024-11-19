@@ -35,6 +35,7 @@ import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.data.model.Greeting
 import network.bisq.mobile.domain.data.repository.GreetingRepository
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -71,8 +72,8 @@ class MainNodePresenter(greetingRepository: NodeGreetingRepository) :
         }
     }
 
-    override fun onViewAttached() {
-        super.onViewAttached()
+    override fun onViewAttached(param: Any?, coroutineScope: CoroutineScope) {
+        super.onViewAttached(SplashScreen::, this)
         logMessage.addObserver {
             println(it)
         }

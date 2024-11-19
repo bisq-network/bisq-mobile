@@ -13,6 +13,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 
 import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqProgressBar
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -22,7 +23,7 @@ import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 
-interface ISplashPresenter {
+interface ISplashPresenter: ViewPresenter {
     fun startLoading(onProgressUpdate: (Float) -> Unit)
 }
 
@@ -36,6 +37,7 @@ fun SplashScreen(
     var currentProgress by remember { mutableFloatStateOf(0f) }
 
     LaunchedEffect(Unit) {
+        presenter.onViewAttached()
         presenter.startLoading { progress ->
             currentProgress = progress
         }

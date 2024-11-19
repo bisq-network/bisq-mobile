@@ -16,7 +16,7 @@ abstract class SingleObjectRepository<out T : BaseModel>(
     private val persistenceSource: PersistenceSource<T>? = null
 ) : Repository<T> {
 
-    private val logger = Logger.withTag(SingleObjectRepository::class.simpleName ?: "SingleObjectRepository")
+    private val logger = Logger.withTag(this::class.simpleName ?: "SingleObjectRepository")
 
     private val _data = MutableStateFlow<T?>(null)
     override val data: StateFlow<T?> = _data

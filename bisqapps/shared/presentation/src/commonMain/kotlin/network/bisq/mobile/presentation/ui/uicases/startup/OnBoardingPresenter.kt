@@ -7,7 +7,6 @@ import bisqapps.shared.presentation.generated.resources.img_bisq_Easy
 import bisqapps.shared.presentation.generated.resources.img_fiat_btc
 import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -42,7 +41,7 @@ open class OnBoardingPresenter(
     private val _pagerState = MutableStateFlow<PagerState?>(null)
     override val pagerState: StateFlow<PagerState?> = _pagerState
 
-    fun setPagerState(pagerState: PagerState) {
+    override fun setPagerState(pagerState: PagerState) {
         _pagerState.value = pagerState
     }
 

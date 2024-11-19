@@ -8,13 +8,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -27,7 +21,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
-import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
@@ -37,8 +30,9 @@ import org.koin.core.parameter.parametersOf
 import cafe.adriel.lyricist.LocalStrings
 
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.presentation.ViewPresenter
 
-interface ITrustedNodeSetupPresenter {
+interface ITrustedNodeSetupPresenter: ViewPresenter {
     val bisqUrl: StateFlow<String>
     val isConnected: StateFlow<Boolean>
 
@@ -60,7 +54,11 @@ fun TrustedNodeSetupScreen(
     val bisqUrl = presenter.bisqUrl.collectAsState().value
     val isConnected = presenter.isConnected.collectAsState().value
 
-    BisqScrollLayout() {
+    LaunchedEffect(navController) {
+        presenter.onViewAttached()
+    }
+
+    BisqScrollLayout {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
         Column(

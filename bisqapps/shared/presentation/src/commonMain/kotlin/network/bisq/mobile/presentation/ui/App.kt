@@ -9,7 +9,7 @@ import cafe.adriel.lyricist.rememberStrings
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.i18n.Locales
+import network.bisq.mobile.presentation.ViewPresenter
 import org.koin.compose.koinInject
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
@@ -17,7 +17,7 @@ import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.mp.KoinPlatform.getKoin
 
-interface AppPresenter {
+interface AppPresenter: ViewPresenter {
     // Observables for state
     val isContentVisible: StateFlow<Boolean>
     val greetingText: StateFlow<String>
@@ -38,13 +38,15 @@ fun App() {
 
     var isNavControllerSet by remember { mutableStateOf(false) }
 
+    val presenter: AppPresenter = koinInject()
+
+
     LaunchedEffect(rootNavController) {
+        presenter.onViewAttached()
         getKoin().setProperty("RootNavController", rootNavController)
         getKoin().setProperty("TabNavController", tabNavController)
         isNavControllerSet = true
     }
-
-    val presenter: AppPresenter = koinInject()
 
     val lyricist = rememberStrings()
     // lyricist.languageTag = Locales.FR
