@@ -8,11 +8,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.collectLatest
+import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.repository.UserProfileRepository
 import network.bisq.mobile.domain.data.model.UserProfile
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import kotlinx.coroutines.delay
 import network.bisq.mobile.presentation.MainPresenter
 
 open class CreateProfilePresenter(
@@ -28,7 +28,7 @@ open class CreateProfilePresenter(
 
     // TODO: Not working
     init {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(BackgroundDispatcher).launch {
             userProfileRepository.data.collectLatest { userProfile ->
                 userProfile?.let {
                     _profileName.value = it.name
@@ -59,7 +59,7 @@ open class CreateProfilePresenter(
     }
 
     fun saveUserProfile() {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(BackgroundDispatcher).launch {
             val updatedProfile = UserProfile().apply {
                 name = _profileName.value
             }

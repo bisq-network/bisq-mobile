@@ -16,6 +16,7 @@ import bisqapps.shared.presentation.generated.resources.img_bot_image
 import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.components.MaterialTextField
+import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -25,7 +26,7 @@ import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 
-interface ICreateProfilePresenter {
+interface ICreateProfilePresenter: ViewPresenter {
     val profileName: StateFlow<String>
     val nym: StateFlow<String>
     val id: StateFlow<String>
@@ -42,7 +43,7 @@ fun CreateProfileScreen(
 ) {
     val strings = LocalStrings.current
     val navController: NavHostController = koinInject(named("RootNavController"))
-    val presenter: CreateProfilePresenter = koinInject { parametersOf(navController) }
+    val presenter: ICreateProfilePresenter = koinInject { parametersOf(navController) }
 
     val profileName = presenter.profileName.collectAsState().value
 

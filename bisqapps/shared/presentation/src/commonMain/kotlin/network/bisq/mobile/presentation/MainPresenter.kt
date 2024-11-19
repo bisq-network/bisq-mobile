@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.Greeting
 import network.bisq.mobile.domain.data.repository.GreetingRepository
 import network.bisq.mobile.presentation.ui.AppPresenter
@@ -31,7 +32,7 @@ open class MainPresenter(private val greetingRepository: GreetingRepository<Gree
     override val greetingText: StateFlow<String> = _greetingText
 
     init {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(BackgroundDispatcher).launch {
             greetingRepository.create(Greeting())
         }
     }

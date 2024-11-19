@@ -4,6 +4,7 @@ import co.touchlab.kermit.Logger
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.data.persistance.PersistenceSource
 
@@ -22,7 +23,7 @@ abstract class SingleObjectRepository<out T : BaseModel>(
     override val data: StateFlow<T?> = _data
 
     private val job = Job()
-    private val scope = CoroutineScope(job + Dispatchers.IO)
+    private val scope = CoroutineScope(job + BackgroundDispatcher)
 
     init {
         // Load from persistence on initialization if available

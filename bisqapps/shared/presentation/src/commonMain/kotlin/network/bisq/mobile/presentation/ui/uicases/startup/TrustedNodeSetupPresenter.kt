@@ -7,6 +7,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.presentation.BasePresenter
@@ -32,7 +33,7 @@ class TrustedNodeSetupPresenter(
     override fun testConnection(isTested: Boolean) {
         _isConnected.value = isTested
 
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(BackgroundDispatcher).launch {
             val updatedSettings = Settings().apply {
                 bisqUrl = _bisqUrl.value
                 isConnected = _isConnected.value

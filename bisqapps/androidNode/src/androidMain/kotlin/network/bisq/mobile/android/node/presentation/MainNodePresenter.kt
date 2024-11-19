@@ -32,10 +32,10 @@ import network.bisq.mobile.android.node.domain.data.repository.NodeGreetingRepos
 import network.bisq.mobile.android.node.domain.model.UserProfileModel
 import network.bisq.mobile.android.node.service.AndroidApplicationService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
+import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.Greeting
 import network.bisq.mobile.domain.data.repository.GreetingRepository
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -59,7 +59,7 @@ class MainNodePresenter(greetingRepository: NodeGreetingRepository) :
     private val profileModel = UserProfileModel()
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
-    private val loggingScope = CoroutineScope(Dispatchers.IO)
+    private val loggingScope = CoroutineScope(BackgroundDispatcher)
 
     private lateinit var applicationService: AndroidApplicationService
     private lateinit var userIdentityService: UserIdentityService
@@ -67,13 +67,13 @@ class MainNodePresenter(greetingRepository: NodeGreetingRepository) :
 
 
     init {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(BackgroundDispatcher).launch {
             greetingRepository.create(AndroidNodeGreeting())
         }
     }
 
-    override fun onViewAttached(param: Any?, coroutineScope: CoroutineScope) {
-        super.onViewAttached(SplashScreen::, this)
+    override fun onViewAttached() {
+        super.onViewAttached()
         logMessage.addObserver {
             println(it)
         }
@@ -329,7 +329,7 @@ class MainNodePresenter(greetingRepository: NodeGreetingRepository) :
     }
 
     private fun sendRandomMessagesEvery(delayMs: Long) {
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(BackgroundDispatcher).launch {
             while (isActive) { // Coroutine will keep running while active
                 publishRandomChatMessage()
                 delay(delayMs) // Delay for 1 minute (60,000 ms)
