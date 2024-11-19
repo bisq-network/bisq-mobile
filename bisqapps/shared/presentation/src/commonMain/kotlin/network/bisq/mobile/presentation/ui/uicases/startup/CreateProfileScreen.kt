@@ -1,16 +1,17 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bot_image
@@ -19,15 +20,14 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.components.MaterialTextField
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
-import org.koin.core.qualifier.named
-import kotlinx.coroutines.flow.StateFlow
-import cafe.adriel.lyricist.LocalStrings
 import org.koin.core.parameter.parametersOf
+import org.koin.core.qualifier.named
 
 interface ICreateProfilePresenter: ViewPresenter {
     val profileName: StateFlow<String>
@@ -84,12 +84,12 @@ fun CreateProfileScreen(
         Image(painterResource(Res.drawable.img_bot_image), "Crypto geHostnerated image (PoW)") // TODO: Translation
         Spacer(modifier = Modifier.height(32.dp))
         BisqText.baseRegular(
-            text = "Sleepily-Distracted-Zyophyte-257",
+            text = presenter.nym.collectAsState().value,
             color = BisqTheme.colors.light1,
         )
         Spacer(modifier = Modifier.height(12.dp))
         BisqText.baseRegular(
-            text = strings.onboarding_createProfile_nym,
+            text = presenter.id.collectAsState().value,
             color = BisqTheme.colors.grey2,
         )
         Spacer(modifier = Modifier.height(38.dp))
@@ -97,13 +97,13 @@ fun CreateProfileScreen(
             text = strings.onboarding_createProfile_regenerate,
             backgroundColor = BisqTheme.colors.dark5,
             padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp),
-            onClick = {}
+            onClick = {presenter.onGenerateKeyPair() }
         )
         Spacer(modifier = Modifier.height(40.dp))
         BisqButton(
             strings.buttons_next,
-            onClick = { presenter.navigateToNextScreen() },
+            onClick = { presenter.onCreateAndPublishNewUserProfile() },
             backgroundColor = if (profileName.isEmpty()) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
         )
-   }
+    }
 }
