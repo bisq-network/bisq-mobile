@@ -10,7 +10,7 @@ import org.koin.dsl.module
 
 val iosClientModule = module {
     single<UserProfileModel> { ClientUserProfileModel() }
-    single { ApiRequestService("localhost") }
+    single { ApiRequestService(get(), "localhost") }
     single { UserProfileApiGateway(get()) }
     single<UserProfileServiceFacade> { ClientUserProfileServiceFacade(get(), get()) }
 

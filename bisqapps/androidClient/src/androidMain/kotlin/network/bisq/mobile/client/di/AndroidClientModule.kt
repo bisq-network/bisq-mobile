@@ -10,7 +10,7 @@ import org.koin.dsl.module
 
 val androidClientModule = module {
     single<UserProfileModel> { ClientUserProfileModel() }
-    single { ApiRequestService("10.0.2.2") }
+    single { ApiRequestService(get(), "10.0.2.2") }
     single { UserProfileApiGateway(get()) }
     single<UserProfileServiceFacade> { ClientUserProfileServiceFacade(get(), get()) }
 
