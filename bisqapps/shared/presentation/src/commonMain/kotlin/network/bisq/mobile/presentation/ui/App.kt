@@ -47,7 +47,6 @@ fun App() {
     }
 
     val lyricist = rememberStrings()
-    // lyricist.languageTag = Locales.FR
 
     BisqTheme(darkTheme = true) {
         ProvideStrings(lyricist) {

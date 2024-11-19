@@ -24,6 +24,10 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
+import org.koin.core.qualifier.named
+import kotlinx.coroutines.flow.StateFlow
+import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 
@@ -55,19 +59,17 @@ fun CreateProfileScreen(
             textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(36.dp))
-        Column(modifier = Modifier.padding(horizontal = 24.dp)) {
-            //TODO: Convert this into a Form field component, which is Label + TextField
-            BisqText.baseRegular(
-                text = strings.onboarding_createProfile_nickName,
-                color = BisqTheme.colors.light2,
-            )
-            MaterialTextField(
-                text = presenter.nickName.collectAsState().value,
-                placeholder = strings.onboarding_createProfile_nickName_prompt,
-                onValueChanged = { presenter.setNickname(it) })
-        }
+        BisqTextField(
+            label = strings.onboarding_createProfile_nickName,
+            value = presenter.nickName.collectAsState().value,
+            onValueChanged = { presenter.setNickname(it) },
+            placeholder = strings.onboarding_createProfile_nickName_prompt
+        )
         Spacer(modifier = Modifier.height(36.dp))
-        Image(painterResource(Res.drawable.img_bot_image), "User profile icon generated from the hash of the public key") // TODO: Translation
+        Image(
+            painterResource(Res.drawable.img_bot_image),
+            "User profile icon generated from the hash of the public key"
+        ) // TODO: Translation
         Spacer(modifier = Modifier.height(32.dp))
         BisqText.baseRegular(
             text = presenter.nym.collectAsState().value,
@@ -83,7 +85,7 @@ fun CreateProfileScreen(
             text = strings.onboarding_createProfile_regenerate,
             backgroundColor = BisqTheme.colors.dark5,
             padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp),
-            onClick = {presenter.onGenerateKeyPair() }
+            onClick = { presenter.onGenerateKeyPair() }
         )
         Spacer(modifier = Modifier.height(40.dp))
         BisqButton(

@@ -190,11 +190,6 @@ fun PriceProfileCard(price: String, priceText: String) {
 @Composable
 fun FeatureCard(image: DrawableResource, title: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
-//        AsyncImage(
-//            model = Res.getUri(imagePath),
-//            contentDescription = null,
-//            modifier = Modifier.size(20.dp)
-//        )
         Image(painterResource(image), null, Modifier.size(20.dp))
         Spacer(modifier = Modifier.width(9.dp))
         BisqText.smallRegular(
@@ -214,11 +209,6 @@ fun InstructionCard(image: DrawableResource, title: String, description: String,
             .padding(vertical = 18.dp, horizontal = 12.dp),
         verticalArrangement = Arrangement.spacedBy(18.dp)
     ) {
-//        AsyncImage(
-//            model = Res.getUri(imagePath),
-//            contentDescription = null,
-//            modifier = Modifier.size(50.dp)
-//        )
         Image(painterResource(image), "")
         BisqText.baseRegular(
             text = title,

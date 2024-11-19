@@ -12,21 +12,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.composeModels.OnBoardingPage
+import network.bisq.mobile.presentation.ui.composeModels.PagerViewItem
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 val onBoardingPages = listOf(
-    OnBoardingPage(
+    PagerViewItem(
         title = "Introducing Bisq Easy",
         image = Res.drawable.img_bisq_Easy,
         desc = "Getting your first Bitcoin privately has never been easier"
     ),
-    OnBoardingPage(
+    PagerViewItem(
         title = "Learn & Discover",
         image = Res.drawable.img_learn_and_discover,
         desc = "Get a gentle introduction into Bitcoin through our guides and community chat"
     ),
-    OnBoardingPage(
+    PagerViewItem(
         title = "Coming soon",
         image = Res.drawable.img_fiat_btc,
         desc = "Choose how to trade: Bisq MuSig, Lightning, Submarine Swaps,..."
@@ -37,24 +37,12 @@ open class OnBoardingPresenter(
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IOnboardingPresenter {
 
-    private val _pagerState = MutableStateFlow<PagerState?>(null)
-    override val pagerState: StateFlow<PagerState?> = _pagerState
-
-    override fun setPagerState(pagerState: PagerState) {
-        _pagerState.value = pagerState
-    }
-
-    override fun onNextButtonClick(coroutineScope: CoroutineScope) {
+    override fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState) {
         coroutineScope.launch {
-            val state = pagerState.value
-            if (state != null) {
-                if (state.currentPage == onBoardingPages.lastIndex) {
-                    rootNavigator.navigate(Routes.CreateProfile.name) {
-                        popUpTo(Routes.Onboarding.name) { inclusive = true }
-                    }
-                } else {
-                    state.animateScrollToPage(state.currentPage + 1)
-                }
+            if (pagerState.currentPage == onBoardingPages.lastIndex) {
+                 rootNavigator.navigate(Routes.CreateProfile.name)
+            } else {
+                pagerState.animateScrollToPage(pagerState.currentPage + 1)
             }
         }
     }

@@ -17,8 +17,17 @@ fun UserIcon(modifier: Modifier = Modifier) {
     Image(painterResource(Res.drawable.img_bot_image), "User icon", modifier = modifier)
 }
 
-
 @Composable
 fun SortIcon(modifier: Modifier = Modifier) {
     Image(painterResource(Res.drawable.icon_sort), "Sort icon", modifier = modifier)
+}
+
+@Composable
+fun CopyIcon(modifier: Modifier = Modifier) {
+    Image(painterResource(Res.drawable.icon_copy), "Copy icon", modifier = modifier)
+}
+
+@Composable
+fun ScanIcon(modifier: Modifier = Modifier) {
+    Image(painterResource(Res.drawable.icon_qr), "Scan icon", modifier = modifier)
 }
