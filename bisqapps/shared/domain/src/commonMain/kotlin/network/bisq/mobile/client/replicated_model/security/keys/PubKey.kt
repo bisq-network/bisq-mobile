@@ -1,4 +1,4 @@
-package network.bisq.mobile.domain.security.keys
+package network.bisq.mobile.client.replicated_model.security.keys
 
 import kotlinx.serialization.Serializable
 

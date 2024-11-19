@@ -7,7 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.user_profile.UserProfileResponse
-import network.bisq.mobile.domain.user.profile.UserProfile
+import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.domain.user_profile.UserProfileModel
 import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
 import kotlin.math.max

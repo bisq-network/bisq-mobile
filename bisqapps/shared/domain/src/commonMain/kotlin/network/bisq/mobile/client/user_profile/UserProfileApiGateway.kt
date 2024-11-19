@@ -6,8 +6,8 @@ import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
 import network.bisq.mobile.client.service.ApiRequestService
 import network.bisq.mobile.client.user_profile.UserProfileResponse
-import network.bisq.mobile.domain.user.identity.PreparedData
-import network.bisq.mobile.domain.user.profile.UserProfile
+import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
+import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.utils.ByteArrayAsBase64Serializer
 
 class UserProfileApiGateway(

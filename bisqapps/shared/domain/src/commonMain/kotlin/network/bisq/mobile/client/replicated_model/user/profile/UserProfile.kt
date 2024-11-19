@@ -1,8 +1,8 @@
-package network.bisq.mobile.domain.user.profile
+package network.bisq.mobile.client.replicated_model.user.profile
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.domain.network.identity.NetworkId
-import network.bisq.mobile.domain.security.pow.ProofOfWork
+import network.bisq.mobile.client.replicated_model.network.identity.NetworkId
+import network.bisq.mobile.client.replicated_model.security.pow.ProofOfWork
 
 @Serializable
 data class UserProfile(

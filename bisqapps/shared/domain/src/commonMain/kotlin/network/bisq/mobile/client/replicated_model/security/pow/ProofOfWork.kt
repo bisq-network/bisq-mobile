@@ -1,4 +1,4 @@
-package network.bisq.mobile.domain.security.pow
+package network.bisq.mobile.client.replicated_model.security.pow
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable

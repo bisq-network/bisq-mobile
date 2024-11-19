@@ -1,4 +1,4 @@
-package network.bisq.mobile.domain.common.network
+package network.bisq.mobile.client.replicated_model.common.network
 
 import kotlinx.serialization.Serializable
 
