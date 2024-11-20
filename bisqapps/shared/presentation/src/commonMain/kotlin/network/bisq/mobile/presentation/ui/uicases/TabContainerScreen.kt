@@ -1,22 +1,18 @@
 package network.bisq.mobile.presentation.ui.uicases
 
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
+import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
+import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.composeModels.BottomNavigationItem
 import network.bisq.mobile.presentation.ui.navigation.BottomNavigation
-import network.bisq.mobile.presentation.ui.navigation.Graph
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.navigation.graph.TabNavGraph
 import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
-import org.koin.mp.KoinPlatform.getKoin
 
 val navigationListItem = listOf(
     BottomNavigationItem("Home", Routes.TabHome.name, Res.drawable.icon_home),
@@ -36,8 +32,25 @@ fun TabContainerScreen() {
         }
     }
 
-    Scaffold(
-        containerColor = BisqTheme.colors.dark3,
+    BisqStaticScaffold(
+        topBar = {
+            // TODO: Since Topbar should go inside Scaffold
+            // the TopBar is written here commonly for all 4 tabs.
+            // Based on currentRoute, TopBar customization is done.
+            // Ideally, if this goes inside each Tabpage, it will look better.
+            // But it's a trade off.
+            TopBar(
+                isHome = currentRoute == Routes.TabHome.name,
+                title = when (currentRoute) {
+                    Routes.TabHome.name -> "Home"
+                    Routes.TabExchange.name -> "Buy/Sell"
+                    Routes.TabMyTrades.name -> "My Trades"
+                    Routes.TabSettings.name -> "Settings"
+                    else -> "App"
+                },
+            )
+
+        },
         bottomBar = {
             BottomNavigation(
                 items = navigationListItem,
@@ -55,7 +68,5 @@ fun TabContainerScreen() {
                 })
         }
 
-    ) { innerPadding ->
-        RootNavGraph(startDestination = Graph.MAIN_SCREEN_GRAPH_KEY)
-    }
+    ) { TabNavGraph() }
 }

@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import network.bisq.mobile.components.MaterialTextField
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
-// TODO: Label suffix component
 @Composable
 fun BisqTextField(
     label: String,

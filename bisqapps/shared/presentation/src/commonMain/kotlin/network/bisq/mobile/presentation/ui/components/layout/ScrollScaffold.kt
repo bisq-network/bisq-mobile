@@ -12,20 +12,27 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
-fun BisqScrollLayout(
+fun BisqScrollScaffold(
     innerPadding: PaddingValues = PaddingValues(top = 48.dp, bottom = 12.dp, start = 12.dp, end = 12.dp),
-    verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    topBar: @Composable () -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = verticalArrangement ?: Arrangement.Top,
-        modifier = Modifier
-            .fillMaxSize()
-            .background(color = BisqTheme.colors.backgroundColor)
-            .padding(innerPadding)
-            .verticalScroll(rememberScrollState())
-    ) {
-        content()
-    }
+    Scaffold(
+        containerColor = BisqTheme.colors.backgroundColor,
+        topBar = topBar,
+        bottomBar = bottomBar,
+        content = {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = BisqTheme.colors.backgroundColor)
+                    .padding(innerPadding)
+                    .verticalScroll(rememberScrollState())
+            ) {
+                content()
+            }
+        },
+    )
 }

@@ -51,9 +51,7 @@ fun App() {
     BisqTheme(darkTheme = true) {
         ProvideStrings(lyricist) {
             if (isNavControllerSet) {
-                RootNavGraph(
-                    startDestination = Routes.Splash.name
-                )
+                RootNavGraph()
             }
         }
     }

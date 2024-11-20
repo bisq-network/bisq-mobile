@@ -36,7 +36,7 @@ fun ExchangeScreen() {
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
-        TopBar("Buy/Sell")
+//        TopBar("Buy/Sell")
         Column(modifier = Modifier.padding(vertical = 12.dp, horizontal = 32.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

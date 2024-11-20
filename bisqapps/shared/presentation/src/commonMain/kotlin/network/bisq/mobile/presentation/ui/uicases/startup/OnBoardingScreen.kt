@@ -17,6 +17,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.organisms.startup.BisqPagerView
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
@@ -42,7 +43,7 @@ fun OnBoardingScreen() {
         presenter.onViewAttached()
     }
 
-    BisqScrollLayout() {
+    BisqScrollScaffold() {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
         BisqText.h1Light(

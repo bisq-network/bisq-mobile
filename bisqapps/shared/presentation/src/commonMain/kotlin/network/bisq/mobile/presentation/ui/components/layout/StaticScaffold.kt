@@ -10,22 +10,27 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
-fun BisqStaticLayout(
+fun BisqStaticScaffold(
     innerPadding: PaddingValues = PaddingValues(top = 48.dp, bottom = 30.dp),
+    topBar: @Composable () -> Unit = {},
+    bottomBar: @Composable () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit
 ) {
     Scaffold(
         containerColor = BisqTheme.colors.backgroundColor,
-    ) {
-        Column(
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxSize()
-                .background(color = BisqTheme.colors.backgroundColor)
-                .padding(innerPadding)
-        ) {
+        topBar = topBar,
+        bottomBar = bottomBar,
+        content = {
+            Column(
+                verticalArrangement = Arrangement.SpaceBetween,
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = BisqTheme.colors.backgroundColor)
+                    .padding(innerPadding)
+            ) {
                 content()
+            }
         }
-    }
+    )
 }

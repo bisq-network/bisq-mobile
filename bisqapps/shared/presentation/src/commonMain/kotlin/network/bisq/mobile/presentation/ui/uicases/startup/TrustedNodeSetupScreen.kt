@@ -14,15 +14,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.icon_copy
-import bisqapps.shared.presentation.generated.resources.icon_qr
-import bisqapps.shared.presentation.generated.resources.icon_question_mark
 import network.bisq.mobile.components.MaterialTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
+import network.bisq.mobile.presentation.ui.components.atoms.icons.QuestionIcon
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
@@ -63,7 +60,7 @@ fun TrustedNodeSetupScreen(
         presenter.onViewAttached()
     }
 
-    BisqScrollLayout {
+    BisqScrollScaffold {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
         Column(
@@ -76,12 +73,13 @@ fun TrustedNodeSetupScreen(
                 value = bisqUrl,
                 placeholder = "",
                 labelRightSuffix = {
-                    // TODO: Should be a IconButton
-                    Image(painterResource(Res.drawable.icon_question_mark), "Question mark")
+                    BisqButton(
+                        iconOnly = { QuestionIcon() },
+                        backgroundColor = BisqTheme.colors.backgroundColor,
+                        onClick = { presenter.navigateToNextScreen() }
+                    )
                 }
             )
-
-            // MaterialTextField(bisqUrl, onValueChanged = { presenter.updateBisqUrl(it) })
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -92,13 +90,13 @@ fun TrustedNodeSetupScreen(
                     onClick = {},
                     backgroundColor = BisqTheme.colors.dark5,
                     color = BisqTheme.colors.light1,
-                    leftIcon= { CopyIcon() } // TODO: Should be IconButtons
+                    leftIcon= { CopyIcon() }
                 )
 
                 BisqButton(
                     text = "Scan",
                     onClick = {},
-                    leftIcon= { ScanIcon() } // TODO: Should be IconButtons
+                    leftIcon= { ScanIcon() }
                 )
             }
             Spacer(modifier = Modifier.height(36.dp))

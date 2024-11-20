@@ -18,6 +18,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,15 +35,17 @@ import bisqapps.shared.presentation.generated.resources.icon_tag_outlined
 import bisqapps.shared.presentation.generated.resources.img_fiat_btc
 import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
-interface IGettingStarted {
+interface IGettingStarted: ViewPresenter {
     val btcPrice: StateFlow<String>
     val offersOnline: StateFlow<Number>
     val publishedProfiles: StateFlow<Number>
@@ -51,73 +54,71 @@ interface IGettingStarted {
 @Composable
 fun GettingStartedScreen() {
     val presenter: IGettingStarted = koinInject()
-    val btcPrice:String = presenter.btcPrice.collectAsState().value
-    val offersOnline:Number = presenter.offersOnline.collectAsState().value
-    val publishedProfiles:Number = presenter.publishedProfiles.collectAsState().value
+    val btcPrice: String = presenter.btcPrice.collectAsState().value
+    val offersOnline: Number = presenter.offersOnline.collectAsState().value
+    val publishedProfiles: Number = presenter.publishedProfiles.collectAsState().value
 
     // TODO attach view should happen here to let the presenter know?
+    // buddha: So here we have 2 screens actually.
+    //  - TabContainerScreen that has Scaffold, Topbar, Bottom bar (with 4 tabs)
+    //  - Indidivual tab screens like current GettingStartedScreen, which is technically
+    //  - not an indpendent screen. Since it doesn't have scaffold, topbar on it's own.
 
-    Column(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        // TODO: Should be a child of Scaffold, in TabContainerScreen
-        TopBar(isHome = true)
+    //  - So I guess, TabContainerScreen will have it's own TabContainerPresenter
+    //  - GettingStartedScreen (and other 3 tabs) will have it's own IGettingStarted
+    LaunchedEffect(Unit) {
+        presenter.onViewAttached()
+    }
 
-        // TODO: Should use BisqScrollLayout. But it has Scaffold inside it already!
-        Column(
-            modifier = Modifier.padding(horizontal = 32.dp, vertical = 15.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
+    BisqScrollLayout(verticalArrangement = Arrangement.spacedBy(24.dp)) {
 
-            Column {
-                PriceProfileCard(
-                    price = btcPrice,
-                    priceText = "Market price"
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Box(modifier = Modifier.weight(1f)) {
-                        PriceProfileCard(
-                            price = offersOnline.toString(),
-                            priceText = "Offers online"
-                        )
-                    }
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Box(modifier = Modifier.weight(1f)) {
-                        PriceProfileCard(
-                            price = publishedProfiles.toString(),
-                            priceText = "Published profiles"
-                        )
-                    }
+        Column {
+            PriceProfileCard(
+                price = btcPrice,
+                priceText = "Market price"
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Box(modifier = Modifier.weight(1f)) {
+                    PriceProfileCard(
+                        price = offersOnline.toString(),
+                        priceText = "Offers online"
+                    )
+                }
+                Spacer(modifier = Modifier.width(16.dp))
+                Box(modifier = Modifier.weight(1f)) {
+                    PriceProfileCard(
+                        price = publishedProfiles.toString(),
+                        priceText = "Published profiles"
+                    )
                 }
             }
-            WelcomeCard(
-                title = "Get your first BTC",
-                buttonText = "Enter Bisq Easy"
+        }
+        WelcomeCard(
+            title = "Get your first BTC",
+            buttonText = "Enter Bisq Easy"
+        )
+        Column {
+            InstructionCard(
+                image = Res.drawable.img_fiat_btc,
+                title = "Multiple trade protocols",
+                description = "Checkout the roadmap for upcoming trade protocols. Get an overview about the features of the different protocols.",
+                buttonText = "Explore trade protocols"
             )
-            Column {
-                InstructionCard(
-                    image = Res.drawable.img_fiat_btc,
-                    title = "Multiple trade protocols",
-                    description = "Checkout the roadmap for upcoming trade protocols. Get an overview about the features of the different protocols.",
-                    buttonText = "Explore trade protocols"
-                )
-                Spacer(modifier = Modifier.height(24.dp))
-                InstructionCard(
-                    image = Res.drawable.img_learn_and_discover,
-                    title = "Learn & discover",
-                    description = "Learn about Bitcoin and checkout upcoming events. Meet other Bisq users in the discussion chat.",
-                    buttonText = "Learn more"
-                )
-            }
+            Spacer(modifier = Modifier.height(24.dp))
+            InstructionCard(
+                image = Res.drawable.img_learn_and_discover,
+                title = "Learn & discover",
+                description = "Learn about Bitcoin and checkout upcoming events. Meet other Bisq users in the discussion chat.",
+                buttonText = "Learn more"
+            )
         }
     }
 }
 
 @Composable
 fun WelcomeCard(title: String, buttonText: String) {
-    NeumorphicCard{
+    NeumorphicCard {
         Column(
             modifier = Modifier.shadow(
                 ambientColor = Color.Blue, spotColor = BisqTheme.colors.primary,
@@ -236,12 +237,12 @@ fun NeumorphicCard(
     content: @Composable () -> Unit
 ) {
 
-        Box(
-            modifier = modifier
-                .shadow(elevation = 8.dp, shape = RoundedCornerShape(5.dp), spotColor = BisqTheme.colors.primary)
-                .padding(2.dp)
-        ) {
-            content()
-        }
+    Box(
+        modifier = modifier
+            .shadow(elevation = 8.dp, shape = RoundedCornerShape(5.dp), spotColor = BisqTheme.colors.primary)
+            .padding(2.dp)
+    ) {
+        content()
+    }
 
 }

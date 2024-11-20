@@ -12,7 +12,7 @@ import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqProgressBar
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
-import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
+import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
@@ -30,7 +30,7 @@ fun SplashScreen(
         presenter.onViewAttached()
     }
 
-    BisqStaticLayout {
+    BisqStaticScaffold {
         BisqLogo()
 
         Column {

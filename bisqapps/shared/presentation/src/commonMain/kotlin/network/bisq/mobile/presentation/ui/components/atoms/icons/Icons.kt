@@ -13,8 +13,18 @@ fun BellIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun UserIcon(modifier: Modifier = Modifier) {
-    Image(painterResource(Res.drawable.img_bot_image), "User icon", modifier = modifier)
+fun CopyIcon(modifier: Modifier = Modifier) {
+    Image(painterResource(Res.drawable.icon_copy), "Copy icon", modifier = modifier)
+}
+
+@Composable
+fun QuestionIcon(modifier: Modifier = Modifier) {
+    Image(painterResource(Res.drawable.icon_question_mark), "Question icon", modifier = modifier)
+}
+
+@Composable
+fun ScanIcon(modifier: Modifier = Modifier) {
+    Image(painterResource(Res.drawable.icon_qr), "Scan icon", modifier = modifier)
 }
 
 @Composable
@@ -23,11 +33,6 @@ fun SortIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun CopyIcon(modifier: Modifier = Modifier) {
-    Image(painterResource(Res.drawable.icon_copy), "Copy icon", modifier = modifier)
-}
-
-@Composable
-fun ScanIcon(modifier: Modifier = Modifier) {
-    Image(painterResource(Res.drawable.icon_qr), "Scan icon", modifier = modifier)
+fun UserIcon(modifier: Modifier = Modifier) {
+    Image(painterResource(Res.drawable.img_bot_image), "User icon", modifier = modifier)
 }

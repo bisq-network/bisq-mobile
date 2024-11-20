@@ -43,8 +43,6 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun navigateToNextScreen() {
-        rootNavigator.navigate(Routes.TabContainer.name) {
-            popUpTo(Routes.TrustedNodeSetup.name) { inclusive = true }
-        }
+        rootNavigator.navigate(Routes.TabContainer.name)
     }
 }
