@@ -35,6 +35,4 @@ class NodeMainPresenter(
         supplier.applicationService.shutdown()
         super.onDestroying()
     }
-
-
 }

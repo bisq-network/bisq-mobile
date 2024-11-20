@@ -5,7 +5,6 @@ import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.data.repository.BtcPriceRepository
 import network.bisq.mobile.domain.data.repository.GreetingRepository
 import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.data.repository.UserProfileRepository
 import org.koin.dsl.module
 
 val domainModule = module {
@@ -13,5 +12,4 @@ val domainModule = module {
     single<BisqStatsRepository> { BisqStatsRepository() }
     single<BtcPriceRepository> { BtcPriceRepository() }
     single<SettingsRepository> { SettingsRepository() }
-    single { UserProfileRepository(get(), get()) }
 }

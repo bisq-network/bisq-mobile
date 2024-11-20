@@ -3,25 +3,23 @@ package network.bisq.mobile.android.node.main.bootstrap
 import bisq.application.State
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapModel
 
 class NodeApplicationBootstrapFacade(
-    override val model: ApplicationBootstrapModel,
-    private val applicationServiceSupplier: AndroidApplicationService.Supplier
+    private val supplier: AndroidApplicationService.Supplier
 ) :
-    ApplicationBootstrapFacade {
+    ApplicationBootstrapFacade() {
 
     override fun initialize() {
-        applicationServiceSupplier.stateSupplier.get().addObserver { state: State ->
+        supplier.stateSupplier.get().addObserver { state: State ->
             when (state) {
                 State.INITIALIZE_APP -> {
-                    model.setState("Starting Bisq")
-                    model.setProgress(0f)
+                   setState("Starting Bisq")
+                   setProgress(0f)
                 }
 
                 State.INITIALIZE_NETWORK -> {
-                    model.setState("Initialize P2P network")
-                    model.setProgress(0.5f)
+                   setState("Initialize P2P network")
+                   setProgress(0.5f)
                 }
 
                 // not used
@@ -29,18 +27,18 @@ class NodeApplicationBootstrapFacade(
                 }
 
                 State.INITIALIZE_SERVICES -> {
-                    model.setState("Initialize services")
-                    model.setProgress(0.75f)
+                   setState("Initialize services")
+                   setProgress(0.75f)
                 }
 
                 State.APP_INITIALIZED -> {
-                    model.setState("Bisq started")
-                    model.setProgress(1f)
+                   setState("Bisq started")
+                   setProgress(1f)
                 }
 
                 State.FAILED -> {
-                    model.setState("Startup failed")
-                    model.setProgress(0f)
+                   setState("Startup failed")
+                   setProgress(0f)
                 }
             }
         }

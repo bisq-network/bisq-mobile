@@ -2,11 +2,6 @@ package network.bisq.mobile.domain.user_profile
 
 interface UserProfileServiceFacade {
     /**
-     * The model for holding presentation relevant data as well as data needed for creating the user identity.
-     */
-    val model: UserProfileModel
-
-    /**
      * Returns true if there is a user identity already created.
      * This should be used to detect a first time user who has no identity created yet and where
      * we display the create user profile screen.
@@ -26,7 +21,7 @@ interface UserProfileServiceFacade {
      * the proof of work solution.
      * The CatHash image is also created based on that hash and the proof of work solution.
      */
-    suspend fun generateKeyPair()
+    suspend fun generateKeyPair(result: (String, String) -> Unit)
 
     /**
      * Once the user clicks the `create` button we create a user identity and publish the
@@ -34,7 +29,7 @@ interface UserProfileServiceFacade {
      * The user identity contains the key pair and is private data. The UserProfile is public data
      * and shared with the network.
      */
-    suspend fun createAndPublishNewUserProfile()
+    suspend fun createAndPublishNewUserProfile(nickName: String)
 
     /**
      * Create UserProfileModels from the userIdentities.
@@ -44,5 +39,5 @@ interface UserProfileServiceFacade {
     /**
      * Applies the selected user identity to the user profile model
      */
-    suspend fun applySelectedUserProfile()
+    suspend fun applySelectedUserProfile(result: (String?, String?, String?) -> Unit)
 }

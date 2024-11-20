@@ -3,14 +3,14 @@ package network.bisq.mobile.android.node.domain.user_profile
 import bisq.common.encoding.Hex
 import bisq.security.DigestUtil
 import bisq.security.SecurityService
+import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
-import bisq.user.identity.UserIdentity
 import bisq.user.profile.UserProfile
 import co.touchlab.kermit.Logger
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.domain.user_profile.UserProfileModel
 import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
+import java.security.KeyPair
 import java.util.Random
 import kotlin.math.max
 import kotlin.math.min
@@ -21,10 +21,7 @@ import kotlin.math.min
  * It uses in a in-memory model for the relevant data required for the presenter to reflect the domains state.
  * Persistence is done inside the Bisq 2 libraries.
  */
-class NodeUserProfileServiceFacade(
-    override val model: UserProfileModel,
-    private val applicationServiceSupplier: AndroidApplicationService.Supplier
-) :
+class NodeUserProfileServiceFacade(private val supplier: AndroidApplicationService.Supplier) :
     UserProfileServiceFacade {
 
     companion object {
@@ -33,35 +30,33 @@ class NodeUserProfileServiceFacade(
 
     private val log = Logger.withTag(this::class.simpleName ?: "NodeUserProfileServiceFacade")
 
+    private var pubKeyHash: ByteArray? = null
+    private var keyPair: KeyPair? = null
+    private var proofOfWork: ProofOfWork? = null
 
     private val securityService: SecurityService
-        get() = applicationServiceSupplier.securityServiceSupplier.get()
+        get() = supplier.securityServiceSupplier.get()
 
     private val userService: UserService
-        get() = applicationServiceSupplier.userServiceSupplier.get()
+        get() = supplier.userServiceSupplier.get()
 
 
     override suspend fun hasUserProfile(): Boolean {
         return userService.userIdentityService.userIdentities.isNotEmpty()
     }
 
-    override suspend fun generateKeyPair() {
-        model as NodeUserProfileModel
-        model.setGenerateKeyPairInProgress(true)
-        val keyPair = securityService.keyBundleService.generateKeyPair()
-        model.keyPair = keyPair
-        val pubKeyHash = DigestUtil.hash(keyPair.public.encoded)
-        model.pubKeyHash = pubKeyHash
-        model.setId(Hex.encode(pubKeyHash))
+    override suspend fun generateKeyPair(result: (String, String) -> Unit) {
+        keyPair = securityService.keyBundleService.generateKeyPair()
+        pubKeyHash = DigestUtil.hash(keyPair!!.public.encoded)
+
         val ts = System.currentTimeMillis()
-        val proofOfWork = userService.userIdentityService.mintNymProofOfWork(pubKeyHash)
+        proofOfWork = userService.userIdentityService.mintNymProofOfWork(pubKeyHash)
         val powDuration = System.currentTimeMillis() - ts
         log.i("Proof of work creation completed after $powDuration ms")
         createSimulatedDelay(powDuration)
-        model.proofOfWork = proofOfWork
-        val powSolution = proofOfWork.solution
-        val nym = NymIdGenerator.generate(pubKeyHash, powSolution)
-        model.setNym(nym)
+
+        val id = Hex.encode(pubKeyHash)
+        val nym = NymIdGenerator.generate(pubKeyHash, proofOfWork!!.solution)
 
         // CatHash is in desktop, needs to be reimplemented or the javafx part extracted and refactored into a non javafx lib
         //  Image image = CatHash.getImage(pubKeyHash,
@@ -69,63 +64,36 @@ class NodeUserProfileServiceFacade(
         //                                CURRENT_AVATARS_VERSION,
         //                                CreateProfileModel.CAT_HASH_IMAGE_SIZE);
 
-        model.setGenerateKeyPairInProgress(false)
+        result(id!!, nym!!)
     }
 
-    override suspend fun createAndPublishNewUserProfile() {
-        model as NodeUserProfileModel
-        model.setCreateAndPublishInProgress(true)  // UI should start busy animation based on that property
+    override suspend fun createAndPublishNewUserProfile(nickName: String) {
         userService.userIdentityService.createAndPublishNewUserProfile(
-            model.nickName.value,
-            model.keyPair,
-            model.pubKeyHash,
-            model.proofOfWork,
+            nickName,
+            keyPair,
+            pubKeyHash,
+            proofOfWork,
             AVATAR_VERSION,
             "",
             ""
         )
-            .whenComplete { userIdentity: UserIdentity?, throwable: Throwable? ->
-                // UI should stop busy animation and show `next` button
-                model.setCreateAndPublishInProgress(false)
-            }
+
+        pubKeyHash = null
+        keyPair = null
+        proofOfWork = null
     }
 
     override suspend fun getUserIdentityIds(): List<String> {
-        return userService.userIdentityService.userIdentities
-            .map { userIdentity -> userIdentity.id }
+        return userService.userIdentityService.userIdentities.map { userIdentity -> userIdentity.id }
     }
 
-    override suspend fun applySelectedUserProfile() {
+    override suspend fun applySelectedUserProfile(result: (String?, String?, String?) -> Unit) {
         val userProfile = getSelectedUserProfile()
-        if (userProfile != null) {
-            model.setNickName(userProfile.nickName)
-            model.setNym(userProfile.nym)
-            model.setId(userProfile.id)
-        }
+        result(userProfile?.nickName, userProfile?.nym, userProfile?.id)
     }
 
     private fun getSelectedUserProfile(): UserProfile? {
-        val userIdentity = userService.userIdentityService.selectedUserIdentity ?: return null
-        return userIdentity.userProfile
-
-    }
-
-    private fun findUserProfile(id: String): UserProfileModel? {
-        return userService.userIdentityService.userIdentities
-            .map { userIdentity -> getNodeUserProfileModel(userIdentity) }
-            .find { model -> model.id.equals(id) }
-    }
-
-    private fun getNodeUserProfileModel(userIdentity: UserIdentity): UserProfileModel {
-        val userProfile = userIdentity.userProfile
-        val model = NodeUserProfileModel()
-        model.setNickName(userProfile.nickName)
-        model.setNym(userProfile.nym)
-        model.setId(userProfile.id)
-        model.keyPair = userIdentity.identity.keyBundle.keyPair
-        model.pubKeyHash = userIdentity.userProfile.pubKeyHash
-        model.proofOfWork = userIdentity.userProfile.proofOfWork
-        return model
+        return userService.userIdentityService.selectedUserIdentity?.userProfile
     }
 
     private fun createSimulatedDelay(powDuration: Long) {

@@ -4,10 +4,11 @@ import androidx.navigation.NavController
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.data.repository.UserProfileRepository
+import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -15,16 +16,40 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 open class CreateProfilePresenter(
     mainPresenter: MainPresenter,
     private val navController: NavController,
-    private val userProfileRepository: UserProfileRepository
+    private val userProfileService: UserProfileServiceFacade
 ) : BasePresenter(mainPresenter) {
 
     private val log = Logger.withTag(this::class.simpleName ?: "CreateProfilePresenter")
-    private val userProfileModel = userProfileRepository.model
 
-    val nickName: StateFlow<String> = userProfileModel.nickName
-    val nym: StateFlow<String> = userProfileModel.nym
-    val id: StateFlow<String> = userProfileModel.id
+    private val _id = MutableStateFlow("")
+    val id: StateFlow<String> get() = _id
+    private fun setId(value: String) {
+        _id.value = value
+    }
 
+    private val _nym = MutableStateFlow("")
+    val nym: StateFlow<String> get() = _nym
+    private fun setNym(value: String) {
+        _nym.value = value
+    }
+
+    private val _nickName = MutableStateFlow("")
+    val nickName: StateFlow<String> get() = _nickName
+    fun setNickname(value: String) {
+        _nickName.value = value
+    }
+
+    private val _generateKeyPairInProgress = MutableStateFlow(false)
+    val generateKeyPairInProgress: StateFlow<Boolean> get() = _generateKeyPairInProgress
+    private fun setGenerateKeyPairInProgress(value: Boolean) {
+        _generateKeyPairInProgress.value = value
+    }
+
+    private val _createAndPublishInProgress = MutableStateFlow(false)
+    val createAndPublishInProgress: StateFlow<Boolean> get() = _createAndPublishInProgress
+    private fun setCreateAndPublishInProgress(value: Boolean) {
+        _createAndPublishInProgress.value = value
+    }
 
     override fun onViewAttached() {
         onGenerateKeyPair()
@@ -41,43 +66,37 @@ open class CreateProfilePresenter(
         // `onGenerateKeyPair()` when view is ready.
     }
 
-    fun onNickNameChanged(value: String) {
-        userProfileRepository.model.setNickName(value)
-    }
-
     fun onGenerateKeyPair() {
         // takes 200 -1000 ms
-        // todo start busy animation in UI
         CoroutineScope(BackgroundDispatcher).launch {
-            userProfileRepository.model.generateKeyPairInProgress.collect { inProgress ->
-                if (!inProgress) {
-                    // todo stop busy animation in UI
-                }
+            setGenerateKeyPairInProgress(true)
+            log.i { "Show busy animation for generateKeyPair" }
+            userProfileService.generateKeyPair { id, nym ->
+                setId(id)
+                setNym(nym)
+                //todo show new profile image
             }
-        }
-
-        CoroutineScope(BackgroundDispatcher).launch {
-            userProfileRepository.service.generateKeyPair()
+            setGenerateKeyPairInProgress(false)
+            log.i { "Hide busy animation for generateKeyPair" }
         }
     }
 
     fun onCreateAndPublishNewUserProfile() {
-        // todo start busy animation in UI
-        // We cannot use BackgroundDispatcher here as we get error:
-        // `Method setCurrentState must be called on the main thread`
-        CoroutineScope(Dispatchers.Main).launch {
-            userProfileRepository.model.createAndPublishInProgress.collect { inProgress ->
-                if (!inProgress) {
+        if (nickName.value.isNotEmpty()) {
+            CoroutineScope(BackgroundDispatcher).launch {
+                setCreateAndPublishInProgress(true)
+                log.i { "Show busy animation for createAndPublishInProgress" }
+                userProfileService.createAndPublishNewUserProfile(nickName.value)
+                log.i { "Hide busy animation for createAndPublishInProgress" }
+                setCreateAndPublishInProgress(false)
+
+                CoroutineScope(Dispatchers.Main).launch {
                     // todo stop busy animation in UI
                     navController.navigate(Routes.TrustedNodeSetup.name) {
                         popUpTo(Routes.CreateProfile.name) { inclusive = true }
                     }
                 }
             }
-        }
-
-        CoroutineScope(BackgroundDispatcher).launch {
-            userProfileRepository.service.createAndPublishNewUserProfile()
         }
     }
 }

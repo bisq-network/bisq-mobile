@@ -35,7 +35,6 @@ fun CreateProfileScreen(
     val navController: NavHostController = koinInject(named("RootNavController"))
     val presenter: CreateProfilePresenter = koinInject { parametersOf(navController) }
 
-    val profileName = presenter.nickName.collectAsState().value
 
     LaunchedEffect(Unit) {
         presenter.onViewAttached()
@@ -65,7 +64,7 @@ fun CreateProfileScreen(
             MaterialTextField(
                 text = presenter.nickName.collectAsState().value,
                 placeholder = strings.onboarding_createProfile_nickName_prompt,
-                onValueChanged = { presenter.onNickNameChanged(it) })
+                onValueChanged = { presenter.setNickname(it) })
         }
         Spacer(modifier = Modifier.height(36.dp))
         Image(painterResource(Res.drawable.img_bot_image), "User profile icon generated from the hash of the public key") // TODO: Translation
@@ -90,7 +89,7 @@ fun CreateProfileScreen(
         BisqButton(
             strings.buttons_next,
             onClick = { presenter.onCreateAndPublishNewUserProfile() },
-            backgroundColor = if (profileName.isEmpty()) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
+            backgroundColor = if (presenter.nickName.value.isEmpty()) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
         )
     }
 }

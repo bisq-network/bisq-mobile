@@ -8,7 +8,6 @@ import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.IGettingStarted
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
-import network.bisq.mobile.presentation.ui.uicases.startup.ISplashPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
@@ -29,9 +28,10 @@ val presentationModule = module {
     single { (navController: NavController) ->
         SplashPresenter(
             get(),
-            navController = navController
+            navController = navController,
+            get()
         )
-    } bind ISplashPresenter::class
+    }
 
     single { (navController: NavController) ->
         OnBoardingPresenter(
@@ -52,7 +52,7 @@ val presentationModule = module {
         CreateProfilePresenter(
             get(),
             navController = navController,
-            userProfileRepository = get()
+            get()
         )
     }
 

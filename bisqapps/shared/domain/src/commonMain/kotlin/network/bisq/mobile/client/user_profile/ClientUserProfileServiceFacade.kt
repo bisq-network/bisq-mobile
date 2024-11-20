@@ -5,64 +5,51 @@ import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.client.user_profile.UserProfileResponse
-import network.bisq.mobile.domain.user_profile.UserProfileModel
 import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 
-class ClientUserProfileServiceFacade(
-    override val model: UserProfileModel,
-    private val apiGateway: UserProfileApiGateway
-) :
+class ClientUserProfileServiceFacade(private val apiGateway: UserProfileApiGateway) :
     UserProfileServiceFacade {
     private val log = Logger.withTag(this::class.simpleName ?: "UserProfileServiceFacade")
 
+    private var preparedDataAsJson: String? = null
 
     override suspend fun hasUserProfile(): Boolean {
         return getUserIdentityIds().isNotEmpty()
     }
 
-    override suspend fun generateKeyPair() {
-        model as ClientUserProfileModel
+    override suspend fun generateKeyPair(result: (String, String) -> Unit) {
         try {
-            model.setGenerateKeyPairInProgress(true)
             val ts = Clock.System.now().toEpochMilliseconds()
             val response = apiGateway.requestPreparedData()
-            model.preparedDataAsJson = response.first
+            preparedDataAsJson = response.first
             val preparedData = response.second
 
             createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
 
-            model.keyPair = preparedData.keyPair
-            model.proofOfWork = preparedData.proofOfWork
-            model.setNym(preparedData.nym)
-            model.setId(preparedData.id)
+            result(preparedData.id, preparedData.nym)
         } catch (e: Exception) {
             log.e { e.toString() }
-        } finally {
-            model.setGenerateKeyPairInProgress(false)
         }
     }
 
-    override suspend fun createAndPublishNewUserProfile() {
-        model as ClientUserProfileModel
-        try {
-            model.setCreateAndPublishInProgress(true)
-            val response: UserProfileResponse =
-                apiGateway.createAndPublishNewUserProfile(
-                    model.nickName.value,
-                    model.preparedDataAsJson
-                )
-            require(model.id.value == response.userProfileId)
-            { "userProfileId from model does not match userProfileId from response" }
-        } catch (e: Exception) {
-            log.e { e.toString() }
-        } finally {
-            model.setCreateAndPublishInProgress(false)
+    override suspend fun createAndPublishNewUserProfile(nickName: String) {
+        preparedDataAsJson?.let { preparedDataAsJson ->
+            try {
+                val response: UserProfileResponse =
+                    apiGateway.createAndPublishNewUserProfile(
+                        nickName,
+                        preparedDataAsJson
+                    )
+                this.preparedDataAsJson = null
+                log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = $response.userProfileId" }
+            } catch (e: Exception) {
+                log.e { e.toString() }
+            }
         }
     }
-
 
     override suspend fun getUserIdentityIds(): List<String> {
         return try {
@@ -73,12 +60,10 @@ class ClientUserProfileServiceFacade(
         }
     }
 
-    override suspend fun applySelectedUserProfile() {
+    override suspend fun applySelectedUserProfile(result: (String?, String?, String?) -> Unit) {
         try {
             val userProfile = getSelectedUserProfile()
-            model.setNickName(userProfile.nickName)
-            model.setNym(userProfile.nym)
-            model.setId(userProfile.id)
+            result(userProfile.nickName, userProfile.nym, userProfile.id)
         } catch (e: Exception) {
             log.e { e.toString() }
         }
@@ -86,10 +71,6 @@ class ClientUserProfileServiceFacade(
 
     private suspend fun getSelectedUserProfile(): UserProfile {
         return apiGateway.getSelectedUserProfile()
-    }
-
-    private suspend fun findUserProfile(id: String): UserProfileModel? {
-        TODO("Not yet implemented")
     }
 
     private suspend fun createSimulatedDelay(requestDuration: Long) {
