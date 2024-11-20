@@ -6,7 +6,7 @@ import network.bisq.mobile.android.node.domain.user_profile.NodeUserProfileModel
 import network.bisq.mobile.android.node.domain.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.android.node.main.bootstrap.NodeApplicationBootstrapFacade
 import network.bisq.mobile.android.node.main.bootstrap.NodeApplicationBootstrapModel
-import network.bisq.mobile.android.node.presentation.MainNodePresenter
+import network.bisq.mobile.android.node.presentation.NodeMainPresenter
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapModel
 import network.bisq.mobile.domain.user_profile.UserProfileModel
@@ -24,7 +24,7 @@ val androidNodeModule = module {
 
     // this line showcases both, the possibility to change behaviour of the app by changing one definition
     // and binding the same obj to 2 different abstractions
-    single<MainPresenter> { MainNodePresenter(get(), get()) } bind AppPresenter::class
+    single<MainPresenter> { NodeMainPresenter(get(), get()) } bind AppPresenter::class
 
     single<ApplicationBootstrapModel> { NodeApplicationBootstrapModel() }
     single<ApplicationBootstrapFacade> { NodeApplicationBootstrapFacade(get(), get()) }

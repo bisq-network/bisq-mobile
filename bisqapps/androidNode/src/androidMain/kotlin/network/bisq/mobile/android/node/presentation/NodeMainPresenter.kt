@@ -8,7 +8,7 @@ import network.bisq.mobile.domain.data.repository.GreetingRepository
 import network.bisq.mobile.presentation.MainPresenter
 
 @Suppress("UNCHECKED_CAST")
-class MainNodePresenter(
+class NodeMainPresenter(
     greetingRepository: NodeGreetingRepository,
     private val supplier: AndroidApplicationService.Supplier
 ) : MainPresenter(greetingRepository as GreetingRepository<Greeting>) {
