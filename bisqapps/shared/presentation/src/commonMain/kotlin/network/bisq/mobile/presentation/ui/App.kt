@@ -1,8 +1,6 @@
 package network.bisq.mobile.presentation.ui
 
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.*
-import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import cafe.adriel.lyricist.ProvideStrings
 import cafe.adriel.lyricist.rememberStrings
@@ -38,11 +36,13 @@ fun App() {
 
     var isNavControllerSet by remember { mutableStateOf(false) }
 
-    val presenter: AppPresenter = koinInject()
+//    Looks like the main view composable is not needing the presenter at all - uncomment this if this changes
+//    val presenter: AppPresenter = koinInject()
 
 
     LaunchedEffect(rootNavController) {
-        presenter.onViewAttached()
+//        For the main presenter use case we leave this for the moment the activity/viewcontroller respectively gets attached
+//        presenter.onViewAttached()
         getKoin().setProperty("RootNavController", rootNavController)
         getKoin().setProperty("TabNavController", tabNavController)
         isNavControllerSet = true

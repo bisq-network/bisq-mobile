@@ -8,8 +8,6 @@ import network.bisq.mobile.presentation.MainPresenter
 class AndroidClientMainPresenter(
     private val applicationBootstrapFacade: ApplicationBootstrapFacade
 ) : MainPresenter(GreetingRepository()) {
-
-    // FIXME onViewAttached is called twice
     var applicationServiceInited = false
     override fun onViewAttached() {
         super.onViewAttached()

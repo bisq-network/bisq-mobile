@@ -16,8 +16,6 @@
  */
 package network.bisq.mobile.android.node
 
-import android.content.Context
-import android.os.Process
 import androidx.core.util.Supplier
 import bisq.account.AccountService
 import bisq.application.ApplicationService
@@ -25,10 +23,6 @@ import bisq.application.State
 import bisq.bonded_roles.BondedRolesService
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService
 import bisq.chat.ChatService
-import bisq.common.facades.FacadeProvider
-import bisq.common.facades.android.AndroidGuavaFacade
-import bisq.common.facades.android.AndroidJdkFacade
-import bisq.common.network.AndroidEmulatorLocalhostFacade
 import bisq.common.observable.Observable
 import bisq.common.util.ExceptionUtil
 import bisq.contract.ContractService
@@ -49,11 +43,9 @@ import lombok.Getter
 import lombok.Setter
 import lombok.extern.slf4j.Slf4j
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
-import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import java.nio.file.Path
-import java.security.Security
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
@@ -66,7 +58,7 @@ import java.util.concurrent.TimeUnit
  */
 @Slf4j
 @Getter
-class AndroidApplicationService(context: Context, userDataDir: Path?) :
+class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportService, userDataDir: Path?) :
     ApplicationService("android", arrayOf<String>(), userDataDir) {
 
     @Getter
@@ -115,22 +107,9 @@ class AndroidApplicationService(context: Context, userDataDir: Path?) :
         val log: Logger = LoggerFactory.getLogger(ApplicationService::class.java)
     }
 
-    init {
-        FacadeProvider.setLocalhostFacade(AndroidEmulatorLocalhostFacade())
-        FacadeProvider.setJdkFacade(AndroidJdkFacade(Process.myPid()))
-        FacadeProvider.setGuavaFacade(AndroidGuavaFacade())
-
-        // Androids default BC version does not support all algorithms we need, thus we remove
-        // it and add our BC provider
-        Security.removeProvider("BC")
-        Security.addProvider(BouncyCastleProvider())
-    }
-
     val state = Observable(State.INITIALIZE_APP)
     private val shutDownErrorMessage = Observable<String>()
     private val startupErrorMessage = Observable<String>()
-
-    val androidMemoryService = AndroidMemoryReportService(context)
 
     val securityService =
         SecurityService(persistenceService, SecurityService.Config.from(getConfig("security")))
@@ -144,7 +123,7 @@ class AndroidApplicationService(context: Context, userDataDir: Path?) :
         securityService.keyBundleService,
         securityService.hashCashProofOfWorkService,
         securityService.equihashProofOfWorkService,
-        androidMemoryService
+        androidMemoryReportService
     )
     val identityService = IdentityService(
         persistenceService,

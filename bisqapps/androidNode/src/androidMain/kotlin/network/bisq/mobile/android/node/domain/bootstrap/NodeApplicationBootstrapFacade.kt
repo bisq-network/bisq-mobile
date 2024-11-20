@@ -1,4 +1,4 @@
-package network.bisq.mobile.android.node.main.bootstrap
+package network.bisq.mobile.android.node.domain.bootstrap
 
 import bisq.application.State
 import network.bisq.mobile.android.node.AndroidApplicationService

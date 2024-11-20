@@ -2,8 +2,6 @@ package network.bisq.mobile.presentation
 
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.BuildNodeConfig
