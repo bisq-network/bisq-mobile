@@ -22,16 +22,16 @@ val androidNodeModule = module {
 
     single { AndroidApplicationService.Supplier() }
 
-    // this line showcases both, the possibility to change behaviour of the app by changing one definition
-    // and binding the same obj to 2 different abstractions
-    single<MainPresenter> { NodeMainPresenter(get(), get()) } bind AppPresenter::class
-
     single<ApplicationBootstrapModel> { NodeApplicationBootstrapModel() }
     single<ApplicationBootstrapFacade> { NodeApplicationBootstrapFacade(get(), get()) }
 
     single<UserProfileModel> { NodeUserProfileModel() }
     single<UserProfileServiceFacade> { NodeUserProfileServiceFacade(get(), get()) }
 
+
+    // this line showcases both, the possibility to change behaviour of the app by changing one definition
+    // and binding the same obj to 2 different abstractions
+    single<MainPresenter> { NodeMainPresenter(get(), get(), get()) } bind AppPresenter::class
 
 
     // Services

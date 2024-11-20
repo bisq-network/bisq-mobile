@@ -73,7 +73,8 @@ class AndroidApplicationService(context: Context, userDataDir: Path?) :
     class Supplier {
         @Setter
         lateinit var applicationService: AndroidApplicationService
-
+        var stateSupplier: androidx.core.util.Supplier<Observable<State>> =
+            Supplier { applicationService.state }
         var securityServiceSupplier: androidx.core.util.Supplier<SecurityService> =
             Supplier { applicationService.securityService }
         var networkServiceSupplier: androidx.core.util.Supplier<NetworkService> =
@@ -225,7 +226,7 @@ class AndroidApplicationService(context: Context, userDataDir: Path?) :
         log.info("readAllPersisted took {} ms", System.currentTimeMillis() - ts)
 
         return securityService.initialize()
-            .thenCompose<Boolean> { result: Boolean? ->
+            .thenCompose { result: Boolean? ->
                 setState(State.INITIALIZE_NETWORK)
                 networkService.initialize()
             }

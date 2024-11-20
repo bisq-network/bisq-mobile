@@ -13,7 +13,7 @@ class ClientApplicationBootstrapFacade(
     ApplicationBootstrapFacade {
     private val coroutineScope =  CoroutineScope(BackgroundDispatcher)
 
-    init {
+    override fun initialize() {
         val model = model as ClientApplicationBootstrapModel
         model.setState( "Dummy state 1")
         model.setProgress(0f)

@@ -7,13 +7,12 @@ import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBoot
 
 class NodeApplicationBootstrapFacade(
     override val model: ApplicationBootstrapModel,
-    applicationService: AndroidApplicationService
+    private val applicationServiceSupplier: AndroidApplicationService.Supplier
 ) :
     ApplicationBootstrapFacade {
 
-    init {
-        val model = model as ClientApplicationBootstrapModel
-        applicationService.state.addObserver { state: State ->
+    override fun initialize() {
+        applicationServiceSupplier.stateSupplier.get().addObserver { state: State ->
             when (state) {
                 State.INITIALIZE_APP -> {
                     model.setState("Starting Bisq")
