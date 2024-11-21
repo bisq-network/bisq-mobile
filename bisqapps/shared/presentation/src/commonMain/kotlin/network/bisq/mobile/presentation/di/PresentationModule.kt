@@ -11,6 +11,8 @@ import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPres
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupPresenter
+import network.bisq.mobile.presentation.ui.uicases.trades.IMyTrades
+import network.bisq.mobile.presentation.ui.uicases.trades.MyTradesPresenter
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -55,4 +57,12 @@ val presentationModule = module {
             settingsRepository = get()
         )
     } bind ITrustedNodeSetupPresenter::class
+
+    single {
+        (navController: NavController, tabController: NavController) -> MyTradesPresenter(
+            get(),
+            tabController = tabController,
+            myTradesRepository = get()
+        )
+    } bind IMyTrades::class
 }

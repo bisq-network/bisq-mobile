@@ -40,7 +40,7 @@ open class SplashPresenter(
         // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
         // If not, goto TabContainerScreen
         rootNavigator.navigate(Routes.Onboarding.name) {
-        // navController.navigate(Routes.TabContainer.name) {
+        // rootNavigator.navigate(Routes.TabContainer.name) {
             popUpTo(Routes.Splash.name) { inclusive = true }
         }
     }
