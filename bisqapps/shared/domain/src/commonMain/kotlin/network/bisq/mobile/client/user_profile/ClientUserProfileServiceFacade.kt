@@ -3,6 +3,7 @@ package network.bisq.mobile.domain.client.main.user_profile
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
+import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.client.user_profile.UserProfileResponse
 import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
@@ -14,7 +15,7 @@ class ClientUserProfileServiceFacade(private val apiGateway: UserProfileApiGatew
     UserProfileServiceFacade {
     private val log = Logger.withTag(this::class.simpleName ?: "UserProfileServiceFacade")
 
-    private var preparedDataAsJson: String? = null
+    private var preparedData: PreparedData? = null
 
     override suspend fun hasUserProfile(): Boolean {
         return getUserIdentityIds().isNotEmpty()
@@ -23,28 +24,25 @@ class ClientUserProfileServiceFacade(private val apiGateway: UserProfileApiGatew
     override suspend fun generateKeyPair(result: (String, String) -> Unit) {
         try {
             val ts = Clock.System.now().toEpochMilliseconds()
-            val response = apiGateway.requestPreparedData()
-            preparedDataAsJson = response.first
-            val preparedData = response.second
-
+            val preparedData = apiGateway.requestPreparedData()
             createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
-
             result(preparedData.id, preparedData.nym)
+            this.preparedData = preparedData
         } catch (e: Exception) {
             log.e { e.toString() }
         }
     }
 
     override suspend fun createAndPublishNewUserProfile(nickName: String) {
-        preparedDataAsJson?.let { preparedDataAsJson ->
+        preparedData?.let { preparedData ->
             try {
                 val response: UserProfileResponse =
                     apiGateway.createAndPublishNewUserProfile(
                         nickName,
-                        preparedDataAsJson
+                        preparedData
                     )
-                this.preparedDataAsJson = null
-                log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = $response.userProfileId" }
+                this.preparedData = null
+                log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = ${response.userProfileId}" }
             } catch (e: Exception) {
                 log.e { e.toString() }
             }

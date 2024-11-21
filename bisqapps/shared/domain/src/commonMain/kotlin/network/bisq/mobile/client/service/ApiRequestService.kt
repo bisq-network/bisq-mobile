@@ -6,19 +6,21 @@ import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.contentType
 
-class ApiRequestService(private val httpClient: HttpClient, host: String) {
+class ApiRequestService(val httpClient: HttpClient, host: String) {
     private val log = Logger.withTag(this::class.simpleName ?: "ApiRequestService")
+
     private var baseUrl = "http://$host:8082/api/v1/"
 
-    suspend fun get(path: String): String {
-        return httpClient.get(baseUrl + path).bodyAsText()
+    fun endpoint(path: String) = baseUrl + path
+
+    suspend inline fun <reified T> get(path: String): T {
+        return httpClient.get(endpoint(path)).body()
     }
 
-    suspend fun post(path: String, requestBody: Any): String {
-        return httpClient.post(baseUrl + path) {
+    suspend inline fun <reified T> post(path: String, requestBody: Any): T {
+        return httpClient.post(endpoint(path)) {
             contentType(io.ktor.http.ContentType.Application.Json)
             setBody(requestBody)
         }.body()
