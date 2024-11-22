@@ -18,7 +18,6 @@ import org.koin.mp.KoinPlatform.getKoin
 interface AppPresenter: ViewPresenter {
     // Observables for state
     val isContentVisible: StateFlow<Boolean>
-    val greetingText: StateFlow<String>
 
     // Actions
     fun toggleContentVisibility()

@@ -21,7 +21,7 @@ val presentationModule = module {
     single(named("RootNavController")) { getKoin().getProperty<NavHostController>("RootNavController") }
     single(named("TabNavController")) { getKoin().getProperty<NavHostController>("TabNavController") }
 
-    single<MainPresenter> { MainPresenter(get()) } bind AppPresenter::class
+    single<MainPresenter> { MainPresenter() } bind AppPresenter::class
 
     // TODO: Since NavController will be required for almost all Presenters for basic navigation
     // Added this as top constructor level param. Is this okay?

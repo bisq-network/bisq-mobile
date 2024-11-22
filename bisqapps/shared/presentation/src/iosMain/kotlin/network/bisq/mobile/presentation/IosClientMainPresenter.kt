@@ -6,7 +6,7 @@ import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBoot
 @Suppress("UNCHECKED_CAST")
 class IosClientMainPresenter(
     private val applicationBootstrapFacade: ApplicationBootstrapFacade
-) : MainPresenter(GreetingRepository()) {
+) : MainPresenter() {
     var applicationServiceInited = false
     override fun onViewAttached() {
         super.onViewAttached()
