@@ -7,11 +7,19 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
+import network.bisq.mobile.android.node.main.bootstrap.ClientApplicationBootstrapFacade
+import network.bisq.mobile.client.service.ApiRequestService
+import network.bisq.mobile.domain.client.main.user_profile.ClientUserProfileServiceFacade
+import network.bisq.mobile.domain.client.main.user_profile.UserProfileApiGateway
+import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.ByteArrayAsBase64Serializer
 import org.koin.dsl.module
 
 
+// networking and services dependencies
 val clientModule = module {
+
     single {
         HttpClient(CIO) {
             install(ContentNegotiation) {
@@ -24,4 +32,11 @@ val clientModule = module {
             }
         }
     }
+
+
+    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade() }
+
+    single { ApiRequestService(get(), "10.0.2.2") }
+    single { UserProfileApiGateway(get()) }
+    single<UserProfileServiceFacade> { ClientUserProfileServiceFacade(get()) }
 }

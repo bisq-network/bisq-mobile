@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.di
 
-import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
@@ -20,7 +19,7 @@ val presentationModule = module {
     single(named("RootNavController")) { getKoin().getProperty<NavHostController>("RootNavController") }
     single(named("TabNavController")) { getKoin().getProperty<NavHostController>("TabNavController") }
 
-    single<MainPresenter> { MainPresenter() } bind AppPresenter::class
+    single<MainPresenter> { MainPresenter(get()) } bind AppPresenter::class
 
     single {
         SplashPresenter(

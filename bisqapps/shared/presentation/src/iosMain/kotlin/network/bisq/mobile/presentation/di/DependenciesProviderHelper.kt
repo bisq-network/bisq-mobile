@@ -14,7 +14,7 @@ class DependenciesProviderHelper {
 
     fun initKoin() {
         val instance = startKoin {
-            modules(listOf(domainModule, presentationModule, clientModule, iosClientModule))
+            modules(listOf(domainModule, presentationModule, clientModule))
         }
 
         koin = instance.koin

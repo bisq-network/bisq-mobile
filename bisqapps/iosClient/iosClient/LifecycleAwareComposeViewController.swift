@@ -10,6 +10,7 @@ class LifecycleAwareComposeViewController: UIViewController {
     init(presenter: MainPresenter) {
         self.presenter = presenter
         super.init(nibName: nil, bundle: nil)
+        presenter.attachView(view: self)
     }
 
     required init?(coder: NSCoder) {
@@ -31,7 +32,7 @@ class LifecycleAwareComposeViewController: UIViewController {
             name: UIApplication.didBecomeActiveNotification,
             object: nil)
     }
-    
+
     @objc private func handleDidBecomeActive() {
         presenter.onResume()
     }

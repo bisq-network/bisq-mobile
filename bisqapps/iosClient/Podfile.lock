@@ -13,8 +13,8 @@ EXTERNAL SOURCES:
     :path: "../shared/presentation"
 
 SPEC CHECKSUMS:
-  domain: 47abf0eea12f1e6f5b4f15c05dd23f437ec5478f
-  presentation: 55df2024e1ee347459ecf9349d6e1fde59450eef
+  domain: feb764d7802f6a414d3f649e95721d16a38d018e
+  presentation: 8c21a3748676af08d28227a02cad92c9a7eeb27a
 
 PODFILE CHECKSUM: e4e5bb187d8247572973af90a35b57b84c96b4c6
 

@@ -10,11 +10,12 @@ class NodeMainPresenter(
     private val supplier: AndroidApplicationService.Supplier,
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade
-) : MainPresenter() {
+) : MainPresenter(applicationBootstrapFacade) {
 
     var applicationServiceInited = false
     override fun onViewAttached() {
-        super.onViewAttached()
+//        full override
+//        super.onViewAttached()
 
         if (!applicationServiceInited) {
             applicationServiceInited = true
