@@ -1,10 +1,13 @@
 package network.bisq.mobile.presentation.di
 
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import network.bisq.mobile.client.ClientMainPresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.IGettingStarted
+import network.bisq.mobile.presentation.ui.uicases.exchange.ExchangePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPresenter
@@ -19,10 +22,10 @@ val presentationModule = module {
     single(named("RootNavController")) { getKoin().getProperty<NavHostController>("RootNavController") }
     single(named("TabNavController")) { getKoin().getProperty<NavHostController>("TabNavController") }
 
-    single<MainPresenter> { MainPresenter(get()) } bind AppPresenter::class
-
+    single<MainPresenter> { ClientMainPresenter(get(), get()) } bind AppPresenter::class
     single {
         SplashPresenter(
+            get(),
             get(),
             get()
         )
@@ -45,6 +48,13 @@ val presentationModule = module {
     single {
         CreateProfilePresenter(
             get(),
+            get()
+        )
+    }
+    single { (navController: NavController) ->
+        ExchangePresenter(
+            get(),
+            navController = navController,
             get()
         )
     }

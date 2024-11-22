@@ -1,18 +1,19 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class SplashPresenter(
     mainPresenter: MainPresenter,
-    applicationBootstrapFacade: ApplicationBootstrapFacade
+    applicationBootstrapFacade: ApplicationBootstrapFacade,
+    private val userProfileService: UserProfileServiceFacade
 ) : BasePresenter(mainPresenter) {
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
 
@@ -29,21 +30,15 @@ open class SplashPresenter(
         }
     }
 
-    private fun navigateToNextScreen() {
-        // TODO: Conditional nav
-        // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
-        // If not, goto TabContainerScreen
-        /*  rootNavigator.navigate(Routes.Onboarding.name) {
-              popUpTo(Routes.Splash.name) { inclusive = true }
-          }*/
-
-        //TODO
-        /* rootNavigator.navigate(Routes.TabContainer.name) {
-             popUpTo(Routes.TrustedNodeSetup.name) { inclusive = true }
-         }*/
-        rootNavigator.navigate(Routes.CreateProfile.name) {
-            popUpTo(Routes.Splash.name) { inclusive = true }
+    private suspend fun navigateToNextScreen() {
+        if(userProfileService.hasUserProfile()){
+            rootNavigator.navigate(Routes.TabContainer.name) {
+                popUpTo(Routes.Splash.name) { inclusive = true }
+            }
+        }else{
+            rootNavigator.navigate(Routes.CreateProfile.name) {
+                popUpTo(Routes.Splash.name) { inclusive = true }
+            }
         }
     }
-
 }

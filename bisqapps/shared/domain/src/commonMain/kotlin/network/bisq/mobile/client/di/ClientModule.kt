@@ -8,10 +8,13 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
 import network.bisq.mobile.android.node.main.bootstrap.ClientApplicationBootstrapFacade
+import network.bisq.mobile.client.offerbook.ClientOfferbookServiceFacade
 import network.bisq.mobile.client.service.ApiRequestService
 import network.bisq.mobile.domain.client.main.user_profile.ClientUserProfileServiceFacade
+import network.bisq.mobile.domain.client.main.user_profile.OfferbookApiGateway
 import network.bisq.mobile.domain.client.main.user_profile.UserProfileApiGateway
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.ByteArrayAsBase64Serializer
 import org.koin.core.qualifier.named
@@ -39,8 +42,12 @@ val clientModule = module {
 
     single(named("ApiBaseUrl")) { provideApiBaseUrl() }
     single { ApiRequestService(get(), get<String>(named("ApiBaseUrl"))) }
+
     single { UserProfileApiGateway(get()) }
     single<UserProfileServiceFacade> { ClientUserProfileServiceFacade(get()) }
+
+    single { OfferbookApiGateway(get()) }
+    single<OfferbookServiceFacade> { ClientOfferbookServiceFacade(get()) }
 }
 
 fun provideApiBaseUrl(): String {

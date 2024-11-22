@@ -90,7 +90,11 @@ open class CreateProfilePresenter(
 
                 CoroutineScope(Dispatchers.Main).launch {
                     // todo stop busy animation in UI
-                    rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
+                    // Skip for now the TrustedNodeSetup until its fully implemented with persisting the api URL.
+                   /* rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
+                        popUpTo(Routes.CreateProfile.name) { inclusive = true }
+                    }  */
+                    rootNavigator.navigate(Routes.TabContainer.name) {
                         popUpTo(Routes.CreateProfile.name) { inclusive = true }
                     }
                 }

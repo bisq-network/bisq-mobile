@@ -12,27 +12,32 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.currency_euro
-import bisqapps.shared.presentation.generated.resources.currency_gpb
-import bisqapps.shared.presentation.generated.resources.currency_usd
-import network.bisq.mobile.presentation.ui.components.CurrencyProfileCard
 import network.bisq.mobile.components.MaterialTextField
-import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.CurrencyProfileCard
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SortIcon
-import org.jetbrains.compose.resources.ExperimentalResourceApi
+import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import org.koin.compose.koinInject
+import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 
 @Composable
 fun ExchangeScreen() {
     val navController: NavHostController = koinInject(named("RootNavController"))
+    val presenter: ExchangePresenter = koinInject { parametersOf(navController) }
+
     val originDirection = LocalLayoutDirection.current
+
+    LaunchedEffect(Unit) {
+        presenter.onViewAttached()
+    }
+
+
     Column(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -50,9 +55,12 @@ fun ExchangeScreen() {
             }
             Spacer(modifier = Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                CurrencyProfileCard("US Dollars", "USD", Res.drawable.currency_usd)
-                CurrencyProfileCard("Euro", "EUR", Res.drawable.currency_euro)
-                CurrencyProfileCard("British Pounds", "GPB", Res.drawable.currency_gpb)
+                presenter.marketWithNumOffers
+                    .forEach { item-> CurrencyProfileCard(item.quoteCurrencyName,
+                        item.quoteCurrencyCode,
+                        item.numOffers,
+                        presenter.drawableResource(item.quoteCurrencyCode))
+                    }
             }
         }
     }

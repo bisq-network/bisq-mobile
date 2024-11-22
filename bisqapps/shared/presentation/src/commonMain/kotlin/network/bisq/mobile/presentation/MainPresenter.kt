@@ -2,16 +2,16 @@ package network.bisq.mobile.presentation
 
 import androidx.navigation.NavHostController
 import co.touchlab.kermit.Logger
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.presentation.ui.AppPresenter
 
 /**
  * Main Presenter as an example of implementation for now.
  */
-open class MainPresenter(private val applicationBootstrapFacade: ApplicationBootstrapFacade) : BasePresenter(null), AppPresenter {
+open class MainPresenter : BasePresenter(null), AppPresenter {
     lateinit var navController: NavHostController
         private set
 
@@ -23,16 +23,6 @@ open class MainPresenter(private val applicationBootstrapFacade: ApplicationBoot
     // Observable state
     private val _isContentVisible = MutableStateFlow(false)
     override val isContentVisible: StateFlow<Boolean> = _isContentVisible
-
-   private var applicationServiceInited = false
-    override fun onViewAttached() {
-        super.onViewAttached()
-
-        if (!applicationServiceInited) {
-            applicationServiceInited = true
-            applicationBootstrapFacade.initialize()
-        }
-    }
 
     // passthrough example
 //    private val _greetingText: StateFlow<String> = stateFlowFromRepository(
@@ -56,6 +46,4 @@ open class MainPresenter(private val applicationBootstrapFacade: ApplicationBoot
     override fun toggleContentVisibility() {
         _isContentVisible.value = !_isContentVisible.value
     }
-
-
 }

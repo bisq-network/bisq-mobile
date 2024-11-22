@@ -1,15 +1,10 @@
-package network.bisq.mobile.android.node.presentation
+package network.bisq.mobile.client
 
-import android.app.Activity
-import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
-class NodeMainPresenter(
-    private val supplier: AndroidApplicationService.Supplier,
-    private val androidMemoryReportService: AndroidMemoryReportService,
+class ClientMainPresenter(
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val offerbookServiceFacade: OfferbookServiceFacade
 ) : MainPresenter() {
@@ -20,18 +15,12 @@ class NodeMainPresenter(
 
         if (!applicationServiceInited) {
             applicationServiceInited = true
-            val context = (view as Activity).applicationContext
-            val filesDirsPath = (view as Activity).filesDir.toPath()
-            supplier.applicationService =
-                AndroidApplicationService(androidMemoryReportService, filesDirsPath)
             applicationBootstrapFacade.initialize()
-            supplier.applicationService.initialize()
             offerbookServiceFacade.initialize()
         }
     }
 
     override fun onDestroying() {
-        supplier.applicationService.shutdown()
         super.onDestroying()
     }
 }
