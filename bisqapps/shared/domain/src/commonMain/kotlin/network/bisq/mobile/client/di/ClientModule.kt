@@ -14,6 +14,7 @@ import network.bisq.mobile.domain.client.main.user_profile.UserProfileApiGateway
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.ByteArrayAsBase64Serializer
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 
@@ -36,7 +37,12 @@ val clientModule = module {
 
     single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade() }
 
-    single { ApiRequestService(get(), "10.0.2.2") }
+    single(named("ApiBaseUrl")) { provideApiBaseUrl() }
+    single { ApiRequestService(get(), get<String>(named("ApiBaseUrl"))) }
     single { UserProfileApiGateway(get()) }
     single<UserProfileServiceFacade> { ClientUserProfileServiceFacade(get()) }
+}
+
+fun provideApiBaseUrl(): String {
+    return "10.0.2.2" // Default for Android emulator
 }
