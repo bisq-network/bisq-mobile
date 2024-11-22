@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.components.organisms.startup
+package network.bisq.mobile.presentation.ui.components.organisms
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

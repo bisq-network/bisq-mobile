@@ -24,9 +24,13 @@ import org.jetbrains.compose.resources.painterResource
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun CurrencyProfileCard(currencyName: String, currencyShort: String, image: DrawableResource) {
+fun CurrencyProfileCard(
+    currencyName: String,
+    currencyShort: String,
+    image: DrawableResource,
+    onClick: () -> Unit) {
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
         ) {

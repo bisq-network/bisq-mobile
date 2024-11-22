@@ -16,7 +16,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
-import network.bisq.mobile.presentation.ui.components.organisms.startup.BisqPagerView
+import network.bisq.mobile.presentation.ui.components.organisms.BisqPagerView
 import network.bisq.mobile.presentation.ui.composeModels.PagerViewItem
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.*
