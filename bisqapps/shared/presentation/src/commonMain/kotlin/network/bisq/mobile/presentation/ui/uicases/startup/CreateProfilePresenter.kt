@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import androidx.navigation.NavController
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +14,6 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class CreateProfilePresenter(
     mainPresenter: MainPresenter,
-    private val navController: NavController,
     private val userProfileService: UserProfileServiceFacade
 ) : BasePresenter(mainPresenter) {
 
@@ -92,7 +90,7 @@ open class CreateProfilePresenter(
 
                 CoroutineScope(Dispatchers.Main).launch {
                     // todo stop busy animation in UI
-                    navController.navigate(Routes.TrustedNodeSetup.name) {
+                    rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
                         popUpTo(Routes.CreateProfile.name) { inclusive = true }
                     }
                 }

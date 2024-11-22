@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation
 
 import androidx.annotation.CallSuper
+import androidx.navigation.NavHostController
 import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -49,6 +50,14 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     protected val presenterScope = CoroutineScope(Dispatchers.Main + Job())
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
+
+    /**
+     * @throws IllegalStateException if this presenter has no root
+     * @return Nav controller for navigation from the root
+     */
+    protected val rootNavigator: NavHostController
+        get() = (rootPresenter ?: throw IllegalStateException("This presenter has no root")).navController
+
 
     init {
         rootPresenter?.registerChild(child = this)

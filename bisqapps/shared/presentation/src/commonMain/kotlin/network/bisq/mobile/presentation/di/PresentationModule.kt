@@ -17,26 +17,21 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val presentationModule = module {
-
     single(named("RootNavController")) { getKoin().getProperty<NavHostController>("RootNavController") }
     single(named("TabNavController")) { getKoin().getProperty<NavHostController>("TabNavController") }
 
     single<MainPresenter> { MainPresenter() } bind AppPresenter::class
 
-    // TODO: Since NavController will be required for almost all Presenters for basic navigation
-    // Added this as top constructor level param. Is this okay?
-    single { (navController: NavController) ->
+    single {
         SplashPresenter(
             get(),
-            navController = navController,
             get()
         )
     }
 
-    single { (navController: NavController) ->
+    single {
         OnBoardingPresenter(
-            get(),
-            navController
+            get()
         )
     } bind IOnboardingPresenter::class
 
@@ -48,18 +43,16 @@ val presentationModule = module {
         )
     } bind IGettingStarted::class
 
-    single { (navController: NavController) ->
+    single {
         CreateProfilePresenter(
             get(),
-            navController = navController,
             get()
         )
     }
 
-    single { (navController: NavController) ->
+    single {
         TrustedNodeSetupPresenter(
             get(),
-            navController = navController,
             settingsRepository = get()
         )
     } bind ITrustedNodeSetupPresenter::class

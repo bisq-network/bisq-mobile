@@ -16,7 +16,6 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class TrustedNodeSetupPresenter(
     mainPresenter: MainPresenter,
-    private val navController: NavController,
     private val settingsRepository: SettingsRepository
 ) : BasePresenter(mainPresenter), ITrustedNodeSetupPresenter {
 
@@ -44,7 +43,7 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun navigateToNextScreen() {
-        navController.navigate(Routes.TabContainer.name) {
+        rootNavigator.navigate(Routes.TabContainer.name) {
             popUpTo(Routes.TrustedNodeSetup.name) { inclusive = true }
         }
     }

@@ -12,7 +12,6 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class SplashPresenter(
     mainPresenter: MainPresenter,
-    private val navController: NavController,
     applicationBootstrapFacade: ApplicationBootstrapFacade
 ) : BasePresenter(mainPresenter) {
     private val coroutineScope = CoroutineScope(Dispatchers.Main)
@@ -34,15 +33,15 @@ open class SplashPresenter(
         // TODO: Conditional nav
         // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
         // If not, goto TabContainerScreen
-        /*  navController.navigate(Routes.Onboarding.name) {
+        /*  rootNavigator.navigate(Routes.Onboarding.name) {
               popUpTo(Routes.Splash.name) { inclusive = true }
           }*/
 
         //TODO
-        /* navController.navigate(Routes.TabContainer.name) {
+        /* rootNavigator.navigate(Routes.TabContainer.name) {
              popUpTo(Routes.TrustedNodeSetup.name) { inclusive = true }
          }*/
-        navController.navigate(Routes.CreateProfile.name) {
+        rootNavigator.navigate(Routes.CreateProfile.name) {
             popUpTo(Routes.Splash.name) { inclusive = true }
         }
     }

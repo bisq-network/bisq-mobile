@@ -34,8 +34,7 @@ val onBoardingPages = listOf(
 )
 
 open class OnBoardingPresenter(
-    mainPresenter: MainPresenter,
-    private val navController: NavController
+    mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IOnboardingPresenter {
 
     private val _pagerState = MutableStateFlow<PagerState?>(null)
@@ -50,7 +49,7 @@ open class OnBoardingPresenter(
             val state = pagerState.value
             if (state != null) {
                 if (state.currentPage == onBoardingPages.lastIndex) {
-                    navController.navigate(Routes.CreateProfile.name) {
+                    rootNavigator.navigate(Routes.CreateProfile.name) {
                         popUpTo(Routes.Onboarding.name) { inclusive = true }
                     }
                 } else {

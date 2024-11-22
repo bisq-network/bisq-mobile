@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui
 
 import androidx.compose.runtime.*
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import cafe.adriel.lyricist.ProvideStrings
 import cafe.adriel.lyricist.rememberStrings
@@ -16,7 +17,8 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.mp.KoinPlatform.getKoin
 
 interface AppPresenter: ViewPresenter {
-    // Observables for state
+    fun setNavController(controller: NavHostController)
+        // Observables for state
     val isContentVisible: StateFlow<Boolean>
 
     // Actions
@@ -32,12 +34,8 @@ fun App() {
 
     val rootNavController = rememberNavController()
     val tabNavController = rememberNavController()
-
     var isNavControllerSet by remember { mutableStateOf(false) }
-
-//    Looks like the main view composable is not needing the presenter at all - uncomment this if this changes
-//    val presenter: AppPresenter = koinInject()
-
+    val presenter: AppPresenter = koinInject()
 
     LaunchedEffect(rootNavController) {
 //        For the main presenter use case we leave this for the moment the activity/viewcontroller respectively gets attached
@@ -45,6 +43,7 @@ fun App() {
         getKoin().setProperty("RootNavController", rootNavController)
         getKoin().setProperty("TabNavController", tabNavController)
         isNavControllerSet = true
+        presenter.setNavController(rootNavController)
     }
 
     val lyricist = rememberStrings()
