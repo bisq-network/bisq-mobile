@@ -5,47 +5,52 @@ import bisq.chat.bisqeasy.offerbook.BisqEasyOfferbookMessage
 import bisq.common.observable.Pin
 import co.touchlab.kermit.Logger
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.client.replicated_model.common.currency.Market
+import network.bisq.mobile.client.replicated_model.common.currency.MarketListItem
+import network.bisq.mobile.domain.LifeCycleAware
 
 
-class Markets(private val applicationServiceSupplier: AndroidApplicationService.Supplier) {
+class MarketListItemService(private val applicationServiceSupplier: AndroidApplicationService.Supplier) :
+    LifeCycleAware {
+    // Properties
+    private val _marketListItems: List<MarketListItem> by lazy { fillMarketListItems() }
+    val marketListItems: List<MarketListItem> get() = _marketListItems
 
+    // Misc
     private val log = Logger.withTag(this::class.simpleName ?: "Markets")
-    private val _markets: List<Market> by lazy { fillMarketListItems() }
-    val markets: List<Market> get() = _markets
     private var numOffersObservers: MutableList<NumOffersObserver> = mutableListOf()
 
-    fun initialize() {
+    // Life cycle
+    override fun initialize() {
     }
 
-    fun resume() {
+    override fun resume() {
         numOffersObservers.forEach { it.resume() }
     }
 
-    fun dispose() {
+    override fun dispose() {
         numOffersObservers.forEach { it.dispose() }
     }
 
-    private fun fillMarketListItems(): MutableList<Market> {
-        val markets: MutableList<Market> = mutableListOf()
+    private fun fillMarketListItems(): MutableList<MarketListItem> {
+        val marketListItems: MutableList<MarketListItem> = mutableListOf()
         applicationServiceSupplier.chatServiceSupplier.get().bisqEasyOfferbookChannelService.channels
             .forEach { channel ->
-                val _market = channel.market // Bisq 2 domain object
-                // We convert to our replicated Market model
-                val market = Market(
-                    _market.baseCurrencyCode,
-                    _market.quoteCurrencyCode,
-                    _market.baseCurrencyName,
-                    _market.quoteCurrencyName,
+                // We convert channel.market to our replicated Market model
+                val marketListItem = MarketListItem(
+                    channel.market.baseCurrencyCode,
+                    channel.market.quoteCurrencyCode,
+                    channel.market.baseCurrencyName,
+                    channel.market.quoteCurrencyName,
                 )
-                markets.add(market)
+                marketListItems.add(marketListItem)
 
-                val numOffersObserver = NumOffersObserver(channel, market::setNumOffers)
+                val numOffersObserver = NumOffersObserver(channel, marketListItem::setNumOffers)
                 numOffersObservers.add(numOffersObserver)
             }
-        return markets
+        return marketListItems
     }
 
+    // Inner class
     inner class NumOffersObserver(
         private val channel: BisqEasyOfferbookChannel,
         val setNumOffers: (Int) -> Unit
@@ -73,5 +78,4 @@ class Markets(private val applicationServiceSupplier: AndroidApplicationService.
             setNumOffers(numOffers)
         }
     }
-
 }

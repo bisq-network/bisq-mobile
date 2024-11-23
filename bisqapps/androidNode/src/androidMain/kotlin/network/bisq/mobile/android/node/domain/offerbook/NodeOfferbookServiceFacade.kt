@@ -1,41 +1,63 @@
 package network.bisq.mobile.android.node.domain.offerbook
 
+import bisq.common.currency.Market
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.domain.offerbook.market.SelectedMarket
-import network.bisq.mobile.android.node.domain.offerbook.market.Markets
-import network.bisq.mobile.client.replicated_model.common.currency.Market
+import network.bisq.mobile.android.node.domain.offerbook.market.MarketChannelSelectionService
+import network.bisq.mobile.android.node.domain.offerbook.market.MarketListItemService
+import network.bisq.mobile.android.node.domain.offerbook.offers.OfferbookListItemService
+import network.bisq.mobile.client.replicated_model.common.currency.MarketListItem
+import network.bisq.mobile.domain.offerbook.OfferbookListItem
+import network.bisq.mobile.domain.offerbook.OfferbookMarket
 import network.bisq.mobile.domain.offerbook.OfferbookServiceFacade
 
 class NodeOfferbookServiceFacade(private val applicationServiceSupplier: AndroidApplicationService.Supplier) :
     OfferbookServiceFacade {
 
-    var marketsFacade: Markets = Markets(applicationServiceSupplier)
-    var selectedMarket: SelectedMarket = SelectedMarket(applicationServiceSupplier)
-    private val log = Logger.withTag(this::class.simpleName ?: "NodeOfferbookServiceFacade")
-    override val markets: List<Market> get() = marketsFacade.markets
+    // Dependencies
 
+
+    // Properties
+    override val marketListItemList: List<MarketListItem> get() = marketListItemService.marketListItems
+    override val offerbookListItemList: StateFlow<List<OfferbookListItem>> get() = offerbookListItemService.offerbookListItems
+    override val selectedOfferbookMarket: StateFlow<OfferbookMarket> get() = marketChannelSelectionService.selectedOfferbookMarket
+
+    // Misc
+    private val log = Logger.withTag(this::class.simpleName ?: "NodeOfferbookServiceFacade")
+    private var offerbookListItemService: OfferbookListItemService =
+        OfferbookListItemService(applicationServiceSupplier)
+    private var marketListItemService: MarketListItemService =
+        MarketListItemService(applicationServiceSupplier)
+    private var marketChannelSelectionService: MarketChannelSelectionService =
+        MarketChannelSelectionService(applicationServiceSupplier)
+
+    // Life cycle
     override fun initialize() {
-        marketsFacade.initialize()
-        selectedMarket.initialize()
+        marketListItemService.initialize()
+        marketChannelSelectionService.initialize()
+        offerbookListItemService.initialize()
     }
 
     override fun resume() {
-        marketsFacade.resume()
-        selectedMarket.resume()
-    }
-
-    override fun selectMarket(market: network.bisq.mobile.client.replicated_model.common.currency.Market) {
-        val _market: bisq.common.currency.Market = bisq.common.currency.Market(
-            market.baseCurrencyCode,
-            market.quoteCurrencyCode,
-            market.baseCurrencyName, market.quoteCurrencyName
-        )
-        selectedMarket.selectMarket(_market)
+        marketListItemService.resume()
+        marketChannelSelectionService.resume()
+        offerbookListItemService.resume()
     }
 
     override fun dispose() {
-        marketsFacade.dispose()
-        selectedMarket.dispose()
+        marketListItemService.dispose()
+        marketChannelSelectionService.dispose()
+        offerbookListItemService.dispose()
+    }
+
+    // API
+    override fun selectMarket(marketListItem: MarketListItem) {
+        val market = Market(
+            marketListItem.baseCurrencyCode,
+            marketListItem.quoteCurrencyCode,
+            marketListItem.baseCurrencyName, marketListItem.quoteCurrencyName
+        )
+        marketChannelSelectionService.selectMarket(market)
     }
 }

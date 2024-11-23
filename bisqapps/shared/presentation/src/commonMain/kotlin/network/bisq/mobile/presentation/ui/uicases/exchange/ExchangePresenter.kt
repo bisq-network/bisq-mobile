@@ -4,7 +4,7 @@ import androidx.navigation.NavController
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.currency_usd
 import co.touchlab.kermit.Logger
-import network.bisq.mobile.client.replicated_model.common.currency.Market
+import network.bisq.mobile.client.replicated_model.common.currency.MarketListItem
 import network.bisq.mobile.domain.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -19,9 +19,9 @@ class ExchangePresenter(
     private val log = Logger.withTag(this::class.simpleName ?: "ExchangePresenter")
     private var mainCurrencies = OfferbookServiceFacade.mainCurrencies
 
-    var marketWithNumOffers: List<Market> = service.markets
+    var marketListItemWithNumOffers: List<MarketListItem> = service.marketListItemList
         .sortedWith(
-            compareByDescending<Market> {  it.numOffers.value }
+            compareByDescending<MarketListItem> {  it.numOffers.value }
                 .thenByDescending { mainCurrencies.contains(it.quoteCurrencyCode.lowercase()) } // [1]
                 .thenBy { item->
                     if (!mainCurrencies.contains(item.quoteCurrencyCode.lowercase())) item.quoteCurrencyName
@@ -53,7 +53,7 @@ class ExchangePresenter(
         service.dispose()
     }
 
-    fun onSelectMarket(market: Market) {
-        service.selectMarket(market)
+    fun onSelectMarket(marketListItem: MarketListItem) {
+        service.selectMarket(marketListItem)
     }
 }

@@ -55,7 +55,7 @@ fun ExchangeScreen() {
             }
             Spacer(modifier = Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                presenter.marketWithNumOffers
+                presenter.marketListItemWithNumOffers
                     .forEach { item ->
                         val card = CurrencyProfileCard(item.quoteCurrencyName,
                             item.quoteCurrencyCode,

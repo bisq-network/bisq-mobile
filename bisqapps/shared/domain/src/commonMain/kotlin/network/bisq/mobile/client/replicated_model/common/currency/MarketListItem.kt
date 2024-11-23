@@ -19,7 +19,7 @@ package network.bisq.mobile.client.replicated_model.common.currency
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
-class Market(
+class MarketListItem(
     val baseCurrencyCode: String,
     val quoteCurrencyCode: String,
     val baseCurrencyName: String,
