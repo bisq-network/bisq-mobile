@@ -20,6 +20,7 @@ import androidx.core.util.Supplier
 import bisq.account.AccountService
 import bisq.application.ApplicationService
 import bisq.application.State
+import bisq.bisq_easy.BisqEasyService
 import bisq.bonded_roles.BondedRolesService
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService
 import bisq.chat.ChatService
@@ -38,7 +39,6 @@ import bisq.settings.SettingsService
 import bisq.support.SupportService
 import bisq.trade.TradeService
 import bisq.user.UserService
-import com.google.common.base.Preconditions
 import lombok.Getter
 import lombok.Setter
 import lombok.extern.slf4j.Slf4j
@@ -87,6 +87,8 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
             Supplier { applicationService.chatService }
         var settingsServiceSupplier: androidx.core.util.Supplier<SettingsService> =
             Supplier { applicationService.settingsService }
+        var bisqEasyServiceSupplier: androidx.core.util.Supplier<BisqEasyService> =
+            Supplier { applicationService.bisqEasyService }
         var supportServiceSupplier: androidx.core.util.Supplier<SupportService> =
             Supplier { applicationService.supportService }
         var systemNotificationServiceSupplier: androidx.core.util.Supplier<SystemNotificationService> =
@@ -107,7 +109,6 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
         val log: Logger = LoggerFactory.getLogger(ApplicationService::class.java)
     }
 
-    val state = Observable(State.INITIALIZE_APP)
     private val shutDownErrorMessage = Observable<String>()
     private val startupErrorMessage = Observable<String>()
 
@@ -150,10 +151,10 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
     val supportService: SupportService
     val systemNotificationService = SystemNotificationService(Optional.empty())
     val tradeService: TradeService
+    val bisqEasyService:BisqEasyService
     val alertNotificationsService: AlertNotificationsService
     val favouriteMarketsService: FavouriteMarketsService
     val dontShowAgainService: DontShowAgainService
-
 
     init {
         chatService = ChatService(
@@ -186,6 +187,20 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
             settingsService
         )
 
+        bisqEasyService = BisqEasyService( persistenceService,
+            securityService,
+             networkService,
+             identityService,
+             bondedRolesService,
+             accountService,
+             offerService,
+             contractService,
+             userService,
+             chatService,
+             settingsService,
+             supportService,
+             systemNotificationService,
+             tradeService)
 
         alertNotificationsService =
             AlertNotificationsService(settingsService, bondedRolesService.alertService)
@@ -340,15 +355,6 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
                 }
                 .join()
         }
-    }
-
-    private fun setState(newState: State) {
-        Preconditions.checkArgument(
-            state.get().ordinal < newState.ordinal,
-            "New state %s must have a higher ordinal as the current state %s", newState, state.get()
-        )
-        state.set(newState)
-        log.info("New state {}", newState)
     }
 
     private fun logError(throwable: Throwable): Boolean {
