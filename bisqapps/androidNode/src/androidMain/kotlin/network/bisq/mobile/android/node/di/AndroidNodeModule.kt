@@ -2,7 +2,6 @@ package network.bisq.mobile.android.node.di
 
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.domain.bootstrap.NodeApplicationBootstrapFacade
-import network.bisq.mobile.android.node.domain.data.repository.NodeGreetingRepository
 import network.bisq.mobile.android.node.domain.offerbook.NodeOfferbookServiceFacade
 import network.bisq.mobile.android.node.domain.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
@@ -17,9 +16,6 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val androidNodeModule = module {
-    // this one is for example properties, will be eliminated soon
-    single<NodeGreetingRepository> { NodeGreetingRepository() }
-
     single<AndroidMemoryReportService> {
         AndroidMemoryReportService(androidContext())
     }
