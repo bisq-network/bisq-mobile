@@ -13,7 +13,7 @@ import network.bisq.mobile.presentation.ui.AppPresenter
  */
 open class MainPresenter(private val applicationBootstrapFacade: ApplicationBootstrapFacade) : BasePresenter(null), AppPresenter {
     lateinit var navController: NavHostController
-        private set
+    private set
 
     override fun setNavController(controller: NavHostController) {
         navController = controller
@@ -24,32 +24,37 @@ open class MainPresenter(private val applicationBootstrapFacade: ApplicationBoot
     private val _isContentVisible = MutableStateFlow(false)
     override val isContentVisible: StateFlow<Boolean> = _isContentVisible
 
-   private var applicationServiceInited = false
-    override fun onViewAttached() {
-        super.onViewAttached()
-
-        if (!applicationServiceInited) {
-            applicationServiceInited = true
-            applicationBootstrapFacade.initialize()
-        }
-    }
+    private var applicationServiceInited = false
 
     // passthrough example
-//    private val _greetingText: StateFlow<String> = stateFlowFromRepository(
-//        repositoryFlow = greetingRepository.data,
-//        transform = { it?.greet() ?: "" },
-//        initialValue = "Welcome!"
-//    )
-//    override val greetingText: StateFlow<String> = _greetingText
+    //    private val _greetingText: StateFlow<String> = stateFlowFromRepository(
+    //        repositoryFlow = greetingRepository.data,
+    //        transform = { it?.greet() ?: "" },
+    //        initialValue = "Welcome!"
+    //    )
+    //    override val greetingText: StateFlow<String> = _greetingText
 
     init {
         log.i { "Shared Version: ${BuildConfig.SHARED_LIBS_VERSION}" }
         log.i { "iOS Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Node Version: ${BuildNodeConfig.APP_VERSION}" }
-//        CoroutineScope(BackgroundDispatcher).launch {
-//            greetingRepository.create(Greeting())
-//        }
+    //        CoroutineScope(BackgroundDispatcher).launch {
+    //            greetingRepository.create(Greeting())
+    //        }
+    }
+
+    override fun onViewAttached() {
+        super.onViewAttached()
+
+        if (!applicationServiceInited) {
+            initializeServices()
+            applicationServiceInited = true
+        }
+    }
+
+    protected open fun initializeServices() {
+        applicationBootstrapFacade.initialize()
     }
 
     // Toggle action

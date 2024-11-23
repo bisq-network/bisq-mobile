@@ -9,23 +9,16 @@ import network.bisq.mobile.presentation.MainPresenter
 class NodeMainPresenter(
     private val supplier: AndroidApplicationService.Supplier,
     private val androidMemoryReportService: AndroidMemoryReportService,
-    private val applicationBootstrapFacade: ApplicationBootstrapFacade
+    applicationBootstrapFacade: ApplicationBootstrapFacade
 ) : MainPresenter(applicationBootstrapFacade) {
 
-    var applicationServiceInited = false
-    override fun onViewAttached() {
-//        full override
-//        super.onViewAttached()
-
-        if (!applicationServiceInited) {
-            applicationServiceInited = true
-            val context = (view as Activity).applicationContext
-            val filesDirsPath = (view as Activity).filesDir.toPath()
-            supplier.applicationService =
-                AndroidApplicationService(androidMemoryReportService, filesDirsPath)
-            applicationBootstrapFacade.initialize()
-            supplier.applicationService.initialize()
-        }
+    override fun initializeServices() {
+        val context = (view as Activity).applicationContext
+        val filesDirsPath = (view as Activity).filesDir.toPath()
+        supplier.applicationService =
+            AndroidApplicationService(androidMemoryReportService, filesDirsPath)
+        supplier.applicationService.initialize()
+        super.initializeServices()
     }
 
     override fun onDestroying() {
