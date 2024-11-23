@@ -26,7 +26,6 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
-            implementation(libs.navigation.compose)
             implementation(libs.androidx.activity.compose)
         }
         val androidMain by getting {
@@ -123,7 +122,6 @@ protobuf {
 dependencies {
     implementation(project(":shared:presentation"))
     implementation(project(":shared:domain"))
-    implementation(libs.navigation.compose)
     debugImplementation(compose.uiTooling)
 
     // bisq2 core dependencies
