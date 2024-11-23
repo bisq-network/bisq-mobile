@@ -37,4 +37,9 @@ class Market(
 
     val marketCodes: String
         get() = baseCurrencyCode + QUOTE_SEPARATOR + quoteCurrencyCode
+
+    override fun toString(): String {
+        return "Market(baseCurrencyCode='$baseCurrencyCode', quoteCurrencyCode='$quoteCurrencyCode', baseCurrencyName='$baseCurrencyName', quoteCurrencyName='$quoteCurrencyName', _numOffers=$_numOffers)"
+    }
+
 }

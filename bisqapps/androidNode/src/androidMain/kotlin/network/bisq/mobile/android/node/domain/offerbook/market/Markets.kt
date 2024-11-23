@@ -10,7 +10,7 @@ import network.bisq.mobile.client.replicated_model.common.currency.Market
 
 class Markets(private val applicationServiceSupplier: AndroidApplicationService.Supplier) {
 
-    private val log = Logger.withTag(this::class.simpleName ?: "NodeOfferbookServiceFacade")
+    private val log = Logger.withTag(this::class.simpleName ?: "Markets")
     private val _markets: List<Market> by lazy { fillMarketListItems() }
     val markets: List<Market> get() = _markets
     private var numOffersObservers: MutableList<NumOffersObserver> = mutableListOf()

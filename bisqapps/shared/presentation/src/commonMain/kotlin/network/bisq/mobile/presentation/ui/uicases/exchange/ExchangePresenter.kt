@@ -52,4 +52,8 @@ class ExchangePresenter(
     override fun onDestroying() {
         service.dispose()
     }
+
+    fun onSelectMarket(market: Market) {
+        service.selectMarket(market)
+    }
 }

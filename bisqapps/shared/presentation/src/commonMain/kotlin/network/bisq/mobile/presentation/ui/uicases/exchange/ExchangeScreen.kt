@@ -56,10 +56,14 @@ fun ExchangeScreen() {
             Spacer(modifier = Modifier.height(12.dp))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 presenter.marketWithNumOffers
-                    .forEach { item-> CurrencyProfileCard(item.quoteCurrencyName,
-                        item.quoteCurrencyCode,
-                        item.numOffers,
-                        presenter.drawableResource(item.quoteCurrencyCode))
+                    .forEach { item ->
+                        val card = CurrencyProfileCard(item.quoteCurrencyName,
+                            item.quoteCurrencyCode,
+                            item.numOffers,
+                            presenter.drawableResource(item.quoteCurrencyCode),
+                            onClick = {
+                                presenter.onSelectMarket(item)
+                            })
                     }
             }
         }

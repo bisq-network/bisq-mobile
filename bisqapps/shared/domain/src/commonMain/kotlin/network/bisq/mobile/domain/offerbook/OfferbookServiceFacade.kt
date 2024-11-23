@@ -7,6 +7,7 @@ interface OfferbookServiceFacade {
     fun initialize()
     fun dispose()
     fun resume()
+    fun selectMarket(market: Market)
 
     companion object {
         val mainCurrencies: List<String> =

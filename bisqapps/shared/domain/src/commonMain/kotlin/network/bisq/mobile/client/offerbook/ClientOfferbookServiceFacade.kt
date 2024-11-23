@@ -41,6 +41,11 @@ class ClientOfferbookServiceFacade(private val apiGateway: OfferbookApiGateway) 
         polling.start()
     }
 
+    override fun selectMarket(market: Market) {
+        //todo
+        log.i { "market " + market }
+    }
+
     private fun getNumOffersByMarketCode() {
         CoroutineScope(BackgroundDispatcher).launch {
             val numOffersByMarketCode = apiGateway.getNumOffersByMarketCode()
