@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.model.BaseModel
+import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
+import network.bisq.mobile.utils.log
 
 /**
  * Presenter methods accesible by all views. Views should extend this interface when defining the behaviour expected for their presenter.
@@ -44,7 +46,6 @@ interface ViewPresenter {
  */
 abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPresenter {
     protected var view: Any? = null
-    protected val log = Logger.withTag(this::class.simpleName ?: "BasePresenter")
     // Coroutine scope for the presenter
     protected val presenterScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -169,7 +170,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     private fun cleanup() {
         try {
             presenterScope.cancel()
-            // copy to avoid concurrency exception - no problem with multiple on detroy calls
+            // copy to avoid concurrency exception - no problem with multiple on destroy calls
             dependants?.toList()?.forEach { it.onDestroy() }
         } catch (e: Exception) {
             log.e("Failed cleanup", e)

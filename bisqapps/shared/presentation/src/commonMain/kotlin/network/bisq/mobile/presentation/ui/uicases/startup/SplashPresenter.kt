@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
@@ -9,6 +8,7 @@ import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBoot
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.utils.log
 
 open class SplashPresenter(
     mainPresenter: MainPresenter,

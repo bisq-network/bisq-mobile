@@ -7,9 +7,9 @@ import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
 import bisq.user.profile.UserProfile
-import co.touchlab.kermit.Logger
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.utils.log
 import java.security.KeyPair
 import java.util.Random
 import kotlin.math.max
@@ -27,8 +27,6 @@ class NodeUserProfileServiceFacade(private val supplier: AndroidApplicationServi
     companion object {
         private const val AVATAR_VERSION = 0
     }
-
-    private val log = Logger.withTag(this::class.simpleName ?: "NodeUserProfileServiceFacade")
 
     private var pubKeyHash: ByteArray? = null
     private var keyPair: KeyPair? = null

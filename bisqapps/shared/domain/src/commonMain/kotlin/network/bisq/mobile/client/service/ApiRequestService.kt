@@ -9,8 +9,6 @@ import io.ktor.client.request.setBody
 import io.ktor.http.contentType
 
 class ApiRequestService(val httpClient: HttpClient, host: String) {
-    private val log = Logger.withTag(this::class.simpleName ?: "ApiRequestService")
-
     private var baseUrl = "http://$host:8082/api/v1/"
 
     fun endpoint(path: String) = baseUrl + path

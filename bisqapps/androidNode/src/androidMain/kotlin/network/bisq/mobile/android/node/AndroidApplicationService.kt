@@ -42,8 +42,7 @@ import lombok.Getter
 import lombok.Setter
 import lombok.extern.slf4j.Slf4j
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import network.bisq.mobile.utils.log
 import java.nio.file.Path
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
@@ -103,7 +102,6 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
     companion object {
         const val STARTUP_TIMEOUT_SEC: Long = 300
         const val SHUTDOWN_TIMEOUT_SEC: Long = 10
-        val log: Logger = LoggerFactory.getLogger(ApplicationService::class.java)
     }
 
     private val shutDownErrorMessage = Observable<String>()
@@ -196,11 +194,11 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
     override fun initialize(): CompletableFuture<Boolean> {
         var ts = System.currentTimeMillis()
         pruneAllBackups().join()
-        log.info("pruneAllBackups took {} ms", System.currentTimeMillis() - ts)
+        log.i("pruneAllBackups took $(System.currentTimeMillis() - ts) ms", )
 
         ts = System.currentTimeMillis()
         readAllPersisted().join()
-        log.info("readAllPersisted took {} ms", System.currentTimeMillis() - ts)
+        log.i("readAllPersisted took $(System.currentTimeMillis() - ts) ms")
 
         return securityService.initialize()
             .thenCompose { result: Boolean? ->
@@ -231,17 +229,14 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
                 if (throwable == null) {
                     if (result != null && result) {
                         setState(State.APP_INITIALIZED)
-                        log.info("ApplicationService initialized")
+                        log.i("ApplicationService initialized")
                         return@handle true
                     } else {
                         startupErrorMessage.set("Initializing applicationService failed with result=false")
-                        log.error(startupErrorMessage.get())
+                        log.e(startupErrorMessage.get())
                     }
                 } else {
-                    log.error(
-                        "Initializing applicationService failed",
-                        throwable
-                    )
+                    log.e("Initializing applicationService failed", throwable)
                     startupErrorMessage.set(ExceptionUtil.getRootCauseMessage(throwable))
                 }
                 setState(State.FAILED)
@@ -250,7 +245,7 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
     }
 
     override fun shutdown(): CompletableFuture<Boolean> {
-        log.info("shutdown")
+        log.i("shutdown")
         // We shut down services in opposite order as they are initialized
         // In case a shutdown method completes exceptionally we log the error and map the result to `false` to not
         // interrupt the shutdown sequence.
@@ -321,17 +316,14 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
                 .handle { result: Boolean?, throwable: Throwable? ->
                     if (throwable == null) {
                         if (result != null && result) {
-                            log.info("ApplicationService shutdown completed")
+                            log.i("ApplicationService shutdown completed")
                             return@handle true
                         } else {
                             startupErrorMessage.set("Shutdown applicationService failed with result=false")
-                            log.error(shutDownErrorMessage.get())
+                            log.e(shutDownErrorMessage.get())
                         }
                     } else {
-                        log.error(
-                            "Shutdown applicationService failed",
-                            throwable
-                        )
+                        log.e("Shutdown applicationService failed", throwable)
                         shutDownErrorMessage.set(ExceptionUtil.getRootCauseMessage(throwable))
                     }
                     false
@@ -340,8 +332,9 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
         }
     }
 
+
     private fun logError(throwable: Throwable): Boolean {
-        log.error("Exception at shutdown", throwable)
+        log.e("Exception at shutdown", throwable)
         return false
     }
 }

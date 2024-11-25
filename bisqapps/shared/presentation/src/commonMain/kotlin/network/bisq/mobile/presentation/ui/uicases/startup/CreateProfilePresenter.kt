@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.utils.log
 
 open class CreateProfilePresenter(
     mainPresenter: MainPresenter,

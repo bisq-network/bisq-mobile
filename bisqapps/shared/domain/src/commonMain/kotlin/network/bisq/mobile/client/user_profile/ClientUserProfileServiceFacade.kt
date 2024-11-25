@@ -1,19 +1,18 @@
 package network.bisq.mobile.domain.client.main.user_profile
 
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.client.user_profile.UserProfileResponse
 import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.utils.log
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 
 class ClientUserProfileServiceFacade(private val apiGateway: UserProfileApiGateway) :
     UserProfileServiceFacade {
-    private val log = Logger.withTag(this::class.simpleName ?: "UserProfileServiceFacade")
 
     private var preparedData: PreparedData? = null
 

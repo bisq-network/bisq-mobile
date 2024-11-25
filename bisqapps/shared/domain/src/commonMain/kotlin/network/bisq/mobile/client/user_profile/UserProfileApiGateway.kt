@@ -9,7 +9,6 @@ import network.bisq.mobile.client.user_profile.UserProfileResponse
 class UserProfileApiGateway(
     private val apiRequestService: ApiRequestService
 ) {
-    private val log = Logger.withTag(this::class.simpleName ?: "UserProfileApiGateway")
     private val basePath = "user-identities"
     suspend fun requestPreparedData(): PreparedData {
 
