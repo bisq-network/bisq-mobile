@@ -35,8 +35,6 @@ open class CurrenciesRepository : SingleObjectRepository<Currencies>() {
 
                     FiatCurrency(flagImage = "currency_jpy.png", name = "Japanese Yen", code = "jpy", offerCount = 2),
 
-                    FiatCurrency(flagImage = "currency_ngn.png", name = "Nigerian Naira", code = "ngn", offerCount = 23),
-
                     FiatCurrency(flagImage = "currency_qar.png", name = "Qatari Rial", code = "qar", offerCount = 4),
                     FiatCurrency(flagImage = "currency_sek.png", name = "Swedish Krona", code = "sek", offerCount = 18),
                     FiatCurrency(

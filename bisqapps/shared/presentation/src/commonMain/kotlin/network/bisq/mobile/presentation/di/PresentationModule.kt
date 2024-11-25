@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.di
 
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter

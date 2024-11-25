@@ -17,6 +17,7 @@ androidx-lifecycle = "2.8.2"
 androidx-test-compose-ver = "1.6.8"
 androidx-multidex = "2.0.1"
 bisq-core = "2.1.2"
+coilCompose = "3.0.3"
 compose-plugin = "1.7.0"
 junit = "4.13.2"
 kotlinxDatetime = "0.4.0"
@@ -64,6 +65,7 @@ lombok-lib = { strictly = '1.18.34' }
 typesafe-config-lib = { strictly = '1.4.3' }
 
 [libraries]
+coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit-v180 = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlinTestJunit" }
 kotlinx-coroutines = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx" }
