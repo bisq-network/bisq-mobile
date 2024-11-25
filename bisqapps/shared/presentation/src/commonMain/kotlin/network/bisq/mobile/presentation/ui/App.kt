@@ -37,13 +37,19 @@ fun App() {
     var isNavControllerSet by remember { mutableStateOf(false) }
     val presenter: AppPresenter = koinInject()
 
-    LaunchedEffect(rootNavController) {
+    DisposableEffect(Unit) {
 //        For the main presenter use case we leave this for the moment the activity/viewcontroller respectively gets attached
 //        presenter.onViewAttached()
         getKoin().setProperty("RootNavController", rootNavController)
         getKoin().setProperty("TabNavController", tabNavController)
-        isNavControllerSet = true
         presenter.setNavController(rootNavController)
+        isNavControllerSet = true
+
+        onDispose {
+            // Optional cleanup logic
+//            getKoin().setProperty("RootNavController", null)
+//            getKoin().setProperty("TabNavController", null)
+        }
     }
 
     val lyricist = rememberStrings()

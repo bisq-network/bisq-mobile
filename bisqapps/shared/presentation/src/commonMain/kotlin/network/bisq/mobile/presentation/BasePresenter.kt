@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.model.BaseModel
-import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
 
 /**
  * Presenter methods accesible by all views. Views should extend this interface when defining the behaviour expected for their presenter.
@@ -45,7 +44,7 @@ interface ViewPresenter {
  */
 abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPresenter {
     protected var view: Any? = null
-    private val log = Logger.withTag(this::class.simpleName ?: "BasePresenter")
+    protected val log = Logger.withTag(this::class.simpleName ?: "BasePresenter")
     // Coroutine scope for the presenter
     protected val presenterScope = CoroutineScope(Dispatchers.Main + Job())
 
@@ -64,14 +63,10 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     @CallSuper
-    override fun onViewAttached() {
-        log.i { "Lifecycle: View Attached from Presenter" }
-    }
+    override fun onViewAttached() { }
 
     @CallSuper
-    override fun onViewUnattaching() {
-        log.i { "Lifecycle: View Unattached from Presenter" }
-    }
+    override fun onViewUnattaching() { }
 
     @CallSuper
     override fun onDestroying() {
@@ -118,7 +113,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
         // at the moment the attach view is with the activity/ main view in ios
         // unless we change this there is no point in sharing with dependents
         this.view = view
-        log.i { "Lifecycle: View Attached from Presenter" }
+        log.i { "Lifecycle: View Attached to Presenter" }
         onViewAttached()
     }
 
@@ -138,7 +133,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     // TODO we need to test to find what are exactly the best places to register/unregister
     protected fun unregisterChild(child: BasePresenter) {
         if (!isRoot()) {
-            throw IllegalStateException("You can't unregister to a non root presenter")
+            throw IllegalStateException("You can't unregister from a non root presenter")
         }
         this.dependants!!.remove(child)
     }
@@ -174,7 +169,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     private fun cleanup() {
         try {
             presenterScope.cancel()
-            dependants?.forEach { it.onDestroy() }
+            // copy to avoid concurrency exception - no problem with multiple on detroy calls
+            dependants?.toList()?.forEach { it.onDestroy() }
         } catch (e: Exception) {
             log.e("Failed cleanup", e)
         }

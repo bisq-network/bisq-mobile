@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import co.touchlab.kermit.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -16,8 +15,6 @@ open class CreateProfilePresenter(
     mainPresenter: MainPresenter,
     private val userProfileService: UserProfileServiceFacade
 ) : BasePresenter(mainPresenter) {
-
-    private val log = Logger.withTag(this::class.simpleName ?: "CreateProfilePresenter")
 
     private val _id = MutableStateFlow("")
     val id: StateFlow<String> get() = _id

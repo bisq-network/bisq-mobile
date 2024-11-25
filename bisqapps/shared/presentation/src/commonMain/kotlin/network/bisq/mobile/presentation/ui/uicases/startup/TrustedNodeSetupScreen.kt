@@ -4,7 +4,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInHorizontally
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import network.bisq.mobile.components.MaterialTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.icons.QuestionIcon
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -22,7 +20,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
 import org.koin.core.parameter.parametersOf
@@ -33,6 +30,7 @@ import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ScanIcon
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 
 interface ITrustedNodeSetupPresenter: ViewPresenter {
     val bisqUrl: StateFlow<String>
@@ -56,9 +54,7 @@ fun TrustedNodeSetupScreen(
     val bisqUrl = presenter.bisqUrl.collectAsState().value
     val isConnected = presenter.isConnected.collectAsState().value
 
-    LaunchedEffect(navController) {
-        presenter.onViewAttached()
-    }
+    RememberPresenterLifecycle(presenter)
 
     BisqScrollScaffold {
         BisqLogo()

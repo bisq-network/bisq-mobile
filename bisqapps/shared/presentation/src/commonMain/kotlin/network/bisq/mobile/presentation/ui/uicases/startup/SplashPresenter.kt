@@ -27,6 +27,12 @@ open class SplashPresenter(
                 }
             }
         }
+        log.i { "Splash presenter attached" }
+    }
+
+    override fun onViewUnattaching() {
+        super.onViewUnattaching()
+        log.i { "Splash presenter unnattached" }
     }
 
     private fun navigateToNextScreen() {

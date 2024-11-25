@@ -10,16 +10,15 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ViewPresenter
 
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.organisms.startup.BisqPagerView
 import network.bisq.mobile.presentation.ui.composeModels.PagerViewItem
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.koin.compose.koinInject
@@ -44,9 +43,7 @@ fun OnBoardingScreen() {
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { presenter.indexesToShow.size })
 
-    LaunchedEffect(pagerState) {
-        presenter.onViewAttached()
-    }
+    RememberPresenterLifecycle(presenter)
 
     val finalPages = presenter.onBoardingData.filterIndexed { index, _ ->
         presenter.indexesToShow.contains(index)

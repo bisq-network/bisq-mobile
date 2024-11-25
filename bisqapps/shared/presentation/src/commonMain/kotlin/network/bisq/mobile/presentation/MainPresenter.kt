@@ -19,7 +19,6 @@ open class MainPresenter(private val applicationBootstrapFacade: ApplicationBoot
         navController = controller
     }
 
-    private val log = Logger.withTag(this::class.simpleName ?: "MainPresenter")
     // Observable state
     private val _isContentVisible = MutableStateFlow(false)
     override val isContentVisible: StateFlow<Boolean> = _isContentVisible

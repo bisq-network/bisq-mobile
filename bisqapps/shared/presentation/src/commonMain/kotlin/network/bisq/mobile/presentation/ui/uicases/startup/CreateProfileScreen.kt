@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -22,12 +21,10 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
-import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.core.parameter.parametersOf
-import org.koin.core.qualifier.named
-
 
 @Composable
 fun CreateProfileScreen(
@@ -36,10 +33,7 @@ fun CreateProfileScreen(
     val navController: NavHostController = koinInject(named("RootNavController"))
     val presenter: CreateProfilePresenter = koinInject { parametersOf(navController) }
 
-
-    LaunchedEffect(Unit) {
-        presenter.onViewAttached()
-    }
+    RememberPresenterLifecycle(presenter)
 
     BisqScrollScaffold() {
         BisqLogo()
