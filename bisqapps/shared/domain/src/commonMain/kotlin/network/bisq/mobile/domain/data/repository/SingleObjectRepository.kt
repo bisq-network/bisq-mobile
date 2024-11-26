@@ -31,7 +31,7 @@ abstract class SingleObjectRepository<out T : BaseModel>(
         // Load from persistence on initialization if available
         persistenceSource?.let {
             scope.launch {
-                _data.value = it.get()
+                _data.value = it.get(null)
             }
         }
     }
@@ -52,7 +52,7 @@ abstract class SingleObjectRepository<out T : BaseModel>(
     }
 
     override suspend fun fetch(): T? {
-        return _data.value ?: persistenceSource?.get().also { _data.value = it }
+        return _data.value ?: persistenceSource?.get(null).also { _data.value = it }
     }
 
     override suspend fun clear() {

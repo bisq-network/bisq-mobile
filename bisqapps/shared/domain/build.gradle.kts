@@ -49,12 +49,30 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.jetbrains.serialization.gradle.plugin)
 
+            implementation(libs.multiplatform.settings)
+
             configurations.all {
                 exclude(group = "org.slf4j", module = "slf4j-api")
             }
         }
+
         commonTest.dependencies {
             implementation(libs.kotlin.test)
+            implementation(libs.multiplatform.settings.test)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.koin.test)
+        }
+        androidUnitTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.multiplatform.settings.test)
+            implementation(libs.kotlinx.coroutines.test)
+            implementation(libs.koin.test)
+//            implementation("com.russhwolf:multiplatform-settings-datastore:1.2.0")
+//
+//            implementation("androidx.test:core:1.5.0")
+//            implementation("androidx.test.ext:junit:1.1.5")
+//            implementation("androidx.test.espresso:espresso-core:3.5.1")
+//            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
         }
 
         iosMain.dependencies {
