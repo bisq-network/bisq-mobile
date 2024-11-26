@@ -1,6 +1,5 @@
 package network.bisq.mobile.domain.client.main.user_profile
 
-import co.touchlab.kermit.Logger
 import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.client.service.ApiRequestService
@@ -18,7 +17,7 @@ class UserProfileApiGateway(
     suspend fun createAndPublishNewUserProfile(
         nickName: String,
         preparedData: PreparedData
-    ):  UserProfileResponse {
+    ): UserProfileResponse {
         val createUserIdentityRequest = CreateUserIdentityRequest(
             nickName,
             "",

@@ -13,24 +13,28 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BellIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun TopBar(title: String = "", isHome:Boolean = false) {
+fun TopBar(
+    title: String = "",
+    isHome: Boolean = false,
+    navigationIcon: @Composable () -> Unit = {}
+) {
     TopAppBar(
         modifier = Modifier.padding(horizontal = 16.dp).padding(end = 16.dp),
+        navigationIcon = navigationIcon,
         colors = TopAppBarDefaults.topAppBarColors(
             containerColor = BisqTheme.colors.backgroundColor,
         ),
         title = {
             if (isHome) {
-                BisqLogoSmall(modifier = Modifier.height(34.dp).width(100.dp),)
+                BisqLogoSmall(modifier = Modifier.height(34.dp).width(100.dp))
             } else {
                 BisqText.h4Medium(
                     text = title,

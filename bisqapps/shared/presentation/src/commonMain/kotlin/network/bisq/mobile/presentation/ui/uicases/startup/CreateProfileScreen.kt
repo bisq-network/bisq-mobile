@@ -16,14 +16,13 @@ import bisqapps.shared.presentation.generated.resources.img_bot_image
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
-import org.koin.core.qualifier.named
-import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
-import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
-import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 

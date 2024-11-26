@@ -8,25 +8,27 @@ import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBoot
 
 class ClientApplicationBootstrapFacade() :
     ApplicationBootstrapFacade() {
-    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
 
-    override fun initialize() {
+    override fun activate() {
         setState("Dummy state 1")
         setProgress(0f)
 
         // just dummy loading simulation, might be that there is no loading delay at the end...
-        coroutineScope.launch {
-            delay(500L)
+        CoroutineScope(BackgroundDispatcher).launch {
+            delay(50L)
             setState("Dummy state 2")
             setProgress(0.25f)
 
-            delay(500L)
+            delay(50L)
             setState("Dummy state 3")
             setProgress(0.5f)
 
-            delay(500L)
+            delay(50L)
             setState("Dummy state 4")
             setProgress(1f)
         }
+    }
+
+    override fun deactivate() {
     }
 }

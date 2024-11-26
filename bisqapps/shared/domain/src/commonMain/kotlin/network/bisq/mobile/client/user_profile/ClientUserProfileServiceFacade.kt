@@ -14,8 +14,10 @@ import kotlin.random.Random
 class ClientUserProfileServiceFacade(private val apiGateway: UserProfileApiGateway) :
     UserProfileServiceFacade, Logging {
 
+    // Misc
     private var preparedData: PreparedData? = null
 
+    // API
     override suspend fun hasUserProfile(): Boolean {
         return getUserIdentityIds().isNotEmpty()
     }
@@ -66,6 +68,7 @@ class ClientUserProfileServiceFacade(private val apiGateway: UserProfileApiGatew
         }
     }
 
+    // Private
     private suspend fun getSelectedUserProfile(): UserProfile {
         return apiGateway.getSelectedUserProfile()
     }

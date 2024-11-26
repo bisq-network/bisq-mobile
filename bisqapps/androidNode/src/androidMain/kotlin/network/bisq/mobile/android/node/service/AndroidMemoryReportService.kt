@@ -1,22 +1,24 @@
 package network.bisq.mobile.android.node.service
 
-import bisq.common.platform.MemoryReportService
-import java.util.concurrent.CompletableFuture
 import android.app.ActivityManager
 import android.content.Context
+import bisq.common.platform.MemoryReportService
+import network.bisq.mobile.utils.Logging
+import java.util.concurrent.CompletableFuture
 
 /**
  * Memory report for bisq jars calculations
  */
-class AndroidMemoryReportService(private val context: Context) : MemoryReportService {
+class AndroidMemoryReportService(private val context: Context) : MemoryReportService, Logging {
 
-    private val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+    private val activityManager =
+        context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
 
     override fun logReport() {
         val usedMemory = usedMemoryInMB
         val freeMemory = freeMemoryInMB
         val totalMemory = totalMemoryInMB
-        println("Memory Report - Used: ${usedMemory}MB, Free: ${freeMemory}MB, Total: ${totalMemory}MB")
+        log.i("Memory Report - Used: ${usedMemory}MB, Free: ${freeMemory}MB, Total: ${totalMemory}MB")
     }
 
     override fun getUsedMemoryInBytes(): Long {

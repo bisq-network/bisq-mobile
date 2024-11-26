@@ -10,5 +10,4 @@ val domainModule = module {
     single<BtcPriceRepository> { BtcPriceRepository() }
     single<SettingsRepository> { SettingsRepository() }
     single<MyTradesRepository> { MyTradesRepository() }
-    single<CurrenciesRepository> { CurrenciesRepository() }
 }

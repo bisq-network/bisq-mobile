@@ -4,26 +4,53 @@ import android.app.Activity
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
 class NodeMainPresenter(
-    private val supplier: AndroidApplicationService.Supplier,
+    private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
-    applicationBootstrapFacade: ApplicationBootstrapFacade
-) : MainPresenter(applicationBootstrapFacade) {
+    private val applicationBootstrapFacade: ApplicationBootstrapFacade,
+    private val offerbookServiceFacade: OfferbookServiceFacade,
+    private val marketPriceServiceFacade: MarketPriceServiceFacade
+) : MainPresenter() {
 
-    override fun initializeServices() {
-        log.i{"initializeServices1"}
-        val context = (view as Activity).applicationContext
-        val filesDirsPath = (view as Activity).filesDir.toPath()
-        supplier.applicationService =
-            AndroidApplicationService(androidMemoryReportService, filesDirsPath)
-        supplier.applicationService.initialize()
-        super.initializeServices()
+    private var applicationServiceCreated = false
+    override fun onViewAttached() {
+        if (!applicationServiceCreated) {
+            applicationServiceCreated = true
+            val filesDirsPath = (view as Activity).filesDir.toPath()
+            val applicationService =
+                AndroidApplicationService(androidMemoryReportService, filesDirsPath)
+            provider.applicationService = applicationService
+
+            applicationBootstrapFacade.activate()
+            log.i { "Start initializing applicationService" }
+            applicationService.initialize()
+                .whenComplete { r: Boolean?, throwable: Throwable? ->
+                    if (throwable == null) {
+                        log.i { "ApplicationService initialized" }
+                        applicationBootstrapFacade.deactivate()
+                        offerbookServiceFacade.activate()
+                        marketPriceServiceFacade.activate()
+                    } else {
+                        log.e("Initializing applicationService failed", throwable)
+                    }
+                }
+        } else {
+            offerbookServiceFacade.activate()
+            marketPriceServiceFacade.activate()
+        }
+    }
+
+    override fun onViewUnattaching() {
+        applicationBootstrapFacade.deactivate()
+        offerbookServiceFacade.deactivate()
+        marketPriceServiceFacade.deactivate()
     }
 
     override fun onDestroying() {
-        supplier.applicationService.shutdown()
-        super.onDestroying()
+        provider.applicationService.onStop()
     }
 }

@@ -11,7 +11,6 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-
 open class CreateProfilePresenter(
     mainPresenter: MainPresenter,
     private val userProfileService: UserProfileServiceFacade
@@ -48,33 +47,12 @@ open class CreateProfilePresenter(
     }
 
     override fun onViewAttached() {
-        onGenerateKeyPair()
-
-        // Currently we just always show the create profile page.
-        // We need to make the UI behaving to the intended use case.
-        // 1. After loading screen -> check if there is an existing user profile by
-        // calling `userProfileRepository.service.hasUserProfile()`
-        // 1a. If there is an existing user profile, do not show create user profile screen,
-        // but show user profile is some not yet defined way (right top corner in Desktop shows user profile).
-        // `userProfileRepository.service.applySelectedUserProfile()` fills the user profile data to
-        // userProfileRepository.model to be used in the UI.
-        // 1b. If there is no existing user profile, show create profile screen and call
-        // `onGenerateKeyPair()` when view is ready.
+        generateKeyPair()
     }
 
+    // UI handlers
     fun onGenerateKeyPair() {
-        // takes 200 -1000 ms
-        CoroutineScope(BackgroundDispatcher).launch {
-            setGenerateKeyPairInProgress(true)
-            log.i { "Show busy animation for generateKeyPair" }
-            userProfileService.generateKeyPair { id, nym ->
-                setId(id)
-                setNym(nym)
-                //todo show new profile image
-            }
-            setGenerateKeyPairInProgress(false)
-            log.i { "Hide busy animation for generateKeyPair" }
-        }
+        generateKeyPair()
     }
 
     fun onCreateAndPublishNewUserProfile() {
@@ -88,11 +66,30 @@ open class CreateProfilePresenter(
 
                 CoroutineScope(Dispatchers.Main).launch {
                     // todo stop busy animation in UI
-                    rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
+                    // Skip for now the TrustedNodeSetup until its fully implemented with persisting the api URL.
+                    /* rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
+                         popUpTo(Routes.CreateProfile.name) { inclusive = true }
+                     }  */
+                    rootNavigator.navigate(Routes.TabContainer.name) {
                         popUpTo(Routes.CreateProfile.name) { inclusive = true }
                     }
                 }
             }
+        }
+    }
+
+    private fun generateKeyPair() {
+        // takes 200 -1000 ms
+        CoroutineScope(BackgroundDispatcher).launch {
+            setGenerateKeyPairInProgress(true)
+            log.i { "Show busy animation for generateKeyPair" }
+            userProfileService.generateKeyPair { id, nym ->
+                setId(id)
+                setNym(nym)
+                //todo show new profile image
+            }
+            setGenerateKeyPairInProgress(false)
+            log.i { "Hide busy animation for generateKeyPair" }
         }
     }
 }

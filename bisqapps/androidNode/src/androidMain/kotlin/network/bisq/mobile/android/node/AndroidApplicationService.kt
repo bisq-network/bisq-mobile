@@ -20,6 +20,7 @@ import androidx.core.util.Supplier
 import bisq.account.AccountService
 import bisq.application.ApplicationService
 import bisq.application.State
+import bisq.bisq_easy.BisqEasyService
 import bisq.bonded_roles.BondedRolesService
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService
 import bisq.chat.ChatService
@@ -43,7 +44,6 @@ import lombok.Setter
 import lombok.extern.slf4j.Slf4j
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.utils.Logging
-
 import java.nio.file.Path
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
@@ -57,46 +57,51 @@ import java.util.concurrent.TimeUnit
  */
 @Slf4j
 @Getter
-class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportService, userDataDir: Path?) :
+class AndroidApplicationService(
+    androidMemoryReportService: AndroidMemoryReportService,
+    userDataDir: Path?
+) :
     ApplicationService("android", arrayOf<String>(), userDataDir), Logging {
 
     @Getter
-    class Supplier {
+    class Provider {
         @Setter
         lateinit var applicationService: AndroidApplicationService
-        var stateSupplier: androidx.core.util.Supplier<Observable<State>> =
+        var state: Supplier<Observable<State>> =
             Supplier { applicationService.state }
-        var securityServiceSupplier: androidx.core.util.Supplier<SecurityService> =
+        var securityService: Supplier<SecurityService> =
             Supplier { applicationService.securityService }
-        var networkServiceSupplier: androidx.core.util.Supplier<NetworkService> =
+        var networkService: Supplier<NetworkService> =
             Supplier { applicationService.networkService }
-        var identityServiceSupplier: androidx.core.util.Supplier<IdentityService> =
+        var identityService: Supplier<IdentityService> =
             Supplier { applicationService.identityService }
-        var bondedRolesServiceSupplier: androidx.core.util.Supplier<BondedRolesService> =
+        var bondedRolesService: Supplier<BondedRolesService> =
             Supplier { applicationService.bondedRolesService }
-        var accountServiceSupplier: androidx.core.util.Supplier<AccountService> =
+        var accountService: Supplier<AccountService> =
             Supplier { applicationService.accountService }
-        var offerServiceSupplier: androidx.core.util.Supplier<OfferService> =
+        var offerService: Supplier<OfferService> =
             Supplier { applicationService.offerService }
-        var contractServiceSupplier: androidx.core.util.Supplier<ContractService> =
+        var contractService: Supplier<ContractService> =
             Supplier { applicationService.contractService }
-        var userServiceSupplier: androidx.core.util.Supplier<UserService> =
+        var userService: Supplier<UserService> =
             Supplier { applicationService.userService }
-        var chatServiceSupplier: androidx.core.util.Supplier<ChatService> =
+        var chatService: Supplier<ChatService> =
             Supplier { applicationService.chatService }
-        var settingsServiceSupplier: androidx.core.util.Supplier<SettingsService> =
+        var settingsService: Supplier<SettingsService> =
             Supplier { applicationService.settingsService }
-        var supportServiceSupplier: androidx.core.util.Supplier<SupportService> =
+        var bisqEasyService: Supplier<BisqEasyService> =
+            Supplier { applicationService.bisqEasyService }
+        var supportService: Supplier<SupportService> =
             Supplier { applicationService.supportService }
-        var systemNotificationServiceSupplier: androidx.core.util.Supplier<SystemNotificationService> =
+        var systemNotificationService: Supplier<SystemNotificationService> =
             Supplier { applicationService.systemNotificationService }
-        var tradeServiceSupplier: androidx.core.util.Supplier<TradeService> =
+        var tradeService: Supplier<TradeService> =
             Supplier { applicationService.tradeService }
-        var alertNotificationsServiceSupplier: androidx.core.util.Supplier<AlertNotificationsService> =
+        var alertNotificationsService: Supplier<AlertNotificationsService> =
             Supplier { applicationService.alertNotificationsService }
-        var favouriteMarketsServiceSupplier: androidx.core.util.Supplier<FavouriteMarketsService> =
+        var favouriteMarketsService: Supplier<FavouriteMarketsService> =
             Supplier { applicationService.favouriteMarketsService }
-        var dontShowAgainServiceSupplier: androidx.core.util.Supplier<DontShowAgainService> =
+        var dontShowAgainService: Supplier<DontShowAgainService> =
             Supplier { applicationService.dontShowAgainService }
     }
 
@@ -147,10 +152,10 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
     val supportService: SupportService
     val systemNotificationService = SystemNotificationService(Optional.empty())
     val tradeService: TradeService
+    val bisqEasyService: BisqEasyService
     val alertNotificationsService: AlertNotificationsService
     val favouriteMarketsService: FavouriteMarketsService
     val dontShowAgainService: DontShowAgainService
-
 
     init {
         chatService = ChatService(
@@ -183,6 +188,22 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
             settingsService
         )
 
+        bisqEasyService = BisqEasyService(
+            persistenceService,
+            securityService,
+            networkService,
+            identityService,
+            bondedRolesService,
+            accountService,
+            offerService,
+            contractService,
+            userService,
+            chatService,
+            settingsService,
+            supportService,
+            systemNotificationService,
+            tradeService
+        )
 
         alertNotificationsService =
             AlertNotificationsService(settingsService, bondedRolesService.alertService)
@@ -195,11 +216,11 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
     override fun initialize(): CompletableFuture<Boolean> {
         var ts = System.currentTimeMillis()
         pruneAllBackups().join()
-        log.i("pruneAllBackups took $(System.currentTimeMillis() - ts) ms", )
+        log.i("pruneAllBackups took ${(System.currentTimeMillis() - ts)} ms")
 
         ts = System.currentTimeMillis()
         readAllPersisted().join()
-        log.i("readAllPersisted took $(System.currentTimeMillis() - ts) ms")
+        log.i("readAllPersisted took ${(System.currentTimeMillis() - ts)} ms")
 
         return securityService.initialize()
             .thenCompose { result: Boolean? ->
@@ -243,6 +264,10 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
                 setState(State.FAILED)
                 false
             }
+    }
+
+    fun onStop() {
+        shutdown().join()
     }
 
     override fun shutdown(): CompletableFuture<Boolean> {
@@ -332,7 +357,6 @@ class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportS
                 .join()
         }
     }
-
 
     private fun logError(throwable: Throwable): Boolean {
         log.e("Exception at shutdown", throwable)

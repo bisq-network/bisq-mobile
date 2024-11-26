@@ -1,7 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.trades
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
@@ -19,7 +23,6 @@ import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
-import network.bisq.mobile.presentation.ui.components.molecules.OfferCard
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.painterResource
@@ -27,7 +30,7 @@ import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 
-interface IMyTrades: ViewPresenter {
+interface IMyTrades : ViewPresenter {
     val myTrades: StateFlow<List<BisqOffer>>
 
     fun navigateToCurrencyList()
@@ -38,7 +41,7 @@ fun MyTradesScreen() {
     val navController: NavHostController = koinInject(named("RootNavController"))
     val tabController: NavHostController = koinInject(named("TabNavController"))
 
-    val presenter: IMyTrades = koinInject { parametersOf(navController, tabController)  }
+    val presenter: IMyTrades = koinInject { parametersOf(navController, tabController) }
 
     val myTrades: List<BisqOffer> = presenter.myTrades.collectAsState().value
 
@@ -56,11 +59,11 @@ fun MyTradesScreen() {
 @Composable
 fun TradeList(presenter: IMyTrades, myTrades: List<BisqOffer>) {
 
-        LazyColumn(modifier = Modifier.padding(top= 48.dp)) {
-            items(myTrades) { offer ->
-                OfferCard( onClick = {} )
-            }
+    LazyColumn(modifier = Modifier.padding(top = 48.dp)) {
+        items(myTrades) { offer ->
+            //OfferCard( onClick = {} )
         }
+    }
 
 }
 
@@ -71,7 +74,7 @@ fun NoTradesSection(presenter: IMyTrades) {
             modifier = Modifier.padding(vertical = 52.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(64.dp)
-        ){
+        ) {
             Image(
                 painterResource(Res.drawable.img_no_trades), "",
                 modifier = Modifier.height(272.dp).width(350.dp)

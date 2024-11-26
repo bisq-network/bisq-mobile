@@ -2,10 +2,9 @@ package network.bisq.mobile.domain.data.repository.main.bootstrap
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.LifeCycleAware
 
-abstract class ApplicationBootstrapFacade {
-    abstract fun initialize()
-
+abstract class ApplicationBootstrapFacade: LifeCycleAware {
     private val _state = MutableStateFlow("")
     val state: StateFlow<String> = _state
     fun setState(value: String) {

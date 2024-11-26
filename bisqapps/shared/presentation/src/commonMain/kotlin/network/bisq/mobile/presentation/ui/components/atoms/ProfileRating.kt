@@ -13,11 +13,14 @@ import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.icon_star
 import bisqapps.shared.presentation.generated.resources.img_bot_image
+import network.bisq.mobile.domain.offerbook.OfferListItem
 import org.jetbrains.compose.resources.painterResource
 
 // TODO: Get params and render apt
 @Composable
-fun ProfileRating() {
+fun ProfileRating(item: OfferListItem) {
+    val fiveSystemScore:Int = item.reputationScore.fiveSystemScore.toInt()
+
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
         Image(
             painterResource(Res.drawable.img_bot_image), "",
@@ -25,10 +28,10 @@ fun ProfileRating() {
         )
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             BisqText.smallMedium(
-                text = "Satoshi Ninja"
+                text = item.userName
             )
             LazyRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-                items(5) {
+                items(fiveSystemScore) {
                     Image(
                         painterResource(Res.drawable.icon_star), "",
                         modifier = Modifier.size(10.dp)

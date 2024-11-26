@@ -10,7 +10,6 @@ import bisq.user.profile.UserProfile
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.Logging
-
 import java.security.KeyPair
 import java.util.Random
 import kotlin.math.max
@@ -22,24 +21,28 @@ import kotlin.math.min
  * It uses in a in-memory model for the relevant data required for the presenter to reflect the domains state.
  * Persistence is done inside the Bisq 2 libraries.
  */
-class NodeUserProfileServiceFacade(private val supplier: AndroidApplicationService.Supplier) :
+class NodeUserProfileServiceFacade(private val applicationService: AndroidApplicationService.Provider) :
     UserProfileServiceFacade, Logging {
 
     companion object {
         private const val AVATAR_VERSION = 0
     }
 
+    // Dependencies
+    private val securityService: SecurityService by lazy {
+        applicationService.securityService.get()
+    }
+    private val userService: UserService by lazy {
+        applicationService.userService.get()
+    }
+
+    // Misc
     private var pubKeyHash: ByteArray? = null
     private var keyPair: KeyPair? = null
     private var proofOfWork: ProofOfWork? = null
 
-    private val securityService: SecurityService
-        get() = supplier.securityServiceSupplier.get()
 
-    private val userService: UserService
-        get() = supplier.userServiceSupplier.get()
-
-
+    // API
     override suspend fun hasUserProfile(): Boolean {
         return userService.userIdentityService.userIdentities.isNotEmpty()
     }
@@ -91,6 +94,7 @@ class NodeUserProfileServiceFacade(private val supplier: AndroidApplicationServi
         result(userProfile?.nickName, userProfile?.nym, userProfile?.id)
     }
 
+    // Private
     private fun getSelectedUserProfile(): UserProfile? {
         return userService.userIdentityService.selectedUserIdentity?.userProfile
     }
