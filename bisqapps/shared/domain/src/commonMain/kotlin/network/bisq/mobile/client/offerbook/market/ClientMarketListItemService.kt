@@ -2,6 +2,7 @@ package network.bisq.mobile.client.offerbook.market
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.offerbook.offer.OfferbookApiGateway
 import network.bisq.mobile.client.replicated_model.common.currency.Market
 import network.bisq.mobile.client.service.Polling
@@ -9,6 +10,7 @@ import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.offerbook.market.MarketListItem
 import network.bisq.mobile.utils.Logging
+
 
 class ClientMarketListItemService(private val apiGateway: OfferbookApiGateway) : LifeCycleAware,
     Logging {
@@ -23,29 +25,21 @@ class ClientMarketListItemService(private val apiGateway: OfferbookApiGateway) :
 
     // Life cycle
     override fun activate() {
-        // TODO we should fill it with static default data as the list is only changing if we add a
-        //  new currency to the price feed service. With that we have the list immediately and we
-        //  can do a request to cover the case that markets have been added.
-        if (!marketListItemsRequested) {
+        // As markets are rather static we apply the default markets immediately.
+        // Markets would only change if we get new markets added to the market price server,
+        // which happens rarely.
+        val defaultMarkets = Json.decodeFromString<List<Market>>(DEFAULT_MARKETS)
+        fillMarketListItems(defaultMarkets, emptyMap())
+
+        if (marketListItemsRequested) {
             CoroutineScope(BackgroundDispatcher).launch {
                 try {
-                    val numOffersByMarketCode = apiGateway.getNumOffersByMarketCode()
+                    // TODO we might combine that api call to avoid 2 separate calls.
+                    val numOffersByMarketCode: Map<String, Int> =
+                        apiGateway.getNumOffersByMarketCode()
+                    val markets = apiGateway.getMarkets()
+                    fillMarketListItems(markets, numOffersByMarketCode)
                     marketListItemsRequested = true
-                    val list = apiGateway.getMarkets()
-                        .map { marketDto ->
-                            val market = Market(
-                                marketDto.baseCurrencyCode,
-                                marketDto.quoteCurrencyCode,
-                                marketDto.baseCurrencyName,
-                                marketDto.quoteCurrencyName,
-                            )
-
-                            val marketListItem = MarketListItem(market)
-                            val numOffers = numOffersByMarketCode[marketDto.quoteCurrencyCode] ?: 0
-                            marketListItem.setNumOffers(numOffers)
-                            marketListItem
-                        }
-                    _marketListItems.addAll(list)
                 } catch (e: Exception) {
                     log.e("Error at API request", e)
                 }
@@ -59,12 +53,33 @@ class ClientMarketListItemService(private val apiGateway: OfferbookApiGateway) :
     }
 
     // Private
+    private fun fillMarketListItems(
+        markets: List<Market>,
+        numOffersByMarketCode: Map<String, Int>
+    ) {
+        val list = markets.map { marketDto ->
+            val market = Market(
+                marketDto.baseCurrencyCode,
+                marketDto.quoteCurrencyCode,
+                marketDto.baseCurrencyName,
+                marketDto.quoteCurrencyName,
+            )
+
+            val marketListItem = MarketListItem(market)
+            val numOffers = numOffersByMarketCode[marketDto.quoteCurrencyCode] ?: 0
+            marketListItem.setNumOffers(numOffers)
+            marketListItem
+        }
+        _marketListItems.addAll(list)
+    }
+
     private fun updateNumOffers() {
         CoroutineScope(BackgroundDispatcher).launch {
             try {
                 val numOffersByMarketCode = apiGateway.getNumOffersByMarketCode()
                 marketListItems.map { marketListItem ->
-                    val numOffers = numOffersByMarketCode[marketListItem.market.quoteCurrencyCode] ?: 0
+                    val numOffers =
+                        numOffersByMarketCode[marketListItem.market.quoteCurrencyCode] ?: 0
                     marketListItem.setNumOffers(numOffers)
                     marketListItem
                 }
