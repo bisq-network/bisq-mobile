@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -17,6 +16,7 @@ import network.bisq.mobile.domain.data.model.FiatCurrency
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SortIcon
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 interface ICurrencyList : ViewPresenter {
@@ -30,9 +30,7 @@ fun CurrencyListScreen() {
     val presenter: ICurrencyList = koinInject()
     val currencies: List<FiatCurrency> = presenter.currencies.collectAsState().value
 
-    LaunchedEffect(Unit) {
-        presenter.onViewAttached()
-    }
+    RememberPresenterLifecycle(presenter)
 
     BisqStaticLayout(verticalArrangement = Arrangement.Top) {
         Row(

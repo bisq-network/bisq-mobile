@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +20,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.components.molecules.OfferCard
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -42,9 +42,7 @@ fun MyTradesScreen() {
 
     val myTrades: List<BisqOffer> = presenter.myTrades.collectAsState().value
 
-    LaunchedEffect(Unit) {
-        presenter.onViewAttached()
-    }
+    RememberPresenterLifecycle(presenter)
 
     if (myTrades.isEmpty()) {
         NoTradesSection(presenter)
