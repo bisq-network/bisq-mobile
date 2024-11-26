@@ -159,6 +159,7 @@ dependencies {
     implementation(libs.bisq.core.application)
     implementation(libs.bisq.core.chat)
     implementation(libs.bisq.core.presentation)
+    implementation(libs.bisq.core.bisq.easy)
 
     // protobuf
     implementation(libs.protobuf.gradle.plugin)

@@ -131,6 +131,7 @@ bisq-core-chat = { module = "bisq:chat", version.ref = "bisq-core" }
 bisq-core-contract = { module = "bisq:contract", version.ref = "bisq-core" }
 bisq-core-i18n = { module = "bisq:i18n", version.ref = "bisq-core" }
 bisq-core-identity = { module = "bisq:identity", version.ref = "bisq-core" }
+bisq-core-bisq-easy = { module = "bisq:bisq-easy", version.ref = "bisq-core" }
 
 # bisq core transitive dependencies
 chimp-jsocks = { module = 'com.github.chimp1984:jsocks', version.ref = 'chimp-jsocks-lib'  }
