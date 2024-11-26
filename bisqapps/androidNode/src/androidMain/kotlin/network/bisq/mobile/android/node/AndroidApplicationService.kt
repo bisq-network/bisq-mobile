@@ -42,7 +42,8 @@ import lombok.Getter
 import lombok.Setter
 import lombok.extern.slf4j.Slf4j
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
-import network.bisq.mobile.utils.log
+import network.bisq.mobile.utils.Logging
+
 import java.nio.file.Path
 import java.util.Optional
 import java.util.concurrent.CompletableFuture
@@ -57,7 +58,7 @@ import java.util.concurrent.TimeUnit
 @Slf4j
 @Getter
 class AndroidApplicationService(androidMemoryReportService: AndroidMemoryReportService, userDataDir: Path?) :
-    ApplicationService("android", arrayOf<String>(), userDataDir) {
+    ApplicationService("android", arrayOf<String>(), userDataDir), Logging {
 
     @Getter
     class Supplier {

@@ -9,7 +9,8 @@ import bisq.user.identity.NymIdGenerator
 import bisq.user.profile.UserProfile
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.utils.log
+import network.bisq.mobile.utils.Logging
+
 import java.security.KeyPair
 import java.util.Random
 import kotlin.math.max
@@ -22,7 +23,7 @@ import kotlin.math.min
  * Persistence is done inside the Bisq 2 libraries.
  */
 class NodeUserProfileServiceFacade(private val supplier: AndroidApplicationService.Supplier) :
-    UserProfileServiceFacade {
+    UserProfileServiceFacade, Logging {
 
     companion object {
         private const val AVATAR_VERSION = 0

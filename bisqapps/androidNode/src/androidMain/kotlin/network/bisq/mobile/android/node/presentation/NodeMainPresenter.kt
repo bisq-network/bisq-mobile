@@ -13,6 +13,7 @@ class NodeMainPresenter(
 ) : MainPresenter(applicationBootstrapFacade) {
 
     override fun initializeServices() {
+        log.i{"initializeServices1"}
         val context = (view as Activity).applicationContext
         val filesDirsPath = (view as Activity).filesDir.toPath()
         supplier.applicationService =

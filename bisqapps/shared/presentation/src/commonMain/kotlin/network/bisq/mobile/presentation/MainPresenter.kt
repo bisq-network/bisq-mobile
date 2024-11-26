@@ -1,13 +1,13 @@
 package network.bisq.mobile.presentation
 
 import androidx.navigation.NavHostController
-import co.touchlab.kermit.Logger
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.presentation.ui.AppPresenter
-import network.bisq.mobile.utils.log
+
 
 /**
  * Main Presenter as an example of implementation for now.

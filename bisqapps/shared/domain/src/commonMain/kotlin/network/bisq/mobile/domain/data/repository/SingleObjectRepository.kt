@@ -9,7 +9,8 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.data.persistance.PersistenceSource
-import network.bisq.mobile.utils.log
+import network.bisq.mobile.utils.Logging
+
 
 /**
  * Repository implementation for a single object. Allows for persistance if the persistance source if provided, otherwise is mem-only.
@@ -18,7 +19,7 @@ import network.bisq.mobile.utils.log
  */
 abstract class SingleObjectRepository<out T : BaseModel>(
     private val persistenceSource: PersistenceSource<T>? = null
-) : Repository<T> {
+) : Repository<T>,Logging {
 
     private val _data = MutableStateFlow<T?>(null)
     override val data: StateFlow<T?> = _data
