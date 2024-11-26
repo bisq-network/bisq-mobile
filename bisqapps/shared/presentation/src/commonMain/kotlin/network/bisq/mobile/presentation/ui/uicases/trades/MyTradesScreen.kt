@@ -30,7 +30,7 @@ import org.koin.core.qualifier.named
 interface IMyTrades: ViewPresenter {
     val myTrades: StateFlow<List<BisqOffer>>
 
-    fun navigateToExchange()
+    fun navigateToCurrencyList()
 }
 
 @Composable
@@ -85,7 +85,7 @@ fun NoTradesSection(presenter: IMyTrades) {
             )
             BisqButton(
                 text = "Start your first trade",
-                onClick = { presenter.navigateToExchange() }
+                onClick = { presenter.navigateToCurrencyList() }
             )
         }
     }

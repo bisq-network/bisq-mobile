@@ -1,58 +1,76 @@
 package network.bisq.mobile.presentation.ui.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Text
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import bisqapps.shared.presentation.generated.resources.Res
+import coil3.compose.AsyncImage
+import network.bisq.mobile.domain.data.model.FiatCurrency
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 
+
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun CurrencyProfileCard(
-    currencyName: String,
-    currencyShort: String,
-    image: DrawableResource,
-    onClick: () -> Unit) {
+    currency: FiatCurrency,
+    onClick: (FiatCurrency) -> Unit) {
+
+    val interactionSource = remember { MutableInteractionSource() }
+
     Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 14.dp, vertical = 4.dp)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = {
+                    onClick(currency)
+                }
+            )
+        ,
         ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Image(painterResource(image), null, modifier = Modifier.size(36.dp))
+            //Image(painterResource(image), null, modifier = Modifier.size(36.dp))
+            //DynamicImage("drawable/${currency.flagImage}", contentDescription = null)
+            println(currency.flagImage)
+            DynamicImage("drawable/${currency.flagImage}", contentDescription = null)
+//            AsyncImage(
+//                //model = Res.getUri("drawable/${currency.flagImage}"),
+//                model = Res.getUri("drawable/currency_usd.png"),
+//                contentDescription = null,
+//                modifier = Modifier.size(36.dp)
+//            )
             Spacer(modifier = Modifier.width(8.dp))
             Column {
                 BisqText.baseRegular(
-                    text = currencyName,
+                    text = currency.name,
                     color = BisqTheme.colors.light1,
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(0.dp))
                 BisqText.baseRegular(
-                    text = currencyShort,
+                    text = currency.code,
                     color = BisqTheme.colors.grey2,
                 )
             }
         }
         BisqText.smallRegular(
-            text = "43 offers",
+            text = "${currency.offerCount.toString()} offers",
             color = BisqTheme.colors.primary,
         )
     }

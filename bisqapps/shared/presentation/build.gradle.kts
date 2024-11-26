@@ -94,6 +94,8 @@ kotlin {
             implementation(libs.navigation.compose)
             implementation(libs.lyricist)
 
+            implementation(libs.coil.compose)
+
         }
         val commonTest by getting {
             dependencies {

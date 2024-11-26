@@ -11,7 +11,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.navigation.Graph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedScreen
-import network.bisq.mobile.presentation.ui.uicases.exchange.ExchangeScreen
+import network.bisq.mobile.presentation.ui.uicases.offers.CurrencyListScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.trades.MyTradesScreen
 import org.koin.compose.koinInject
@@ -34,8 +34,8 @@ fun TabNavGraph() {
             composable(route = Routes.TabHome.name) {
                 GettingStartedScreen()
             }
-            composable(route = Routes.TabExchange.name) {
-                ExchangeScreen()
+            composable(route = Routes.TabCurrencies.name) {
+                CurrencyListScreen()
             }
             composable(route = Routes.TabMyTrades.name) {
                 MyTradesScreen()

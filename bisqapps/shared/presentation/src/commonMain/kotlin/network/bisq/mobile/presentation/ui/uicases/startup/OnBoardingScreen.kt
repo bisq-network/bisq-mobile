@@ -37,8 +37,7 @@ interface IOnboardingPresenter: ViewPresenter {
 @Composable
 fun OnBoardingScreen() {
     val strings = LocalStrings.current
-    val navController: NavHostController = koinInject(named("RootNavController"))
-    val presenter: IOnboardingPresenter = koinInject { parametersOf(navController) }
+    val presenter: IOnboardingPresenter = koinInject()
 
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { presenter.indexesToShow.size })

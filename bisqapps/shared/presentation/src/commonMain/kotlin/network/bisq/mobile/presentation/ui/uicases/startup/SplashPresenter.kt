@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.StateFlow
@@ -39,8 +38,8 @@ open class SplashPresenter(
         // TODO: Conditional nav - Will implement once we got persistant storage from nish to save flags
         // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
         // If not, goto TabContainerScreen
-        rootNavigator.navigate(Routes.Onboarding.name) {
-        // rootNavigator.navigate(Routes.TabContainer.name) {
+        // rootNavigator.navigate(Routes.Onboarding.name) {
+        rootNavigator.navigate(Routes.TabContainer.name) {
             popUpTo(Routes.Splash.name) { inclusive = true }
         }
     }

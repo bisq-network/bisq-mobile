@@ -5,6 +5,10 @@ import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.IGettingStarted
+import network.bisq.mobile.presentation.ui.uicases.offers.CurrencyListPresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.ICurrencyList
+import network.bisq.mobile.presentation.ui.uicases.offers.IOffersList
+import network.bisq.mobile.presentation.ui.uicases.offers.OffersListPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPresenter
@@ -57,6 +61,10 @@ val presentationModule = module {
             settingsRepository = get()
         )
     } bind ITrustedNodeSetupPresenter::class
+
+    single { CurrencyListPresenter(get(), get()) } bind ICurrencyList::class
+
+    single { OffersListPresenter(get()) } bind IOffersList::class
 
     single {
         (navController: NavController, tabController: NavController) -> MyTradesPresenter(

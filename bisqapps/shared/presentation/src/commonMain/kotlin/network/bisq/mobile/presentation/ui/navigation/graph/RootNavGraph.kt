@@ -11,6 +11,7 @@ import androidx.navigation.compose.composable
 import network.bisq.mobile.presentation.ui.navigation.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.*
+import network.bisq.mobile.presentation.ui.uicases.offers.OffersListScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
@@ -56,6 +57,15 @@ fun RootNavGraph() {
         }
         composable(route = Routes.TabContainer.name) {
             TabContainerScreen()
+        }
+
+        composable(route = Routes.OfferList.name, enterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(300)
+            )
+        }) {
+            OffersListScreen()
         }
     }
 }

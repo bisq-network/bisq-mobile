@@ -21,7 +21,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 fun BisqDialog(
     onDismissRequest: () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit = {}
-){
+) {
     Dialog(onDismissRequest = { onDismissRequest() }) {
         Box(
             modifier = Modifier

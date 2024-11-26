@@ -22,10 +22,9 @@ class MyTradesPresenter(
     private val _myTrades = MutableStateFlow<List<BisqOffer>>(emptyList())
     override val myTrades: StateFlow<List<BisqOffer>> = _myTrades
 
-    override fun navigateToExchange() {
-        // tabController.navigate(Routes.TabExchange.name)
+    override fun navigateToCurrencyList() {
 
-        tabController.navigate(Routes.TabExchange.name) {
+        tabController.navigate(Routes.TabCurrencies.name) {
             tabController.graph.startDestinationRoute?.let { route ->
                 popUpTo(route) {
                     saveState = true

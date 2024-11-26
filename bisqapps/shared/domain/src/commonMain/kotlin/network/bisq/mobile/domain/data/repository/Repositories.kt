@@ -28,7 +28,6 @@ open class MyTradesRepository : SingleObjectRepository<MyTrades>() {
                 )
             )
 
-            // Use the create method to initialize the data
             create(myTrades)
 
             println("MyTradeRepo :: Created")

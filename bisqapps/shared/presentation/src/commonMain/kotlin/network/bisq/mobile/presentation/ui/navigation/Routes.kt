@@ -13,7 +13,8 @@ enum class Routes(val title: String) {
     TrustedNodeSetup(title = "trusted_node_setup"),
     TabContainer(title = "tab_container"),
     TabHome(title = "tab_home"),
-    TabExchange(title = "tab_exchange"),
+    TabCurrencies(title = "tab_currencies"),
     TabMyTrades(title = "tab_my_trades"),
     TabSettings(title = "tab_settings"),
+    OfferList(title = "offer_list"),
 }

@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.*
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import bisqapps.shared.presentation.generated.resources.*
@@ -16,7 +18,7 @@ import org.koin.core.qualifier.named
 
 val navigationListItem = listOf(
     BottomNavigationItem("Home", Routes.TabHome.name, Res.drawable.icon_home),
-    BottomNavigationItem("Buy/Sell", Routes.TabExchange.name, Res.drawable.icon_market),
+    BottomNavigationItem("Buy/Sell", Routes.TabCurrencies.name, Res.drawable.icon_market),
     BottomNavigationItem("My Trades", Routes.TabMyTrades.name, Res.drawable.icon_trades),
     BottomNavigationItem("Settings", Routes.TabSettings.name, Res.drawable.icon_settings),
 )
@@ -33,6 +35,7 @@ fun TabContainerScreen() {
     }
 
     BisqStaticScaffold(
+        innerPadding = PaddingValues(top = 48.dp, bottom = 12.dp, start = 12.dp, end = 12.dp),
         topBar = {
             // TODO: Since Topbar should go inside Scaffold
             // the TopBar is written here commonly for all 4 tabs.
@@ -43,7 +46,7 @@ fun TabContainerScreen() {
                 isHome = currentRoute == Routes.TabHome.name,
                 title = when (currentRoute) {
                     Routes.TabHome.name -> "Home"
-                    Routes.TabExchange.name -> "Buy/Sell"
+                    Routes.TabCurrencies.name -> "Buy/Sell"
                     Routes.TabMyTrades.name -> "My Trades"
                     Routes.TabSettings.name -> "Settings"
                     else -> "App"
