@@ -2,13 +2,17 @@ package network.bisq.mobile.domain.data.repository
 
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.domain.data.model.*
+import network.bisq.mobile.domain.data.model.BisqStats
+import network.bisq.mobile.domain.data.model.BtcPrice
+import network.bisq.mobile.domain.data.model.Greeting
+import network.bisq.mobile.domain.data.model.Settings
+import network.bisq.mobile.domain.data.persistance.KeyValueStorage
 
 // this way of defining supports both platforms
 // add your repositories here and then in your DI module call this classes for instanciation
 open class GreetingRepository<T: Greeting>: SingleObjectRepository<T>()
 open class BisqStatsRepository: SingleObjectRepository<BisqStats>()
 open class BtcPriceRepository: SingleObjectRepository<BtcPrice>()
-open class SettingsRepository: SingleObjectRepository<Settings>()
 
 open class MyTradesRepository : SingleObjectRepository<MyTrades>() {
     init {
@@ -34,3 +38,4 @@ open class MyTradesRepository : SingleObjectRepository<MyTrades>() {
         }
     }
 }
+open class SettingsRepository(keyValueStorage: KeyValueStorage<Settings>): SingleObjectRepository<Settings>(keyValueStorage)

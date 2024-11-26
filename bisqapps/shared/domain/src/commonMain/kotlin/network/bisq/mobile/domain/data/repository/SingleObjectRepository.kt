@@ -19,7 +19,7 @@ import network.bisq.mobile.utils.Logging
  */
 abstract class SingleObjectRepository<out T : BaseModel>(
     private val persistenceSource: PersistenceSource<T>? = null
-) : Repository<T>,Logging {
+) : Repository<T>, Logging {
 
     private val _data = MutableStateFlow<T?>(null)
     override val data: StateFlow<T?> = _data

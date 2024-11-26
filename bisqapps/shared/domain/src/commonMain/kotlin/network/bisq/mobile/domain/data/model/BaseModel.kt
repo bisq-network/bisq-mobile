@@ -13,6 +13,13 @@ sealed class BaseModel {
     // Add here any common properties of models (id?, timestamps?)
     open var id: String = UNDEFINED_ID
 
+    override fun toString(): String {
+        if (id != UNDEFINED_ID) {
+            return "${this::class.simpleName}(id=$id)"
+        }
+        return super.toString()
+    }
+
     override fun equals(other: Any?): Boolean {
         if (other == null)
             return false

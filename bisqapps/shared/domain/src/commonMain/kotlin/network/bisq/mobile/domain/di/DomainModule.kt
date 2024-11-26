@@ -6,7 +6,6 @@ import kotlinx.serialization.json.Json
 import network.bisq.mobile.domain.data.model.Greeting
 import network.bisq.mobile.domain.data.repository.*
 import network.bisq.mobile.domain.data.persistance.KeyValueStorage
-import network.bisq.mobile.domain.data.persistance.PersistenceSource
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.data.repository.BtcPriceRepository
 import network.bisq.mobile.domain.data.repository.GreetingRepository
@@ -20,7 +19,7 @@ val domainModule = module {
     single<Settings> { provideSettings() }
 
     // Provide PersistenceSource
-    single<PersistenceSource<*>> {
+    single<KeyValueStorage<*>> {
         KeyValueStorage(
             settings = get(),
             keyPrefix = "domain_",
@@ -33,6 +32,7 @@ val domainModule = module {
     single<GreetingRepository<Greeting>> { GreetingRepository() }
     single<BisqStatsRepository> { BisqStatsRepository() }
     single<BtcPriceRepository> { BtcPriceRepository() }
-    single<SettingsRepository> { SettingsRepository() }
     single<MyTradesRepository> { MyTradesRepository() }
+    single<CurrenciesRepository> { CurrenciesRepository() }
+    single<SettingsRepository> { SettingsRepository(get()) }
 }

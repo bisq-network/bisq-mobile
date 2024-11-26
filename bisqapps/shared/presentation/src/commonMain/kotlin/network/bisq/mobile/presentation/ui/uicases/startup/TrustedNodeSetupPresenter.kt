@@ -1,9 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -25,6 +22,28 @@ class TrustedNodeSetupPresenter(
     private val _isConnected = MutableStateFlow(false)
     override val isConnected: StateFlow<Boolean> = _isConnected
 
+    init {
+        initialize()
+    }
+
+    private fun initialize() {
+        log.i { "View attached to Trusted node presenter"}
+        CoroutineScope(BackgroundDispatcher).launch {
+            try {
+                settingsRepository.fetch()
+                settingsRepository.data.value.let {
+                    it?.let {
+                        log.d { "Settings connected:${it.isConnected} url:${it.bisqUrl}" }
+                        _bisqUrl.value = it.bisqUrl
+                        _isConnected.value = it.isConnected
+                    }
+                }
+            } catch (e: Exception) {
+                log.e("Failed to load from repository", e)
+            }
+        }
+    }
+
     override fun updateBisqUrl(newUrl: String) {
         _bisqUrl.value = newUrl
     }
@@ -33,7 +52,8 @@ class TrustedNodeSetupPresenter(
         _isConnected.value = isTested
 
         CoroutineScope(BackgroundDispatcher).launch {
-            val updatedSettings = Settings().apply {
+            // TODO only update repository if the test connection succeds. (will need a service for this)
+            val updatedSettings = (settingsRepository.data.value ?: Settings()).apply {
                 bisqUrl = _bisqUrl.value
                 isConnected = _isConnected.value
             }
