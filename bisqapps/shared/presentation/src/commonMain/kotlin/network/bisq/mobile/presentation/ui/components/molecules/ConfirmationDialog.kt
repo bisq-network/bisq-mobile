@@ -11,6 +11,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
+// TODO: Update default params with translation keys
 @Composable
 fun ConfirmationDialog(
     title: String = "",

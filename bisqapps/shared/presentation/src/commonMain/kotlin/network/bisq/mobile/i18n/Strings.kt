@@ -144,4 +144,10 @@ data class Strings(
     val buttons_next: String,
     val buttons_submit: String,
     val buttons_cancel: String,
+
+    val common_offers: String,
+    val common_search: String,
+
+    val offers_list_buy_from: String,
+    val offers_list_sell_to: String,
 )

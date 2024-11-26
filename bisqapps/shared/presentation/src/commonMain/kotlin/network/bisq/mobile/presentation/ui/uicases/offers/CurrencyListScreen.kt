@@ -40,7 +40,7 @@ fun CurrencyListScreen() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            MaterialTextField(text = "Search", onValueChanged = {})
+            MaterialTextField(text = strings.common_search, onValueChanged = {})
             SortIcon(modifier = Modifier.size(24.dp))
         }
         Spacer(modifier = Modifier.height(12.dp))

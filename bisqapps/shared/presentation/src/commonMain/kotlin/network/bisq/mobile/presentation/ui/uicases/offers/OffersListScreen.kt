@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.*
@@ -31,12 +32,12 @@ interface IOffersList : ViewPresenter {
 @Composable
 fun OffersListScreen() {
     val presenter: ICurrencyList = koinInject()
+    val strings = LocalStrings.current
+
     val states = listOf(
-        "Buy from",
-        "Sell to"
+        strings.offers_list_buy_from,
+        strings.offers_list_sell_to
     )
-    val openDialog = remember { mutableStateOf(false) }
-    val rootNavController: NavController
 
     LaunchedEffect(Unit) {
         presenter.onViewAttached()
@@ -44,10 +45,10 @@ fun OffersListScreen() {
 
     BisqStaticScaffold(
         topBar = {
-            TopBar(title = "Offers")
+            TopBar(title = strings.common_offers)
         },
     ) {
-        Box(modifier = Modifier.fillMaxSize().blur(if (openDialog.value) 12.dp else 0.dp)) {
+        Box(modifier = Modifier.fillMaxSize()) {
             Column {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
@@ -62,20 +63,9 @@ fun OffersListScreen() {
                     ) {
                         items(3) {
                             OfferCard(onClick = {
-                                openDialog.value = !openDialog.value
+                                // TODO: Do navigation here
                             })
                         }
-                    }
-
-                    if (openDialog.value) {
-                        ConfirmationDialog(
-                            message = "Do you want to take this trade?",
-                            confirmButtonText = "Yes, please",
-                            cancelButtonText = "Cancel",
-                            onDismissRequest = {
-                                openDialog.value = !openDialog.value
-                            },
-                        )
                     }
 
                 }

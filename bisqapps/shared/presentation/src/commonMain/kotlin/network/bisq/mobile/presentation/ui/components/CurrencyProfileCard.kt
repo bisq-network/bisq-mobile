@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
+import cafe.adriel.lyricist.LocalStrings
 import coil3.compose.AsyncImage
 import network.bisq.mobile.domain.data.model.FiatCurrency
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -26,6 +27,7 @@ fun CurrencyProfileCard(
     currency: FiatCurrency,
     onClick: (FiatCurrency) -> Unit) {
 
+    val strings = LocalStrings.current
     val interactionSource = remember { MutableInteractionSource() }
 
     Row(
@@ -61,7 +63,7 @@ fun CurrencyProfileCard(
             }
         }
         BisqText.smallRegular(
-            text = "${currency.offerCount.toString()} offers",
+            text = "${currency.offerCount.toString()} ${strings.common_offers}",
             color = BisqTheme.colors.primary,
         )
     }

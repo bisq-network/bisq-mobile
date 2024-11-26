@@ -148,4 +148,10 @@ val FRStrings = Strings(
     buttons_next = "[FR] Next",
     buttons_submit = "[FR] Submit",
     buttons_cancel = "[FR] Cancel",
+
+    common_offers = "[FR] offers",
+    common_search = "[FR] Search",
+
+    offers_list_buy_from = "[FR] Buy from",
+    offers_list_sell_to = "[FR] Sell to",
 )
