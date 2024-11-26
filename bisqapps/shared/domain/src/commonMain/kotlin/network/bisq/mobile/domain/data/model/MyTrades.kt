@@ -1,6 +1,6 @@
 package network.bisq.mobile.domain.data.model
 
-// TODO: Update later
+// TODO: Update later based on model class from bisq2 lib
 data class BisqOffer (
     val id: String = "offer_283UANJD19A",
     val isBuy: Boolean = true,

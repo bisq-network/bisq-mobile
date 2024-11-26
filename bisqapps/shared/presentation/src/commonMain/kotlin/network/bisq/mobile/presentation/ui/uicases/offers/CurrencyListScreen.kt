@@ -9,6 +9,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ui.components.CurrencyProfileCard
 import network.bisq.mobile.components.MaterialTextField
@@ -25,6 +26,7 @@ interface ICurrencyList : ViewPresenter {
 
 @Composable
 fun CurrencyListScreen() {
+    val strings = LocalStrings.current
     val presenter: ICurrencyList = koinInject()
     val currencies: List<FiatCurrency> = presenter.currencies.collectAsState().value
 
@@ -38,9 +40,7 @@ fun CurrencyListScreen() {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            Box() {
-                MaterialTextField(text = "Search", onValueChanged = {})
-            }
+            MaterialTextField(text = "Search", onValueChanged = {})
             SortIcon(modifier = Modifier.size(24.dp))
         }
         Spacer(modifier = Modifier.height(12.dp))

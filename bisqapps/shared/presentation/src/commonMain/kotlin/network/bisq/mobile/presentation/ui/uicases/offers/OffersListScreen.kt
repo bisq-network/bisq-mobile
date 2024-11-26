@@ -68,16 +68,14 @@ fun OffersListScreen() {
                     }
 
                     if (openDialog.value) {
-                        BisqDialog {
-                            ConfirmationDialog(
-                                message = "Do you want to take this trade?",
-                                confirmButtonText = "Yes, please",
-                                cancelButtonText = "Cancel",
-                                onDismissRequest = {
-                                    openDialog.value = !openDialog.value
-                                },
-                            )
-                        }
+                        ConfirmationDialog(
+                            message = "Do you want to take this trade?",
+                            confirmButtonText = "Yes, please",
+                            cancelButtonText = "Cancel",
+                            onDismissRequest = {
+                                openDialog.value = !openDialog.value
+                            },
+                        )
                     }
 
                 }

@@ -46,16 +46,7 @@ fun CurrencyProfileCard(
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            //Image(painterResource(image), null, modifier = Modifier.size(36.dp))
-            //DynamicImage("drawable/${currency.flagImage}", contentDescription = null)
-            println(currency.flagImage)
             DynamicImage("drawable/${currency.flagImage}", contentDescription = null)
-//            AsyncImage(
-//                //model = Res.getUri("drawable/${currency.flagImage}"),
-//                model = Res.getUri("drawable/currency_usd.png"),
-//                contentDescription = null,
-//                modifier = Modifier.size(36.dp)
-//            )
             Spacer(modifier = Modifier.width(8.dp))
             Column {
                 BisqText.baseRegular(

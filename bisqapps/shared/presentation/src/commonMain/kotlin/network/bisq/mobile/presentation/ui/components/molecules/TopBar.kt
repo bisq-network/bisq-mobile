@@ -22,7 +22,7 @@ import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalResourceApi::class)
 @Composable
-fun TopBar(title: String = "",isHome:Boolean = false) {
+fun TopBar(title: String = "", isHome:Boolean = false) {
     TopAppBar(
         modifier = Modifier.padding(horizontal = 16.dp).padding(end = 16.dp),
         colors = TopAppBarDefaults.topAppBarColors(
