@@ -33,10 +33,10 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.ScanIcon
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 
 interface ITrustedNodeSetupPresenter: ViewPresenter {
-    val bisqUrl: StateFlow<String>
+    val bisqApiUrl: StateFlow<String>
     val isConnected: StateFlow<Boolean>
 
-    fun updateBisqUrl(newUrl: String)
+    fun updateBisqApiUrl(newUrl: String)
 
     fun testConnection(isTested: Boolean)
 
@@ -51,7 +51,7 @@ fun TrustedNodeSetupScreen(
     val navController: NavHostController = koinInject(named("RootNavController"))
     val presenter: ITrustedNodeSetupPresenter = koinInject { parametersOf(navController) }
 
-    val bisqUrl = presenter.bisqUrl.collectAsState().value
+    val bisqApiUrl = presenter.bisqApiUrl.collectAsState().value
     val isConnected = presenter.isConnected.collectAsState().value
 
     RememberPresenterLifecycle(presenter)
@@ -65,8 +65,8 @@ fun TrustedNodeSetupScreen(
         ) {
             BisqTextField(
                 label = "Bisq URL",
-                onValueChanged = { presenter.updateBisqUrl(it) },
-                value = bisqUrl,
+                onValueChanged = { presenter.updateBisqApiUrl(it) },
+                value = bisqApiUrl,
                 placeholder = "",
                 labelRightSuffix = {
                     BisqButton(
@@ -122,7 +122,7 @@ fun TrustedNodeSetupScreen(
         if (!isConnected) {
             BisqButton(
                 text = "Test Connection",
-                color = if (bisqUrl.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
+                color = if (bisqApiUrl.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
                 onClick = {
                     presenter.testConnection(true)
                           },
@@ -139,7 +139,7 @@ fun TrustedNodeSetupScreen(
                 ) {
                     BisqButton(
                         text = "Test Connection",
-                        color = if (bisqUrl.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
+                        color = if (bisqApiUrl.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
                         onClick = { presenter.testConnection(true) },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )

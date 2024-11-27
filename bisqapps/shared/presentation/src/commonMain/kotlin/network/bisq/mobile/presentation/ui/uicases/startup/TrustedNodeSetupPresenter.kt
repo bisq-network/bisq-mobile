@@ -16,8 +16,8 @@ class TrustedNodeSetupPresenter(
     private val settingsRepository: SettingsRepository
 ) : BasePresenter(mainPresenter), ITrustedNodeSetupPresenter {
 
-    private val _bisqUrl = MutableStateFlow("")
-    override val bisqUrl: StateFlow<String> = _bisqUrl
+    private val _bisqApiUrl = MutableStateFlow("")
+    override val bisqApiUrl: StateFlow<String> = _bisqApiUrl
 
     private val _isConnected = MutableStateFlow(false)
     override val isConnected: StateFlow<Boolean> = _isConnected
@@ -33,8 +33,8 @@ class TrustedNodeSetupPresenter(
                 settingsRepository.fetch()
                 settingsRepository.data.value.let {
                     it?.let {
-                        log.d { "Settings connected:${it.isConnected} url:${it.bisqUrl}" }
-                        _bisqUrl.value = it.bisqUrl
+                        log.d { "Settings connected:${it.isConnected} url:${it.bisqApiUrl}" }
+                        _bisqApiUrl.value = it.bisqApiUrl
                         _isConnected.value = it.isConnected
                     }
                 }
@@ -44,8 +44,8 @@ class TrustedNodeSetupPresenter(
         }
     }
 
-    override fun updateBisqUrl(newUrl: String) {
-        _bisqUrl.value = newUrl
+    override fun updateBisqApiUrl(newUrl: String) {
+        _bisqApiUrl.value = newUrl
     }
 
     override fun testConnection(isTested: Boolean) {
@@ -54,7 +54,7 @@ class TrustedNodeSetupPresenter(
         CoroutineScope(BackgroundDispatcher).launch {
             // TODO only update repository if the test connection succeds. (will need a service for this)
             val updatedSettings = (settingsRepository.data.value ?: Settings()).apply {
-                bisqUrl = _bisqUrl.value
+                bisqApiUrl = _bisqApiUrl.value
                 isConnected = _isConnected.value
             }
 

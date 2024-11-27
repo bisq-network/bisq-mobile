@@ -4,6 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 open class Settings : BaseModel() {
-    open var bisqUrl: String = ""
+    open var bisqApiUrl: String = ""
     open var isConnected: Boolean = false
 }
