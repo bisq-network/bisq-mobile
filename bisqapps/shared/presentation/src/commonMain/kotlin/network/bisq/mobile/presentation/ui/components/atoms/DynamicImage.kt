@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.AsyncImage
+import network.bisq.mobile.utils.getLogger
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 
 @OptIn(ExperimentalResourceApi::class)
@@ -25,10 +26,10 @@ fun DynamicImage(
             try {
                 model = Res.getUri(fallbackPath)
             } catch (e: Exception) {
-                println("Could not find resource $fallbackPath")
+                getLogger("DynamicImage").i { "Could not find resource $fallbackPath" }
             }
         } else {
-            println("Could not find resource $path")
+            getLogger("DynamicImage").i { "Could not find resource $path" }
         }
     }
     AsyncImage(
