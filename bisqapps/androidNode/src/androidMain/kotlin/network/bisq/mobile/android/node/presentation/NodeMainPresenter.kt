@@ -18,6 +18,7 @@ class NodeMainPresenter(
 
     private var applicationServiceCreated = false
     override fun onViewAttached() {
+        super.onViewAttached()
         if (!applicationServiceCreated) {
             applicationServiceCreated = true
             val filesDirsPath = (view as Activity).filesDir.toPath()
@@ -48,9 +49,11 @@ class NodeMainPresenter(
         applicationBootstrapFacade.deactivate()
         offerbookServiceFacade.deactivate()
         marketPriceServiceFacade.deactivate()
+        super.onViewUnattaching()
     }
 
     override fun onDestroying() {
         provider.applicationService.onStop()
+        super.onDestroying()
     }
 }
