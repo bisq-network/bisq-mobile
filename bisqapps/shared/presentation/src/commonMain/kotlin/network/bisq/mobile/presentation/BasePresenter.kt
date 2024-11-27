@@ -75,12 +75,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     @CallSuper
-    open fun onCreate() {
-        log.i { "Lifecycle: CREATE" }
-        this.dependants?.forEach { it.onCreate() }
-    }
-
-    @CallSuper
     open fun onStart() {
         log.i { "Lifecycle: START" }
         this.dependants?.forEach { it.onStart() }
