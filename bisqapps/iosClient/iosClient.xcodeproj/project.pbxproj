@@ -122,7 +122,7 @@
 				B92378962B6B1156000C7307 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
 				3281115E126FA938007845C3 /* [CP] Embed Pods Frameworks */,
-				CF1709C216E5B9793172E942 /* [CP] Copy Pods Resources */,
+				C4A62A78957219C45FAA848E /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -219,7 +219,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-iosClient/Pods-iosClient-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		CF1709C216E5B9793172E942 /* [CP] Copy Pods Resources */ = {
+		C4A62A78957219C45FAA848E /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
