@@ -13,7 +13,7 @@ interface Logging {
 
 fun getLogger(anyObj: Any): Logger {
     val tag = anyObj::class.simpleName
-    return getLogger(tag)
+    return doGetLogger(tag)
 }
 
 fun getLogger(tag: String): Logger {
@@ -21,10 +21,10 @@ fun getLogger(tag: String): Logger {
 }
 
 fun getLogger(): Logger {
-    return getLogger(null)
+    return doGetLogger(null)
 }
 
-private fun getLogger(tag: String?): Logger {
+private fun doGetLogger(tag: String?): Logger {
     return if (tag != null) {
         loggerCache.getOrPut(tag) { Logger.withTag(tag) }
     } else {
