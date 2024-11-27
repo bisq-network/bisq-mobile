@@ -13,7 +13,6 @@ val testModule = module {
     single<PersistenceSource<*>> {
         KeyValueStorage(
             settings = get(),
-            keyPrefix = "testBaseModel_",
             serializer = { kotlinx.serialization.json.Json.encodeToString(it) },
             deserializer = { kotlinx.serialization.json.Json.decodeFromString(it) }
         )

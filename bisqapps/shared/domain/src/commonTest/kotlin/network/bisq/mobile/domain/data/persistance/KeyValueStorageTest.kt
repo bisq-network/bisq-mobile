@@ -33,7 +33,8 @@ class KeyValueStorageTest : KoinTest {
         val item = Settings().apply { id = "1" }
         persistenceSource.save(item)
 
-        val retrievedItem = persistenceSource.get("1")
+        val testModel = Settings().apply { id = "1" }
+        val retrievedItem = persistenceSource.get(testModel)
         assertEquals(item, retrievedItem)
     }
 
@@ -42,7 +43,8 @@ class KeyValueStorageTest : KoinTest {
         val items = listOf(Settings().apply { id = "1" }, Settings().apply { id = "2" })
         persistenceSource.saveAll(items)
 
-        val retrievedItems = persistenceSource.getAll()
+        val testModel = Settings()
+        val retrievedItems = persistenceSource.getAll(testModel)
         assertEquals(items, retrievedItems)
     }
 
@@ -51,8 +53,9 @@ class KeyValueStorageTest : KoinTest {
         val item = Settings().apply { id = "1" }
         persistenceSource.save(item)
 
+        val testModel = Settings().apply { id = "1" }
         persistenceSource.delete(item)
-        val retrievedItem = persistenceSource.get("1")
+        val retrievedItem = persistenceSource.get(testModel)
         assertEquals(null, retrievedItem)
     }
 
@@ -61,8 +64,9 @@ class KeyValueStorageTest : KoinTest {
         val items = listOf(Settings().apply { id = "1" }, Settings().apply { id = "2" })
         persistenceSource.saveAll(items)
 
+        val testModel = Settings()
         persistenceSource.clear()
-        val retrievedItems = persistenceSource.getAll()
+        val retrievedItems = persistenceSource.getAll(testModel)
         assertEquals(emptyList<BaseModel>(), retrievedItems)
     }
 
@@ -74,13 +78,15 @@ class KeyValueStorageTest : KoinTest {
         persistenceSource.save(item1)
         persistenceSource.save(item2)
 
-        val retrievedItem = persistenceSource.get("1")
+        val testModel = Settings().apply { id = "1" }
+        val retrievedItem = persistenceSource.get(testModel)
         assertEquals(item2, retrievedItem)
     }
 
     @Test
     fun testNonExistentId() = runBlocking {
-        val retrievedItem = persistenceSource.get("999")
+        val testModel = Settings().apply { id = "999" }
+        val retrievedItem = persistenceSource.get(testModel)
         assertEquals(null, retrievedItem)
     }
 
@@ -92,8 +98,9 @@ class KeyValueStorageTest : KoinTest {
         persistenceSource.save(item1)
         persistenceSource.save(item2)
 
-        val retrievedItem1 = persistenceSource.get("1")
-        val retrievedItem2 = persistenceSource.get("10")
+        val testModel = Settings().apply { id = "1" }
+        val retrievedItem1 = persistenceSource.get(testModel)
+        val retrievedItem2 = persistenceSource.get(testModel.apply { id = "10" })
 
         assertEquals(item1, retrievedItem1)
         assertEquals(item2, retrievedItem2)
@@ -107,7 +114,8 @@ class KeyValueStorageTest : KoinTest {
         persistenceSource.saveAll(listOf(item1, item2))
         persistenceSource.delete(item1)
 
-        val allItems = persistenceSource.getAll()
+        val testModel = Settings()
+        val allItems = persistenceSource.getAll(testModel)
         assertEquals(listOf(item2), allItems)
     }
 }

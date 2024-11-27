@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 sealed class BaseModel {
     companion object {
         const val UNDEFINED_ID = ""
+        inline fun <reified T : BaseModel> typeName(): String = T::class.simpleName ?: "BaseModel"
     }
     // Add here any common properties of models (id?, timestamps?)
     open var id: String = UNDEFINED_ID

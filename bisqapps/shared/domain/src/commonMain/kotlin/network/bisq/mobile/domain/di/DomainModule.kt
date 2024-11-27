@@ -22,7 +22,6 @@ val domainModule = module {
     single<KeyValueStorage<*>> {
         KeyValueStorage(
             settings = get(),
-            keyPrefix = "domain_",
             serializer = { Json.encodeToString(it) },
             deserializer = { Json.decodeFromString(it) }
         )

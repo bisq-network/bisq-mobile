@@ -41,7 +41,11 @@ open class SplashPresenter(
 
     private fun navigateToNextScreen() {
         CoroutineScope(Dispatchers.Main).launch {
+            // TODO: Conditional nav - Will implement once we got persistant storage from nish to save flags
+            // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
+            // If not, goto TabContainerScreen
             if (userProfileService.hasUserProfile()) {
+                //                rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
                 rootNavigator.navigate(Routes.TabContainer.name) {
                     popUpTo(Routes.Splash.name) { inclusive = true }
                 }

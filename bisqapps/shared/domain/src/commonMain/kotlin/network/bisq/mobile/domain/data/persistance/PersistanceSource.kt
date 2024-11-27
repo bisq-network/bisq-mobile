@@ -7,11 +7,11 @@ interface PersistenceSource<T: BaseModel> {
     suspend fun saveAll(items: List<T>)
 
     /**
-     * @param id: pass null if this source handles a unique saved obj.
+     * @param prototype: of the object to search for. The prototype class and BaseModel#id is used to find the right obj data.
      */
-    suspend fun get(id: String?): T?
-    suspend fun getAll(): List<T>
+    suspend fun get(prototype: T): T?
+    suspend fun getAll(prototype: T): List<T>
     suspend fun delete(item: T)
-    suspend fun deleteAll()
+    suspend fun deleteAll(prototype: T)
     suspend fun clear()
 }
