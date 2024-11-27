@@ -13,6 +13,18 @@ interface Logging {
 
 fun getLogger(anyObj: Any): Logger {
     val tag = anyObj::class.simpleName
+    return getLogger(tag)
+}
+
+fun getLogger(tag: String): Logger {
+    return getLogger(tag)
+}
+
+fun getLogger(): Logger {
+    return getLogger(null)
+}
+
+private fun getLogger(tag: String?): Logger {
     return if (tag != null) {
         loggerCache.getOrPut(tag) { Logger.withTag(tag) }
     } else {
