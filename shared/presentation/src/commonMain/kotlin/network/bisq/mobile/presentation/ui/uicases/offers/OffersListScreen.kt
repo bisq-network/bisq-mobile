@@ -31,6 +31,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.OfferCard
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
 
@@ -57,21 +58,10 @@ fun OffersListScreen() {
 
     BisqStaticScaffold(
         topBar = {
-            TopBar(
-                title = strings.common_offers,
-                false,
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
-                            tint = BisqTheme.colors.primary
-                        )
-                    }
-                },
-            )
+            TopBar(title = strings.common_offers)
         },
     ) {
+        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
         Box(modifier = Modifier.fillMaxSize()) {
             Column {
                 Column(
