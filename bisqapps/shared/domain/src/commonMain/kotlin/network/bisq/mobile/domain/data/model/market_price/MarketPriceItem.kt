@@ -3,11 +3,12 @@ package network.bisq.mobile.domain.data.model.market_price
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.client.replicated_model.common.currency.Market
+import network.bisq.mobile.domain.data.model.BaseModel
 
 /**
  * Provides market price data
  */
-data class MarketPriceItem(val market: Market) {
+data class MarketPriceItem(val market: Market) : BaseModel() {
     private val _quote = MutableStateFlow(0L)
     val quote: StateFlow<Long> get() = _quote
     fun setQuote(value: Long) {

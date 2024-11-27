@@ -3,6 +3,7 @@ package network.bisq.mobile.domain.data.model.offerbook
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.replicated_model.offer.Direction
 import network.bisq.mobile.client.replicated_model.user.reputation.ReputationScore
+import network.bisq.mobile.domain.data.model.BaseModel
 
 /**
  * For displaying offer data in the offerbook list
@@ -24,7 +25,7 @@ data class OfferListItem(
     val quoteSidePaymentMethods: List<String>,
     val baseSidePaymentMethods: List<String>,
     val supportedLanguageCodes: String
-) {
+) : BaseModel() {
     override fun toString(): String {
         return "OfferItem(\n" +
                 "MessageId ID='${messageId}'\n" +
