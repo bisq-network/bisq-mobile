@@ -22,20 +22,28 @@ fun PaymentMethods(item: OfferListItem) {
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             quoteSidePaymentMethods.forEach { paymentMethod ->
                 DynamicImage(
-                    path = "drawable/payment/fiat/${paymentMethod.lowercase()}.png",
+                    path = "drawable/payment/fiat/${
+                        paymentMethod
+                            .lowercase()
+                            .replace("-", "_")
+                    }.png",
                     fallbackPath = "drawable/payment/fiat/custom_payment_${customMethodCounter++}.png",
                     modifier = Modifier.size(15.dp),
                 )
             }
         }
         DynamicImage(
-            "drawable/payment/interchangeable-grey.png",
+            "drawable/payment/interchangeable_grey.png",
             modifier = Modifier.size(12.dp)
         )
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             baseSidePaymentMethods.forEach { paymentMethod ->
                 DynamicImage(
-                    "drawable/payment/bitcoin/${paymentMethod.lowercase()}.png",
+                    "drawable/payment/bitcoin/${
+                        paymentMethod
+                            .lowercase()
+                            .replace("-", "_")
+                    }.png",
                     modifier = Modifier.size(15.dp)
                 )
             }
