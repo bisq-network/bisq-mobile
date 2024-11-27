@@ -7,7 +7,7 @@ import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.IGettingStarted
-import network.bisq.mobile.presentation.ui.uicases.offers.CurrencyListPresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.MarketListPresenter
 import network.bisq.mobile.presentation.ui.uicases.offers.OffersListPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
@@ -63,7 +63,7 @@ val presentationModule = module {
         )
     } bind ITrustedNodeSetupPresenter::class
 
-    single<CurrencyListPresenter> { CurrencyListPresenter(get(), get()) }
+    single<MarketListPresenter> { MarketListPresenter(get(), get()) }
 
     single<OffersListPresenter> { OffersListPresenter(get(), get()) }
 

@@ -1,12 +1,12 @@
 package network.bisq.mobile.presentation.ui.uicases.offers
 
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.domain.data.model.offerbook.market.MarketListItem
+import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-class CurrencyListPresenter(
+class MarketListPresenter(
     mainPresenter: MainPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade,
     ) : BasePresenter(mainPresenter) {

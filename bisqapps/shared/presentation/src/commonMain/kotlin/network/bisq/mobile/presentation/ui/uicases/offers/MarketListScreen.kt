@@ -23,7 +23,7 @@ import org.koin.compose.koinInject
 @Composable
 fun CurrencyListScreen() {
     val strings = LocalStrings.current
-    val presenter: CurrencyListPresenter = koinInject()
+    val presenter: MarketListPresenter = koinInject()
 
     RememberPresenterLifecycle(presenter)
 
