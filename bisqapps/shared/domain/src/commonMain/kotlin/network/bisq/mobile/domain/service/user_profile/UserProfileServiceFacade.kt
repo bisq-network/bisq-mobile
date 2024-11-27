@@ -1,4 +1,4 @@
-package network.bisq.mobile.domain.user_profile
+package network.bisq.mobile.domain.service.user_profile
 
 interface UserProfileServiceFacade {
     /**

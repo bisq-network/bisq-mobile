@@ -5,11 +5,11 @@ import network.bisq.mobile.client.offerbook.market.ClientMarketListItemService
 import network.bisq.mobile.client.offerbook.market.ClientSelectedOfferbookMarketService
 import network.bisq.mobile.client.offerbook.offer.ClientOfferbookListItemService
 import network.bisq.mobile.client.offerbook.offer.OfferbookApiGateway
-import network.bisq.mobile.domain.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.offerbook.OfferListItem
-import network.bisq.mobile.domain.offerbook.OfferbookServiceFacade
-import network.bisq.mobile.domain.offerbook.market.MarketListItem
-import network.bisq.mobile.domain.offerbook.market.OfferbookMarket
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offerbook.OfferListItem
+import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.service.offerbook.market.MarketListItem
+import network.bisq.mobile.domain.service.offerbook.market.OfferbookMarket
 import network.bisq.mobile.utils.Logging
 
 class ClientOfferbookServiceFacade(

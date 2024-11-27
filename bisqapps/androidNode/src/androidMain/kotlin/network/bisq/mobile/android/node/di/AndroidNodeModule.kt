@@ -9,9 +9,9 @@ import network.bisq.mobile.android.node.presentation.NodeMainPresenter
 import network.bisq.mobile.android.node.presentation.OnBoardingNodePresenter
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.offerbook.OfferbookServiceFacade
-import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter

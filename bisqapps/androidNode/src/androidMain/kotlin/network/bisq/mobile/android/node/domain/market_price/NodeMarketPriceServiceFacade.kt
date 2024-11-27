@@ -8,9 +8,9 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.domain.offerbook.NodeOfferbookServiceFacade.Companion.toLibraryMarket
 import network.bisq.mobile.android.node.domain.offerbook.NodeOfferbookServiceFacade.Companion.toReplicatedMarket
-import network.bisq.mobile.domain.market_price.MarketPriceItem
-import network.bisq.mobile.domain.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.offerbook.market.MarketListItem
+import network.bisq.mobile.domain.service.market_price.MarketPriceItem
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offerbook.market.MarketListItem
 import network.bisq.mobile.utils.Logging
 
 class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplicationService.Provider) :

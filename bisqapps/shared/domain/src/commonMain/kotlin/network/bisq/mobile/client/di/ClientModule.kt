@@ -16,9 +16,9 @@ import network.bisq.mobile.domain.client.main.user_profile.ClientUserProfileServ
 import network.bisq.mobile.client.offerbook.offer.OfferbookApiGateway
 import network.bisq.mobile.domain.client.main.user_profile.UserProfileApiGateway
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.offerbook.OfferbookServiceFacade
-import network.bisq.mobile.domain.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.ByteArrayAsBase64Serializer
 import org.koin.core.qualifier.named
 import org.koin.dsl.module

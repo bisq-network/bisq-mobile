@@ -9,9 +9,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.offerbook.market.MarketListItem
-import network.bisq.mobile.domain.offerbook.market.OfferbookMarket
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offerbook.market.MarketListItem
+import network.bisq.mobile.domain.service.offerbook.market.OfferbookMarket
 import network.bisq.mobile.utils.Logging
 
 class ClientSelectedOfferbookMarketService(

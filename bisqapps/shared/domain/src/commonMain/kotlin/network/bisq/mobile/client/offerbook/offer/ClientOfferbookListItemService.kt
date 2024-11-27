@@ -9,8 +9,8 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.client.service.Polling
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.offerbook.OfferListItem
-import network.bisq.mobile.domain.offerbook.market.MarketListItem
+import network.bisq.mobile.domain.service.offerbook.OfferListItem
+import network.bisq.mobile.domain.service.offerbook.market.MarketListItem
 import network.bisq.mobile.utils.Logging
 
 

@@ -1,8 +1,8 @@
 package network.bisq.mobile.client
 
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
 class ClientMainPresenter(
