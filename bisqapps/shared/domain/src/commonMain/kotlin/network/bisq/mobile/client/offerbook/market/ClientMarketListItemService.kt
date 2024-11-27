@@ -1,6 +1,8 @@
 package network.bisq.mobile.client.offerbook.market
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.offerbook.offer.OfferbookApiGateway
@@ -20,6 +22,8 @@ class ClientMarketListItemService(private val apiGateway: OfferbookApiGateway) :
     val marketListItems: List<MarketListItem> get() = _marketListItems
 
     // Misc
+    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
+    private var job: Job? = null
     private var polling = Polling(1000) { updateNumOffers() }
     private var marketListItemsRequested = false
 
@@ -29,16 +33,16 @@ class ClientMarketListItemService(private val apiGateway: OfferbookApiGateway) :
         // Markets would only change if we get new markets added to the market price server,
         // which happens rarely.
         val defaultMarkets = Json.decodeFromString<List<Market>>(DEFAULT_MARKETS)
-        fillMarketListItems(defaultMarkets, emptyMap())
+        fillMarketListItems(defaultMarkets)
+        // NumOffers are at default value (0)
 
         if (marketListItemsRequested) {
-            CoroutineScope(BackgroundDispatcher).launch {
+            job = coroutineScope.launch {
                 try {
                     // TODO we might combine that api call to avoid 2 separate calls.
-                    val numOffersByMarketCode: Map<String, Int> =
-                        apiGateway.getNumOffersByMarketCode()
                     val markets = apiGateway.getMarkets()
-                    fillMarketListItems(markets, numOffersByMarketCode)
+                    fillMarketListItems(markets)
+                    requestAndApplyNumOffers()
                     marketListItemsRequested = true
                 } catch (e: Exception) {
                     log.e("Error at API request", e)
@@ -49,14 +53,17 @@ class ClientMarketListItemService(private val apiGateway: OfferbookApiGateway) :
     }
 
     override fun deactivate() {
+        cancelJob()
         polling.stop()
     }
 
     // Private
-    private fun fillMarketListItems(
-        markets: List<Market>,
-        numOffersByMarketCode: Map<String, Int>
-    ) {
+    private fun updateNumOffers() {
+        cancelJob()
+        job = coroutineScope.launch { requestAndApplyNumOffers() }
+    }
+
+    private fun fillMarketListItems(markets: List<Market>) {
         val list = markets.map { marketDto ->
             val market = Market(
                 marketDto.baseCurrencyCode,
@@ -65,27 +72,31 @@ class ClientMarketListItemService(private val apiGateway: OfferbookApiGateway) :
                 marketDto.quoteCurrencyName,
             )
 
-            val marketListItem = MarketListItem(market)
-            val numOffers = numOffersByMarketCode[marketDto.quoteCurrencyCode] ?: 0
-            marketListItem.setNumOffers(numOffers)
-            marketListItem
+            MarketListItem(market)
         }
         _marketListItems.addAll(list)
     }
 
-    private fun updateNumOffers() {
-        CoroutineScope(BackgroundDispatcher).launch {
-            try {
-                val numOffersByMarketCode = apiGateway.getNumOffersByMarketCode()
-                marketListItems.map { marketListItem ->
-                    val numOffers =
-                        numOffersByMarketCode[marketListItem.market.quoteCurrencyCode] ?: 0
-                    marketListItem.setNumOffers(numOffers)
-                    marketListItem
-                }
-            } catch (e: Exception) {
-                log.e("Error at API request", e)
+    private suspend fun requestAndApplyNumOffers() {
+        try {
+            val numOffersByMarketCode = apiGateway.getNumOffersByMarketCode()
+            marketListItems.map { marketListItem ->
+                val numOffers =
+                    numOffersByMarketCode[marketListItem.market.quoteCurrencyCode] ?: 0
+                marketListItem.setNumOffers(numOffers)
+                marketListItem
             }
+        } catch (e: Exception) {
+            log.e("Error at API request", e)
+        }
+    }
+
+    private fun cancelJob() {
+        try {
+            job?.cancel()
+            job = null
+        } catch (e: CancellationException) {
+            log.e("Job cancel failed", e)
         }
     }
 }

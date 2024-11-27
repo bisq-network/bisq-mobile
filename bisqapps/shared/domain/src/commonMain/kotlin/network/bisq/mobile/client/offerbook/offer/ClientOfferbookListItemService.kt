@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.offerbook.offer
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,9 +23,10 @@ class ClientOfferbookListItemService(private val apiGateway: OfferbookApiGateway
     val offerListItems: StateFlow<List<OfferListItem>> get() = _offerListItems
 
     // Misc
-    private var getOffersJob: Job? = null
+    private var job: Job? = null
     private var polling = Polling(1000) { updateOffers() }
     private var selectedMarket: MarketListItem? = null
+    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
 
     // Life cycle
     override fun activate() {
@@ -32,8 +34,7 @@ class ClientOfferbookListItemService(private val apiGateway: OfferbookApiGateway
     }
 
     override fun deactivate() {
-        getOffersJob?.cancel()
-        getOffersJob = null
+        cancelJob()
         polling.stop()
     }
 
@@ -43,10 +44,10 @@ class ClientOfferbookListItemService(private val apiGateway: OfferbookApiGateway
         updateOffers()
     }
 
-  private  fun updateOffers() {
+    private fun updateOffers() {
         if (selectedMarket != null) {
-            getOffersJob?.cancel()
-            getOffersJob = CoroutineScope(BackgroundDispatcher).launch {
+            cancelJob()
+            job = coroutineScope.launch {
                 try {
                     if (selectedMarket != null) {
                         _offerListItems.value =
@@ -56,6 +57,15 @@ class ClientOfferbookListItemService(private val apiGateway: OfferbookApiGateway
                     log.e("Error at getOffers API request", e)
                 }
             }
+        }
+    }
+
+    private fun cancelJob() {
+        try {
+            job?.cancel()
+            job = null
+        } catch (e: CancellationException) {
+            log.e("Job cancel failed", e)
         }
     }
 }

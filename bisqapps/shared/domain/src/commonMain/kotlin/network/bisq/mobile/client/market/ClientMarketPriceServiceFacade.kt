@@ -1,6 +1,8 @@
 package network.bisq.mobile.client.market
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -21,6 +23,8 @@ class ClientMarketPriceServiceFacade(
     override val marketPriceItem: StateFlow<MarketPriceItem> get() = _marketPriceItem
 
     // Misc
+    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
+    private var job: Job? = null
     private var polling = Polling(60000) { requestMarketPriceQuotes() }
     private var selectedMarket: Market = Market.USD // todo use persisted or user default
     private val quotes: HashMap<String, Long> = HashMap()
@@ -32,6 +36,7 @@ class ClientMarketPriceServiceFacade(
     }
 
     override fun deactivate() {
+        cancelJob()
         polling.stop()
     }
 
@@ -45,7 +50,8 @@ class ClientMarketPriceServiceFacade(
     // Private
     private fun requestMarketPriceQuotes() {
         selectedMarket.let {
-            CoroutineScope(BackgroundDispatcher).launch {
+            cancelJob()
+            job = coroutineScope.launch {
                 try {
                     val response: MarketPriceResponse = apiGateway.getQuotes()
                     quotes.putAll(response.quotes)
@@ -63,6 +69,15 @@ class ClientMarketPriceServiceFacade(
         quotes[code]?.let {
             _marketPriceItem.value.setQuote(it)
             log.i { "applyQuote: code=$code; quote =$it" }
+        }
+    }
+
+    private fun cancelJob() {
+        try {
+            job?.cancel()
+            job = null
+        } catch (e: CancellationException) {
+            log.e("Job cancel failed", e)
         }
     }
 }

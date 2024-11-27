@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.service
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -7,16 +8,16 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.utils.Logging
 
-class Polling(private val intervalMillis: Long, private val task: () -> Unit): Logging {
+class Polling(private val intervalMillis: Long, private val task: () -> Unit) : Logging {
     private var job: Job? = null
     private var isRunning = false
+    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
 
     fun start() {
         if (!isRunning) {
             isRunning = true
-            job = CoroutineScope(BackgroundDispatcher).launch {
+            job = coroutineScope.launch {
                 while (isRunning) {
-                    //log.i { "poll" }
                     task()
                     delay(intervalMillis)
                 }
@@ -26,12 +27,20 @@ class Polling(private val intervalMillis: Long, private val task: () -> Unit): L
 
     fun stop() {
         isRunning = false
-        job?.cancel()
-        job = null
+        cancelJob()
     }
 
     fun restart() {
         stop()
         start()
+    }
+
+    private fun cancelJob() {
+        try {
+            job?.cancel()
+            job = null
+        } catch (e: CancellationException) {
+            log.e("Job cancel failed", e)
+        }
     }
 }
