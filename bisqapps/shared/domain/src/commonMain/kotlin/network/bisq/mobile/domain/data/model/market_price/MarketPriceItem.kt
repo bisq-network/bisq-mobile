@@ -1,4 +1,4 @@
-package network.bisq.mobile.domain.service.market_price
+package network.bisq.mobile.domain.data.model.market_price
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

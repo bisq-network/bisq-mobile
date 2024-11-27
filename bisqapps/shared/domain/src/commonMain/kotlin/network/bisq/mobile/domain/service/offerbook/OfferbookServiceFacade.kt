@@ -2,8 +2,9 @@ package network.bisq.mobile.domain.service.offerbook
 
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.LifeCycleAware
-import network.bisq.mobile.domain.service.offerbook.market.MarketListItem
-import network.bisq.mobile.domain.service.offerbook.market.OfferbookMarket
+import network.bisq.mobile.domain.data.model.offerbook.OfferListItem
+import network.bisq.mobile.domain.data.model.offerbook.market.MarketListItem
+import network.bisq.mobile.domain.data.model.offerbook.market.OfferbookMarket
 
 interface OfferbookServiceFacade: LifeCycleAware {
     val offerbookMarketItems: List<MarketListItem>
