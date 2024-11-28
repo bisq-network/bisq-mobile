@@ -5,7 +5,11 @@ import com.russhwolf.settings.set
 import network.bisq.mobile.domain.data.model.BaseModel
 
 /**
- * Multi platform key-value storage ("settings")
+ * Multi platform key-value storage ("settings") linked to the usage of our BaseModels.
+ * The key for the key-value is exctracted from the model based on its final runtime class and an id if available
+ * Hence why some methods will require a prototype of the model being used.
+ * This allows us to reuse a single instance of this storage in different repositories without having data collision
+ * If you are going to persist only one obj of T, you can just leave the id with default BaseModel#UNDEFINED_ID value.
  */
 class KeyValueStorage<T : BaseModel>(
     private val settings: Settings,
