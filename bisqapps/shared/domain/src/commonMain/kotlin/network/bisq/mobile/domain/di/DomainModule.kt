@@ -32,6 +32,5 @@ val domainModule = module {
     single<BisqStatsRepository> { BisqStatsRepository() }
     single<BtcPriceRepository> { BtcPriceRepository() }
     single<MyTradesRepository> { MyTradesRepository() }
-    single<CurrenciesRepository> { CurrenciesRepository() }
     single<SettingsRepository> { SettingsRepository(get()) }
 }

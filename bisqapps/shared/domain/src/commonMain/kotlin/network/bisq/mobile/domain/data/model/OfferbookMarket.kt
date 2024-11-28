@@ -1,10 +1,9 @@
-package network.bisq.mobile.domain.data.model.offerbook.market
+package network.bisq.mobile.domain.data.model
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.replicated_model.common.currency.Market
-import network.bisq.mobile.domain.data.model.BaseModel
 
 /**
  * Provides data for the offerbook header showing the selected market data

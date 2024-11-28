@@ -1,6 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.offers
 
-import network.bisq.mobile.domain.data.model.offerbook.market.MarketListItem
+import network.bisq.mobile.domain.data.model.MarketListItem
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter

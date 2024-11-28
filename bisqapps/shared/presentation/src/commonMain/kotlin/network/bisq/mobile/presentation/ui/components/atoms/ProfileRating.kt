@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.icon_star
 import bisqapps.shared.presentation.generated.resources.img_bot_image
-import network.bisq.mobile.domain.data.model.offerbook.OfferListItem
+import network.bisq.mobile.domain.data.model.OfferListItem
 import org.jetbrains.compose.resources.painterResource
 
 // TODO: Get params and render apt

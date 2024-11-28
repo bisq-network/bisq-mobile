@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.data.model.offerbook.OfferListItem
+import network.bisq.mobile.domain.data.model.OfferListItem
 
 // TODO: Get params and render apt
 @Composable

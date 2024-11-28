@@ -7,10 +7,10 @@ import network.bisq.mobile.android.node.domain.offerbook.market.NodeMarketListIt
 import network.bisq.mobile.android.node.domain.offerbook.market.NodeSelectedOfferbookMarketService
 import network.bisq.mobile.android.node.domain.offerbook.offer.NodeOfferbookListItemService
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.data.model.offerbook.OfferListItem
+import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
-import network.bisq.mobile.domain.data.model.offerbook.market.MarketListItem
-import network.bisq.mobile.domain.data.model.offerbook.market.OfferbookMarket
+import network.bisq.mobile.domain.data.model.MarketListItem
+import network.bisq.mobile.domain.data.model.OfferbookMarket
 import network.bisq.mobile.utils.Logging
 
 class NodeOfferbookServiceFacade(

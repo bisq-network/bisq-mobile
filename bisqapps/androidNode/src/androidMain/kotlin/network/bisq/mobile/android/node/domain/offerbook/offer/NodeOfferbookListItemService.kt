@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.client.replicated_model.user.reputation.ReputationScore
 import network.bisq.mobile.domain.LifeCycleAware
-import network.bisq.mobile.domain.data.model.offerbook.OfferListItem
+import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.utils.Logging
 import java.text.DateFormat
 import java.util.Date

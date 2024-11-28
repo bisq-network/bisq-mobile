@@ -14,13 +14,12 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
-package network.bisq.mobile.domain.data.model.offerbook.market
+package network.bisq.mobile.domain.data.model
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.replicated_model.common.currency.Market
-import network.bisq.mobile.domain.data.model.BaseModel
 
 /**
  * Provides data for offerbook market list items

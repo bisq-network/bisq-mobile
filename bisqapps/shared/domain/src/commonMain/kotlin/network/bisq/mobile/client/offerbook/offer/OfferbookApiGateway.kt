@@ -2,7 +2,7 @@ package network.bisq.mobile.client.offerbook.offer
 
 import network.bisq.mobile.client.replicated_model.common.currency.Market
 import network.bisq.mobile.client.service.ApiRequestService
-import network.bisq.mobile.domain.data.model.offerbook.OfferListItem
+import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.utils.Logging
 
 class OfferbookApiGateway(private val apiRequestService: ApiRequestService) : Logging {

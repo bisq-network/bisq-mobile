@@ -10,8 +10,8 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.data.model.offerbook.market.MarketListItem
-import network.bisq.mobile.domain.data.model.offerbook.market.OfferbookMarket
+import network.bisq.mobile.domain.data.model.MarketListItem
+import network.bisq.mobile.domain.data.model.OfferbookMarket
 import network.bisq.mobile.utils.Logging
 
 class ClientSelectedOfferbookMarketService(

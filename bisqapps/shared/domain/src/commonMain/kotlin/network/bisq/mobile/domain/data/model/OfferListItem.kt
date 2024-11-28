@@ -1,4 +1,4 @@
-package network.bisq.mobile.domain.data.model.offerbook
+package network.bisq.mobile.domain.data.model
 
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.replicated_model.offer.Direction

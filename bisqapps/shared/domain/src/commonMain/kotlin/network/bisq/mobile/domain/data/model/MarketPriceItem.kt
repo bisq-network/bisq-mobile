@@ -1,9 +1,8 @@
-package network.bisq.mobile.domain.data.model.market_price
+package network.bisq.mobile.domain.data.model
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.client.replicated_model.common.currency.Market
-import network.bisq.mobile.domain.data.model.BaseModel
 
 /**
  * Provides market price data
