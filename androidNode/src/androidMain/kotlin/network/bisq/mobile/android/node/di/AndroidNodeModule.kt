@@ -7,6 +7,7 @@ import network.bisq.mobile.android.node.domain.offerbook.NodeOfferbookServiceFac
 import network.bisq.mobile.android.node.domain.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
 import network.bisq.mobile.android.node.presentation.OnBoardingNodePresenter
+import network.bisq.mobile.android.node.service.AndroidCatHashService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -22,6 +23,11 @@ import org.koin.dsl.module
 val androidNodeModule = module {
     single<AndroidMemoryReportService> {
         AndroidMemoryReportService(androidContext())
+    }
+
+    single<AndroidCatHashService> {
+        val context = androidContext()
+        AndroidCatHashService(context, context.filesDir.toPath())
     }
 
     single { AndroidApplicationService.Provider() }

@@ -16,27 +16,26 @@
  */
 package network.bisq.mobile.android.node.service
 
+import android.content.Context
 import android.graphics.Bitmap
 import bisq.user.cathash.CatHashService
+import network.bisq.mobile.android.node.utils.ImageUtil
 import java.io.File
-import java.io.IOException
 import java.nio.file.Path
 
 /**
- * TODO hashing implementation for image generation - used by bisq2 jars.
+ * Cat Hash implementation for Android
  */
-class AndroidCatHashService(baseDir: Path?) : CatHashService<Bitmap>(baseDir) {
+class AndroidCatHashService(private val context: Context, baseDir: Path?) : CatHashService<Bitmap>(baseDir) {
     override fun composeImage(paths: Array<String>, size: Double): Bitmap {
-        throw RuntimeException("Not impl. yet")
+        return ImageUtil.composeImage(context, paths, size.toInt(), size.toInt())
     }
 
-    @Throws(IOException::class)
-    override fun writeRawImage(image: Bitmap, iconFile: File) {
-        throw RuntimeException("Not impl. yet")
+    override fun writeRawImage(image: Bitmap, file: File) {
+        ImageUtil.writeRawImage(image, file)
     }
 
-    @Throws(IOException::class)
-    override fun readRawImage(iconFile: File): Bitmap {
-        throw RuntimeException("Not impl. yet")
+    override fun readRawImage(file: File): Bitmap? {
+        return ImageUtil.readRawImage(file)
     }
 }

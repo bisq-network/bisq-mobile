@@ -11,6 +11,7 @@ import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.presentation.di.presentationModule
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import java.security.Security
 
@@ -34,10 +35,13 @@ class MainApplication : Application() {
     }
 
     private fun setupKoinDI() {
-        startKoin {
-            androidContext(this@MainApplication)
-            // order is important, last one is picked for each interface/class key
-            modules(listOf(domainModule, presentationModule, androidNodeModule))
+        // Initialize Koin only if it hasn't been initialized - fix issue running emulated robo instrumentation unit tests
+        if (GlobalContext.getOrNull() == null) {
+            startKoin {
+                androidContext(this@MainApplication)
+                // order is important, last one is picked for each interface/class key
+                modules(listOf(domainModule, presentationModule, androidNodeModule))
+            }
         }
     }
 }

@@ -37,6 +37,20 @@ kotlin {
                 implementation(libs.mock.io)
                 implementation(libs.kotlin.test.junit.v180)
                 implementation(libs.junit)
+
+                implementation(libs.roboelectric)
+                implementation(libs.androidx.test)
+                implementation(libs.androidx.test.espresso)
+                implementation(libs.androidx.test.junit)
+            }
+            androidInstrumentedTest.dependencies {
+                implementation(libs.mock.io)
+                implementation(libs.kotlin.test.junit.v180)
+                implementation(libs.junit)
+
+                implementation(libs.androidx.test.espresso)
+                implementation(libs.androidx.test)
+                implementation(libs.androidx.test.junit)
             }
             kotlin.srcDirs(
                 "src/androidMain/kotlin",
@@ -100,6 +114,9 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+    }
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
     }
 }
 
