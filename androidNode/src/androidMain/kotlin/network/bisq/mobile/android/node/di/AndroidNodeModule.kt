@@ -25,6 +25,11 @@ val androidNodeModule = module {
         AndroidMemoryReportService(androidContext())
     }
 
+    single<AndroidCatHashService> {
+        val context = androidContext()
+        AndroidCatHashService(context, context.filesDir.toPath())
+    }
+
     single { AndroidApplicationService.Provider() }
 
     single<ApplicationBootstrapFacade> { NodeApplicationBootstrapFacade(get()) }
