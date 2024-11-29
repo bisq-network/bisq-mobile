@@ -17,11 +17,7 @@ fun getLogger(anyObj: Any): Logger {
 }
 
 fun getLogger(tag: String): Logger {
-    return getLogger(tag)
-}
-
-fun getLogger(): Logger {
-    return doGetLogger(null)
+    return doGetLogger(tag)
 }
 
 private fun doGetLogger(tag: String?): Logger {
