@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -89,19 +88,25 @@ open class CreateProfilePresenter(
             // We would never call generateKeyPair while generateKeyPair is not
             // completed, thus we can assign to same job reference
             job = coroutineScope.launch {
-                setCreateAndPublishInProgress(true)
                 log.i { "Show busy animation for createAndPublishInProgress" }
-                userProfileService.createAndPublishNewUserProfile(nickName.value)
-                log.i { "Hide busy animation for createAndPublishInProgress" }
-                setCreateAndPublishInProgress(false)
+                setCreateAndPublishInProgress(true)
+                runCatching {
+                    userProfileService.createAndPublishNewUserProfile(nickName.value)
 
-                // todo stop busy animation in UI
-                // Skip for now the TrustedNodeSetup until its fully implemented with persisting the api URL.
-                /* rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
-                     popUpTo(Routes.CreateProfile.name) { inclusive = true }
-                 }  */
-                rootNavigator.navigate(Routes.TabContainer.name) {
-                    popUpTo(Routes.CreateProfile.name) { inclusive = true }
+                    log.i { "Hide busy animation for createAndPublishInProgress" }
+                    setCreateAndPublishInProgress(false)
+
+                    // Skip for now the TrustedNodeSetup until its fully implemented with persisting the api URL.
+                    /* rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
+                         popUpTo(Routes.CreateProfile.name) { inclusive = true }
+                     }  */
+                    rootNavigator.navigate(Routes.TabContainer.name) {
+                        popUpTo(Routes.CreateProfile.name) { inclusive = true }
+                    }
+                }.onFailure { e ->
+                    // TODO give user feedback (we could have a general error screen covering usual
+                    //  issues like connection issues and potential solutions)
+                    log.e("onCreateAndPublishNewUserProfile failed", e)
                 }
             }
         }
@@ -115,26 +120,29 @@ open class CreateProfilePresenter(
         job = coroutineScope.launch {
             setGenerateKeyPairInProgress(true)
             log.i { "Show busy animation for generateKeyPair" }
-            // takes 200 -1000 ms
-            userProfileService.generateKeyPair { id, nym, profileIcon ->
-                setId(id)
-                setNym(nym)
-                setProfileIcon(profileIcon)
-                backgroundScope.launch {
-                    userRepository.update(User().apply { uniqueAvatar = profileIcon })
+
+            runCatching {
+                // takes 200 -1000 ms
+                userProfileService.generateKeyPair { id, nym, profileIcon ->
+                    setId(id)
+                    setNym(nym)
+                    setProfileIcon(profileIcon)
+                    backgroundScope.launch {
+                        userRepository.update(User().apply { uniqueAvatar = profileIcon })
+                    }
                 }
+                setGenerateKeyPairInProgress(false)
+                log.i { "Hide busy animation for generateKeyPair" }
+            }.onFailure { e ->
+                // TODO give user feedback (we could have a general error screen covering usual
+                //  issues like connection issues and potential solutions)
+                log.e("generateKeyPair failed", e)
             }
-            setGenerateKeyPairInProgress(false)
-            log.i { "Hide busy animation for generateKeyPair" }
         }
     }
 
     private fun cancelJob() {
-        try {
-            job?.cancel()
-            job = null
-        } catch (e: CancellationException) {
-            log.e("Job cancel failed", e)
-        }
+        job?.cancel()
+        job = null
     }
 }

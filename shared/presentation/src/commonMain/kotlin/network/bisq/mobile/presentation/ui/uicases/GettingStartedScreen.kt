@@ -2,7 +2,17 @@ package network.bisq.mobile.presentation.ui.uicases
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -13,32 +23,24 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.icon_chat_outlined
+import bisqapps.shared.presentation.generated.resources.icon_star_outlined
 import bisqapps.shared.presentation.generated.resources.icon_tag_outlined
 import bisqapps.shared.presentation.generated.resources.img_fiat_btc
 import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
-import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.*
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
-interface IGettingStarted : ViewPresenter {
-    val btcPrice: StateFlow<String>
-    val offersOnline: StateFlow<Number>
-    val publishedProfiles: StateFlow<Number>
-}
-
 @Composable
 fun GettingStartedScreen() {
-    val presenter: IGettingStarted = koinInject()
-    val btcPrice: String = presenter.btcPrice.collectAsState().value
+    val presenter: GettingStartedPresenter = koinInject()
     val offersOnline: Number = presenter.offersOnline.collectAsState().value
     val publishedProfiles: Number = presenter.publishedProfiles.collectAsState().value
 
@@ -60,7 +62,7 @@ fun GettingStartedScreen() {
 
         Column {
             PriceProfileCard(
-                price = btcPrice,
+                price = presenter.formattedMarketPrice.collectAsState().value,
                 priceText = "Market price"
             )
             Spacer(modifier = Modifier.height(16.dp))

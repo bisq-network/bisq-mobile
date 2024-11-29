@@ -8,11 +8,15 @@ import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
-import network.bisq.mobile.presentation.ui.uicases.IGettingStarted
 import network.bisq.mobile.presentation.ui.uicases.offers.IOffersListPresenter
 import network.bisq.mobile.presentation.ui.uicases.offers.MarketListPresenter
 import network.bisq.mobile.presentation.ui.uicases.offers.OffersListPresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.*
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.ITakeOfferPaymentMethodPresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.ITakeOfferReviewTradePresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.ITakeOfferTradeAmountPresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.PaymentMethodPresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.ReviewTradePresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TradeAmountPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPresenter
@@ -48,10 +52,10 @@ val presentationModule = module {
     single<GettingStartedPresenter> {
         GettingStartedPresenter(
             get(),
-            priceRepository = get(),
-            bisqStatsRepository = get()
+            bisqStatsRepository = get(),
+            get()
         )
-    } bind IGettingStarted::class
+    }
 
     single {
         CreateProfilePresenter(

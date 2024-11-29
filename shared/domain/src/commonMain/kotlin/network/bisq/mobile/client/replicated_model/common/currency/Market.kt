@@ -19,7 +19,7 @@ package network.bisq.mobile.client.replicated_model.common.currency
 import kotlinx.serialization.Serializable
 
 @Serializable
-class Market(
+data class Market(
     val baseCurrencyCode: String,
     val quoteCurrencyCode: String,
     val baseCurrencyName: String,

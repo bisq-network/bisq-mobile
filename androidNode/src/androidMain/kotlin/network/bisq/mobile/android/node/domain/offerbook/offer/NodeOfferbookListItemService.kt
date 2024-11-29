@@ -182,6 +182,7 @@ class NodeOfferbookListItemService(private val applicationService: AndroidApplic
             offerId,
             isMyMessage,
             direction,
+            market.quoteCurrencyCode,
             offerTitle,
             date,
             formattedDate,
