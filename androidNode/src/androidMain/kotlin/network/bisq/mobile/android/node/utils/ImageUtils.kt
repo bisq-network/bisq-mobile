@@ -15,7 +15,7 @@ import java.io.IOException
 /**
  * Android images utilitary functions
  */
-object ImageUtil: Logging {
+object ImageUtil : Logging {
 
     fun composeImage(context: Context, paths: Array<String>, width: Int, height: Int): Bitmap {
         val resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -25,7 +25,8 @@ object ImageUtil: Logging {
         paths.forEach { path ->
             val bitmap = getImageByPath(context, path)
             if (bitmap != null) {
-                canvas.drawBitmap(bitmap, 0f, 0f, paint)
+                val scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)
+                canvas.drawBitmap(scaledBitmap, 0f, 0f, paint)
             }
         }
 
@@ -53,8 +54,8 @@ object ImageUtil: Logging {
 
     internal fun getImageByPath(context: Context, path: String): Bitmap? {
         return try {
-            log.d { "opening file in path $path"}
-            val inputStream = context.assets.open(path)
+            val fullPath = "cathash/$path"
+            val inputStream = context.assets.open(fullPath)
             BitmapFactory.decodeStream(inputStream)
         } catch (e: Exception) {
             e.printStackTrace()
