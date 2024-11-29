@@ -9,6 +9,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
 import org.koin.compose.koinInject
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
@@ -57,7 +58,9 @@ fun App() {
     BisqTheme(darkTheme = true) {
         ProvideStrings(lyricist) {
             if (isNavControllerSet) {
-                RootNavGraph()
+                SwipeBackIOSNavigationHandler(rootNavController) {
+                    RootNavGraph()
+                }
             }
         }
     }
