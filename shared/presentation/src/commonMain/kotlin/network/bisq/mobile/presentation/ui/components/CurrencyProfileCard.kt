@@ -17,7 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.data.model.MarketListItem
+import network.bisq.mobile.domain.data.model.offerbook.market.MarketListItem
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -35,7 +35,7 @@ fun CurrencyProfileCard(
         horizontalArrangement = Arrangement.SpaceBetween,
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 4.dp)
+            .padding(vertical = 4.dp)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,

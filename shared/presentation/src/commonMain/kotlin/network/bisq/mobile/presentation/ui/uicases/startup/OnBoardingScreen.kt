@@ -45,7 +45,7 @@ fun OnBoardingScreen() {
         presenter.indexesToShow.contains(index)
     }
 
-    BisqScrollScaffold() {
+    BisqScrollScaffold {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
         BisqText.h1Light(

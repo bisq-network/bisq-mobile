@@ -10,10 +10,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun BisqScrollLayout(
-    innerPadding: PaddingValues = PaddingValues(top = 48.dp, bottom = 12.dp, start = 12.dp, end = 12.dp),
+    padding: PaddingValues = PaddingValues(all = BisqUIConstants.ScreenPadding),
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -23,7 +24,7 @@ fun BisqScrollLayout(
         modifier = Modifier
             .fillMaxSize()
             .background(color = BisqTheme.colors.backgroundColor)
-            .padding(innerPadding)
+            .padding(padding)
             .verticalScroll(rememberScrollState())
     ) {
         content()

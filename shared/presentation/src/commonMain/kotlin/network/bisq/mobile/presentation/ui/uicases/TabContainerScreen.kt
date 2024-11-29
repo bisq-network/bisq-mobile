@@ -35,7 +35,6 @@ fun TabContainerScreen() {
     }
 
     BisqStaticScaffold(
-        innerPadding = PaddingValues(top = 48.dp, bottom = 12.dp, start = 12.dp, end = 12.dp),
         topBar = {
             // TODO: Since Topbar should go inside Scaffold
             // the TopBar is written here commonly for all 4 tabs.
@@ -69,7 +68,8 @@ fun TabContainerScreen() {
                         restoreState = true
                     }
                 })
-        }
+        },
+        content = { TabNavGraph() }
 
-    ) { TabNavGraph() }
+    )
 }

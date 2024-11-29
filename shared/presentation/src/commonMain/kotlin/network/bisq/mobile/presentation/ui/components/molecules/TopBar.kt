@@ -54,7 +54,7 @@ fun TopBar(
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
-            containerColor = Color.DarkGray, // BisqTheme.colors.backgroundColor,
+            containerColor = BisqTheme.colors.backgroundColor, //Color.DarkGray,
         ),
         title = {
             if (isHome) {

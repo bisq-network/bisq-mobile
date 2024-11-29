@@ -35,7 +35,7 @@ fun CreateProfileScreen(
 
     RememberPresenterLifecycle(presenter)
 
-    BisqScrollScaffold() {
+    BisqScrollScaffold {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
         BisqText.h1Light(

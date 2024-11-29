@@ -5,22 +5,26 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun BisqScrollScaffold(
-    innerPadding: PaddingValues = PaddingValues(top = 48.dp, bottom = 12.dp, start = 12.dp, end = 12.dp),
-    topBar: @Composable () -> Unit = {},
-    bottomBar: @Composable () -> Unit = {},
+    padding: PaddingValues = PaddingValues(
+        top = BisqUIConstants.ScrollTopPadding,
+        bottom = BisqUIConstants.ScreenPadding,
+        start = BisqUIConstants.ScreenPadding,
+        end = BisqUIConstants.ScreenPadding
+    ),
+    topBar: @Composable (() -> Unit)? = null,
+    bottomBar: @Composable (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Scaffold(
         containerColor = BisqTheme.colors.backgroundColor,
-        topBar = topBar,
-        bottomBar = bottomBar,
+        topBar = topBar ?: {},
+        bottomBar = bottomBar ?: {},
         content = {
-            BisqScrollLayout {
-                content()
-            }
+            BisqScrollLayout(padding = if (topBar != null) it else padding) { content() }
         },
     )
 }
