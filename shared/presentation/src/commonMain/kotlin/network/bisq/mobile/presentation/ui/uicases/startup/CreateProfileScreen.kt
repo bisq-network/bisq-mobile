@@ -3,16 +3,17 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.img_bot_image
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -21,10 +22,10 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
+import kotlin.math.log
 
 @Composable
 fun CreateProfileScreen(
@@ -57,10 +58,19 @@ fun CreateProfileScreen(
             placeholder = strings.onboarding_createProfile_nickName_prompt
         )
         Spacer(modifier = Modifier.height(36.dp))
-        Image(
-            painterResource(Res.drawable.img_bot_image),
-            "User profile icon generated from the hash of the public key"
-        ) // TODO: Translation
+
+        presenter.profileIcon.collectAsState().value?.let { profileIcon ->
+            // how can i convert a coil3.Bitmap to androidx.compose.ui.graphics.ImageBitmap in KMP
+            val imageBitmap: ImageBitmap? = profileIcon as ImageBitmap
+            if (imageBitmap != null) {
+                Image(
+                    bitmap = imageBitmap,
+                    contentDescription = "User profile icon generated from the hash of the public key",
+                    modifier = Modifier.height(60.dp).width(60.dp)
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
         BisqText.baseRegular(
             text = presenter.nym.collectAsState().value,

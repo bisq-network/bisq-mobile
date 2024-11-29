@@ -1,4 +1,4 @@
-package network.bisq.mobile.domain.client.main.user_profile
+package network.bisq.mobile.client.user_profile
 
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.replicated_model.user.identity.PreparedData

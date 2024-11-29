@@ -22,8 +22,13 @@ class NodeMainPresenter(
         if (!applicationServiceCreated) {
             applicationServiceCreated = true
             val filesDirsPath = (view as Activity).filesDir.toPath()
+            val applicationContext = (view as Activity).applicationContext
             val applicationService =
-                AndroidApplicationService(androidMemoryReportService, filesDirsPath)
+                AndroidApplicationService(
+                    androidMemoryReportService,
+                    applicationContext,
+                    filesDirsPath
+                )
             provider.applicationService = applicationService
 
             applicationBootstrapFacade.activate()

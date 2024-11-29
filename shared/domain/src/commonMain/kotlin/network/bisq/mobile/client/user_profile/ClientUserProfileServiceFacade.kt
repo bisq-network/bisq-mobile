@@ -1,10 +1,9 @@
-package network.bisq.mobile.domain.client.main.user_profile
+package network.bisq.mobile.client.user_profile
 
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
-import network.bisq.mobile.client.user_profile.UserProfileResponse
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.Logging
 import kotlin.math.max
@@ -22,12 +21,13 @@ class ClientUserProfileServiceFacade(private val apiGateway: UserProfileApiGatew
         return getUserIdentityIds().isNotEmpty()
     }
 
-    override suspend fun generateKeyPair(result: (String, String) -> Unit) {
+    override suspend fun generateKeyPair(result: (String, String, Any?) -> Unit) {
         try {
             val ts = Clock.System.now().toEpochMilliseconds()
             val preparedData = apiGateway.requestPreparedData()
             createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
-            result(preparedData.id, preparedData.nym)
+            //todo not impl yet
+            result(preparedData.id, preparedData.nym, null)
             this.preparedData = preparedData
         } catch (e: Exception) {
             log.e { e.toString() }

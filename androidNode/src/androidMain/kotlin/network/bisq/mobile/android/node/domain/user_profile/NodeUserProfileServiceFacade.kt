@@ -1,5 +1,7 @@
 package network.bisq.mobile.android.node.domain.user_profile
 
+import android.graphics.Bitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import bisq.common.encoding.Hex
 import bisq.security.DigestUtil
 import bisq.security.SecurityService
@@ -8,6 +10,7 @@ import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
 import bisq.user.profile.UserProfile
 import network.bisq.mobile.android.node.AndroidApplicationService
+import network.bisq.mobile.android.node.service.AndroidCatHashService
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.Logging
 import java.security.KeyPair
@@ -35,6 +38,9 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     private val userService: UserService by lazy {
         applicationService.userService.get()
     }
+    private val catHashService: AndroidCatHashService by lazy {
+        applicationService.androidCatHashService.get()
+    }
 
     // Misc
     private var pubKeyHash: ByteArray? = null
@@ -47,7 +53,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         return userService.userIdentityService.userIdentities.isNotEmpty()
     }
 
-    override suspend fun generateKeyPair(result: (String, String) -> Unit) {
+    override suspend fun generateKeyPair(result: (String, String, Any?) -> Unit) {
         keyPair = securityService.keyBundleService.generateKeyPair()
         pubKeyHash = DigestUtil.hash(keyPair!!.public.encoded)
 
@@ -58,15 +64,16 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         createSimulatedDelay(powDuration)
 
         val id = Hex.encode(pubKeyHash)
-        val nym = NymIdGenerator.generate(pubKeyHash, proofOfWork!!.solution)
-
-        // CatHash is in desktop, needs to be reimplemented or the javafx part extracted and refactored into a non javafx lib
-        //  Image image = CatHash.getImage(pubKeyHash,
-        //                                powSolution,
-        //                                CURRENT_AVATARS_VERSION,
-        //                                CreateProfileModel.CAT_HASH_IMAGE_SIZE);
-
-        result(id!!, nym!!)
+        val solution = proofOfWork!!.solution
+        val nym = NymIdGenerator.generate(pubKeyHash, solution)
+        val profileIcon: Bitmap = catHashService.getImage(
+            pubKeyHash,
+            solution,
+            0,
+            120.0
+        )
+        val imageBitmap = profileIcon.asImageBitmap()
+        result(id!!, nym!!, imageBitmap)
     }
 
     override suspend fun createAndPublishNewUserProfile(nickName: String) {

@@ -16,6 +16,7 @@
  */
 package network.bisq.mobile.android.node
 
+import android.content.Context
 import androidx.core.util.Supplier
 import bisq.account.AccountService
 import bisq.application.ApplicationService
@@ -42,6 +43,7 @@ import bisq.user.UserService
 import lombok.Getter
 import lombok.Setter
 import lombok.extern.slf4j.Slf4j
+import network.bisq.mobile.android.node.service.AndroidCatHashService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.utils.Logging
 import java.nio.file.Path
@@ -59,6 +61,7 @@ import java.util.concurrent.TimeUnit
 @Getter
 class AndroidApplicationService(
     androidMemoryReportService: AndroidMemoryReportService,
+    context: Context,
     userDataDir: Path?
 ) :
     ApplicationService("android", arrayOf<String>(), userDataDir), Logging {
@@ -69,6 +72,8 @@ class AndroidApplicationService(
         lateinit var applicationService: AndroidApplicationService
         var state: Supplier<Observable<State>> =
             Supplier { applicationService.state }
+        var androidCatHashService: Supplier<AndroidCatHashService> =
+            Supplier { applicationService.androidCatHashService }
         var securityService: Supplier<SecurityService> =
             Supplier { applicationService.securityService }
         var networkService: Supplier<NetworkService> =
@@ -112,6 +117,8 @@ class AndroidApplicationService(
 
     private val shutDownErrorMessage = Observable<String>()
     private val startupErrorMessage = Observable<String>()
+
+    val androidCatHashService = AndroidCatHashService(context, config.baseDir)
 
     val securityService =
         SecurityService(persistenceService, SecurityService.Config.from(getConfig("security")))

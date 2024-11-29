@@ -1,9 +1,8 @@
-package network.bisq.mobile.domain.client.main.user_profile
+package network.bisq.mobile.client.user_profile
 
 import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.client.service.ApiRequestService
-import network.bisq.mobile.client.user_profile.UserProfileResponse
 
 class UserProfileApiGateway(
     private val apiRequestService: ApiRequestService

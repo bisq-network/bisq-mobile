@@ -30,6 +30,12 @@ open class CreateProfilePresenter(
         _nym.value = value
     }
 
+    private val _profileIcon = MutableStateFlow<Any?>(null)
+    val profileIcon: StateFlow<Any?> get() = _profileIcon
+    private fun setProfileIcon(value: Any?) {
+        _profileIcon.value = value
+    }
+
     private val _nickName = MutableStateFlow("")
     val nickName: StateFlow<String> get() = _nickName
     fun setNickname(value: String) {
@@ -99,10 +105,10 @@ open class CreateProfilePresenter(
             setGenerateKeyPairInProgress(true)
             log.i { "Show busy animation for generateKeyPair" }
             // takes 200 -1000 ms
-            userProfileService.generateKeyPair { id, nym ->
+            userProfileService.generateKeyPair { id, nym, profileIcon ->
                 setId(id)
                 setNym(nym)
-                //todo show new profile image
+                setProfileIcon(profileIcon)
             }
             setGenerateKeyPairInProgress(false)
             log.i { "Hide busy animation for generateKeyPair" }
