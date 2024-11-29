@@ -31,7 +31,7 @@ val presentationModule = module {
     single(named("RootNavController")) { getKoin().getProperty<NavHostController>("RootNavController") }
     single(named("TabNavController")) { getKoin().getProperty<NavHostController>("TabNavController") }
 
-    single<MainPresenter> { ClientMainPresenter(get(), get(), get()) } bind AppPresenter::class
+    single<MainPresenter> { ClientMainPresenter(get(), get(), get(), get()) } bind AppPresenter::class
 
     single<TopBarPresenter> { TopBarPresenter(get(), get()) } bind ITopBarPresenter::class
 

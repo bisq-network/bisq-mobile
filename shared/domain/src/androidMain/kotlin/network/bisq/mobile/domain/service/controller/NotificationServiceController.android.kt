@@ -7,11 +7,12 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import network.bisq.mobile.domain.service.BisqForegroundService
+import network.bisq.mobile.utils.Logging
 
 /**
  * Controller interacting with the bisq service
  */
-actual class NotificationServiceController (private val context: Context): ServiceController {
+actual class NotificationServiceController (private val context: Context): ServiceController, Logging {
 
     companion object {
         const val SERVICE_NAME = "Bisq Service"
@@ -23,26 +24,33 @@ actual class NotificationServiceController (private val context: Context): Servi
      */
     actual override fun startService() {
         if (!isRunning) {
+            log.i { "Starting Bisq Service.."}
             createNotificationChannel()
             val intent = Intent(context, BisqForegroundService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                log.i { "OS supports foreground service" }
                 context.startForegroundService(intent)
             } else {
                 // if the phone does not support foreground service
                 context.startService(intent)
             }
             isRunning = true
+            log.i { "Started Bisq Service"}
         }
     }
 
+    // TODO provide an access for this
     actual override fun stopService() {
         // TODO we need to leave the service running if the user is ok with it
-        deleteNotificationChannel()
-        val intent = Intent(context, BisqForegroundService::class.java)
-        context.stopService(intent)
-        isRunning = false
+        if (isRunning) {
+            deleteNotificationChannel()
+            val intent = Intent(context, BisqForegroundService::class.java)
+            context.stopService(intent)
+            isRunning = false
+        }
     }
 
+    // TODO support for on click
     actual fun pushNotification(title: String, message: String) {
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notification = NotificationCompat.Builder(context, BisqForegroundService.CHANNEL_ID)
@@ -50,8 +58,9 @@ actual class NotificationServiceController (private val context: Context): Servi
             .setContentText(message)
             .setSmallIcon(android.R.drawable.ic_notification_overlay)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT) // For android previous to O
+            .setOngoing(true)
             .build()
-        notificationManager.notify(1, notification)
+        notificationManager.notify(BisqForegroundService.PUSH_NOTIFICATION_ID, notification)
     }
 
     actual override fun isServiceRunning() = isRunning

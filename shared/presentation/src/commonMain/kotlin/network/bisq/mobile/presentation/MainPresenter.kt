@@ -6,13 +6,14 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.getPlatformInfo
+import network.bisq.mobile.domain.service.controller.NotificationServiceController
 import network.bisq.mobile.presentation.ui.AppPresenter
 
 
 /**
  * Main Presenter as an example of implementation for now.
  */
-open class MainPresenter() :
+open class MainPresenter(private val notificationServiceController: NotificationServiceController) :
     BasePresenter(null), AppPresenter {
     lateinit var navController: NavHostController
         private set
@@ -39,6 +40,7 @@ open class MainPresenter() :
         log.i { "iOS Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Node Version: ${BuildNodeConfig.APP_VERSION}" }
+        notificationServiceController.startService()
         //        CoroutineScope(BackgroundDispatcher).launch {
         //            greetingRepository.create(Greeting())
         //        }
