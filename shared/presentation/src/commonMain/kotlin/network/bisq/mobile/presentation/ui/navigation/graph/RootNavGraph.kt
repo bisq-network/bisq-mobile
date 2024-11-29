@@ -8,10 +8,13 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferPaymentMethodScreen
 import network.bisq.mobile.presentation.ui.navigation.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.*
 import network.bisq.mobile.presentation.ui.uicases.offers.OffersListScreen
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferReviewTradeScreen
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferTradeAmountScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
@@ -67,5 +70,16 @@ fun RootNavGraph() {
         }) {
             OffersListScreen()
         }
+
+        composable(route = Routes.TakeOfferTradeAmount.name, enterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(300)
+            )
+        }) {
+            TakeOfferTradeAmountScreen()
+        }
+
+
     }
 }

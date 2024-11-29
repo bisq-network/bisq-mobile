@@ -7,6 +7,7 @@ import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class OffersListPresenter(
     mainPresenter: MainPresenter,
@@ -27,7 +28,7 @@ open class OffersListPresenter(
     fun takeOffer() {
         log.i { "take offer clicked " }
         //todo show take offer screen
-        // rootNavigator.navigate(Routes.OfferList.name)
+        rootNavigator.navigate(Routes.TakeOfferTradeAmount.name)
     }
 
     fun onSelectDirection(direction: Direction) {

@@ -17,6 +17,7 @@ fun BisqStaticScaffold(
     ),
     topBar: @Composable (() -> Unit)? = null,
     bottomBar: @Composable (() -> Unit)? = null,
+    verticalArrangement: Arrangement.Vertical = Arrangement.SpaceBetween,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Scaffold(
@@ -24,7 +25,10 @@ fun BisqStaticScaffold(
         topBar = topBar ?: {},
         bottomBar = bottomBar ?: {},
         content = {
-            BisqStaticLayout(padding = if (topBar != null) it else padding) { content() }
+            BisqStaticLayout(
+                padding = if (topBar != null) it else padding,
+                verticalArrangement = verticalArrangement
+            ) { content() }
         }
     )
 }

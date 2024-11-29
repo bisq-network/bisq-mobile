@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -18,6 +19,10 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BellIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
@@ -34,7 +39,9 @@ interface ITopBarPresenter: ViewPresenter {
 fun TopBar(
     title: String = "",
     isHome: Boolean = false,
-    customBackButton: @Composable (() -> Unit)? = null
+    customBackButton: @Composable (() -> Unit)? = null,
+    isFlowScreen: Boolean = false,
+    stepText: String = ""
 ) {
     val navController: NavHostController = koinInject(named("RootNavController"))
     val presenter: ITopBarPresenter = koinInject()
@@ -50,7 +57,7 @@ fun TopBar(
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = BisqTheme.colors.primary
+                tint = BisqTheme.colors.grey1
             )
         }
     }
@@ -70,14 +77,30 @@ fun TopBar(
             if (isHome) {
                 BisqLogoSmall(modifier = Modifier.height(34.dp).width(100.dp))
             } else {
-                BisqText.h4Medium(
-                    text = title,
-                    color = BisqTheme.colors.light1,
-                )
+                if (isFlowScreen) {
+                    Column {
+                        BisqText.xsmallRegular(
+                            text = "Step $stepText",
+                            color = BisqTheme.colors.grey1
+                        )
+                        BisqText.h5Medium(
+                            text = title,
+                            color = BisqTheme.colors.light1,
+                        )
+                    }
+                } else {
+                    BisqText.h4Medium(
+                        text = title,
+                        color = BisqTheme.colors.light1,
+                    )
+                }
             }
         },
         actions = {
-            Row(modifier = Modifier.padding(end = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                modifier = Modifier.padding(top = if (isFlowScreen) 14.dp  else 0.dp, end = 16.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 BellIcon(modifier = Modifier.size(30.dp))
                 Spacer(modifier = Modifier.width(12.dp))
                 UserIcon(presenter.uniqueAvatar.value, modifier = Modifier.size(30.dp))

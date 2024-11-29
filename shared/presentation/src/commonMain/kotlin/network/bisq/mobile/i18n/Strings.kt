@@ -150,4 +150,6 @@ data class Strings(
 
     val offers_list_buy_from: String,
     val offers_list_sell_to: String,
+
+    val take_offer: String,
 )

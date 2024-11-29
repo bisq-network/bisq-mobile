@@ -152,4 +152,6 @@ val EnStrings = Strings(
     
     offers_list_buy_from = "Buy from",
     offers_list_sell_to = "Sell to",
+
+    take_offer = "Take offer"
 )

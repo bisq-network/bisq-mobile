@@ -28,7 +28,8 @@ fun BisqButton(
     leftIcon: (@Composable () -> Unit)? = null,
     rightIcon: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
-    cornerRadius: Dp = 8.dp
+    cornerRadius: Dp = 8.dp,
+    disabled: Boolean = false,
 ) {
 
     Button(
@@ -40,6 +41,7 @@ fun BisqButton(
             contentColor = color,
             disabledContentColor = color),
         shape = RoundedCornerShape(cornerRadius),
+        enabled = !disabled,
     ) {
         if (iconOnly == null && text == null) {
             BisqText.baseMedium("Error: Pass either text or icon")
