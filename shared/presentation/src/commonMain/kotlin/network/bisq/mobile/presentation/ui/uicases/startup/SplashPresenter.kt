@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -58,11 +57,7 @@ open class SplashPresenter(
     }
 
     private fun cancelJob() {
-        try {
-            job?.cancel()
-            job = null
-        } catch (e: CancellationException) {
-            log.e("Job cancel failed", e)
-        }
+        job?.cancel()
+        job = null
     }
 }

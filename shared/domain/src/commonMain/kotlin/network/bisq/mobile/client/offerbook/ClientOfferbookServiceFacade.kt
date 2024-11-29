@@ -1,10 +1,12 @@
 package network.bisq.mobile.client.offerbook
 
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.offerbook.market.ClientMarketListItemService
 import network.bisq.mobile.client.offerbook.market.ClientSelectedOfferbookMarketService
 import network.bisq.mobile.client.offerbook.offer.ClientOfferbookListItemService
 import network.bisq.mobile.client.offerbook.offer.OfferbookApiGateway
+import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.domain.data.model.MarketListItem
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.domain.data.model.OfferbookMarket
@@ -14,7 +16,9 @@ import network.bisq.mobile.utils.Logging
 
 class ClientOfferbookServiceFacade(
     apiGateway: OfferbookApiGateway,
-    private val marketPriceServiceFacade: MarketPriceServiceFacade
+    webSocketClient: WebSocketClient,
+    private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val json: Json
 ) :
     OfferbookServiceFacade, Logging {
 
@@ -25,9 +29,9 @@ class ClientOfferbookServiceFacade(
 
     // Misc
     private val offerbookListItemService: ClientOfferbookListItemService =
-        ClientOfferbookListItemService(apiGateway)
+        ClientOfferbookListItemService(apiGateway, json)
     private val marketListItemService: ClientMarketListItemService =
-        ClientMarketListItemService(apiGateway)
+        ClientMarketListItemService(apiGateway, json)
     private val selectedOfferbookMarketService: ClientSelectedOfferbookMarketService =
         ClientSelectedOfferbookMarketService(marketPriceServiceFacade)
 

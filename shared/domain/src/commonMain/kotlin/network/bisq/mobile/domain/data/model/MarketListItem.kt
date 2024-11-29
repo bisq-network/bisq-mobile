@@ -25,7 +25,7 @@ import network.bisq.mobile.client.replicated_model.common.currency.Market
  * Provides data for offerbook market list items
  */
 @Serializable
-class MarketListItem(val market: Market) : BaseModel() {
+data class MarketListItem(val market: Market) : BaseModel() {
     private val _numOffers = MutableStateFlow(0)
     val numOffers: StateFlow<Int> get() = _numOffers
     fun setNumOffers(value: Int) {
