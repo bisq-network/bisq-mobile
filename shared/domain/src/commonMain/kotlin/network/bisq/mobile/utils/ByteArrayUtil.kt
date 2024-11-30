@@ -23,3 +23,17 @@ object ByteArrayAsBase64Serializer : KSerializer<ByteArray> {
         return base64String.decodeBase64()?.toByteArray()!!
     }
 }
+
+fun ByteArray.toHex(): String {
+    return joinToString("") { it.toUByte()
+        .toString(16)
+        .padStart(2, '0') }
+}
+
+fun String.hexToByteArray(): ByteArray {
+    require(length % 2 == 0) { "Hex string must have an even length" }
+
+    return chunked(2)
+        .map { it.toUByte(16).toByte() }
+        .toByteArray()
+}

@@ -7,7 +7,7 @@ import network.bisq.mobile.android.node.domain.offerbook.NodeOfferbookServiceFac
 import network.bisq.mobile.android.node.domain.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
 import network.bisq.mobile.android.node.presentation.OnBoardingNodePresenter
-import network.bisq.mobile.android.node.service.AndroidCatHashService
+import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -25,9 +25,9 @@ val androidNodeModule = module {
         AndroidMemoryReportService(androidContext())
     }
 
-    single<AndroidCatHashService> {
+    single<AndroidNodeCatHashService> {
         val context = androidContext()
-        AndroidCatHashService(context, context.filesDir.toPath())
+        AndroidNodeCatHashService(context, context.filesDir.toPath())
     }
 
     single { AndroidApplicationService.Provider() }

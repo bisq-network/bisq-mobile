@@ -10,7 +10,7 @@ import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
 import bisq.user.profile.UserProfile
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.service.AndroidCatHashService
+import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.Logging
 import java.security.KeyPair
@@ -38,7 +38,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     private val userService: UserService by lazy {
         applicationService.userService.get()
     }
-    private val catHashService: AndroidCatHashService by lazy {
+    private val catHashService: AndroidNodeCatHashService by lazy {
         applicationService.androidCatHashService.get()
     }
 

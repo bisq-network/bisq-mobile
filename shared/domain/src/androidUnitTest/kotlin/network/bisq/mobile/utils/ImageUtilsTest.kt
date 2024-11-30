@@ -1,9 +1,12 @@
-package network.bisq.mobile.android.node.utils
+package network.bisq.mobile.utils
 
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.test.core.app.ApplicationProvider
-import org.junit.Assert.*
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -26,21 +29,24 @@ class ImageUtilTest {
     fun `test getImageByPath valid path`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
         // TODO couldn't get it to test with sample test asset so had to use a path for a real one
-        val assetPath = "composeResources/bisqapps.shared.presentation.generated.resources/drawable/bisq_logo.png"
-        val bitmap = ImageUtil.getImageByPath(context, assetPath)
+        val assetPath =
+            "composeResources/bisqapps.shared.presentation.generated.resources/drawable/bisq_logo.png"
+        val bitmap = ImageUtil.getImageByPath(context, ImageUtil.PATH_TO_DRAWABLE, assetPath)
         assertNotNull("Image should be loaded", bitmap)
     }
 
     @Test
     fun `test getImageByPath invalid path`() {
-        val bitmap = ImageUtil.getImageByPath(context, "non_existing_image.png")
+        val bitmap =
+            ImageUtil.getImageByPath(context, ImageUtil.PATH_TO_DRAWABLE, "non_existing_image.png")
         assertNull("Image should be null for an invalid path", bitmap)
     }
 
     @Test
     fun `test composeImage from multiple paths`() {
         val paths = arrayOf("images/sample_image.png", "images/sample_overlay.png")
-        val composedBitmap = ImageUtil.composeImage(context, paths, 200, 200)
+        val composedBitmap =
+            ImageUtil.composeImage(context, ImageUtil.PATH_TO_DRAWABLE, paths, 200, 200)
         assertEquals("Composed image width should be 200", 200, composedBitmap.width)
         assertEquals("Composed image height should be 200", 200, composedBitmap.height)
     }

@@ -19,19 +19,22 @@ package network.bisq.mobile.android.node.service
 import android.content.Context
 import android.graphics.Bitmap
 import bisq.user.cathash.CatHashService
-import network.bisq.mobile.android.node.utils.ImageUtil
+import network.bisq.mobile.utils.ImageUtil
+import network.bisq.mobile.utils.ImageUtil.PATH_TO_DRAWABLE
 import java.io.File
 import java.nio.file.Path
 
 /**
- * Cat Hash implementation for Android
+ * Cat Hash implementation for Android node
  */
-class AndroidCatHashService(private val context: Context, baseDir: Path?) :
+const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
+
+class AndroidNodeCatHashService(private val context: Context, baseDir: Path?) :
     CatHashService<Bitmap>(baseDir) {
     override fun composeImage(paths: Array<String>, size: Double): Bitmap {
         return ImageUtil.composeImage(
             context,
-            ImageUtil.BASE_PATH,
+            CAT_HASH_PATH,
             paths,
             size.toInt(),
             size.toInt()

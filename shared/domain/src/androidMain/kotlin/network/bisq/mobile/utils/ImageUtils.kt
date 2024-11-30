@@ -1,11 +1,10 @@
-package network.bisq.mobile.android.node.utils
+package network.bisq.mobile.utils
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
-import network.bisq.mobile.utils.Logging
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -16,7 +15,8 @@ import java.io.IOException
  * Android images utility functions
  */
 object ImageUtil : Logging {
-    const val BASE_PATH = "cathash/"
+    const val PATH_TO_DRAWABLE =
+        "composeResources/bisqapps.shared.presentation.generated.resources/drawable/"
     fun composeImage(
         context: Context,
         basePath: String,
