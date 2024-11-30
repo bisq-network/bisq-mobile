@@ -50,7 +50,7 @@ val clientModule = module {
     single<MarketPriceServiceFacade> { ClientMarketPriceServiceFacade(get()) }
 
     single { UserProfileApiGateway(get()) }
-    single<UserProfileServiceFacade> { ClientUserProfileServiceFacade(get()) }
+    single<UserProfileServiceFacade> { ClientUserProfileServiceFacade(get(), get()) }
 
     single { OfferbookApiGateway(get()) }
     single<OfferbookServiceFacade> { ClientOfferbookServiceFacade(get(), get()) }

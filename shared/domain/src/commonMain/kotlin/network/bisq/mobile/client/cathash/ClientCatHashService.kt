@@ -5,6 +5,7 @@ import com.ionspin.kotlin.bignum.integer.Sign
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.utils.concat
 import network.bisq.mobile.utils.hexToByteArray
 import network.bisq.mobile.utils.toHex
 import okio.FileSystem
@@ -32,24 +33,6 @@ abstract class ClientCatHashService<T>(private val baseDirPath: String) : Loggin
             userProfile.avatarVersion,
             size
         )
-    }
-
-    fun concatByteArrays(array1: ByteArray, array2: ByteArray): ByteArray {
-        val result = ByteArray(array1.size + array2.size)
-        array1.copyInto(result, 0, 0, array1.size)
-        array2.copyInto(result, array1.size, 0, array2.size)
-        return result
-    }
-
-    fun concat(vararg byteArrays: ByteArray): ByteArray {
-        val totalLength = byteArrays.sumOf { it.size }
-        val result = ByteArray(totalLength)
-        var currentIndex = 0
-        for (array in byteArrays) {
-            array.copyInto(result, currentIndex)
-            currentIndex += array.size
-        }
-        return result
     }
 
 

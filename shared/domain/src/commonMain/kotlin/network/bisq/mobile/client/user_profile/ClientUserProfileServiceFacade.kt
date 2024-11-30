@@ -2,15 +2,20 @@ package network.bisq.mobile.client.user_profile
 
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
+import network.bisq.mobile.client.cathash.ClientCatHashService
 import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.utils.hexToByteArray
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
 
-class ClientUserProfileServiceFacade(private val apiGateway: UserProfileApiGateway) :
+class ClientUserProfileServiceFacade(
+    private val apiGateway: UserProfileApiGateway,
+    private val clientCatHashService: ClientCatHashService<Any>
+) :
     UserProfileServiceFacade, Logging {
 
     // Misc
@@ -26,8 +31,15 @@ class ClientUserProfileServiceFacade(private val apiGateway: UserProfileApiGatew
             val ts = Clock.System.now().toEpochMilliseconds()
             val preparedData = apiGateway.requestPreparedData()
             createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
-            //todo not impl yet
-            result(preparedData.id, preparedData.nym, null)
+            val pubKeyHash: ByteArray = preparedData.id.hexToByteArray()
+            val powSolution = preparedData.proofOfWork.solution
+            val image = clientCatHashService.getImage(
+                pubKeyHash,
+                powSolution,
+                0,
+                120
+            )
+            result(preparedData.id, preparedData.nym, image)
             this.preparedData = preparedData
         } catch (e: Exception) {
             log.e { e.toString() }
