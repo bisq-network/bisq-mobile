@@ -32,6 +32,9 @@ kotlin {
     }
 
     sourceSets {
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+        }
         commonMain.dependencies {
             //put your multiplatform dependencies here
             implementation(libs.koin.core)

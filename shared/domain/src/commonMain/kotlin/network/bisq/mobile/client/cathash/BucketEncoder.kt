@@ -37,11 +37,6 @@ object BucketEncoder {
             val reminder: Long = divisorReminder.second.longValue()
             val res = abs(reminder % bucketSize).toInt()
             result[currentBucket] = res
-            println("divisorReminder1 " + divisorReminder.first.toString())
-            println("divisorReminder2 " + divisorReminder.second.toString())
-            println("currentBucket " + currentBucket)
-            println("reminder " + reminder)
-            println("res " + res)
             currentBucket++
         }
         return result

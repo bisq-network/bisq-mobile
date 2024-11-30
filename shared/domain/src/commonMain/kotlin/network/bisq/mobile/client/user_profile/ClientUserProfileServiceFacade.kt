@@ -2,6 +2,7 @@ package network.bisq.mobile.client.user_profile
 
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
+import network.bisq.mobile.PlatformImage
 import network.bisq.mobile.client.cathash.ClientCatHashService
 import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
@@ -14,7 +15,7 @@ import kotlin.random.Random
 
 class ClientUserProfileServiceFacade(
     private val apiGateway: UserProfileApiGateway,
-    private val clientCatHashService: ClientCatHashService<Any>
+    private val clientCatHashService: ClientCatHashService<PlatformImage>
 ) :
     UserProfileServiceFacade, Logging {
 
@@ -26,23 +27,24 @@ class ClientUserProfileServiceFacade(
         return getUserIdentityIds().isNotEmpty()
     }
 
-    override suspend fun generateKeyPair(result: (String, String, Any?) -> Unit) {
+    override suspend fun generateKeyPair(result: (String, String, PlatformImage?) -> Unit) {
         try {
             val ts = Clock.System.now().toEpochMilliseconds()
             val preparedData = apiGateway.requestPreparedData()
             createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
             val pubKeyHash: ByteArray = preparedData.id.hexToByteArray()
             val powSolution = preparedData.proofOfWork.solution
-            val image = clientCatHashService.getImage(
+            val image: PlatformImage? = clientCatHashService.getImage(
                 pubKeyHash,
                 powSolution,
                 0,
                 120
             )
+
             result(preparedData.id, preparedData.nym, image)
             this.preparedData = preparedData
         } catch (e: Exception) {
-            log.e { e.toString() }
+            log.e("generateKeyPair failed", e)
         }
     }
 
@@ -57,7 +59,7 @@ class ClientUserProfileServiceFacade(
                 this.preparedData = null
                 log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = ${response.userProfileId}" }
             } catch (e: Exception) {
-                log.e { e.toString() }
+                log.e("createAndPublishNewUserProfile failed", e)
             }
         }
     }
@@ -66,7 +68,7 @@ class ClientUserProfileServiceFacade(
         return try {
             apiGateway.getUserIdentityIds()
         } catch (e: Exception) {
-            log.e { e.toString() }
+            log.e("getUserIdentityIds failed", e)
             emptyList()
         }
     }
@@ -76,7 +78,7 @@ class ClientUserProfileServiceFacade(
             val userProfile = getSelectedUserProfile()
             result(userProfile.nickName, userProfile.nym, userProfile.id)
         } catch (e: Exception) {
-            log.e { e.toString() }
+            log.e("applySelectedUserProfile failed", e)
         }
     }
 

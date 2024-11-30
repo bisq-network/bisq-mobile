@@ -1,7 +1,5 @@
 package network.bisq.mobile.android.node.domain.user_profile
 
-import android.graphics.Bitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import bisq.common.encoding.Hex
 import bisq.security.DigestUtil
 import bisq.security.SecurityService
@@ -9,6 +7,7 @@ import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
 import bisq.user.profile.UserProfile
+import network.bisq.mobile.PlatformImage
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -53,7 +52,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         return userService.userIdentityService.userIdentities.isNotEmpty()
     }
 
-    override suspend fun generateKeyPair(result: (String, String, Any?) -> Unit) {
+    override suspend fun generateKeyPair(result: (String, String, PlatformImage?) -> Unit) {
         keyPair = securityService.keyBundleService.generateKeyPair()
         pubKeyHash = DigestUtil.hash(keyPair!!.public.encoded)
 
@@ -66,14 +65,13 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         val id = Hex.encode(pubKeyHash)
         val solution = proofOfWork!!.solution
         val nym = NymIdGenerator.generate(pubKeyHash, solution)
-        val profileIcon: Bitmap = catHashService.getImage(
+        val profileIcon: PlatformImage = catHashService.getImage(
             pubKeyHash,
             solution,
             0,
             120.0
         )
-        val imageBitmap = profileIcon.asImageBitmap()
-        result(id!!, nym!!, imageBitmap)
+        result(id!!, nym!!, profileIcon)
     }
 
     override suspend fun createAndPublishNewUserProfile(nickName: String) {

@@ -7,6 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.PlatformImage
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -30,9 +31,9 @@ open class CreateProfilePresenter(
         _nym.value = value
     }
 
-    private val _profileIcon = MutableStateFlow<Any?>(null)
-    val profileIcon: StateFlow<Any?> get() = _profileIcon
-    private fun setProfileIcon(value: Any?) {
+    private val _profileIcon = MutableStateFlow<PlatformImage?>(null)
+    val profileIcon: StateFlow<PlatformImage?> get() = _profileIcon
+    private fun setProfileIcon(value: PlatformImage?) {
         _profileIcon.value = value
     }
 

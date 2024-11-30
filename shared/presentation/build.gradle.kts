@@ -1,4 +1,3 @@
-import org.jetbrains.compose.compose
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 
@@ -24,7 +23,10 @@ version = project.findProperty("shared.version") as String
 buildConfig {
     forClass("network.bisq.mobile.client.shared", className = "BuildConfig") {
         buildConfigField("APP_NAME", project.findProperty("client.name").toString())
-        buildConfigField("ANDROID_APP_VERSION", project.findProperty("client.android.version").toString())
+        buildConfigField(
+            "ANDROID_APP_VERSION",
+            project.findProperty("client.android.version").toString()
+        )
         buildConfigField("IOS_APP_VERSION", project.findProperty("client.ios.version").toString())
         buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
         buildConfigField("BUILD_TS", System.currentTimeMillis())
@@ -96,6 +98,7 @@ kotlin {
 
             implementation(libs.coil.compose)
         }
+
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
@@ -125,7 +128,7 @@ dependencies {
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().all {
-    if(name != "kspCommonMainKotlinMetadata") {
+    if (name != "kspCommonMainKotlinMetadata") {
         dependsOn("kspCommonMainKotlinMetadata")
     }
 }

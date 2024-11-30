@@ -17,33 +17,41 @@
 package network.bisq.mobile.service
 
 import android.content.Context
+import android.graphics.Bitmap
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import network.bisq.mobile.PlatformImage
 import network.bisq.mobile.client.cathash.ClientCatHashService
-import network.bisq.mobile.utils.ImageUtil
-import network.bisq.mobile.utils.ImageUtil.PATH_TO_DRAWABLE
+import network.bisq.mobile.utils.AndroidImageUtil
+import network.bisq.mobile.utils.AndroidImageUtil.PATH_TO_DRAWABLE
 import java.io.File
 
 const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
 
 class AndroidClientCatHashService(private val context: Context, filesDir: String) :
-    ClientCatHashService<ImageBitmap>("$filesDir/Bisq2_mobile") {
-    override fun composeImage(paths: Array<String>, size: Int): ImageBitmap {
-        return ImageUtil.composeImage(
+    ClientCatHashService<PlatformImage?>("$filesDir/Bisq2_mobile") {
+    override fun composeImage(paths: Array<String>, size: Int): PlatformImage {
+        val profileIcon = AndroidImageUtil.composeImage(
             context,
             CAT_HASH_PATH,
             paths,
             size,
             size
-        ).asImageBitmap()
+        )
+        return profileIcon
     }
 
-    override fun writeRawImage(image: ImageBitmap, iconFilePath: String) {
-        ImageUtil.writeRawImage(image.asAndroidBitmap(), File(iconFilePath))
+    override fun writeRawImage(image: PlatformImage?, iconFilePath: String) {
+        image as ImageBitmap
+        val bitmap: Bitmap = image.asAndroidBitmap()
+        val file = File(iconFilePath)
+        AndroidImageUtil.writeBitmapAsByteArray(bitmap, file)
     }
 
-    override fun readRawImage(iconFilePath: String): ImageBitmap? {
-        return ImageUtil.readRawImage(File((iconFilePath)))?.asImageBitmap()
+    override fun readRawImage(iconFilePath: String): PlatformImage? {
+        val file = File(iconFilePath)
+        val bitmap: Bitmap? = AndroidImageUtil.readByteArrayAsBitmap(file)
+        return bitmap?.asImageBitmap()
     }
 }

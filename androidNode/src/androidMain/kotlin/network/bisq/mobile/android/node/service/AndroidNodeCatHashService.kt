@@ -18,9 +18,13 @@ package network.bisq.mobile.android.node.service
 
 import android.content.Context
 import android.graphics.Bitmap
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import bisq.user.cathash.CatHashService
-import network.bisq.mobile.utils.ImageUtil
-import network.bisq.mobile.utils.ImageUtil.PATH_TO_DRAWABLE
+import network.bisq.mobile.PlatformImage
+import network.bisq.mobile.utils.AndroidImageUtil
+import network.bisq.mobile.utils.AndroidImageUtil.PATH_TO_DRAWABLE
 import java.io.File
 import java.nio.file.Path
 
@@ -30,9 +34,9 @@ import java.nio.file.Path
 const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
 
 class AndroidNodeCatHashService(private val context: Context, baseDir: Path?) :
-    CatHashService<Bitmap>(baseDir) {
-    override fun composeImage(paths: Array<String>, size: Double): Bitmap {
-        return ImageUtil.composeImage(
+    CatHashService<PlatformImage>(baseDir) {
+    override fun composeImage(paths: Array<String>, size: Double): PlatformImage {
+        return AndroidImageUtil.composeImage(
             context,
             CAT_HASH_PATH,
             paths,
@@ -41,11 +45,14 @@ class AndroidNodeCatHashService(private val context: Context, baseDir: Path?) :
         )
     }
 
-    override fun writeRawImage(image: Bitmap, file: File) {
-        ImageUtil.writeRawImage(image, file)
+    override fun writeRawImage(image: PlatformImage, file: File) {
+        image as ImageBitmap
+        val bitmap: Bitmap = image.asAndroidBitmap()
+        AndroidImageUtil.writeBitmapAsByteArray(bitmap, file)
     }
 
-    override fun readRawImage(file: File): Bitmap? {
-        return ImageUtil.readRawImage(file)
+    override fun readRawImage(file: File): PlatformImage? {
+        val bitmap: Bitmap? = AndroidImageUtil.readByteArrayAsBitmap(file)
+        return bitmap?.asImageBitmap()
     }
 }
