@@ -17,13 +17,16 @@ import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.mp.KoinPlatform.getKoin
 
-interface AppPresenter: ViewPresenter {
+interface AppPresenter : ViewPresenter {
     fun setNavController(controller: NavHostController)
-        // Observables for state
+
+    // Observables for state
     val isContentVisible: StateFlow<Boolean>
 
     // Actions
     fun toggleContentVisibility()
+
+    fun isIOS(): Boolean
 }
 
 /**

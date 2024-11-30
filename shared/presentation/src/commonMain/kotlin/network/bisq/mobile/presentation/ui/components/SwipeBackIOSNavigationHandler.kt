@@ -8,7 +8,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import network.bisq.mobile.domain.getPlatform
+import network.bisq.mobile.presentation.ui.AppPresenter
+import org.koin.compose.koinInject
 
 // TODO:
 // Patch work to handle horizontal swipe in iOS and pop back
@@ -21,9 +22,7 @@ fun SwipeBackIOSNavigationHandler(
     navController: NavController,
     content: @Composable () -> Unit
 ) {
-
-    val platform = getPlatform()
-    val isIOS = platform.name.lowercase().contains("ios")
+    val presenter: AppPresenter = koinInject()
 
     // TODO: Find the right way to get screenWidth in KMP way.
     // This is not right.
@@ -36,7 +35,7 @@ fun SwipeBackIOSNavigationHandler(
     var cumulativeDrag by remember { mutableStateOf(0f) }
 
     Box(
-        modifier = if (isIOS) {
+        modifier = if (presenter.isIOS()) {
             Modifier.pointerInput(Unit) {
                 detectHorizontalDragGestures(
                     onDragStart = {

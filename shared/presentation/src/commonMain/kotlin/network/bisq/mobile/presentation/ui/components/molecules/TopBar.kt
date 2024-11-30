@@ -36,7 +36,11 @@ fun TopBar(
     val showBackButton = customBackButton == null && navController.previousBackStackEntry != null
 
     val defaultBackButton: @Composable () -> Unit = {
-        IconButton(onClick = { navController.popBackStack() }) {
+        IconButton(onClick = {
+            if (navController.previousBackStackEntry != null) {
+                navController.popBackStack()
+            }
+        }) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
