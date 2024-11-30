@@ -26,9 +26,16 @@ import java.nio.file.Path
 /**
  * Cat Hash implementation for Android
  */
-class AndroidCatHashService(private val context: Context, baseDir: Path?) : CatHashService<Bitmap>(baseDir) {
+class AndroidCatHashService(private val context: Context, baseDir: Path?) :
+    CatHashService<Bitmap>(baseDir) {
     override fun composeImage(paths: Array<String>, size: Double): Bitmap {
-        return ImageUtil.composeImage(context, paths, size.toInt(), size.toInt())
+        return ImageUtil.composeImage(
+            context,
+            ImageUtil.BASE_PATH,
+            paths,
+            size.toInt(),
+            size.toInt()
+        )
     }
 
     override fun writeRawImage(image: Bitmap, file: File) {
