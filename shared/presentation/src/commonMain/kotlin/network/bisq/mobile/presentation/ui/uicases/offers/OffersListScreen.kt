@@ -28,7 +28,7 @@ import org.koin.compose.koinInject
 @Composable
 fun OffersListScreen() {
     val presenter: OffersListPresenter = koinInject()
-    val strings = LocalStrings.current
+    val strings = LocalStrings.current.common
 
     // Offers are mirrored to what user wants. E.g. I want to buy Bitcoin using a sell offer
     val offerDirections: List<Direction> = listOf(

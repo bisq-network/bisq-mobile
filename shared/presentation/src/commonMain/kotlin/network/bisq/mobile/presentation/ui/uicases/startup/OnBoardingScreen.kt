@@ -33,7 +33,8 @@ interface IOnboardingPresenter : ViewPresenter {
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun OnBoardingScreen() {
-    val strings = LocalStrings.current
+    val strings = LocalStrings.current.application
+    val commonStrings = LocalStrings.current.common
     val presenter: IOnboardingPresenter = koinInject()
 
     val coroutineScope = rememberCoroutineScope()
@@ -57,7 +58,7 @@ fun OnBoardingScreen() {
         Spacer(modifier = Modifier.height(56.dp))
 
         BisqButton(
-            text = if (pagerState.currentPage == presenter.indexesToShow.lastIndex) strings.onboarding_button_create_profile else strings.buttons_next,
+            text = if (pagerState.currentPage == presenter.indexesToShow.lastIndex) strings.onboarding_button_create_profile else commonStrings.buttons_next,
             onClick = { presenter.onNextButtonClick(coroutineScope, pagerState) }
         )
     }

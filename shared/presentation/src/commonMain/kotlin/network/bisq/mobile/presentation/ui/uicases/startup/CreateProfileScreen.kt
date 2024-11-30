@@ -29,7 +29,8 @@ import org.koin.core.qualifier.named
 @Composable
 fun CreateProfileScreen(
 ) {
-    val strings = LocalStrings.current
+    val strings = LocalStrings.current.application
+    val commonStrings = LocalStrings.current.common
     val navController: NavHostController = koinInject(named("RootNavController"))
     val presenter: CreateProfilePresenter = koinInject { parametersOf(navController) }
 
@@ -82,7 +83,7 @@ fun CreateProfileScreen(
         )
         Spacer(modifier = Modifier.height(40.dp))
         BisqButton(
-            strings.buttons_next,
+            commonStrings.buttons_next,
             onClick = { presenter.onCreateAndPublishNewUserProfile() },
             backgroundColor = if (presenter.nickName.value.isEmpty()) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
         )

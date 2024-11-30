@@ -11,6 +11,9 @@ import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.IGettingStarted
 import network.bisq.mobile.presentation.ui.uicases.offers.MarketListPresenter
 import network.bisq.mobile.presentation.ui.uicases.offers.OffersListPresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.PaymentMethodPresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.ReviewTradePresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TradeAmountPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPresenter
@@ -71,6 +74,12 @@ val presentationModule = module {
     single<MarketListPresenter> { MarketListPresenter(get(), get()) }
 
     single<OffersListPresenter> { OffersListPresenter(get(), get()) }
+
+    single<TradeAmountPresenter> { TradeAmountPresenter(get(), get()) }
+
+    single<PaymentMethodPresenter> { PaymentMethodPresenter(get(), get()) }
+
+    single<ReviewTradePresenter> { ReviewTradePresenter(get(), get()) }
 
     single { (navController: NavController, tabController: NavController) ->
         MyTradesPresenter(

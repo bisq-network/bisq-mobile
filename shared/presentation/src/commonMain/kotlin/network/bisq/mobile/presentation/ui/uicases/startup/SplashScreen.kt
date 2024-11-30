@@ -34,7 +34,7 @@ fun SplashScreen(
             BisqProgressBar(presenter.progress.collectAsState().value)
 
             // TODO: Get this from presenter
-            val networkType = strings.splash_bootstrapState_network_TOR
+            val networkType = strings.application.splash_bootstrapState_network_TOR
 
             BisqText.baseRegular(
                 text = presenter.state.collectAsState().value,

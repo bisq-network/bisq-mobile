@@ -16,7 +16,7 @@ import org.koin.compose.koinInject
 
 @Composable
 fun MarketListScreen() {
-    val strings = LocalStrings.current
+    val strings = LocalStrings.current.common
     val presenter: MarketListPresenter = koinInject()
 
     RememberPresenterLifecycle(presenter)

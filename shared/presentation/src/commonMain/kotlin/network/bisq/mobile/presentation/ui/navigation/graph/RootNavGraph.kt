@@ -80,6 +80,23 @@ fun RootNavGraph() {
             TakeOfferTradeAmountScreen()
         }
 
+        composable(route = Routes.TakeOfferPaymentMethod.name, enterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(300)
+            )
+        }) {
+            TakeOfferPaymentMethodScreen()
+        }
+
+        composable(route = Routes.TakeOfferReviewTrade.name, enterTransition = {
+            slideIntoContainer(
+                AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(300)
+            )
+        }) {
+            TakeOfferReviewTradeScreen()
+        }
 
     }
 }

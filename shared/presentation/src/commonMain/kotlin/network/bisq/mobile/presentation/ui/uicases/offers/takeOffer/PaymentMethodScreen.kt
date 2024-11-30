@@ -4,29 +4,36 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import org.koin.compose.koinInject
-import org.koin.core.qualifier.named
 
 @Composable
 fun TakeOfferPaymentMethodScreen() {
-    val strings = LocalStrings.current
-    val navController: NavHostController = koinInject(named("RootNavController"))
-    val paymentMethod = "strike"
-    val settlementMethod = "ln"
+    val strings = LocalStrings.current.common
+    val presenter: PaymentMethodPresenter = koinInject()
+
+    val offer = presenter.offerListItems.collectAsState().value.first()
+
     var customMethodCounter = 1
-        MultiScreenWizardScaffold(strings.take_offer, stepIndex = 2, stepsLength = 3) {
+    MultiScreenWizardScaffold(
+        strings.take_offer,
+        stepIndex = 2,
+        stepsLength = 3,
+        prevOnClick = { presenter.goBack() },
+        nextOnClick = { presenter.paymentMethodConfirmed() }
+    ) {
+
+        BisqScrollLayout(padding = PaddingValues(all = 0.dp)) {
             BisqText.h3Regular(
                 text = "Which payment and settlement method do you want to use?",
                 color = BisqTheme.colors.light1
@@ -46,7 +53,8 @@ fun TakeOfferPaymentMethodScreen() {
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    repeat(4) {
+                    offer.quoteSidePaymentMethods.forEach { paymentMethod ->
+                        // TODO: Make this to Toggle buttons
                         Row(
                             modifier = Modifier.fillMaxWidth()
                                 .clip(shape = RoundedCornerShape(6.dp))
@@ -65,7 +73,7 @@ fun TakeOfferPaymentMethodScreen() {
                                 modifier = Modifier.size(15.dp),
                             )
                             BisqText.baseRegular(
-                                text = "Strike"
+                                text = paymentMethod
                             )
                         }
                     }
@@ -85,9 +93,10 @@ fun TakeOfferPaymentMethodScreen() {
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 38.dp),
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.spacedBy(24.dp),
-
                     ) {
-                    repeat(2) {
+
+                    offer.baseSidePaymentMethods.forEach { settlementMethod ->
+                        // TODO: Make this to Toggle buttons
                         Row(
                             modifier = Modifier.fillMaxWidth()
                                 .clip(shape = RoundedCornerShape(6.dp))
@@ -97,20 +106,21 @@ fun TakeOfferPaymentMethodScreen() {
                             horizontalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             DynamicImage(
-                                path = "drawable/payment/bitcoin/${
+                                "drawable/payment/bitcoin/${
                                     settlementMethod
                                         .lowercase()
                                         .replace("-", "_")
                                 }.png",
-                                fallbackPath = "drawable/payment/fiat/custom_payment_${customMethodCounter++}.png",
-                                modifier = Modifier.size(15.dp),
+                                modifier = Modifier.size(15.dp)
                             )
+
                             BisqText.baseRegular(
-                                text = "LN"
+                                text = settlementMethod
                             )
                         }
                     }
                 }
             }
         }
+    }
 }
