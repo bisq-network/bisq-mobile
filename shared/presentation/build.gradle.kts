@@ -99,7 +99,16 @@ kotlin {
             implementation(libs.bignum)
             implementation(libs.coil.compose)
         }
+        androidUnitTest.dependencies {
+            implementation(libs.mock.io)
+            implementation(libs.kotlin.test.junit.v180)
+            implementation(libs.junit)
 
+            implementation(libs.roboelectric)
+            implementation(libs.androidx.test)
+            implementation(libs.androidx.test.espresso)
+            implementation(libs.androidx.test.junit)
+        }
         val commonTest by getting {
             dependencies {
                 implementation(libs.kotlin.test)
