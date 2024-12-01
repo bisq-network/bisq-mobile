@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
@@ -27,7 +28,7 @@ fun SplashScreen(
 
     RememberPresenterLifecycle(presenter)
 
-    BisqStaticScaffold {
+    BisqStaticScaffold(verticalArrangement = Arrangement.SpaceBetween) {
         BisqLogo()
 
         Column {

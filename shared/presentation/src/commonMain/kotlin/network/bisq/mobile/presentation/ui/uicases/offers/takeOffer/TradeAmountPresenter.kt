@@ -21,6 +21,11 @@ open class TradeAmountPresenter(
     override fun onViewUnattaching() {
     }
 
+    fun goBack() {
+        log.i { "goBack" }
+        rootNavigator.popBackStack()
+    }
+    
     fun amountConfirmed() {
         log.i { "Amount selected" }
         rootNavigator.navigate(Routes.TakeOfferPaymentMethod.name)

@@ -13,42 +13,38 @@ enum class InfoBoxValueType {
     TitleSmall,
 }
 
-/*
-Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-    BisqText.largeRegular(
-        text = strings.bisqEasy_tradeState_header_direction,
-        color = BisqTheme.colors.grey2
-    )
-    BisqText.h5Regular(
-        text = if (offer.direction.isBuy)
-            strings.bisqEasy_tradeWizard_directionAndMarket_buy
-        else
-            strings.bisqEasy_tradeWizard_directionAndMarket_sell
-    )
-}
-*/
-
 @Composable
 fun InfoBox(
     label: String,
-    value: String,
+    value: String? = null,
+    valueComposable: (@Composable () -> Unit)? = null,
     rightAlign: Boolean = false,
     valueType: InfoBoxValueType = InfoBoxValueType.BoldValue,
 ) {
 
-    val valueWidget: @Composable () -> Unit = {
-        when (valueType) {
-            InfoBoxValueType.BoldValue -> BisqText.h5Regular(text = value)
-            InfoBoxValueType.SmallValue -> BisqText.baseRegular(text = value)
-            InfoBoxValueType.TitleSmall -> BisqText.h2Regular(text = value)
+    val valueWidget: @Composable () -> Unit = if (value != null) {
+        {
+            when (valueType) {
+                InfoBoxValueType.BoldValue -> BisqText.h6Regular(text = value)
+                InfoBoxValueType.SmallValue -> BisqText.baseRegular(text = value)
+                InfoBoxValueType.TitleSmall -> BisqText.h4Regular(text = value)
+            }
+        }
+    } else if (valueComposable != null) {
+        {
+            valueComposable()
+        }
+    } else {
+        {
+            BisqText.h6Regular(text = "[ERR] Pass either value or valueComposable", color = BisqTheme.colors.danger)
         }
     }
 
     Column(
-        horizontalAlignment = if(rightAlign) Alignment.End else Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(12.dp)
+        horizontalAlignment = if (rightAlign) Alignment.End else Alignment.Start,
+        verticalArrangement = Arrangement.spacedBy(4.dp)
     ) {
-        BisqText.largeRegular(text = label, color = BisqTheme.colors.grey2)
+        BisqText.baseRegular(text = label, color = BisqTheme.colors.grey2)
         valueWidget()
     }
 }

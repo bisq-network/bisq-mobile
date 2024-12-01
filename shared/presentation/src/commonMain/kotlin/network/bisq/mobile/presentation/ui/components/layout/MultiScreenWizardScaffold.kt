@@ -22,8 +22,8 @@ fun MultiScreenWizardScaffold(
     nextOnClick: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
-
-    BisqStaticScaffold(
+    BisqScrollScaffold(
+        padding = PaddingValues(all = 0.dp),
         topBar = {
             TopBar(title, isFlowScreen = true, stepText = "$stepIndex/$stepsLength")
         },
@@ -74,7 +74,7 @@ fun MultiScreenWizardScaffold(
 
         // TODO: Should pass these values to the column deep inside StaticLayout, rather than creating a column here?
         Column(
-            modifier = Modifier.fillMaxHeight().padding(horizontal = 32.dp, vertical = 24.dp),
+            modifier = Modifier.fillMaxHeight().padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

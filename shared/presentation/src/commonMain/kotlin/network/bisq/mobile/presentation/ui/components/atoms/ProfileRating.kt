@@ -19,22 +19,22 @@ import org.jetbrains.compose.resources.painterResource
 // TODO: Get params and render apt
 @Composable
 fun ProfileRating(item: OfferListItem) {
-    val fiveSystemScore:Int = item.reputationScore.fiveSystemScore.toInt()
+    val fiveSystemScore:Int = 3 // item.reputationScore.fiveSystemScore.toInt()
 
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
         Image(
             painterResource(Res.drawable.img_bot_image), "",
-            modifier = Modifier.size(32.dp)
+            modifier = Modifier.size(48.dp)
         )
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            BisqText.smallMedium(
+            BisqText.largeRegular(
                 text = item.userName
             )
             LazyRow(horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 items(fiveSystemScore) {
                     Image(
                         painterResource(Res.drawable.icon_star), "",
-                        modifier = Modifier.size(10.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }

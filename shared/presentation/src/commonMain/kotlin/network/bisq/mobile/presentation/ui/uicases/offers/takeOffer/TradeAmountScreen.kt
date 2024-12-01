@@ -26,6 +26,7 @@ fun TakeOfferTradeAmountScreen() {
         strings.take_offer,
         stepIndex = 1,
         stepsLength = 3,
+        prevOnClick = { presenter.goBack() },
         nextOnClick = { presenter.amountConfirmed() }
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
