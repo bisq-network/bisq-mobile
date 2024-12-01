@@ -90,12 +90,13 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.logging.kermit)
             implementation(libs.kotlinx.coroutines)
-
+            implementation(libs.kotlinx.datetime)
+            
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.navigation.compose)
             implementation(libs.lyricist)
-
+            implementation(libs.bignum)
             implementation(libs.coil.compose)
         }
 

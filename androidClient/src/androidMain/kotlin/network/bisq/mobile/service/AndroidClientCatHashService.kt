@@ -21,8 +21,8 @@ import android.graphics.Bitmap
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import network.bisq.mobile.PlatformImage
-import network.bisq.mobile.client.cathash.ClientCatHashService
+import network.bisq.mobile.client.cathash.BaseClientCatHashService
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.utils.AndroidImageUtil
 import network.bisq.mobile.utils.AndroidImageUtil.PATH_TO_DRAWABLE
 import java.io.File
@@ -30,7 +30,7 @@ import java.io.File
 const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
 
 class AndroidClientCatHashService(private val context: Context, filesDir: String) :
-    ClientCatHashService<PlatformImage?>("$filesDir/Bisq2_mobile") {
+    BaseClientCatHashService("$filesDir/Bisq2_mobile") {
     override fun composeImage(paths: Array<String>, size: Int): PlatformImage {
         val profileIcon = AndroidImageUtil.composeImage(
             context,
@@ -42,7 +42,7 @@ class AndroidClientCatHashService(private val context: Context, filesDir: String
         return profileIcon
     }
 
-    override fun writeRawImage(image: PlatformImage?, iconFilePath: String) {
+    override fun writeRawImage(image: PlatformImage, iconFilePath: String) {
         image as ImageBitmap
         val bitmap: Bitmap = image.asAndroidBitmap()
         val file = File(iconFilePath)

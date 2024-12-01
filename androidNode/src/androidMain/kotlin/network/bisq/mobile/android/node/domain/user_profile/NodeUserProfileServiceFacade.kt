@@ -7,9 +7,9 @@ import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
 import bisq.user.profile.UserProfile
-import network.bisq.mobile.PlatformImage
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.Logging
 import java.security.KeyPair

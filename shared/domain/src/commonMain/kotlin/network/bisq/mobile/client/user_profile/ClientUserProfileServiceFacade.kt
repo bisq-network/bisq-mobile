@@ -2,10 +2,9 @@ package network.bisq.mobile.client.user_profile
 
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
-import network.bisq.mobile.PlatformImage
-import network.bisq.mobile.client.cathash.ClientCatHashService
 import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.Logging
 import network.bisq.mobile.utils.hexToByteArray

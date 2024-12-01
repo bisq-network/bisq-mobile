@@ -1,6 +1,6 @@
 package network.bisq.mobile.domain.service.user_profile
 
-import network.bisq.mobile.PlatformImage
+import network.bisq.mobile.domain.PlatformImage
 
 interface UserProfileServiceFacade {
     /**

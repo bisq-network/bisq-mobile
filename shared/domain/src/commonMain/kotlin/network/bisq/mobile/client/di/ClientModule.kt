@@ -11,9 +11,9 @@ import network.bisq.mobile.android.node.main.bootstrap.ClientApplicationBootstra
 import network.bisq.mobile.client.market.ClientMarketPriceServiceFacade
 import network.bisq.mobile.client.market.MarketPriceApiGateway
 import network.bisq.mobile.client.offerbook.ClientOfferbookServiceFacade
+import network.bisq.mobile.client.offerbook.offer.OfferbookApiGateway
 import network.bisq.mobile.client.service.ApiRequestService
 import network.bisq.mobile.client.user_profile.ClientUserProfileServiceFacade
-import network.bisq.mobile.client.offerbook.offer.OfferbookApiGateway
 import network.bisq.mobile.client.user_profile.UserProfileApiGateway
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade

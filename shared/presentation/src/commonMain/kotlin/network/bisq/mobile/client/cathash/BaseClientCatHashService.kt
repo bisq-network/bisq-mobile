@@ -4,6 +4,8 @@ import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.Sign
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
+import network.bisq.mobile.client.user_profile.ClientCatHashService
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.utils.Logging
 import network.bisq.mobile.utils.concat
 import network.bisq.mobile.utils.hexToByteArray
@@ -12,20 +14,21 @@ import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.SYSTEM
 
-abstract class ClientCatHashService<T>(private val baseDirPath: String) : Logging {
+abstract class BaseClientCatHashService(private val baseDirPath: String) :
+    ClientCatHashService<PlatformImage?>, Logging {
     companion object {
         const val SIZE_OF_CACHED_ICONS = 60
         const val MAX_CACHE_SIZE = 5000
     }
 
     private val fileSystem: FileSystem = FileSystem.SYSTEM
-    private val cache = mutableMapOf<BigInteger, T>()
+    private val cache = mutableMapOf<BigInteger, PlatformImage>()
 
-    protected abstract fun composeImage(paths: Array<String>, size: Int): T
-    protected abstract fun writeRawImage(image: T, iconFilePath: String)
-    protected abstract fun readRawImage(iconFilePath: String): T?
+    protected abstract fun composeImage(paths: Array<String>, size: Int): PlatformImage?
+    protected abstract fun writeRawImage(image: PlatformImage, iconFilePath: String)
+    protected abstract fun readRawImage(iconFilePath: String): PlatformImage?
 
-    fun getImage(userProfile: UserProfile, size: Int): T? {
+    fun getImage(userProfile: UserProfile, size: Int): PlatformImage? {
         val pubKeyHash = userProfile.pubKeyHash.hexToByteArray()
         return getImage(
             pubKeyHash,
@@ -35,13 +38,12 @@ abstract class ClientCatHashService<T>(private val baseDirPath: String) : Loggin
         )
     }
 
-
-    fun getImage(
+    override fun getImage(
         pubKeyHash: ByteArray,
         powSolution: ByteArray,
         avatarVersion: Int,
         size: Int
-    ): T? {
+    ): PlatformImage? {
         try {
             val combined = concat(powSolution, pubKeyHash)
             val catHashInput = BigInteger.fromByteArray(combined, sign = Sign.POSITIVE)
@@ -83,7 +85,7 @@ abstract class ClientCatHashService<T>(private val baseDirPath: String) : Loggin
 
             val passed = Clock.System.now().toEpochMilliseconds() - ts
             log.i("Creating user profile icon for $userProfileId took $passed ms.")
-            if (useCache && cache.size < MAX_CACHE_SIZE) {
+            if (image != null && useCache && cache.size < MAX_CACHE_SIZE) {
                 cache[catHashInput] = image
                 try {
                     writeRawImage(image, iconFilePath.toString())

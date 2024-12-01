@@ -1,12 +1,12 @@
 package network.bisq.mobile.domain.di
 
-import com.russhwolf.settings.ExperimentalSettingsImplementation
-import com.russhwolf.settings.KeychainSettings
-import com.russhwolf.settings.Settings
+import org.koin.core.qualifier.named
+import org.koin.dsl.module
 
-@OptIn(ExperimentalSettingsImplementation::class)
-actual fun provideSettings(): Settings {
-    // TODO we might get away just using normal Settings() KMP agnostic implementation,
-    // leaving this here to be able to choose the specific one for iOS - defaulting to KeyChain
-    return KeychainSettings("Settings")
+val iosDomainModule = module {
+    single<String>(named("ApiBaseUrl")) { provideApiBaseUrl() }
+}
+
+fun provideApiBaseUrl(): String {
+    return "localhost"
 }

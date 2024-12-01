@@ -43,8 +43,8 @@ import bisq.user.UserService
 import lombok.Getter
 import lombok.Setter
 import lombok.extern.slf4j.Slf4j
-import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
+import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.utils.Logging
 import java.nio.file.Path
 import java.util.Optional

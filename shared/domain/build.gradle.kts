@@ -41,7 +41,6 @@ kotlin {
             implementation(libs.kotlinx.coroutines)
             implementation(libs.logging.kermit)
             implementation(libs.okio)
-            implementation(libs.bignum)
             implementation(libs.kotlinx.datetime)
 
             implementation(libs.ktor.client.core)
