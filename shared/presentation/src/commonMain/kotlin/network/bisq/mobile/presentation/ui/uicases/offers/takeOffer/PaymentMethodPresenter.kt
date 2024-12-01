@@ -11,9 +11,9 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 open class PaymentMethodPresenter(
     mainPresenter: MainPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade,
-) : BasePresenter(mainPresenter) {
+) : BasePresenter(mainPresenter), ITakeOfferPaymentMethodPresenter {
 
-    val offerListItems: StateFlow<List<OfferListItem>> = offerbookServiceFacade.offerListItems
+    override val offerListItems: StateFlow<List<OfferListItem>> = offerbookServiceFacade.offerListItems
 
     override fun onViewAttached() {
     }
@@ -21,12 +21,12 @@ open class PaymentMethodPresenter(
     override fun onViewUnattaching() {
     }
 
-    fun goBack() {
+    override fun goBack() {
         log.i { "goBack" }
         rootNavigator.popBackStack()
     }
 
-    fun paymentMethodConfirmed() {
+    override fun paymentMethodConfirmed() {
         log.i { "Payment method selected" }
         rootNavigator.navigate(Routes.TakeOfferReviewTrade.name)
     }

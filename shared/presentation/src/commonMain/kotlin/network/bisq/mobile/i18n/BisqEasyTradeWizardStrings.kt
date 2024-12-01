@@ -144,7 +144,7 @@ data class BisqEasyTradeWizardStrings(
     val bisqEasy_tradeWizard_review_priceDescription_maker: String,
     val bisqEasy_tradeWizard_review_priceDetails_fix: String,
     val bisqEasy_tradeWizard_review_priceDetails_fix_atMarket: String,
-    val bisqEasy_tradeWizard_review_priceDetails_float: String,
+    val bisqEasy_tradeWizard_review_priceDetails_float: (String, String, String) -> String,
     val bisqEasy_tradeWizard_review_priceDetails: String,
     val bisqEasy_tradeWizard_review_nextButton_createOffer: String,
     val bisqEasy_tradeWizard_review_nextButton_takeOffer: String,

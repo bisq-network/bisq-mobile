@@ -1,12 +1,6 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
@@ -79,9 +73,11 @@ fun TopBar(
             } else {
                 if (isFlowScreen) {
                     Column {
-                        BisqText.xsmallRegular(
+                        BisqText.smallRegular(
                             text = "Step $stepText",
-                            color = BisqTheme.colors.grey1
+                            color = BisqTheme.colors.grey1,
+                            // modifier = Modifier.padding(top= 8.dp)
+                            modifier = Modifier.offset(y = (8).dp)
                         )
                         BisqText.h5Medium(
                             text = title,
@@ -98,10 +94,10 @@ fun TopBar(
         },
         actions = {
             Row(
-                modifier = Modifier.padding(top = if (isFlowScreen) 14.dp  else 0.dp, end = 16.dp),
+                modifier = Modifier.padding(top = if (isFlowScreen) 15.dp  else 0.dp, end = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                BellIcon(modifier = Modifier.size(30.dp))
+                BellIcon()
                 Spacer(modifier = Modifier.width(12.dp))
                 UserIcon(presenter.uniqueAvatar.value, modifier = Modifier.size(30.dp))
             }

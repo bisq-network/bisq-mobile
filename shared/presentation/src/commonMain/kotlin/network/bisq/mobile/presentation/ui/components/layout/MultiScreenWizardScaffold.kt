@@ -10,6 +10,7 @@ import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun MultiScreenWizardScaffold(
@@ -31,7 +32,7 @@ fun MultiScreenWizardScaffold(
             // TODO: This takes up too much height
             BottomAppBar(
                 containerColor = BisqTheme.colors.backgroundColor,
-                contentPadding = PaddingValues(horizontal = 32.dp, vertical = 0.dp),
+                contentPadding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding2X, vertical = 0.dp),
                 windowInsets = WindowInsets(top = 0.dp, bottom = 0.dp)
             ) {
                 Row(
@@ -72,9 +73,14 @@ fun MultiScreenWizardScaffold(
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         )
 
-        // TODO: Should pass these values to the column deep inside StaticLayout, rather than creating a column here?
+        // TODO: Should pass these values to the column deep inside BisqScrollLayout
+        // as BissScrollScaffold's params, rather than creating a column here?
+        // 2X screen padding for Flow screens
         Column(
-            modifier = Modifier.fillMaxHeight().padding(horizontal = 24.dp, vertical = 16.dp),
+            modifier = Modifier.fillMaxHeight().padding(
+                horizontal = BisqUIConstants.ScreenPadding2X,
+                vertical = BisqUIConstants.ScreenPadding2X
+            ),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {

@@ -11,9 +11,9 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 open class TradeAmountPresenter(
     mainPresenter: MainPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade,
-) : BasePresenter(mainPresenter) {
+) : BasePresenter(mainPresenter), ITakeOfferTradeAmountPresenter {
 
-    val offerListItems: StateFlow<List<OfferListItem>> = offerbookServiceFacade.offerListItems
+    override val offerListItems: StateFlow<List<OfferListItem>> = offerbookServiceFacade.offerListItems
 
     override fun onViewAttached() {
     }
@@ -21,12 +21,12 @@ open class TradeAmountPresenter(
     override fun onViewUnattaching() {
     }
 
-    fun goBack() {
+    override fun goBack() {
         log.i { "goBack" }
         rootNavigator.popBackStack()
     }
     
-    fun amountConfirmed() {
+    override fun amountConfirmed() {
         log.i { "Amount selected" }
         rootNavigator.navigate(Routes.TakeOfferPaymentMethod.name)
     }

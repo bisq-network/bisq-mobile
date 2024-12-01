@@ -23,8 +23,7 @@ import org.koin.core.qualifier.named
 fun SplashScreen(
 ) {
     val strings = LocalStrings.current
-    val navController: NavHostController = koinInject(named("RootNavController"))
-    val presenter: SplashPresenter = koinInject { parametersOf(navController) }
+    val presenter: SplashPresenter = koinInject()
 
     RememberPresenterLifecycle(presenter)
 

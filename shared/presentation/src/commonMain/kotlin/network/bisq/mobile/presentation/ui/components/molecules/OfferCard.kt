@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.VerticalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -21,11 +22,16 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqVDivider
 import network.bisq.mobile.presentation.ui.components.atoms.PaymentMethods
 import network.bisq.mobile.presentation.ui.components.atoms.ProfileRating
+import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun OfferCard(item: OfferListItem, onClick: () -> Unit) {
+fun OfferCard(
+    item: OfferListItem,
+    onClick: () -> Unit,
+    onChatClick: () -> Unit,
+    ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -74,11 +80,9 @@ fun OfferCard(item: OfferListItem, onClick: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier.width(36.dp).height(108.dp).background(color = BisqTheme.colors.dark4)
         ) {
-            Image(
-                painterResource(Res.drawable.icon_chat_outlined),
-                "",
-                modifier = Modifier.size(24.dp),
-            )
+            IconButton(onClick = onChatClick) {
+                ChatIcon(modifier = Modifier.size(24.dp))
+            }
         }
     }
 }

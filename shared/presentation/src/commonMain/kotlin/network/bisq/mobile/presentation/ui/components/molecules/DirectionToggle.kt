@@ -68,10 +68,8 @@ fun DirectionToggle(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                directions.forEach { direction ->
-                    BisqText.baseMedium(
-                        text = toDisplayString(direction),
-                        color = BisqTheme.colors.light1,
+                directions.forEach{ direction ->
+                    Box(
                         modifier = Modifier
                             .padding(horizontal = 32.dp, vertical = 12.dp)
                             .clickable(
@@ -82,7 +80,12 @@ fun DirectionToggle(
                                     onStateChange.invoke(direction)
                                 }
                             )
-                    )
+                    ) {
+                        BisqText.baseMedium(
+                            text = toDisplayString(direction),
+                            color = BisqTheme.colors.light1,
+                        )
+                    }
                 }
             }
         }
@@ -90,5 +93,5 @@ fun DirectionToggle(
 }
 
 fun toDisplayString(direction: Direction): String {
-   return if (direction.mirror().isBuy) "Buy from" else "Sell to"
+    return if (direction.mirror().isBuy) "Buy from" else "Sell to"
 }

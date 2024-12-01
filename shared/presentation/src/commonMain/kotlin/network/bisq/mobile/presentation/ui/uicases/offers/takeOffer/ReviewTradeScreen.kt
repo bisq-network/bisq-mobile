@@ -7,6 +7,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
+import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.data.model.OfferListItem
+import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.text.InfoBox
@@ -14,7 +17,16 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
+
+interface ITakeOfferReviewTradePresenter : ViewPresenter {
+    // TODO: Update later to refer to a single OfferListItem
+    val offerListItems: StateFlow<List<OfferListItem>>
+
+    fun goBack()
+    fun tradeConfirmed()
+}
 
 @Composable
 fun TakeOfferReviewTradeScreen() {
@@ -22,12 +34,12 @@ fun TakeOfferReviewTradeScreen() {
     val bisqEasyStrings = LocalStrings.current.bisqEasy
     val tradeStateStrings = LocalStrings.current.bisqEasyTradeState
     val commonStrings = LocalStrings.current.common
-    val presenter: ReviewTradePresenter = koinInject()
+    val presenter: ITakeOfferReviewTradePresenter = koinInject()
 
     val offer = presenter.offerListItems.collectAsState().value.first()
 
     MultiScreenWizardScaffold(
-        commonStrings.take_offer,
+        bisqEasyStrings.bisqEasy_takeOffer_progress_review,
         stepIndex = 2,
         stepsLength = 3,
         prevOnClick = { presenter.goBack() },
@@ -35,11 +47,11 @@ fun TakeOfferReviewTradeScreen() {
         nextOnClick = { presenter.tradeConfirmed() }
     ) {
         BisqText.h3Regular(
-            text = strings.bisqEasy_tradeWizard_review_headline_taker,
+            text = bisqEasyStrings.bisqEasy_takeOffer_progress_review,
             color = BisqTheme.colors.light1
         )
-        Spacer(modifier = Modifier.height(16.dp))
-        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
+        Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoRow(
                 label1 = tradeStateStrings.bisqEasy_tradeState_header_direction.uppercase(),
                 value1 = if (offer.direction.isBuy)
@@ -61,16 +73,16 @@ fun TakeOfferReviewTradeScreen() {
             InfoBox(
                 label = strings.bisqEasy_tradeWizard_review_priceDescription_taker,
                 valueComposable = {
-                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Row(
                             verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             BisqText.h6Regular(text = "98,000.68") // TODO: Values?
                             BisqText.baseRegular(text = "BTC/USD", color = BisqTheme.colors.grey2) // TODO: Values?
                         }
                         BisqText.smallRegular(
-                            text = "Float price 1.00% above market price of 60,000 BTC/USD",
+                            text = strings.bisqEasy_tradeWizard_review_priceDetails_float("1.00%", "above", "60,000 BTC/USD"),
                             color = BisqTheme.colors.grey4
                         )
                     }

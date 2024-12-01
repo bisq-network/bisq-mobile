@@ -42,7 +42,7 @@ fun InfoBox(
 
     Column(
         horizontalAlignment = if (rightAlign) Alignment.End else Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(4.dp)
+        verticalArrangement = Arrangement.spacedBy(2.dp)
     ) {
         BisqText.baseRegular(text = label, color = BisqTheme.colors.grey2)
         valueWidget()

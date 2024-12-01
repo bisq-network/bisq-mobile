@@ -12,9 +12,9 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 open class ReviewTradePresenter(
     mainPresenter: MainPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade,
-) : BasePresenter(mainPresenter) {
+) : BasePresenter(mainPresenter), ITakeOfferReviewTradePresenter {
 
-    val offerListItems: StateFlow<List<OfferListItem>> = offerbookServiceFacade.offerListItems
+    override val offerListItems: StateFlow<List<OfferListItem>> = offerbookServiceFacade.offerListItems
 
     override fun onViewAttached() {
     }
@@ -22,12 +22,12 @@ open class ReviewTradePresenter(
     override fun onViewUnattaching() {
     }
 
-    fun goBack() {
+    override fun goBack() {
         log.i { "goBack" }
         rootNavigator.popBackStack()
     }
 
-    fun tradeConfirmed() {
+    override fun tradeConfirmed() {
         log.i { "Trade confirmed" }
         // TODO: Confirmation popup goes here
         rootNavigator.navigate(Routes.OfferList.name)

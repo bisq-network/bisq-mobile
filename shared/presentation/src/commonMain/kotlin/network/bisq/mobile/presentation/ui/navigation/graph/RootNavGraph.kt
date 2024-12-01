@@ -5,6 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -34,69 +35,72 @@ fun RootNavGraph() {
         composable(route = Routes.Splash.name) {
             SplashScreen()
         }
-        composable(route = Routes.Onboarding.name, enterTransition = {
-            slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(300)
-            )
-        }) {
+
+        addScreen(Routes.Onboarding.name) {
             OnBoardingScreen()
         }
-        composable(route = Routes.CreateProfile.name, enterTransition = {
-            slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(300)
-            )
-        }) {
+
+        addScreen(Routes.CreateProfile.name) {
             CreateProfileScreen()
         }
-        composable(route = Routes.TrustedNodeSetup.name, enterTransition = {
-            slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(300)
-            )
-        }) {
+
+        addScreen(Routes.TrustedNodeSetup.name) {
             TrustedNodeSetupScreen()
         }
-        composable(route = Routes.TabContainer.name) {
+
+        addScreen(route = Routes.TabContainer.name) {
             TabContainerScreen()
         }
 
-        composable(route = Routes.OfferList.name, enterTransition = {
-            slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(300)
-            )
-        }) {
+        addScreen(Routes.OfferList.name) {
             OffersListScreen()
         }
 
-        composable(route = Routes.TakeOfferTradeAmount.name, enterTransition = {
-            slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(300)
-            )
-        }) {
+        addScreen(Routes.TakeOfferTradeAmount.name) {
             TakeOfferTradeAmountScreen()
         }
 
-        composable(route = Routes.TakeOfferPaymentMethod.name, enterTransition = {
-            slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(300)
-            )
-        }) {
+        addScreen(Routes.TakeOfferPaymentMethod.name) {
             TakeOfferPaymentMethodScreen()
         }
 
-        composable(route = Routes.TakeOfferReviewTrade.name, enterTransition = {
+        addScreen(Routes.TakeOfferReviewTrade.name) {
+            TakeOfferReviewTradeScreen()
+        }
+
+    }
+}
+
+fun NavGraphBuilder.addScreen(
+    route: String,
+    content: @Composable () -> Unit
+) {
+    composable(
+        route = route,
+        enterTransition = {
+            // When a screen is pushed in, slide in from right edge of the screen to left
             slideIntoContainer(
                 AnimatedContentTransitionScope.SlideDirection.Left,
                 animationSpec = tween(300)
             )
-        }) {
-            TakeOfferReviewTradeScreen()
+        },
+        exitTransition = {
+            // When a new screen is pushed over current screen, don't do exit animation
+            null
+        },
+        popEnterTransition = {
+            // When the new pushed screen is poppped out, don't do pop Enter animation
+            null
+        },
+        popExitTransition = {
+            // When current screen is poped out, slide if from screen to screen's right edge
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(300)
+            )
         }
 
+    ) {
+        content()
     }
 }
