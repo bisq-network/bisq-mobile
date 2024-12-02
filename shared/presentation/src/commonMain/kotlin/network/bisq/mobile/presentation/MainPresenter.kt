@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.domain.getPlatform
+import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.presentation.ui.AppPresenter
 
 
@@ -50,8 +50,8 @@ open class MainPresenter() :
     }
 
     override fun isIOS(): Boolean {
-        val platform = getPlatform()
-        val isIOS = platform.name.lowercase().contains("ios")
+        val platformInfo = getPlatformInfo()
+        val isIOS = platformInfo.name.lowercase().contains("ios")
         return isIOS
     }
 
