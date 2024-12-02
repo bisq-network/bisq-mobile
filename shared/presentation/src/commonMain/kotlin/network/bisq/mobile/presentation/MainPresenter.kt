@@ -41,9 +41,8 @@ open class MainPresenter(private val notificationServiceController: Notification
         log.i { "Android Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Node Version: ${BuildNodeConfig.APP_VERSION}" }
         notificationServiceController.startService()
-        //        CoroutineScope(BackgroundDispatcher).launch {
-        //            greetingRepository.create(Greeting())
-        //        }
+//        CoroutineScope(BackgroundDispatcher).launch {
+//        }
     }
 
     // Toggle action

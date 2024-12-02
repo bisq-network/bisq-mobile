@@ -24,7 +24,7 @@ class ClientOfferbookListItemService(private val apiGateway: OfferbookApiGateway
 
     // Misc
     private var job: Job? = null
-    private var polling = Polling(1000) { updateOffers() }
+    private var polling = Polling(10000) { updateOffers() }
     private var selectedMarket: MarketListItem? = null
     private val coroutineScope = CoroutineScope(BackgroundDispatcher)
 

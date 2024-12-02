@@ -12,6 +12,7 @@ import network.bisq.mobile.utils.Logging
 /**
  * Controller interacting with the bisq service
  */
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class NotificationServiceController (private val context: Context): ServiceController, Logging {
 
     companion object {

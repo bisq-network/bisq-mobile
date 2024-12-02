@@ -24,7 +24,7 @@ class ClientMarketListItemService(private val apiGateway: OfferbookApiGateway) :
     // Misc
     private val coroutineScope = CoroutineScope(BackgroundDispatcher)
     private var job: Job? = null
-    private var polling = Polling(1000) { updateNumOffers() }
+    private var polling = Polling(10000) { updateNumOffers() }
     private var marketListItemsRequested = false
 
     // Life cycle
@@ -45,7 +45,7 @@ class ClientMarketListItemService(private val apiGateway: OfferbookApiGateway) :
                     requestAndApplyNumOffers()
                     marketListItemsRequested = true
                 } catch (e: Exception) {
-                    log.e("Error at API request", e)
+                    log.e("Error at Fill Market List Items API request", e)
                 }
             }
         }
@@ -87,7 +87,7 @@ class ClientMarketListItemService(private val apiGateway: OfferbookApiGateway) :
                 marketListItem
             }
         } catch (e: Exception) {
-            log.e("Error at API request", e)
+            log.e("Error at apply num offers for markets API request", e)
         }
     }
 
