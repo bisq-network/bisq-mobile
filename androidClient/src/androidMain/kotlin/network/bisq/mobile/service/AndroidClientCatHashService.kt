@@ -38,7 +38,7 @@ class AndroidClientCatHashService(private val context: Context, filesDir: String
             size,
             size
         )
-        return profileIcon
+        return PlatformImage(profileIcon)
     }
 
     override fun writeRawImage(image: PlatformImage, iconFilePath: String) {
@@ -50,6 +50,6 @@ class AndroidClientCatHashService(private val context: Context, filesDir: String
     override fun readRawImage(iconFilePath: String): PlatformImage? {
         val file = File(iconFilePath)
         val bitmap: Bitmap? = AndroidImageUtil.readByteArrayAsBitmap(file)
-        return bitmap?.asImageBitmap()
+        return if (bitmap == null) null else PlatformImage(bitmap.asImageBitmap())
     }
 }

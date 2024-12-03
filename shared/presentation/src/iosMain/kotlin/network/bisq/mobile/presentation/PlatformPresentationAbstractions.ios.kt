@@ -10,6 +10,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
+import network.bisq.mobile.domain.PlatformImage
 import platform.CoreGraphics.CGContextRef
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSize
@@ -33,10 +34,11 @@ fun NSData.toByteArray(): ByteArray {
 }
 
 @OptIn(ExperimentalForeignApi::class)
-actual fun getPlatformPainter(platformImage: UIImage): Painter {
+actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
     return object : Painter() {
         override val intrinsicSize: Size
             get() {
+                platformImage as UIImage
                 val size: CValue<CGSize> = platformImage.size
                 return Size(
                     width = size.useContents { this.width.toFloat() },
