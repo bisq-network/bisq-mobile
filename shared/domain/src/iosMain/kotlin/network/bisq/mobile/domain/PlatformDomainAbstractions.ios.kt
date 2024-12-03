@@ -5,9 +5,15 @@ package network.bisq.mobile.domain
 import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.KeychainSettings
 import com.russhwolf.settings.Settings
+import kotlinx.cinterop.*
+import kotlinx.serialization.Serializable
+import platform.Foundation.NSData
+import platform.UIKit.UIImage
+import platform.Foundation.create
+import platform.UIKit.UIImagePNGRepresentation
 
 import platform.UIKit.UIDevice
-import platform.UIKit.UIImage
+import platform.posix.memcpy
 
 @OptIn(ExperimentalSettingsImplementation::class)
 actual fun getPlatformSettings(): Settings {
@@ -22,4 +28,39 @@ class IOSPlatformInfo: PlatformInfo {
 
 actual fun getPlatformInfo(): PlatformInfo = IOSPlatformInfo()
 
-actual typealias PlatformImage = UIImage
+@Serializable(with = PlatformImageSerializer::class)
+actual class PlatformImage(private val image: UIImage) {
+    actual fun serialize(): ByteArray {
+        val nsData: NSData = UIImagePNGRepresentation(image)!!
+        return nsData.toByteArray()
+    }
+
+    companion actual object {
+        actual fun deserialize(data: ByteArray): PlatformImage {
+            val nsData = data.toNSData()
+            val image = UIImage(data = nsData)!!
+            return PlatformImage(image)
+        }
+    }
+}
+
+// Helper extensions for NSData conversion:
+@OptIn(ExperimentalForeignApi::class)
+fun NSData.toByteArray(): ByteArray {
+    val byteArray = ByteArray(this.length.toInt())
+    byteArray.usePinned { pinned ->
+        memcpy(pinned.addressOf(0), this.bytes, this.length)
+    }
+    return byteArray
+}
+
+@OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
+fun ByteArray.toNSData(): NSData {
+    return NSData.create(bytes = this.refTo(0).getPointer(MemScope()), length = this.size.toULong())
+}
+//fun NSData.toByteArray(): ByteArray =
+//    ByteArray(this.length.toInt()).also { copyBytesToByteArray(it) }
+//
+//@OptIn(ExperimentalForeignApi::class)
+//fun ByteArray.toNSData(): NSData =
+//    NSData.create(bytes = this, length = size.toULong())

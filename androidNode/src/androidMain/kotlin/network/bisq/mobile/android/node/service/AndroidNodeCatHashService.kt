@@ -18,7 +18,6 @@ package network.bisq.mobile.android.node.service
 
 import android.content.Context
 import android.graphics.Bitmap
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import bisq.user.cathash.CatHashService
@@ -36,23 +35,22 @@ const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
 class AndroidNodeCatHashService(private val context: Context, baseDir: Path?) :
     CatHashService<PlatformImage>(baseDir) {
     override fun composeImage(paths: Array<String>, size: Double): PlatformImage {
-        return AndroidImageUtil.composeImage(
+        return PlatformImage(AndroidImageUtil.composeImage(
             context,
             CAT_HASH_PATH,
             paths,
             size.toInt(),
             size.toInt()
-        )
+        ))
     }
 
     override fun writeRawImage(image: PlatformImage, file: File) {
-        image as ImageBitmap
-        val bitmap: Bitmap = image.asAndroidBitmap()
+        val bitmap: Bitmap = image.bitmap.asAndroidBitmap()
         AndroidImageUtil.writeBitmapAsByteArray(bitmap, file)
     }
 
     override fun readRawImage(file: File): PlatformImage? {
         val bitmap: Bitmap? = AndroidImageUtil.readByteArrayAsBitmap(file)
-        return bitmap?.asImageBitmap()
+        return if (bitmap == null) null else PlatformImage(bitmap.asImageBitmap())
     }
 }
