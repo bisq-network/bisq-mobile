@@ -1,68 +1,107 @@
-package network.bisq.mobile.domain.service.controller
+    package network.bisq.mobile.domain.service.controller
 
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import network.bisq.mobile.utils.Logging
-import platform.BackgroundTasks.*
+    import kotlinx.cinterop.ExperimentalForeignApi
+    import kotlinx.coroutines.CoroutineScope
+    import kotlinx.coroutines.Dispatchers
+    import kotlinx.coroutines.launch
+    import network.bisq.mobile.utils.Logging
+    import platform.BackgroundTasks.*
+    import platform.Foundation.NSUUID
+    import platform.Foundation.setValue
+    import platform.UserNotifications.*
 
-@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-actual class NotificationServiceController: ServiceController, Logging {
 
-    private val logScope = CoroutineScope(Dispatchers.Main)
+    @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
+    actual class NotificationServiceController: ServiceController, Logging {
 
-    actual override fun startService() {
-        logDebug("Starting background service")
-        BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(identifier = "network.bisq.mobile.ios.backgroundtask", usingQueue = null) { task ->
-            handleBackgroundTask(task as BGProcessingTask)
-        }
-        scheduleBackgroundTask()
-        logDebug("Background service started")
-    }
+        private var isRunning = false
 
-    actual override fun stopService() {
-        BGTaskScheduler.sharedScheduler.cancelAllTaskRequests()
-        logDebug("Background service stopped")
-    }
+        private val logScope = CoroutineScope(Dispatchers.Main)
 
-    actual fun pushNotification(title: String, message: String) {
-//        TODO
-//        val content = UNMutableNotificationContent().apply {
-//            this.title = title
-//            this.body = message
+//      TODO foreground notifications?
+//        UNUserNotificationCenter.currentNotificationCenter().delegate = object : UNUserNotificationCenterDelegateProtocol {
+//            override fun userNotificationCenter(
+//                center: UNUserNotificationCenter,
+//                willPresentNotification: UNNotification,
+//                withCompletionHandler: (UNNotificationPresentationOptions) -> Unit
+//            ) {
+//                withCompletionHandler(UNNotificationPresentationOptionsAlert or UNNotificationPresentationOptionsSound)
+//            }
 //        }
-//        val request = UNNotificationRequest.requestWithIdentifier(
-//            NSUUID().UUIDString,
-//            content,
-//            null
-//        )
-//        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request, null)
-    }
 
-    actual override fun isServiceRunning(): Boolean {
-        // iOS doesn't allow querying background task state directly
-        return false
-    }
+        actual override fun startService() {
+            if (isRunning) {
+                return
+            }
+            logDebug("Starting background service")
+            UNUserNotificationCenter.currentNotificationCenter().requestAuthorizationWithOptions(
+                UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
+            ) { granted, error ->
+                if (granted) {
+                    logDebug("Notification permission granted.")
 
-    private fun handleBackgroundTask(task: BGProcessingTask) {
-        logDebug("Executing background task")
-        task.setTaskCompletedWithSuccess(true)
-        scheduleBackgroundTask() // Reschedule if needed
-    }
-
-    @OptIn(ExperimentalForeignApi::class)
-    private fun scheduleBackgroundTask() {
-        val request = BGProcessingTaskRequest("com.yourapp.backgroundtask").apply {
-            requiresNetworkConnectivity = true
+//                  TODO need to move to iOS callback ->  didFinishLaunchingWithOptions
+                    BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(identifier = "network.bisq.mobile.ios.backgroundtask", usingQueue = null) { task ->
+                        handleBackgroundTask(task as BGProcessingTask)
+                    }
+                    scheduleBackgroundTask()
+                    logDebug("Background service started")
+                    isRunning = true
+                } else {
+                    logDebug("Notification permission denied: ${error?.localizedDescription}")
+                }
+            }
         }
-        BGTaskScheduler.sharedScheduler.submitTaskRequest(request, null)
-        logDebug("Background task scheduled")
-    }
 
-    private fun logDebug(message: String) {
-        logScope.launch {
-            log.d { message }
+        actual override fun stopService() {
+            BGTaskScheduler.sharedScheduler.cancelAllTaskRequests()
+            logDebug("Background service stopped")
+            isRunning = false
+        }
+
+        actual fun pushNotification(title: String, message: String) {
+            val content = UNMutableNotificationContent().apply {
+                setValue(title, forKey = "title")
+                setValue(message, forKey = "body")
+            }
+
+            val request = UNNotificationRequest.requestWithIdentifier(
+                NSUUID().UUIDString,  // Generates a unique identifier
+                content,
+                null  // Trigger can be set to null for immediate delivery
+            )
+            UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
+                if (error != null) {
+                    println("Error adding notification request: ${error.localizedDescription}")
+                } else {
+                    println("Notification added successfully")
+                }
+            }
+        }
+
+        actual override fun isServiceRunning(): Boolean {
+            // iOS doesn't allow querying background task state directly
+            return isRunning
+        }
+
+        private fun handleBackgroundTask(task: BGProcessingTask) {
+            logDebug("Executing background task")
+            task.setTaskCompletedWithSuccess(true)
+            scheduleBackgroundTask() // Reschedule if needed
+        }
+
+        @OptIn(ExperimentalForeignApi::class)
+        private fun scheduleBackgroundTask() {
+            val request = BGProcessingTaskRequest("com.yourapp.backgroundtask").apply {
+                requiresNetworkConnectivity = true
+            }
+            BGTaskScheduler.sharedScheduler.submitTaskRequest(request, null)
+            logDebug("Background task scheduled")
+        }
+
+        private fun logDebug(message: String) {
+            logScope.launch {
+                log.d(message)
+            }
         }
     }
-}
