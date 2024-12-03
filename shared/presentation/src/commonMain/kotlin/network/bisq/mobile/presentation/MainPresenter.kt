@@ -6,8 +6,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.controller.NotificationServiceController
 import network.bisq.mobile.presentation.ui.AppPresenter

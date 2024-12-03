@@ -14,6 +14,10 @@
     @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
     actual class NotificationServiceController: ServiceController, Logging {
 
+        companion object {
+            const val BACKGROUND_TASK_ID = "network.bisq.mobile.ios.backgroundtask"
+        }
+
         private var isRunning = false
 
         private val logScope = CoroutineScope(Dispatchers.Main)
@@ -41,7 +45,7 @@
                     logDebug("Notification permission granted.")
 
 //                  TODO need to move to iOS callback ->  didFinishLaunchingWithOptions
-                    BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(identifier = "network.bisq.mobile.ios.backgroundtask", usingQueue = null) { task ->
+                    BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(identifier = BACKGROUND_TASK_ID, usingQueue = null) { task ->
                         handleBackgroundTask(task as BGProcessingTask)
                     }
                     scheduleBackgroundTask()
@@ -92,7 +96,7 @@
 
         @OptIn(ExperimentalForeignApi::class)
         private fun scheduleBackgroundTask() {
-            val request = BGProcessingTaskRequest("com.yourapp.backgroundtask").apply {
+            val request = BGProcessingTaskRequest(BACKGROUND_TASK_ID).apply {
                 requiresNetworkConnectivity = true
             }
             BGTaskScheduler.sharedScheduler.submitTaskRequest(request, null)
