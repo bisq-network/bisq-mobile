@@ -5,6 +5,8 @@ import androidx.navigation.NavHostController
 import network.bisq.mobile.client.ClientMainPresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
+import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
+import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.IGettingStarted
 import network.bisq.mobile.presentation.ui.uicases.offers.MarketListPresenter
@@ -26,6 +28,8 @@ val presentationModule = module {
     single(named("TabNavController")) { getKoin().getProperty<NavHostController>("TabNavController") }
 
     single<MainPresenter> { ClientMainPresenter(get(), get(), get()) } bind AppPresenter::class
+
+    single<TopBarPresenter> { TopBarPresenter(get(), get()) } bind ITopBarPresenter::class
 
     single {
         SplashPresenter(
@@ -51,6 +55,7 @@ val presentationModule = module {
 
     single {
         CreateProfilePresenter(
+            get(),
             get(),
             get()
         )

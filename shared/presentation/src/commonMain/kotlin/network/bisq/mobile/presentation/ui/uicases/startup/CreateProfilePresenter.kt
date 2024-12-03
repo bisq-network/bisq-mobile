@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.model.User
+import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -15,6 +17,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class CreateProfilePresenter(
     mainPresenter: MainPresenter,
+    private val userRepository: UserRepository,
     private val userProfileService: UserProfileServiceFacade
 ) : BasePresenter(mainPresenter) {
 
@@ -69,6 +72,13 @@ open class CreateProfilePresenter(
         cancelJob()
     }
 
+    init {
+        // if this presenter gets to work, it means there is no profile saved
+        backgroundScope.launch {
+            userRepository.create(User())
+        }
+    }
+
     // UI handlers
     fun onGenerateKeyPair() {
         generateKeyPair()
@@ -110,6 +120,9 @@ open class CreateProfilePresenter(
                 setId(id)
                 setNym(nym)
                 setProfileIcon(profileIcon)
+                backgroundScope.launch {
+                    userRepository.update(User().apply { uniqueAvatar = profileIcon })
+                }
             }
             setGenerateKeyPairInProgress(false)
             log.i { "Hide busy animation for generateKeyPair" }

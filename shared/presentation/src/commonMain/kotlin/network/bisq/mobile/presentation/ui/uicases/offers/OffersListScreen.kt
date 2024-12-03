@@ -30,7 +30,6 @@ import network.bisq.mobile.presentation.ui.components.molecules.DirectionToggle
 import network.bisq.mobile.presentation.ui.components.molecules.OfferCard
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
