@@ -10,7 +10,7 @@ import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation
 
 actual fun rememberPlatformImagePainter(platformImage: PlatformImage): Painter {
-    val uiImage = platformImage as UIImage
+    val uiImage = platformImage.image
     val skiaImage = uiImage.toSkiaImage()
     return BitmapPainter(skiaImage.toComposeImageBitmap())
 }
