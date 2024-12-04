@@ -18,6 +18,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
+import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -58,12 +59,8 @@ fun CreateProfileScreen(
         Spacer(modifier = Modifier.height(36.dp))
 
         presenter.profileIcon.collectAsState().value?.let { profileIcon ->
-            val painter = getPlatformPainter(profileIcon)
-            Image(
-                painter = painter,
-                contentDescription = "User profile icon generated from the hash of the public key",
-                modifier = Modifier.height(60.dp).width(60.dp)
-            )
+            val painter = rememberPlatformImagePainter(profileIcon)
+            Image(painter = painter, contentDescription = "User profile icon generated from the hash of the public key", modifier = Modifier.height(60.dp).width(60.dp))
         }
 
         Spacer(modifier = Modifier.height(32.dp))
