@@ -26,7 +26,7 @@ object IosImageUtil {
         height: Int
     ): UIImage? {
         val size = CGSizeMake(width.toDouble(), height.toDouble())
-        var resultImage: UIImage? = nullBaseClientCatHashService
+        var resultImage: UIImage? = null
         UIGraphicsBeginImageContextWithOptions(size, false, UIScreen.mainScreen.scale)
         try {
             paths.forEach { path ->
