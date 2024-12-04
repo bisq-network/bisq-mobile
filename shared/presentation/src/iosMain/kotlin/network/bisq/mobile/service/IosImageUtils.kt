@@ -15,7 +15,6 @@ import platform.UIKit.UIGraphicsBeginImageContextWithOptions
 import platform.UIKit.UIGraphicsEndImageContext
 import platform.UIKit.UIGraphicsGetImageFromCurrentImageContext
 import platform.UIKit.UIImage
-import platform.UIKit.UIImagePNGRepresentation
 import platform.UIKit.UIScreen
 
 object IosImageUtil {
@@ -27,7 +26,7 @@ object IosImageUtil {
         height: Int
     ): UIImage? {
         val size = CGSizeMake(width.toDouble(), height.toDouble())
-        var resultImage: UIImage? = null
+        var resultImage: UIImage? = nullBaseClientCatHashService
         UIGraphicsBeginImageContextWithOptions(size, false, UIScreen.mainScreen.scale)
         try {
             paths.forEach { path ->
@@ -66,18 +65,7 @@ object IosImageUtil {
     private fun getImageByPath(basePath: String, path: String): UIImage? {
         val fullPath = basePath + path
         val imageByPath = getImageByPath(fullPath)
-        val imageNamed = UIImage.imageNamed(fullPath)
-
-        // println("fullPath "+fullPath)
-        //  println("imageByPath "+imageByPath)
-        // println("imageNamed "+imageNamed)
         return imageByPath
-    }
-
-    fun uiImageToPngByteArray(uiImage: UIImage): ByteArray {
-        val pngData = UIImagePNGRepresentation(uiImage)
-            ?: throw IllegalArgumentException("Failed to convert UIImage to PNG data")
-        return pngData.toByteArray()
     }
 
     @OptIn(ExperimentalForeignApi::class)

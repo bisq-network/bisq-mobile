@@ -15,7 +15,6 @@ actual fun rememberPlatformImagePainter(platformImage: PlatformImage): Painter {
     return BitmapPainter(skiaImage.toComposeImageBitmap())
 }
 
-// Helper function to convert UIImage to Skia Image
 fun UIImage.toSkiaImage(): Image {
     val nsData = UIImagePNGRepresentation(this)!!
     val byteArray = nsData.toByteArray()

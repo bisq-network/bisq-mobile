@@ -58,9 +58,3 @@ fun NSData.toByteArray(): ByteArray {
 fun ByteArray.toNSData(): NSData {
     return NSData.create(bytes = this.refTo(0).getPointer(MemScope()), length = this.size.toULong())
 }
-//fun NSData.toByteArray(): ByteArray =
-//    ByteArray(this.length.toInt()).also { copyBytesToByteArray(it) }
-//
-//@OptIn(ExperimentalForeignApi::class)
-//fun ByteArray.toNSData(): NSData =
-//    NSData.create(bytes = this, length = size.toULong())
