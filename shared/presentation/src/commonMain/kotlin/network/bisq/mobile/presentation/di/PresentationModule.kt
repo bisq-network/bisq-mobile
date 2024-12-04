@@ -20,7 +20,9 @@ import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupPresenter
 import network.bisq.mobile.presentation.ui.uicases.trades.IMyTrades
+import network.bisq.mobile.presentation.ui.uicases.trades.ITradeFlowPresenter
 import network.bisq.mobile.presentation.ui.uicases.trades.MyTradesPresenter
+import network.bisq.mobile.presentation.ui.uicases.trades.TradeFlowPresenter
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -83,4 +85,6 @@ val presentationModule = module {
             myTradesRepository = get()
         )
     } bind IMyTrades::class
+
+    single{ TradeFlowPresenter(get(), get()) } bind ITradeFlowPresenter::class
 }

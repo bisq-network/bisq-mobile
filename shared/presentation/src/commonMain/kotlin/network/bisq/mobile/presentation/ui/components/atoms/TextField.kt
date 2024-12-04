@@ -26,7 +26,7 @@ fun BisqTextField(
     label: String,
     value: String,
     onValueChanged: (String) -> Unit,
-    placeholder: String?,
+    placeholder: String? = null,
     labelRightSuffix: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
     ) {

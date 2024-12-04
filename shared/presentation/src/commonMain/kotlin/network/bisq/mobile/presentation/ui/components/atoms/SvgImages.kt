@@ -24,5 +24,10 @@ fun SvgImage(
 }
 
 object SvgImageNames {
+    const val BACK_BUTTON = "svg_back_button.svg"
+    const val STAR = "svg_star.svg"
     const val INFO = "svg_info.svg"
+    const val EXCHANGE_VERTICAL_ARROW = "svg_exchange_v_arrow.svg"
+    const val EXCHANGE_HORIZONTAL_ARROW = "svg_exchange_h_arrow.svg"
+    const val UP_ARROW = "svg_up_arrow.svg"
 }

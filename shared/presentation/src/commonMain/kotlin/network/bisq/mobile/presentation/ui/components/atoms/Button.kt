@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -30,6 +31,7 @@ fun BisqButton(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 8.dp,
     disabled: Boolean = false,
+    border: BorderStroke? = null
 ) {
 
     Button(
@@ -42,6 +44,7 @@ fun BisqButton(
             disabledContentColor = color),
         shape = RoundedCornerShape(cornerRadius),
         enabled = !disabled,
+        border = border
     ) {
         if (iconOnly == null && text == null) {
             BisqText.baseMedium("Error: Pass either text or icon")

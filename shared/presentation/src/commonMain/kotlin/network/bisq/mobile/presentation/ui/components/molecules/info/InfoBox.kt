@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.components.atoms.text
+package network.bisq.mobile.presentation.ui.components.molecules.info
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
@@ -13,6 +13,11 @@ enum class InfoBoxValueType {
     TitleSmall,
 }
 
+enum class InfoBoxStyle {
+    Style1, // Label on top, value below
+    Style2  // Value on top, label below
+}
+
 @Composable
 fun InfoBox(
     label: String,
@@ -20,6 +25,7 @@ fun InfoBox(
     valueComposable: (@Composable () -> Unit)? = null,
     rightAlign: Boolean = false,
     valueType: InfoBoxValueType = InfoBoxValueType.BoldValue,
+    style: InfoBoxStyle = InfoBoxStyle.Style1,
 ) {
 
     val valueWidget: @Composable () -> Unit = if (value != null) {
@@ -40,6 +46,28 @@ fun InfoBox(
         }
     }
 
+    when (style) {
+        InfoBoxStyle.Style1 -> {
+            Column(
+                horizontalAlignment = if (rightAlign) Alignment.End else Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                BisqText.baseRegular(text = label, color = BisqTheme.colors.grey2)
+                valueWidget()
+            }
+        }
+        InfoBoxStyle.Style2 -> {
+            Column(
+                horizontalAlignment = if (rightAlign) Alignment.End else Alignment.Start,
+                verticalArrangement = Arrangement.spacedBy(2.dp)
+            ) {
+                valueWidget()
+                BisqText.baseRegular(text = label, color = BisqTheme.colors.grey2)
+            }
+        }
+    }
+
+    /*
     Column(
         horizontalAlignment = if (rightAlign) Alignment.End else Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(2.dp)
@@ -47,4 +75,5 @@ fun InfoBox(
         BisqText.baseRegular(text = label, color = BisqTheme.colors.grey2)
         valueWidget()
     }
+    */
 }

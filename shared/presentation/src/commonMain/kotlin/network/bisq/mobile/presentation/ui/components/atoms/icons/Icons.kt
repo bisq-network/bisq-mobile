@@ -29,6 +29,16 @@ fun CopyIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun SwapHArrowIcon(modifier: Modifier = Modifier.size(16.dp)) {
+    Image(painterResource(Res.drawable.exchange_h_arrow), "Swap horizontal icon", modifier = modifier)
+}
+
+@Composable
+fun SwapVArrowIcon(modifier: Modifier = Modifier.size(16.dp)) {
+    Image(painterResource(Res.drawable.exchange_v_arrow), "Swap vertical icon", modifier = modifier)
+}
+
+@Composable
 fun QuestionIcon(modifier: Modifier = Modifier) {
     Image(painterResource(Res.drawable.icon_question_mark), "Question icon", modifier = modifier)
 }
@@ -52,6 +62,11 @@ fun StarEmptyIcon(modifier: Modifier = Modifier.size(16.dp)) {
 @Composable
 fun StarFillIcon(modifier: Modifier = Modifier.size(16.dp)) {
     Image(painterResource(Res.drawable.icon_star), "Filled star icon", modifier = modifier)
+}
+
+@Composable
+fun UpIcon(modifier: Modifier = Modifier.size(30.dp)) {
+    Image(painterResource(Res.drawable.up_arrow), "Up icon", modifier = modifier)
 }
 
 @Composable

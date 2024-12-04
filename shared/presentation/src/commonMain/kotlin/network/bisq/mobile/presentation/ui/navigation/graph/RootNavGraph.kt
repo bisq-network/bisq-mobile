@@ -20,6 +20,7 @@ import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScreen
+import network.bisq.mobile.presentation.ui.uicases.trades.TradeFlowScreen
 import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
 
@@ -66,6 +67,10 @@ fun RootNavGraph() {
 
         addScreen(Routes.TakeOfferReviewTrade.name) {
             TakeOfferReviewTradeScreen()
+        }
+
+        addScreen(Routes.TradeFlow.name) {
+            TradeFlowScreen()
         }
 
     }
