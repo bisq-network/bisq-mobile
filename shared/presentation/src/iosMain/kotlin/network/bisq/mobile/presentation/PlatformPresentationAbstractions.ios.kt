@@ -38,8 +38,7 @@ actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
     return object : Painter() {
         override val intrinsicSize: Size
             get() {
-                platformImage as UIImage
-                val size: CValue<CGSize> = platformImage.size
+                val size: CValue<CGSize> = platformImage.image.size
                 return Size(
                     width = size.useContents { this.width.toFloat() },
                     height = size.useContents { this.width.toFloat() },
@@ -54,7 +53,7 @@ actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
             )
             val context: CGContextRef? = UIGraphicsGetCurrentContext()
             if (context != null) {
-                platformImage.drawInRect(
+                platformImage.image.drawInRect(
                     CGRectMake(0.0, 0.0, size.width.toDouble(), size.height.toDouble())
                 )
             }

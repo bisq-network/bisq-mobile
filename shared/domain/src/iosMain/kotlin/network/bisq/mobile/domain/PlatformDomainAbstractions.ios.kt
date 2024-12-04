@@ -29,7 +29,7 @@ class IOSPlatformInfo: PlatformInfo {
 actual fun getPlatformInfo(): PlatformInfo = IOSPlatformInfo()
 
 @Serializable(with = PlatformImageSerializer::class)
-actual class PlatformImage(private val image: UIImage) {
+actual class PlatformImage(val image: UIImage) {
     actual fun serialize(): ByteArray {
         val nsData: NSData = UIImagePNGRepresentation(image)!!
         return nsData.toByteArray()

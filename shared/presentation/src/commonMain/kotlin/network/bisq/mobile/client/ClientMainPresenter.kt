@@ -12,6 +12,7 @@ class ClientMainPresenter(
 ) : MainPresenter() {
 
     override fun onViewAttached() {
+        super.onViewAttached()
         applicationBootstrapFacade.activate()
         offerbookServiceFacade.activate()
         marketPriceServiceFacade.activate()
@@ -21,5 +22,6 @@ class ClientMainPresenter(
         applicationBootstrapFacade.deactivate()
         offerbookServiceFacade.deactivate()
         marketPriceServiceFacade.deactivate()
+        super.onViewUnattaching()
     }
 }
