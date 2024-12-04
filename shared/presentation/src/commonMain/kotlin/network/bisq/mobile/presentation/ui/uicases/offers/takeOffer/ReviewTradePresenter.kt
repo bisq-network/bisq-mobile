@@ -30,7 +30,7 @@ open class ReviewTradePresenter(
     override fun tradeConfirmed() {
         log.i { "Trade confirmed" }
         // TODO: Confirmation popup goes here
-        rootNavigator.navigate(Routes.OfferList.name)
+        rootNavigator.navigate(Routes.TradeFlow.name)
     }
 
 }

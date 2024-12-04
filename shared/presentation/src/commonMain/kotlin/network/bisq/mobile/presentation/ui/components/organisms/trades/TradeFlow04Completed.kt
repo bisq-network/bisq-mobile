@@ -1,45 +1,52 @@
 package network.bisq.mobile.presentation.ui.components.organisms.trades
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun TradeFlow04Completed(
     onNext: () -> Unit
 ){
+    val strings = LocalStrings.current.bisqEasyTradeState
+
+    val sendAmount = "1234.56 USD"
+    val btcValue = "0.00173399 BTC"
+
     Column {
+        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
         BisqText.h6Regular(
-            text = "Trade was successfully completed"
+            text = strings.bisqEasy_tradeCompleted_title
         )
+        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
         BisqTextField(
-            value = "10000.02 USD",
+            value = sendAmount,
             onValueChanged = {},
-            label = "You have received"
+            label = strings.bisqEasy_tradeCompleted_body_you_have_receveid,
         )
+        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
         BisqTextField(
-            value = "0.00173399 BTC",
+            value = btcValue,
             onValueChanged = {},
-            label = "You have sold"
+            label = strings.bisqEasy_tradeCompleted_body_you_have_sold
         )
+        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             BisqButton(
-                text = "Close trade",
+                text = strings.bisqEasy_tradeState_info_phase4_leaveChannel,
                 color = BisqTheme.colors.primary,
                 onClick = onNext,
                 backgroundColor = BisqTheme.colors.dark5,
@@ -53,7 +60,7 @@ fun TradeFlow04Completed(
                 )
             )
             BisqButton(
-                text = "Explore trade data",
+                text = strings.bisqEasy_tradeState_info_phase4_exportTrade,
                 color = BisqTheme.colors.light1,
                 onClick = {},
                 backgroundColor = BisqTheme.colors.dark5,

@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.components.organisms.trades
 
-import androidx.compose.animation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -67,7 +66,7 @@ fun StepperSection(
             BisqText.xsmallRegular(
                 textAlign = TextAlign.Center,
                 text = stepNumber.toString(),
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = Modifier.padding(start = 8.dp).offset(x = 1.dp, y = (-4).dp)
             )
         }
         content(

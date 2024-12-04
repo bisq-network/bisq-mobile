@@ -16,16 +16,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.img_bitcoin_payment_confirmation
-import bisqapps.shared.presentation.generated.resources.img_bitcoin_payment_waiting
-import kotlinx.coroutines.delay
+import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.ProfileRating
-import network.bisq.mobile.presentation.ui.components.atoms.icons.SwapHArrowIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UpIcon
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxStyle
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
@@ -36,6 +31,8 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 fun TradeHeader(
     offer: OfferListItem,
 ) {
+    val strings = LocalStrings.current.bisqEasyTradeState
+    val stringsBisqEasy = LocalStrings.current.bisqEasy
 
     val enterTransition = remember {
         expandVertically(
@@ -81,12 +78,11 @@ fun TradeHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 ProfileRating(offer)
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    horizontalAlignment = Alignment.End
                 ) {
                     BisqText.xsmallRegular(text = "10000.02 USD")
-                    SwapHArrowIcon()
                     BisqText.xsmallRegular(text = "0.00173399 BTC")
                 }
             }
@@ -99,9 +95,9 @@ fun TradeHeader(
 
                     InfoRow(
                         style = InfoBoxStyle.Style2,
-                        label1 = "Trade ID",
+                        label1 = strings.bisqEasy_tradeState_header_tradeId,
                         value1 = "07b9bab1",
-                        label2 = "Date",
+                        label2 = strings.bisqEasy_tradeCompleted_body_date,
                         value2 = "29 Sep 2024",
                     )
 
@@ -111,7 +107,7 @@ fun TradeHeader(
                         style = InfoBoxStyle.Style2,
                         label1 = "Floating percentage",
                         value1 = "1.71%",
-                        label2 = "Price",
+                        label2 = stringsBisqEasy.bisqEasy_openTrades_table_price,
                         value2 = "9567056.04 USD/BTC",
                     )
 
@@ -119,9 +115,9 @@ fun TradeHeader(
 
                     InfoRow(
                         style = InfoBoxStyle.Style2,
-                        label1 = "Payment method",
+                        label1 = strings.bisqEasy_tradeCompleted_header_paymentMethod,
                         value1 = "CashApp",
-                        label2 = "Settlement method",
+                        label2 = stringsBisqEasy.bisqEasy_offerbook_offerList_table_columns_settlementMethod,
                         value2 = "Lightning",
                     )
 
@@ -133,8 +129,8 @@ fun TradeHeader(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 BisqButton(
-                    text = "Cancel Trade",
-                    color = BisqTheme.colors.primary,
+                    text = stringsBisqEasy.bisqEasy_openTrades_cancelTrade,
+                    color = BisqTheme.colors.grey1,
                     onClick = {},
                     backgroundColor = Color.Transparent,
                     padding = PaddingValues(horizontal = 70.dp, vertical = 6.dp)

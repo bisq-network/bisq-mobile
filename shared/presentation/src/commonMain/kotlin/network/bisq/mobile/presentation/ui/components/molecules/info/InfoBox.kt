@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.components.molecules.info
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -31,7 +32,7 @@ fun InfoBox(
     val valueWidget: @Composable () -> Unit = if (value != null) {
         {
             when (valueType) {
-                InfoBoxValueType.BoldValue -> BisqText.h6Regular(text = value)
+                InfoBoxValueType.BoldValue -> if (style == InfoBoxStyle.Style1) BisqText.h6Regular(text = value) else (BisqText.baseRegular(text = value))
                 InfoBoxValueType.SmallValue -> BisqText.baseRegular(text = value)
                 InfoBoxValueType.TitleSmall -> BisqText.h4Regular(text = value)
             }
@@ -59,10 +60,10 @@ fun InfoBox(
         InfoBoxStyle.Style2 -> {
             Column(
                 horizontalAlignment = if (rightAlign) Alignment.End else Alignment.Start,
-                verticalArrangement = Arrangement.spacedBy(2.dp)
+                verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
                 valueWidget()
-                BisqText.baseRegular(text = label, color = BisqTheme.colors.grey2)
+                BisqText.smallRegular(text = label, color = BisqTheme.colors.grey2, modifier = Modifier.offset(y = (-4).dp))
             }
         }
     }

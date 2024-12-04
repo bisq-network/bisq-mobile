@@ -15,7 +15,6 @@ import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
-import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -26,7 +25,7 @@ interface ITakeOfferPaymentMethodPresenter : ViewPresenter {
     val offerListItems: StateFlow<List<OfferListItem>>
 
     fun goBack()
-    fun  paymentMethodConfirmed()
+    fun paymentMethodConfirmed()
 }
 
 @Composable
@@ -98,7 +97,7 @@ fun TakeOfferPaymentMethodScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             BisqText.largeLight(
-                text = "Choose a settlement method to send Bitcoin",
+                text = strings.bisqEasy_takeOffer_paymentMethods_subtitle_bitcoin_seller,
                 color = BisqTheme.colors.grey2
             )
             Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
@@ -126,9 +125,7 @@ fun TakeOfferPaymentMethodScreen() {
                             modifier = Modifier.size(15.dp)
                         )
 
-                        BisqText.baseRegular(
-                            text = settlementMethod
-                        )
+                        BisqText.baseRegular(text = settlementMethod)
                     }
                 }
             }
