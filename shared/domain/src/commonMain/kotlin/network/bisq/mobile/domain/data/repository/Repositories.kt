@@ -39,3 +39,4 @@ open class MyTradesRepository : SingleObjectRepository<MyTrades>() {
     }
 }
 open class SettingsRepository(keyValueStorage: KeyValueStorage<Settings>): SingleObjectRepository<Settings>(keyValueStorage, Settings())
+open class UserRepository(keyValueStorage: KeyValueStorage<User>): SingleObjectRepository<User>(keyValueStorage, User())

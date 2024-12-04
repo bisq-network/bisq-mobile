@@ -1,11 +1,12 @@
-package network.bisq.mobile.android.node.utils
+package network.bisq.mobile.utils
 
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
-import network.bisq.mobile.utils.Logging
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -15,15 +16,17 @@ import java.io.IOException
 /**
  * Android images utility functions
  */
-object ImageUtil : Logging {
-    const val BASE_PATH = "cathash/"
+object AndroidImageUtil : Logging {
+    const val PATH_TO_DRAWABLE =
+        "composeResources/bisqapps.shared.presentation.generated.resources/drawable/"
+
     fun composeImage(
         context: Context,
         basePath: String,
         paths: Array<String>,
         width: Int,
         height: Int
-    ): Bitmap {
+    ): ImageBitmap {
         val resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(resultBitmap)
         val paint = Paint()
@@ -36,10 +39,10 @@ object ImageUtil : Logging {
             }
         }
 
-        return resultBitmap
+        return resultBitmap.asImageBitmap()
     }
 
-    fun readRawImage(file: File): Bitmap? {
+    fun readByteArrayAsBitmap(file: File): Bitmap? {
         return try {
             val byteArray = file.readBytes()
             byteArrayToBitmap(byteArray)
@@ -49,7 +52,7 @@ object ImageUtil : Logging {
         }
     }
 
-    fun writeRawImage(image: Bitmap, file: File) {
+    fun writeBitmapAsByteArray(image: Bitmap, file: File) {
         try {
             val byteArray = bitmapToByteArray(image)
             FileOutputStream(file).use { it.write(byteArray) }
@@ -75,8 +78,41 @@ object ImageUtil : Logging {
         return outputStream.toByteArray()
     }
 
-    internal fun byteArrayToBitmap(data: ByteArray): Bitmap? {
+    fun byteArrayToBitmap(data: ByteArray): Bitmap? {
         val inputStream = ByteArrayInputStream(data)
         return BitmapFactory.decodeStream(inputStream)
     }
+
+    fun bitmapToPngByteArray(bitmap: Bitmap): ByteArray {
+        val outputStream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
+        return outputStream.toByteArray()
+    }
+
+    fun decodePngToImageBitmap(pngByteArray: ByteArray): Bitmap {
+        return BitmapFactory.decodeByteArray(pngByteArray, 0, pngByteArray.size)
+    }
+
+    fun saveByteArrayAsPng(data: ByteArray, file: File) {
+        val bitmap = byteArrayToBitmap(data)
+        if (bitmap != null) {
+            saveBitmapAsPng(bitmap, file)
+        }
+    }
+
+    fun saveBitmapAsPng(bitmap: Bitmap, file: File) {
+        FileOutputStream(file).use { fos ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+        }
+    }
+
+    fun readPngByteArray(file: File): ByteArray? {
+        return try {
+            file.readBytes()
+        } catch (e: IOException) {
+            log.e("Reading $file failed", e)
+            null
+        }
+    }
 }
+

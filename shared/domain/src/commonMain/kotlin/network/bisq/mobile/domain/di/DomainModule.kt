@@ -4,19 +4,14 @@ import com.russhwolf.settings.Settings
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.domain.data.model.Greeting
-import network.bisq.mobile.domain.data.repository.*
 import network.bisq.mobile.domain.data.persistance.KeyValueStorage
-import network.bisq.mobile.domain.data.repository.BisqStatsRepository
-import network.bisq.mobile.domain.data.repository.BtcPriceRepository
-import network.bisq.mobile.domain.data.repository.GreetingRepository
-import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.data.repository.*
+import network.bisq.mobile.domain.getPlatformSettings
 import org.koin.dsl.module
-
-expect fun provideSettings(): Settings
 
 val domainModule = module {
     // Data
-    single<Settings> { provideSettings() }
+    single<Settings> { getPlatformSettings() }
 
     // Provide PersistenceSource
     single<KeyValueStorage<*>> {
@@ -33,4 +28,5 @@ val domainModule = module {
     single<BtcPriceRepository> { BtcPriceRepository() }
     single<MyTradesRepository> { MyTradesRepository() }
     single<SettingsRepository> { SettingsRepository(get()) }
+    single<UserRepository> { UserRepository(get()) }
 }

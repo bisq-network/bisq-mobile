@@ -20,6 +20,7 @@ androidx-test-espresso= "3.6.1"
 androidx-lifecycle = "2.8.2"
 androidx-test-compose-ver = "1.6.8"
 androidx-multidex = "2.0.1"
+bignum-lib= "0.3.10"
 bisq-core = "2.1.2"
 coilCompose = "3.0.3"
 compose-plugin = "1.7.0"
@@ -104,6 +105,8 @@ androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+
+bignum = { module = 'com.ionspin.kotlin:bignum', version.ref = 'bignum-lib' }
 
 logging-kermit = { group = "co.touchlab", name = "kermit", version.ref = "kermit" }
 

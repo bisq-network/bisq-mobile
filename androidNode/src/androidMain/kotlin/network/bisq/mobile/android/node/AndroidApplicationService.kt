@@ -43,8 +43,8 @@ import bisq.user.UserService
 import lombok.Getter
 import lombok.Setter
 import lombok.extern.slf4j.Slf4j
-import network.bisq.mobile.android.node.service.AndroidCatHashService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
+import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.utils.Logging
 import java.nio.file.Path
 import java.util.Optional
@@ -72,7 +72,7 @@ class AndroidApplicationService(
         lateinit var applicationService: AndroidApplicationService
         var state: Supplier<Observable<State>> =
             Supplier { applicationService.state }
-        var androidCatHashService: Supplier<AndroidCatHashService> =
+        var androidCatHashService: Supplier<AndroidNodeCatHashService> =
             Supplier { applicationService.androidCatHashService }
         var securityService: Supplier<SecurityService> =
             Supplier { applicationService.securityService }
@@ -118,7 +118,7 @@ class AndroidApplicationService(
     private val shutDownErrorMessage = Observable<String>()
     private val startupErrorMessage = Observable<String>()
 
-    val androidCatHashService = AndroidCatHashService(context, config.baseDir)
+    val androidCatHashService = AndroidNodeCatHashService(context, config.baseDir)
 
     val securityService =
         SecurityService(persistenceService, SecurityService.Config.from(getConfig("security")))

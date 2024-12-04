@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.utils.Logging
 
@@ -47,6 +48,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     protected var view: Any? = null
     // Coroutine scope for the presenter
     protected val presenterScope = CoroutineScope(Dispatchers.Main + Job())
+    protected val backgroundScope = CoroutineScope(BackgroundDispatcher)
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
 

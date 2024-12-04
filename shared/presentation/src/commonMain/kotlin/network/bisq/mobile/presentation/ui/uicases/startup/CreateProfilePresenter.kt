@@ -7,6 +7,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.model.User
+import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -14,6 +17,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class CreateProfilePresenter(
     mainPresenter: MainPresenter,
+    private val userRepository: UserRepository,
     private val userProfileService: UserProfileServiceFacade
 ) : BasePresenter(mainPresenter) {
 
@@ -30,9 +34,9 @@ open class CreateProfilePresenter(
         _nym.value = value
     }
 
-    private val _profileIcon = MutableStateFlow<Any?>(null)
-    val profileIcon: StateFlow<Any?> get() = _profileIcon
-    private fun setProfileIcon(value: Any?) {
+    private val _profileIcon = MutableStateFlow<PlatformImage?>(null)
+    val profileIcon: StateFlow<PlatformImage?> get() = _profileIcon
+    private fun setProfileIcon(value: PlatformImage?) {
         _profileIcon.value = value
     }
 
@@ -66,6 +70,13 @@ open class CreateProfilePresenter(
 
     override fun onViewUnattaching() {
         cancelJob()
+    }
+
+    init {
+        // if this presenter gets to work, it means there is no profile saved
+        backgroundScope.launch {
+            userRepository.create(User())
+        }
     }
 
     // UI handlers
@@ -109,6 +120,9 @@ open class CreateProfilePresenter(
                 setId(id)
                 setNym(nym)
                 setProfileIcon(profileIcon)
+                backgroundScope.launch {
+                    userRepository.update(User().apply { uniqueAvatar = profileIcon })
+                }
             }
             setGenerateKeyPairInProgress(false)
             log.i { "Hide busy animation for generateKeyPair" }

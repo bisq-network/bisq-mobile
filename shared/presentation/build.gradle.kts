@@ -1,4 +1,3 @@
-import org.jetbrains.compose.compose
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSetTree
 
@@ -24,7 +23,10 @@ version = project.findProperty("shared.version") as String
 buildConfig {
     forClass("network.bisq.mobile.client.shared", className = "BuildConfig") {
         buildConfigField("APP_NAME", project.findProperty("client.name").toString())
-        buildConfigField("ANDROID_APP_VERSION", project.findProperty("client.android.version").toString())
+        buildConfigField(
+            "ANDROID_APP_VERSION",
+            project.findProperty("client.android.version").toString()
+        )
         buildConfigField("IOS_APP_VERSION", project.findProperty("client.ios.version").toString())
         buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
         buildConfigField("BUILD_TS", System.currentTimeMillis())
@@ -88,13 +90,24 @@ kotlin {
             implementation(libs.androidx.lifecycle.runtime.compose)
             implementation(libs.logging.kermit)
             implementation(libs.kotlinx.coroutines)
-
+            implementation(libs.kotlinx.datetime)
+            
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.navigation.compose)
             implementation(libs.lyricist)
-
+            implementation(libs.bignum)
             implementation(libs.coil.compose)
+        }
+        androidUnitTest.dependencies {
+            implementation(libs.mock.io)
+            implementation(libs.kotlin.test.junit.v180)
+            implementation(libs.junit)
+
+            implementation(libs.roboelectric)
+            implementation(libs.androidx.test)
+            implementation(libs.androidx.test.espresso)
+            implementation(libs.androidx.test.junit)
         }
         val commonTest by getting {
             dependencies {
@@ -125,7 +138,7 @@ dependencies {
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().all {
-    if(name != "kspCommonMainKotlinMetadata") {
+    if (name != "kspCommonMainKotlinMetadata") {
         dependsOn("kspCommonMainKotlinMetadata")
     }
 }

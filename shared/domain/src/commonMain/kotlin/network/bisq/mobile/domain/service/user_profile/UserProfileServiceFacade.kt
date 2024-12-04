@@ -1,5 +1,7 @@
 package network.bisq.mobile.domain.service.user_profile
 
+import network.bisq.mobile.domain.PlatformImage
+
 interface UserProfileServiceFacade {
     /**
      * Returns true if there is a user identity already created.
@@ -21,7 +23,7 @@ interface UserProfileServiceFacade {
      * the proof of work solution.
      * The CatHash image is also created based on that hash and the proof of work solution.
      */
-    suspend fun generateKeyPair(result: (String, String, Any?) -> Unit)
+    suspend fun generateKeyPair(result: (String, String, PlatformImage?) -> Unit)
 
     /**
      * Once the user clicks the `create` button we create a user identity and publish the

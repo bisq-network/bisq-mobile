@@ -32,6 +32,9 @@ kotlin {
     }
 
     sourceSets {
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+        }
         commonMain.dependencies {
             //put your multiplatform dependencies here
             implementation(libs.koin.core)
@@ -63,10 +66,15 @@ kotlin {
             implementation(libs.koin.test)
         }
         androidUnitTest.dependencies {
-            implementation(libs.kotlin.test)
-            implementation(libs.multiplatform.settings.test)
-            implementation(libs.kotlinx.coroutines.test)
-            implementation(libs.koin.test)
+            implementation(libs.mock.io)
+            implementation(libs.kotlin.test.junit.v180)
+            implementation(libs.junit)
+
+            implementation(libs.roboelectric)
+            implementation(libs.androidx.test)
+            implementation(libs.androidx.test.espresso)
+            implementation(libs.androidx.test.junit)
+
 //            implementation("com.russhwolf:multiplatform-settings-datastore:1.2.0")
 //
 //            implementation("androidx.test:core:1.5.0")
