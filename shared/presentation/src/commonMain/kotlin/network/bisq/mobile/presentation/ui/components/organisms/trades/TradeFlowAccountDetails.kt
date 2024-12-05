@@ -13,8 +13,11 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.trades.ITradeFlowPresenter
 import org.koin.compose.koinInject
 
+/**
+ * Trade flow's 1st Stepper section
+ */
 @Composable
-fun TradeFlow01AccountDetails(
+fun TradeFlowAccountDetails(
     onNext: () -> Unit
 ) {
     val strings = LocalStrings.current.bisqEasyTradeState
@@ -48,6 +51,6 @@ fun TradeFlow01AccountDetails(
             text = strings.bisqEasy_tradeState_info_buyer_phase1a_wallet_prompt_prefix
         )
         // TODO: Make a small variation of the button
-        BisqButton(text = stringsBisqEasy.bisqEasy_walletGuide_tabs_headline, onClick = {})
+        BisqButton(text = stringsBisqEasy.bisqEasy_walletGuide_tabs_headline, onClick = { presenter.openWalletGuideLink() })
     }
 }

@@ -16,8 +16,11 @@ import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
+/**
+ * Trade flow's 3rd Stepper section
+ */
 @Composable
-fun TradeFlow03BtcPayment(
+fun TradeFlowBtcPayment(
     onNext: () -> Unit
 ) {
     val strings = LocalStrings.current.bisqEasyTradeState

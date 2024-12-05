@@ -13,9 +13,13 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
+/**
+ * Trade flow's 4th Stepper section
+ */
 @Composable
-fun TradeFlow04Completed(
-    onNext: () -> Unit
+fun TradeFlowCompleted(
+    onClose: () -> Unit,
+    onExport: () -> Unit,
 ){
     val strings = LocalStrings.current.bisqEasyTradeState
 
@@ -48,7 +52,7 @@ fun TradeFlow04Completed(
             BisqButton(
                 text = strings.bisqEasy_tradeState_info_phase4_leaveChannel,
                 color = BisqTheme.colors.primary,
-                onClick = onNext,
+                onClick = onClose,
                 backgroundColor = BisqTheme.colors.dark5,
                 border = BorderStroke(
                     width = 2.dp,
@@ -62,7 +66,7 @@ fun TradeFlow04Completed(
             BisqButton(
                 text = strings.bisqEasy_tradeState_info_phase4_exportTrade,
                 color = BisqTheme.colors.light1,
-                onClick = {},
+                onClick = onExport,
                 backgroundColor = BisqTheme.colors.dark5,
                 padding = PaddingValues(
                     horizontal = 18.dp,

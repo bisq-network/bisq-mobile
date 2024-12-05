@@ -8,6 +8,7 @@ import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.navigation.Routes
 
 enum class TradeFlowScreenSteps(val titleKey: String) {
     ACCOUNT_DETAILS(titleKey = "bisqEasy_tradeState_phase1"),
@@ -27,7 +28,6 @@ fun TradeFlowScreenSteps.getTranslatedTitle(): String {
     }
 }
 
-// TODO: Should do Interface for this?
 open class TradeFlowPresenter(
     mainPresenter: MainPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade,
@@ -59,6 +59,38 @@ open class TradeFlowPresenter(
         setConfirmingFiatPayment(true)
     }
 
+    private val _showCloseTradeDialog = MutableStateFlow(false)
+    override val showCloseTradeDialog: StateFlow<Boolean> get() = _showCloseTradeDialog
+    override fun setShowCloseTradeDialog(value: Boolean) {
+        _showCloseTradeDialog.value = value
+    }
+
+    override fun closeTrade() {
+        setShowCloseTradeDialog(true)
+    }
+
+    override fun closeTradeConfirm() {
+        setShowCloseTradeDialog(false)
+        rootNavigator.popBackStack(Routes.OfferList.name, inclusive = false, saveState = false)
+    }
+
+    override fun openWalletGuideLink() {
+        // Open web link for Wallet guide
+    }
+
+    override fun openTradeGuideLink() {
+        // Open web link for Trade guide
+    }
+
+    override fun exportTrade() {
+        // TODO
+    }
+
+    override fun openMediation() {
+        // TODO: Is Mediation part of MVP?
+        // If not, should we show a message to the user,
+        // to install desktop app to handle disputes?
+    }
 
     override fun onViewAttached() {
     }

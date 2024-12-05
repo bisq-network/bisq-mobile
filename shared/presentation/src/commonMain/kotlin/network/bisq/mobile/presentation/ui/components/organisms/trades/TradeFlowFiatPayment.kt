@@ -21,8 +21,11 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.trades.ITradeFlowPresenter
 import org.koin.compose.koinInject
 
+/**
+ * Trade flow's 2nd Stepper section
+ */
 @Composable
-fun TradeFlow02FiatPayment(
+fun TradeFlowFiatPayment(
     onNext: () -> Unit
 ) {
     val strings = LocalStrings.current.bisqEasyTradeState

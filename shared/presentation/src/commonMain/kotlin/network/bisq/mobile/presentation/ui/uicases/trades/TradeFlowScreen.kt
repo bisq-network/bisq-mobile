@@ -5,13 +5,17 @@ import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
+import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.organisms.trades.CloseTradeCard
 import network.bisq.mobile.presentation.ui.components.organisms.trades.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -31,6 +35,18 @@ interface ITradeFlowPresenter : ViewPresenter {
 
     fun confirmFiatPayment()
 
+    val showCloseTradeDialog: StateFlow<Boolean>
+    fun setShowCloseTradeDialog(value: Boolean)
+    fun closeTrade()
+
+    fun closeTradeConfirm()
+
+    fun openWalletGuideLink()
+    fun openTradeGuideLink()
+
+    fun exportTrade()
+
+    fun openMediation()
 }
 
 @Composable
@@ -39,23 +55,39 @@ fun TradeFlowScreen() {
     val presenter: ITradeFlowPresenter = koinInject()
 
     val offer = presenter.offerListItems.collectAsState().value.first()
+    val showCloseTradeDialog = presenter.showCloseTradeDialog.collectAsState().value
 
     BisqStaticScaffold(
         topBar = { TopBar("Trade - 07b9bab1") }
     ) {
+        Box(modifier = Modifier.fillMaxSize().blur(if (showCloseTradeDialog) 12.dp else 0.dp)) {
+            Column(
+                modifier = Modifier
+                    .verticalScroll(rememberScrollState())
+                    .fillMaxSize()
+            ) {
 
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .fillMaxSize()
-        ) {
+                TradeHeader(offer)
 
-            TradeHeader(offer)
+                Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
 
-            Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
+                TradeFlowStepper()
 
-            TradeFlowStepper()
+            }
+            if (showCloseTradeDialog) {
+                BisqDialog() {
+                    CloseTradeCard(
+                        onDismissRequest = {
+                            presenter.setShowCloseTradeDialog(false)
+                        },
+                        onConfirm = {
+                            presenter.closeTradeConfirm()
+                        }
+                    )
 
+                }
+
+            }
         }
     }
 }
@@ -85,19 +117,23 @@ fun TradeFlowStepper() {
                     ) {
                         when (step.titleKey) {
                             TradeFlowScreenSteps.ACCOUNT_DETAILS.titleKey -> {
-                                TradeFlow01AccountDetails(onNext = { expandedStep += 1 })
+                                TradeFlowAccountDetails(onNext = { expandedStep += 1 })
                             }
 
                             TradeFlowScreenSteps.FIAT_PAYMENT.titleKey -> {
-                                TradeFlow02FiatPayment(onNext = { expandedStep += 1 })
+                                TradeFlowFiatPayment(onNext = { expandedStep += 1 })
                             }
 
                             TradeFlowScreenSteps.BITCOIN_TRANSFER.titleKey -> {
-                                TradeFlow03BtcPayment(onNext = { expandedStep += 1 })
+                                TradeFlowBtcPayment(onNext = { expandedStep += 1 })
                             }
 
                             TradeFlowScreenSteps.TRADE_COMPLETED.titleKey -> {
-                                TradeFlow04Completed(onNext = { expandedStep += 1 })
+                                TradeFlowCompleted(onClose = {
+                                    presenter.closeTrade()
+                                }, onExport = {
+
+                                })
                             }
                         }
                     }

@@ -7,7 +7,6 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-// TODO: Should do Interface for this?
 open class PaymentMethodPresenter(
     mainPresenter: MainPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade,
