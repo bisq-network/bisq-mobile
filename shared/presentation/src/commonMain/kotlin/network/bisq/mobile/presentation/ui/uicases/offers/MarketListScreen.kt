@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.CurrencyProfileCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
@@ -16,14 +17,12 @@ import org.koin.compose.koinInject
 
 @Composable
 fun MarketListScreen() {
-    val strings = LocalStrings.current
+    val strings = LocalStrings.current.common
     val presenter: MarketListPresenter = koinInject()
 
     RememberPresenterLifecycle(presenter)
 
-    BisqStaticLayout(
-        verticalArrangement = Arrangement.Top,
-        ) {
+    BisqStaticLayout(padding = PaddingValues(all = 0.dp), verticalArrangement = Arrangement.Top) {
         BisqTextField(label = "", placeholder = strings.common_search, value ="", onValueChanged = {})
 
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))

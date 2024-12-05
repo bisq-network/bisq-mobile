@@ -5,17 +5,22 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferPaymentMethodScreen
 import network.bisq.mobile.presentation.ui.navigation.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.*
 import network.bisq.mobile.presentation.ui.uicases.offers.OffersListScreen
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferReviewTradeScreen
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferTradeAmountScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScreen
+import network.bisq.mobile.presentation.ui.uicases.trades.TradeFlowScreen
 import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
 
@@ -31,41 +36,76 @@ fun RootNavGraph() {
         composable(route = Routes.Splash.name) {
             SplashScreen()
         }
-        composable(route = Routes.Onboarding.name, enterTransition = {
-            slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(300)
-            )
-        }) {
+
+        addScreen(Routes.Onboarding.name) {
             OnBoardingScreen()
         }
-        composable(route = Routes.CreateProfile.name, enterTransition = {
-            slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(300)
-            )
-        }) {
+
+        addScreen(Routes.CreateProfile.name) {
             CreateProfileScreen()
         }
-        composable(route = Routes.TrustedNodeSetup.name, enterTransition = {
-            slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(300)
-            )
-        }) {
+
+        addScreen(Routes.TrustedNodeSetup.name) {
             TrustedNodeSetupScreen()
         }
-        composable(route = Routes.TabContainer.name) {
+
+        addScreen(route = Routes.TabContainer.name) {
             TabContainerScreen()
         }
 
-        composable(route = Routes.OfferList.name, enterTransition = {
+        addScreen(Routes.OfferList.name) {
+            OffersListScreen()
+        }
+
+        addScreen(Routes.TakeOfferTradeAmount.name) {
+            TakeOfferTradeAmountScreen()
+        }
+
+        addScreen(Routes.TakeOfferPaymentMethod.name) {
+            TakeOfferPaymentMethodScreen()
+        }
+
+        addScreen(Routes.TakeOfferReviewTrade.name) {
+            TakeOfferReviewTradeScreen()
+        }
+
+        addScreen(Routes.TradeFlow.name) {
+            TradeFlowScreen()
+        }
+
+    }
+}
+
+fun NavGraphBuilder.addScreen(
+    route: String,
+    content: @Composable () -> Unit
+) {
+    composable(
+        route = route,
+        enterTransition = {
+            // When a screen is pushed in, slide in from right edge of the screen to left
             slideIntoContainer(
                 AnimatedContentTransitionScope.SlideDirection.Left,
                 animationSpec = tween(300)
             )
-        }) {
-            OffersListScreen()
+        },
+        exitTransition = {
+            // When a new screen is pushed over current screen, don't do exit animation
+            null
+        },
+        popEnterTransition = {
+            // When the new pushed screen is poppped out, don't do pop Enter animation
+            null
+        },
+        popExitTransition = {
+            // When current screen is poped out, slide if from screen to screen's right edge
+            slideOutOfContainer(
+                AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(300)
+            )
         }
+
+    ) {
+        content()
     }
 }

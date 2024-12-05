@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
@@ -22,19 +23,18 @@ import org.koin.core.qualifier.named
 fun SplashScreen(
 ) {
     val strings = LocalStrings.current
-    val navController: NavHostController = koinInject(named("RootNavController"))
-    val presenter: SplashPresenter = koinInject { parametersOf(navController) }
+    val presenter: SplashPresenter = koinInject()
 
     RememberPresenterLifecycle(presenter)
 
-    BisqStaticScaffold {
+    BisqStaticScaffold(verticalArrangement = Arrangement.SpaceBetween) {
         BisqLogo()
 
         Column {
             BisqProgressBar(presenter.progress.collectAsState().value)
 
             // TODO: Get this from presenter
-            val networkType = strings.splash_bootstrapState_network_TOR
+            val networkType = strings.application.splash_bootstrapState_network_TOR
 
             BisqText.baseRegular(
                 text = presenter.state.collectAsState().value,

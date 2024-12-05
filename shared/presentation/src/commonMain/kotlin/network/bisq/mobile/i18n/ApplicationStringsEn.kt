@@ -2,8 +2,8 @@ package network.bisq.mobile.i18n
 
 import cafe.adriel.lyricist.LyricistStrings
 
-@LyricistStrings(languageTag = Locales.EN, default = true)
-val EnStrings = Strings(
+// @LyricistStrings(languageTag = Locales.EN, default = true)
+val EnApplicationStrings = ApplicationStrings(
     splash_details_tooltip = "Click to toggle details",
     splash_applicationServiceState_INITIALIZE_APP = "Starting Bisq",
     splash_applicationServiceState_INITIALIZE_NETWORK = "Initialize P2P network",
@@ -142,14 +142,4 @@ val EnStrings = Strings(
     video_mp4NotSupported_warning_headline = "Embedded video cannot be played",
     video_mp4NotSupported_warning = "You can watch the video in your browser at: [HYPERLINK:{0}]",
     version_versionAndCommitHash = "Version: v{0} / Commit hash: {1}",
-
-    buttons_next = "Next",
-    buttons_submit = "Submit",
-    buttons_cancel = "Cancel",
-
-    common_offers = "Offers",
-    common_search = "Search",
-    
-    offers_list_buy_from = "Buy from",
-    offers_list_sell_to = "Sell to",
 )

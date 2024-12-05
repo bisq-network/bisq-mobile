@@ -17,4 +17,9 @@ enum class Routes(val title: String) {
     TabMyTrades(title = "tab_my_trades"),
     TabSettings(title = "tab_settings"),
     OfferList(title = "offer_list"),
+    TakeOfferTradeAmount(title = "take_offer_trade_amount"),
+    TakeOfferPaymentMethod(title = "take_offer_payment_method"),
+    TakeOfferReviewTrade(title = "take_offer_review_trade"),
+
+    TradeFlow(title = "trade_flow"),
 }

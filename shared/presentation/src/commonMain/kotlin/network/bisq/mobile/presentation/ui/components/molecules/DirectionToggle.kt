@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import cafe.adriel.lyricist.LocalStrings
+import kotlinx.coroutines.selects.select
 import network.bisq.mobile.client.replicated_model.offer.Direction
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -33,6 +35,7 @@ fun DirectionToggle(
     transitionX: Dp,
     onStateChange: (Direction) -> Unit
 ) {
+    val strings = LocalStrings.current.common
     var selectedDirection by remember {
         mutableStateOf(initialDirection)
     }
@@ -41,6 +44,8 @@ fun DirectionToggle(
         targetValue = if (selectedDirection == directions[0]) 0.dp else transitionX,
         animationSpec = tween(durationMillis = 300)
     )
+
+    val toggleText = if (selectedDirection.isBuy) strings.offers_list_buy_from else strings.offers_list_sell_to
 
     Surface(
         shape = RoundedCornerShape(6.dp),
@@ -58,7 +63,7 @@ fun DirectionToggle(
             ) {
 
                 BisqText.baseMedium(
-                    text = toDisplayString(selectedDirection),
+                    text = toggleText,
                     color = BisqTheme.colors.light1,
                     modifier = Modifier
                         .padding(horizontal = 32.dp, vertical = 12.dp)
@@ -68,10 +73,8 @@ fun DirectionToggle(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                directions.forEach { direction ->
-                    BisqText.baseMedium(
-                        text = toDisplayString(direction),
-                        color = BisqTheme.colors.light1,
+                directions.forEach{ direction ->
+                    Box(
                         modifier = Modifier
                             .padding(horizontal = 32.dp, vertical = 12.dp)
                             .clickable(
@@ -82,13 +85,14 @@ fun DirectionToggle(
                                     onStateChange.invoke(direction)
                                 }
                             )
-                    )
+                    ) {
+                        BisqText.baseMedium(
+                            text = toggleText,
+                            color = BisqTheme.colors.light1,
+                        )
+                    }
                 }
             }
         }
     }
-}
-
-fun toDisplayString(direction: Direction): String {
-   return if (direction.mirror().isBuy) "Buy from" else "Sell to"
 }

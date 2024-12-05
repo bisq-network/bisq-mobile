@@ -28,13 +28,13 @@ fun PaymentMethods(item: OfferListItem) {
                             .replace("-", "_")
                     }.png",
                     fallbackPath = "drawable/payment/fiat/custom_payment_${customMethodCounter++}.png",
-                    modifier = Modifier.size(15.dp),
+                    modifier = Modifier.size(16.dp),
                 )
             }
         }
         DynamicImage(
             "drawable/payment/interchangeable_grey.png",
-            modifier = Modifier.size(12.dp)
+            modifier = Modifier.size(14.dp)
         )
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             baseSidePaymentMethods.forEach { paymentMethod ->
@@ -44,7 +44,7 @@ fun PaymentMethods(item: OfferListItem) {
                             .lowercase()
                             .replace("-", "_")
                     }.png",
-                    modifier = Modifier.size(15.dp)
+                    modifier = Modifier.size(16.dp)
                 )
             }
         }

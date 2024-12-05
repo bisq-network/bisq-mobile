@@ -9,8 +9,10 @@ import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.IGettingStarted
+import network.bisq.mobile.presentation.ui.uicases.offers.IOffersListPresenter
 import network.bisq.mobile.presentation.ui.uicases.offers.MarketListPresenter
 import network.bisq.mobile.presentation.ui.uicases.offers.OffersListPresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.*
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPresenter
@@ -18,7 +20,9 @@ import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupPresenter
 import network.bisq.mobile.presentation.ui.uicases.trades.IMyTrades
+import network.bisq.mobile.presentation.ui.uicases.trades.ITradeFlowPresenter
 import network.bisq.mobile.presentation.ui.uicases.trades.MyTradesPresenter
+import network.bisq.mobile.presentation.ui.uicases.trades.TradeFlowPresenter
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -39,11 +43,7 @@ val presentationModule = module {
         )
     }
 
-    single {
-        OnBoardingPresenter(
-            get()
-        )
-    } bind IOnboardingPresenter::class
+    single { OnBoardingPresenter(get()) } bind IOnboardingPresenter::class
 
     single<GettingStartedPresenter> {
         GettingStartedPresenter(
@@ -70,7 +70,13 @@ val presentationModule = module {
 
     single<MarketListPresenter> { MarketListPresenter(get(), get()) }
 
-    single<OffersListPresenter> { OffersListPresenter(get(), get()) }
+    single<OffersListPresenter> { OffersListPresenter(get(), get()) } bind IOffersListPresenter::class
+
+    single<TradeAmountPresenter> { TradeAmountPresenter(get(), get()) } bind ITakeOfferTradeAmountPresenter::class
+
+    single { PaymentMethodPresenter(get(), get()) } bind ITakeOfferPaymentMethodPresenter::class
+
+    single{ ReviewTradePresenter(get(), get()) } bind ITakeOfferReviewTradePresenter::class
 
     single { (navController: NavController, tabController: NavController) ->
         MyTradesPresenter(
@@ -79,4 +85,6 @@ val presentationModule = module {
             myTradesRepository = get()
         )
     } bind IMyTrades::class
+
+    single{ TradeFlowPresenter(get(), get()) } bind ITradeFlowPresenter::class
 }

@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,8 +37,7 @@ fun BisqDialog(
                     disabledContainerColor = Color.Unspecified,
                     disabledContentColor = Color.Unspecified,
                 ),
-                border = BorderStroke(1.dp, color = BisqTheme.colors.grey3),
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(16.dp),
             ) {
                 content()
             }

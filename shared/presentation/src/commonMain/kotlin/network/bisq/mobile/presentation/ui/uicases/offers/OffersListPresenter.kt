@@ -7,16 +7,18 @@ import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.navigation.Routes
+
 
 open class OffersListPresenter(
     mainPresenter: MainPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade,
-) : BasePresenter(mainPresenter) {
-
-    val offerListItems: StateFlow<List<OfferListItem>> = offerbookServiceFacade.offerListItems
+) : BasePresenter(mainPresenter), IOffersListPresenter {
+    override val offerListItems: StateFlow<List<OfferListItem>> = offerbookServiceFacade.offerListItems
 
     private val _selectedDirection = MutableStateFlow(Direction.SELL)
-    val selectedDirection: StateFlow<Direction> = _selectedDirection
+    override val selectedDirection: StateFlow<Direction> = _selectedDirection
 
     override fun onViewAttached() {
     }
@@ -24,13 +26,17 @@ open class OffersListPresenter(
     override fun onViewUnattaching() {
     }
 
-    fun takeOffer() {
+    override fun takeOffer(offer: OfferListItem) {
         log.i { "take offer clicked " }
         //todo show take offer screen
-        // rootNavigator.navigate(Routes.OfferList.name)
+        rootNavigator.navigate(Routes.TakeOfferTradeAmount.name)
     }
 
-    fun onSelectDirection(direction: Direction) {
+    override fun chatForOffer(offer: OfferListItem) {
+        log.i { "chat for offer clicked " }
+    }
+
+    override fun onSelectDirection(direction: Direction) {
         _selectedDirection.value = direction
     }
 }

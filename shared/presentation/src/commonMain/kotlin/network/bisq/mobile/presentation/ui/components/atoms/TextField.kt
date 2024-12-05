@@ -26,10 +26,11 @@ fun BisqTextField(
     label: String,
     value: String,
     onValueChanged: (String) -> Unit,
-    placeholder: String?,
+    placeholder: String? = null,
     labelRightSuffix: (@Composable () -> Unit)? = null,
+    disabled: Boolean = false,
     modifier: Modifier = Modifier,
-    ) {
+) {
     var isFocused by remember { mutableStateOf(false) }
     Column(modifier = modifier) {
         if (label.isNotEmpty()) {
@@ -41,7 +42,7 @@ fun BisqTextField(
                 BisqText.baseRegular(
                     text = label,
                     color = BisqTheme.colors.light2,
-                    )
+                )
                 if (labelRightSuffix != null) {
                     labelRightSuffix()
                 }
@@ -59,7 +60,7 @@ fun BisqTextField(
                 modifier = Modifier.fillMaxWidth().clickable { isFocused = true }
                     .onFocusChanged { focusState ->
                         isFocused = focusState.isFocused
-                                    },
+                    },
                 textStyle = TextStyle(fontSize = 22.sp),
                 onValueChange = onValueChanged,
                 colors = TextFieldDefaults.colors(
@@ -76,9 +77,10 @@ fun BisqTextField(
                         BisqText.h5Regular(
                             text = placeholder,
                             color = BisqTheme.colors.secondaryHover,
-                            )
+                        )
                     }
-                }
+                },
+                enabled = !disabled,
             )
             if (isFocused) {
                 Box(

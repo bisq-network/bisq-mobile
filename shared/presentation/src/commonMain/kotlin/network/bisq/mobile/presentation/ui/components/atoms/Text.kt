@@ -9,6 +9,7 @@ import org.jetbrains.compose.resources.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_light
 import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_regular
@@ -44,6 +45,7 @@ object BisqText {
         fontSize: FontSize = FontSize.BASE,
         fontWeight: FontWeight = FontWeight.REGULAR,
         textAlign: TextAlign = TextAlign.Start,
+        lineHeight: TextUnit = TextUnit.Unspecified,
         modifier: Modifier = Modifier,
     ) {
 
@@ -60,6 +62,7 @@ object BisqText {
             fontSize = fontSize.size,
             fontFamily = fontFamily,
             textAlign = textAlign,
+            lineHeight = lineHeight,
             modifier = modifier,
         )
     }
@@ -215,6 +218,7 @@ object BisqText {
             fontWeight = FontWeight.LIGHT,
             color=color,
             textAlign = textAlign,
+            lineHeight = TextUnit(16.0f, TextUnitType.Sp),
             modifier = modifier,
         )
     }
@@ -232,6 +236,7 @@ object BisqText {
             fontWeight = FontWeight.REGULAR,
             color=color,
             textAlign = textAlign,
+            lineHeight = TextUnit(16.0f, TextUnitType.Sp),
             modifier = modifier,
         )
     }
@@ -249,6 +254,7 @@ object BisqText {
             fontWeight = FontWeight.MEDIUM,
             color=color,
             textAlign = textAlign,
+            lineHeight = TextUnit(16.0f, TextUnitType.Sp),
             modifier = modifier,
         )
     }
@@ -266,6 +272,7 @@ object BisqText {
             fontWeight = FontWeight.BOLD,
             color=color,
             textAlign = textAlign,
+            lineHeight = TextUnit(16.0f, TextUnitType.Sp),
             modifier = modifier,
         )
     }
