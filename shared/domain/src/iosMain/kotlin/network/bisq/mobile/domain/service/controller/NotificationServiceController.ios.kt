@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.bisq.mobile.utils.Logging
 import platform.BackgroundTasks.*
+import platform.Foundation.NSDate
 import platform.Foundation.NSUUID
 import platform.Foundation.setValue
 import platform.UserNotifications.*
@@ -16,7 +17,7 @@ import platform.darwin.NSObject
 actual class NotificationServiceController: ServiceController, Logging {
 
     companion object {
-        const val BACKGROUND_TASK_ID = "network.bisq.mobile.ios.backgroundtask"
+        const val BACKGROUND_TASK_ID = "network.bisq.mobile.iosUC4273Y485"
     }
 
     private var isRunning = false
@@ -79,13 +80,13 @@ actual class NotificationServiceController: ServiceController, Logging {
             UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
         ) { granted, error ->
             if (granted) {
-                logDebug("Notification permission granted.")
+                println("Notification permission granted.")
                 // Once permission is granted, you can start scheduling background tasks
                 scheduleBackgroundTask()
-                logDebug("Background service started")
+                println("Background service started")
                 isRunning = true
             } else {
-                logDebug("Notification permission denied: ${error?.localizedDescription}")
+                println("Notification permission denied: ${error?.localizedDescription}")
             }
         }
     }
@@ -103,11 +104,14 @@ actual class NotificationServiceController: ServiceController, Logging {
             setSound(UNNotificationSound.defaultSound())
         }
 
+        val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(5.0, repeats = false)
+
         val request = UNNotificationRequest.requestWithIdentifier(
             NSUUID().UUIDString,  // Generates a unique identifier
             content,
-            null  // Trigger can be set to null for immediate delivery
+            trigger  // Trigger can be set to null for immediate delivery
         )
+        println("getting called every 10 sec")
         UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
             if (error != null) {
                 println("Error adding notification request: ${error.localizedDescription}")
@@ -124,6 +128,8 @@ actual class NotificationServiceController: ServiceController, Logging {
 
     private fun handleBackgroundTask(task: BGProcessingTask) {
         logDebug("Executing background task")
+        pushNotification("Background Notification", "This notification was triggered in the background")
+
         task.setTaskCompletedWithSuccess(true)
         scheduleBackgroundTask() // Reschedule if needed
     }
@@ -132,9 +138,10 @@ actual class NotificationServiceController: ServiceController, Logging {
     private fun scheduleBackgroundTask() {
         val request = BGProcessingTaskRequest(BACKGROUND_TASK_ID).apply {
             requiresNetworkConnectivity = true
+            earliestBeginDate = NSDate(timeIntervalSinceReferenceDate = 10.0)
         }
         BGTaskScheduler.sharedScheduler.submitTaskRequest(request, null)
-        logDebug("Background task scheduled")
+        println("Background task scheduled")
     }
 
 
@@ -147,17 +154,20 @@ actual class NotificationServiceController: ServiceController, Logging {
 
     private fun registerBackgroundTask() {
         if (isBackgroundTaskRegistered) {
-            logDebug("Background task is already registered.")
+            println("Background task is already registered.")
             return
         }
 
         // Register for background task handler
-        BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(identifier = BACKGROUND_TASK_ID, usingQueue = null) { task ->
+        BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(
+            identifier = BACKGROUND_TASK_ID,
+            usingQueue = null
+        ) { task ->
             handleBackgroundTask(task as BGProcessingTask)
         }
 
         isBackgroundTaskRegistered = true
-        logDebug("Background task handler registered.")
-
+        // TODO logger is not working
+        println("Background task handler registered.")
     }
 }
