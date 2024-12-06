@@ -43,11 +43,12 @@ val presentationModule = module {
         SplashPresenter(
             get(),
             get(),
-            get()
+            get(),
+            get(),
         )
     }
 
-    single { OnBoardingPresenter(get()) } bind IOnboardingPresenter::class
+    single { OnBoardingPresenter(get(), get()) } bind IOnboardingPresenter::class
 
     single<GettingStartedPresenter> {
         GettingStartedPresenter(

@@ -39,7 +39,7 @@ fun TakeOfferReviewTradeScreen() {
 
     MultiScreenWizardScaffold(
         bisqEasyStrings.bisqEasy_takeOffer_progress_review,
-        stepIndex = 2,
+        stepIndex = 3,
         stepsLength = 3,
         prevOnClick = { presenter.goBack() },
         nextButtonText = bisqEasyStrings.bisqEasy_takeOffer_review_takeOffer,

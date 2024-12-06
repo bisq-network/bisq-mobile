@@ -69,7 +69,7 @@ fun MultiScreenWizardScaffold(
         val screenSize = remember { mutableStateOf(320) }
 
         BisqProgressBar(
-            stepIndex.toFloat() * screenSize.value / stepsLength.toFloat(),
+            stepIndex.toFloat() / stepsLength.toFloat(),
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         )
 

@@ -11,6 +11,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqSlider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.SvgImage
 import network.bisq.mobile.presentation.ui.components.atoms.SvgImageNames
+import network.bisq.mobile.presentation.ui.helpers.numberFormatter
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import kotlin.math.roundToInt
 
@@ -29,7 +30,7 @@ fun BisqAmountSelector(
     else
         roundedNumber.toString() // if it's 3.14, keep the same
 
-    val satsValue = (price.toDouble() / exchangeRate).toString()
+    val satsValue = numberFormatter.satsFormat(price.toDouble() / exchangeRate)
 
     Column(
         verticalArrangement = Arrangement.Top
