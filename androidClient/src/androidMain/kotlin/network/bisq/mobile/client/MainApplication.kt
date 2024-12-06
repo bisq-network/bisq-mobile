@@ -4,6 +4,7 @@ import android.app.Application
 import network.bisq.mobile.client.di.androidClientModule
 import network.bisq.mobile.client.di.clientModule
 import network.bisq.mobile.domain.di.domainModule
+import network.bisq.mobile.domain.di.serviceModule
 import network.bisq.mobile.presentation.di.presentationModule
 import org.koin.android.ext.koin.androidContext
 
@@ -15,7 +16,7 @@ class MainApplication: Application() {
 
         startKoin {
             androidContext(this@MainApplication)
-            modules(listOf(domainModule, presentationModule, clientModule, androidClientModule))
+            modules(listOf(domainModule, serviceModule, presentationModule, clientModule, androidClientModule))
         }
     }
 }

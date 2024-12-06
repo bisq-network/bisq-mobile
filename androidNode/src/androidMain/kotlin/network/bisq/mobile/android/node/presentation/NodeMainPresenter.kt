@@ -4,17 +4,19 @@ import android.app.Activity
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
 class NodeMainPresenter(
+    notificationServiceController: NotificationServiceController,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val offerbookServiceFacade: OfferbookServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade
-) : MainPresenter() {
+) : MainPresenter(notificationServiceController) {
 
     private var applicationServiceCreated = false
     override fun onViewAttached() {

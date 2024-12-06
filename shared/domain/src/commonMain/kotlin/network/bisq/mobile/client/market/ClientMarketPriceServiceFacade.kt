@@ -58,7 +58,7 @@ class ClientMarketPriceServiceFacade(
 
                     applyQuote()
                 } catch (e: Exception) {
-                    log.e("Error at API request", e)
+                    log.e("Error at getQuotes API request", e)
                 }
             }
         }

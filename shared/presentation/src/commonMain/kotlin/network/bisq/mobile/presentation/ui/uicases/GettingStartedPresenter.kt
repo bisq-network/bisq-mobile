@@ -12,7 +12,6 @@ import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.data.repository.BtcPriceRepository
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class GettingStartedPresenter(
     mainPresenter: MainPresenter,

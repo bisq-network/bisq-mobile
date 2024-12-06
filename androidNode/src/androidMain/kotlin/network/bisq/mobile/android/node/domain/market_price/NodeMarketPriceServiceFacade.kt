@@ -55,8 +55,12 @@ class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplic
     private fun observeSelectedMarket() {
         selectedMarketPin?.unbind()
         selectedMarketPin = marketPriceService.selectedMarket.addObserver { market ->
-            _marketPriceItem.value = MarketPriceItem(toReplicatedMarket(market))
-            updatePrice()
+           try {
+                _marketPriceItem.value = MarketPriceItem(toReplicatedMarket(market))
+                updatePrice()
+           } catch (e: Exception) {
+               log.e("Failed to update market item", e)
+           }
         }
     }
 

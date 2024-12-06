@@ -3,6 +3,7 @@ import presentation
 
 @main
 struct iosClient: App {
+
     init() {
         DependenciesProviderHelper().doInitKoin()
     }
@@ -12,4 +13,5 @@ struct iosClient: App {
             ContentView()
         }
     }
+
 }

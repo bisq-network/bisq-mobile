@@ -8,6 +8,7 @@ import bisq.common.facades.android.AndroidJdkFacade
 import bisq.common.network.AndroidEmulatorLocalhostFacade
 import network.bisq.mobile.android.node.di.androidNodeModule
 import network.bisq.mobile.domain.di.domainModule
+import network.bisq.mobile.domain.di.serviceModule
 import network.bisq.mobile.presentation.di.presentationModule
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.koin.android.ext.koin.androidContext
@@ -40,7 +41,7 @@ class MainApplication : Application() {
             startKoin {
                 androidContext(this@MainApplication)
                 // order is important, last one is picked for each interface/class key
-                modules(listOf(domainModule, presentationModule, androidNodeModule))
+                modules(listOf(domainModule, serviceModule, presentationModule, androidNodeModule))
             }
         }
     }

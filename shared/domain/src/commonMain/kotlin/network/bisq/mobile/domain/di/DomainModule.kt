@@ -7,6 +7,10 @@ import network.bisq.mobile.domain.data.model.Greeting
 import network.bisq.mobile.domain.data.persistance.KeyValueStorage
 import network.bisq.mobile.domain.data.repository.*
 import network.bisq.mobile.domain.getPlatformSettings
+import network.bisq.mobile.domain.data.repository.BisqStatsRepository
+import network.bisq.mobile.domain.data.repository.BtcPriceRepository
+import network.bisq.mobile.domain.data.repository.GreetingRepository
+import network.bisq.mobile.domain.data.repository.SettingsRepository
 import org.koin.dsl.module
 
 val domainModule = module {
