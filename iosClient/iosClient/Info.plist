@@ -4,7 +4,7 @@
 <dict>
 	<key>BGTaskSchedulerPermittedIdentifiers</key>
 	<array>
-		<string>network.bisq.mobile.iosUC4273Y485.backgroundTask</string>
+		<string>network.bisq.mobile.iosUC4273Y485</string>
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>

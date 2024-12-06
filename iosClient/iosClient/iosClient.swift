@@ -1,5 +1,4 @@
 import SwiftUI
-import domain
 import presentation
 
 @main

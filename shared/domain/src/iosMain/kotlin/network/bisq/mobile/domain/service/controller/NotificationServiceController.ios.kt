@@ -57,25 +57,8 @@ actual class NotificationServiceController: ServiceController, Logging {
         if (isRunning) {
             return
         }
+        registerBackgroundTask()
         logDebug("Starting background service")
-//            UNUserNotificationCenter.currentNotificationCenter().requestAuthorizationWithOptions(
-//                UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
-//            ) { granted, error ->
-//                if (granted) {
-//                    logDebug("Notification permission granted.")
-//
-////                  TODO need to move to iOS callback ->  didFinishLaunchingWithOptions
-//                    BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(identifier = BACKGROUND_TASK_ID, usingQueue = null) { task ->
-//                        handleBackgroundTask(task as BGProcessingTask)
-//                    }
-//                    scheduleBackgroundTask()
-//                    logDebug("Background service started")
-//                    isRunning = true
-//                } else {
-//                    logDebug("Notification permission denied: ${error?.localizedDescription}")
-//                }
-//            }
-
         UNUserNotificationCenter.currentNotificationCenter().requestAuthorizationWithOptions(
             UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
         ) { granted, error ->
@@ -131,7 +114,7 @@ actual class NotificationServiceController: ServiceController, Logging {
         pushNotification("Background Notification", "This notification was triggered in the background")
 
         task.setTaskCompletedWithSuccess(true)
-        scheduleBackgroundTask() // Reschedule if needed
+//        scheduleBackgroundTask() // Reschedule if needed
     }
 
     @OptIn(ExperimentalForeignApi::class)
