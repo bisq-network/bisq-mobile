@@ -15,12 +15,11 @@ class ClientMainPresenter(
     private val offerbookServiceFacade: OfferbookServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade
 ) : MainPresenter() {
-    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
 
     override fun onViewAttached() {
         super.onViewAttached()
         runCatching {
-            coroutineScope.launch { webSocketClient.connect() }
+            backgroundScope.launch { webSocketClient.connect() }
 
             applicationBootstrapFacade.activate()
             offerbookServiceFacade.activate()

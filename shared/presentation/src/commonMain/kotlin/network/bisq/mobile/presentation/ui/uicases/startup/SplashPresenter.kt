@@ -22,10 +22,9 @@ open class SplashPresenter(
     val progress: StateFlow<Float> = applicationBootstrapFacade.progress
 
     private var job: Job? = null
-    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
 
     override fun onViewAttached() {
-        job = coroutineScope.launch {
+        job = backgroundScope.launch {
             progress.collect { value ->
                 when {
                     value == 1.0f -> navigateToNextScreen()
