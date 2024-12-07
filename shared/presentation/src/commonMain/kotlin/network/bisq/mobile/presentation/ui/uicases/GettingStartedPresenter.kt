@@ -1,11 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
@@ -26,10 +24,9 @@ class GettingStartedPresenter(
     val formattedMarketPrice: StateFlow<String> = marketPriceServiceFacade.selectedFormattedMarketPrice
 
     private var job: Job? = null
-    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
 
     private fun refresh() {
-        job = coroutineScope.launch {
+        job = backgroundScope.launch {
             try {
                 val bisqStats = bisqStatsRepository.fetch()
                 _offersOnline.value = bisqStats?.offersOnline ?: 0
