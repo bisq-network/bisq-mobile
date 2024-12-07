@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -23,10 +22,9 @@ open class SplashPresenter(
     val progress: StateFlow<Float> = applicationBootstrapFacade.progress
 
     private var job: Job? = null
-    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
 
     override fun onViewAttached() {
-        job = coroutineScope.launch {
+        job = backgroundScope.launch {
             progress.collect { value ->
                 when {
                     value == 1.0f -> navigateToNextScreen()
@@ -58,11 +56,7 @@ open class SplashPresenter(
     }
 
     private fun cancelJob() {
-        try {
-            job?.cancel()
-            job = null
-        } catch (e: CancellationException) {
-            log.e("Job cancel failed", e)
-        }
+        job?.cancel()
+        job = null
     }
 }

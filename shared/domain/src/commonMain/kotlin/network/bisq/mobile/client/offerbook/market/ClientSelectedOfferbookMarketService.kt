@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.offerbook.market
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -9,9 +8,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.data.model.MarketListItem
 import network.bisq.mobile.domain.data.model.OfferbookMarket
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.utils.Logging
 
 class ClientSelectedOfferbookMarketService(
@@ -50,18 +49,14 @@ class ClientSelectedOfferbookMarketService(
 
     private fun observeMarketPrice(): Job {
         return coroutineScope.launch {
-            marketPriceServiceFacade.marketPriceItem.collectLatest { marketPriceItem ->
-                _selectedOfferbookMarket.value.setFormattedPrice(marketPriceItem.formattedPrice.value)
+            marketPriceServiceFacade.selectedMarketPriceItem.collectLatest { marketPriceItem ->
+                _selectedOfferbookMarket.value.setFormattedPrice(marketPriceItem.formattedPrice)
             }
         }
     }
 
     private fun cancelJob() {
-        try {
-            job?.cancel()
-            job = null
-        } catch (e: CancellationException) {
-            log.e("Job cancel failed", e)
-        }
+        job?.cancel()
+        job = null
     }
 }
