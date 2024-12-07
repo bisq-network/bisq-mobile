@@ -15,5 +15,5 @@ fun provideRestApiHost(): String {
     return "localhost"
 }
 fun provideWebsocketHost(): String {
-    return "localhost" // Default for Android emulator
+    return "localhost"
 }
