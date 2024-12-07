@@ -30,27 +30,30 @@ class RequestResponseHandler(private val sendFunction: suspend (WebSocketMessage
         webSocketRequest: WebSocketRequest,
         timeoutMillis: Long = 10_000
     ): WebSocketResponse? {
-        require(requestId == null) { "RequestResponseHandler is designed to be used only once per request ID" }
         log.i { "Sending request with ID: ${webSocketRequest.requestId}" }
-        requestId = webSocketRequest.requestId
-        mutex.withLock { deferredWebSocketResponse = CompletableDeferred() }
+        mutex.withLock {
+            require(requestId == null) { "RequestResponseHandler is designed to be used only once per request ID" }
+            requestId = webSocketRequest.requestId
+            deferredWebSocketResponse = CompletableDeferred()
 
-        try {
-            sendFunction.invoke(webSocketRequest)
-        } catch (e: Exception) {
-            mutex.withLock { deferredWebSocketResponse?.completeExceptionally(e) }
-            throw e
+            try {
+                sendFunction.invoke(webSocketRequest)
+            } catch (e: Exception) {
+                deferredWebSocketResponse?.completeExceptionally(e)
+                throw e
+            }
         }
-
         return withTimeout(timeoutMillis) {
             deferredWebSocketResponse?.await()
         }
     }
 
     suspend fun onWebSocketResponse(webSocketResponse: WebSocketResponse) {
-        require(webSocketResponse.requestId == requestId) { "Request ID of response does not match our request ID" }
         log.i { "Received response for request ID: ${webSocketResponse.requestId}" }
-        mutex.withLock { deferredWebSocketResponse?.complete(webSocketResponse) }
+        mutex.withLock {
+            require(webSocketResponse.requestId == requestId) { "Request ID of response does not match our request ID" }
+            deferredWebSocketResponse?.complete(webSocketResponse)
+        }
     }
 
     suspend fun dispose() {
@@ -58,7 +61,7 @@ class RequestResponseHandler(private val sendFunction: suspend (WebSocketMessage
         mutex.withLock {
             deferredWebSocketResponse?.cancel()
             deferredWebSocketResponse = null
+            requestId = null
         }
-        requestId = null
     }
 }
