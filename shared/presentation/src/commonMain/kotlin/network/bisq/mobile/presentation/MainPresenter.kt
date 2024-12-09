@@ -21,6 +21,10 @@ import kotlin.random.Random
  */
 open class MainPresenter(private val notificationServiceController: NotificationServiceController) :
     BasePresenter(null), AppPresenter {
+    companion object {
+        const val PUSH_DELAY = 60000L
+    }
+
     lateinit var navController: NavHostController
         private set
 
@@ -58,8 +62,8 @@ open class MainPresenter(private val notificationServiceController: Notification
                 val randomTitle = "Title ${Random.nextInt(1, 100)}"
                 val randomMessage = "Message ${Random.nextInt(1, 100)}"
                 notificationServiceController.pushNotification(randomTitle, randomMessage)
-                println("Pushed: $randomTitle - $randomMessage")
-                delay(10000) // 10 seconds
+                log.d {"Pushed: $randomTitle - $randomMessage" }
+                delay(PUSH_DELAY) // 1 min
             }
         }
     }
