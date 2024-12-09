@@ -57,9 +57,9 @@ class ClientUserProfileServiceFacade(
         return apiGateway.getUserIdentityIds()
     }
 
-    override suspend fun applySelectedUserProfile(result: (String?, String?, String?) -> Unit) {
+    override suspend fun applySelectedUserProfile(): Triple<String?, String?, String?> {
         val userProfile = getSelectedUserProfile()
-        result(userProfile.nickName, userProfile.nym, userProfile.id)
+        return Triple(userProfile.nickName, userProfile.nym, userProfile.id)
     }
 
     // Private
