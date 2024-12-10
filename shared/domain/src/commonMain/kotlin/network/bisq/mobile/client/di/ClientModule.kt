@@ -14,6 +14,7 @@ import network.bisq.mobile.client.market.ClientMarketPriceServiceFacade
 import network.bisq.mobile.client.market.MarketPriceApiGateway
 import network.bisq.mobile.client.offerbook.ClientOfferbookServiceFacade
 import network.bisq.mobile.client.offerbook.offer.OfferbookApiGateway
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.rest_api_proxy.WebSocketRestApiClient
 import network.bisq.mobile.client.websocket.messages.SubscriptionRequest
@@ -69,9 +70,9 @@ val clientModule = module {
     single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade() }
 
     single(named("RestApiHost")) { provideRestApiHost() }
-    single(named("RestApiPort")) { 8090 }
+    single(named("RestApiPort")) { (BuildConfig.WS_PORT.takeIf { it.isNotEmpty() } ?: "8090").toInt() }
     single(named("WebsocketApiHost")) { provideWebsocketHost() }
-    single(named("WebsocketApiPort")) { 8090 }
+    single(named("WebsocketApiPort")) { (BuildConfig.WS_PORT.takeIf { it.isNotEmpty() } ?: "8090").toInt() }
 
     single {
         WebSocketClient(
@@ -103,9 +104,9 @@ val clientModule = module {
 }
 
 fun provideRestApiHost(): String {
-    return "10.0.2.2" // Default for Android emulator
+    return BuildConfig.WS_ANDROID_HOST.takeIf { it.isNotEmpty() } ?: "10.0.2.2"
 }
 
 fun provideWebsocketHost(): String {
-    return "10.0.2.2" // Default for Android emulator
+    return BuildConfig.WS_ANDROID_HOST.takeIf { it.isNotEmpty() } ?: "10.0.2.2"
 }
