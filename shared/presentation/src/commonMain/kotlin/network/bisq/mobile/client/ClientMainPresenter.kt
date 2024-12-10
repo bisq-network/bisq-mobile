@@ -19,7 +19,17 @@ class ClientMainPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         runCatching {
-            backgroundScope.launch { webSocketClient.connect() }
+            backgroundScope.launch {
+                runCatching {
+                    webSocketClient.connect()
+                }.onSuccess {
+                    log.d { "Connected to trusted node" }
+                }.onFailure {
+                    // TODO give user feedback (we could have a general error screen covering usual
+                    //  issues like connection issues and potential solutions)
+                    log.e { "ERROR: FAILED to connect to trusted node - details above" }
+                }
+            }
 
             applicationBootstrapFacade.activate()
             offerbookServiceFacade.activate()
