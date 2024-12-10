@@ -22,6 +22,9 @@ import kotlin.random.Random
 open class MainPresenter(private val notificationServiceController: NotificationServiceController) :
     BasePresenter(null), AppPresenter {
     companion object {
+        // FIXME this will be erased eventually, for now you can turn on to see the notifications working
+        // it will push a notification every 60 sec
+        const val testNotifications = false
         const val PUSH_DELAY = 60000L
     }
 
@@ -57,13 +60,15 @@ open class MainPresenter(private val notificationServiceController: Notification
         super.onViewAttached()
         notificationServiceController.startService()
         // sample code for push notifications sends a random message every 10 secs
-        CoroutineScope(BackgroundDispatcher).launch {
-            while (notificationServiceController.isServiceRunning()) {
-                val randomTitle = "Title ${Random.nextInt(1, 100)}"
-                val randomMessage = "Message ${Random.nextInt(1, 100)}"
-                notificationServiceController.pushNotification(randomTitle, randomMessage)
-                log.d {"Pushed: $randomTitle - $randomMessage" }
-                delay(PUSH_DELAY) // 1 min
+        if (testNotifications) {
+            backgroundScope.launch {
+                while (notificationServiceController.isServiceRunning()) {
+                    val randomTitle = "Title ${Random.nextInt(1, 100)}"
+                    val randomMessage = "Message ${Random.nextInt(1, 100)}"
+                    notificationServiceController.pushNotification(randomTitle, randomMessage)
+                    log.d {"Pushed: $randomTitle - $randomMessage" }
+                    delay(PUSH_DELAY) // 1 min
+                }
             }
         }
     }
