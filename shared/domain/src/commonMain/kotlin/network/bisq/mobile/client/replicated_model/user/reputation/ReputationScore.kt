@@ -19,7 +19,7 @@ package network.bisq.mobile.client.replicated_model.user.reputation
 import kotlinx.serialization.Serializable
 
 @Serializable
-class ReputationScore(
+data class ReputationScore(
     val totalScore: Long,
     val fiveSystemScore: Double,
     val ranking: Int

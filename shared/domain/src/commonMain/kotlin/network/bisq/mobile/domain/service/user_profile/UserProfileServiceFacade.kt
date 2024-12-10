@@ -41,5 +41,5 @@ interface UserProfileServiceFacade {
     /**
      * Applies the selected user identity to the user profile model
      */
-    suspend fun applySelectedUserProfile(result: (String?, String?, String?) -> Unit)
+    suspend fun applySelectedUserProfile():Triple<String?, String?, String?>
 }

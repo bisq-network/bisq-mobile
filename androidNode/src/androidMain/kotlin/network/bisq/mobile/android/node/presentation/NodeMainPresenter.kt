@@ -21,34 +21,41 @@ class NodeMainPresenter(
     private var applicationServiceCreated = false
     override fun onViewAttached() {
         super.onViewAttached()
-        if (!applicationServiceCreated) {
-            applicationServiceCreated = true
-            val filesDirsPath = (view as Activity).filesDir.toPath()
-            val applicationContext = (view as Activity).applicationContext
-            val applicationService =
-                AndroidApplicationService(
-                    androidMemoryReportService,
-                    applicationContext,
-                    filesDirsPath
-                )
-            provider.applicationService = applicationService
 
-            applicationBootstrapFacade.activate()
-            log.i { "Start initializing applicationService" }
-            applicationService.initialize()
-                .whenComplete { r: Boolean?, throwable: Throwable? ->
-                    if (throwable == null) {
-                        log.i { "ApplicationService initialized" }
-                        applicationBootstrapFacade.deactivate()
-                        offerbookServiceFacade.activate()
-                        marketPriceServiceFacade.activate()
-                    } else {
-                        log.e("Initializing applicationService failed", throwable)
+        runCatching {
+            if (!applicationServiceCreated) {
+                applicationServiceCreated = true
+                val filesDirsPath = (view as Activity).filesDir.toPath()
+                val applicationContext = (view as Activity).applicationContext
+                val applicationService =
+                    AndroidApplicationService(
+                        androidMemoryReportService,
+                        applicationContext,
+                        filesDirsPath
+                    )
+                provider.applicationService = applicationService
+
+                applicationBootstrapFacade.activate()
+                log.i { "Start initializing applicationService" }
+                applicationService.initialize()
+                    .whenComplete { r: Boolean?, throwable: Throwable? ->
+                        if (throwable == null) {
+                            log.i { "ApplicationService initialized" }
+                            applicationBootstrapFacade.deactivate()
+                            offerbookServiceFacade.activate()
+                            marketPriceServiceFacade.activate()
+                        } else {
+                            log.e("Initializing applicationService failed", throwable)
+                        }
                     }
-                }
-        } else {
-            offerbookServiceFacade.activate()
-            marketPriceServiceFacade.activate()
+            } else {
+                offerbookServiceFacade.activate()
+                marketPriceServiceFacade.activate()
+            }
+        }.onFailure { e ->
+            // TODO give user feedback (we could have a general error screen covering usual
+            //  issues like connection issues and potential solutions)
+            log.e("Error at onViewAttached", e)
         }
     }
 

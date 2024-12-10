@@ -11,8 +11,8 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.domain.offerbook.NodeOfferbookServiceFacade.Companion.toReplicatedMarket
 import network.bisq.mobile.domain.LifeCycleAware
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.data.model.OfferbookMarket
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.utils.Logging
 
 
@@ -92,7 +92,7 @@ class NodeSelectedOfferbookMarketService(
     }
 
     private fun updateMarketPrice() {
-        val formattedPrice = marketPriceServiceFacade.marketPriceItem.value.formattedPrice
-        _selectedOfferbookMarket.value.setFormattedPrice(formattedPrice.value)
+        val formattedPrice = marketPriceServiceFacade.selectedMarketPriceItem.value.formattedPrice
+        _selectedOfferbookMarket.value.setFormattedPrice(formattedPrice)
     }
 }
