@@ -16,15 +16,15 @@ import network.bisq.mobile.client.offerbook.ClientOfferbookServiceFacade
 import network.bisq.mobile.client.offerbook.offer.OfferbookApiGateway
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClient
-import network.bisq.mobile.client.websocket.rest_api_proxy.WebSocketRestApiClient
+import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.websocket.messages.SubscriptionRequest
 import network.bisq.mobile.client.websocket.messages.SubscriptionResponse
 import network.bisq.mobile.client.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.websocket.messages.WebSocketMessage
 import network.bisq.mobile.client.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketResponse
-import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
-import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
+import network.bisq.mobile.client.websocket.messages.WebSocketApiRequest
+import network.bisq.mobile.client.websocket.messages.WebSocketApiResponse
 import network.bisq.mobile.client.user_profile.ClientUserProfileServiceFacade
 import network.bisq.mobile.client.user_profile.UserProfileApiGateway
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
@@ -43,11 +43,11 @@ val clientModule = module {
             polymorphic(WebSocketMessage::class) {
                 subclass(WebSocketEvent::class, WebSocketEvent.serializer())
                 polymorphic(WebSocketRequest::class) {
-                    subclass(WebSocketRestApiRequest::class, WebSocketRestApiRequest.serializer())
+                    subclass(WebSocketApiRequest::class, WebSocketApiRequest.serializer())
                     subclass(SubscriptionRequest::class, SubscriptionRequest.serializer())
                 }
                 polymorphic(WebSocketResponse::class) {
-                    subclass(WebSocketRestApiResponse::class, WebSocketRestApiResponse.serializer())
+                    subclass(WebSocketApiResponse::class, WebSocketApiResponse.serializer())
                     subclass(SubscriptionResponse::class, SubscriptionResponse.serializer())
                 }
             }
@@ -69,8 +69,8 @@ val clientModule = module {
 
     single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade() }
 
-    single(named("RestApiHost")) { provideRestApiHost() }
-    single(named("RestApiPort")) { (BuildConfig.WS_PORT.takeIf { it.isNotEmpty() } ?: "8090").toInt() }
+    single(named("ApiHost")) { provideApiHost() }
+    single(named("ApiPort")) { (BuildConfig.WS_PORT.takeIf { it.isNotEmpty() } ?: "8090").toInt() }
     single(named("WebsocketApiHost")) { provideWebsocketHost() }
     single(named("WebsocketApiPort")) { (BuildConfig.WS_PORT.takeIf { it.isNotEmpty() } ?: "8090").toInt() }
 
@@ -84,7 +84,7 @@ val clientModule = module {
     }
     // single { WebSocketHttpClient(get()) }
     single {
-        WebSocketRestApiClient(
+        WebSocketApiClient(
             get(),
             get(),
             get(),
@@ -103,7 +103,7 @@ val clientModule = module {
     single<OfferbookServiceFacade> { ClientOfferbookServiceFacade(get(), get(), get(), get()) }
 }
 
-fun provideRestApiHost(): String {
+fun provideApiHost(): String {
     return BuildConfig.WS_ANDROID_HOST.takeIf { it.isNotEmpty() } ?: "10.0.2.2"
 }
 

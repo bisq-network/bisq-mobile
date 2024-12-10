@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.websocket.rest_api_proxy
+package network.bisq.mobile.client.websocket.api_proxy
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -9,13 +9,13 @@ import io.ktor.http.contentType
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.WebSocketClient
-import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
-import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
+import network.bisq.mobile.client.websocket.messages.WebSocketApiRequest
+import network.bisq.mobile.client.websocket.messages.WebSocketApiResponse
 import network.bisq.mobile.utils.Logging
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
-class WebSocketRestApiClient(
+class WebSocketApiClient(
     val httpClient: HttpClient,
     val webSocketClient: WebSocketClient,
     val json: Json,
@@ -23,7 +23,7 @@ class WebSocketRestApiClient(
     port: Int
 ) : Logging {
     val apiPath = "/api/v1/"
-    var restApiUrl = "http://$host:$port$apiPath"
+    var apiUrl = "http://$host:$port$apiPath"
 
     // POST request still not working, but issue is likely on the bisq2 side.
     // So we use httpClient instead.
@@ -35,7 +35,7 @@ class WebSocketRestApiClient(
 
     suspend inline fun <reified T, reified R> post(path: String, requestBody: R): T {
         if (useHttpClientForPost) {
-            return httpClient.post(restApiUrl + path) {
+            return httpClient.post(apiUrl + path) {
                 contentType(ContentType.Application.Json)
                 setBody(requestBody)
             }.body<T>()
@@ -55,16 +55,16 @@ class WebSocketRestApiClient(
     ): T {
         val requestId = Uuid.random().toString()
         val fullPath = apiPath + path
-        val responseClassName = WebSocketRestApiResponse::class.qualifiedName!!
-        val webSocketRestApiRequest = WebSocketRestApiRequest(
+        val responseClassName = WebSocketApiResponse::class.qualifiedName!!
+        val webSocketApiRequest = WebSocketApiRequest(
             responseClassName,
             requestId,
             method,
             fullPath,
             bodyAsJson
         )
-        val response = webSocketClient.sendRequestAndAwaitResponse(webSocketRestApiRequest)
-        require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
+        val response = webSocketClient.sendRequestAndAwaitResponse(webSocketApiRequest)
+        require(response is WebSocketApiResponse) { "Response not of expected type. response=$response" }
         val body = response.body
         val decodeFromString = json.decodeFromString<T>(body)
         return decodeFromString

@@ -6,7 +6,7 @@ import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val iosClientModule = module {
-    single(named("RestApiHost")) { provideRestApiHost() }
+    single(named("ApiHost")) { provideApiHost() }
     single(named("WebsocketApiHost")) { provideWebsocketHost() }
 
     single<NotificationServiceController> {
@@ -16,7 +16,7 @@ val iosClientModule = module {
     }
 }
 
-fun provideRestApiHost(): String {
+fun provideApiHost(): String {
     return BuildConfig.WS_IOS_HOST.takeIf { it.isNotEmpty() } ?: "localhost"
 }
 fun provideWebsocketHost(): String {

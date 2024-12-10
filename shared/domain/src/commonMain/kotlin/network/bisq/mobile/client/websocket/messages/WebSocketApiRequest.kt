@@ -3,7 +3,7 @@ package network.bisq.mobile.client.websocket.messages
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class WebSocketRestApiRequest(
+data class WebSocketApiRequest(
     val responseClassName: String,
     override val requestId: String,
     val method: String,
