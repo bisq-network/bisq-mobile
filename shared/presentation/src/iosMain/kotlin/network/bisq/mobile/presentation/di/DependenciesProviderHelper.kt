@@ -11,6 +11,9 @@ import org.koin.core.context.startKoin
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.Qualifier
 
+/**
+ * Helper for iOS koin injection
+ */
 class DependenciesProviderHelper {
 
     fun initKoin() {

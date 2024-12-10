@@ -10,7 +10,6 @@ class LifecycleAwareComposeViewController: UIViewController {
     init(presenter: MainPresenter) {
         self.presenter = presenter
         super.init(nibName: nil, bundle: nil)
-        presenter.attachView(view: self)
     }
 
     required init?(coder: NSCoder) {
@@ -64,6 +63,7 @@ class LifecycleAwareComposeViewController: UIViewController {
 
         // Notify the child view controller that it was moved to a parent
         mainViewController.didMove(toParent: self)
+        presenter.attachView(view: self)
     }
 
     // Equivalent to `onDestroy` in Android for final cleanup

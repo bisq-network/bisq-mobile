@@ -41,7 +41,7 @@ val androidNodeModule = module {
     single<OfferbookServiceFacade> { NodeOfferbookServiceFacade(get(), get()) }
     // this line showcases both, the possibility to change behaviour of the app by changing one definition
     // and binding the same obj to 2 different abstractions
-    single<MainPresenter> { NodeMainPresenter(get(), get(),  get(), get(), get()) } bind AppPresenter::class
+    single<MainPresenter> { NodeMainPresenter(get(), get(), get(),  get(), get(), get()) } bind AppPresenter::class
 
     single<IOnboardingPresenter> { OnBoardingNodePresenter(get()) } bind IOnboardingPresenter::class
 }

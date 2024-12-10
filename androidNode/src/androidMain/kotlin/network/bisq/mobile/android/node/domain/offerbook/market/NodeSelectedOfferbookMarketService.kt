@@ -73,8 +73,8 @@ class NodeSelectedOfferbookMarketService(
     private fun observeSelectedChannel() {
         selectedChannelPin =
             bisqEasyOfferbookChannelSelectionService.selectedChannel.addObserver { selectedChannel ->
-                this.selectedChannel = selectedChannel as BisqEasyOfferbookChannel
-                marketPriceService.setSelectedMarket(selectedChannel.market)
+                this.selectedChannel = selectedChannel as BisqEasyOfferbookChannel?
+                marketPriceService.setSelectedMarket(selectedChannel?.market)
                 applySelectedOfferbookMarket()
             }
     }
