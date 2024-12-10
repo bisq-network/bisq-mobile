@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.websocket
 
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
@@ -43,8 +44,13 @@ class RequestResponseHandler(private val sendFunction: suspend (WebSocketMessage
                 throw e
             }
         }
-        return withTimeout(timeoutMillis) {
-            deferredWebSocketResponse?.await()
+        return try {
+            withTimeout(timeoutMillis) {
+                deferredWebSocketResponse?.await()
+            }
+        } catch (e: TimeoutCancellationException) {
+            log.w(e) { "WARN: Operation timed out after $timeoutMillis ms" }
+            throw e
         }
     }
 
