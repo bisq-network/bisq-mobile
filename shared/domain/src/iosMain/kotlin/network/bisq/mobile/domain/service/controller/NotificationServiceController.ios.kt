@@ -149,7 +149,8 @@ actual class NotificationServiceController: ServiceController, Logging {
     }
 
 
-    private fun registerBackgroundTask() {
+    // in iOS this needs to be done on app init or it will throw exception
+    fun registerBackgroundTask() {
         if (isBackgroundTaskRegistered) {
             logDebug("Background task is already registered.")
             return

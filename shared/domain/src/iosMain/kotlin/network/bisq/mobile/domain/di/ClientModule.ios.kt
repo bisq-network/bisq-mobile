@@ -8,7 +8,11 @@ val iosClientModule = module {
     single(named("RestApiHost")) { provideRestApiHost() }
     single(named("WebsocketApiHost")) { provideWebsocketHost() }
 
-    single<NotificationServiceController> { NotificationServiceController() }
+    single<NotificationServiceController> {
+        NotificationServiceController().apply {
+            this.registerBackgroundTask()
+        }
+    }
 }
 
 fun provideRestApiHost(): String {
