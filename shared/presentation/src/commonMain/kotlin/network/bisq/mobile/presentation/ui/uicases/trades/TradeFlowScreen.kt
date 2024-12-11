@@ -69,7 +69,7 @@ fun TradeFlowScreen() {
 
                 TradeHeader(offer)
 
-                Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
+                BisqGap.V2()
 
                 TradeFlowStepper()
 

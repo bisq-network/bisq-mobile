@@ -13,12 +13,13 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun BisqStaticLayout(
     padding: PaddingValues = PaddingValues(all = BisqUIConstants.ScreenPadding),
+    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.SpaceBetween,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
+        horizontalAlignment = horizontalAlignment,
         verticalArrangement = verticalArrangement,
-        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .fillMaxSize()
             .background(color = BisqTheme.colors.backgroundColor)

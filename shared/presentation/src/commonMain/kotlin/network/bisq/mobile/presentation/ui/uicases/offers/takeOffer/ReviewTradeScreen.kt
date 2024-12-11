@@ -10,6 +10,7 @@ import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -49,7 +50,7 @@ fun TakeOfferReviewTradeScreen() {
             text = bisqEasyStrings.bisqEasy_takeOffer_progress_review,
             color = BisqTheme.colors.light1
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
+        BisqGap.V2()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoRow(
                 label1 = tradeStateStrings.bisqEasy_tradeState_header_direction.uppercase(),

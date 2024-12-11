@@ -13,6 +13,7 @@ import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -48,8 +49,8 @@ fun TakeOfferPaymentMethodScreen() {
             text = strings.bisqEasy_takeOffer_paymentMethods_headline_fiatAndBitcoin,
             color = BisqTheme.colors.light1
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
+        BisqGap.V2()
+        BisqGap.V2()
         Column(
             modifier = Modifier.padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -58,7 +59,7 @@ fun TakeOfferPaymentMethodScreen() {
                 text = strings.bisqEasy_takeOffer_paymentMethods_subtitle_fiat_buyer("USD"),
                 color = BisqTheme.colors.grey2
             )
-            Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
+            BisqGap.V2()
             Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 38.dp),
                 horizontalAlignment = Alignment.Start,
@@ -90,8 +91,8 @@ fun TakeOfferPaymentMethodScreen() {
                 }
             }
         }
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
+        BisqGap.V2()
+        BisqGap.V2()
         Column(
             modifier = Modifier.padding(horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -100,7 +101,7 @@ fun TakeOfferPaymentMethodScreen() {
                 text = strings.bisqEasy_takeOffer_paymentMethods_subtitle_bitcoin_seller,
                 color = BisqTheme.colors.grey2
             )
-            Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
+            BisqGap.V1()
             Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 38.dp),
                 horizontalAlignment = Alignment.Start,

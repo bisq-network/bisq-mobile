@@ -16,5 +16,6 @@ val EnCommonStrings = CommonStrings(
     offers_list_sell_to = "Sell to",
 
     take_offer = "Take offer",
+    currency = "Currency",
 
 )

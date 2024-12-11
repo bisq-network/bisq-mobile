@@ -28,6 +28,8 @@ fun BisqTextField(
     onValueChanged: (String) -> Unit,
     placeholder: String? = null,
     labelRightSuffix: (@Composable () -> Unit)? = null,
+    prefix: (@Composable () -> Unit)? = null,
+    suffix: (@Composable () -> Unit)? = null,
     disabled: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
@@ -63,6 +65,8 @@ fun BisqTextField(
                     },
                 textStyle = TextStyle(fontSize = 22.sp),
                 onValueChange = onValueChanged,
+                prefix = prefix,
+                suffix = suffix,
                 colors = TextFieldDefaults.colors(
                     focusedTextColor = BisqTheme.colors.light3,
                     unfocusedTextColor = BisqTheme.colors.secondaryHover,

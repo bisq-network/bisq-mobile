@@ -16,5 +16,6 @@ val FrCommonStrings = CommonStrings(
     offers_list_buy_from = "[FR] Buy from",
     offers_list_sell_to = "[FR] Sell to",
 
-    take_offer = "[FR] Take offer"
+    take_offer = "[FR] Take offer",
+    currency = "[FR] Currency"
 )

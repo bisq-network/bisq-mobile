@@ -169,4 +169,7 @@ val FrBisqEasyTradeWizardStrings = BisqEasyTradeWizardStrings(
     bisqEasy_tradeWizard_review_chatMessage_peerMessageTitle_sell = "[FR] Sell Bitcoin to",
     bisqEasy_tradeWizard_review_chatMessage_peerMessageTitle_buy = "[FR] Buy Bitcoin from",
     bisqEasy_tradeWizard_review_chatMessage_myMessageTitle = "[FR] My Offer to {0} Bitcoin",
+
+    bisqEasy_tradeWizard_buy_description = "[FR] The easiest way to get your first Bitcoin",
+    bisqEasy_tradeWizard_sell_description = "[FR] Experienced Bisq users with reputation can act as seller",
 )

@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -27,23 +28,23 @@ fun TradeFlowCompleted(
     val btcValue = "0.00173399 BTC"
 
     Column {
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         BisqText.h6Regular(
             text = strings.bisqEasy_tradeCompleted_title
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         BisqTextField(
             value = sendAmount,
             onValueChanged = {},
             label = strings.bisqEasy_tradeCompleted_body_you_have_receveid,
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         BisqTextField(
             value = btcValue,
             onValueChanged = {},
             label = strings.bisqEasy_tradeCompleted_body_you_have_sold
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,

@@ -16,6 +16,8 @@ import network.bisq.mobile.presentation.ui.navigation.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.*
 import network.bisq.mobile.presentation.ui.uicases.offers.OffersListScreen
+import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.CreateOfferBuySellScreen
+import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.CreateOfferCurrencySelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferReviewTradeScreen
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferTradeAmountScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
@@ -73,6 +75,14 @@ fun RootNavGraph() {
 
         addScreen(Routes.TradeFlow.name) {
             TradeFlowScreen()
+        }
+
+        addScreen(Routes.CreateOfferBuySell.name) {
+            CreateOfferBuySellScreen()
+        }
+
+        addScreen(Routes.CreateOfferCurrency.name) {
+            CreateOfferCurrencySelectorScreen()
         }
 
     }

@@ -171,4 +171,8 @@ data class BisqEasyTradeWizardStrings(
     val bisqEasy_tradeWizard_review_chatMessage_peerMessageTitle_sell: String,
     val bisqEasy_tradeWizard_review_chatMessage_peerMessageTitle_buy: String,
     val bisqEasy_tradeWizard_review_chatMessage_myMessageTitle: String,
+
+    // Mobile app specific
+    val bisqEasy_tradeWizard_buy_description: String,
+    val bisqEasy_tradeWizard_sell_description: String,
 )

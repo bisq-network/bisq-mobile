@@ -25,6 +25,10 @@ class GettingStartedPresenter(
 
     private var job: Job? = null
 
+    override fun navigateToCreateOffer() {
+        rootNavigator.navigate(Routes.CreateOfferBuySell.name)
+    }
+
     private fun refresh() {
         job = backgroundScope.launch {
             try {
