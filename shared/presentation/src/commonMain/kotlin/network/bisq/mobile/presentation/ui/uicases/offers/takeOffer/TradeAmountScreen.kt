@@ -23,6 +23,8 @@ interface ITakeOfferTradeAmountPresenter : ViewPresenter {
 
     fun goBack()
     fun amountConfirmed()
+    
+    fun onFixedAmountChange(amount: Float)
 }
 
 @Composable
@@ -62,7 +64,8 @@ fun TakeOfferTradeAmountScreen() {
             minAmount = offerMinFiatAmount,
             maxAmount = offerMaxFiatAmount,
             exchangeRate = 95000.0,
-            currency = "USD"
+            currency = "USD",
+            onValueChange = {value -> }
         )
     }
 }

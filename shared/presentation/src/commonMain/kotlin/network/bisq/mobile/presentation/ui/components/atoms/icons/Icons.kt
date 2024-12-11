@@ -29,6 +29,11 @@ fun CopyIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun InfoIcon(modifier: Modifier = Modifier.size(16.dp)) {
+    Image(painterResource(Res.drawable.icon_info), "Info icon", modifier = modifier)
+}
+
+@Composable
 fun SwapHArrowIcon(modifier: Modifier = Modifier.size(16.dp)) {
     Image(painterResource(Res.drawable.exchange_h_arrow), "Swap horizontal icon", modifier = modifier)
 }

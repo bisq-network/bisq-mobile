@@ -29,7 +29,7 @@ data class BisqEasyTradeWizardStrings(
     val bisqEasy_price_percentage_title: String,
     val bisqEasy_price_percentage_inputBoxText: String,
     val bisqEasy_price_tradePrice_title: String,
-    val bisqEasy_price_tradePrice_inputBoxText: String,
+    val bisqEasy_price_tradePrice_inputBoxText: (String) -> String,
     val bisqEasy_price_feedback_sentence: String,
     val bisqEasy_price_feedback_sentence_veryLow: String,
     val bisqEasy_price_feedback_sentence_low: String,
@@ -85,8 +85,8 @@ data class BisqEasyTradeWizardStrings(
     val bisqEasy_tradeWizard_amount_buyer_numSellers_many: String,
     val bisqEasy_tradeWizard_amount_numOffers_0: String,
     val bisqEasy_tradeWizard_amount_numOffers_1: String,
-    val bisqEasy_tradeWizard_amount_numOffers_many: String,
-    val bisqEasy_tradeWizard_amount_buyer_limitInfo: String,
+    val bisqEasy_tradeWizard_amount_numOffers_many: (String) -> String,
+    val bisqEasy_tradeWizard_amount_buyer_limitInfo:  (String, String) -> String,
     val bisqEasy_tradeWizard_amount_buyer_limitInfo_overlay_info: String,
     val bisqEasy_tradeWizard_amount_buyer_limitInfo_wizard_info_leadLine: String,
     val bisqEasy_tradeWizard_amount_buyer_limitInfo_wizard_info: String,
@@ -175,4 +175,10 @@ data class BisqEasyTradeWizardStrings(
     // Mobile app specific
     val bisqEasy_tradeWizard_buy_description: String,
     val bisqEasy_tradeWizard_sell_description: String,
+    val bisqEasy_tradeWizard_trade_amount: String,
+    val bisqEasy_tradeWizard_fixed_amount: String,
+    val bisqEasy_tradeWizard_range_amount: String,
+    val bisqEasy_tradeWizard_trade_price_percentage: String,
+    val bisqEasy_tradeWizard_trade_price_fixed: String,
+
 )

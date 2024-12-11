@@ -14,9 +14,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -31,6 +33,7 @@ fun BisqTextField(
     prefix: (@Composable () -> Unit)? = null,
     suffix: (@Composable () -> Unit)? = null,
     disabled: Boolean = false,
+    indicatorColor: Color = BisqTheme.colors.primary,
     modifier: Modifier = Modifier,
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -55,6 +58,16 @@ fun BisqTextField(
                 .fillMaxWidth()
                 .clip(shape = RoundedCornerShape(6.dp))
                 .background(color = BisqTheme.colors.secondary)
+                .drawBehind {
+                    if (isFocused || value.isNotEmpty()) {
+                        drawLine(
+                            color = indicatorColor,
+                            start = Offset(0f, size.height),
+                            end = Offset(size.width, size.height),
+                            strokeWidth = 4.dp.toPx()
+                        )
+                    }
+                }
         ) {
             TextField(
                 value = value,

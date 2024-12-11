@@ -27,7 +27,6 @@ import org.koin.compose.koinInject
 @Composable
 fun CreateOfferCurrencySelectorScreen() {
     val strings = LocalStrings.current.bisqEasyTradeWizard
-    val stringsCommon = LocalStrings.current.common
     val commonStrings = LocalStrings.current.common
     val presenter: ICreateOfferPresenter = koinInject()
     val state by presenter.state.collectAsState()

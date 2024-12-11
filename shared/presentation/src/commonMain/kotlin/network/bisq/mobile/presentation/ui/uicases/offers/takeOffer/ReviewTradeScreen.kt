@@ -31,29 +31,29 @@ interface ITakeOfferReviewTradePresenter : ViewPresenter {
 @Composable
 fun TakeOfferReviewTradeScreen() {
     val strings = LocalStrings.current.bisqEasyTradeWizard
-    val bisqEasyStrings = LocalStrings.current.bisqEasy
-    val tradeStateStrings = LocalStrings.current.bisqEasyTradeState
+    val stringsBisqEasy = LocalStrings.current.bisqEasy
+    val stringsTradeState = LocalStrings.current.bisqEasyTradeState
     val commonStrings = LocalStrings.current.common
     val presenter: ITakeOfferReviewTradePresenter = koinInject()
 
     val offer = presenter.offerListItems.collectAsState().value.first()
 
     MultiScreenWizardScaffold(
-        bisqEasyStrings.bisqEasy_takeOffer_progress_review,
+        stringsBisqEasy.bisqEasy_takeOffer_progress_review,
         stepIndex = 3,
         stepsLength = 3,
         prevOnClick = { presenter.goBack() },
-        nextButtonText = bisqEasyStrings.bisqEasy_takeOffer_review_takeOffer,
+        nextButtonText = stringsBisqEasy.bisqEasy_takeOffer_review_takeOffer,
         nextOnClick = { presenter.tradeConfirmed() }
     ) {
         BisqText.h3Regular(
-            text = bisqEasyStrings.bisqEasy_takeOffer_progress_review,
+            text = stringsBisqEasy.bisqEasy_takeOffer_progress_review,
             color = BisqTheme.colors.light1
         )
         BisqGap.V2()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoRow(
-                label1 = tradeStateStrings.bisqEasy_tradeState_header_direction.uppercase(),
+                label1 = stringsTradeState.bisqEasy_tradeState_header_direction.uppercase(),
                 value1 = if (offer.direction.isBuy)
                     strings.bisqEasy_tradeWizard_directionAndMarket_buy
                 else

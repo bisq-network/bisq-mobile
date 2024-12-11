@@ -10,8 +10,10 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.components.atoms.*
+import network.bisq.mobile.presentation.ui.components.atoms.icons.InfoIcon
 import network.bisq.mobile.presentation.ui.helpers.numberFormatter
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,7 +22,8 @@ fun BisqAmountSelector(
     minAmount: Float,
     maxAmount: Float,
     exchangeRate: Double,
-    currency: String
+    currency: String,
+    onValueChange: (Float) -> Unit
 ) {
     var sliderPosition by remember { mutableFloatStateOf((minAmount + maxAmount) * 0.5f) }
     val roundedNumber = (sliderPosition * 100).roundToInt() / 100.0
@@ -38,6 +41,10 @@ fun BisqAmountSelector(
     val tooltipState = rememberTooltipState(isPersistent = true)
     val scope = rememberCoroutineScope()
 
+    LaunchedEffect(sliderPosition) {
+        onValueChange(sliderPosition)
+    }
+
     Column(
         verticalArrangement = Arrangement.Top
     ) {
@@ -47,7 +54,7 @@ fun BisqAmountSelector(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.Bottom
             ) {
                 BisqText.h1Regular(
@@ -61,7 +68,7 @@ fun BisqAmountSelector(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // TODO: Do the btc-sats display control, as suggested by cbeams
+                // TODO: Create a control out of this
                 DynamicImage(
                     "drawable/bitcoin.png",
                     modifier = Modifier.size(16.dp)
@@ -75,6 +82,8 @@ fun BisqAmountSelector(
                         text = "$satoshi sats",
                     )
                 }
+                BisqGap.H1()
+                // TODO: Needs work
                 TooltipBox(positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
                     tooltip = {
                         Box(
@@ -87,7 +96,7 @@ fun BisqAmountSelector(
                         }
 
                     },
-                    modifier = Modifier.offset((-20).dp, (-20).dp),
+                    // modifier = Modifier.offset((-20).dp, (-20).dp),
                     state = tooltipState
                 ) {
                     IconButton(onClick = {
@@ -95,11 +104,8 @@ fun BisqAmountSelector(
                             tooltipState.show()
                         }
                     }) {
-                        SvgImage(
-                            image = SvgImageNames.INFO,
-                            modifier = Modifier.size(16.dp),
-                            colorFilter = ColorFilter.tint(BisqTheme.colors.grey2)
-                        )
+                        // TODO: Make SVG Icons work!
+                        InfoIcon()
                     }
                 }
             }

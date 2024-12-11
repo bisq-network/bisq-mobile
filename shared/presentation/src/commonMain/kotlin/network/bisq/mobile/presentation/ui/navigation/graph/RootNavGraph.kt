@@ -16,8 +16,7 @@ import network.bisq.mobile.presentation.ui.navigation.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.*
 import network.bisq.mobile.presentation.ui.uicases.offers.OffersListScreen
-import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.CreateOfferBuySellScreen
-import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.CreateOfferCurrencySelectorScreen
+import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.*
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferReviewTradeScreen
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferTradeAmountScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
@@ -81,9 +80,26 @@ fun RootNavGraph() {
             CreateOfferBuySellScreen()
         }
 
-        addScreen(Routes.CreateOfferCurrency.name) {
+        addScreen(Routes.CreateOfferCurrency.name, wizardTransition = true) {
             CreateOfferCurrencySelectorScreen()
         }
+
+        addScreen(Routes.CreateOfferAmount.name, wizardTransition = true) {
+            CreateOfferAmountSelectorScreen()
+        }
+
+        addScreen(Routes.CreateOfferTradePrice.name, wizardTransition = true) {
+            CreateOfferTradePriceSelectorScreen()
+        }
+
+        addScreen(Routes.CreateOfferPaymentMethod.name, wizardTransition = true) {
+            CreateOfferPaymentMethodSelectorScreen()
+        }
+
+        addScreen(Routes.CreateOfferReviewOffer.name, wizardTransition = true) {
+            CreateOfferReviewOfferScreen()
+        }
+
 
     }
 }

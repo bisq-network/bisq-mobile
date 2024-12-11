@@ -30,4 +30,7 @@ open class TradeAmountPresenter(
         rootNavigator.navigate(Routes.TakeOfferPaymentMethod.name)
     }
 
+    override fun onFixedAmountChange(amount: Float) {
+        log.i { "Change amount: ${amount.toString()}" }
+    }
 }
