@@ -97,7 +97,8 @@ fun TopBar(
                 modifier = Modifier.padding(top = if (isFlowScreen) 15.dp  else 0.dp, end = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                BellIcon()
+//                TODO implement full feature after MVP
+//                BellIcon()
                 Spacer(modifier = Modifier.width(12.dp))
                 UserIcon(presenter.uniqueAvatar.value, modifier = Modifier.size(30.dp))
             }
