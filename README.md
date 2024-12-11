@@ -12,6 +12,7 @@
      - [Project dev requirements](#project-dev-requirements)
    - [Getting started](#getting-started)
      - [Getting started for Android Node](#getting-started-for-android-node)
+   - [Local Env Setup](#local-env-setup)
    - [UI](#ui)
      - [Designs](#designs)
      - [Navigation Implementation](#navigation-implementation)
@@ -83,6 +84,24 @@ Addicionally, for the `androidNode` module to build you need to have its depende
 3. run `./gradlew publishAll` // this will install all the jars you need in your m2 repo
 
 Done! Alternatively if you are interested only in contributing for the `xClients` you can just build them individually instead of building the whole project.
+
+### Local Env Setup
+
+**Node**
+
+You just need to run a local bisq seed node from the bisq2 project. By default port 8000 is used
+
+**Clients**
+
+You need to run the seed node as explained above + the http-api module with the following VM parameters
+
+```
+ -Dapplication.appName=bisq2_restApi_clear
+ -Dapplication.network.supportedTransportTypes.2=CLEAR
+ -Dapplication.devMode=true
+```
+
+Default networking setup for the WebSocket (WS) connection can be found in `gradle.properties` file. You can change there for locally building pointing at the ip you are interested in.
 
 ### UI
 

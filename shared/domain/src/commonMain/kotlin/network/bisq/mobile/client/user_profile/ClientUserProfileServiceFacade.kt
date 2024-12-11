@@ -15,10 +15,8 @@ import kotlin.random.Random
 class ClientUserProfileServiceFacade(
     private val apiGateway: UserProfileApiGateway,
     private val clientCatHashService: ClientCatHashService<PlatformImage>
-) :
-    UserProfileServiceFacade, Logging {
+) : UserProfileServiceFacade, Logging {
 
-    // Misc
     private var preparedData: PreparedData? = null
 
     // API
@@ -27,58 +25,41 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun generateKeyPair(result: (String, String, PlatformImage?) -> Unit) {
-        try {
-            val ts = Clock.System.now().toEpochMilliseconds()
-            val preparedData = apiGateway.requestPreparedData()
-            createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
-            val pubKeyHash: ByteArray = preparedData.id.hexToByteArray()
-            val powSolution = preparedData.proofOfWork.solution
-            val image: PlatformImage? = clientCatHashService.getImage(
-                pubKeyHash,
-                powSolution,
-                0,
-                120
-            )
+        val ts = Clock.System.now().toEpochMilliseconds()
+        val preparedData = apiGateway.requestPreparedData()
+        createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
+        val pubKeyHash: ByteArray = preparedData.id.hexToByteArray()
+        val powSolution = preparedData.proofOfWork.solution
+        val image: PlatformImage? = clientCatHashService.getImage(
+            pubKeyHash,
+            powSolution,
+            0,
+            120
+        )
 
-            result(preparedData.id, preparedData.nym, image)
-            this.preparedData = preparedData
-        } catch (e: Exception) {
-            log.e("generateKeyPair failed", e)
-        }
+        result(preparedData.id, preparedData.nym, image)
+        this.preparedData = preparedData
     }
 
     override suspend fun createAndPublishNewUserProfile(nickName: String) {
         preparedData?.let { preparedData ->
-            try {
-                val response: UserProfileResponse =
-                    apiGateway.createAndPublishNewUserProfile(
-                        nickName,
-                        preparedData
-                    )
-                this.preparedData = null
-                log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = ${response.userProfileId}" }
-            } catch (e: Exception) {
-                log.e("createAndPublishNewUserProfile failed", e)
-            }
+            val response: UserProfileResponse =
+                apiGateway.createAndPublishNewUserProfile(
+                    nickName,
+                    preparedData
+                )
+            this.preparedData = null
+            log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = ${response.userProfileId}" }
         }
     }
 
     override suspend fun getUserIdentityIds(): List<String> {
-        return try {
-            apiGateway.getUserIdentityIds()
-        } catch (e: Exception) {
-            log.e("getUserIdentityIds failed", e)
-            emptyList()
-        }
+        return apiGateway.getUserIdentityIds()
     }
 
-    override suspend fun applySelectedUserProfile(result: (String?, String?, String?) -> Unit) {
-        try {
-            val userProfile = getSelectedUserProfile()
-            result(userProfile.nickName, userProfile.nym, userProfile.id)
-        } catch (e: Exception) {
-            log.e("applySelectedUserProfile failed", e)
-        }
+    override suspend fun applySelectedUserProfile(): Triple<String?, String?, String?> {
+        val userProfile = getSelectedUserProfile()
+        return Triple(userProfile.nickName, userProfile.nym, userProfile.id)
     }
 
     // Private

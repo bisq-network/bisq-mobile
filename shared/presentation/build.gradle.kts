@@ -7,7 +7,6 @@ plugins {
     alias(libs.plugins.androidLibrary)
     alias(libs.plugins.jetbrainsCompose)
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.buildconfig)
     alias(libs.plugins.ksp)
 }
 
@@ -17,37 +16,6 @@ dependencies {
 }
 
 version = project.findProperty("shared.version") as String
-
-// The following allow us to configure each app type independently and link for example with gradle.properties
-// TODO potentially to be refactored into a shared/common module
-buildConfig {
-    forClass("network.bisq.mobile.client.shared", className = "BuildConfig") {
-        buildConfigField("APP_NAME", project.findProperty("client.name").toString())
-        buildConfigField(
-            "ANDROID_APP_VERSION",
-            project.findProperty("client.android.version").toString()
-        )
-        buildConfigField("IOS_APP_VERSION", project.findProperty("client.ios.version").toString())
-        buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
-        buildConfigField("BUILD_TS", System.currentTimeMillis())
-    }
-    forClass("network.bisq.mobile.android.node", className = "BuildNodeConfig") {
-        buildConfigField("APP_NAME", project.findProperty("node.name").toString())
-        buildConfigField("APP_VERSION", project.findProperty("node.android.version").toString())
-        buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
-        buildConfigField("BUILD_TS", System.currentTimeMillis())
-    }
-//    buildConfigField("APP_SECRET", "Z3JhZGxlLWphdmEtYnVpbGRjb25maWctcGx1Z2lu")
-//    buildConfigField<String>("OPTIONAL", null)
-//    buildConfigField("FEATURE_ENABLED", true)
-//    buildConfigField("MAGIC_NUMBERS", intArrayOf(1, 2, 3, 4))
-//    buildConfigField("STRING_LIST", arrayOf("a", "b", "c"))
-//    buildConfigField("MAP", mapOf("a" to 1, "b" to 2))
-//    buildConfigField("FILE", File("aFile"))
-//    buildConfigField("URI", uri("https://example.io"))
-//    buildConfigField("com.github.gmazzo.buildconfig.demos.kts.SomeData", "DATA", "SomeData(\"a\", 1)")
-
-}
 
 kotlin {
     androidTarget {
