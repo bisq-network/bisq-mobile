@@ -27,6 +27,7 @@ import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.client.user_profile.ClientUserProfileServiceFacade
 import network.bisq.mobile.client.user_profile.UserProfileApiGateway
+import network.bisq.mobile.domain.data.EnvironmentController
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
@@ -68,11 +69,12 @@ val clientModule = module {
     }
 
     single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade() }
-
-    single(named("ApiHost")) { provideApiHost() }
-    single(named("ApiPort")) { (BuildConfig.WS_PORT.takeIf { it.isNotEmpty() } ?: "8090").toInt() }
-    single(named("WebsocketApiHost")) { provideWebsocketHost() }
-    single(named("WebsocketApiPort")) { (BuildConfig.WS_PORT.takeIf { it.isNotEmpty() } ?: "8090").toInt() }
+    
+    single { EnvironmentController() }
+    single(named("ApiHost")) { get<EnvironmentController>().getApiHost() }
+    single(named("ApiPort")) { get<EnvironmentController>().getApiPort() }
+    single(named("WebsocketApiHost")) { get<EnvironmentController>().getWebSocketHost() }
+    single(named("WebsocketApiPort")) { get<EnvironmentController>().getWebSocketPort() }
 
     single {
         WebSocketClient(
@@ -84,6 +86,7 @@ val clientModule = module {
     }
     // single { WebSocketHttpClient(get()) }
     single {
+        println("Running on simulator: ${get<EnvironmentController>().isSimulator()}")
         WebSocketApiClient(
             get(),
             get(),
@@ -101,12 +104,4 @@ val clientModule = module {
 
     single { OfferbookApiGateway(get(), get()) }
     single<OfferbookServiceFacade> { ClientOfferbookServiceFacade(get(), get(), get(), get()) }
-}
-
-fun provideApiHost(): String {
-    return BuildConfig.WS_ANDROID_HOST.takeIf { it.isNotEmpty() } ?: "10.0.2.2"
-}
-
-fun provideWebsocketHost(): String {
-    return BuildConfig.WS_ANDROID_HOST.takeIf { it.isNotEmpty() } ?: "10.0.2.2"
 }
