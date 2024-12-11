@@ -23,8 +23,8 @@ import network.bisq.mobile.client.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.websocket.messages.WebSocketMessage
 import network.bisq.mobile.client.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketResponse
-import network.bisq.mobile.client.websocket.messages.WebSocketApiRequest
-import network.bisq.mobile.client.websocket.messages.WebSocketApiResponse
+import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
+import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.client.user_profile.ClientUserProfileServiceFacade
 import network.bisq.mobile.client.user_profile.UserProfileApiGateway
 import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
@@ -43,11 +43,11 @@ val clientModule = module {
             polymorphic(WebSocketMessage::class) {
                 subclass(WebSocketEvent::class, WebSocketEvent.serializer())
                 polymorphic(WebSocketRequest::class) {
-                    subclass(WebSocketApiRequest::class, WebSocketApiRequest.serializer())
+                    subclass(WebSocketRestApiRequest::class, WebSocketRestApiRequest.serializer())
                     subclass(SubscriptionRequest::class, SubscriptionRequest.serializer())
                 }
                 polymorphic(WebSocketResponse::class) {
-                    subclass(WebSocketApiResponse::class, WebSocketApiResponse.serializer())
+                    subclass(WebSocketRestApiResponse::class, WebSocketRestApiResponse.serializer())
                     subclass(SubscriptionResponse::class, SubscriptionResponse.serializer())
                 }
             }

@@ -9,8 +9,8 @@ import io.ktor.http.contentType
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.WebSocketClient
-import network.bisq.mobile.client.websocket.messages.WebSocketApiRequest
-import network.bisq.mobile.client.websocket.messages.WebSocketApiResponse
+import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
+import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.utils.Logging
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -55,16 +55,16 @@ class WebSocketApiClient(
     ): T {
         val requestId = Uuid.random().toString()
         val fullPath = apiPath + path
-        val responseClassName = WebSocketApiResponse::class.qualifiedName!!
-        val webSocketApiRequest = WebSocketApiRequest(
+        val responseClassName = WebSocketRestApiResponse::class.qualifiedName!!
+        val webSocketRestApiRequest = WebSocketRestApiRequest(
             responseClassName,
             requestId,
             method,
             fullPath,
             bodyAsJson
         )
-        val response = webSocketClient.sendRequestAndAwaitResponse(webSocketApiRequest)
-        require(response is WebSocketApiResponse) { "Response not of expected type. response=$response" }
+        val response = webSocketClient.sendRequestAndAwaitResponse(webSocketRestApiRequest)
+        require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
         val body = response.body
         val decodeFromString = json.decodeFromString<T>(body)
         return decodeFromString

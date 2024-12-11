@@ -101,7 +101,7 @@ You need to run the seed node as explained above + the http-api module with the 
  -Dapplication.devMode=true
 ```
 
-Default networking setup for the WebSocket (WS) connection can be found in `gradle.properties` file. If you need to override locally just use `local.properties` as in any gradle project.
+Default networking setup for the WebSocket (WS) connection can be found in `gradle.properties` file. You can change there for locally building pointing at the ip you are interested in.
 
 ### UI
 
