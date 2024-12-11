@@ -100,6 +100,7 @@ open class CreateOfferPresenter(
                 quoteSidePaymentMethods = listOf("Amazon-Gift-Card", "ACH-Transfer", "Cash-App"),
                 baseSidePaymentMethods = listOf("Main-Chain", "Ln"),
                 supportedLanguageCodes = "en,es,de",
+                quoteCurrencyCode = "USD",
             )
         )
     )
@@ -209,6 +210,10 @@ open class CreateOfferPresenter(
 
     override fun createOffer() {
         log.i { "createOffer" }
+
+        CoroutineScope(Dispatchers.Main).launch {
+            rootNavigator.popBackStack(Routes.TabContainer.name, inclusive = false, saveState = false )
+        }
     }
 
     override fun onSelectPriceType(priceType: PriceType) {

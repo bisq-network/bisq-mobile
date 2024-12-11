@@ -42,7 +42,6 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 interface IGettingStarted : ViewPresenter {
-    val btcPrice: StateFlow<String>
     val offersOnline: StateFlow<Number>
     val publishedProfiles: StateFlow<Number>
 
