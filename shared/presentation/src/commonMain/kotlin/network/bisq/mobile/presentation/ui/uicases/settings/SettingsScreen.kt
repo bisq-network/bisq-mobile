@@ -7,15 +7,21 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import org.koin.compose.koinInject
+
+
+interface ISettingsPresenter: ViewPresenter {
+    fun menuTree(): MenuItem
+}
 
 // UI model/s
 sealed class MenuItem(val label: String, val onClick: (() -> Unit)? = null) {
@@ -56,50 +62,78 @@ fun SettingsButton(label: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(BisqTheme.colors.backgroundColor)
+            .background(BisqTheme.colors.grey5)
             .clickable(onClick = onClick)
             .padding(vertical = 12.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyLarge.copy(color = BisqTheme.colors.primary, fontSize = 16.sp),
+            style = MaterialTheme.typography.bodyLarge.copy(color = BisqTheme.colors.light1 , fontSize = 16.sp),
             modifier = Modifier.weight(1f)
         )
         Text(
             text = ">",
             textAlign = TextAlign.End,
-            style = MaterialTheme.typography.bodyLarge.copy(color = BisqTheme.colors.secondary, fontSize = 16.sp),
+            style = MaterialTheme.typography.bodyLarge.copy(color = BisqTheme.colors.light1, fontSize = 16.sp),
             modifier = Modifier.weight(1f)
         )
     }
 }
 
-// TODO refactor to get the menu structure from presenter and let presenter decide what to do
-// on click (in this way each presenter can customize the settings , useful for node vs xclients
 @Composable
-fun SettingsScreen() {
-//    val currentMenu = remember { mutableStateOf(menuTree) }
-    // TODO get menu tree from presenter
-    val exampleMenuTree = MenuItem.Parent(
-        label = "Settings",
-        children = listOf(
-            MenuItem.Parent(
-                label = "Account",
-                children = listOf(
-                    MenuItem.Leaf(label = "User Profile", onClick = { println("Userprofile") }),
-                    MenuItem.Leaf(label = "Payment Methods", onClick = { println("Payment methods") })
-                )
+fun BreadcrumbNavigation(
+    path: List<MenuItem>,
+    onBreadcrumbClick: (Int) -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        path.forEachIndexed { index, menuItem ->
+            Text(
+                text = menuItem.label,
+                style = MaterialTheme.typography.bodyLarge.copy(color = BisqTheme.colors.grey1),
+                modifier = Modifier.clickable { onBreadcrumbClick(index) }
             )
-        )
-    )
-    val currentMenu = remember { mutableStateOf(exampleMenuTree) }
+            if (index != path.lastIndex) {
+                Text(" > ", color = BisqTheme.colors.grey1) // Separator
+            }
+        }
+    }
+}
 
-    SettingsMenu(menuItem = currentMenu.value) { selectedItem ->
-        if (selectedItem is MenuItem.Parent) {
-            currentMenu.value = selectedItem
-        } else {
-            selectedItem.onClick?.invoke()
+@Composable
+fun SettingsScreen(isTabSelected: Boolean) {
+
+//    val currentMenu = remember { mutableStateOf(menuTree) }
+    val settingsPresenter: ISettingsPresenter = koinInject()
+    val menuTree: MenuItem = settingsPresenter.menuTree()
+    val currentMenu = remember { mutableStateOf(menuTree) }
+    val menuPath = remember { mutableStateListOf(menuTree) }
+
+    RememberPresenterLifecycle(settingsPresenter)
+    // Reset to root menu when the tab is selected
+    LaunchedEffect(isTabSelected) {
+        if (isTabSelected) {
+            currentMenu.value = menuTree
+        }
+    }
+
+    Column {
+        BreadcrumbNavigation(path = menuPath) { index ->
+            currentMenu.value = menuPath[index]
+            menuPath.removeRange(index + 1, menuPath.size)
+        }
+        SettingsMenu(menuItem = currentMenu.value) { selectedItem ->
+            if (selectedItem is MenuItem.Parent) {
+                currentMenu.value = selectedItem
+                menuPath.add(selectedItem)
+            } else {
+                selectedItem.onClick?.invoke()
+            }
         }
     }
 }
