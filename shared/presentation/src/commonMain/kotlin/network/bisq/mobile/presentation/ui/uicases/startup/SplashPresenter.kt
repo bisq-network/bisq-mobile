@@ -46,18 +46,14 @@ open class SplashPresenter(
             val settings: Settings? = settingsRepository.data.value
 
             if (settings == null) {
-                rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
-                    popUpTo(Routes.Splash.name) { inclusive = true }
+                if (!doCustomNavigationLogic(Settings())) {
+                    navigateToHome()
                 }
             } else {
                 if (userProfileService.hasUserProfile()) {
-                    // rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
-                    // [DONE] For androidNode, goto TabContainer
-                    rootNavigator.navigate(Routes.TabContainer.name) {
-                        popUpTo(Routes.Splash.name) { inclusive = true }
+                    if (!doCustomNavigationLogic(settings)) {
+                        navigateToHome()
                     }
-
-                    doCustomNavigationLogic(settings)
                 } else {
                     // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
                     // If not, goto CreateProfile
@@ -75,19 +71,24 @@ open class SplashPresenter(
         }
     }
 
+    private fun navigateToHome() {
+        rootNavigator.navigate(Routes.TabContainer.name) {
+            popUpTo(Routes.Splash.name) { inclusive = true }
+        }
+    }
     /**
      * Default implementation in shared is for xClients. Override on node to avoid this.
+     * @return true if handled, false otherwise
      */
-    open fun doCustomNavigationLogic(settings: Settings) {
+    open fun doCustomNavigationLogic(settings: Settings): Boolean {
         if (settings.bisqApiUrl.isNotEmpty()) {
-            // Test if the Bisq remote instance is up and responding
-            // If yes, goto TabContainer screen.
-            // If no, goto TrustedNodeSetupScreen
+            navigateToHome()
         } else {
             rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
                 popUpTo(Routes.Splash.name) { inclusive = true }
             }
         }
+        return true
     }
 
     private fun cancelJob() {
