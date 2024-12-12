@@ -27,6 +27,7 @@ import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.client.user_profile.ClientUserProfileServiceFacade
 import network.bisq.mobile.client.user_profile.UserProfileApiGateway
 import network.bisq.mobile.domain.data.EnvironmentController
+import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
@@ -67,7 +68,7 @@ val clientModule = module {
         }
     }
 
-    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get()) }
+    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get()) }
     
     single { EnvironmentController() }
     single(named("ApiHost")) { get<EnvironmentController>().getApiHost() }
@@ -83,6 +84,9 @@ val clientModule = module {
             get(named("WebsocketApiPort"))
         )
     }
+
+    single { TrustedNodeService(get()) }
+
     // single { WebSocketHttpClient(get()) }
     single {
         println("Running on simulator: ${get<EnvironmentController>().isSimulator()}")

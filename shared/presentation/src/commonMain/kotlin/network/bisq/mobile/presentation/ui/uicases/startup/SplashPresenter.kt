@@ -43,26 +43,32 @@ open class SplashPresenter(
         CoroutineScope(Dispatchers.Main).launch {
 
             settingsRepository.fetch()
-            val settings: Settings = settingsRepository.data.value ?: Settings()
+            val settings: Settings? = settingsRepository.data.value
 
-            if (userProfileService.hasUserProfile()) {
-                // rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
-                // [DONE] For androidNode, goto TabContainer
-                rootNavigator.navigate(Routes.TabContainer.name) {
+            if (settings == null) {
+                rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
                     popUpTo(Routes.Splash.name) { inclusive = true }
                 }
-
-                doCustomNavigationLogic(settings)
             } else {
-                // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
-                // If not, goto CreateProfile
-                if (settings.firstLaunch) {
-                    rootNavigator.navigate(Routes.Onboarding.name) {
+                if (userProfileService.hasUserProfile()) {
+                    // rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
+                    // [DONE] For androidNode, goto TabContainer
+                    rootNavigator.navigate(Routes.TabContainer.name) {
                         popUpTo(Routes.Splash.name) { inclusive = true }
                     }
+
+                    doCustomNavigationLogic(settings)
                 } else {
-                    rootNavigator.navigate(Routes.CreateProfile.name) {
-                        popUpTo(Routes.Splash.name) { inclusive = true }
+                    // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
+                    // If not, goto CreateProfile
+                    if (settings.firstLaunch) {
+                        rootNavigator.navigate(Routes.Onboarding.name) {
+                            popUpTo(Routes.Splash.name) { inclusive = true }
+                        }
+                    } else {
+                        rootNavigator.navigate(Routes.CreateProfile.name) {
+                            popUpTo(Routes.Splash.name) { inclusive = true }
+                        }
                     }
                 }
             }
