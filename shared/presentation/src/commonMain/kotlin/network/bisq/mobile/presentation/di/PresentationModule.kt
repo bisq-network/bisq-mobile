@@ -42,7 +42,7 @@ val presentationModule = module {
 
     single<TopBarPresenter> { TopBarPresenter(get(), get()) } bind ITopBarPresenter::class
 
-    single {
+    single<SplashPresenter> {
         SplashPresenter(
             get(),
             get(),

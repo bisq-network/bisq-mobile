@@ -2,7 +2,7 @@ package network.bisq.mobile.client
 
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.websocket.WebSocketClient
-import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade

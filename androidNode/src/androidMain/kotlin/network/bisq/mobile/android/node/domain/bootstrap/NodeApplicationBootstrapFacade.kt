@@ -4,7 +4,7 @@ import bisq.application.State
 import bisq.common.observable.Observable
 import bisq.common.observable.Pin
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 
 class NodeApplicationBootstrapFacade(
     private val applicationService: AndroidApplicationService.Provider
