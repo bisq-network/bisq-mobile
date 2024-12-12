@@ -15,9 +15,10 @@ class NodeSplashPresenter(
 ) : SplashPresenter(mainPresenter, applicationBootstrapFacade, userProfileService, settingsRepository) {
 
     /**
-     * Default implementation in shared is for xClients. Override on node to avoid this.
+     * 
      */
-    override fun doCustomNavigationLogic(settings: Settings) {
+    override fun doCustomNavigationLogic(settings: Settings): Boolean {
         // do nothin
+        return false
     }
 }
