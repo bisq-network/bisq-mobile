@@ -12,10 +12,7 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_fiat_payment_waiting
 import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.delay
-import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
-import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
+import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.trades.ITradeFlowPresenter
@@ -41,11 +38,11 @@ fun TradeFlowFiatPayment(
     }
 
     Column {
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         BisqText.h6Regular(
             text = strings.bisqEasy_tradeState_info_buyer_phase2a_headline(sendAmount)
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         BisqTextField(
             value = sendAmount,
             onValueChanged = {},
@@ -58,12 +55,12 @@ fun TradeFlowFiatPayment(
             label = strings.bisqEasy_tradeState_info_buyer_phase2a_sellersAccount,
             disabled = true,
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         BisqText.smallRegular(
             text = strings.bisqEasy_tradeState_info_buyer_phase2a_reasonForPaymentInfo,
             color = BisqTheme.colors.grey1
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         BisqButton(
             text = strings.bisqEasy_tradeState_info_buyer_phase2a_confirmFiatSent(sendAmount),
             onClick = { presenter.confirmFiatPayment() },
@@ -88,7 +85,7 @@ fun ShowLoaderFiatPayment(
         onNext()
     }
 
-    Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+    BisqGap.V1()
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)

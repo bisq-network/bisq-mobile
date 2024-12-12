@@ -28,6 +28,7 @@ fun BisqButton(
     iconOnly: (@Composable () -> Unit)? = null,
     leftIcon: (@Composable () -> Unit)? = null,
     rightIcon: (@Composable () -> Unit)? = null,
+    textComponent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 8.dp,
     disabled: Boolean = false,
@@ -44,10 +45,11 @@ fun BisqButton(
             disabledContentColor = color),
         shape = RoundedCornerShape(cornerRadius),
         enabled = !disabled,
-        border = border
+        border = border,
+        modifier = modifier
     ) {
-        if (iconOnly == null && text == null) {
-            BisqText.baseMedium("Error: Pass either text or icon")
+        if (iconOnly == null && text == null && textComponent == null) {
+            BisqText.baseMedium("Error: Pass either text or customText or icon")
         }
 
         if (iconOnly != null) {
@@ -56,10 +58,14 @@ fun BisqButton(
             Row {
                 if(leftIcon != null) leftIcon()
                 if(leftIcon != null) Spacer(modifier = Modifier.width(10.dp))
-                BisqText.baseMedium(
-                    text = text,
-                    color = BisqTheme.colors.light1,
-                    )
+                if (textComponent != null) {
+                    textComponent()
+                } else {
+                    BisqText.baseMedium(
+                        text = text,
+                        color = BisqTheme.colors.light1,
+                        )
+                }
                 if(rightIcon != null) Spacer(modifier = Modifier.width(10.dp))
                 if(rightIcon != null) rightIcon()
             }

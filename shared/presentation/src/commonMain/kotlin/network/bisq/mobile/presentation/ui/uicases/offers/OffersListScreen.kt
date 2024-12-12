@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.client.replicated_model.offer.Direction
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.DirectionToggle
 import network.bisq.mobile.presentation.ui.components.molecules.OfferCard
@@ -65,7 +66,7 @@ fun OffersListScreen() {
             presenter.onSelectDirection(direction)
         }
 
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),

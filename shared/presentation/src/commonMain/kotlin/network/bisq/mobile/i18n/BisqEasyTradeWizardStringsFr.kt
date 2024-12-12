@@ -27,7 +27,7 @@ val FrBisqEasyTradeWizardStrings = BisqEasyTradeWizardStrings(
     bisqEasy_price_percentage_title = "[FR] Percentage price",
     bisqEasy_price_percentage_inputBoxText = "[FR] Market price percentage between -10% and 50%",
     bisqEasy_price_tradePrice_title = "[FR] Fixed price",
-    bisqEasy_price_tradePrice_inputBoxText = "[FR] Trade price in {0}",
+    bisqEasy_price_tradePrice_inputBoxText = { currency -> "[FR] Trade price in $currency" },
     bisqEasy_price_feedback_sentence = "[FR] Your offer has {0} chances to be taken at this price.",
     bisqEasy_price_feedback_sentence_veryLow = "[FR] very low",
     bisqEasy_price_feedback_sentence_low = "[FR] low",
@@ -83,8 +83,8 @@ val FrBisqEasyTradeWizardStrings = BisqEasyTradeWizardStrings(
     bisqEasy_tradeWizard_amount_buyer_numSellers_many = "[FR] are {0} sellers",
     bisqEasy_tradeWizard_amount_numOffers_0 = "[FR] is no offer",
     bisqEasy_tradeWizard_amount_numOffers_1 = "[FR] is one offer",
-    bisqEasy_tradeWizard_amount_numOffers_many = "[FR] are {0} offers",
-    bisqEasy_tradeWizard_amount_buyer_limitInfo = "[FR] There {0} in the network with sufficient reputation to take an offer of {1}.",
+    bisqEasy_tradeWizard_amount_numOffers_many = { count -> "[FR] are $count offers" },
+    bisqEasy_tradeWizard_amount_buyer_limitInfo = { sellers, currency -> "[FR] There $sellers in the network with sufficient reputation to take an offer of $currency."},
     bisqEasy_tradeWizard_amount_buyer_limitInfo_overlay_info = "[FR] A seller who wants to take your offer of {0}, must have a reputation score of at least {1}.\n By reducing the maximum trade amount, you make your offer accessible to more sellers.",
     bisqEasy_tradeWizard_amount_buyer_limitInfo_wizard_info_leadLine = "[FR] There {0} matching the chosen trade amount.",
     bisqEasy_tradeWizard_amount_buyer_limitInfo_wizard_info = "[FR] For offers up to {0}, reputation requirements are relaxed.",
@@ -169,4 +169,14 @@ val FrBisqEasyTradeWizardStrings = BisqEasyTradeWizardStrings(
     bisqEasy_tradeWizard_review_chatMessage_peerMessageTitle_sell = "[FR] Sell Bitcoin to",
     bisqEasy_tradeWizard_review_chatMessage_peerMessageTitle_buy = "[FR] Buy Bitcoin from",
     bisqEasy_tradeWizard_review_chatMessage_myMessageTitle = "[FR] My Offer to {0} Bitcoin",
+
+    bisqEasy_tradeWizard_buy_description = "[FR] The easiest way to get your first Bitcoin",
+    bisqEasy_tradeWizard_sell_description = "[FR] Experienced Bisq users with reputation can act as seller",
+
+    bisqEasy_tradeWizard_trade_amount= "[FR] Trade amount",
+    bisqEasy_tradeWizard_fixed_amount= "[FR] Fixed amount",
+    bisqEasy_tradeWizard_range_amount= "[FR] Range amount",
+
+    bisqEasy_tradeWizard_trade_price_percentage = "[FR] Percentage",
+    bisqEasy_tradeWizard_trade_price_fixed = "[FR] Fixed",
 )

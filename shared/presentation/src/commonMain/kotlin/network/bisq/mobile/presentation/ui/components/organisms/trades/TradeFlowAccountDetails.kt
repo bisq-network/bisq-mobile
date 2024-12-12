@@ -6,9 +6,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.trades.ITradeFlowPresenter
 import org.koin.compose.koinInject
@@ -25,19 +23,19 @@ fun TradeFlowAccountDetails(
     val presenter: ITradeFlowPresenter = koinInject()
 
     Column {
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         BisqText.baseRegular(text = strings.bisqEasy_tradeState_info_buyer_phase1a_seller_wait_message)
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
+        BisqGap.V2()
         BisqText.h6Regular(
             text = strings.bisqEasy_tradeState_info_buyer_phase1a_bitcoinPayment_headline_LN
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         BisqTextField(
             label = strings.bisqEasy_tradeState_info_buyer_phase1a_bitcoinPayment_description_LN,
             value = presenter.receiveAddress.collectAsState().value,
             onValueChanged = { presenter.setReceiveAddress(it) },
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         BisqButton(
             text = strings.bisqEasy_tradeState_info_buyer_phase1a_send,
             onClick = onNext,
@@ -46,7 +44,7 @@ fun TradeFlowAccountDetails(
                 vertical = 6.dp
             )
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         BisqText.smallMedium(
             text = strings.bisqEasy_tradeState_info_buyer_phase1a_wallet_prompt_prefix
         )

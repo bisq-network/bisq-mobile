@@ -9,6 +9,7 @@ import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.BisqAmountSelector
@@ -22,6 +23,8 @@ interface ITakeOfferTradeAmountPresenter : ViewPresenter {
 
     fun goBack()
     fun amountConfirmed()
+    
+    fun onFixedAmountChange(amount: Float)
 }
 
 @Composable
@@ -46,7 +49,7 @@ fun TakeOfferTradeAmountScreen() {
             text = strings.bisqEasy_takeOffer_amount_headline_buyer,
             color = BisqTheme.colors.light1
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         BisqText.largeLight(
             text = strings.bisqEasy_takeOffer_amount_description(
                 offerMinFiatAmount.toDouble(),
@@ -61,7 +64,8 @@ fun TakeOfferTradeAmountScreen() {
             minAmount = offerMinFiatAmount,
             maxAmount = offerMaxFiatAmount,
             exchangeRate = 95000.0,
-            currency = "USD"
+            currency = "USD",
+            onValueChange = {value -> }
         )
     }
 }

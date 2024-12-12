@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.CurrencyProfileCard
+import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SortIcon
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
@@ -25,7 +26,7 @@ fun MarketListScreen() {
     BisqStaticLayout(padding = PaddingValues(all = 0.dp), verticalArrangement = Arrangement.Top) {
         BisqTextField(label = "", placeholder = strings.common_search, value ="", onValueChanged = {})
 
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
 
         LazyColumn {
             items(presenter.marketListItemWithNumOffers) { item ->

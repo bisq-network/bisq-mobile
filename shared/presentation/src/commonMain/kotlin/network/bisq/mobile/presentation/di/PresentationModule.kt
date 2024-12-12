@@ -17,6 +17,9 @@ import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.ITakeOfferTr
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.PaymentMethodPresenter
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.ReviewTradePresenter
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TradeAmountPresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.CreateOfferPresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.ICreateOfferPresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.*
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPresenter
@@ -43,11 +46,12 @@ val presentationModule = module {
         SplashPresenter(
             get(),
             get(),
-            get()
+            get(),
+            get(),
         )
     }
 
-    single { OnBoardingPresenter(get()) } bind IOnboardingPresenter::class
+    single { OnBoardingPresenter(get(), get()) } bind IOnboardingPresenter::class
 
     single<GettingStartedPresenter> {
         GettingStartedPresenter(
@@ -91,4 +95,6 @@ val presentationModule = module {
     } bind IMyTrades::class
 
     single{ TradeFlowPresenter(get(), get()) } bind ITradeFlowPresenter::class
+
+    single{ CreateOfferPresenter(get(), get()) } bind ICreateOfferPresenter::class
 }

@@ -2,6 +2,8 @@ package network.bisq.mobile.presentation.ui.navigation.graph
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -14,6 +16,7 @@ import network.bisq.mobile.presentation.ui.navigation.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.*
 import network.bisq.mobile.presentation.ui.uicases.offers.OffersListScreen
+import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.*
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferReviewTradeScreen
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferTradeAmountScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
@@ -61,11 +64,11 @@ fun RootNavGraph() {
             TakeOfferTradeAmountScreen()
         }
 
-        addScreen(Routes.TakeOfferPaymentMethod.name) {
+        addScreen(Routes.TakeOfferPaymentMethod.name, wizardTransition = true) {
             TakeOfferPaymentMethodScreen()
         }
 
-        addScreen(Routes.TakeOfferReviewTrade.name) {
+        addScreen(Routes.TakeOfferReviewTrade.name, wizardTransition = true) {
             TakeOfferReviewTradeScreen()
         }
 
@@ -73,21 +76,52 @@ fun RootNavGraph() {
             TradeFlowScreen()
         }
 
+        addScreen(Routes.CreateOfferBuySell.name) {
+            CreateOfferBuySellScreen()
+        }
+
+        addScreen(Routes.CreateOfferCurrency.name, wizardTransition = true) {
+            CreateOfferCurrencySelectorScreen()
+        }
+
+        addScreen(Routes.CreateOfferAmount.name, wizardTransition = true) {
+            CreateOfferAmountSelectorScreen()
+        }
+
+        addScreen(Routes.CreateOfferTradePrice.name, wizardTransition = true) {
+            CreateOfferTradePriceSelectorScreen()
+        }
+
+        addScreen(Routes.CreateOfferPaymentMethod.name, wizardTransition = true) {
+            CreateOfferPaymentMethodSelectorScreen()
+        }
+
+        addScreen(Routes.CreateOfferReviewOffer.name, wizardTransition = true) {
+            CreateOfferReviewOfferScreen()
+        }
+
+
     }
 }
 
 fun NavGraphBuilder.addScreen(
     route: String,
+    wizardTransition: Boolean = false,
     content: @Composable () -> Unit
 ) {
     composable(
         route = route,
         enterTransition = {
-            // When a screen is pushed in, slide in from right edge of the screen to left
-            slideIntoContainer(
-                AnimatedContentTransitionScope.SlideDirection.Left,
-                animationSpec = tween(300)
-            )
+            if (wizardTransition) {
+                // When user presses 'Next', fadeIn the next step screen
+                fadeIn(animationSpec = tween(150))
+            } else  {
+                // When a screen is pushed in, slide in from right edge of the screen to left
+                slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Left,
+                    animationSpec = tween(300)
+                )
+            }
         },
         exitTransition = {
             // When a new screen is pushed over current screen, don't do exit animation
@@ -98,11 +132,16 @@ fun NavGraphBuilder.addScreen(
             null
         },
         popExitTransition = {
-            // When current screen is poped out, slide if from screen to screen's right edge
-            slideOutOfContainer(
-                AnimatedContentTransitionScope.SlideDirection.Right,
-                animationSpec = tween(300)
-            )
+            if (wizardTransition) {
+                // When user presses 'Back', fadeOut the current step screen
+                fadeOut(animationSpec = tween(150))
+            } else {
+                // When current screen is poped out, slide if from screen to screen's right edge
+                slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Right,
+                    animationSpec = tween(300)
+                )
+            }
         }
 
     ) {

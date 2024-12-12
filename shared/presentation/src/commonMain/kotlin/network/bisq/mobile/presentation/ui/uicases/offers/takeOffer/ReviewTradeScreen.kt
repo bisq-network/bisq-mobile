@@ -10,6 +10,7 @@ import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -30,29 +31,29 @@ interface ITakeOfferReviewTradePresenter : ViewPresenter {
 @Composable
 fun TakeOfferReviewTradeScreen() {
     val strings = LocalStrings.current.bisqEasyTradeWizard
-    val bisqEasyStrings = LocalStrings.current.bisqEasy
-    val tradeStateStrings = LocalStrings.current.bisqEasyTradeState
+    val stringsBisqEasy = LocalStrings.current.bisqEasy
+    val stringsTradeState = LocalStrings.current.bisqEasyTradeState
     val commonStrings = LocalStrings.current.common
     val presenter: ITakeOfferReviewTradePresenter = koinInject()
 
     val offer = presenter.offerListItems.collectAsState().value.first()
 
     MultiScreenWizardScaffold(
-        bisqEasyStrings.bisqEasy_takeOffer_progress_review,
-        stepIndex = 2,
+        stringsBisqEasy.bisqEasy_takeOffer_progress_review,
+        stepIndex = 3,
         stepsLength = 3,
         prevOnClick = { presenter.goBack() },
-        nextButtonText = bisqEasyStrings.bisqEasy_takeOffer_review_takeOffer,
+        nextButtonText = stringsBisqEasy.bisqEasy_takeOffer_review_takeOffer,
         nextOnClick = { presenter.tradeConfirmed() }
     ) {
         BisqText.h3Regular(
-            text = bisqEasyStrings.bisqEasy_takeOffer_progress_review,
+            text = stringsBisqEasy.bisqEasy_takeOffer_progress_review,
             color = BisqTheme.colors.light1
         )
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
+        BisqGap.V2()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoRow(
-                label1 = tradeStateStrings.bisqEasy_tradeState_header_direction.uppercase(),
+                label1 = stringsTradeState.bisqEasy_tradeState_header_direction.uppercase(),
                 value1 = if (offer.direction.isBuy)
                     strings.bisqEasy_tradeWizard_directionAndMarket_buy
                 else

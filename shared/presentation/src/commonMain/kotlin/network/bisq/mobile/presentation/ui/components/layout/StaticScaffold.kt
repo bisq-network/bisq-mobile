@@ -19,6 +19,7 @@ fun BisqStaticScaffold(
     ),
     topBar: @Composable (() -> Unit)? = null,
     bottomBar: @Composable (() -> Unit)? = null,
+    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     content: @Composable ColumnScope.() -> Unit
 ) {
@@ -29,6 +30,7 @@ fun BisqStaticScaffold(
         content = { it ->
             BisqStaticLayout(
                 padding = if (topBar != null) it else padding,
+                horizontalAlignment = horizontalAlignment,
                 verticalArrangement = verticalArrangement
             ) {
                 // Padding logic:
@@ -39,7 +41,7 @@ fun BisqStaticScaffold(
                 if (topBar != null)
                     Column(
                         modifier = Modifier.padding(all = BisqUIConstants.ScreenPadding),
-                        horizontalAlignment = Alignment.CenterHorizontally
+                        horizontalAlignment = horizontalAlignment
                     ) {
                         content()
                     }

@@ -11,6 +11,7 @@ import bisqapps.shared.presentation.generated.resources.img_bitcoin_payment_wait
 import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.delay
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -39,7 +40,7 @@ fun TradeFlowBtcPayment(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         CircularLoadingImage(
             image = Res.drawable.img_bitcoin_payment_confirmation,
             isLoading = !isLoading
@@ -76,7 +77,7 @@ fun ShowLoaderBtcPayment(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V1()
         CircularLoadingImage(
             image = Res.drawable.img_bitcoin_payment_waiting,
             isLoading = true

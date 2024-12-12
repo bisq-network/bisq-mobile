@@ -22,4 +22,11 @@ enum class Routes(val title: String) {
     TakeOfferReviewTrade(title = "take_offer_review_trade"),
 
     TradeFlow(title = "trade_flow"),
+
+    CreateOfferBuySell(title = "create_offer_buy_sel"),
+    CreateOfferCurrency(title = "create_offer_currency"),
+    CreateOfferAmount(title = "create_offer_amount"),
+    CreateOfferTradePrice(title = "create_offer_trade_price"),
+    CreateOfferPaymentMethod(title = "create_offer_payment_method"),
+    CreateOfferReviewOffer(title = "create_offer_review_offer"),
 }

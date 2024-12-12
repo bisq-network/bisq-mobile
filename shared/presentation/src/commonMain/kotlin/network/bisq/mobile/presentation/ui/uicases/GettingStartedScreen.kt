@@ -29,6 +29,9 @@ import bisqapps.shared.presentation.generated.resources.icon_star_outlined
 import bisqapps.shared.presentation.generated.resources.icon_tag_outlined
 import bisqapps.shared.presentation.generated.resources.img_fiat_btc
 import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
+import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -37,6 +40,13 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
+
+interface IGettingStarted : ViewPresenter {
+    val offersOnline: StateFlow<Number>
+    val publishedProfiles: StateFlow<Number>
+
+    fun navigateToCreateOffer()
+}
 
 @Composable
 fun GettingStartedScreen() {
@@ -82,6 +92,7 @@ fun GettingStartedScreen() {
                 }
             }
         }
+        BisqButton("Create offer", onClick={ presenter.navigateToCreateOffer() })
         WelcomeCard(
             title = "Get your first BTC",
             buttonText = "Enter Bisq Easy"

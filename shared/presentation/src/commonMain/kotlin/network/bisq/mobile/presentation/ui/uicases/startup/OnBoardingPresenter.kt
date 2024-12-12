@@ -2,19 +2,19 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 
 import androidx.compose.foundation.pager.PagerState
 import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.img_bisq_Easy
-import bisqapps.shared.presentation.generated.resources.img_fiat_btc
-import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
+import bisqapps.shared.presentation.generated.resources.*
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.data.model.Settings
+import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.composeModels.PagerViewItem
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-
 open class OnBoardingPresenter(
-    mainPresenter: MainPresenter
+    mainPresenter: MainPresenter,
+    private val settingsRepository: SettingsRepository
 ) : BasePresenter(mainPresenter), IOnboardingPresenter {
 
     override val indexesToShow = listOf(0)
@@ -42,8 +42,19 @@ open class OnBoardingPresenter(
 
     override fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState) {
         coroutineScope.launch {
+
+            settingsRepository.fetch()
+            val settings: Settings? = settingsRepository.data.value
+
             if (pagerState.currentPage == indexesToShow.lastIndex) {
                 rootNavigator.navigate(Routes.CreateProfile.name)
+
+                val updatedSettings = (settings ?: Settings()).apply {
+                    firstLaunch = false
+                }
+
+                settingsRepository.update(updatedSettings)
+
             } else {
                 pagerState.animateScrollToPage(pagerState.currentPage + 1)
             }

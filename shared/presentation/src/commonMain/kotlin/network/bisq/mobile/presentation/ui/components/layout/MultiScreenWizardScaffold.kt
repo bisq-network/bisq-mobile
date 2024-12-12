@@ -5,6 +5,7 @@ import androidx.compose.material3.BottomAppBar
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.*
@@ -21,14 +22,45 @@ fun MultiScreenWizardScaffold(
     nextButtonText: String = LocalStrings.current.common.buttons_next,
     prevOnClick: (() -> Unit)? = null,
     nextOnClick: (() -> Unit)? = null,
+    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
+    useStaticScaffold: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    BisqScrollScaffold(
-        padding = PaddingValues(all = 0.dp),
-        topBar = {
+
+    val scaffold: @Composable (
+        padding: PaddingValues,
+        topBar: @Composable (() -> Unit)?,
+        bottomBar: @Composable (() -> Unit)?,
+        hAlignment: Alignment.Horizontal,
+        vArrangement: Arrangement.Vertical,
+        content: @Composable ColumnScope.() -> Unit
+    ) -> Unit =
+        if (useStaticScaffold) { padding, topBar, bottomBar, hAlignment, verticalArrangement, innerContent ->
+            BisqStaticScaffold(
+                padding = padding,
+                topBar = topBar,
+                bottomBar = bottomBar,
+                horizontalAlignment = hAlignment,
+                verticalArrangement = verticalArrangement,
+                content = innerContent
+            )
+        } else { padding, topBar, bottomBar, hAlignment, verticalArrangement, innerContent ->
+            BisqScrollScaffold(
+                padding = padding,
+                topBar = topBar,
+                bottomBar = bottomBar,
+                horizontalAlignment = hAlignment,
+                verticalArrangement = verticalArrangement,
+                content = innerContent
+            )
+        }
+
+    scaffold(
+        PaddingValues(all = 0.dp),
+        {
             TopBar(title, isFlowScreen = true, stepText = "$stepIndex/$stepsLength")
         },
-        bottomBar = {
+        {
             // TODO: This takes up too much height
             BottomAppBar(
                 containerColor = BisqTheme.colors.backgroundColor,
@@ -63,26 +95,26 @@ fun MultiScreenWizardScaffold(
                 }
             }
 
-        }
+        },
+        horizontalAlignment,
+        Arrangement.Top,
     ) {
-        // TODO: Get correct full width
-        val screenSize = remember { mutableStateOf(320) }
 
         BisqProgressBar(
-            stepIndex.toFloat() * screenSize.value / stepsLength.toFloat(),
+            stepIndex.toFloat() / stepsLength.toFloat(),
             modifier = Modifier.fillMaxWidth().padding(top = 16.dp)
         )
 
         // TODO: Should pass these values to the column deep inside BisqScrollLayout
         // as BissScrollScaffold's params, rather than creating a column here?
-        // 2X screen padding for Flow screens
+
         Column(
             modifier = Modifier.fillMaxHeight().padding(
-                horizontal = BisqUIConstants.ScreenPadding2X,
-                vertical = BisqUIConstants.ScreenPadding2X
+                horizontal = BisqUIConstants.ScreenPadding,
+                vertical = BisqUIConstants.ScreenPadding
             ),
+            horizontalAlignment = horizontalAlignment,
             verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             content()
         }

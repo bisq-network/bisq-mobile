@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.ProfileRating
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UpIcon
@@ -101,7 +102,7 @@ fun TradeHeader(
                         value2 = "29 Sep 2024",
                     )
 
-                    Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+                    BisqGap.V1()
 
                     InfoRow(
                         style = InfoBoxStyle.Style2,
@@ -111,7 +112,7 @@ fun TradeHeader(
                         value2 = "9567056.04 USD/BTC",
                     )
 
-                    Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+                    BisqGap.V1()
 
                     InfoRow(
                         style = InfoBoxStyle.Style2,

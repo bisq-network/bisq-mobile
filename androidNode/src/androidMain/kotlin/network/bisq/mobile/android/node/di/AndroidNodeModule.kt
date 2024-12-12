@@ -43,5 +43,5 @@ val androidNodeModule = module {
     // and binding the same obj to 2 different abstractions
     single<MainPresenter> { NodeMainPresenter(get(), get(), get(),  get(), get(), get()) } bind AppPresenter::class
 
-    single<IOnboardingPresenter> { OnBoardingNodePresenter(get()) } bind IOnboardingPresenter::class
+    single<IOnboardingPresenter> { OnBoardingNodePresenter(get(), get()) } bind IOnboardingPresenter::class
 }

@@ -8,22 +8,28 @@ import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class GettingStartedPresenter(
     mainPresenter: MainPresenter,
     private val bisqStatsRepository: BisqStatsRepository,
-    private val marketPriceServiceFacade: MarketPriceServiceFacade
-) : BasePresenter(mainPresenter) {
+    private val marketPriceServiceFacade: MarketPriceServiceFacade,
+) : BasePresenter(mainPresenter), IGettingStarted {
 
     private val _offersOnline = MutableStateFlow(145)
-    val offersOnline: StateFlow<Int> = _offersOnline
+    override val offersOnline: StateFlow<Int> = _offersOnline
 
     private val _publishedProfiles = MutableStateFlow(1145)
-    val publishedProfiles: StateFlow<Int> = _publishedProfiles
+    override val publishedProfiles: StateFlow<Int> = _publishedProfiles
 
     val formattedMarketPrice: StateFlow<String> = marketPriceServiceFacade.selectedFormattedMarketPrice
 
     private var job: Job? = null
+
+    override fun navigateToCreateOffer() {
+        rootNavigator.navigate(Routes.CreateOfferBuySell.name)
+        // rootNavigator.navigate(Routes.CreateOfferReviewOffer.name)
+    }
 
     private fun refresh() {
         job = backgroundScope.launch {

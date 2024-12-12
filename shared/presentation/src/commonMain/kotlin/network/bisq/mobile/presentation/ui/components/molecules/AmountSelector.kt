@@ -1,17 +1,19 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.presentation.ui.components.atoms.BisqSlider
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.SvgImage
-import network.bisq.mobile.presentation.ui.components.atoms.SvgImageNames
+import kotlinx.coroutines.launch
+import network.bisq.mobile.presentation.ui.components.atoms.*
+import network.bisq.mobile.presentation.ui.components.atoms.icons.InfoIcon
+import network.bisq.mobile.presentation.ui.helpers.numberFormatter
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,7 +22,8 @@ fun BisqAmountSelector(
     minAmount: Float,
     maxAmount: Float,
     exchangeRate: Double,
-    currency: String
+    currency: String,
+    onValueChange: (Float) -> Unit
 ) {
     var sliderPosition by remember { mutableFloatStateOf((minAmount + maxAmount) * 0.5f) }
     val roundedNumber = (sliderPosition * 100).roundToInt() / 100.0
@@ -29,7 +32,18 @@ fun BisqAmountSelector(
     else
         roundedNumber.toString() // if it's 3.14, keep the same
 
-    val satsValue = (price.toDouble() / exchangeRate).toString()
+    val satsValue = numberFormatter.satsFormat(price.toDouble() / exchangeRate)
+
+    val highLightedSatsZeros = satsValue.takeWhile { it == '0' || it == '.' }
+    val sats = satsValue.dropWhile { it == '0' || it == '.' }
+    var showPopup by remember { mutableStateOf(false) }
+    val satoshi = sats.reversed().chunked(3).joinToString(" ").reversed()
+    val tooltipState = rememberTooltipState(isPersistent = true)
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(sliderPosition) {
+        onValueChange(sliderPosition)
+    }
 
     Column(
         verticalArrangement = Arrangement.Top
@@ -40,7 +54,7 @@ fun BisqAmountSelector(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
                 verticalAlignment = Alignment.Bottom
             ) {
                 BisqText.h1Regular(
@@ -52,18 +66,48 @@ fun BisqAmountSelector(
             }
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.Top
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // TODO: Do the btc-sats display control, as suggested by cbeams
-                BisqText.h5Regular(
-                    text = "$satsValue btc",
-                    color = BisqTheme.colors.grey2
+                // TODO: Create a control out of this
+                DynamicImage(
+                    "drawable/bitcoin.png",
+                    modifier = Modifier.size(16.dp)
                 )
-                SvgImage(
-                    image = SvgImageNames.INFO,
-                    modifier = Modifier.size(16.dp),
-                    colorFilter = ColorFilter.tint(BisqTheme.colors.grey2)
-                )
+                Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    BisqText.h5Regular(
+                        text = highLightedSatsZeros,
+                        color = BisqTheme.colors.grey2
+                    )
+                    BisqText.h5Regular(
+                        text = "$satoshi sats",
+                    )
+                }
+                BisqGap.H1()
+                // TODO: Needs work
+                TooltipBox(positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                    tooltip = {
+                        Box(
+                            modifier = Modifier.background(BisqTheme.colors.dark5),
+                            contentAlignment = Alignment.Center
+                        ){
+                            BisqText.h5Regular(
+                                text = "Hi welcome"
+                            )
+                        }
+
+                    },
+                    // modifier = Modifier.offset((-20).dp, (-20).dp),
+                    state = tooltipState
+                ) {
+                    IconButton(onClick = {
+                        scope.launch {
+                            tooltipState.show()
+                        }
+                    }) {
+                        // TODO: Make SVG Icons work!
+                        InfoIcon()
+                    }
+                }
             }
         }
 
