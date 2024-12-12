@@ -6,16 +6,18 @@ import network.bisq.mobile.android.node.domain.market_price.NodeMarketPriceServi
 import network.bisq.mobile.android.node.domain.offerbook.NodeOfferbookServiceFacade
 import network.bisq.mobile.android.node.domain.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
+import network.bisq.mobile.android.node.presentation.NodeSplashPresenter
 import network.bisq.mobile.android.node.presentation.OnBoardingNodePresenter
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
-import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
+import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -42,6 +44,15 @@ val androidNodeModule = module {
     // this line showcases both, the possibility to change behaviour of the app by changing one definition
     // and binding the same obj to 2 different abstractions
     single<MainPresenter> { NodeMainPresenter(get(), get(), get(),  get(), get(), get()) } bind AppPresenter::class
+
+    single<SplashPresenter> {
+        NodeSplashPresenter(
+            get(),
+            get(),
+            get(),
+            get(),
+        )
+    }
 
     single<IOnboardingPresenter> { OnBoardingNodePresenter(get(), get()) } bind IOnboardingPresenter::class
 }

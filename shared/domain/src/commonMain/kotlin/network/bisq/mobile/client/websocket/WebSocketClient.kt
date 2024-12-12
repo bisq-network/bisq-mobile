@@ -41,7 +41,7 @@ class WebSocketClient(
 
     private val webSocketUrl: String = "ws://$host:$port/websocket"
     private var session: DefaultClientWebSocketSession? = null
-    private var isConnected = false
+    var isConnected = false
     private val webSocketEventObservers = ConcurrentMap<String, WebSocketEventObserver>()
     private val requestResponseHandlers = mutableMapOf<String, RequestResponseHandler>()
     private var connectionReady = CompletableDeferred<Boolean>()

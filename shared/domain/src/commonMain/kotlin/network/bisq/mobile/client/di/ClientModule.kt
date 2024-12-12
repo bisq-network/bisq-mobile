@@ -9,12 +9,11 @@ import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.contextual
 import kotlinx.serialization.modules.polymorphic
-import network.bisq.mobile.android.node.main.bootstrap.ClientApplicationBootstrapFacade
+import network.bisq.mobile.client.bootstrap.ClientApplicationBootstrapFacade
 import network.bisq.mobile.client.market.ClientMarketPriceServiceFacade
 import network.bisq.mobile.client.market.MarketPriceApiGateway
 import network.bisq.mobile.client.offerbook.ClientOfferbookServiceFacade
 import network.bisq.mobile.client.offerbook.offer.OfferbookApiGateway
-import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.websocket.messages.SubscriptionRequest
@@ -28,7 +27,8 @@ import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.client.user_profile.ClientUserProfileServiceFacade
 import network.bisq.mobile.client.user_profile.UserProfileApiGateway
 import network.bisq.mobile.domain.data.EnvironmentController
-import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.TrustedNodeService
+import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -68,7 +68,7 @@ val clientModule = module {
         }
     }
 
-    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade() }
+    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get()) }
     
     single { EnvironmentController() }
     single(named("ApiHost")) { get<EnvironmentController>().getApiHost() }
@@ -84,6 +84,9 @@ val clientModule = module {
             get(named("WebsocketApiPort"))
         )
     }
+
+    single { TrustedNodeService(get()) }
+
     // single { WebSocketHttpClient(get()) }
     single {
         println("Running on simulator: ${get<EnvironmentController>().isSimulator()}")

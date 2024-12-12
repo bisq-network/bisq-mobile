@@ -1,31 +1,53 @@
-package network.bisq.mobile.android.node.main.bootstrap
+package network.bisq.mobile.client.bootstrap
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.data.repository.main.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.service.TrustedNodeService
+import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 
-class ClientApplicationBootstrapFacade() :
+class ClientApplicationBootstrapFacade(
+    private val settingsRepository: SettingsRepository,
+    private val trustedNodeService: TrustedNodeService) :
     ApplicationBootstrapFacade() {
 
+    private val backgroundScope = CoroutineScope(BackgroundDispatcher)
     override fun activate() {
-        setState("Dummy state 1")
+        // TODO all texts here shoul use the translation module
+        setState("Bootstrapping..")
         setProgress(0f)
 
         // just dummy loading simulation, might be that there is no loading delay at the end...
-        CoroutineScope(BackgroundDispatcher).launch {
-            delay(50L)
-            setState("Dummy state 2")
-            setProgress(0.25f)
+        backgroundScope.launch {
+            settingsRepository.fetch()
+            val url = settingsRepository.data.value?.bisqApiUrl
+            log.d { "Settings url $url" }
 
-            delay(50L)
-            setState("Dummy state 3")
-            setProgress(0.5f)
-
-            delay(50L)
-            setState("Dummy state 4")
-            setProgress(1f)
+//            TODO this is validated elsewhere, need to unify it or get
+//            rid of this facade otherwise
+//            Main issue is that the Trusted node setup screen is not
+//            if (url == null) {
+//                setState("Trusted node not configured")
+//                setProgress(0f)
+//            } else {
+                setProgress(0.5f)
+                setState("Connecting to Trusted Node..")
+                if (!trustedNodeService.isConnected()) {
+                    try {
+                        trustedNodeService.connect()
+                        setState("Connected to Trusted Node")
+                        setProgress(1.0f)
+                    } catch (e: Exception) {
+                        log.e(e) { "Failed to connect to trusted node" }
+                        setState("No connectivity")
+                        setProgress(1.0f)
+                    }
+                } else {
+                    setState("Connected to Trusted Node")
+                    setProgress(1.0f)
+                }
+//            }
         }
     }
 
