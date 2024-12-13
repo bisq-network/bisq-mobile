@@ -55,7 +55,7 @@ val presentationModule = module {
 
     single { OnBoardingPresenter(get(), get()) } bind IOnboardingPresenter::class
 
-    single { SettingsPresenter(get(), get()) } bind ISettingsPresenter::class
+    single<SettingsPresenter> { SettingsPresenter(get(), get()) } bind ISettingsPresenter::class
 
     single<GettingStartedPresenter> {
         GettingStartedPresenter(

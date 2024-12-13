@@ -113,27 +113,39 @@ fun SettingsScreen(isTabSelected: Boolean) {
     val menuTree: MenuItem = settingsPresenter.menuTree()
     val currentMenu = remember { mutableStateOf(menuTree) }
     val menuPath = remember { mutableStateListOf(menuTree) }
+    val selectedLeaf = remember { mutableStateOf<MenuItem.Leaf?>(null) }
 
     RememberPresenterLifecycle(settingsPresenter)
     // Reset to root menu when the tab is selected
     LaunchedEffect(isTabSelected) {
         if (isTabSelected) {
             currentMenu.value = menuTree
+            selectedLeaf.value = null
         }
     }
 
-    Column {
+    Column(modifier = Modifier.fillMaxSize()) {
         BreadcrumbNavigation(path = menuPath) { index ->
             currentMenu.value = menuPath[index]
+            // TODO might need complex index logic?
+            selectedLeaf.value = null
             menuPath.removeRange(index + 1, menuPath.size)
         }
-        SettingsMenu(menuItem = currentMenu.value) { selectedItem ->
-            if (selectedItem is MenuItem.Parent) {
-                currentMenu.value = selectedItem
-                menuPath.add(selectedItem)
-            } else {
-                selectedItem.onClick?.invoke()
+
+        if (selectedLeaf.value == null) {
+            SettingsMenu(menuItem = currentMenu.value) { selectedItem ->
+                if (selectedItem is MenuItem.Parent) {
+                    selectedLeaf.value = null
+                    currentMenu.value = selectedItem
+                    menuPath.add(selectedItem)
+                } else {
+                    println("Item selected ${selectedItem}")
+                    selectedLeaf.value = selectedItem as MenuItem.Leaf
+                    selectedItem.onClick?.invoke()
+                }
             }
+        } else {
+            Text("fuck")
         }
     }
 }
