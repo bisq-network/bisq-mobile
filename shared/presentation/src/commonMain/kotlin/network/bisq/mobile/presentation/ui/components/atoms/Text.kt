@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.sp
 import org.jetbrains.compose.resources.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import bisqapps.shared.presentation.generated.resources.Res
@@ -46,10 +47,12 @@ object BisqText {
         fontWeight: FontWeight = FontWeight.REGULAR,
         textAlign: TextAlign = TextAlign.Start,
         lineHeight: TextUnit = TextUnit.Unspecified,
+        maxLines: Int = Int.MAX_VALUE,
+        overflow: TextOverflow = TextOverflow.Clip,
         modifier: Modifier = Modifier,
     ) {
 
-        val fontFamily = when(fontWeight) {
+        val fontFamily = when (fontWeight) {
             FontWeight.LIGHT -> FontFamily(Font(Res.font.ibm_plex_sans_light))
             FontWeight.REGULAR -> FontFamily(Font(Res.font.ibm_plex_sans_regular))
             FontWeight.MEDIUM -> FontFamily(Font(Res.font.ibm_plex_sans_medium))
@@ -63,6 +66,8 @@ object BisqText {
             fontFamily = fontFamily,
             textAlign = textAlign,
             lineHeight = lineHeight,
+            maxLines = maxLines,
+            overflow = overflow,
             modifier = modifier,
         )
     }
@@ -78,7 +83,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.XSMALL,
             fontWeight = FontWeight.LIGHT,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -95,7 +100,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.XSMALL,
             fontWeight = FontWeight.REGULAR,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -112,7 +117,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.XSMALL,
             fontWeight = FontWeight.MEDIUM,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -129,7 +134,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.XSMALL,
             fontWeight = FontWeight.BOLD,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -147,7 +152,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.SMALL,
             fontWeight = FontWeight.LIGHT,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -164,7 +169,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.SMALL,
             fontWeight = FontWeight.REGULAR,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -181,7 +186,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.SMALL,
             fontWeight = FontWeight.MEDIUM,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -198,7 +203,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.SMALL,
             fontWeight = FontWeight.BOLD,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -216,7 +221,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.BASE,
             fontWeight = FontWeight.LIGHT,
-            color=color,
+            color = color,
             textAlign = textAlign,
             lineHeight = TextUnit(16.0f, TextUnitType.Sp),
             modifier = modifier,
@@ -228,15 +233,18 @@ object BisqText {
         text: String,
         color: Color = BisqTheme.colors.light1,
         textAlign: TextAlign = TextAlign.Start,
+        singleLine: Boolean = false,
         modifier: Modifier = Modifier,
     ) {
         styledText(
             text = text,
             fontSize = FontSize.BASE,
             fontWeight = FontWeight.REGULAR,
-            color=color,
+            color = color,
             textAlign = textAlign,
             lineHeight = TextUnit(16.0f, TextUnitType.Sp),
+            maxLines = if (singleLine) 1 else Int.MAX_VALUE,
+            overflow = if (singleLine) TextOverflow.Ellipsis else TextOverflow.Clip,
             modifier = modifier,
         )
     }
@@ -252,7 +260,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.BASE,
             fontWeight = FontWeight.MEDIUM,
-            color=color,
+            color = color,
             textAlign = textAlign,
             lineHeight = TextUnit(16.0f, TextUnitType.Sp),
             modifier = modifier,
@@ -270,7 +278,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.BASE,
             fontWeight = FontWeight.BOLD,
-            color=color,
+            color = color,
             textAlign = textAlign,
             lineHeight = TextUnit(16.0f, TextUnitType.Sp),
             modifier = modifier,
@@ -289,7 +297,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.LARGE,
             fontWeight = FontWeight.LIGHT,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -300,14 +308,17 @@ object BisqText {
         text: String,
         color: Color = BisqTheme.colors.light1,
         textAlign: TextAlign = TextAlign.Start,
+        singleLine: Boolean = false,
         modifier: Modifier = Modifier,
     ) {
         styledText(
             text = text,
             fontSize = FontSize.LARGE,
             fontWeight = FontWeight.REGULAR,
-            color=color,
+            color = color,
             textAlign = textAlign,
+            maxLines = if (singleLine) 1 else Int.MAX_VALUE,
+            overflow = if (singleLine) TextOverflow.Ellipsis else TextOverflow.Clip,
             modifier = modifier,
         )
     }
@@ -323,7 +334,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.LARGE,
             fontWeight = FontWeight.MEDIUM,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -340,7 +351,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.LARGE,
             fontWeight = FontWeight.BOLD,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -358,7 +369,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H6,
             fontWeight = FontWeight.LIGHT,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -375,7 +386,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H6,
             fontWeight = FontWeight.REGULAR,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -392,7 +403,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H6,
             fontWeight = FontWeight.MEDIUM,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -409,7 +420,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H6,
             fontWeight = FontWeight.BOLD,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -427,7 +438,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H5,
             fontWeight = FontWeight.LIGHT,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -444,7 +455,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H5,
             fontWeight = FontWeight.REGULAR,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -461,7 +472,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H5,
             fontWeight = FontWeight.MEDIUM,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -478,7 +489,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H5,
             fontWeight = FontWeight.BOLD,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -496,7 +507,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H4,
             fontWeight = FontWeight.LIGHT,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -513,7 +524,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H4,
             fontWeight = FontWeight.REGULAR,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -530,7 +541,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H4,
             fontWeight = FontWeight.MEDIUM,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -547,7 +558,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H4,
             fontWeight = FontWeight.BOLD,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -565,7 +576,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H3,
             fontWeight = FontWeight.LIGHT,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -582,7 +593,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H3,
             fontWeight = FontWeight.REGULAR,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -599,7 +610,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H3,
             fontWeight = FontWeight.MEDIUM,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -616,7 +627,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H3,
             fontWeight = FontWeight.BOLD,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -634,7 +645,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H2,
             fontWeight = FontWeight.LIGHT,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -651,7 +662,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H2,
             fontWeight = FontWeight.REGULAR,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -668,7 +679,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H2,
             fontWeight = FontWeight.MEDIUM,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -685,7 +696,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H2,
             fontWeight = FontWeight.BOLD,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -703,7 +714,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H1,
             fontWeight = FontWeight.LIGHT,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -720,7 +731,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H1,
             fontWeight = FontWeight.REGULAR,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -737,7 +748,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H1,
             fontWeight = FontWeight.MEDIUM,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -754,7 +765,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.H1,
             fontWeight = FontWeight.BOLD,
-            color=color,
+            color = color,
             textAlign = textAlign,
             modifier = modifier,
         )

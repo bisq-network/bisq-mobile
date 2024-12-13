@@ -29,6 +29,11 @@ fun CopyIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun LanguageIcon(modifier: Modifier = Modifier.size(16.dp)) {
+    Image(painterResource(Res.drawable.icon_language_grey), "Language icon", modifier = modifier)
+}
+
+@Composable
 fun InfoIcon(modifier: Modifier = Modifier.size(16.dp)) {
     Image(painterResource(Res.drawable.icon_info), "Info icon", modifier = modifier)
 }
@@ -61,12 +66,17 @@ fun SortIcon(modifier: Modifier = Modifier) {
 @Composable
 fun StarEmptyIcon(modifier: Modifier = Modifier.size(16.dp)) {
     // TODO: Import right resource for this
-    Image(painterResource(Res.drawable.icon_star), "Empty star icon", modifier = modifier)
+    Image(painterResource(Res.drawable.icon_star_grey_hollow), "Empty star icon", modifier = modifier)
+}
+
+@Composable
+fun StarHalfFilledIcon(modifier: Modifier = Modifier.size(16.dp)) {
+    Image(painterResource(Res.drawable.icon_star_half_green), "Half filled star icon", modifier = modifier)
 }
 
 @Composable
 fun StarFillIcon(modifier: Modifier = Modifier.size(16.dp)) {
-    Image(painterResource(Res.drawable.icon_star), "Filled star icon", modifier = modifier)
+    Image(painterResource(Res.drawable.icon_star_green), "Filled star icon", modifier = modifier)
 }
 
 @Composable
