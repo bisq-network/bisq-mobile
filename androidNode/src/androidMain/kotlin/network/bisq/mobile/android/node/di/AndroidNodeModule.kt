@@ -6,6 +6,7 @@ import network.bisq.mobile.android.node.domain.market_price.NodeMarketPriceServi
 import network.bisq.mobile.android.node.domain.offerbook.NodeOfferbookServiceFacade
 import network.bisq.mobile.android.node.domain.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
+import network.bisq.mobile.android.node.presentation.NodeSettingsPresenter
 import network.bisq.mobile.android.node.presentation.NodeSplashPresenter
 import network.bisq.mobile.android.node.presentation.OnBoardingNodePresenter
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
@@ -16,6 +17,8 @@ import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 import org.koin.android.ext.koin.androidContext
@@ -53,6 +56,8 @@ val androidNodeModule = module {
             get(),
         )
     }
+
+    single<SettingsPresenter> { NodeSettingsPresenter(get(), get()) } bind ISettingsPresenter::class
 
     single<IOnboardingPresenter> { OnBoardingNodePresenter(get(), get()) } bind IOnboardingPresenter::class
 }

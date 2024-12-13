@@ -20,6 +20,8 @@ import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TradeAmountP
 import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.ICreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.*
+import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPresenter
@@ -52,6 +54,8 @@ val presentationModule = module {
     }
 
     single { OnBoardingPresenter(get(), get()) } bind IOnboardingPresenter::class
+
+    single<SettingsPresenter> { SettingsPresenter(get(), get()) } bind ISettingsPresenter::class
 
     single<GettingStartedPresenter> {
         GettingStartedPresenter(
