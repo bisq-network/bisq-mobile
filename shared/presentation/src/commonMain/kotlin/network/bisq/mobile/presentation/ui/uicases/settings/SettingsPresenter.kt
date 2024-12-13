@@ -16,8 +16,8 @@ open class SettingsPresenter(
             MenuItem.Parent(
                 label = "Account",
                 children = listOf(
-                    MenuItem.Leaf(label = "User Profile", onClick = ::navigateToUserProfileSettings),
-                    MenuItem.Leaf(label = "Payment Methods", onClick = ::navigateToPaymentMethodsSettings)
+                    MenuItem.Leaf(label = "User Profile", content = { UserProfileSettingsScreen() }),
+                    MenuItem.Leaf(label = "Payment Accounts", content = { PaymentAccountSettingsScreen() })
                 )
             )
         )
@@ -28,19 +28,7 @@ open class SettingsPresenter(
     }
 
     protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
-        menuItems.add(MenuItem.Leaf("Trusted Node", onClick = ::navigateToTrustedNodeSettings))
+        menuItems.add(MenuItem.Leaf("Trusted Node", content = { TrustedNodeSettingsScreen() }))
         return menuItems.toList()
-    }
-
-    private fun navigateToUserProfileSettings() {
-        log.d { "TODO: Userprofile" }
-    }
-
-    private fun navigateToPaymentMethodsSettings() {
-        log.d { "TODO: Payment methods" }
-    }
-
-    private fun navigateToTrustedNodeSettings() {
-        log.d { "TODO: Trusted node settings" }
     }
 }

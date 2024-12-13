@@ -24,8 +24,8 @@ interface ISettingsPresenter: ViewPresenter {
 }
 
 // UI model/s
-sealed class MenuItem(val label: String, val onClick: (() -> Unit)? = null) {
-    class Leaf(label: String, onClick: () -> Unit) : MenuItem(label, onClick)
+sealed class MenuItem(val label: String) {
+    class Leaf(label: String, val content: @Composable () -> Unit) : MenuItem(label)
     class Parent(label: String, val children: List<MenuItem>) : MenuItem(label)
 }
 
@@ -139,13 +139,11 @@ fun SettingsScreen(isTabSelected: Boolean) {
                     currentMenu.value = selectedItem
                     menuPath.add(selectedItem)
                 } else {
-                    println("Item selected ${selectedItem}")
                     selectedLeaf.value = selectedItem as MenuItem.Leaf
-                    selectedItem.onClick?.invoke()
                 }
             }
         } else {
-            Text("fuck")
+            selectedLeaf.value!!.content.invoke()
         }
     }
 }
