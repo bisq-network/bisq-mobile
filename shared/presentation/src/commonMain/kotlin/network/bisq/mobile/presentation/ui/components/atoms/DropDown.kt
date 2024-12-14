@@ -33,7 +33,7 @@ fun BisqDropDown(
         rightSuffix = {
             Box(
                 modifier = Modifier
-                    .padding(vertical = 12.dp, horizontal = 16.dp)
+                    .padding(vertical = 8.dp, horizontal = 16.dp)
                     .clickable(
                         onClick = { showDialog = true },
                         interactionSource = remember { MutableInteractionSource() },

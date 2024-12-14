@@ -47,12 +47,46 @@ fun PaymentAccountSettingsScreen() {
     var showConfirmationDialog by remember { mutableStateOf(false) }
     var showBottomSheet by remember { mutableStateOf(false) }
 
+    LaunchedEffect(selectedAccount) {
+        accountName = selectedAccount.name
+        accountDescription = selectedAccount.description
+    }
+
+    if (showBottomSheet) {
+        BisqBottomSheet(
+            onDismissRequest = { showBottomSheet = !showBottomSheet }
+        ) {
+            AppPaymentAccountCard(
+                onCancel = { showBottomSheet = false },
+                onConfirm = { name, description ->
+                    presenter.addAccount(name, description)
+                    showBottomSheet = false
+                },
+            )
+        }
+    }
+
+    if (accounts.isEmpty()) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            BisqButton(
+                text = strings.user_paymentAccounts_createAccount,
+                onClick = { showBottomSheet = !showBottomSheet },
+                modifier = Modifier.padding(all = 8.dp)
+            )
+        }
+        return
+    }
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
     ) {
         BisqButton(
-            text = "+ Create new payment method",
+            text = strings.user_paymentAccounts_createAccount,
             onClick = { showBottomSheet = !showBottomSheet },
             padding = PaddingValues(horizontal = 18.dp, vertical = 6.dp),
             modifier = Modifier.align(Alignment.End)
@@ -123,18 +157,5 @@ fun PaymentAccountSettingsScreen() {
         )
     }
 
-    if (showBottomSheet) {
-        BisqBottomSheet(
-            onDismissRequest = { showBottomSheet = !showBottomSheet }
-        ) {
-            AppPaymentAccountCard(
-                onCancel = { showBottomSheet = false },
-                onConfirm = { name, description ->
-                    presenter.addAccount(name, description)
-                    showBottomSheet = false
-                },
-            )
-        }
-    }
 }
 

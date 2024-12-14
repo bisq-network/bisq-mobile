@@ -14,17 +14,10 @@ open class PaymentAccountPresenter(
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IPaymentAccountSettingsPresenter {
 
-    private val _accounts = MutableStateFlow(
-        listOf(
-            PaymentAccount("0", "Pink account", "Acc Num: 1234566789\nBank name: Bank of America"),
-            PaymentAccount("1", "Yellow account", "Acc Num: 9876543210\nBank name: Chase Bank"),
-            PaymentAccount("2", "Red account", "Acc Num: 1122334455\nBank name: Wells Fargo"),
-            PaymentAccount("3", "Orange account", "Acc Num: 5566778899\nBank name: Citi Bank")
-        )
-    )
+    private val _accounts = MutableStateFlow(listOf<PaymentAccount>())
     override val accounts: StateFlow<List<PaymentAccount>> = _accounts
 
-    private val _selectedAccount = MutableStateFlow(_accounts.value.first())
+    private val _selectedAccount = MutableStateFlow(_accounts.value.firstOrNull() ?: PaymentAccount(id= "0", name= "", description = ""))
     override val selectedAccount: StateFlow<PaymentAccount> = _selectedAccount
 
     override fun selectAccount(account: PaymentAccount) {
