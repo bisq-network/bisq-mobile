@@ -32,8 +32,8 @@ fun CreateOfferAmountSelectorScreen() {
     val stringsCommon = LocalStrings.current.common
     val presenter: ICreateOfferPresenter = koinInject()
 
-    val offerMinFiatAmount = 800.0f
-    val offerMaxFiatAmount = 1500.0f
+    val offerMinFiatAmount = 800.0
+    val offerMaxFiatAmount = 1500.0
     val state by presenter.state.collectAsState()
     val isBuy = presenter.direction.collectAsState().value.isBuy
     val fixedAmount = presenter.fixedAmount.collectAsState().value
@@ -96,7 +96,7 @@ fun CreateOfferAmountSelectorScreen() {
                     maxAmount = offerMaxFiatAmount,
                     exchangeRate = 95000.0,
                     currency = "USD",
-                    onValueChange = { value -> presenter.onFixedAmountChange(value) }
+                    // onValueChanged = { value -> presenter.onFixedAmountChange(value) }
                 )
             } else {
                 RangeAmountSelector(

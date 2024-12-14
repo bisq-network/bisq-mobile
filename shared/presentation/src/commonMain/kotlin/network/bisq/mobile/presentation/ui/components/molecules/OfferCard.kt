@@ -16,6 +16,7 @@ import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.LanguageIcon
+import network.bisq.mobile.presentation.ui.components.molecules.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable

@@ -19,10 +19,10 @@ import kotlin.math.roundToInt
 // TODO: This has more work to do
 @Composable
 fun RangeAmountSelector(
-    minAmount: Float,
-    maxAmount: Float,
+    minAmount: Double,
+    maxAmount: Double,
 ) {
-    var sliderPosition by remember { mutableStateOf(minAmount .. maxAmount)  }
+    var sliderPosition by remember { mutableStateOf(minAmount..maxAmount) }
     var tradeValue = 873f..1200f
     Column {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -113,12 +113,12 @@ fun RangeAmountSelector(
         }
         Column {
             BisqRangeSlider(
-                minAmount,
-                maxAmount,
-                sliderPosition,
+                sliderPosition.start.toFloat()..sliderPosition.endInclusive.toFloat(),
                 onValueChange = {
-                    sliderPosition = it
-                }
+                    sliderPosition = it.start.toDouble()..it.endInclusive.toDouble()
+                },
+                minAmount.toFloat(),
+                maxAmount.toFloat(),
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,

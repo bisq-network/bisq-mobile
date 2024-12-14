@@ -21,7 +21,7 @@ interface ITakeOfferTradeAmountPresenter : ViewPresenter {
     // TODO: Update later to refer to a single OfferListItem
     val offerListItems: StateFlow<List<OfferListItem>>
     fun amountConfirmed()
-    
+
     fun onFixedAmountChange(amount: Float)
 }
 
@@ -33,8 +33,8 @@ fun TakeOfferTradeAmountScreen() {
     val offer = presenter.offerListItems.collectAsState().value.first()
 
     // TODO: Should be from OfferListItem
-    val offerMinFiatAmount = 800.0f
-    val offerMaxFiatAmount = 1500.0f
+    val offerMinFiatAmount = 800.0
+    val offerMaxFiatAmount = 1500.0
 
     MultiScreenWizardScaffold(
         strings.bisqEasy_takeOffer_progress_amount,
@@ -56,14 +56,14 @@ fun TakeOfferTradeAmountScreen() {
             color = BisqTheme.colors.grey2
         )
 
-        Spacer(modifier = Modifier.height(128.dp))
+        BisqGap.V5()
 
         BisqAmountSelector(
             minAmount = offerMinFiatAmount,
             maxAmount = offerMaxFiatAmount,
-            exchangeRate = 95000.0,
+            exchangeRate = 100000.0,
             currency = "USD",
-            onValueChange = {value -> }
+            onValueChange = { println(it) }
         )
     }
 }
