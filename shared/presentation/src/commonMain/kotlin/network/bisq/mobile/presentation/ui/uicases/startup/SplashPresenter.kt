@@ -6,7 +6,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.Settings
+import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
@@ -17,7 +19,8 @@ open class SplashPresenter(
     mainPresenter: MainPresenter,
     applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val userProfileService: UserProfileServiceFacade,
-    private val settingsRepository: SettingsRepository
+    private val userRepository: UserRepository,
+    private val settingsRepository: SettingsRepository,
 ) : BasePresenter(mainPresenter) {
 
     val state: StateFlow<String> = applicationBootstrapFacade.state
@@ -41,14 +44,11 @@ open class SplashPresenter(
 
     private fun navigateToNextScreen() {
         CoroutineScope(Dispatchers.Main).launch {
+            val settings: Settings = settingsRepository.fetch() ?: Settings()
+            val user: User? = userRepository.fetch()
 
-            settingsRepository.fetch()
-            val settings: Settings? = settingsRepository.data.value
-
-            if (settings == null) {
-                if (!doCustomNavigationLogic(Settings())) {
-                    navigateToHome()
-                }
+            if (user == null) {
+                navigateToCreateProfile()
             } else {
                 if (userProfileService.hasUserProfile()) {
                     if (!doCustomNavigationLogic(settings)) {
@@ -58,6 +58,7 @@ open class SplashPresenter(
                     // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
                     // If not, goto CreateProfile
                     if (settings.firstLaunch) {
+                        // TODO after onboarding need to make sure the rest is configured?
                         rootNavigator.navigate(Routes.Onboarding.name) {
                             popUpTo(Routes.Splash.name) { inclusive = true }
                         }
@@ -71,22 +72,31 @@ open class SplashPresenter(
         }
     }
 
+    private fun navigateToCreateProfile() {
+        rootNavigator.navigate(Routes.CreateProfile.name) {
+            popUpTo(Routes.Splash.name) { inclusive = true }
+        }
+    }
+
     private fun navigateToHome() {
         rootNavigator.navigate(Routes.TabContainer.name) {
             popUpTo(Routes.Splash.name) { inclusive = true }
         }
     }
+
     /**
      * Default implementation in shared is for xClients. Override on node to avoid this.
      * @return true if handled, false otherwise
      */
     open fun doCustomNavigationLogic(settings: Settings): Boolean {
-        if (settings.bisqApiUrl.isNotEmpty()) {
-            navigateToHome()
-        } else {
-            rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
-                popUpTo(Routes.Splash.name) { inclusive = true }
+        when {
+            settings.bisqApiUrl.isEmpty() -> {
+                rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
+                    popUpTo(Routes.Splash.name) { inclusive = true }
+                }
             }
+//            settings.firstLaunch -> navigateToCreateProfile()
+            else -> navigateToHome()
         }
         return true
     }
