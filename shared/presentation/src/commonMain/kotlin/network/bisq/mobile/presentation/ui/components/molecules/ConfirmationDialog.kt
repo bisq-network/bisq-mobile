@@ -17,6 +17,7 @@ fun ConfirmationDialog(
     message: String = "Are you sure?",
     confirmButtonText: String = "Yes",
     cancelButtonText: String = "No",
+    onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
     ) {
     BisqDialog {
@@ -41,7 +42,7 @@ fun ConfirmationDialog(
                 )
                 BisqButton(
                     text = confirmButtonText,
-                    onClick = { onDismissRequest() },
+                    onClick = { onConfirm() },
                     padding = PaddingValues(horizontal = 32.dp, vertical = 4.dp)
                 )
             }

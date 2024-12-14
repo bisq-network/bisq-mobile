@@ -1,12 +1,10 @@
 package network.bisq.mobile.i18n
 
-import cafe.adriel.lyricist.LyricistStrings
-
-//@LyricistStrings(languageTag = Locales.FR)
 val FrCommonStrings = CommonStrings(
 
     buttons_back = "[FR] Back",
     buttons_next = "[FR] Next",
+    buttons_save = "[FR] Save",
     buttons_submit = "[FR] Submit",
     buttons_cancel = "[FR] Cancel",
 
@@ -17,5 +15,7 @@ val FrCommonStrings = CommonStrings(
     offers_list_sell_to = "[FR] Sell to",
 
     take_offer = "[FR] Take offer",
-    currency = "[FR] Currency"
+    currency = "[FR] Currency",
+
+    delete_account = "[FR] Delete account",
 )

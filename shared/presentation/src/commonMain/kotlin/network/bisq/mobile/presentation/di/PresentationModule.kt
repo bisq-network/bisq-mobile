@@ -1,7 +1,5 @@
 package network.bisq.mobile.presentation.di
 
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import network.bisq.mobile.client.ClientMainPresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
@@ -19,9 +17,10 @@ import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.ReviewTradeP
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TradeAmountPresenter
 import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.ICreateOfferPresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.*
+import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfileSettingsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.PaymentAccountPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
@@ -34,7 +33,6 @@ import network.bisq.mobile.presentation.ui.uicases.trades.IMyTrades
 import network.bisq.mobile.presentation.ui.uicases.trades.ITradeFlowPresenter
 import network.bisq.mobile.presentation.ui.uicases.trades.MyTradesPresenter
 import network.bisq.mobile.presentation.ui.uicases.trades.TradeFlowPresenter
-import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -102,4 +100,6 @@ val presentationModule = module {
     single{ TradeFlowPresenter(get(), get()) } bind ITradeFlowPresenter::class
 
     single{ CreateOfferPresenter(get(), get()) } bind ICreateOfferPresenter::class
+
+    single{ PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
 }
