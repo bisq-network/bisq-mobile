@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
 import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.components.molecules.settings.SettingsMenu
@@ -33,7 +34,7 @@ fun SettingsScreen(isTabSelected: Boolean) {
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
+    BisqScrollLayout {
         BreadcrumbNavigation(path = menuPath) { index ->
             currentMenu.value = menuPath[index]
             // TODO might need complex index logic?
@@ -43,10 +44,10 @@ fun SettingsScreen(isTabSelected: Boolean) {
 
         if (selectedLeaf.value == null) {
             SettingsMenu(menuItem = currentMenu.value) { selectedItem ->
+                menuPath.add(selectedItem)
                 if (selectedItem is MenuItem.Parent) {
                     selectedLeaf.value = null
                     currentMenu.value = selectedItem
-                    menuPath.add(selectedItem)
                 } else {
                     selectedLeaf.value = selectedItem as MenuItem.Leaf
                 }

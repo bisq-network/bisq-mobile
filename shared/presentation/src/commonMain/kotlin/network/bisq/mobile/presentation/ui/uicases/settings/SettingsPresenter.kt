@@ -23,7 +23,7 @@ open class SettingsPresenter(
             )
         )
         return MenuItem.Parent(
-            label = "Application",
+            label = "Bisq",
             children = addCustomSettings(defaultList)
             )
     }
