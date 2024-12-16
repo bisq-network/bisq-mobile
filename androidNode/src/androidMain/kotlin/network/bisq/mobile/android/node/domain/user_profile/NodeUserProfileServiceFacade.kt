@@ -6,9 +6,13 @@ import bisq.security.SecurityService
 import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
-import bisq.user.profile.UserProfile
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
+import network.bisq.mobile.client.replicated_model.common.network.Address
+import network.bisq.mobile.client.replicated_model.common.network.TransportType
+import network.bisq.mobile.client.replicated_model.network.identity.NetworkId
+import network.bisq.mobile.client.replicated_model.security.keys.PubKey
+import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.Logging
@@ -100,8 +104,34 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     // Private
-    private fun getSelectedUserProfile(): UserProfile? {
-        return userService.userIdentityService.selectedUserIdentity?.userProfile
+    override suspend fun getSelectedUserProfile(): UserProfile? {
+        // TODO move to bridge mapper
+        return userService.userIdentityService.selectedUserIdentity?.userProfile?.let {
+            UserProfile(
+                it.nickName,
+                network.bisq.mobile.client.replicated_model.security.pow.ProofOfWork(
+                    it.proofOfWork.solution,
+                    it.proofOfWork.counter,
+                    it.proofOfWork.challenge,
+                    it.proofOfWork.difficulty,
+                    it.proofOfWork.payload,
+                    it.proofOfWork.duration
+                ),
+                NetworkId(it.networkId.addressByTransportTypeMap.map{
+                    (key, value) ->
+                        TransportType.entries[key.ordinal] to Address(value.host, value.port) }.toMap(),
+                          PubKey( it.networkId.pubKey.publicKey.toString(),  it.networkId.pubKey.keyId)),
+                it.terms,
+                it.statement,
+                it.avatarVersion,
+                it.applicationVersion,
+                it.id,
+                it.nym,
+                it.userName,
+                it.pubKeyHash.toString(),
+                it.publishDate
+            )
+        }
     }
 
     private fun createSimulatedDelay(powDuration: Long) {
