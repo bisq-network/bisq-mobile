@@ -1,6 +1,7 @@
 package network.bisq.mobile.utils
 
 import kotlinx.datetime.*
+import kotlin.time.ExperimentalTime
 
 object DateUtils {
 
@@ -21,5 +22,13 @@ object DateUtils {
 
         // Format the result
         return Triple(years, months, days)
+    }
+
+    fun toDateString(epochMillis: Long, timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
+        val instant = Instant.fromEpochMilliseconds(epochMillis)
+        val localDateTime = instant.toLocalDateTime(timeZone)
+        return localDateTime.toString()
+            .split(".")[0] // remove ms
+                .replace("T", " ") // separate date time
     }
 }

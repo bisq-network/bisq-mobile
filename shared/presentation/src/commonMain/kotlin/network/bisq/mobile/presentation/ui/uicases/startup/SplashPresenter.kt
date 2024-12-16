@@ -5,6 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.SettingsRepository
@@ -30,6 +31,10 @@ open class SplashPresenter(
 
     override fun onViewAttached() {
         job = backgroundScope.launch {
+            userRepository.fetch()?.let {
+                it.lastActivity = Clock.System.now().toEpochMilliseconds()
+                userRepository.update(it)
+            }
             progress.collect { value ->
                 when {
                     value == 1.0f -> navigateToNextScreen()

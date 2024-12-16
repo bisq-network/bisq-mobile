@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
@@ -47,6 +48,8 @@ class UserProfileSettingsPresenter(
                 setProfileAge(it)
                 setProfileId(it)
                 setBotId(it)
+            }
+            userRepository.fetch()?.let {
                 // The following should be local to the app
                 setLastActivity(it)
                 setTradeTerms(it)
@@ -56,19 +59,16 @@ class UserProfileSettingsPresenter(
         }
     }
 
-    private fun setStatement(it: UserProfile) {
-        // TODO define how we get this (user repository?)
-        _statement.value = DEFAULT_UNKNOWN_VALUE
+    private fun setStatement(user: User) {
+        _statement.value = user.statement ?: DEFAULT_UNKNOWN_VALUE
     }
 
-    private fun setTradeTerms(it: UserProfile) {
-        // TODO define how we get this (user repository?)
-        _tradeTerms.value = DEFAULT_UNKNOWN_VALUE
+    private fun setTradeTerms(user: User) {
+        _tradeTerms.value = user.statement ?: DEFAULT_UNKNOWN_VALUE
     }
 
-    private fun setLastActivity(it: UserProfile) {
-        // TODO define how we get this (user repository?)
-        _lastUserActivity.value = DEFAULT_UNKNOWN_VALUE
+    private fun setLastActivity(user: User) {
+        _lastUserActivity.value = user.lastActivity?.let { DateUtils.toDateString(it) } ?: DEFAULT_UNKNOWN_VALUE
     }
 
     private fun setBotId(it: UserProfile) {
