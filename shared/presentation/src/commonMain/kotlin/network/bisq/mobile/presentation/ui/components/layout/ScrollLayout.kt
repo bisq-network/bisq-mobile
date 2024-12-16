@@ -15,6 +15,7 @@ fun BisqScrollLayout(
     padding: PaddingValues = PaddingValues(all = BisqUIConstants.ScreenPadding),
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    onModifier: ((Modifier) -> Modifier)? = null, // allows to customize modifier settings
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
@@ -25,6 +26,7 @@ fun BisqScrollLayout(
             .background(color = BisqTheme.colors.backgroundColor)
             .padding(padding)
             .verticalScroll(rememberScrollState())
+            .run { onModifier?.invoke(this) ?: this }
     ) {
         content()
     }

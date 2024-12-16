@@ -4,6 +4,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
+import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -11,11 +13,15 @@ import network.bisq.mobile.utils.DateUtils
 
 class UserProfileSettingsPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
+    private val userRepository: UserRepository,
     mainPresenter: MainPresenter): BasePresenter(mainPresenter), IUserProfileSettingsPresenter {
 
     companion object {
         const val DEFAULT_UNKNOWN_VALUE = "N/A"
     }
+
+    private val _uniqueAvatar = MutableStateFlow(userRepository.data.value?.uniqueAvatar)
+    override val uniqueAvatar: StateFlow<PlatformImage?> get() = _uniqueAvatar
 
     private val _reputation = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
     override val reputation: StateFlow<String> = _reputation
@@ -46,6 +52,7 @@ class UserProfileSettingsPresenter(
                 setTradeTerms(it)
                 setStatement(it)
             }
+            _uniqueAvatar.value = userRepository.fetch()?.uniqueAvatar
         }
     }
 

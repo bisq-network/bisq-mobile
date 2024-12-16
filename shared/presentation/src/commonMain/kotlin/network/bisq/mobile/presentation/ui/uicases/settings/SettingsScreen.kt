@@ -34,7 +34,8 @@ fun SettingsScreen(isTabSelected: Boolean) {
         }
     }
 
-    BisqScrollLayout {
+    // Column is used leaving the possibility to the leaf views to set the scrolling as they please
+    Column {
         BreadcrumbNavigation(path = menuPath) { index ->
             currentMenu.value = menuPath[index]
             // TODO might need complex index logic?

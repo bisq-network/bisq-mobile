@@ -8,16 +8,16 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
+import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -32,6 +32,8 @@ interface IUserProfileSettingsPresenter: ViewPresenter {
     val botId: StateFlow<String>
     val statement: StateFlow<String>
     val tradeTerms: StateFlow<String>
+
+    val uniqueAvatar: StateFlow<PlatformImage?>
 
     fun onDelete()
     fun onSave()
@@ -54,93 +56,110 @@ fun UserProfileSettingsScreen() {
 
     RememberPresenterLifecycle(presenter)
 
-    Column(modifier = Modifier.fillMaxWidth()) {
-        // Bot Icon
-        Box(
-            modifier = Modifier
-                .size(80.dp)
-                .clip(CircleShape)
-                .background(BisqTheme.colors.dark1),
-            contentAlignment = Alignment.Center
+    // Bot Icon
+    Spacer(modifier = Modifier.height(16.dp))
+
+    Column(modifier = Modifier.fillMaxSize(),
+           horizontalAlignment = Alignment.CenterHorizontally) {
+
+        UserProfileScreenHeader(presenter)
+
+        Spacer(modifier = Modifier.height(16.dp))
+        BisqScrollLayout(onModifier = { modifier -> modifier.weight(1f) }) {
+            // Bot ID
+            SettingsTextField(label = "Bot ID", value = botId, editable = false)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Profile ID
+            SettingsTextField(label = "Profile ID", value = profileId, editable = false)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Profile Age
+            SettingsTextField(label = "Profile age", value = profileAge, editable = false)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Last User Activity
+            SettingsTextField(label = "Last user activity", value = lastUserActivity, editable = false)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Reputation
+            SettingsTextField(label = "Reputation", value = reputation, editable = false)
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Statement
+            SettingsTextField(
+                label = "Statement",
+                value = statement,
+                editable = true,
+                onValueChange = { presenter.updateStatement(it) }
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Trade Terms
+            SettingsTextField(
+                label = "Trade terms",
+                value = tradeTerms,
+                editable = true,
+                onValueChange = { presenter.updateTradeTerms(it) }
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        UserProfileScreenFooter(presenter)
+    }
+}
+
+@Composable
+private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter) {
+    Box(
+        modifier = Modifier
+            .size(80.dp)
+            .clip(CircleShape)
+            .padding(8.dp)
+            .fillMaxWidth()
+            .background(BisqTheme.colors.dark1),
+        contentAlignment = Alignment.Center
+    ) {
+        UserIcon(
+            presenter.uniqueAvatar.value,
+            modifier = Modifier.size(72.dp)
+        )
+    }
+}
+
+@Composable
+private fun UserProfileScreenFooter(presenter: IUserProfileSettingsPresenter) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Button(
+            onClick = presenter::onDelete,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = BisqTheme.colors.danger,
+                contentColor = BisqTheme.colors.light1
+            ),
+            modifier = Modifier.weight(1f)
         ) {
-            Text(" PLACEHOLDER ")
+            Text("Delete profile", fontSize = 14.sp)
         }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
-        // Bot ID
-        SettingsTextField(label = "Bot ID", value = botId, editable = false)
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Profile ID
-        SettingsTextField(label = "Profile ID", value = profileId, editable = false)
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Profile Age
-        SettingsTextField(label = "Profile age", value = profileAge, editable = false)
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Last User Activity
-        SettingsTextField(label = "Last user activity", value = lastUserActivity, editable = false)
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Reputation
-        SettingsTextField(label = "Reputation", value = reputation, editable = false)
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        // Statement
-        SettingsTextField(
-            label = "Statement",
-            value = statement,
-            editable = true,
-            onValueChange = { presenter.updateStatement(it) }
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Trade Terms
-        SettingsTextField(
-            label = "Trade terms",
-            value = tradeTerms,
-            editable = true,
-            onValueChange = { presenter.updateTradeTerms(it) }
-        )
-
-        Spacer(modifier = Modifier.height(24.dp))
-
-        // Buttons
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+        Button(
+            onClick = presenter::onSave,
+            colors = ButtonDefaults.buttonColors(
+                containerColor = BisqTheme.colors.primary,
+                contentColor = BisqTheme.colors.light1
+            ),
+            modifier = Modifier.weight(1f)
         ) {
-            Button(
-                onClick = presenter::onDelete,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BisqTheme.colors.dark1,
-                    contentColor = BisqTheme.colors.light1
-                ),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Delete profile", fontSize = 14.sp)
-            }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
-            Button(
-                onClick = presenter::onSave,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BisqTheme.colors.primary,
-                    contentColor = BisqTheme.colors.light1
-                ),
-                modifier = Modifier.weight(1f)
-            ) {
-                Text("Save", fontSize = 14.sp)
-            }
+            Text("Save", fontSize = 14.sp)
         }
     }
 }
