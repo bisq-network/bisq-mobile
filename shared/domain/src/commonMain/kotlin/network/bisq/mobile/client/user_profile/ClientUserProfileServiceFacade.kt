@@ -63,7 +63,7 @@ class ClientUserProfileServiceFacade(
     }
 
     // Private
-    private suspend fun getSelectedUserProfile(): UserProfile {
+    override suspend fun getSelectedUserProfile(): UserProfile {
         return apiGateway.getSelectedUserProfile()
     }
 

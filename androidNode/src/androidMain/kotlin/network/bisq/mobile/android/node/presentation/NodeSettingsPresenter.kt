@@ -2,8 +2,8 @@ package network.bisq.mobile.android.node.presentation
 
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.MenuItem
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
 
 class NodeSettingsPresenter(

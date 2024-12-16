@@ -6,16 +6,16 @@ import network.bisq.mobile.client.replicated_model.security.pow.ProofOfWork
 
 @Serializable
 data class UserProfile(
-    val nickName: String,
-    val proofOfWork: ProofOfWork,
-    val networkId: NetworkId,
-    val terms: String,
-    val statement: String,
-    val avatarVersion: Int,
-    val applicationVersion: String,
-    val id: String,
-    val nym: String,
-    val userName: String,
-    val pubKeyHash: String,
-    val publishDate: Long
+    val nickName: String? = null,
+    val proofOfWork: ProofOfWork? = null,
+    val networkId: NetworkId? = null,
+    val terms: String? = null,
+    val statement: String? = null,
+    val avatarVersion: Int? = null,
+    val applicationVersion: String? = null,
+    val id: String? = null,
+    val nym: String? = null,
+    val userName: String? = null,
+    val pubKeyHash: String? = null,
+    val publishDate: Long? = null
 )

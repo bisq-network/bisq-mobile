@@ -6,6 +6,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.UserRepository
@@ -128,7 +129,10 @@ open class CreateProfilePresenter(
                     setNym(nym)
                     setProfileIcon(profileIcon)
                     backgroundScope.launch {
-                        userRepository.update(User().apply { uniqueAvatar = profileIcon })
+                        userRepository.update(User().apply {
+                            uniqueAvatar = profileIcon
+                            lastActivity = Clock.System.now().toEpochMilliseconds()
+                        })
                     }
                 }
                 setGenerateKeyPairInProgress(false)

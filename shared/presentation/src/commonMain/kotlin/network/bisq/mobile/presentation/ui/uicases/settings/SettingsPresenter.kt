@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 
 /**
  * SettingsPresenter with default implementation
@@ -22,7 +23,7 @@ open class SettingsPresenter(
             )
         )
         return MenuItem.Parent(
-            label = "Application",
+            label = "Bisq",
             children = addCustomSettings(defaultList)
             )
     }
