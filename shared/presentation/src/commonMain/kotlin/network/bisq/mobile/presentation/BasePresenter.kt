@@ -65,7 +65,9 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     @CallSuper
-    override fun onViewAttached() { }
+    override fun onViewAttached() {
+        log.i { "Lifecycle: View attached to presenter" }
+    }
 
     @CallSuper
     override fun onViewUnattaching() { }
@@ -116,8 +118,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
         // at the moment the attach view is with the activity/ main view in ios
         // unless we change this there is no point in sharing with dependents
         this.view = view
-        log.i { "Lifecycle: View Attached to Presenter" }
-        onViewAttached()
+        log.i { "Lifecycle: Main View attached to Main Presenter" }
     }
 
     fun detachView() {

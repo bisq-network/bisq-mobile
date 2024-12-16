@@ -17,6 +17,8 @@ import org.koin.core.qualifier.named
 
 @Composable
 fun TakeOfferReviewTradeScreen() {
+    // TODO presenter for this? And call RememberLifecycle...
+
     val navController: NavHostController = koinInject(named("RootNavController"))
     TakeOfferScaffold {
         Column(modifier = Modifier.padding(horizontal = 32.dp, vertical = 24.dp)) {
