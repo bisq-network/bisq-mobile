@@ -5,10 +5,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.TextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -32,27 +34,25 @@ fun SettingsTextField(
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 4.dp)
         )
-
-        if (editable) {
-            BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BisqTheme.colors.dark1, RoundedCornerShape(8.dp))
-                    .padding(8.dp)
-            )
-        } else {
-            Text(
-                text = value,
-                color = BisqTheme.colors.light1,
-                fontSize = 14.sp,
-                textAlign = TextAlign.Start,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(BisqTheme.colors.dark1, RoundedCornerShape(8.dp))
-                    .padding(8.dp)
-            )
-        }
+        TextField(
+            value = value,
+            enabled = editable,
+            onValueChange = onValueChange,
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = BisqTheme.colors.light3,
+                unfocusedTextColor = BisqTheme.colors.secondaryHover,
+                unfocusedIndicatorColor = BisqTheme.colors.secondary,
+                focusedIndicatorColor = Color.Transparent,
+                focusedContainerColor = BisqTheme.colors.secondary,
+                cursorColor = Color.Blue,
+                unfocusedContainerColor = BisqTheme.colors.secondary
+            ),
+//            fontSize = 14.sp,
+//            textAlign = TextAlign.Start,
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(BisqTheme.colors.dark1, RoundedCornerShape(8.dp))
+                .padding(8.dp)
+        )
     }
 }

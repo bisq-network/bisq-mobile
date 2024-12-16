@@ -27,6 +27,10 @@ class UserProfileSettingsPresenter(
     override val profileId: StateFlow<String> = _profileId
     private val _botId = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
     override val botId: StateFlow<String> = _botId
+    private val _tradeTerms = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
+    override val tradeTerms: StateFlow<String> = _tradeTerms
+    private val _statement = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
+    override val statement: StateFlow<String> = _statement
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -35,8 +39,37 @@ class UserProfileSettingsPresenter(
 //                _reputation.value = it.reputation // TODO reputation?
 //                _lastUserActivity = it.lastUserActivity // TODO implement this feature? - we will need to persist profile
                 setProfileAge(it)
+                setProfileId(it)
+                setBotId(it)
+                // The following should be local to the app
+                setLastActivity(it)
+                setTradeTerms(it)
+                setStatement(it)
             }
         }
+    }
+
+    private fun setStatement(it: UserProfile) {
+        // TODO define how we get this (user repository?)
+        _statement.value = DEFAULT_UNKNOWN_VALUE
+    }
+
+    private fun setTradeTerms(it: UserProfile) {
+        // TODO define how we get this (user repository?)
+        _tradeTerms.value = DEFAULT_UNKNOWN_VALUE
+    }
+
+    private fun setLastActivity(it: UserProfile) {
+        // TODO define how we get this (user repository?)
+        _lastUserActivity.value = DEFAULT_UNKNOWN_VALUE
+    }
+
+    private fun setBotId(it: UserProfile) {
+        _profileId.value = it.nickName ?: DEFAULT_UNKNOWN_VALUE
+    }
+
+    private fun setProfileId(it: UserProfile) {
+        _profileId.value = it.id ?: DEFAULT_UNKNOWN_VALUE
     }
 
     private fun setProfileAge(userProfile: UserProfile) {
@@ -57,6 +90,14 @@ class UserProfileSettingsPresenter(
 
     override fun onSave() {
         TODO("Not yet implemented")
+    }
+
+    override fun updateTradeTerms(it: String) {
+        _tradeTerms.value = it
+    }
+
+    override fun updateStatement(it: String) {
+        _statement.value = it
     }
 
 }

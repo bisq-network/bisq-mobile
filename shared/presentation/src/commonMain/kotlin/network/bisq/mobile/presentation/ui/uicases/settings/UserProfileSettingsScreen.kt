@@ -30,15 +30,17 @@ interface IUserProfileSettingsPresenter: ViewPresenter {
     val profileAge: StateFlow<String>
     val profileId: StateFlow<String>
     val botId: StateFlow<String>
+    val statement: StateFlow<String>
+    val tradeTerms: StateFlow<String>
 
     fun onDelete()
     fun onSave()
+    fun updateTradeTerms(it: String)
+    fun updateStatement(it: String)
 }
 
 @Composable
 fun UserProfileSettingsScreen() {
-    val statement = remember { mutableStateOf("") }
-    val tradeTerms = remember { mutableStateOf("") }
     val presenter: IUserProfileSettingsPresenter = koinInject()
 
 
@@ -47,6 +49,8 @@ fun UserProfileSettingsScreen() {
     val profileAge = presenter.profileAge.collectAsState().value
     val lastUserActivity = presenter.lastUserActivity.collectAsState().value
     val reputation = presenter.reputation.collectAsState().value
+    val statement = presenter.statement.collectAsState().value
+    val tradeTerms = presenter.tradeTerms.collectAsState().value
 
     RememberPresenterLifecycle(presenter)
 
@@ -92,9 +96,9 @@ fun UserProfileSettingsScreen() {
         // Statement
         SettingsTextField(
             label = "Statement",
-            value = statement.value,
+            value = statement,
             editable = true,
-            onValueChange = { statement.value = it }
+            onValueChange = { presenter.updateStatement(it) }
         )
 
         Spacer(modifier = Modifier.height(8.dp))
@@ -102,9 +106,9 @@ fun UserProfileSettingsScreen() {
         // Trade Terms
         SettingsTextField(
             label = "Trade terms",
-            value = tradeTerms.value,
+            value = tradeTerms,
             editable = true,
-            onValueChange = { tradeTerms.value = it }
+            onValueChange = { presenter.updateTradeTerms(it) }
         )
 
         Spacer(modifier = Modifier.height(24.dp))
