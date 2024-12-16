@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -39,12 +40,14 @@ class UserProfileSettingsPresenter(
     private val _statement = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
     override val statement: StateFlow<String> = _statement
 
+    private val _showLoading = MutableStateFlow(false)
+    override val showLoading: StateFlow<Boolean> = _showLoading
+
     override fun onViewAttached() {
         super.onViewAttached()
         backgroundScope.launch {
             userProfileServiceFacade.getSelectedUserProfile()?.let { it ->
 //                _reputation.value = it.reputation // TODO reputation?
-//                _lastUserActivity = it.lastUserActivity // TODO implement this feature? - we will need to persist profile
                 setProfileAge(it)
                 setProfileId(it)
                 setBotId(it)
@@ -64,7 +67,7 @@ class UserProfileSettingsPresenter(
     }
 
     private fun setTradeTerms(user: User) {
-        _tradeTerms.value = user.statement ?: DEFAULT_UNKNOWN_VALUE
+        _tradeTerms.value = user.tradeTerms ?: DEFAULT_UNKNOWN_VALUE
     }
 
     private fun setLastActivity(user: User) {
@@ -96,7 +99,22 @@ class UserProfileSettingsPresenter(
     }
 
     override fun onSave() {
-        TODO("Not yet implemented")
+        backgroundScope.launch {
+            setShowLoading(true)
+            try {
+                userRepository.fetch()!!.let {
+                    it.statement = statement.value
+                    it.tradeTerms = tradeTerms.value
+                    userRepository.update(it)
+                }
+                // avoid flicker
+                delay(500L)
+            } catch (e: Exception) {
+                log.e(e) { "Failed to save user profile settings" }
+            } finally {
+                setShowLoading(false)
+            }
+        }
     }
 
     override fun updateTradeTerms(it: String) {
@@ -107,4 +125,9 @@ class UserProfileSettingsPresenter(
         _statement.value = it
     }
 
+    private fun setShowLoading(show: Boolean = true) {
+        uiScope.launch {
+            _showLoading.value = show
+        }
+    }
 }

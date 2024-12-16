@@ -13,9 +13,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.img_bitcoin_payment_waiting
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
@@ -35,6 +38,8 @@ interface IUserProfileSettingsPresenter: ViewPresenter {
 
     val uniqueAvatar: StateFlow<PlatformImage?>
 
+    val showLoading: StateFlow<Boolean>
+
     fun onDelete()
     fun onSave()
     fun updateTradeTerms(it: String)
@@ -53,6 +58,8 @@ fun UserProfileSettingsScreen() {
     val reputation = presenter.reputation.collectAsState().value
     val statement = presenter.statement.collectAsState().value
     val tradeTerms = presenter.tradeTerms.collectAsState().value
+
+    val showLoading = presenter.showLoading.collectAsState().value
 
     RememberPresenterLifecycle(presenter)
 
@@ -110,7 +117,7 @@ fun UserProfileSettingsScreen() {
             )
         }
         Spacer(modifier = Modifier.height(16.dp))
-        UserProfileScreenFooter(presenter)
+        UserProfileScreenFooter(presenter, showLoading)
     }
 }
 
@@ -133,33 +140,49 @@ private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter) {
 }
 
 @Composable
-private fun UserProfileScreenFooter(presenter: IUserProfileSettingsPresenter) {
+private fun UserProfileScreenFooter(presenter: IUserProfileSettingsPresenter, showLoading: Boolean) {
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
+        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Button(
-            onClick = presenter::onDelete,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = BisqTheme.colors.danger,
-                contentColor = BisqTheme.colors.light1
-            ),
-            modifier = Modifier.weight(1f)
-        ) {
-            Text("Delete profile", fontSize = 14.sp)
-        }
+        if (showLoading) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier.weight(1f)) {
+                CircularLoadingImage(
+                    // TODO specific image?
+                    image = Res.drawable.img_bitcoin_payment_waiting,
+                    isLoading = !showLoading
+                )
+            }
+        } else {
+            //        TODO uncomment when delete profile gets implemented
+            //        Button(
+            //            onClick = presenter::onDelete,
+            //            colors = ButtonDefaults.buttonColors(
+            //                containerColor = BisqTheme.colors.danger,
+            //                contentColor = BisqTheme.colors.light1
+            //            ),
+            //            modifier = Modifier.weight(1f).wrapContentWidth().padding(horizontal = 8.dp)
+            //        ) {
+            //            Text("Delete profile", fontSize = 14.sp)
+            //        }
+            //
+            //        Spacer(modifier = Modifier.width(16.dp))
 
-        Spacer(modifier = Modifier.width(16.dp))
-
-        Button(
-            onClick = presenter::onSave,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = BisqTheme.colors.primary,
-                contentColor = BisqTheme.colors.light1
-            ),
-            modifier = Modifier.weight(1f)
-        ) {
-            Text("Save", fontSize = 14.sp)
+            Button(
+                onClick = presenter::onSave,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = BisqTheme.colors.primary,
+                    contentColor = BisqTheme.colors.light1
+                ),
+                // TODO fixed height to match both cases?
+                modifier = Modifier.weight(1f)
+                    .wrapContentWidth()
+                    .padding(horizontal = 8.dp)
+            ) {
+                Text("Save", fontSize = 14.sp)
+            }
         }
     }
 }
