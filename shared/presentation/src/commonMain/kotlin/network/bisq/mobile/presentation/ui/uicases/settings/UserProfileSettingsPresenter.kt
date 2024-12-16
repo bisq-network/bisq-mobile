@@ -33,11 +33,13 @@ class UserProfileSettingsPresenter(
     override val profileAge: StateFlow<String> = _profileAge
     private val _profileId = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
     override val profileId: StateFlow<String> = _profileId
+    private val _nickname = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
+    override val nickname: StateFlow<String> = _nickname
     private val _botId = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
     override val botId: StateFlow<String> = _botId
-    private val _tradeTerms = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
+    private val _tradeTerms = MutableStateFlow("")
     override val tradeTerms: StateFlow<String> = _tradeTerms
-    private val _statement = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
+    private val _statement = MutableStateFlow("")
     override val statement: StateFlow<String> = _statement
 
     private val _showLoading = MutableStateFlow(false)
@@ -51,6 +53,7 @@ class UserProfileSettingsPresenter(
                 setProfileAge(it)
                 setProfileId(it)
                 setBotId(it)
+                setNickname(it)
             }
             userRepository.fetch()?.let {
                 // The following should be local to the app
@@ -74,12 +77,16 @@ class UserProfileSettingsPresenter(
         _lastUserActivity.value = user.lastActivity?.let { DateUtils.toDateString(it) } ?: DEFAULT_UNKNOWN_VALUE
     }
 
-    private fun setBotId(it: UserProfile) {
-        _profileId.value = it.nickName ?: DEFAULT_UNKNOWN_VALUE
+    private fun setBotId(userProfile: UserProfile) {
+        _botId.value = userProfile.nym ?: DEFAULT_UNKNOWN_VALUE
     }
 
-    private fun setProfileId(it: UserProfile) {
-        _profileId.value = it.id ?: DEFAULT_UNKNOWN_VALUE
+    private fun setNickname(userProfile: UserProfile) {
+        _nickname.value = userProfile.nickName ?: DEFAULT_UNKNOWN_VALUE
+    }
+
+    private fun setProfileId(userProfile: UserProfile) {
+        _profileId.value = userProfile.id ?: DEFAULT_UNKNOWN_VALUE
     }
 
     private fun setProfileAge(userProfile: UserProfile) {

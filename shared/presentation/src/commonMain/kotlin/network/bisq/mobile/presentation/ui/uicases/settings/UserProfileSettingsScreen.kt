@@ -32,6 +32,7 @@ interface IUserProfileSettingsPresenter: ViewPresenter {
     val lastUserActivity: StateFlow<String>
     val profileAge: StateFlow<String>
     val profileId: StateFlow<String>
+    val nickname: StateFlow<String>
     val botId: StateFlow<String>
     val statement: StateFlow<String>
     val tradeTerms: StateFlow<String>
@@ -52,6 +53,7 @@ fun UserProfileSettingsScreen() {
 
 
     val botId = presenter.botId.collectAsState().value
+    val nickname = presenter.nickname.collectAsState().value
     val profileId = presenter.profileId.collectAsState().value
     val profileAge = presenter.profileAge.collectAsState().value
     val lastUserActivity = presenter.lastUserActivity.collectAsState().value
@@ -73,22 +75,22 @@ fun UserProfileSettingsScreen() {
 
         Spacer(modifier = Modifier.height(16.dp))
         BisqScrollLayout(onModifier = { modifier -> modifier.weight(1f) }) {
-            // Bot ID
             SettingsTextField(label = "Bot ID", value = botId, editable = false)
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Profile ID
+            SettingsTextField(label = "Nickname", value = nickname, editable = false)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
             SettingsTextField(label = "Profile ID", value = profileId, editable = false)
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Profile Age
             SettingsTextField(label = "Profile age", value = profileAge, editable = false)
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Last User Activity
             SettingsTextField(label = "Last user activity", value = lastUserActivity, editable = false)
 
             Spacer(modifier = Modifier.height(8.dp))

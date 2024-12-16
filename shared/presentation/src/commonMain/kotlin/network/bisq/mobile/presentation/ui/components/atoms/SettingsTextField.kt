@@ -39,6 +39,8 @@ fun SettingsTextField(
             enabled = editable,
             onValueChange = onValueChange,
             colors = TextFieldDefaults.colors(
+                disabledContainerColor = BisqTheme.colors.secondaryDisabled,
+                disabledTextColor = BisqTheme.colors.light5,
                 focusedTextColor = BisqTheme.colors.light3,
                 unfocusedTextColor = BisqTheme.colors.secondaryHover,
                 unfocusedIndicatorColor = BisqTheme.colors.secondary,
