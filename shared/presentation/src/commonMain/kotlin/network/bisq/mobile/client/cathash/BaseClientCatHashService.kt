@@ -19,6 +19,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
     companion object {
         const val SIZE_OF_CACHED_ICONS = 60
         const val MAX_CACHE_SIZE = 5000
+        const val CATHASH_ICONS_PATH = "db/cache/cat_hash_icons"
     }
 
     private val fileSystem: FileSystem = FileSystem.SYSTEM
@@ -29,13 +30,18 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
     protected abstract fun readRawImage(iconFilePath: String): PlatformImage?
 
     fun getImage(userProfile: UserProfile, size: Int): PlatformImage? {
-        val pubKeyHash = userProfile.pubKeyHash.hexToByteArray()
-        return getImage(
-            pubKeyHash,
-            userProfile.proofOfWork.solution,
-            userProfile.avatarVersion,
-            size
-        )
+        try {
+            val pubKeyHash = userProfile.pubKeyHash!!.hexToByteArray()
+            return getImage(
+                pubKeyHash,
+                userProfile.proofOfWork!!.solution,
+                userProfile.avatarVersion!!,
+                size
+            )
+        } catch (e: Exception) {
+            log.e(e) { "Failed to get image from profile" }
+            return null
+        }
     }
 
     override fun getImage(
@@ -103,7 +109,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
     fun pruneOutdatedProfileIcons(userProfiles: Collection<UserProfile>) {
         if (userProfiles.isEmpty()) return
 
-        val iconsDirectory = baseDirPath.toPath().resolve("db/cache/cat_hash_icons")
+        val iconsDirectory = baseDirPath.toPath().resolve(CATHASH_ICONS_PATH)
         val versionDirs =
             fileSystem.listOrNull(iconsDirectory)?.filter { fileSystem.metadata(it).isDirectory }
                 ?: return

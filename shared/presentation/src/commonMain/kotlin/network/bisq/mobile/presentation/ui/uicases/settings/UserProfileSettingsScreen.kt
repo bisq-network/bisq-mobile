@@ -7,6 +7,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -14,19 +15,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
 interface IUserProfileSettingsPresenter: ViewPresenter {
 
-    val reputation: String
-    val lastUserActivity: String
-    val profileAge: String
-    val profileId: String
-    val botId: String
+    val reputation: StateFlow<String>
+    val lastUserActivity: StateFlow<String>
+    val profileAge: StateFlow<String>
+    val profileId: StateFlow<String>
+    val botId: StateFlow<String>
 
     fun onDelete()
     fun onSave()
@@ -34,20 +37,20 @@ interface IUserProfileSettingsPresenter: ViewPresenter {
 
 @Composable
 fun UserProfileSettingsScreen() {
-val statement = remember { mutableStateOf("") }
+    val statement = remember { mutableStateOf("") }
     val tradeTerms = remember { mutableStateOf("") }
     val presenter: IUserProfileSettingsPresenter = koinInject()
 
+
+    val botId = presenter.botId.collectAsState().value
+    val profileId = presenter.profileId.collectAsState().value
+    val profileAge = presenter.profileAge.collectAsState().value
+    val lastUserActivity = presenter.lastUserActivity.collectAsState().value
+    val reputation = presenter.reputation.collectAsState().value
+
     RememberPresenterLifecycle(presenter)
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(BisqTheme.colors.dark1)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.Top,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
+    Column(modifier = Modifier.fillMaxWidth()) {
         // Bot Icon
         Box(
             modifier = Modifier
@@ -62,27 +65,27 @@ val statement = remember { mutableStateOf("") }
         Spacer(modifier = Modifier.height(16.dp))
 
         // Bot ID
-        SettingsTextField(label = "Bot ID", value = presenter.botId, editable = false)
+        SettingsTextField(label = "Bot ID", value = botId, editable = false)
 
         Spacer(modifier = Modifier.height(8.dp))
 
         // Profile ID
-        SettingsTextField(label = "Profile ID", value = presenter.profileId, editable = false)
+        SettingsTextField(label = "Profile ID", value = profileId, editable = false)
 
         Spacer(modifier = Modifier.height(8.dp))
 
         // Profile Age
-        SettingsTextField(label = "Profile age", value = presenter.profileAge, editable = false)
+        SettingsTextField(label = "Profile age", value = profileAge, editable = false)
 
         Spacer(modifier = Modifier.height(8.dp))
 
         // Last User Activity
-        SettingsTextField(label = "Last user activity", value = presenter.lastUserActivity, editable = false)
+        SettingsTextField(label = "Last user activity", value = lastUserActivity, editable = false)
 
         Spacer(modifier = Modifier.height(8.dp))
 
         // Reputation
-        SettingsTextField(label = "Reputation", value = presenter.reputation, editable = false)
+        SettingsTextField(label = "Reputation", value = reputation, editable = false)
 
         Spacer(modifier = Modifier.height(16.dp))
 
