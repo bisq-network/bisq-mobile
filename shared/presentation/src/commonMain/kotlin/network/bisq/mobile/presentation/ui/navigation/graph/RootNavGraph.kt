@@ -19,6 +19,7 @@ import network.bisq.mobile.presentation.ui.uicases.offers.OffersListScreen
 import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.*
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferReviewTradeScreen
 import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferTradeAmountScreen
+import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
@@ -96,6 +97,9 @@ fun RootNavGraph(rootNavController: NavHostController) {
             CreateOfferReviewOfferScreen()
         }
 
+        composable(Routes.UserProfileSettings.name) {
+            UserProfileSettingsScreen(showBackNavigation = true)
+        }
 
     }
 }

@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -17,9 +18,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import network.bisq.mobile.presentation.ui.components.atoms.icons.BellIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
+import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
@@ -100,7 +101,11 @@ fun TopBar(
 //                TODO implement full feature after MVP
 //                BellIcon()
                 Spacer(modifier = Modifier.width(12.dp))
-                UserIcon(presenter.uniqueAvatar.value, modifier = Modifier.size(30.dp))
+                UserIcon(presenter.uniqueAvatar.value,
+                         modifier = Modifier.size(30.dp)
+                             .clickable {
+                                 navController.navigate(Routes.UserProfileSettings.name)
+                             })
             }
         },
     )
