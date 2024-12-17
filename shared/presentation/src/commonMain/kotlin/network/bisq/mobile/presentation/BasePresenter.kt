@@ -20,6 +20,14 @@ import network.bisq.mobile.utils.Logging
  */
 interface ViewPresenter {
     /**
+     * @return root navigation controller
+     */
+    fun getRootNavController(): NavHostController
+    /**
+     * @return main app tab nav controller
+     */
+    fun getRootTabNavController(): NavHostController
+    /**
      * This can be used as initialization method AFTER view gets attached (so view is available)
      */
     fun onViewAttached()
@@ -63,6 +71,26 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
 
     init {
         rootPresenter?.registerChild(child = this)
+    }
+
+    /**
+     * Default implementation assumes is a child presenter
+     */
+    override fun getRootNavController(): NavHostController {
+        if (isRoot()) {
+            throw IllegalStateException("You need to redefine this method in your root presenter implementation")
+        }
+        return rootPresenter!!.getRootNavController()
+    }
+
+    /**
+     * Default implementation assumes is a child presenter
+     */
+    override fun getRootTabNavController(): NavHostController {
+        if (isRoot()) {
+            throw IllegalStateException("You need to redefine this method in your root presenter implementation")
+        }
+        return rootPresenter!!.getRootNavController()
     }
 
     @CallSuper

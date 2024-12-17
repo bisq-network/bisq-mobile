@@ -19,8 +19,7 @@ import org.koin.core.qualifier.named
 fun TakeOfferReviewTradeScreen() {
     // TODO presenter for this? And call RememberLifecycle...
 
-    val navController: NavHostController = koinInject(named("RootNavController"))
-    TakeOfferScaffold {
+   TakeOfferScaffold {
         Column(modifier = Modifier.padding(horizontal = 32.dp, vertical = 24.dp)) {
             BisqText.h3Regular(
                 text = "Review trade",

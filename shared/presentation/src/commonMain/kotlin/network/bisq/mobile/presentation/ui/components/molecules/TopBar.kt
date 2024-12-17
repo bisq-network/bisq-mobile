@@ -37,8 +37,8 @@ fun TopBar(
     isFlowScreen: Boolean = false,
     stepText: String = ""
 ) {
-    val navController: NavHostController = koinInject(named("RootNavController"))
     val presenter: ITopBarPresenter = koinInject()
+    val navController: NavHostController = presenter.getRootNavController()
 
     val showBackButton = customBackButton == null && navController.previousBackStackEntry != null
 

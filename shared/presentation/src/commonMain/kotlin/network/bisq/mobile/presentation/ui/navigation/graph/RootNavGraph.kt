@@ -24,16 +24,12 @@ import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScreen
 import network.bisq.mobile.presentation.ui.uicases.trades.TradeFlowScreen
-import org.koin.compose.koinInject
-import org.koin.core.qualifier.named
 
 @Composable
-fun RootNavGraph() {
-    val navController: NavHostController = koinInject(named("RootNavController"))
-
+fun RootNavGraph(rootNavController: NavHostController) {
     NavHost(
         modifier = Modifier.background(color = BisqTheme.colors.backgroundColor),
-        navController = navController,
+        navController = rootNavController,
         startDestination = Routes.Splash.name,
     ) {
         composable(route = Routes.Splash.name) {

@@ -48,8 +48,8 @@ interface ITrustedNodeSetupPresenter: ViewPresenter {
 fun TrustedNodeSetupScreen(
 ) {
     val strings = LocalStrings.current
-    val navController: NavHostController = koinInject(named("RootNavController"))
-    val presenter: ITrustedNodeSetupPresenter = koinInject { parametersOf(navController) }
+    val presenter: ITrustedNodeSetupPresenter = koinInject()
+    val navController: NavHostController = presenter.getRootNavController()
 
     val bisqApiUrl = presenter.bisqApiUrl.collectAsState().value
     val isConnected = presenter.isConnected.collectAsState().value

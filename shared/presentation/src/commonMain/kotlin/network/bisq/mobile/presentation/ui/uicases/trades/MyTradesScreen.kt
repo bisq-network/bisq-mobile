@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_no_trades
 import kotlinx.coroutines.flow.StateFlow
@@ -27,8 +26,6 @@ import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
-import org.koin.core.parameter.parametersOf
-import org.koin.core.qualifier.named
 
 interface IMyTrades : ViewPresenter {
     val myTrades: StateFlow<List<BisqOffer>>
@@ -38,10 +35,7 @@ interface IMyTrades : ViewPresenter {
 
 @Composable
 fun MyTradesScreen() {
-    val navController: NavHostController = koinInject(named("RootNavController"))
-    val tabController: NavHostController = koinInject(named("TabNavController"))
-
-    val presenter: IMyTrades = koinInject { parametersOf(navController, tabController) }
+    val presenter: IMyTrades = koinInject()
 
     val myTrades: List<BisqOffer> = presenter.myTrades.collectAsState().value
 

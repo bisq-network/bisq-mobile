@@ -39,9 +39,6 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val presentationModule = module {
-    single(named("RootNavController")) { getKoin().getProperty<NavHostController>("RootNavController") }
-    single(named("TabNavController")) { getKoin().getProperty<NavHostController>("TabNavController") }
-
     single<MainPresenter> { ClientMainPresenter(get(), get(), get(), get(), get()) } bind AppPresenter::class
 
     single<TopBarPresenter> { TopBarPresenter(get(), get()) } bind ITopBarPresenter::class
@@ -95,10 +92,9 @@ val presentationModule = module {
 
     single{ ReviewTradePresenter(get(), get()) } bind ITakeOfferReviewTradePresenter::class
 
-    single { (navController: NavController, tabController: NavController) ->
+    single {
         MyTradesPresenter(
             get(),
-            tabController = tabController,
             myTradesRepository = get()
         )
     } bind IMyTrades::class
