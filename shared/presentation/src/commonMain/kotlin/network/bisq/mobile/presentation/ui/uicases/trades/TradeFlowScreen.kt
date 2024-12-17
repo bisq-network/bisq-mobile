@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.*
+import network.bisq.mobile.presentation.ui.components.atoms.layout.*
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar

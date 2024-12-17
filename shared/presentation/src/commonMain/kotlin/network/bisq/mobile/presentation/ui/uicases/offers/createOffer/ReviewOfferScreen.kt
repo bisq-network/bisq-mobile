@@ -13,8 +13,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
-import network.bisq.mobile.presentation.ui.components.atoms.BisqHDivider
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox

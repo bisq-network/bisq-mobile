@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UpIcon
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfile

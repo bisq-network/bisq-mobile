@@ -13,7 +13,7 @@ import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ViewPresenter
-import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme

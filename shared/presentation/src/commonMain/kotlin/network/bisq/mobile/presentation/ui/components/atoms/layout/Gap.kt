@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.components.atoms
+package network.bisq.mobile.presentation.ui.components.atoms.layout
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height

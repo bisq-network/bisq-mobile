@@ -8,7 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.theme.BisqTheme

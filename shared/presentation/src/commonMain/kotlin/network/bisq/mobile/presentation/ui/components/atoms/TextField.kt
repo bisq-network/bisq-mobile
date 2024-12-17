@@ -1,8 +1,6 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -34,7 +32,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SearchIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
@@ -45,6 +42,7 @@ fun BisqTextField(
     onValueChanged: (String) -> Unit = {},
     placeholder: String = "",
     labelRightSuffix: (@Composable () -> Unit)? = null,
+    leftSuffix: (@Composable () -> Unit)? = null,
     rightSuffix: (@Composable () -> Unit)? = null,
     isSearch: Boolean = false,
     helperText: String = "",
@@ -119,10 +117,6 @@ fun BisqTextField(
                 decorationBox = { innerTextField ->
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         if (value.isEmpty()) {
-                            if (isSearch) {
-                                SearchIcon()
-                                Spacer(modifier = Modifier.width(10.dp))
-                            }
                             BisqText.largeRegular(
                                 text = placeholder,
                                 color = BisqTheme.colors.secondaryHover
@@ -134,6 +128,11 @@ fun BisqTextField(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
+                        if (leftSuffix != null) {
+                            leftSuffix()
+                            Spacer(modifier = Modifier.width(10.dp))
+                        }
+
                         innerTextField()
 
                         if (rightSuffix != null) {
