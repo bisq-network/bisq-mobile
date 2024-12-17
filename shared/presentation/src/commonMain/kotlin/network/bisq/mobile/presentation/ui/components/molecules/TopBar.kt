@@ -18,6 +18,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.ui.draw.alpha
+import androidx.navigation.compose.currentBackStackEntryAsState
+import network.bisq.mobile.presentation.ui.components.atoms.animations.ShineOverlay
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -40,6 +43,9 @@ fun TopBar(
 ) {
     val presenter: ITopBarPresenter = koinInject()
     val navController: NavHostController = presenter.getRootNavController()
+    val tabNavController: NavHostController = presenter.getRootTabNavController()
+
+    val currentTab = tabNavController.currentBackStackEntryAsState().value?.destination?.route
 
     val showBackButton = customBackButton == null && navController.previousBackStackEntry != null
 
@@ -101,11 +107,17 @@ fun TopBar(
 //                TODO implement full feature after MVP
 //                BellIcon()
                 Spacer(modifier = Modifier.width(12.dp))
-                UserIcon(presenter.uniqueAvatar.value,
-                         modifier = Modifier.size(30.dp)
-                             .clickable {
-                                 navController.navigate(Routes.UserProfileSettings.name)
-                             })
+                ShineOverlay {
+                    UserIcon(presenter.uniqueAvatar.value,
+                             modifier = Modifier.size(30.dp)
+//                                 .fillMaxSize()
+                                 .alpha(if (currentTab == Routes.TabSettings.name) 0.5f else 1.0f)
+                                 .clickable {
+                                     if (currentTab != Routes.TabSettings.name) {
+                                         navController.navigate(Routes.UserProfileSettings.name)
+                                     }
+                                 })
+                }
             }
         },
     )
