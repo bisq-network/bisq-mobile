@@ -16,6 +16,7 @@ enum class Routes(val title: String) {
     TabCurrencies(title = "tab_currencies"),
     TabMyTrades(title = "tab_my_trades"),
     TabSettings(title = "tab_settings"),
+    UserProfileSettings(title = "user_profile_settings"),
     OfferList(title = "offer_list"),
     TakeOfferTradeAmount(title = "take_offer_trade_amount"),
     TakeOfferPaymentMethod(title = "take_offer_payment_method"),

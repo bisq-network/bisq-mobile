@@ -3,9 +3,10 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bitcoin_payment_waiting
 import kotlinx.coroutines.flow.StateFlow
@@ -48,7 +50,7 @@ interface IUserProfileSettingsPresenter: ViewPresenter {
 }
 
 @Composable
-fun UserProfileSettingsScreen() {
+fun UserProfileSettingsScreen(showBackNavigation: Boolean = false) {
     val presenter: IUserProfileSettingsPresenter = koinInject()
 
 
@@ -71,7 +73,7 @@ fun UserProfileSettingsScreen() {
     Column(modifier = Modifier.fillMaxSize(),
            horizontalAlignment = Alignment.CenterHorizontally) {
 
-        UserProfileScreenHeader(presenter)
+        UserProfileScreenHeader(presenter, showBackNavigation)
 
         Spacer(modifier = Modifier.height(16.dp))
         BisqScrollLayout(onModifier = { modifier -> modifier.weight(1f) }) {
@@ -124,20 +126,44 @@ fun UserProfileSettingsScreen() {
 }
 
 @Composable
-private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter) {
+private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter, showBackNavigation: Boolean) {
     Box(
         modifier = Modifier
-            .size(80.dp)
-            .clip(CircleShape)
-            .padding(8.dp)
             .fillMaxWidth()
+            .padding(8.dp)
             .background(BisqTheme.colors.dark1),
         contentAlignment = Alignment.Center
     ) {
-        UserIcon(
-            presenter.uniqueAvatar.value,
-            modifier = Modifier.size(72.dp)
-        )
+        // Back Button if showBackNavigation is true
+        if (showBackNavigation) {
+            IconButton(
+                onClick = { presenter.getRootNavController().popBackStack() },
+                modifier = Modifier
+                    .size(48.dp)
+                    .align(Alignment.CenterStart) // Align to the top-left
+            ) {
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "Back",
+                    tint = BisqTheme.colors.light1
+                )
+            }
+        }
+
+        Box(
+            modifier = Modifier
+                .size(80.dp)
+                .clip(CircleShape)
+                .padding(8.dp)
+                .fillMaxWidth()
+                .background(BisqTheme.colors.dark1),
+            contentAlignment = Alignment.Center
+        ) {
+            UserIcon(
+                presenter.uniqueAvatar.value,
+                modifier = Modifier.size(72.dp)
+            )
+        }
     }
 }
 
