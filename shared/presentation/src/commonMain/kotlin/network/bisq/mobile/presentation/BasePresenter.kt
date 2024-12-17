@@ -90,7 +90,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
         if (isRoot()) {
             throw IllegalStateException("You need to redefine this method in your root presenter implementation")
         }
-        return rootPresenter!!.getRootNavController()
+        return rootPresenter!!.getRootTabNavController()
     }
 
     @CallSuper
