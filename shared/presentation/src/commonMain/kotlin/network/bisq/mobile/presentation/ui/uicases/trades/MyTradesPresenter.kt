@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.trades
 
-import androidx.navigation.NavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,7 +14,6 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class MyTradesPresenter(
     mainPresenter: MainPresenter,
-    private val tabController: NavController,
     private val myTradesRepository: MyTradesRepository
 ) : BasePresenter(mainPresenter), IMyTrades {
 
@@ -23,7 +21,7 @@ class MyTradesPresenter(
     override val myTrades: StateFlow<List<BisqOffer>> = _myTrades
 
     override fun navigateToCurrencyList() {
-
+        val tabController = getRootTabNavController()
         tabController.navigate(Routes.TabCurrencies.name) {
             tabController.graph.startDestinationRoute?.let { route ->
                 popUpTo(route) {

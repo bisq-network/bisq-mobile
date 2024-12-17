@@ -31,8 +31,8 @@ fun CreateProfileScreen(
 ) {
     val strings = LocalStrings.current.application
     val commonStrings = LocalStrings.current.common
-    val navController: NavHostController = koinInject(named("RootNavController"))
-    val presenter: CreateProfilePresenter = koinInject { parametersOf(navController) }
+    val presenter: CreateProfilePresenter = koinInject()
+    val navController: NavHostController = presenter.getRootNavController()
 
     RememberPresenterLifecycle(presenter)
 

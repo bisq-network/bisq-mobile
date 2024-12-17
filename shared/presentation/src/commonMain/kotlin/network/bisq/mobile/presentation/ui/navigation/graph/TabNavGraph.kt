@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
+import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.navigation.Graph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -22,12 +23,12 @@ import org.koin.core.qualifier.named
 @Composable
 fun TabNavGraph() {
 
-    val navController: NavHostController = koinInject(named("TabNavController"))
+    val mainPresenter: AppPresenter = koinInject()
     val selectedTab = remember { mutableStateOf(Routes.TabHome.name) }
 
     NavHost(
         modifier = Modifier.background(color = BisqTheme.colors.backgroundColor),
-        navController = navController,
+        navController = mainPresenter.getRootTabNavController(),
         startDestination = Graph.MAIN_SCREEN_GRAPH_KEY,
     ) {
         navigation(

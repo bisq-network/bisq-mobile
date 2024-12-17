@@ -28,12 +28,8 @@ open class MainPresenter(private val notificationServiceController: Notification
         const val PUSH_DELAY = 60000L
     }
 
-    lateinit var navController: NavHostController
-        private set
-
-    override fun setNavController(controller: NavHostController) {
-        navController = controller
-    }
+    override lateinit var navController: NavHostController
+    override lateinit var tabNavController: NavHostController
 
     // Observable state
     private val _isContentVisible = MutableStateFlow(false)
@@ -82,6 +78,14 @@ open class MainPresenter(private val notificationServiceController: Notification
         val platformInfo = getPlatformInfo()
         val isIOS = platformInfo.name.lowercase().contains("ios")
         return isIOS
+    }
+
+    override fun getRootNavController(): NavHostController {
+        return navController
+    }
+
+    override fun getRootTabNavController(): NavHostController {
+        return tabNavController
     }
 
 }

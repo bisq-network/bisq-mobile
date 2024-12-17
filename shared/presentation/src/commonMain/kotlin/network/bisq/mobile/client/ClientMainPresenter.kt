@@ -1,7 +1,5 @@
 package network.bisq.mobile.client
 
-import kotlinx.coroutines.launch
-import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.controller.NotificationServiceController

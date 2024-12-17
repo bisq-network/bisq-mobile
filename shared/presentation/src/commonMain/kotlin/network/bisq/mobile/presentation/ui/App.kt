@@ -12,14 +12,14 @@ import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
-import network.bisq.mobile.presentation.ui.navigation.Routes
 
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import org.koin.mp.KoinPlatform.getKoin
 
 interface AppPresenter : ViewPresenter {
-    fun setNavController(controller: NavHostController)
+    var navController: NavHostController
+
+    var tabNavController: NavHostController
 
     // Observables for state
     val isContentVisible: StateFlow<Boolean>
@@ -43,9 +43,8 @@ fun App() {
     val presenter: AppPresenter = koinInject()
 
     RememberPresenterLifecycle(presenter, {
-        getKoin().setProperty("RootNavController", rootNavController)
-        getKoin().setProperty("TabNavController", tabNavController)
-        presenter.setNavController(rootNavController)
+        presenter.navController = rootNavController
+        presenter.tabNavController = tabNavController
         isNavControllerSet = true
     })
 
@@ -55,7 +54,7 @@ fun App() {
         ProvideStrings(lyricist) {
             if (isNavControllerSet) {
                 SwipeBackIOSNavigationHandler(rootNavController) {
-                    RootNavGraph()
+                    RootNavGraph(rootNavController)
                 }
             }
         }

@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
+import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.composeModels.BottomNavigationItem
@@ -24,7 +25,8 @@ val navigationListItem = listOf(
 
 @Composable
 fun TabContainerScreen() {
-    val navController: NavHostController = koinInject(named("TabNavController"))
+    val mainPresenter: AppPresenter = koinInject()
+    val navController: NavHostController = mainPresenter.getRootTabNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute by remember(navBackStackEntry) {
         derivedStateOf {
