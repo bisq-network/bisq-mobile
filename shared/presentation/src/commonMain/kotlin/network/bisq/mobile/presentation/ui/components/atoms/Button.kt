@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 enum class BisqButtonType {
@@ -39,9 +42,12 @@ fun BisqButton(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 8.dp,
     disabled: Boolean = false,
+    isLoading: Boolean = false,
     border: BorderStroke? = null,
     type: BisqButtonType = BisqButtonType.Default
 ) {
+
+    val enabled = !disabled && !isLoading
 
     val finalBackgroundColor = when (type) {
         BisqButtonType.Default -> backgroundColor
@@ -55,21 +61,19 @@ fun BisqButton(
         BisqButtonType.Clear -> null
     }
 
-    val finalContentColor = when (type) {
-        BisqButtonType.Default, BisqButtonType.Outline -> color
-        BisqButtonType.Clear -> color
-    }
+    val finalContentColor = color
 
     Button(
         onClick = { onClick() },
-        contentPadding = if(iconOnly != null) PaddingValues(horizontal = 0.dp, vertical = 0.dp) else padding,
+        contentPadding = if (iconOnly != null) PaddingValues(horizontal = 0.dp, vertical = 0.dp) else padding,
         colors = ButtonColors(
             containerColor = finalBackgroundColor,
-            disabledContainerColor = finalBackgroundColor,
+            disabledContainerColor = finalBackgroundColor.copy(alpha = 0.5f),
             contentColor = finalContentColor,
-            disabledContentColor = finalContentColor),
+            disabledContentColor = finalContentColor.copy(alpha = 0.5f),
+        ),
         shape = RoundedCornerShape(cornerRadius),
-        enabled = !disabled,
+        enabled = enabled,
         border = finalBorder,
         modifier = modifier
     ) {
@@ -80,19 +84,27 @@ fun BisqButton(
         if (iconOnly != null) {
             iconOnly()
         } else if (text != null) {
-            Row {
-                if(leftIcon != null) leftIcon()
-                if(leftIcon != null) Spacer(modifier = Modifier.width(10.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                if (isLoading) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(16.dp),
+                        color = BisqTheme.colors.light1,
+                        strokeWidth = 2.dp
+                    )
+                    BisqGap.HHalf()
+                }
+                if (leftIcon != null) leftIcon()
+                if (leftIcon != null) Spacer(modifier = Modifier.width(10.dp))
                 if (textComponent != null) {
                     textComponent()
                 } else {
                     BisqText.baseMedium(
                         text = text,
                         color = BisqTheme.colors.light1,
-                        )
+                    )
                 }
-                if(rightIcon != null) Spacer(modifier = Modifier.width(10.dp))
-                if(rightIcon != null) rightIcon()
+                if (rightIcon != null) Spacer(modifier = Modifier.width(10.dp))
+                if (rightIcon != null) rightIcon()
             }
         }
     }

@@ -52,15 +52,11 @@ class MarketListPresenter(
     // sorted alphabetically (false before true), thus we use thenByDescending
 
     val marketListItemWithNumOffers: StateFlow<List<MarketListItem>> = combine(
-            // offerbookServiceFacade.offerbookMarketItems,
             _filter,
             _searchText,
             _sortBy
-        ) { /*items: List<MarketListItem>,*/ filter: MarketFilter, searchText: String, sortBy: MarketSortBy ->
+        ) { filter: MarketFilter, searchText: String, sortBy: MarketSortBy ->
             computeMarketList(filter, searchText, sortBy)
-//        }.onEach { updatedList: List<MarketListItem> ->
-//            println("Updating main Var for Screen ${updatedList.count()}")
-//            marketListItemWithNumOffers = updatedList
         }.stateIn(
             CoroutineScope(Dispatchers.Main),
             SharingStarted.Lazily,
@@ -68,12 +64,10 @@ class MarketListPresenter(
         )
 
     private fun computeMarketList(
-        // items: List<MarketListItem>,
         filter: MarketFilter,
         searchText: String,
         sortBy: MarketSortBy
     ): List<MarketListItem> {
-        // return items
         return offerbookServiceFacade.offerbookMarketItems
             .filter { item ->
                 when (filter) {
