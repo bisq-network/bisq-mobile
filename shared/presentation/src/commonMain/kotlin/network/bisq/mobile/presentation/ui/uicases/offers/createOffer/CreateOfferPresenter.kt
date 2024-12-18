@@ -44,8 +44,6 @@ interface ICreateOfferPresenter : ViewPresenter {
 
     fun onSelectAmountType(amountType: AmountType)
 
-    fun goBack()
-
     fun navigateToCurrencySelector()
 
     fun buyBitcoinClicked()
@@ -156,11 +154,6 @@ open class CreateOfferPresenter(
     override fun sellBitcoinClicked() {
         _direction.value = Direction.SELL
         navigateToCurrencySelector()
-    }
-
-    override fun goBack() {
-        log.i { "goBack" }
-        rootNavigator.popBackStack()
     }
 
     override fun navigateToCurrencySelector() {

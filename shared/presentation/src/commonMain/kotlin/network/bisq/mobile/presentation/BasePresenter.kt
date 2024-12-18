@@ -27,6 +27,12 @@ interface ViewPresenter {
      * @return main app tab nav controller
      */
     fun getRootTabNavController(): NavHostController
+
+    /**
+     * Navigate back in the stack
+     */
+    fun goBack()
+
     /**
      * This can be used as initialization method AFTER view gets attached (so view is available)
      */
@@ -91,6 +97,15 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
             throw IllegalStateException("You need to redefine this method in your root presenter implementation")
         }
         return rootPresenter!!.getRootTabNavController()
+    }
+
+    override fun goBack() {
+        try {
+            log.i { "goBack defaut implementation" }
+            rootNavigator.popBackStack()
+        } catch (e: Exception) {
+            log.e(e) { "Faled to navigate back" }
+        }
     }
 
     @CallSuper

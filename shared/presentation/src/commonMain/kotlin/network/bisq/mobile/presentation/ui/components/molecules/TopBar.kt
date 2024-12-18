@@ -52,7 +52,7 @@ fun TopBar(
     val defaultBackButton: @Composable () -> Unit = {
         IconButton(onClick = {
             if (navController.previousBackStackEntry != null) {
-                navController.popBackStack()
+                presenter.goBack()
             }
         }) {
             Icon(

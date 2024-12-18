@@ -19,11 +19,6 @@ open class TradeAmountPresenter(
 
     override fun onViewUnattaching() {
     }
-
-    override fun goBack() {
-        log.i { "goBack" }
-        rootNavigator.popBackStack()
-    }
     
     override fun amountConfirmed() {
         log.i { "Amount selected" }

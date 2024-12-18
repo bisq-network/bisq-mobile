@@ -21,11 +21,6 @@ open class ReviewTradePresenter(
     override fun onViewUnattaching() {
     }
 
-    override fun goBack() {
-        log.i { "goBack" }
-        rootNavigator.popBackStack()
-    }
-
     override fun tradeConfirmed() {
         log.i { "Trade confirmed" }
         // TODO: Confirmation popup goes here
