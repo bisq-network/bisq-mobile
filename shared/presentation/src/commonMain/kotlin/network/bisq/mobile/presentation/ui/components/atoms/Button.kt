@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
@@ -12,11 +13,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
+enum class BisqButtonType {
+    Default,
+    Outline,
+    Clear
+}
+
 /**
  * Either pass
- *  - text for regular button (or)
- *  - iconOnly for Icon only button.
- * If both are given, iconOnly takes precedence
+ *  - iconOnly for Icon only button (or)
+ *  - textComponent for button with custom styled text (or)
+ *  - text for regular button
  */
 @Composable
 fun BisqButton(
@@ -32,20 +39,38 @@ fun BisqButton(
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 8.dp,
     disabled: Boolean = false,
-    border: BorderStroke? = null
+    border: BorderStroke? = null,
+    type: BisqButtonType = BisqButtonType.Default
 ) {
+
+    val finalBackgroundColor = when (type) {
+        BisqButtonType.Default -> backgroundColor
+        BisqButtonType.Outline -> Color.Transparent
+        BisqButtonType.Clear -> Color.Transparent
+    }
+
+    val finalBorder = when (type) {
+        BisqButtonType.Default -> border
+        BisqButtonType.Outline -> BorderStroke(1.dp, BisqTheme.colors.primary)
+        BisqButtonType.Clear -> null
+    }
+
+    val finalContentColor = when (type) {
+        BisqButtonType.Default, BisqButtonType.Outline -> color
+        BisqButtonType.Clear -> color
+    }
 
     Button(
         onClick = { onClick() },
         contentPadding = if(iconOnly != null) PaddingValues(horizontal = 0.dp, vertical = 0.dp) else padding,
         colors = ButtonColors(
-            containerColor = backgroundColor,
-            disabledContainerColor = backgroundColor,
-            contentColor = color,
-            disabledContentColor = color),
+            containerColor = finalBackgroundColor,
+            disabledContainerColor = finalBackgroundColor,
+            contentColor = finalContentColor,
+            disabledContentColor = finalContentColor),
         shape = RoundedCornerShape(cornerRadius),
         enabled = !disabled,
-        border = border,
+        border = finalBorder,
         modifier = modifier
     ) {
         if (iconOnly == null && text == null && textComponent == null) {

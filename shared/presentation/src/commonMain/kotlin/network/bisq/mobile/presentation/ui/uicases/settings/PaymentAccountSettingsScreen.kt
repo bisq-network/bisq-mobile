@@ -9,7 +9,7 @@ import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqDropDown
+import network.bisq.mobile.presentation.ui.components.atoms.BisqEditableDropDown
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.molecules.BisqBottomSheet
 import network.bisq.mobile.presentation.ui.components.molecules.ConfirmationDialog
@@ -92,7 +92,7 @@ fun PaymentAccountSettingsScreen() {
             modifier = Modifier.align(Alignment.End)
         )
 
-        BisqDropDown(
+        BisqEditableDropDown(
             value = accountName,
             onValueChanged = { name ->
                 var account = accounts.firstOrNull { it.name == name }

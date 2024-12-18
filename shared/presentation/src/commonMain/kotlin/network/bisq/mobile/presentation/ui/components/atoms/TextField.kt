@@ -48,7 +48,7 @@ fun BisqTextField(
     helperText: String = "",
     indicatorColor: Color = BisqTheme.colors.primary,
     isTextArea: Boolean = false,
-    paddingValues: PaddingValues = PaddingValues(vertical = 12.dp),
+    paddingValues: PaddingValues = PaddingValues(all = 12.dp),
     disabled: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
@@ -81,7 +81,6 @@ fun BisqTextField(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(paddingValues)
                 .clip(shape = RoundedCornerShape(6.dp))
                 .background(color = BisqTheme.colors.secondary)
                 .drawBehind {
@@ -99,7 +98,7 @@ fun BisqTextField(
                 value = value,
                 onValueChange = onValueChanged,
                 modifier = Modifier
-                    .padding(12.dp)
+                    .padding(paddingValues)
                     .fillMaxWidth()
                     .onFocusChanged { focusState ->
                         isFocused = focusState.isFocused
@@ -115,14 +114,6 @@ fun BisqTextField(
                 cursorBrush = SolidColor(BisqTheme.colors.primary),
                 enabled = !disabled,
                 decorationBox = { innerTextField ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        if (value.isEmpty()) {
-                            BisqText.largeRegular(
-                                text = placeholder,
-                                color = BisqTheme.colors.secondaryHover
-                            )
-                        }
-                    }
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -133,10 +124,20 @@ fun BisqTextField(
                             Spacer(modifier = Modifier.width(10.dp))
                         }
 
-                        innerTextField()
+                        Box(modifier = Modifier.weight(1f)) {
+                            if (value.isEmpty()) {
+                                BisqText.largeRegular(
+                                    text = placeholder,
+                                    color = BisqTheme.colors.secondaryHover
+                                )
+                            }
+                            innerTextField()
+                        }
 
                         if (rightSuffix != null) {
-                            rightSuffix()
+                            Box(modifier = Modifier.width(50.dp)) {
+                                rightSuffix()
+                            }
                         }
                     }
                 }
