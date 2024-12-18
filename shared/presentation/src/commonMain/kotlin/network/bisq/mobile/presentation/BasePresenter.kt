@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
+import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.utils.Logging
 
 
@@ -225,4 +226,13 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     private fun isRoot() = rootPresenter == null
+
+    companion object {
+        lateinit var strings: AppStrings
+    }
+
+    fun setStrings(localStrings: AppStrings) {
+        BasePresenter.strings = localStrings
+    }
+
 }
