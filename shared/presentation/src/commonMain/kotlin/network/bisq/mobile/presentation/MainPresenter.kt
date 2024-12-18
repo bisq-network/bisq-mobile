@@ -24,7 +24,7 @@ open class MainPresenter(private val notificationServiceController: Notification
     companion object {
         // FIXME this will be erased eventually, for now you can turn on to see the notifications working
         // it will push a notification every 60 sec
-        const val testNotifications = false
+        const val testNotifications = true
         const val PUSH_DELAY = 60000L
     }
 

@@ -20,11 +20,6 @@ open class PaymentMethodPresenter(
     override fun onViewUnattaching() {
     }
 
-    override fun goBack() {
-        log.i { "goBack" }
-        rootNavigator.popBackStack()
-    }
-
     override fun paymentMethodConfirmed() {
         log.i { "Payment method selected" }
         rootNavigator.navigate(Routes.TakeOfferReviewTrade.name)

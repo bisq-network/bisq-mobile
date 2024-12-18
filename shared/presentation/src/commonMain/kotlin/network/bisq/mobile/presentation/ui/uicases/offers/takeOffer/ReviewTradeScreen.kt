@@ -23,8 +23,6 @@ import org.koin.compose.koinInject
 interface ITakeOfferReviewTradePresenter : ViewPresenter {
     // TODO: Update later to refer to a single OfferListItem
     val offerListItems: StateFlow<List<OfferListItem>>
-
-    fun goBack()
     fun tradeConfirmed()
 }
 
