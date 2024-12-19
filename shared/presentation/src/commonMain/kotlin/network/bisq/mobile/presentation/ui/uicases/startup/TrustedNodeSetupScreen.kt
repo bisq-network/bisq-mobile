@@ -45,8 +45,7 @@ interface ITrustedNodeSetupPresenter: ViewPresenter {
 
 @OptIn(ExperimentalResourceApi::class)
 @Composable
-fun TrustedNodeSetupScreen(
-) {
+fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val strings = LocalStrings.current
     val presenter: ITrustedNodeSetupPresenter = koinInject()
     val navController: NavHostController = presenter.getRootNavController()
@@ -151,9 +150,9 @@ fun TrustedNodeSetupScreen(
 
                     ) {
                     BisqButton(
-                        text = "Next",
+                        text = if (isWorkflow) "Next" else "Save",
                         color = BisqTheme.colors.light1,
-                        onClick = { presenter.navigateToNextScreen() },
+                        onClick = { if (isWorkflow) presenter.navigateToNextScreen() else presenter.testConnection(true) },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )
                 }
