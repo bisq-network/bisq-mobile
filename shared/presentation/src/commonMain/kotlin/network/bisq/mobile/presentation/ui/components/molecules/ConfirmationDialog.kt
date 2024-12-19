@@ -10,6 +10,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun ConfirmationDialog(
@@ -17,8 +18,9 @@ fun ConfirmationDialog(
     message: String = "Are you sure?",
     confirmButtonText: String = "Yes",
     cancelButtonText: String = "No",
+    onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
-    ) {
+) {
     BisqDialog {
         Column(
             modifier = Modifier
@@ -37,12 +39,18 @@ fun ConfirmationDialog(
                     text = cancelButtonText,
                     backgroundColor = BisqTheme.colors.dark5,
                     onClick = { onDismissRequest() },
-                    padding = PaddingValues(horizontal = 42.dp, vertical = 4.dp)
+                    padding = PaddingValues(
+                        horizontal = BisqUIConstants.ScreenPadding4X,
+                        vertical = BisqUIConstants.ScreenPaddingHalf
+                    )
                 )
                 BisqButton(
                     text = confirmButtonText,
-                    onClick = { onDismissRequest() },
-                    padding = PaddingValues(horizontal = 32.dp, vertical = 4.dp)
+                    onClick = { onConfirm() },
+                    padding = PaddingValues(
+                        horizontal = BisqUIConstants.ScreenPadding4X,
+                        vertical = BisqUIConstants.ScreenPaddingHalf
+                    )
                 )
             }
         }

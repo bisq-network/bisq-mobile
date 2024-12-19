@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.*
+import network.bisq.mobile.presentation.ui.components.atoms.layout.*
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.trades.ITradeFlowPresenter
 import org.koin.compose.koinInject

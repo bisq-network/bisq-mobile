@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.components.atoms
+package network.bisq.mobile.presentation.ui.components.molecules
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -8,6 +8,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.model.OfferListItem
+import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 
 // TODO: Get params and render apt
 @Composable

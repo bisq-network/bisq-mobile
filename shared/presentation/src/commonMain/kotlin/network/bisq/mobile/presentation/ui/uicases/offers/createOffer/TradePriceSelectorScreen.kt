@@ -21,7 +21,7 @@ import androidx.compose.ui.unit.sp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_medium
 import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText

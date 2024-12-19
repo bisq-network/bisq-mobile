@@ -3,11 +3,13 @@ package network.bisq.mobile.presentation.ui
 import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import cafe.adriel.lyricist.LocalStrings
 import cafe.adriel.lyricist.ProvideStrings
 import cafe.adriel.lyricist.rememberStrings
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -28,6 +30,8 @@ interface AppPresenter : ViewPresenter {
     fun toggleContentVisibility()
 
     fun isIOS(): Boolean
+
+    fun setStrings(strings: AppStrings)
 }
 
 /**
@@ -52,6 +56,7 @@ fun App() {
 
     BisqTheme(darkTheme = true) {
         ProvideStrings(lyricist) {
+            presenter.setStrings(LocalStrings.current)
             if (isNavControllerSet) {
                 SwipeBackIOSNavigationHandler(rootNavController) {
                     RootNavGraph(rootNavController)

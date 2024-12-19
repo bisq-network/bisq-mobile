@@ -18,10 +18,10 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BisqRangeSlider(
+    value: ClosedFloatingPointRange<Float>,
+    onValueChange: (ClosedFloatingPointRange<Float>) -> Unit,
     minAmount: Float,
     maxAmount: Float,
-    tradeValue: ClosedFloatingPointRange<Float>,
-    onValueChange: (ClosedFloatingPointRange<Float>) -> Unit
 ){
     val colors = SliderColors(
         thumbColor = BisqTheme.colors.primary,
@@ -38,7 +38,7 @@ fun BisqRangeSlider(
 
     RangeSlider(
         modifier = Modifier.fillMaxWidth(),
-        value = tradeValue,
+        value = value,
         onValueChange = {onValueChange(it)},
         valueRange = minAmount .. maxAmount,
         track = { rangeSliderState  ->

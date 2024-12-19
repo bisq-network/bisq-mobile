@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
@@ -21,7 +22,7 @@ fun BisqDialog(
     onDismissRequest: () -> Unit = {},
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
-    Dialog(onDismissRequest = { onDismissRequest() }) {
+    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(dismissOnClickOutside = true)) {
         Box(
             modifier = Modifier
                 .fillMaxSize()

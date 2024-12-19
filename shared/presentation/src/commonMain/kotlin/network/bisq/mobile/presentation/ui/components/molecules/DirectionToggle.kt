@@ -61,7 +61,6 @@ fun DirectionToggle(
                     .offset(x = slideOffset)
                     .background(BisqTheme.colors.primary, RoundedCornerShape(4.dp))
             ) {
-
                 BisqText.baseMedium(
                     text = toggleText,
                     color = BisqTheme.colors.light1,
@@ -86,8 +85,9 @@ fun DirectionToggle(
                                 }
                             )
                     ) {
+                        val label = if (direction.isBuy) strings.offers_list_buy_from else strings.offers_list_sell_to
                         BisqText.baseMedium(
-                            text = toggleText,
+                            text = label,
                             color = BisqTheme.colors.light1,
                         )
                     }

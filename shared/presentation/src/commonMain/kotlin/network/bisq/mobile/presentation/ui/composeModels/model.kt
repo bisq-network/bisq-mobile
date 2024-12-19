@@ -6,3 +6,5 @@ data class BottomNavigationItem(val title: String, val route: String, val icon: 
 data class PagerViewItem(val title: String, val image: DrawableResource, val desc: String)
 
 data class PaymentTypeData(val image: String, val title: String)
+
+data class PaymentAccount(val id: String, val name: String, var description: String)

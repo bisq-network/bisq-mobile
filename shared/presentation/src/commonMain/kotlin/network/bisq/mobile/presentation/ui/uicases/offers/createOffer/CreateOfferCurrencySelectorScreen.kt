@@ -14,8 +14,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.presentation.ui.components.CurrencyProfileCard
-import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
+import network.bisq.mobile.presentation.ui.components.CurrencyCard
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
@@ -77,7 +77,7 @@ fun CreateOfferCurrencySelectorScreen() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(presenter.marketListItemWithNumOffers) { item ->
-                CurrencyProfileCard(
+                CurrencyCard(
                     item,
                     isSelected = state.selectedOfferbookMarket.market.quoteCurrencyCode == item.market.quoteCurrencyCode,
                     onClick = { presenter.onSelectMarket(item) }

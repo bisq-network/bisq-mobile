@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
@@ -21,14 +20,16 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.style.TextAlign
 import network.bisq.mobile.domain.data.model.MarketListItem
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
-fun CurrencyProfileCard(
+fun CurrencyCard(
     item: MarketListItem,
     isSelected: Boolean = false,
     onClick: () -> Unit
@@ -63,18 +64,14 @@ fun CurrencyProfileCard(
                     Modifier.background(Color.Transparent)
                 }
             )
-            .padding(horizontal = 4.dp, vertical = (16/LocalDensity.current.density).dp)
-            // .padding(vertical = 4.dp)
+            .padding(vertical = BisqUIConstants.ScreenPadding)
             .clickable(
                 interactionSource = interactionSource,
                 indication = null,
                 onClick = onClick
             )
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(3.0f)) {
             // If the image is not available we get an exception here and we cannot use try/catch
             // Is DynamicImage needed? If so we can pass it as
             DynamicImage(
@@ -83,12 +80,12 @@ fun CurrencyProfileCard(
                     .replace("-", "_")}.png",
                 modifier = Modifier.size(36.dp)
             )
-
-            Spacer(modifier = Modifier.width(8.dp))
+            BisqGap.HHalf()
             Column {
                 BisqText.baseRegular(
                     text = item.market.quoteCurrencyName,
                     color = BisqTheme.colors.light1,
+                    singleLine = true
                 )
                 Spacer(modifier = Modifier.height(0.dp))
                 BisqText.baseRegular(
@@ -97,9 +94,11 @@ fun CurrencyProfileCard(
                 )
             }
         }
-        BisqText.smallRegular(
+        BisqText.baseRegular(
             text = "$numOffers offers",
             color = BisqTheme.colors.primary,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1.0f),
         )
     }
 }

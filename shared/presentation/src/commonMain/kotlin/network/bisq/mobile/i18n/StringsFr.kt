@@ -9,5 +9,6 @@ val FrAppStrings = AppStrings(
     bisqEasy = FrBisqEasyStrings,
     bisqEasyTradeWizard = FrBisqEasyTradeWizardStrings,
     bisqEasyTradeState = FrBisqEasyTradeStateStrings,
+    user = FrUserStrings,
     common = FrCommonStrings
 )

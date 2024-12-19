@@ -14,6 +14,11 @@ import org.jetbrains.compose.resources.painterResource
 expect fun rememberPlatformImagePainter(platformImage: PlatformImage): Painter
 
 @Composable
+fun ArrowDownIcon(modifier: Modifier = Modifier.size(12.dp)) {
+    Image(painterResource(Res.drawable.icon_arrow_down), "Down arrow icon", modifier = modifier)
+}
+
+@Composable
 fun BellIcon(modifier: Modifier = Modifier.size(30.dp)) {
     Image(painterResource(Res.drawable.icon_bell), "Bell icon", modifier = modifier)
 }
@@ -26,6 +31,11 @@ fun ChatIcon(modifier: Modifier = Modifier) {
 @Composable
 fun CopyIcon(modifier: Modifier = Modifier) {
     Image(painterResource(Res.drawable.icon_copy), "Copy icon", modifier = modifier)
+}
+
+@Composable
+fun LanguageIcon(modifier: Modifier = Modifier.size(16.dp)) {
+    Image(painterResource(Res.drawable.icon_language_grey), "Language icon", modifier = modifier)
 }
 
 @Composable
@@ -54,6 +64,11 @@ fun ScanIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun SearchIcon(modifier: Modifier = Modifier.size(16.dp)) {
+    Image(painterResource(Res.drawable.icon_search_dimmed), "Search icon", modifier = modifier)
+}
+
+@Composable
 fun SortIcon(modifier: Modifier = Modifier) {
     Image(painterResource(Res.drawable.icon_sort), "Sort icon", modifier = modifier)
 }
@@ -61,12 +76,17 @@ fun SortIcon(modifier: Modifier = Modifier) {
 @Composable
 fun StarEmptyIcon(modifier: Modifier = Modifier.size(16.dp)) {
     // TODO: Import right resource for this
-    Image(painterResource(Res.drawable.icon_star), "Empty star icon", modifier = modifier)
+    Image(painterResource(Res.drawable.icon_star_grey_hollow), "Empty star icon", modifier = modifier)
+}
+
+@Composable
+fun StarHalfFilledIcon(modifier: Modifier = Modifier.size(16.dp)) {
+    Image(painterResource(Res.drawable.icon_star_half_green), "Half filled star icon", modifier = modifier)
 }
 
 @Composable
 fun StarFillIcon(modifier: Modifier = Modifier.size(16.dp)) {
-    Image(painterResource(Res.drawable.icon_star), "Filled star icon", modifier = modifier)
+    Image(painterResource(Res.drawable.icon_star_green), "Filled star icon", modifier = modifier)
 }
 
 @Composable

@@ -6,5 +6,6 @@ data class AppStrings(
     val bisqEasy: BisqEasyStrings,
     val bisqEasyTradeState: BisqEasyTradeStateStrings,
     val bisqEasyTradeWizard: BisqEasyTradeWizardStrings,
+    val user: UserStrings,
     val common: CommonStrings
 )

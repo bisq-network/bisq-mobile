@@ -9,5 +9,6 @@ val EnAppStrings = AppStrings(
     bisqEasy = EnBisqEasyStrings,
     bisqEasyTradeWizard = EnBisqEasyTradeWizardStrings,
     bisqEasyTradeState = EnBisqEasyTradeStateStrings,
+    user = EnUserStrings,
     common = EnCommonStrings
 )

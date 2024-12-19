@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.components.atoms
+package network.bisq.mobile.presentation.ui.components.atoms.layout
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
@@ -8,6 +8,11 @@ import androidx.compose.ui.Modifier
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 object BisqGap {
+
+    @Composable()
+    fun VHalf() {
+        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPaddingHalf))
+    }
 
     @Composable()
     fun V1() {
@@ -27,6 +32,26 @@ object BisqGap {
     @Composable()
     fun V4() {
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding4X))
+    }
+
+    @Composable()
+    fun V5() {
+        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding5X))
+    }
+
+    @Composable()
+    fun HQuarter() {
+        Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPaddingQuarter))
+    }
+
+    @Composable()
+    fun HHalf() {
+        Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPaddingHalf))
+    }
+
+    @Composable()
+    fun HHalfQuarter() {
+        Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPaddingHalfQuarter))
     }
 
     @Composable()

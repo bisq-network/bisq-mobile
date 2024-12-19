@@ -3,6 +3,7 @@ package network.bisq.mobile.i18n
 data class CommonStrings(
     val buttons_back: String,
     val buttons_next: String,
+    val buttons_save: String,
     val buttons_submit: String,
     val buttons_cancel: String,
 
@@ -14,4 +15,6 @@ data class CommonStrings(
 
     val take_offer: String,
     val currency: String,
+
+    val delete_account: String,
 )

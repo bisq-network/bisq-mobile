@@ -1,42 +1,67 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import network.bisq.mobile.presentation.ui.components.atoms.icons.SearchIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun BisqTextField(
     label: String,
     value: String,
-    onValueChanged: (String) -> Unit,
-    placeholder: String? = null,
+    onValueChanged: (String) -> Unit = {},
+    placeholder: String = "",
     labelRightSuffix: (@Composable () -> Unit)? = null,
-    prefix: (@Composable () -> Unit)? = null,
-    suffix: (@Composable () -> Unit)? = null,
-    disabled: Boolean = false,
+    leftSuffix: (@Composable () -> Unit)? = null,
+    rightSuffix: (@Composable () -> Unit)? = null,
+    isSearch: Boolean = false,
+    helperText: String = "",
     indicatorColor: Color = BisqTheme.colors.primary,
+    isTextArea: Boolean = false,
+    paddingValues: PaddingValues = PaddingValues(all = 12.dp),
+    disabled: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var isFocused by remember { mutableStateOf(false) }
+
+    val focusManager = LocalFocusManager.current
+
+    val imeAction = when {
+        isSearch -> ImeAction.Search
+        isTextArea -> ImeAction.Next
+        else -> ImeAction.Done
+    }
+
     Column(modifier = modifier) {
         if (label.isNotEmpty()) {
             Row(
@@ -59,7 +84,7 @@ fun BisqTextField(
                 .clip(shape = RoundedCornerShape(6.dp))
                 .background(color = BisqTheme.colors.secondary)
                 .drawBehind {
-                    if (isFocused || value.isNotEmpty()) {
+                    if (!isSearch && isFocused) {
                         drawLine(
                             color = indicatorColor,
                             start = Offset(0f, size.height),
@@ -69,45 +94,60 @@ fun BisqTextField(
                     }
                 }
         ) {
-            TextField(
+            BasicTextField(
                 value = value,
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth().clickable { isFocused = true }
+                onValueChange = onValueChanged,
+                modifier = Modifier
+                    .padding(paddingValues)
+                    .fillMaxWidth()
                     .onFocusChanged { focusState ->
                         isFocused = focusState.isFocused
                     },
-                textStyle = TextStyle(fontSize = 22.sp),
-                onValueChange = onValueChanged,
-                prefix = prefix,
-                suffix = suffix,
-                colors = TextFieldDefaults.colors(
-                    focusedTextColor = BisqTheme.colors.light3,
-                    unfocusedTextColor = BisqTheme.colors.secondaryHover,
-                    unfocusedIndicatorColor = BisqTheme.colors.secondary,
-                    focusedIndicatorColor = Color.Transparent,
-                    focusedContainerColor = BisqTheme.colors.secondary,
-                    cursorColor = Color.Blue,
-                    unfocusedContainerColor = BisqTheme.colors.secondary
+                singleLine = !isTextArea,
+                maxLines = if (isTextArea) 4 else 1,
+                textStyle = TextStyle(
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    textDecoration = TextDecoration.None
                 ),
-                placeholder = {
-                    if (placeholder != null) {
-                        BisqText.h5Regular(
-                            text = placeholder,
-                            color = BisqTheme.colors.secondaryHover,
-                        )
-                    }
-                },
+                keyboardOptions = KeyboardOptions(imeAction = imeAction),
+                cursorBrush = SolidColor(BisqTheme.colors.primary),
                 enabled = !disabled,
+                decorationBox = { innerTextField ->
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        if (leftSuffix != null) {
+                            leftSuffix()
+                            Spacer(modifier = Modifier.width(10.dp))
+                        }
+
+                        Box(modifier = Modifier.weight(1f)) {
+                            if (value.isEmpty()) {
+                                BisqText.largeRegular(
+                                    text = placeholder,
+                                    color = BisqTheme.colors.secondaryHover
+                                )
+                            }
+                            innerTextField()
+                        }
+
+                        if (rightSuffix != null) {
+                            Box(modifier = Modifier.width(50.dp)) {
+                                rightSuffix()
+                            }
+                        }
+                    }
+                }
             )
-            if (isFocused) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(2.dp)
-                        .align(Alignment.BottomCenter)
-                        .background(BisqTheme.colors.primary)
-                )
-            }
+        }
+        if (helperText.isNotEmpty()) {
+            BisqText.smallRegular(
+                text = helperText,
+                color = BisqTheme.colors.grey1
+            )
         }
     }
 }

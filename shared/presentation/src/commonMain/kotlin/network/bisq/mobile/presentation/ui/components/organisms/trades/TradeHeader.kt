@@ -19,10 +19,10 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.ProfileRating
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UpIcon
+import network.bisq.mobile.presentation.ui.components.molecules.UserProfile
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxStyle
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -78,13 +78,16 @@ fun TradeHeader(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                ProfileRating(offer)
+                Column(modifier = Modifier.weight(3f)) {
+                    UserProfile(offer)
+                }
                 Column(
                     verticalArrangement = Arrangement.spacedBy(2.dp),
-                    horizontalAlignment = Alignment.End
+                    horizontalAlignment = Alignment.End,
+                    modifier = Modifier.weight(2f)
                 ) {
-                    BisqText.xsmallRegular(text = "10000.02 USD")
-                    BisqText.xsmallRegular(text = "0.00173399 BTC")
+                    BisqText.smallRegular(text = "10000.02 USD")
+                    BisqText.smallRegular(text = "0.00173399 BTC")
                 }
             }
             AnimatedVisibility(
