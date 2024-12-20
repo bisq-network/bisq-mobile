@@ -9,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
+// FinalTODO: Merge StaticScaffold and ScrollScaffold
 @Composable
 fun BisqScrollScaffold(
     padding: PaddingValues = PaddingValues(

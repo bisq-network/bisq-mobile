@@ -44,6 +44,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @Composable
 fun TradeHeader(
     offer: OfferListItemVO,
+    onCancel: () -> Unit,
 ) {
     val strings = LocalStrings.current.bisqEasyTradeState
     val stringsBisqEasy = LocalStrings.current.bisqEasy
@@ -148,7 +149,7 @@ fun TradeHeader(
                 BisqButton(
                     text = stringsBisqEasy.bisqEasy_openTrades_cancelTrade,
                     color = BisqTheme.colors.grey1,
-                    onClick = {},
+                    onClick = onCancel,
                     backgroundColor = Color.Transparent,
                     padding = PaddingValues(horizontal = 70.dp, vertical = 6.dp)
                 )

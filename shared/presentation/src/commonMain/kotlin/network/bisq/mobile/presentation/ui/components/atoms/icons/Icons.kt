@@ -120,3 +120,8 @@ fun UserIcon(platformImage: PlatformImage?, modifier: Modifier = Modifier) {
         Image(painter = painter, contentDescription = "User icon", modifier = modifier)
     }
 }
+
+//@Composable
+//fun WarningIcon(modifier: Modifier = Modifier.size(36.dp)) {
+//    Image(painterResource(Res.drawable.icon_warning), "Warning icon", modifier = modifier)
+//}

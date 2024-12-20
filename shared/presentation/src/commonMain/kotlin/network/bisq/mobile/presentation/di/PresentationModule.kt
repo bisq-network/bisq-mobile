@@ -86,7 +86,7 @@ val presentationModule = module {
     single {
         MyTradesPresenter(
             get(),
-            myTradesRepository = get()
+            get()
         )
     } bind IMyTrades::class
 

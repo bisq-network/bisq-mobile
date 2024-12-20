@@ -69,6 +69,22 @@ open class TradeFlowPresenter(
         setShowCloseTradeDialog(true)
     }
 
+    private val _showCancelTradeDialog = MutableStateFlow(false)
+    override val showCancelTradeDialog: StateFlow<Boolean> get() = _showCancelTradeDialog
+    override fun setShowCancelTradeDialog(value: Boolean) {
+        _showCancelTradeDialog.value = value
+    }
+
+    override fun cancelTrade() {
+        setShowCancelTradeDialog(true)
+    }
+
+    private val _showMediationDialog = MutableStateFlow(false)
+    override val showMediationDialog: StateFlow<Boolean> get() = _showMediationDialog
+    override fun setShowMediationDialog(value: Boolean) {
+        _showMediationDialog.value = value
+    }
+
     override fun closeTradeConfirm() {
         setShowCloseTradeDialog(false)
         rootNavigator.popBackStack(Routes.Offerbook.name, inclusive = false, saveState = false)
