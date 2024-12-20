@@ -12,6 +12,7 @@ import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.usePinned
 import kotlinx.serialization.Serializable
+import platform.Foundation.NSBundle
 import platform.Foundation.NSData
 import platform.Foundation.*
 import platform.Foundation.create
@@ -21,6 +22,8 @@ import platform.UIKit.*
 import platform.Foundation.NSURL
 import platform.UIKit.UIApplication
 import platform.posix.memcpy
+import platform.UIKit.UIImagePNGRepresentation
+import platform.Foundation.stringWithContentsOfFile
 
 @OptIn(ExperimentalSettingsImplementation::class)
 actual fun getPlatformSettings(): Settings {
@@ -48,6 +51,12 @@ class IOSPlatformInfo : PlatformInfo {
 }
 
 actual fun getPlatformInfo(): PlatformInfo = IOSPlatformInfo()
+
+actual fun loadFromResources(fileName: String): String {
+    val path = NSBundle.mainBundle.pathForResource(fileName, "txt")
+        ?: throw IllegalArgumentException("File not found: $fileName")
+    return NSString.stringWithContentsOfFile(path) as String
+}
 
 @Serializable(with = PlatformImageSerializer::class)
 actual class PlatformImage(val image: UIImage) {
