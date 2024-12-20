@@ -15,15 +15,15 @@ class OffersListPresenter(
     mainPresenter: MainPresenter,
     offerbookServiceFacade: OfferbookServiceFacade,
     private val takeOfferPresenter: TakeOfferPresenter
-) : BasePresenter(mainPresenter) {
-    val offerListItems: StateFlow<List<OfferListItemVO>> =
+) : BasePresenter(mainPresenter), IOffersListPresenter {
+    override val offerListItems: StateFlow<List<OfferListItemVO>> =
         offerbookServiceFacade.offerListItems
 
     private val _selectedDirection = MutableStateFlow(DirectionEnum.SELL)
-    val selectedDirection: StateFlow<DirectionEnum> = _selectedDirection
+    override val selectedDirection: StateFlow<DirectionEnum> = _selectedDirection
 
-    fun takeOffer(offerListItem: OfferListItemVO) {
-        takeOfferPresenter.selectOfferToTake(offerListItem)
+    override fun takeOffer(offer: OfferListItemVO) {
+        takeOfferPresenter.selectOfferToTake(offer)
 
         if (takeOfferPresenter.showAmountScreen()) {
             rootNavigator.navigate(Routes.TakeOfferTradeAmount.name)
@@ -34,11 +34,15 @@ class OffersListPresenter(
         }
     }
 
-    fun chatForOffer(offerListItem: OfferListItemVO) {
+    override fun createOffer() {
         log.i { "chat for offer clicked " }
     }
 
-    fun onSelectDirection(direction: DirectionEnum) {
+    override fun chatForOffer(offer: OfferListItemVO) {
+        log.i { "chat for offer clicked " }
+    }
+
+    override fun onSelectDirection(direction: DirectionEnum) {
         _selectedDirection.value = direction
     }
 }

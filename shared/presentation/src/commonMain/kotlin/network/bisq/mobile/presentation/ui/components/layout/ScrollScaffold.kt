@@ -20,6 +20,7 @@ fun BisqScrollScaffold(
     ),
     topBar: @Composable (() -> Unit)? = null,
     bottomBar: @Composable (() -> Unit)? = null,
+    fab: @Composable (() -> Unit)? = null,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     content: @Composable ColumnScope.() -> Unit
@@ -28,6 +29,7 @@ fun BisqScrollScaffold(
         containerColor = BisqTheme.colors.backgroundColor,
         topBar = topBar ?: {},
         bottomBar = bottomBar ?: {},
+        floatingActionButton = fab ?: {},
         content = {
             BisqScrollLayout(
                 padding = if (topBar != null) it else padding,

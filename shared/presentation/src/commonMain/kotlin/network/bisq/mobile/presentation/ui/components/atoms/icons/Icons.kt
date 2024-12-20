@@ -29,6 +29,12 @@ import org.jetbrains.compose.resources.painterResource
 
 expect fun rememberPlatformImagePainter(platformImage: PlatformImage): Painter
 
+
+@Composable
+fun AddIcon(modifier: Modifier = Modifier.size(16.dp)) {
+    Image(painterResource(Res.drawable.icon_add_filled_green), "Add icon", modifier = modifier)
+}
+
 @Composable
 fun ArrowDownIcon(modifier: Modifier = Modifier.size(12.dp)) {
     Image(painterResource(Res.drawable.icon_arrow_down), "Down arrow icon", modifier = modifier)

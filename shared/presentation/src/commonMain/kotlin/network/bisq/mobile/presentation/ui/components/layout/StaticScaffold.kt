@@ -20,6 +20,7 @@ fun BisqStaticScaffold(
     ),
     topBar: @Composable (() -> Unit)? = null,
     bottomBar: @Composable (() -> Unit)? = null,
+    fab: @Composable (() -> Unit)? = null,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     content: @Composable ColumnScope.() -> Unit
@@ -28,6 +29,7 @@ fun BisqStaticScaffold(
         containerColor = BisqTheme.colors.backgroundColor,
         topBar = topBar ?: {},
         bottomBar = bottomBar ?: {},
+        floatingActionButton = fab ?: {},
         content = { it ->
             BisqStaticLayout(
                 padding = if (topBar != null) it else padding,
