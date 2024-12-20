@@ -46,6 +46,7 @@ interface IGettingStarted : ViewPresenter {
 @Composable
 fun GettingStartedScreen() {
     val presenter: GettingStartedPresenter = koinInject()
+    val tabPresenter: ITabContainerPresenter = koinInject()
     val offersOnline: Number = presenter.offersOnline.collectAsState().value
     val publishedProfiles: Number = presenter.publishedProfiles.collectAsState().value
 

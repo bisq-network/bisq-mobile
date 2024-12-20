@@ -55,7 +55,9 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
     RememberPresenterLifecycle(presenter)
 
-    BisqScrollScaffold {
+    BisqScrollScaffold(
+        snackbarHostState = presenter.getSnackState()
+    ) {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
         Column(

@@ -59,6 +59,9 @@ class TrustedNodeSetupPresenter(
             }
 
             settingsRepository.update(updatedSettings)
+
+            showSnackbar("Connected successfully")
+            // showSnackbar("Connected successfully and long text message with long list of english words")
         }
     }
 

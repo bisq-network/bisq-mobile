@@ -1,14 +1,18 @@
 package network.bisq.mobile.presentation
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.annotation.CallSuper
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.domain.utils.Logging
-
 
 /**
  * Presenter methods accesible by all views. Views should extend this interface when defining the behaviour expected for their presenter.
@@ -28,6 +32,9 @@ interface ViewPresenter {
      * @return main app tab nav controller
      */
     fun getRootTabNavController(): NavHostController
+
+    fun getSnackState(): SnackbarHostState
+    fun showSnackbar(message: String, isError: Boolean = true)
 
     /**
      * Navigate back in the stack
@@ -71,6 +78,17 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     // Presenter is interactive by default
     private val _isInteractive = MutableStateFlow(true)
     override val isInteractive: StateFlow<Boolean> = _isInteractive
+    val snackbarHostState: SnackbarHostState = SnackbarHostState()
+
+    override fun getSnackState(): SnackbarHostState {
+        return snackbarHostState
+    }
+
+    override fun showSnackbar(message: String, isError: Boolean) {
+        uiScope.launch {
+            snackbarHostState.showSnackbar(message, withDismissAction = true)
+        }
+    }
 
     /**
      * @throws IllegalStateException if this presenter has no root

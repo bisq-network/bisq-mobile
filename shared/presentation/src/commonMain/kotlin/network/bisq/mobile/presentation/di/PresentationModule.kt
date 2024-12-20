@@ -1,14 +1,12 @@
 package network.bisq.mobile.presentation.di
 
 import network.bisq.mobile.client.ClientMainPresenter
-import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.MarketListPresenter
-import network.bisq.mobile.presentation.ui.uicases.offer.OffersListPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferAmountPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferDirectionPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferMarketPresenter
@@ -16,6 +14,10 @@ import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOffe
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPricePresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferReviewPresenter
+import network.bisq.mobile.presentation.ui.uicases.ITabContainerPresenter
+import network.bisq.mobile.presentation.ui.uicases.TabContainerPresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.IOffersListPresenter
+import network.bisq.mobile.presentation.ui.uicases.offers.OffersListPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfileSettingsPresenter
@@ -54,9 +56,8 @@ val presentationModule = module {
         )
     }
 
-//    single { TabContainerPresenter(get()) } bind ITabContainerPresenter::class
-
     single { OnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
+    single { TabContainerPresenter(get()) } bind ITabContainerPresenter::class
 
     single<SettingsPresenter> { SettingsPresenter(get(), get()) } bind ISettingsPresenter::class
 
@@ -81,7 +82,7 @@ val presentationModule = module {
 
     single<MarketListPresenter> { MarketListPresenter(get(), get()) }
 
-    single<OffersListPresenter> { OffersListPresenter(get(), get(), get()) }
+    single { OffersListPresenter(get(), get()) } bind IOffersListPresenter::class
 
     single {
         MyTradesPresenter(
