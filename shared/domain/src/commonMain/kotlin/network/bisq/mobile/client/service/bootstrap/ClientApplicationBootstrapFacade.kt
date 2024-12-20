@@ -6,6 +6,7 @@ import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.i18n.i18n
 
 class ClientApplicationBootstrapFacade(
     private val settingsRepository: SettingsRepository,
@@ -37,6 +38,11 @@ class ClientApplicationBootstrapFacade(
                 try {
                     trustedNodeService.connect()
                     setState("Connected to Trusted Node")
+                    setState("bootstrap.connectedToTrustedNode".i18n())
+                    setProgress(1.0f)
+                } catch (e: Exception) {
+                    log.e(e) { "Failed to connect to trusted node" }
+                    setState("No connectivity")
                     setProgress(1.0f)
                 } catch (e: Exception) {
                     log.e(e) { "Failed to connect to trusted node" }
@@ -45,6 +51,7 @@ class ClientApplicationBootstrapFacade(
                 }
             } else {
                 setState("Connected to Trusted Node")
+                setState("bootstrap.connectedToTrustedNode".i18n())
                 setProgress(1.0f)
             }
 //            }
