@@ -30,6 +30,7 @@ import bisqapps.shared.presentation.generated.resources.icon_tag_outlined
 import bisqapps.shared.presentation.generated.resources.img_fiat_btc
 import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -94,7 +95,7 @@ fun GettingStartedScreen() {
         }
         BisqButton("Create offer", onClick={ presenter.navigateToCreateOffer() })
         WelcomeCard(
-            title = "Get your first BTC",
+            title = "dashboard.main.headline".i18n(),
             buttonText = "Enter Bisq Easy"
         )
         Column {
