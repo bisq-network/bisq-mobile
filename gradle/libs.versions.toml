@@ -47,6 +47,7 @@ ksp = "2.0.20-1.0.25"
 chimp-jsocks-lib = { strictly = '567e1cd6' }
 failsafe-lib = { strictly = '3.2.4' }
 
+qrKit = "3.0.5"
 bouncycastle-lib = { strictly = '1.78.1' }
 
 google-guava-lib = { strictly = '33.2.1-jre' }
@@ -114,6 +115,8 @@ androidx-test-junit = { group = "androidx.test.ext", name = "junit", version.ref
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activityCompose" }
 androidx-lifecycle-viewmodel = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-viewmodel", version.ref = "androidx-lifecycle" }
 androidx-lifecycle-runtime-compose = { group = "org.jetbrains.androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "androidx-lifecycle" }
+
+qr-kit = { module = "network.chaintech:qr-kit", version.ref = "qrKit" }
 
 bignum = { module = 'com.ionspin.kotlin:bignum', version.ref = 'bignum-lib' }
 

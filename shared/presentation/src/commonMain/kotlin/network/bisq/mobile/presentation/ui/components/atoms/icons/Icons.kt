@@ -29,7 +29,6 @@ import org.jetbrains.compose.resources.painterResource
 
 expect fun rememberPlatformImagePainter(platformImage: PlatformImage): Painter
 
-
 @Composable
 fun AddIcon(modifier: Modifier = Modifier.size(16.dp)) {
     Image(painterResource(Res.drawable.icon_add_filled_green), "Add icon", modifier = modifier)
@@ -56,13 +55,23 @@ fun CopyIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun LanguageIcon(modifier: Modifier = Modifier.size(12.dp)) {
+fun FlashLightIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_flash_light), "Flash light icon", modifier = modifier)
+}
+
+@Composable
+fun LanguageIcon(modifier: Modifier = Modifier.size(16.dp)) {
     Image(painterResource(Res.drawable.icon_language_grey), "Language icon", modifier = modifier)
 }
 
 @Composable
 fun InfoIcon(modifier: Modifier = Modifier.size(16.dp)) {
     Image(painterResource(Res.drawable.icon_info), "Info icon", modifier = modifier)
+}
+
+@Composable
+fun GalleryIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_gallery), "Gallery icon", modifier = modifier)
 }
 
 @Composable

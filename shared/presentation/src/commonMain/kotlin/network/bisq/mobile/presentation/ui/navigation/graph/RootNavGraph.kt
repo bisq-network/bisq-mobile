@@ -12,6 +12,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.components.organisms.QRCodeScannerScreen
+import network.bisq.mobile.presentation.ui.navigation.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
 import network.bisq.mobile.presentation.ui.uicases.offer.OffersListScreen
@@ -106,6 +108,9 @@ fun RootNavGraph(rootNavController: NavHostController) {
             UserProfileSettingsScreen(showBackNavigation = true)
         }
 
+        composable(Routes.QRCodeScanner.name) {
+            QRCodeScannerScreen()
+        }
     }
 }
 
