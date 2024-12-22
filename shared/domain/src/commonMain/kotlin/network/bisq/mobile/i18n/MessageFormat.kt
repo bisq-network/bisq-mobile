@@ -6,8 +6,7 @@ object MessageFormat {
 
     fun format(pattern: String, vararg arguments: Any): String {
         try {
-            val args = arguments[0] as Array<Any>
-            getLogger("").e { "args " + args }
+            val args = if (arguments[0] is Array<*>) arguments[0] as Array<*> else arguments
 
             // Use a regular expression to match placeholders like {0}, {1}, etc.
             val regex = Regex("\\{(\\d+)\\}")
