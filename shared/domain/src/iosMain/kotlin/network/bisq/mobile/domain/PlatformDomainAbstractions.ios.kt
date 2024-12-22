@@ -31,6 +31,7 @@ import platform.Foundation.stringWithContentsOfFile
 import platform.UIKit.UIImagePNGRepresentation
 import platform.posix.memcpy
 import kotlin.collections.set
+import platform.Foundation.NSDictionary
 
 @OptIn(ExperimentalSettingsImplementation::class)
 actual fun getPlatformSettings(): Settings {
@@ -68,8 +69,13 @@ actual fun loadFromResources(fileName: String): String {
 
 actual fun loadProperties(fileName: String): Map<String, String> {
     val bundle = NSBundle.mainBundle
+    /*val path = bundle.pathForResource(fileName.removeSuffix(".properties"), "properties")
+        ?: throw IllegalArgumentException("Resource not found: $fileName")*/
     val path = bundle.pathForResource(fileName.removeSuffix(".properties"), "properties")
-        ?: throw IllegalArgumentException("Resource not found: $fileName")
+    // FIXME resources not found yet
+    if (path == null) {
+        return emptyMap()
+    }
 
     val properties = NSDictionary.dictionaryWithContentsOfFile(path) as NSDictionary?
         ?: throw IllegalStateException("Failed to load properties from $path")
