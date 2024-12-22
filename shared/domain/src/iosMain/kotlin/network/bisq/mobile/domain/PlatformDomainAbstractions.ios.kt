@@ -14,13 +14,17 @@ import kotlinx.cinterop.usePinned
 import kotlinx.serialization.Serializable
 import platform.Foundation.NSBundle
 import platform.Foundation.NSData
+import platform.Foundation.NSDictionary
 import platform.Foundation.NSString
+import platform.Foundation.allKeys
 import platform.Foundation.create
+import platform.Foundation.dictionaryWithContentsOfFile
 import platform.Foundation.stringWithContentsOfFile
 import platform.UIKit.UIDevice
 import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation
 import platform.posix.memcpy
+import kotlin.collections.set
 
 @OptIn(ExperimentalSettingsImplementation::class)
 actual fun getPlatformSettings(): Settings {
@@ -35,10 +39,26 @@ class IOSPlatformInfo: PlatformInfo {
 
 actual fun getPlatformInfo(): PlatformInfo = IOSPlatformInfo()
 
-actual fun loadFromResources(fileName: String): String {
-    val path = NSBundle.mainBundle.pathForResource(fileName, "txt")
-        ?: throw IllegalArgumentException("File not found: $fileName")
-    return NSString.stringWithContentsOfFile(path) as String
+actual fun loadProperties(fileName: String): Map<String, String> {
+    val bundle = NSBundle.mainBundle
+    val path = bundle.pathForResource(fileName.removeSuffix(".properties"), "properties")
+        ?: throw IllegalArgumentException("Resource not found: $fileName")
+
+    val properties = NSDictionary.dictionaryWithContentsOfFile(path) as NSDictionary?
+        ?: throw IllegalStateException("Failed to load properties from $path")
+
+    return properties.entriesAsMap()
+}
+
+fun NSDictionary.entriesAsMap(): Map<String, String> {
+    val map = mutableMapOf<String, String>()
+    val keys = this.allKeys as List<*> // `allKeys` provides a list of keys
+    for (key in keys) {
+        val keyString = key.toString()
+        val valueString = this.objectForKey(key).toString()
+        map[keyString] = valueString
+    }
+    return map
 }
 
 @Serializable(with = PlatformImageSerializer::class)
