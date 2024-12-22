@@ -21,6 +21,7 @@ import platform.Foundation.create
 import platform.UIKit.UIImagePNGRepresentation
 import platform.Foundation.NSString
 import platform.Foundation.stringWithFormat
+import platform.Foundation.NSDictionary
 import platform.Foundation.allKeys
 import platform.Foundation.dictionaryWithContentsOfFile
 import platform.posix.memcpy
@@ -45,8 +46,13 @@ actual fun getPlatformInfo(): PlatformInfo = IOSPlatformInfo()
 
 actual fun loadProperties(fileName: String): Map<String, String> {
     val bundle = NSBundle.mainBundle
+    /*val path = bundle.pathForResource(fileName.removeSuffix(".properties"), "properties")
+        ?: throw IllegalArgumentException("Resource not found: $fileName")*/
     val path = bundle.pathForResource(fileName.removeSuffix(".properties"), "properties")
-        ?: throw IllegalArgumentException("Resource not found: $fileName")
+    // FIXME resources not found yet
+    if (path == null) {
+        return emptyMap()
+    }
 
     val properties = NSDictionary.dictionaryWithContentsOfFile(path) as NSDictionary?
         ?: throw IllegalStateException("Failed to load properties from $path")
