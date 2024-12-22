@@ -7,6 +7,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.composeModels.PagerViewItem
@@ -14,7 +15,8 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class OnBoardingPresenter(
     mainPresenter: MainPresenter,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val userProfileService: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter), IOnboardingPresenter {
 
     override val indexesToShow = listOf(0)
@@ -46,8 +48,9 @@ open class OnBoardingPresenter(
             settingsRepository.fetch()
             val settings: Settings? = settingsRepository.data.value
 
+            val hasProfile: Boolean = userProfileService.hasUserProfile()
+
             if (pagerState.currentPage == indexesToShow.lastIndex) {
-                rootNavigator.navigate(Routes.CreateProfile.name)
 
                 val updatedSettings = (settings ?: Settings()).apply {
                     firstLaunch = false
@@ -55,9 +58,29 @@ open class OnBoardingPresenter(
 
                 settingsRepository.update(updatedSettings)
 
+                val remoteBisqUrl = settings?.bisqApiUrl ?: ""
+                doCustomNavigationLogic(remoteBisqUrl.isNotEmpty(), hasProfile)
+
             } else {
                 pagerState.animateScrollToPage(pagerState.currentPage + 1)
             }
         }
     }
+
+    protected fun navigateToCreateProfile() {
+        rootNavigator.navigate(Routes.CreateProfile.name)
+    }
+
+    protected fun navigateToTrustedNodeSetup() {
+        rootNavigator.navigate(Routes.TrustedNodeSetup.name)
+    }
+
+    open fun doCustomNavigationLogic(isBisqUrlSet: Boolean, hasProfile: Boolean) {
+        if (isBisqUrlSet) {
+            navigateToCreateProfile()
+        } else {
+            navigateToTrustedNodeSetup()
+        }
+    }
+
 }

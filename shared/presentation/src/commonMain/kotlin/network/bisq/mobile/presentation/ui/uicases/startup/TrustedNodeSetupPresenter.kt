@@ -63,6 +63,6 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun navigateToNextScreen() {
-        rootNavigator.navigate(Routes.TabContainer.name)
+        rootNavigator.navigate(Routes.CreateProfile.name)
     }
 }

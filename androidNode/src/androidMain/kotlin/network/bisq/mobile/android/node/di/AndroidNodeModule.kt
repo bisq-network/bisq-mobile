@@ -69,5 +69,5 @@ val androidNodeModule = module {
 
     single<SettingsPresenter> { NodeSettingsPresenter(get(), get()) } bind ISettingsPresenter::class
 
-    single<IOnboardingPresenter> { OnBoardingNodePresenter(get(), get()) } bind IOnboardingPresenter::class
+    single<IOnboardingPresenter> { OnBoardingNodePresenter(get(), get(), get()) } bind IOnboardingPresenter::class
 }

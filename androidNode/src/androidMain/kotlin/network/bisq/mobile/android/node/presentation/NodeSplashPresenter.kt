@@ -19,7 +19,8 @@ class NodeSplashPresenter(
     /**
      * 
      */
-    override fun doCustomNavigationLogic(settings: Settings): Boolean {
+    override fun doCustomNavigationLogic(settings: Settings, hasProfile: Boolean): Boolean {
+        navigateToCreateProfile()
         // do nothin
         return false
     }
