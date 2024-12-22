@@ -70,13 +70,13 @@ kotlin {
     }
 
     sourceSets {
-        val commonMain by getting {
+        /* val commonMain by getting {
             resources.srcDirs("src/commonMain/resources")
         }
         val androidMain by getting {
             dependsOn(commonMain)
         }
-        val iosMain by creating {
+       val iosMain by creating {
             dependsOn(commonMain)
         }
         val iosX64Main by getting {
@@ -87,7 +87,7 @@ kotlin {
         }
         val iosSimulatorArm64Main by getting {
             dependsOn(commonMain)
-        }
+        }*/
 
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
@@ -172,15 +172,19 @@ android {
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
 }
 
-tasks.withType<Copy> {
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-}
+/*kotlin.sourceSets.commonMain {
+    kotlin.srcDir("src/commonMain/resources")
+}*/
 
-tasks.register("syncFramework") {
+/*tasks.withType<Copy> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}*/
+
+/*tasks.register("syncFramework") {
     group = "cocoapods"
     description = "Sync the framework for CocoaPods integration."
     dependsOn("linkDebugFrameworkIosArm64", "linkDebugFrameworkIosX64", "linkDebugFrameworkIosSimulatorArm64")
     doLast {
         println("Framework synced successfully for CocoaPods integration.")
     }
-}
+}*/
