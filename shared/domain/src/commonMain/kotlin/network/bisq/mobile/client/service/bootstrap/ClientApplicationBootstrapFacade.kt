@@ -9,8 +9,8 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 
 class ClientApplicationBootstrapFacade(
     private val settingsRepository: SettingsRepository,
-    private val trustedNodeService: TrustedNodeService) :
-    ApplicationBootstrapFacade() {
+    private val trustedNodeService: TrustedNodeService
+) : ApplicationBootstrapFacade() {
 
     private val backgroundScope = CoroutineScope(BackgroundDispatcher)
     override fun activate() {
@@ -31,22 +31,22 @@ class ClientApplicationBootstrapFacade(
 //                setState("Trusted node not configured")
 //                setProgress(0f)
 //            } else {
-                setProgress(0.5f)
-                setState("Connecting to Trusted Node..")
-                if (!trustedNodeService.isConnected()) {
-                    try {
-                        trustedNodeService.connect()
-                        setState("Connected to Trusted Node")
-                        setProgress(1.0f)
-                    } catch (e: Exception) {
-                        log.e(e) { "Failed to connect to trusted node" }
-                        setState("No connectivity")
-                        setProgress(1.0f)
-                    }
-                } else {
+            setProgress(0.5f)
+            setState("Connecting to Trusted Node..")
+            if (!trustedNodeService.isConnected()) {
+                try {
+                    trustedNodeService.connect()
                     setState("Connected to Trusted Node")
                     setProgress(1.0f)
+                } catch (e: Exception) {
+                    log.e(e) { "Failed to connect to trusted node" }
+                    setState("No connectivity")
+                    setProgress(1.0f)
                 }
+            } else {
+                setState("Connected to Trusted Node")
+                setProgress(1.0f)
+            }
 //            }
         }
     }
