@@ -4,33 +4,19 @@ import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.chat.bisqeasy.offerbook.BisqEasyOfferbookChannel
 import bisq.chat.bisqeasy.offerbook.BisqEasyOfferbookMessage
 import bisq.chat.bisqeasy.offerbook.BisqEasyOfferbookSelectionService
-import bisq.common.currency.Market
 import bisq.common.observable.Pin
 import bisq.common.observable.collection.CollectionObserver
 import bisq.common.observable.collection.ObservableSet
-import bisq.common.util.StringUtils
-import bisq.i18n.Res
-import bisq.offer.Direction
-import bisq.offer.amount.OfferAmountFormatter
-import bisq.offer.amount.spec.AmountSpec
-import bisq.offer.amount.spec.RangeAmountSpec
-import bisq.offer.bisq_easy.BisqEasyOffer
-import bisq.offer.payment_method.PaymentMethodSpecUtil
-import bisq.offer.price.spec.PriceSpec
-import bisq.offer.price.spec.PriceSpecFormatter
-import bisq.presentation.formatters.DateFormatter
 import bisq.user.identity.UserIdentityService
-import bisq.user.profile.UserProfile
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
-import com.google.common.base.Joiner
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
+import network.bisq.mobile.android.node.mapping.OfferListItemMapping
 import network.bisq.mobile.domain.LifeCycleAware
+import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.domain.utils.Logging
-import java.text.DateFormat
-import java.util.Date
 import java.util.Optional
 
 
@@ -55,8 +41,10 @@ class NodeOfferbookListItemService(private val applicationService: AndroidApplic
     }
 
     // Properties
-    private val _offerListItems = MutableStateFlow<List<OfferListItem>>(emptyList())
-    val offerListItems: StateFlow<List<OfferListItem>> get() = _offerListItems
+    private val _offerListItems = MutableStateFlow<List<OfferListItemVO>>(emptyList())
+    val offerListItems: StateFlow<List<OfferListItemVO>> get() = _offerListItems
+
+    private val bisqEasyOfferbookMessages: MutableSet<BisqEasyOfferbookMessage> = mutableSetOf()
 
     // Misc
     private var chatMessagesPin: Pin? = null
@@ -76,6 +64,12 @@ class NodeOfferbookListItemService(private val applicationService: AndroidApplic
         selectedChannelPin = null
     }
 
+    fun findBisqEasyOfferbookMessage(offer: OfferListItemVO): Optional<BisqEasyOfferbookMessage> =
+        bisqEasyOfferbookMessages.stream()
+            .filter { it.hasBisqEasyOffer() }
+            .filter { it.bisqEasyOffer.get().id.equals(offer.bisqEasyOffer.id) }
+            .findAny()
+
     // Private
     private fun addSelectedChannelObservers() {
         selectedChannelPin =
@@ -86,17 +80,28 @@ class NodeOfferbookListItemService(private val applicationService: AndroidApplic
             }
     }
 
-    private fun addChatMessagesObservers(marketChannel: BisqEasyOfferbookChannel) {
+    private fun createOfferListItemVO(bisqEasyOfferbookMessage: BisqEasyOfferbookMessage): OfferListItemVO {
+        return OfferListItemMapping.createOfferListItemVO(
+            userProfileService,
+            userIdentityService,
+            reputationService,
+            marketPriceService,
+            bisqEasyOfferbookMessage
+        )
+    }
+
+    private fun addChatMessagesObservers(channel: BisqEasyOfferbookChannel) {
         chatMessagesPin?.unbind()
         _offerListItems.value = emptyList()
 
-        val chatMessages: ObservableSet<BisqEasyOfferbookMessage> = marketChannel.chatMessages
+        val chatMessages: ObservableSet<BisqEasyOfferbookMessage> = channel.chatMessages
         chatMessagesPin =
             chatMessages.addObserver(object : CollectionObserver<BisqEasyOfferbookMessage> {
                 override fun add(message: BisqEasyOfferbookMessage) {
                     if (message.hasBisqEasyOffer()) {
-                        val offerListItem: OfferListItem = createOfferItem(message)
+                        val offerListItem: OfferListItemVO = createOfferListItemVO(message)
                         _offerListItems.value = _offerListItems.value + offerListItem
+                        bisqEasyOfferbookMessages.add(message)
                         log.i { "add offer $offerListItem" }
                     }
                 }
@@ -104,109 +109,23 @@ class NodeOfferbookListItemService(private val applicationService: AndroidApplic
                 override fun remove(message: Any) {
                     if (message is BisqEasyOfferbookMessage && message.hasBisqEasyOffer()) {
                         val offerListItem =
-                            _offerListItems.value.first { it.messageId == message.id }
+                            _offerListItems.value.first { it.bisqEasyOffer.id == message.bisqEasyOffer.get().id }
                         _offerListItems.value = _offerListItems.value - offerListItem
+                        bisqEasyOfferbookMessages.remove(message)
                         log.i { "remove offer $offerListItem" }
                     }
                 }
 
                 override fun clear() {
                     _offerListItems.value = emptyList()
+                    bisqEasyOfferbookMessages.clear()
                 }
             })
     }
-
-    private fun createOfferItem(message: BisqEasyOfferbookMessage): OfferListItem {
-        val bisqEasyOffer: BisqEasyOffer = message.bisqEasyOffer.get()
-        val date = message.date
-        val formattedDate = DateFormatter.formatDateTime(
-            Date(date), DateFormat.MEDIUM, DateFormat.SHORT,
-            true, " " + Res.get("temporal.at") + " "
-        )
-
-        val authorUserProfileId = message.authorUserProfileId
-        val senderUserProfile: Optional<UserProfile> =
-            userProfileService.findUserProfile(authorUserProfileId)
-        val nym: String = senderUserProfile.map { it.nym }.orElse("")
-        val userName: String = senderUserProfile.map { it.userName }.orElse("")
-        val reputationScore =
-            senderUserProfile.flatMap(reputationService::findReputationScore)
-                .map {
-                    network.bisq.mobile.domain.replicated.user.reputation.ReputationScore(
-                        it.totalScore,
-                        it.fiveSystemScore,
-                        it.ranking
-                    )
-                }
-                .orElse(network.bisq.mobile.domain.replicated.user.reputation.ReputationScore.NONE)
-        val amountSpec: AmountSpec = bisqEasyOffer.amountSpec
-        val priceSpec: PriceSpec = bisqEasyOffer.priceSpec
-        val hasAmountRange = amountSpec is RangeAmountSpec
-        val market: Market = bisqEasyOffer.market
-        val formattedQuoteAmount: String =
-            OfferAmountFormatter.formatQuoteAmount(
-                marketPriceService,
-                amountSpec,
-                priceSpec,
-                market,
-                hasAmountRange,
-                true
-            )
-        val formattedPrice: String = PriceSpecFormatter.getFormattedPriceSpec(priceSpec, true)
-
-        val quoteSidePaymentMethods: List<String> =
-            PaymentMethodSpecUtil.getPaymentMethods(bisqEasyOffer.quoteSidePaymentMethodSpecs)
-                .map { it.name }
-                .toList()
-        val baseSidePaymentMethods: List<String> =
-            PaymentMethodSpecUtil.getPaymentMethods(bisqEasyOffer.baseSidePaymentMethodSpecs)
-                .map { it.name }
-                .toList()
-        val supportedLanguageCodes: String =
-            Joiner.on(",").join(bisqEasyOffer.supportedLanguageCodes)
-        val isMyMessage = message.isMyMessage(userIdentityService)
-        val direction: network.bisq.mobile.domain.replicated.offer.Direction =
-            if (bisqEasyOffer.direction.isBuy) {
-                network.bisq.mobile.domain.replicated.offer.Direction.BUY
-            } else {
-                network.bisq.mobile.domain.replicated.offer.Direction.SELL
-            }
-
-        val offerTitle = getOfferTitle(message, isMyMessage)
-        val messageId = message.id
-        val offerId = bisqEasyOffer.id
-        val offerListItem = OfferListItem(
-            messageId,
-            offerId,
-            isMyMessage,
-            direction,
-            market.quoteCurrencyCode,
-            offerTitle,
-            date,
-            formattedDate,
-            nym,
-            userName,
-            reputationScore,
-            formattedQuoteAmount,
-            formattedPrice,
-            quoteSidePaymentMethods,
-            baseSidePaymentMethods,
-            supportedLanguageCodes
-        )
-        return offerListItem
-    }
-
-    private fun getOfferTitle(message: BisqEasyOfferbookMessage, isMyMessage: Boolean): String {
-        if (isMyMessage) {
-            val direction: Direction = message.bisqEasyOffer.get().direction
-            val directionString: String =
-                StringUtils.capitalize(Res.get("offer." + direction.name.lowercase()))
-            return Res.get(
-                "bisqEasy.tradeWizard.review.chatMessage.myMessageTitle",
-                directionString
-            )
-        } else {
-            return message.text
-        }
-    }
 }
+
+
+
+
+
+

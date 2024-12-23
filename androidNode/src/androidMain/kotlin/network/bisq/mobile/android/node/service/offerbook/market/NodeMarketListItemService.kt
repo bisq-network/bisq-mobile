@@ -6,10 +6,10 @@ import bisq.chat.bisqeasy.offerbook.BisqEasyOfferbookChannelService
 import bisq.chat.bisqeasy.offerbook.BisqEasyOfferbookMessage
 import bisq.common.observable.Pin
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.service.offerbook.NodeOfferbookServiceFacade.Companion.toLibraryMarket
-import network.bisq.mobile.client.replicated_model.common.currency.Market
+import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.model.MarketListItem
+import network.bisq.mobile.domain.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.utils.Logging
 
 class NodeMarketListItemService(private val applicationService: AndroidApplicationService.Provider) :
@@ -44,7 +44,7 @@ class NodeMarketListItemService(private val applicationService: AndroidApplicati
         val offerbookMarketItems: MutableList<MarketListItem> = mutableListOf()
         bisqEasyOfferbookChannelService.channels
             .forEach { channel ->
-                val market = Market(
+                val marketVO = MarketVO(
                     channel.market.baseCurrencyCode,
                     channel.market.quoteCurrencyCode,
                     channel.market.baseCurrencyName,
@@ -52,11 +52,12 @@ class NodeMarketListItemService(private val applicationService: AndroidApplicati
                 )
 
                 // We convert channel.market to our replicated Market model
-                val offerbookMarketItem = MarketListItem(market)
+                val offerbookMarketItem = MarketListItem(marketVO)
 
-                val libraryMarket = toLibraryMarket(offerbookMarketItem)
+                val market = Mappings.MarketMapping.toPojo(marketVO)
                 if(marketPriceService.marketPriceByCurrencyMap.isEmpty() ||
-                    marketPriceService.marketPriceByCurrencyMap.containsKey(libraryMarket)){
+                    marketPriceService.marketPriceByCurrencyMap.containsKey(market)
+                ) {
                     offerbookMarketItems.add(offerbookMarketItem)
                     val numOffersObserver = NumOffersObserver(channel, offerbookMarketItem::setNumOffers)
                     numOffersObservers.add(numOffersObserver)

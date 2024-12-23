@@ -9,7 +9,7 @@ import bisq.common.observable.Pin
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.service.offerbook.NodeOfferbookServiceFacade.Companion.toReplicatedMarket
+import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.model.OfferbookMarket
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -85,14 +85,18 @@ class NodeSelectedOfferbookMarketService(
         }
 
         val selectedChannel = selectedChannel!!
-        val market = toReplicatedMarket(selectedChannel.market)
-        _selectedOfferbookMarket.value = OfferbookMarket(market)
+        val marketVO = Mappings.MarketMapping.from(selectedChannel.market)
+        _selectedOfferbookMarket.value = OfferbookMarket(marketVO)
         updateMarketPrice()
         log.i { _selectedOfferbookMarket.value.toString() }
     }
 
     private fun updateMarketPrice() {
-        val formattedPrice = marketPriceServiceFacade.selectedMarketPriceItem.value.formattedPrice
-        _selectedOfferbookMarket.value.setFormattedPrice(formattedPrice)
+        if (marketPriceServiceFacade.selectedMarketPriceItem.value != null) {
+            val marketPriceItem = marketPriceServiceFacade.selectedMarketPriceItem.value!!
+            val formattedPrice = marketPriceItem.formattedPrice
+
+            _selectedOfferbookMarket.value.setFormattedPrice(formattedPrice)
+        }
     }
 }

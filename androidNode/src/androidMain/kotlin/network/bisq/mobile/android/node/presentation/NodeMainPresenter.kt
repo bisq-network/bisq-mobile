@@ -6,7 +6,9 @@ import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offer.OfferServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.service.trade.TradeServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
 class NodeMainPresenter(
@@ -15,7 +17,9 @@ class NodeMainPresenter(
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val offerbookServiceFacade: OfferbookServiceFacade,
-    private val marketPriceServiceFacade: MarketPriceServiceFacade
+    private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val offerServiceFacade: OfferServiceFacade,
+    private val tradeServiceFacade: TradeServiceFacade,
 ) : MainPresenter(notificationServiceController) {
 
     private var applicationServiceCreated = false
@@ -44,6 +48,8 @@ class NodeMainPresenter(
                             applicationBootstrapFacade.deactivate()
                             offerbookServiceFacade.activate()
                             marketPriceServiceFacade.activate()
+                            offerServiceFacade.activate()
+                            tradeServiceFacade.activate()
                         } else {
                             log.e("Initializing applicationService failed", throwable)
                         }
@@ -51,6 +57,8 @@ class NodeMainPresenter(
             } else {
                 offerbookServiceFacade.activate()
                 marketPriceServiceFacade.activate()
+                offerServiceFacade.activate()
+                tradeServiceFacade.activate()
             }
         }.onFailure { e ->
             // TODO give user feedback (we could have a general error screen covering usual
@@ -63,6 +71,8 @@ class NodeMainPresenter(
         applicationBootstrapFacade.deactivate()
         offerbookServiceFacade.deactivate()
         marketPriceServiceFacade.deactivate()
+        offerServiceFacade.deactivate()
+        tradeServiceFacade.deactivate()
         super.onViewUnattaching()
     }
 

@@ -9,11 +9,15 @@ import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.android.node.service.bootstrap.NodeApplicationBootstrapFacade
 import network.bisq.mobile.android.node.service.market_price.NodeMarketPriceServiceFacade
+import network.bisq.mobile.android.node.service.offer.NodeOfferServiceFacade
 import network.bisq.mobile.android.node.service.offerbook.NodeOfferbookServiceFacade
+import network.bisq.mobile.android.node.service.trade.NodeTradeServiceFacade
 import network.bisq.mobile.android.node.service.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offer.OfferServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.service.trade.TradeServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
@@ -44,9 +48,14 @@ val androidNodeModule = module {
     single<UserProfileServiceFacade> { NodeUserProfileServiceFacade(get()) }
 
     single<OfferbookServiceFacade> { NodeOfferbookServiceFacade(get(), get()) }
+
+    single<OfferServiceFacade> { NodeOfferServiceFacade(get()) }
+
+    single<TradeServiceFacade> { NodeTradeServiceFacade(get()) }
+
     // this line showcases both, the possibility to change behaviour of the app by changing one definition
     // and binding the same obj to 2 different abstractions
-    single<MainPresenter> { NodeMainPresenter(get(), get(), get(),  get(), get(), get()) } bind AppPresenter::class
+    single<MainPresenter> { NodeMainPresenter(get(), get(), get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
 
     single<SplashPresenter> {
         NodeSplashPresenter(
