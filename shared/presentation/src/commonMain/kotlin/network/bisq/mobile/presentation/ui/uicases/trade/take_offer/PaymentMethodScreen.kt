@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.offers.takeOffer
+package network.bisq.mobile.presentation.ui.uicases.trade.take_offer
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*

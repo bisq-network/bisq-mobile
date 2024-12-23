@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.offers
+package network.bisq.mobile.presentation.ui.uicases.offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

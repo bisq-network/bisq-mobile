@@ -14,7 +14,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.PaymentTypeCard
 import network.bisq.mobile.presentation.ui.composeModels.PaymentTypeData
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.ICreateOfferPresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.ICreateOfferPresenter
 import org.koin.compose.koinInject
 
 @Composable

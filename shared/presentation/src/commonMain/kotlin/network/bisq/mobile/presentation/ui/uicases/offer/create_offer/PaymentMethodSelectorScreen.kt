@@ -1,11 +1,7 @@
-package network.bisq.mobile.presentation.ui.uicases.offers.createOffer
+package network.bisq.mobile.presentation.ui.uicases.offer.create_offer
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -14,7 +10,6 @@ import network.bisq.mobile.presentation.ui.components.organisms.PaymentMethodCar
 import network.bisq.mobile.presentation.ui.composeModels.PaymentTypeData
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 val paymentTransferList = listOf(

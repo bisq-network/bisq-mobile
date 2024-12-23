@@ -1,9 +1,8 @@
-package network.bisq.mobile.presentation.ui.uicases.offers
+package network.bisq.mobile.presentation.ui.uicases.offer
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.MarketListItem
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter

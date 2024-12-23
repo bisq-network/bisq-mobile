@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.offers.createOffer
+package network.bisq.mobile.presentation.ui.uicases.offer.create_offer
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,9 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Popup
 import cafe.adriel.lyricist.LocalStrings
-import com.ionspin.kotlin.bignum.decimal.toBigDecimalUsingSignificandAndExponent
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold

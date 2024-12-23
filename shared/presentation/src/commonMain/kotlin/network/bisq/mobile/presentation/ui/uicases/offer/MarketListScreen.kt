@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.offers
+package network.bisq.mobile.presentation.ui.uicases.offer
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
