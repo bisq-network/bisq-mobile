@@ -9,7 +9,9 @@ import cafe.adriel.lyricist.rememberStrings
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.i18n.AppStrings
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -53,6 +55,8 @@ fun App() {
     })
 
     val lyricist = rememberStrings()
+    val localeCode = getDeviceLanguageCode()
+    I18nSupport.initialize(localeCode)
 
     BisqTheme(darkTheme = true) {
         ProvideStrings(lyricist) {

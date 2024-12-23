@@ -6,10 +6,12 @@ import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.i18n.i18n
 
 class ClientApplicationBootstrapFacade(
     private val settingsRepository: SettingsRepository,
-    private val trustedNodeService: TrustedNodeService) :
+    private val trustedNodeService: TrustedNodeService
+) :
     ApplicationBootstrapFacade() {
 
     private val backgroundScope = CoroutineScope(BackgroundDispatcher)
@@ -31,22 +33,22 @@ class ClientApplicationBootstrapFacade(
 //                setState("Trusted node not configured")
 //                setProgress(0f)
 //            } else {
-                setProgress(0.5f)
-                setState("Connecting to Trusted Node..")
-                if (!trustedNodeService.isConnected()) {
-                    try {
-                        trustedNodeService.connect()
-                        setState("Connected to Trusted Node")
-                        setProgress(1.0f)
-                    } catch (e: Exception) {
-                        log.e(e) { "Failed to connect to trusted node" }
-                        setState("No connectivity")
-                        setProgress(1.0f)
-                    }
-                } else {
-                    setState("Connected to Trusted Node")
+            setProgress(0.5f)
+            setState("Connecting to Trusted Node..")
+            if (!trustedNodeService.isConnected()) {
+                try {
+                    trustedNodeService.connect()
+                    setState("bootstrap.connectedToTrustedNode".i18n())
+                    setProgress(1.0f)
+                } catch (e: Exception) {
+                    log.e(e) { "Failed to connect to trusted node" }
+                    setState("No connectivity")
                     setProgress(1.0f)
                 }
+            } else {
+                setState("bootstrap.connectedToTrustedNode".i18n())
+                setProgress(1.0f)
+            }
 //            }
         }
     }

@@ -3,11 +3,13 @@
 package network.bisq.mobile.domain
 
 import com.russhwolf.settings.Settings
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.descriptors.*
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -17,7 +19,11 @@ interface PlatformInfo {
     val name: String
 }
 
+expect fun getDeviceLanguageCode(): String
+
 expect fun getPlatformInfo(): PlatformInfo
+
+expect fun loadProperties(fileName: String): Map<String, String>
 
 @Serializable(with = PlatformImageSerializer::class)
 expect class PlatformImage {

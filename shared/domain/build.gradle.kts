@@ -70,6 +70,25 @@ kotlin {
     }
 
     sourceSets {
+        /* val commonMain by getting {
+            resources.srcDirs("src/commonMain/resources")
+        }
+        val androidMain by getting {
+            dependsOn(commonMain)
+        }
+       val iosMain by creating {
+            dependsOn(commonMain)
+        }
+        val iosX64Main by getting {
+            dependsOn(commonMain)
+        }
+        val iosArm64Main by getting {
+            dependsOn(commonMain)
+        }
+        val iosSimulatorArm64Main by getting {
+            dependsOn(commonMain)
+        }*/
+
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
         }
@@ -110,7 +129,7 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.androidx.core)
-            
+
             implementation(libs.koin.core)
             implementation(libs.koin.android)
         }
@@ -148,4 +167,23 @@ android {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
+    sourceSets["main"].resources.srcDirs("src/commonMain/resources")
 }
+
+/*kotlin.sourceSets.commonMain {
+    kotlin.srcDir("src/commonMain/resources")
+}*/
+
+/*tasks.withType<Copy> {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}*/
+
+/*tasks.register("syncFramework") {
+    group = "cocoapods"
+    description = "Sync the framework for CocoaPods integration."
+    dependsOn("linkDebugFrameworkIosArm64", "linkDebugFrameworkIosX64", "linkDebugFrameworkIosSimulatorArm64")
+    doLast {
+        println("Framework synced successfully for CocoaPods integration.")
+    }
+}*/

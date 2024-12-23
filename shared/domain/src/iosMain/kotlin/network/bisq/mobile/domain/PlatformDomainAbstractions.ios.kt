@@ -5,15 +5,19 @@ package network.bisq.mobile.domain
 import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.KeychainSettings
 import com.russhwolf.settings.Settings
-import kotlinx.cinterop.*
+import kotlinx.cinterop.BetaInteropApi
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.MemScope
+import kotlinx.cinterop.addressOf
+import kotlinx.cinterop.refTo
+import kotlinx.cinterop.usePinned
 import kotlinx.serialization.Serializable
-import platform.Foundation.NSData
-import platform.UIKit.UIImage
-import platform.Foundation.create
-import platform.UIKit.UIImagePNGRepresentation
-
+import platform.Foundation.*
 import platform.UIKit.UIDevice
+import platform.UIKit.UIImage
+import platform.UIKit.UIImagePNGRepresentation
 import platform.posix.memcpy
+import kotlin.collections.set
 
 @OptIn(ExperimentalSettingsImplementation::class)
 actual fun getPlatformSettings(): Settings {
@@ -22,11 +26,42 @@ actual fun getPlatformSettings(): Settings {
     return KeychainSettings("Settings")
 }
 
-class IOSPlatformInfo: PlatformInfo {
+actual fun getDeviceLanguageCode(): String {
+    return NSLocale.currentLocale.languageCode ?: "en"
+}
+
+class IOSPlatformInfo : PlatformInfo {
     override val name: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
 }
 
 actual fun getPlatformInfo(): PlatformInfo = IOSPlatformInfo()
+
+actual fun loadProperties(fileName: String): Map<String, String> {
+    val bundle = NSBundle.mainBundle
+    /*val path = bundle.pathForResource(fileName.removeSuffix(".properties"), "properties")
+        ?: throw IllegalArgumentException("Resource not found: $fileName")*/
+    val path = bundle.pathForResource(fileName.removeSuffix(".properties"), "properties")
+    // FIXME resources not found yet
+    if (path == null) {
+        return emptyMap()
+    }
+
+    val properties = NSDictionary.dictionaryWithContentsOfFile(path) as NSDictionary?
+        ?: throw IllegalStateException("Failed to load properties from $path")
+
+    return properties.entriesAsMap()
+}
+
+fun NSDictionary.entriesAsMap(): Map<String, String> {
+    val map = mutableMapOf<String, String>()
+    val keys = this.allKeys as List<*> // `allKeys` provides a list of keys
+    for (key in keys) {
+        val keyString = key.toString()
+        val valueString = this.objectForKey(key).toString()
+        map[keyString] = valueString
+    }
+    return map
+}
 
 @Serializable(with = PlatformImageSerializer::class)
 actual class PlatformImage(val image: UIImage) {

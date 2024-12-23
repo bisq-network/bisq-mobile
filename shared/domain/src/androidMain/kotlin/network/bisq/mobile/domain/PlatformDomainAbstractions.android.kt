@@ -11,6 +11,12 @@ import androidx.compose.ui.graphics.asImageBitmap
 import com.russhwolf.settings.Settings
 import kotlinx.serialization.Serializable
 import java.io.ByteArrayOutputStream
+import java.util.Locale
+import java.util.Properties
+
+actual fun getDeviceLanguageCode(): String {
+    return Locale.getDefault().language
+}
 
 actual fun getPlatformSettings(): Settings {
     return Settings()
@@ -21,6 +27,17 @@ class AndroidPlatformInfo : PlatformInfo {
 }
 
 actual fun getPlatformInfo(): PlatformInfo = AndroidPlatformInfo()
+
+
+actual fun loadProperties(fileName: String): Map<String, String> {
+    val properties = Properties()
+    val classLoader = Thread.currentThread().contextClassLoader
+    val resource = classLoader?.getResourceAsStream(fileName)
+        ?: throw IllegalArgumentException("Resource not found: $fileName")
+    properties.load(resource)
+
+    return properties.entries.associate { it.key.toString() to it.value.toString() }
+}
 
 @Serializable(with = PlatformImageSerializer::class)
 actual class PlatformImage(val bitmap: ImageBitmap) {
