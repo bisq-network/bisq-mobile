@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -21,6 +20,7 @@ import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.helpers.StringHelper
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter.AmountType
 import org.koin.compose.koinInject
 
 @Composable
@@ -28,31 +28,21 @@ fun CreateOfferAmountSelectorScreen() {
     val strings = LocalStrings.current.bisqEasyTradeWizard
     val stringsEasy = LocalStrings.current.bisqEasy
     val stringsCommon = LocalStrings.current.common
-    val presenter: ICreateOfferPresenter = koinInject()
-
-    val offerMinFiatAmount = 800.0
-    val offerMaxFiatAmount = 1500.0
-    val state by presenter.state.collectAsState()
-    val isBuy = presenter.direction.collectAsState().value.isBuy
-    val fixedAmount = presenter.fixedAmount.collectAsState().value
-
+    val presenter: CreateOfferAmountPresenter = koinInject()
+    presenter.appStrings = LocalStrings.current // TODO find a more elegant solution
     RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
         stringsEasy.bisqEasy_openTrades_table_quoteAmount,
         stepIndex = 3,
         stepsLength = 6,
-        prevOnClick = { presenter.goBack() },
+        prevOnClick = { presenter.onBack() },
         nextButtonText = stringsCommon.buttons_next,
-        nextOnClick = { presenter.navigateToTradePriceSelector() }
+        nextOnClick = { presenter.onNext() }
     ) {
-        val headerText = if (isBuy)
-            strings.bisqEasy_tradeWizard_amount_headline_buyer
-        else
-            strings.bisqEasy_tradeWizard_amount_headline_seller
 
         BisqText.h3Regular(
-            text = headerText,
+            text = presenter.headline,
             color = BisqTheme.colors.light1,
             modifier = Modifier.align(Alignment.Start)
         )
@@ -71,13 +61,15 @@ fun CreateOfferAmountSelectorScreen() {
 
             ToggleTab(
                 options = AmountType.entries,
-                initialOption = AmountType.FIXED_AMOUNT,
-                onStateChange = { amountType -> presenter.onSelectAmountType(amountType) },
+                initialOption = presenter.amountType.value,
+                onStateChange = { value ->
+                    presenter.onSelectAmountType(value)
+                },
                 getDisplayString = { direction ->
                     if (direction == AmountType.FIXED_AMOUNT)
                         strings.bisqEasy_tradeWizard_fixed_amount
                     else
-                        strings.bisqEasy_tradeWizard_trade_amount
+                        "Range amount" // strings.bisqEasy_tradeWizard_trade_amount
                 },
                 textWidth = StringHelper.calculateTotalWidthOfStrings(
                     strings = listOf(
@@ -88,18 +80,28 @@ fun CreateOfferAmountSelectorScreen() {
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
-            if (state.selectedAmountType == AmountType.FIXED_AMOUNT) {
+            if (presenter.amountType.collectAsState().value == AmountType.FIXED_AMOUNT) {
                 BisqAmountSelector(
-                    minAmount = offerMinFiatAmount,
-                    maxAmount = offerMaxFiatAmount,
-                    exchangeRate = 95000.0,
-                    currency = "USD",
-                    // onValueChanged = { value -> presenter.onFixedAmountChange(value) }
+                    presenter.quoteCurrencyCode,
+                    presenter.formattedMinAmountWithCode,
+                    presenter.formattedMaxAmountWithCode,
+                    presenter.fixedAmountSliderPosition,
+                    presenter.formattedQuoteSideFixedAmount,
+                    presenter.formattedBaseSideFixedAmount,
+                    { sliderValue -> presenter.onFixedAmountSliderChanged(sliderValue) }
                 )
             } else {
                 RangeAmountSelector(
-                    minAmount = offerMinFiatAmount,
-                    maxAmount = offerMaxFiatAmount
+                    presenter.formattedMinAmountWithCode,
+                    presenter.formattedMaxAmountWithCode,
+                    presenter.quoteCurrencyCode,
+                    presenter.rangeSliderPosition,
+                    presenter.formattedQuoteSideMinRangeAmount,
+                    presenter.formattedBaseSideMinRangeAmount,
+                    presenter.formattedQuoteSideMaxRangeAmount,
+                    presenter.formattedBaseSideMaxRangeAmount,
+
+                    { sliderValue -> presenter.onRangeAmountSliderChanged(sliderValue) }
                 )
             }
 
@@ -108,13 +110,12 @@ fun CreateOfferAmountSelectorScreen() {
                 strings.bisqEasy_tradeWizard_amount_numOffers_0
             } else if (matchingSellerCount == 1) {
                 strings.bisqEasy_tradeWizard_amount_numOffers_1
-            } else  {
+            } else {
                 strings.bisqEasy_tradeWizard_amount_numOffers_many(matchingSellerCount.toString())
             }
 
-            val finalText = strings.bisqEasy_tradeWizard_amount_buyer_limitInfo(countString, "$fixedAmount USD")
             NoteText(
-                notes = finalText,
+                notes = strings.bisqEasy_tradeWizard_amount_buyer_limitInfo(countString, presenter.formattedQuoteSideFixedAmount.value),
                 linkText = stringsEasy.bisqEasy_takeOffer_amount_buyer_limitInfo_learnMore
             )
 

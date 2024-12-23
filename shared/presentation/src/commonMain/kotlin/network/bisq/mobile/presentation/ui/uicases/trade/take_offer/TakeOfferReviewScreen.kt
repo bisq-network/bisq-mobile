@@ -1,28 +1,22 @@
 package network.bisq.mobile.presentation.ui.uicases.trade.take_offer
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
-import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
-
-interface ITakeOfferReviewTradePresenter : ViewPresenter {
-    // TODO: Update later to refer to a single OfferListItem
-    val offerListItems: StateFlow<List<OfferListItem>>
-    fun tradeConfirmed()
-}
 
 @Composable
 fun TakeOfferReviewTradeScreen() {
@@ -30,17 +24,17 @@ fun TakeOfferReviewTradeScreen() {
     val stringsBisqEasy = LocalStrings.current.bisqEasy
     val stringsTradeState = LocalStrings.current.bisqEasyTradeState
     val commonStrings = LocalStrings.current.common
-    val presenter: ITakeOfferReviewTradePresenter = koinInject()
-
-    val offer = presenter.offerListItems.collectAsState().value.first()
+    val presenter: TakeOfferReviewPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+    presenter.appStrings = LocalStrings.current // TODO find a more elegant solution
 
     MultiScreenWizardScaffold(
         stringsBisqEasy.bisqEasy_takeOffer_progress_review,
         stepIndex = 3,
         stepsLength = 3,
-        prevOnClick = { presenter.goBack() },
+        prevOnClick = { presenter.onBack() },
         nextButtonText = stringsBisqEasy.bisqEasy_takeOffer_review_takeOffer,
-        nextOnClick = { presenter.tradeConfirmed() }
+        nextOnClick = { presenter.onTakeOffer() }
     ) {
         BisqText.h3Regular(
             text = stringsBisqEasy.bisqEasy_takeOffer_progress_review,
@@ -50,20 +44,18 @@ fun TakeOfferReviewTradeScreen() {
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoRow(
                 label1 = stringsTradeState.bisqEasy_tradeState_header_direction.uppercase(),
-                value1 = if (offer.direction.isBuy)
-                    strings.bisqEasy_tradeWizard_directionAndMarket_buy
-                else
-                    strings.bisqEasy_tradeWizard_directionAndMarket_sell,
+                value1 = presenter.headLine,
                 label2 = strings.bisqEasy_tradeWizard_review_paymentMethodDescription_fiat.uppercase(),
-                value2 = offer.quoteSidePaymentMethods[0], // TODO: Show only selected method
+                value2 = presenter.quoteSidePaymentMethodDisplayString,
             )
             InfoRow(
                 label1 = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
-                value1 = offer.formattedPrice, // TODO: Show selected amount (in case offer has range)
+                value1 = presenter.amountToPay,
                 label2 = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
-                value2 = offer.formattedQuoteAmount
+                value2 = presenter.amountToReceive
             )
         }
+
         BisqHDivider()
         Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
             InfoBox(
@@ -74,11 +66,14 @@ fun TakeOfferReviewTradeScreen() {
                             verticalAlignment = Alignment.Bottom,
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-                            BisqText.h6Regular(text = "98,000.68") // TODO: Values?
-                            BisqText.baseRegular(text = "BTC/USD", color = BisqTheme.colors.grey2) // TODO: Values?
+                            BisqText.h6Regular(text = presenter.price)
+                            BisqText.baseRegular(
+                                text = presenter.marketCodes,
+                                color = BisqTheme.colors.grey2
+                            )
                         }
                         BisqText.smallRegular(
-                            text = strings.bisqEasy_tradeWizard_review_priceDetails_float("1.00%", "above", "60,000 BTC/USD"),
+                            text = presenter.priceDetails,
                             color = BisqTheme.colors.grey4
                         )
                     }
@@ -86,14 +81,28 @@ fun TakeOfferReviewTradeScreen() {
             )
 
             InfoRow(
-                label1 = strings.bisqEasy_tradeWizard_review_paymentMethodDescription_btc,
-                value1 = offer.baseSidePaymentMethods[0], // TODO: Show only selected method
-                label2 = strings.bisqEasy_tradeWizard_review_paymentMethodDescription_fiat,
-                value2 = offer.quoteSidePaymentMethods[0], // TODO: Show only selected method
+                label1 = strings.bisqEasy_tradeWizard_review_paymentMethodDescription_fiat,
+                value1 = presenter.quoteSidePaymentMethodDisplayString,
+                label2 = strings.bisqEasy_tradeWizard_review_paymentMethodDescription_btc,
+                value2 = presenter.baseSidePaymentMethodDisplayString,
             )
+
             InfoBox(
                 label = strings.bisqEasy_tradeWizard_review_feeDescription,
-                value = strings.bisqEasy_tradeWizard_review_noTradeFees
+                valueComposable = {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            BisqText.h6Regular(text = presenter.fee)
+                        }
+                        BisqText.smallRegular(
+                            text = presenter.feeDetails,
+                            color = BisqTheme.colors.grey4
+                        )
+                    }
+                }
             )
         }
     }

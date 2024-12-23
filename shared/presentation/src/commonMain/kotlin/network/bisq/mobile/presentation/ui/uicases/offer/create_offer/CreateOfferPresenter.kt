@@ -1,226 +1,162 @@
 package network.bisq.mobile.presentation.ui.uicases.offer.create_offer
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.model.MarketListItem
-import network.bisq.mobile.domain.data.model.OfferbookMarket
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.data.model.MarketPriceItem
+import network.bisq.mobile.domain.replicated.account.payment_method.BitcoinPaymentRailEnum
+import network.bisq.mobile.domain.replicated.account.payment_method.FiatPaymentRailUtil
+import network.bisq.mobile.domain.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.replicated.common.monetary.CoinVO
+import network.bisq.mobile.domain.replicated.common.monetary.FiatVO
+import network.bisq.mobile.domain.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.domain.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.replicated.offer.amount.spec.AmountSpecVO
+import network.bisq.mobile.domain.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
+import network.bisq.mobile.domain.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
+import network.bisq.mobile.domain.replicated.offer.amount.spec.from
+import network.bisq.mobile.domain.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.domain.replicated.offer.price.spec.FloatPriceSpecVO
+import network.bisq.mobile.domain.replicated.offer.price.spec.MarketPriceSpecVO
+import network.bisq.mobile.domain.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.domain.replicated.offer.price.spec.from
+import network.bisq.mobile.domain.replicated.offer.price.spec.getPriceQuoteVO
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offer.OfferServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ViewPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
-
-enum class AmountType {
-    FIXED_AMOUNT,
-    RANGE_AMOUNT,
-}
-
-enum class PriceType {
-    PERCENTAGE,
-    FIXED,
-}
 
 
-interface ICreateOfferPresenter : ViewPresenter {
-    var marketListItemWithNumOffers: List<MarketListItem>
-
-    val offerListItems: StateFlow<List<OfferListItem>>
-
-    val state: StateFlow<CreateOffer>
-
-    val direction: StateFlow<network.bisq.mobile.domain.replicated.offer.Direction>
-
-    val fixedAmount: StateFlow<Float>
-
-    fun onSelectMarket(marketListItem: MarketListItem)
-
-    fun onSelectAmountType(amountType: AmountType)
-
-    fun navigateToCurrencySelector()
-
-    fun buyBitcoinClicked()
-
-    fun sellBitcoinClicked()
-
-    fun navigateToAmountSelector()
-
-    fun navigateToTradePriceSelector()
-
-    fun navigateToPaymentMethod()
-
-    fun navigateToReviewOffer()
-
-    fun createOffer()
-
-    fun onSelectPriceType(priceType: PriceType)
-
-    fun onSelectPayment(paymentMethod: String)
-
-    fun onFixedAmountChange(amount: Float)
-
-}
-
-data class CreateOffer(
-    val selectedAmountType: AmountType = AmountType.FIXED_AMOUNT,
-    val selectedPriceType: PriceType = PriceType.PERCENTAGE,
-    val selectedOfferbookMarket: OfferbookMarket = OfferbookMarket.EMPTY,
-    val paymentMethod: String = ""
-)
-
-open class CreateOfferPresenter(
+class CreateOfferPresenter(
     mainPresenter: MainPresenter,
-    private val offerbookServiceFacade: OfferbookServiceFacade,
-) : BasePresenter(mainPresenter), ICreateOfferPresenter {
+    private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val offerServiceFacade: OfferServiceFacade
+) : BasePresenter(mainPresenter) {
+    enum class PriceType {
+        PERCENTAGE,
+        FIXED,
+    }
 
-    override val offerListItems: StateFlow<List<OfferListItem>> = MutableStateFlow(
-        listOf(
-            OfferListItem(
-                messageId = "12345",
-                offerId = "abcde",
-                isMyMessage = true,
-                direction = network.bisq.mobile.domain.replicated.offer.Direction.BUY,
-                offerTitle = "Sample Offer",
-                date = 1638316800000,  // Example timestamp
-                formattedDate = "Dec 5, 2024",
-                nym = "user123",
-                userName = "John Doe",
-                reputationScore = network.bisq.mobile.domain.replicated.user.reputation.ReputationScore.NONE,
-                formattedQuoteAmount = "500 USD",
-                formattedPrice = "1000 USD",
-                quoteSidePaymentMethods = listOf("Amazon-Gift-Card", "ACH-Transfer", "Cash-App"),
-                baseSidePaymentMethods = listOf("Main-Chain", "Ln"),
-                supportedLanguageCodes = "en,es,de",
-                quoteCurrencyCode = "USD",
+    enum class AmountType {
+        FIXED_AMOUNT,
+        RANGE_AMOUNT,
+    }
+
+    class CreateOfferModel {
+        var market: MarketVO? = null
+        var direction: DirectionEnum = DirectionEnum.BUY
+
+        var amountType: AmountType = AmountType.FIXED_AMOUNT
+
+        // FIXED_AMOUNT
+        var fixedAmountSliderPosition = 0.5f
+        var quoteSideFixedAmount: FiatVO? = null
+        var baseSideFixedAmount: CoinVO? = null
+
+        // RANGE_AMOUNT
+        var rangeSliderPosition: ClosedFloatingPointRange<Float> = 0.0f..1.0f
+        var quoteSideMinRangeAmount: FiatVO? = null
+        var baseSideMinRangeAmount: CoinVO? = null
+        var quoteSideMaxRangeAmount: FiatVO? = null
+        var baseSideMaxRangeAmount: CoinVO? = null
+
+        var fiatMinAmount: FiatVO? = null
+        var fiatMaxAmount: FiatVO? = null
+
+        var priceType: PriceType = PriceType.PERCENTAGE
+        var percentagePriceValue: Double = 0.0
+        lateinit var priceQuote: PriceQuoteVO
+
+        lateinit var availableQuoteSidePaymentMethods: List<String>
+        var availableBaseSidePaymentMethods: List<String> = BitcoinPaymentRailEnum.entries.map { it.name }
+        var selectedQuoteSidePaymentMethods: Set<String> = emptySet()
+        var selectedBaseSidePaymentMethods: Set<String> = emptySet()
+    }
+
+    lateinit var createOfferModel: CreateOfferModel
+
+    fun onStartCreateOffer() {
+        createOfferModel = CreateOfferModel()
+
+        createOfferModel.apply {
+            priceQuote = marketPriceServiceFacade.selectedMarketPriceItem.value!!.priceQuote
+        }
+    }
+
+    fun commitDirection(value: DirectionEnum) {
+        createOfferModel.direction = value
+    }
+
+    fun commitMarket(value: MarketVO) {
+        createOfferModel.market = value
+        createOfferModel.priceQuote = getMostRecentPriceQuote(value)
+        createOfferModel.availableQuoteSidePaymentMethods = FiatPaymentRailUtil.getPaymentRailNames(value.quoteCurrencyCode)
+    }
+
+    fun commitAmount(
+        amountType: AmountType,
+        quoteSideFixedAmount: FiatVO,
+        baseSideFixedAmount: CoinVO,
+        quoteSideMinRangeAmount: FiatVO,
+        baseSideMinRangeAmount: CoinVO,
+        quoteSideMaxRangeAmount: FiatVO,
+        baseSideMaxRangeAmount: CoinVO,
+    ) {
+        createOfferModel.amountType = amountType
+
+        createOfferModel.quoteSideFixedAmount = quoteSideFixedAmount
+        createOfferModel.baseSideFixedAmount = baseSideFixedAmount
+
+        createOfferModel.quoteSideMinRangeAmount = quoteSideMinRangeAmount
+        createOfferModel.baseSideMinRangeAmount = baseSideMinRangeAmount
+        createOfferModel.quoteSideMaxRangeAmount = quoteSideMaxRangeAmount
+        createOfferModel.baseSideMaxRangeAmount = baseSideMaxRangeAmount
+    }
+
+    fun commitPrice(priceType: PriceType, percentagePrice: Double, priceQuote: PriceQuoteVO) {
+        createOfferModel.priceType = priceType
+        createOfferModel.percentagePriceValue = percentagePrice
+        createOfferModel.priceQuote = priceQuote
+    }
+
+    fun commitPaymentMethod(selectedQuoteSidePaymentMethods: Set<String>, selectedBaseSidePaymentMethods: Set<String>) {
+        createOfferModel.selectedQuoteSidePaymentMethods = selectedQuoteSidePaymentMethods
+        createOfferModel.selectedBaseSidePaymentMethods = selectedBaseSidePaymentMethods
+    }
+
+    suspend fun createOffer() {
+        val direction: DirectionEnum = createOfferModel.direction
+        val market: MarketVO = createOfferModel.market!!
+        val bitcoinPaymentMethods: Set<String> = createOfferModel.selectedBaseSidePaymentMethods
+        val fiatPaymentMethods: Set<String> = createOfferModel.selectedQuoteSidePaymentMethods
+
+        var amountSpec: AmountSpecVO
+        if (createOfferModel.amountType == AmountType.FIXED_AMOUNT) {
+            amountSpec = QuoteSideFixedAmountSpecVO.from(createOfferModel.quoteSideFixedAmount!!.value)
+        } else {
+            amountSpec = QuoteSideRangeAmountSpecVO.from(
+                createOfferModel.quoteSideMinRangeAmount!!.value,
+                createOfferModel.quoteSideMaxRangeAmount!!.value
             )
+        }
+        val priceSpec: PriceSpecVO = if (createOfferModel.priceType == PriceType.FIXED) {
+            FixPriceSpecVO.from(createOfferModel.priceQuote)
+        } else {
+            if (createOfferModel.percentagePriceValue == 0.0) MarketPriceSpecVO.from()
+            else FloatPriceSpecVO.from(createOfferModel.percentagePriceValue)
+        }
+
+        val supportedLanguageCodes: Set<String> = setOf("en") //todo
+        offerServiceFacade.createOffer(
+            direction,
+            market,
+            bitcoinPaymentMethods,
+            fiatPaymentMethods,
+            amountSpec,
+            priceSpec,
+            supportedLanguageCodes
         )
-    )
-    private val _state = MutableStateFlow(CreateOffer())
-    override val state = _state.asStateFlow()
-
-    private val _direction = MutableStateFlow(network.bisq.mobile.domain.replicated.offer.Direction.BUY)
-    override val direction: StateFlow<network.bisq.mobile.domain.replicated.offer.Direction> = _direction.asStateFlow()
-
-    private val _fixedAmount = MutableStateFlow(0.0f)
-    override val fixedAmount: StateFlow<Float> = _fixedAmount.asStateFlow()
-
-    private var mainCurrencies = OfferbookServiceFacade.mainCurrencies
-
-    override var marketListItemWithNumOffers: List<MarketListItem> =
-        offerbookServiceFacade.offerbookMarketItems
-            .sortedWith(
-                compareByDescending<MarketListItem> { it.numOffers.value }
-                    .thenByDescending { mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) } // [1]
-                    .thenBy { item ->
-                        if (!mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) item.market.quoteCurrencyName
-                        else null // Null values will naturally be sorted together
-                    }
-            )
-
-    // [1] thenBy doesn’t work as expected for boolean expressions because true and false are
-    // sorted alphabetically (false before true), thus we use thenByDescending
-
-    override fun onSelectMarket(marketListItem: MarketListItem) {
-        _state.update {
-            it.copy(selectedOfferbookMarket = OfferbookMarket(marketListItem.market))
-        }
-        log.i { state.value.selectedOfferbookMarket.market.quoteCurrencyCode }
     }
 
-    override fun onSelectAmountType(amountType: AmountType) {
-        _state.update {
-            it.copy(selectedAmountType = amountType)
-        }
-    }
-
-    override fun onViewAttached() {
-    }
-
-    override fun onViewUnattaching() {
-    }
-
-    override fun buyBitcoinClicked() {
-        _direction.value = network.bisq.mobile.domain.replicated.offer.Direction.BUY
-        navigateToCurrencySelector()
-    }
-
-    override fun sellBitcoinClicked() {
-        _direction.value = network.bisq.mobile.domain.replicated.offer.Direction.SELL
-        navigateToCurrencySelector()
-    }
-
-    override fun navigateToCurrencySelector() {
-        log.i { "navigateToCurrencySelector" }
-
-        CoroutineScope(Dispatchers.Main).launch {
-            rootNavigator.navigate(Routes.CreateOfferMarket.name)
-        }
-    }
-
-    override fun navigateToAmountSelector() {
-        log.i { "navigateToAmountSelector" }
-
-        if (state.value.selectedOfferbookMarket == OfferbookMarket.EMPTY) {
-            log.e { "A currency must be selected!" }
-            return
-        }
-
-        CoroutineScope(Dispatchers.Main).launch {
-            rootNavigator.navigate(Routes.CreateOfferAmount.name)
-        }
-    }
-
-    override fun navigateToTradePriceSelector() {
-        log.i { "navigateToTradePriceSelector" }
-
-        CoroutineScope(Dispatchers.Main).launch {
-            rootNavigator.navigate(Routes.CreateOfferPrice.name)
-        }
-    }
-
-    override fun navigateToPaymentMethod() {
-        log.i { "navigateToPaymentMethod" }
-
-        CoroutineScope(Dispatchers.Main).launch {
-            rootNavigator.navigate(Routes.CreateOfferPaymentMethod.name)
-        }
-    }
-
-    override fun navigateToReviewOffer() {
-        log.i { "navigateToReviewOffer" }
-
-        CoroutineScope(Dispatchers.Main).launch {
-            rootNavigator.navigate(Routes.CreateOfferReviewOffer.name)
-        }
-    }
-
-    override fun createOffer() {
-        log.i { "createOffer" }
-
-        CoroutineScope(Dispatchers.Main).launch {
-            rootNavigator.popBackStack(Routes.TabContainer.name, inclusive = false, saveState = false )
-        }
-    }
-
-    override fun onSelectPriceType(priceType: PriceType) {
-        _state.update {
-            it.copy(selectedPriceType = priceType)
-        }
-        log.i { "priceType" }
-    }
-
-    override fun onSelectPayment(paymentMethod: String) {
-        _state.update {
-            it.copy(paymentMethod = paymentMethod)
-        }
-    }
-
-    override fun onFixedAmountChange(amount: Float) {
-        _fixedAmount.value = amount
-        log.i { "Change fixed amount: ${amount.toString()}" }
+    fun getMostRecentPriceQuote(market: MarketVO): PriceQuoteVO {
+        val marketPriceItem: MarketPriceItem = marketPriceServiceFacade.findMarketPriceItem(market)!!
+        return MarketPriceSpecVO.from().getPriceQuoteVO(marketPriceItem)
     }
 }

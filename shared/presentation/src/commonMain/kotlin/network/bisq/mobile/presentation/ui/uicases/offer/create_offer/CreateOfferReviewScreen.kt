@@ -5,14 +5,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
+import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
@@ -26,23 +25,18 @@ import org.koin.compose.koinInject
 fun CreateOfferReviewOfferScreen() {
     val strings = LocalStrings.current.bisqEasyTradeWizard
     val stringsBisqEasy = LocalStrings.current.bisqEasy
-    val paymentMethodStrings = LocalStrings.current.paymentMethod
-    val presenter: ICreateOfferPresenter = koinInject()
-    val isBuy = presenter.direction.collectAsState().value.isBuy
-
     val tradeStateStrings = LocalStrings.current.bisqEasyTradeState
-
-    val offer = presenter.offerListItems.collectAsState().value.first()
-
+    val presenter: CreateOfferReviewPresenter = koinInject()
+    presenter.appStrings = LocalStrings.current // TODO find a more elegant solution
     RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
         strings.bisqEasy_tradeWizard_review_headline_maker,
         stepIndex = 6,
         stepsLength = 6,
-        prevOnClick = { presenter.goBack() },
+        prevOnClick = { presenter.onBack() },
         nextButtonText = strings.bisqEasy_tradeWizard_review_nextButton_createOffer,
-        nextOnClick = { presenter.createOffer() },
+        nextOnClick = { presenter.onCreateOffer() },
         horizontalAlignment = Alignment.Start
     ) {
         BisqText.h3Regular(
@@ -55,21 +49,19 @@ fun CreateOfferReviewOfferScreen() {
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoBox(
                 label = tradeStateStrings.bisqEasy_tradeState_header_direction.uppercase(),
-                value = if (isBuy)
-                    strings.bisqEasy_tradeWizard_directionAndMarket_buy
-                else
-                    strings.bisqEasy_tradeWizard_directionAndMarket_sell
+                value = presenter.headLine,
             )
             InfoBox(
                 label = stringsBisqEasy.bisqEasy_takeOffer_review_method_fiat,
-                value = "Strike, National banks, Steem cards"
+                value = presenter.quoteSidePaymentMethodDisplayString,
             )
             InfoRow(
                 label1 = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
-                value1 = offer.formattedPrice, // TODO: Show selected amount (in case offer has range)
+                value1 = presenter.amountToPay,
                 label2 = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
-                value2 = offer.formattedQuoteAmount
+                value2 = presenter.amountToReceive
             )
+
             BisqHDivider()
             InfoBox(
                 label = strings.bisqEasy_tradeWizard_review_priceDescription_taker,
@@ -79,18 +71,14 @@ fun CreateOfferReviewOfferScreen() {
                             verticalAlignment = Alignment.Bottom,
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-                            BisqText.h6Regular(text = "98,000.68") // TODO: Values?
+                            BisqText.h6Regular(text = presenter.formattedPrice)
                             BisqText.baseRegular(
-                                text = "BTC/USD",
+                                text = presenter.marketCodes,
                                 color = BisqTheme.colors.grey2
-                            ) // TODO: Values?
+                            )
                         }
                         BisqText.smallRegular(
-                            text = strings.bisqEasy_tradeWizard_review_priceDetails_float(
-                                "1.00%",
-                                "above",
-                                "60,000 BTC/USD"
-                            ),
+                            text = presenter.priceDetails,
                             color = BisqTheme.colors.grey4
                         )
                     }
@@ -99,22 +87,22 @@ fun CreateOfferReviewOfferScreen() {
 
             InfoBox(
                 label = stringsBisqEasy.bisqEasy_takeOffer_review_method_bitcoin,
-                value = paymentMethodStrings.LN_SHORT
+                value = presenter.quoteSidePaymentMethodDisplayString
             )
             InfoBox(
                 label = stringsBisqEasy.bisqEasy_takeOffer_review_method_fiat,
-                value = paymentMethodStrings.STRIKE
+                value = presenter.baseSidePaymentMethodDisplayString
             )
 
             InfoBox(
                 label = strings.bisqEasy_tradeWizard_review_feeDescription,
                 valueComposable = {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        BisqText.h6Regular(text = strings.bisqEasy_tradeWizard_review_noTradeFees)
+                        BisqText.h6Regular(text = presenter.fee)
                         BisqText.smallRegular(
-                            text = strings.bisqEasy_tradeWizard_review_sellerPaysMinerFeeLong,
+                            text = presenter.feeDetails,
                             color = BisqTheme.colors.grey4,
-                            )
+                        )
                     }
                 }
             )

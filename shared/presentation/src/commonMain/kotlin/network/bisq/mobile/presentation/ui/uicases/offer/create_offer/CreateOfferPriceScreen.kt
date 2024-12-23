@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText
@@ -24,31 +24,34 @@ import org.koin.compose.koinInject
 
 @Composable
 fun CreateOfferTradePriceSelectorScreen() {
-    val strings = LocalStrings.current.bisqEasyTradeWizard
+    val bisqEasyTradeWizardStrings = LocalStrings.current.bisqEasyTradeWizard
     val commonStrings = LocalStrings.current.common
     val bisqEasyStrings = LocalStrings.current.bisqEasy
-    val presenter: ICreateOfferPresenter = koinInject()
 
-    val state by presenter.state.collectAsState()
-
+    val presenter: CreateOfferPricePresenter = koinInject()
+    presenter.appStrings = LocalStrings.current // TODO find a more elegant solution
     RememberPresenterLifecycle(presenter)
+
+    val formattedPercentagePrice by presenter.formattedPercentagePrice.collectAsState()
+    val formattedPrice by presenter.formattedPrice.collectAsState()
+    val priceType by presenter.priceType.collectAsState()
 
     MultiScreenWizardScaffold(
         bisqEasyStrings.bisqEasy_takeOffer_review_price_price,
         stepIndex = 4,
         stepsLength = 6,
-        prevOnClick = { presenter.goBack() },
+        prevOnClick = { presenter.onBack() },
         nextButtonText = commonStrings.buttons_next,
-        nextOnClick = { presenter.navigateToPaymentMethod() }
+        nextOnClick = { presenter.onNext() }
     ) {
         BisqText.h3Regular(
-            text = strings.bisqEasy_price_headline,
+            text = bisqEasyTradeWizardStrings.bisqEasy_price_headline,
             color = BisqTheme.colors.light1,
             modifier = Modifier.align(Alignment.Start)
         )
         BisqGap.V1()
         BisqText.largeLight(
-            text = strings.bisqEasy_tradeWizard_price_subtitle,
+            text = bisqEasyTradeWizardStrings.bisqEasy_tradeWizard_price_subtitle,
             color = BisqTheme.colors.grey2
         )
         Column(
@@ -56,52 +59,45 @@ fun CreateOfferTradePriceSelectorScreen() {
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
         ) {
             ToggleTab(
-                options = PriceType.entries,
-                initialOption = PriceType.PERCENTAGE,
+                options = presenter.priceTypes,
+                initialOption = priceType,
                 onStateChange = { priceType -> presenter.onSelectPriceType(priceType) },
-                getDisplayString = { direction ->
-                    if (direction == PriceType.PERCENTAGE)
-                        strings.bisqEasy_tradeWizard_trade_price_percentage
-                    else
-                        strings.bisqEasy_tradeWizard_trade_price_fixed
-                },
-                textWidth = StringHelper.calculateTotalWidthOfStrings(
-                    strings = PriceType.entries,
-                ),
+                getDisplayString = { presenter.getPriceTypeDisplayString(it) },
+                textWidth = StringHelper.calculateTotalWidthOfStrings(strings = presenter.priceTypes),
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Column(
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
             ) {
-                if (state.selectedPriceType == PriceType.PERCENTAGE) {
+                if (priceType == CreateOfferPresenter.PriceType.PERCENTAGE) {
                     BisqTextField(
-                        label = strings.bisqEasy_price_percentage_inputBoxText,
-                        value = "10%",
-                        onValueChanged = {},
+                        label = bisqEasyTradeWizardStrings.bisqEasy_price_percentage_inputBoxText,
+                        value = formattedPercentagePrice,
+                        onValueChanged = { presenter.onPercentagePriceChanged(it) },
                     )
                     BisqTextField(
-                        label = strings.bisqEasy_price_tradePrice_inputBoxText("USD"),
-                        value = "106212.99",
-                        onValueChanged = {},
+                        label = presenter.fixPriceDescription,
+                        value = formattedPrice,
+                        onValueChanged = {}, // Deactivated
                         indicatorColor = BisqTheme.colors.grey1
                     )
                 } else {
                     BisqTextField(
-                        label = strings.bisqEasy_price_tradePrice_inputBoxText("USD"),
-                        value = "106212.99",
-                        onValueChanged = {},
+                        label = presenter.fixPriceDescription,
+                        value = formattedPrice,
+                        onValueChanged = { presenter.onFixPriceChanged(it) },
                     )
                     BisqTextField(
-                        label = strings.bisqEasy_price_percentage_inputBoxText,
-                        value = "10%",
-                        onValueChanged = {},
+                        label = bisqEasyTradeWizardStrings.bisqEasy_price_percentage_inputBoxText,
+                        value = formattedPercentagePrice,
+                        onValueChanged = {},// Deactivated
                         indicatorColor = BisqTheme.colors.grey1
                     )
                 }
             }
             NoteText(
-                notes = strings.bisqEasy_price_feedback_sentence,
-                linkText = strings.bisqEasy_price_feedback_learnWhySection_openButton,
+                notes = bisqEasyTradeWizardStrings.bisqEasy_price_feedback_sentence,
+                linkText = bisqEasyTradeWizardStrings.bisqEasy_price_feedback_learnWhySection_openButton,
                 textAlign = TextAlign.Center
             )
         }
