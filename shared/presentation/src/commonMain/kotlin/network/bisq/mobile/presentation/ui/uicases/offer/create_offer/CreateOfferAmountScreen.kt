@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -44,7 +45,8 @@ fun CreateOfferAmountSelectorScreen() {
         BisqText.h3Regular(
             text = presenter.headline,
             color = BisqTheme.colors.light1,
-            modifier = Modifier.align(Alignment.Start)
+            textAlign = TextAlign.Center,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
@@ -52,7 +54,8 @@ fun CreateOfferAmountSelectorScreen() {
         BisqText.largeLight(
             text = strings.bisqEasy_tradeWizard_amount_description_fixAmount,
             color = BisqTheme.colors.grey2,
-            modifier = Modifier.align(Alignment.Start)
+            textAlign = TextAlign.Center,
+            modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))

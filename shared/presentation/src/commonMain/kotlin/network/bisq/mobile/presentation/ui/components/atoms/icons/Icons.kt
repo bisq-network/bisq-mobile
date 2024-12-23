@@ -7,7 +7,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.*
+import bisqapps.shared.presentation.generated.resources.exchange_h_arrow
+import bisqapps.shared.presentation.generated.resources.exchange_v_arrow
+import bisqapps.shared.presentation.generated.resources.icon_arrow_down
+import bisqapps.shared.presentation.generated.resources.icon_bell
+import bisqapps.shared.presentation.generated.resources.icon_chat_outlined
+import bisqapps.shared.presentation.generated.resources.icon_copy
+import bisqapps.shared.presentation.generated.resources.icon_info
+import bisqapps.shared.presentation.generated.resources.icon_language_grey
+import bisqapps.shared.presentation.generated.resources.icon_qr
+import bisqapps.shared.presentation.generated.resources.icon_question_mark
+import bisqapps.shared.presentation.generated.resources.icon_search_dimmed
+import bisqapps.shared.presentation.generated.resources.icon_sort
+import bisqapps.shared.presentation.generated.resources.icon_star_green
+import bisqapps.shared.presentation.generated.resources.icon_star_grey_hollow
+import bisqapps.shared.presentation.generated.resources.icon_star_half_green
+import bisqapps.shared.presentation.generated.resources.img_bot_image
+import bisqapps.shared.presentation.generated.resources.up_arrow
 import network.bisq.mobile.domain.PlatformImage
 import org.jetbrains.compose.resources.painterResource
 
@@ -34,7 +50,7 @@ fun CopyIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun LanguageIcon(modifier: Modifier = Modifier.size(16.dp)) {
+fun LanguageIcon(modifier: Modifier = Modifier.size(12.dp)) {
     Image(painterResource(Res.drawable.icon_language_grey), "Language icon", modifier = modifier)
 }
 
