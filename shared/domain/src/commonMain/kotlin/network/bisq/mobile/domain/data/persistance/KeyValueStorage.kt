@@ -3,6 +3,7 @@ package network.bisq.mobile.domain.data.persistance
 import com.russhwolf.settings.Settings
 import com.russhwolf.settings.set
 import network.bisq.mobile.domain.data.model.BaseModel
+import network.bisq.mobile.domain.utils.getLogger
 
 /**
  * Multi platform key-value storage ("settings") linked to the usage of our BaseModels.
@@ -37,7 +38,10 @@ class KeyValueStorage<T : BaseModel>(
             val key = settings.keys.firstOrNull { it == searchKey }
             return key?.let { deserializer(settings.getStringOrNull(it)!!) }
         } catch (e: Exception) {
-            throw IllegalArgumentException("No saved object with id $searchKey")
+            // TODO at dev I got that exception called when renaming classes... I think better to not throw at least while in dev...
+            // throw IllegalArgumentException("No saved object with id $searchKey")
+            getLogger("KeyValueStorage").e { "No saved object with id $searchKey" }
+            return null
         }
     }
 
