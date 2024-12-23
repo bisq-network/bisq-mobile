@@ -1,16 +1,16 @@
-package network.bisq.mobile.android.node.domain.offerbook
+package network.bisq.mobile.android.node.service.offerbook
 
 import bisq.common.currency.Market
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.domain.offerbook.market.NodeMarketListItemService
-import network.bisq.mobile.android.node.domain.offerbook.market.NodeSelectedOfferbookMarketService
-import network.bisq.mobile.android.node.domain.offerbook.offer.NodeOfferbookListItemService
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.data.model.OfferListItem
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.android.node.service.offerbook.market.NodeMarketListItemService
+import network.bisq.mobile.android.node.service.offerbook.market.NodeSelectedOfferbookMarketService
+import network.bisq.mobile.android.node.service.offerbook.offer.NodeOfferbookListItemService
 import network.bisq.mobile.domain.data.model.MarketListItem
+import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.domain.data.model.OfferbookMarket
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.utils.Logging
 
 class NodeOfferbookServiceFacade(

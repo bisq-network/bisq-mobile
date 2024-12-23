@@ -1,4 +1,4 @@
-package network.bisq.mobile.android.node.domain.market_price
+package network.bisq.mobile.android.node.service.market_price
 
 import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.common.observable.Pin
@@ -6,8 +6,8 @@ import bisq.presentation.formatters.PriceFormatter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.domain.offerbook.NodeOfferbookServiceFacade.Companion.toLibraryMarket
-import network.bisq.mobile.android.node.domain.offerbook.NodeOfferbookServiceFacade.Companion.toReplicatedMarket
+import network.bisq.mobile.android.node.service.offerbook.NodeOfferbookServiceFacade.Companion.toLibraryMarket
+import network.bisq.mobile.android.node.service.offerbook.NodeOfferbookServiceFacade.Companion.toReplicatedMarket
 import network.bisq.mobile.domain.data.model.MarketListItem
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade

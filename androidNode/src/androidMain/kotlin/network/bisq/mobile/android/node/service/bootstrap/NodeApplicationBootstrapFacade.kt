@@ -1,4 +1,4 @@
-package network.bisq.mobile.android.node.domain.bootstrap
+package network.bisq.mobile.android.node.service.bootstrap
 
 import bisq.application.State
 import bisq.common.observable.Observable

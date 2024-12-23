@@ -1,4 +1,4 @@
-package network.bisq.mobile.android.node.domain.user_profile
+package network.bisq.mobile.android.node.service.user_profile
 
 import bisq.common.encoding.Hex
 import bisq.security.DigestUtil

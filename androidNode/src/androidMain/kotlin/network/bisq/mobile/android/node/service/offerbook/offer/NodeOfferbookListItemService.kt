@@ -1,4 +1,4 @@
-package network.bisq.mobile.android.node.domain.offerbook.offer
+package network.bisq.mobile.android.node.service.offerbook.offer
 
 import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.chat.bisqeasy.offerbook.BisqEasyOfferbookChannel

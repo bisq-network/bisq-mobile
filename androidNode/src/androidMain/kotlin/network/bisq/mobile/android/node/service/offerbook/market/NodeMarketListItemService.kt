@@ -1,4 +1,4 @@
-package network.bisq.mobile.android.node.domain.offerbook.market
+package network.bisq.mobile.android.node.service.offerbook.market
 
 import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.chat.bisqeasy.offerbook.BisqEasyOfferbookChannel
@@ -6,7 +6,7 @@ import bisq.chat.bisqeasy.offerbook.BisqEasyOfferbookChannelService
 import bisq.chat.bisqeasy.offerbook.BisqEasyOfferbookMessage
 import bisq.common.observable.Pin
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.domain.offerbook.NodeOfferbookServiceFacade.Companion.toLibraryMarket
+import network.bisq.mobile.android.node.service.offerbook.NodeOfferbookServiceFacade.Companion.toLibraryMarket
 import network.bisq.mobile.client.replicated_model.common.currency.Market
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.model.MarketListItem

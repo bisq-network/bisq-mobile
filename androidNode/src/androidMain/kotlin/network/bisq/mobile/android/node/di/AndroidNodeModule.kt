@@ -1,16 +1,16 @@
 package network.bisq.mobile.android.node.di
 
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.domain.bootstrap.NodeApplicationBootstrapFacade
-import network.bisq.mobile.android.node.domain.market_price.NodeMarketPriceServiceFacade
-import network.bisq.mobile.android.node.domain.offerbook.NodeOfferbookServiceFacade
-import network.bisq.mobile.android.node.domain.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
 import network.bisq.mobile.android.node.presentation.NodeSettingsPresenter
 import network.bisq.mobile.android.node.presentation.NodeSplashPresenter
 import network.bisq.mobile.android.node.presentation.OnBoardingNodePresenter
-import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
+import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
+import network.bisq.mobile.android.node.service.bootstrap.NodeApplicationBootstrapFacade
+import network.bisq.mobile.android.node.service.market_price.NodeMarketPriceServiceFacade
+import network.bisq.mobile.android.node.service.offerbook.NodeOfferbookServiceFacade
+import network.bisq.mobile.android.node.service.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
