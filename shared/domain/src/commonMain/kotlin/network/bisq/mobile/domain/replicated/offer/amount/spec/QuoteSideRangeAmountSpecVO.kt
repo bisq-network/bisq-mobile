@@ -14,19 +14,16 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
-package network.bisq.mobile.domain.replicated.offer
+package network.bisq.mobile.domain.replicated.offer.amount.spec
 
-enum class Direction {
-    BUY,
-    SELL;
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-    val isBuy: Boolean
-        get() = this == network.bisq.mobile.domain.replicated.offer.Direction.BUY
+@Serializable
+@SerialName("QuoteSideRangeAmountSpec")
+data class QuoteSideRangeAmountSpecVO(override val minAmount: Long, override val maxAmount: Long) :
+    RangeAmountSpecVO
 
-    val isSell: Boolean
-        get() = this == network.bisq.mobile.domain.replicated.offer.Direction.SELL
-
-    fun mirror(): network.bisq.mobile.domain.replicated.offer.Direction {
-        return if (isBuy) network.bisq.mobile.domain.replicated.offer.Direction.SELL else network.bisq.mobile.domain.replicated.offer.Direction.BUY
-    }
+fun QuoteSideRangeAmountSpecVO.Companion.from(minAmount: Long, maxAmount: Long): QuoteSideRangeAmountSpecVO {
+    return QuoteSideRangeAmountSpecVO(minAmount, maxAmount)
 }

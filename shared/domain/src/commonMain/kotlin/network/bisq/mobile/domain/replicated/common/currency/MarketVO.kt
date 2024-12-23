@@ -19,25 +19,17 @@ package network.bisq.mobile.domain.replicated.common.currency
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class Market(
+data class MarketVO(
     val baseCurrencyCode: String,
     val quoteCurrencyCode: String,
-    val baseCurrencyName: String,
-    val quoteCurrencyName: String,
-) {
-    companion object {
-        val EMPTY: Market = Market("", "", "", "")
-        val USD: Market = Market("BTC", "USD", "Bitcoin", "US Dollar")
-        private const val QUOTE_SEPARATOR = "/"
-    }
+    val baseCurrencyName: String = baseCurrencyCode,
+    val quoteCurrencyName: String = quoteCurrencyCode
+)
 
-    val marketCodes: String
-        get() = baseCurrencyCode + QUOTE_SEPARATOR + quoteCurrencyCode
+val MarketVO.marketCodes: String
+    get() = "$baseCurrencyCode/$quoteCurrencyCode"
 
-    override fun toString(): String {
-        return "Market(baseCurrencyCode='$baseCurrencyCode', " +
-                "quoteCurrencyCode='$quoteCurrencyCode', " +
-                "baseCurrencyName='$baseCurrencyName', " +
-                "quoteCurrencyName='$quoteCurrencyName'"
-    }
+object Markets {
+    val EMPTY: MarketVO = MarketVO("", "")
+    val USD: MarketVO = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
 }

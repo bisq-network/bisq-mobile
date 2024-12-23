@@ -14,24 +14,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
-package network.bisq.mobile.domain.replicated.user.reputation
+package network.bisq.mobile.domain.replicated.offer.payment_method
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class ReputationScore(
-    val totalScore: Long,
-    val fiveSystemScore: Double,
-    val ranking: Int
-) {
+@SerialName("FiatPaymentMethodSpec")
+data class FiatPaymentMethodSpecVO(override val paymentMethod: String, override val saltedMakerAccountId: String?) : PaymentMethodSpecVO
 
-    companion object {
-        val NONE: network.bisq.mobile.domain.replicated.user.reputation.ReputationScore =
-            network.bisq.mobile.domain.replicated.user.reputation.ReputationScore(0, 0.0, Int.MAX_VALUE)
-    }
-
-    override fun toString(): String {
-        return "ReputationScore(totalScore=$totalScore, fiveSystemScore=$fiveSystemScore, ranking=$ranking)"
-    }
+fun FiatPaymentMethodSpecVO.Companion.from(paymentMethod: String, saltedMakerAccountId: String?): FiatPaymentMethodSpecVO {
+    return FiatPaymentMethodSpecVO(paymentMethod, saltedMakerAccountId)
 }
-
