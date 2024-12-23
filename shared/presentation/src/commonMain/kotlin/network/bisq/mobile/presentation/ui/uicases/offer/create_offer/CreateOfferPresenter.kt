@@ -157,7 +157,7 @@ open class CreateOfferPresenter(
         log.i { "navigateToCurrencySelector" }
 
         CoroutineScope(Dispatchers.Main).launch {
-            rootNavigator.navigate(Routes.CreateOfferCurrency.name)
+            rootNavigator.navigate(Routes.CreateOfferMarket.name)
         }
     }
 
@@ -178,7 +178,7 @@ open class CreateOfferPresenter(
         log.i { "navigateToTradePriceSelector" }
 
         CoroutineScope(Dispatchers.Main).launch {
-            rootNavigator.navigate(Routes.CreateOfferTradePrice.name)
+            rootNavigator.navigate(Routes.CreateOfferPrice.name)
         }
     }
 

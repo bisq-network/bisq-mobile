@@ -70,7 +70,7 @@ open class TradeFlowPresenter(
 
     override fun closeTradeConfirm() {
         setShowCloseTradeDialog(false)
-        rootNavigator.popBackStack(Routes.OfferList.name, inclusive = false, saveState = false)
+        rootNavigator.popBackStack(Routes.Offerbook.name, inclusive = false, saveState = false)
     }
 
     override fun openWalletGuideLink() {

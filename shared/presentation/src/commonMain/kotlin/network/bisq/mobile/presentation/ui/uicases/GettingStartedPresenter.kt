@@ -27,7 +27,7 @@ class GettingStartedPresenter(
     private var job: Job? = null
 
     override fun navigateToCreateOffer() {
-        rootNavigator.navigate(Routes.CreateOfferBuySell.name)
+        rootNavigator.navigate(Routes.CreateOfferDirection.name)
         // rootNavigator.navigate(Routes.CreateOfferReviewOffer.name)
     }
 
