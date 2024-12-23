@@ -7,12 +7,11 @@ import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
 import network.bisq.mobile.android.node.AndroidApplicationService
+import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
-import network.bisq.mobile.client.replicated_model.common.network.Address
-import network.bisq.mobile.client.replicated_model.common.network.TransportType
-import network.bisq.mobile.client.replicated_model.security.keys.PubKey
-import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.replicated.user.profile.id
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import java.security.KeyPair
@@ -97,44 +96,16 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         return userService.userIdentityService.userIdentities.map { userIdentity -> userIdentity.id }
     }
 
-    override suspend fun applySelectedUserProfile():Triple<String?, String?, String?> {
+    override suspend fun applySelectedUserProfile(): Triple<String?, String?, String?> {
         val userProfile = getSelectedUserProfile()
         return Triple(userProfile?.nickName, userProfile?.nym, userProfile?.id)
     }
 
-    // Private
-    override suspend fun getSelectedUserProfile(): UserProfile? {
-        // TODO move to bridge mapper
-        return userService.userIdentityService.selectedUserIdentity?.userProfile?.let {
-            UserProfile(
-                it.nickName,
-                network.bisq.mobile.domain.replicated.security.pow.ProofOfWork(
-                    it.proofOfWork.solution,
-                    it.proofOfWork.counter,
-                    it.proofOfWork.challenge,
-                    it.proofOfWork.difficulty,
-                    it.proofOfWork.payload,
-                    it.proofOfWork.duration
-                ),
-                network.bisq.mobile.domain.replicated.network.identity.NetworkId(
-                    it.networkId.addressByTransportTypeMap.map { (key, value) ->
-                        TransportType.entries[key.ordinal] to Address(value.host, value.port)
-                    }.toMap(),
-                    PubKey(it.networkId.pubKey.publicKey.toString(), it.networkId.pubKey.keyId)
-                ),
-                it.terms,
-                it.statement,
-                it.avatarVersion,
-                it.applicationVersion,
-                it.id,
-                it.nym,
-                it.userName,
-                it.pubKeyHash.toString(),
-                it.publishDate
-            )
-        }
+    override suspend fun getSelectedUserProfile(): UserProfileVO? {
+        return userService.userIdentityService.selectedUserIdentity?.userProfile?.let { Mappings.UserProfileMapping.from(it) }
     }
 
+    // Private
     private fun createSimulatedDelay(powDuration: Long) {
         try {
             // Proof of work creation for difficulty 65536 takes about 50 ms to 100 ms on a 4 GHz Intel Core i7.
