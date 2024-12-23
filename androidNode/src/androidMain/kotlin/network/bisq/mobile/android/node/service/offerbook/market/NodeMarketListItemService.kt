@@ -55,7 +55,7 @@ class NodeMarketListItemService(private val applicationService: AndroidApplicati
                 val offerbookMarketItem = MarketListItem(marketVO)
 
                 val market = Mappings.MarketMapping.toPojo(marketVO)
-                if(marketPriceService.marketPriceByCurrencyMap.isEmpty() ||
+                if (marketPriceService.marketPriceByCurrencyMap.isEmpty() ||
                     marketPriceService.marketPriceByCurrencyMap.containsKey(market)
                 ) {
                     offerbookMarketItems.add(offerbookMarketItem)

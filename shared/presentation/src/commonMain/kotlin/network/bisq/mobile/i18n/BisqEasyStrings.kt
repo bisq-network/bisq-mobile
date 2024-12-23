@@ -25,7 +25,7 @@ data class BisqEasyStrings(
     val bisqEasy_takeOffer_progress_review: String,
     val bisqEasy_takeOffer_amount_headline_buyer: String,
     val bisqEasy_takeOffer_amount_headline_seller: String,
-    val bisqEasy_takeOffer_amount_description: (Double, Double) -> String,
+    val bisqEasy_takeOffer_amount_description: (String, String) -> String,
     val bisqEasy_takeOffer_amount_description_limitedByTakersReputation: String,
     val bisqEasy_takeOffer_amount_buyer_limitInfo_tooHighMax: String,
     val bisqEasy_takeOffer_amount_buyer_limitInfoAmount: String,
