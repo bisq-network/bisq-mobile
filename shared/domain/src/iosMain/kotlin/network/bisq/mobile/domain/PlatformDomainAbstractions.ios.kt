@@ -12,12 +12,7 @@ import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.refTo
 import kotlinx.cinterop.usePinned
 import kotlinx.serialization.Serializable
-import platform.Foundation.NSBundle
-import platform.Foundation.NSData
-import platform.Foundation.NSDictionary
-import platform.Foundation.allKeys
-import platform.Foundation.create
-import platform.Foundation.dictionaryWithContentsOfFile
+import platform.Foundation.*
 import platform.UIKit.UIDevice
 import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation
@@ -29,6 +24,10 @@ actual fun getPlatformSettings(): Settings {
     // TODO we might get away just using normal Settings() KMP agnostic implementation,
     // leaving this here to be able to choose the specific one for iOS - defaulting to KeyChain
     return KeychainSettings("Settings")
+}
+
+actual fun getDeviceLanguageCode(): String {
+    return NSLocale.currentLocale.languageCode ?: "en"
 }
 
 class IOSPlatformInfo : PlatformInfo {

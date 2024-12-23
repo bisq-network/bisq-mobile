@@ -19,6 +19,8 @@ interface PlatformInfo {
     val name: String
 }
 
+expect fun getDeviceLanguageCode(): String
+
 expect fun getPlatformInfo(): PlatformInfo
 
 expect fun loadProperties(fileName: String): Map<String, String>
