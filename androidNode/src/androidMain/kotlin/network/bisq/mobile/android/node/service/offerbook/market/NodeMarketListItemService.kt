@@ -10,7 +10,7 @@ import network.bisq.mobile.android.node.service.offerbook.NodeOfferbookServiceFa
 import network.bisq.mobile.client.replicated_model.common.currency.Market
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.model.MarketListItem
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 
 class NodeMarketListItemService(private val applicationService: AndroidApplicationService.Provider) :
     LifeCycleAware, Logging {

@@ -14,7 +14,7 @@ import network.bisq.mobile.client.replicated_model.security.keys.PubKey
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 import java.security.KeyPair
 import java.util.Random
 import kotlin.math.max

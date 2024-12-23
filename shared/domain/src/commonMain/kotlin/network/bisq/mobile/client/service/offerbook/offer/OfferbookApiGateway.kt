@@ -6,7 +6,7 @@ import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 
 class OfferbookApiGateway(
     private val webSocketApiClient: WebSocketApiClient,

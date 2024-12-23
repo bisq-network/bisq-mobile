@@ -16,7 +16,7 @@ import network.bisq.mobile.domain.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.replicated.common.currency.Markets
 import network.bisq.mobile.domain.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 
 class ClientMarketPriceServiceFacade(
     private val apiGateway: MarketPriceApiGateway,

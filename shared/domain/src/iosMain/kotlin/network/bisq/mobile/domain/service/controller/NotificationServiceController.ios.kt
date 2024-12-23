@@ -5,7 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 import platform.BackgroundTasks.*
 import platform.Foundation.NSDate
 import platform.Foundation.NSUUID

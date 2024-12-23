@@ -1,7 +1,6 @@
-package network.bisq.mobile.utils
+package network.bisq.mobile.domain.utils
 
 import kotlinx.datetime.*
-import kotlin.time.ExperimentalTime
 
 object DateUtils {
 

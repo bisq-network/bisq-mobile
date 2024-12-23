@@ -1,7 +1,7 @@
 package network.bisq.mobile.domain.replicated.security.pow
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.utils.hexToByteArray
+import network.bisq.mobile.domain.utils.hexToByteArray
 
 @Serializable
 data class ProofOfWorkVO(

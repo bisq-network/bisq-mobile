@@ -1,4 +1,4 @@
-package network.bisq.mobile.utils
+package network.bisq.mobile.domain.utils
 
 import co.touchlab.kermit.Logger
 

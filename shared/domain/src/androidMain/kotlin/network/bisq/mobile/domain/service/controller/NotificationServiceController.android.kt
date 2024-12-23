@@ -7,7 +7,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import network.bisq.mobile.domain.service.BisqForegroundService
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 
 /**
  * Controller interacting with the bisq service

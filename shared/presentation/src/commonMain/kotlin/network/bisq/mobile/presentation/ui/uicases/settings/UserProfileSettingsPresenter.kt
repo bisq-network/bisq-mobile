@@ -11,7 +11,7 @@ import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.utils.DateUtils
+import network.bisq.mobile.domain.utils.DateUtils
 
 class UserProfileSettingsPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,

@@ -14,7 +14,7 @@ import network.bisq.mobile.client.service.offer.CreateOfferRequest
 import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 

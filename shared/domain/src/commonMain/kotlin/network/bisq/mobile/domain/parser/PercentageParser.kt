@@ -1,6 +1,6 @@
 package network.bisq.mobile.domain.parser
 
-import network.bisq.mobile.utils.getLogger
+import network.bisq.mobile.domain.utils.getLogger
 
 object PercentageParser {
     fun parse(value: String): Double {

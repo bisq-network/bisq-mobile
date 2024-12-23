@@ -11,7 +11,7 @@ import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.domain.data.model.OfferbookMarket
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 
 class NodeOfferbookServiceFacade(
     applicationService: AndroidApplicationService.Provider,

@@ -25,8 +25,8 @@ import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.utils.Logging
-import network.bisq.mobile.utils.createUuid
+import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.createUuid
 
 class WebSocketClient(
     private val httpClient: HttpClient,

@@ -7,8 +7,8 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.replicated.user.profile.id
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.utils.Logging
-import network.bisq.mobile.utils.hexToByteArray
+import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.hexToByteArray
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.max
 import kotlin.math.min

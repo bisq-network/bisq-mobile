@@ -6,10 +6,10 @@ import kotlinx.datetime.Clock
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.utils.Logging
-import network.bisq.mobile.utils.concat
-import network.bisq.mobile.utils.hexToByteArray
-import network.bisq.mobile.utils.toHex
+import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.concat
+import network.bisq.mobile.domain.utils.hexToByteArray
+import network.bisq.mobile.domain.utils.toHex
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.SYSTEM

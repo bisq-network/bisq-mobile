@@ -3,7 +3,7 @@ package network.bisq.mobile.domain.replicated.user.profile
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.domain.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.domain.replicated.security.pow.ProofOfWorkVO
-import network.bisq.mobile.utils.hexToByteArray
+import network.bisq.mobile.domain.utils.hexToByteArray
 
 @Serializable
 data class UserProfileVO(

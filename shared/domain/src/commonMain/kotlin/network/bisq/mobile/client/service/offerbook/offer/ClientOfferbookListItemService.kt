@@ -13,7 +13,7 @@ import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.MarketListItem
 import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 
 class ClientOfferbookListItemService(
     private val apiGateway: OfferbookApiGateway,

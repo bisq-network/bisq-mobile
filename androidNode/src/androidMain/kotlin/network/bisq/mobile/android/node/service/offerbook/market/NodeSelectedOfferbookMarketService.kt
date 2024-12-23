@@ -13,7 +13,7 @@ import network.bisq.mobile.android.node.service.offerbook.NodeOfferbookServiceFa
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.model.OfferbookMarket
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 
 
 class NodeSelectedOfferbookMarketService(

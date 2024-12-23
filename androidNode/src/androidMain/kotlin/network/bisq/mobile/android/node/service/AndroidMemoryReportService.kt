@@ -3,7 +3,7 @@ package network.bisq.mobile.android.node.service
 import android.app.ActivityManager
 import android.content.Context
 import bisq.common.platform.MemoryReportService
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 import java.util.concurrent.CompletableFuture
 
 /**

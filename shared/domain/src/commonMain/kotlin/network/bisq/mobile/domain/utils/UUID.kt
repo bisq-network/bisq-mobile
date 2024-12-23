@@ -1,4 +1,4 @@
-package network.bisq.mobile.utils
+package network.bisq.mobile.domain.utils
 
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid

@@ -32,7 +32,7 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.utils.ByteArrayAsBase64Serializer
+import network.bisq.mobile.domain.utils.ByteArrayAsBase64Serializer
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 

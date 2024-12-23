@@ -1,4 +1,4 @@
-package network.bisq.mobile.utils
+package network.bisq.mobile.domain.utils
 
 import io.ktor.util.encodeBase64
 import kotlinx.serialization.KSerializer
