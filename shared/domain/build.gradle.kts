@@ -80,6 +80,7 @@ kotlin {
             implementation(libs.logging.kermit)
             implementation(libs.okio)
             implementation(libs.kotlinx.datetime)
+            implementation(libs.bignum)
 
             implementation(libs.ktor.client.core)
             implementation(libs.kotlinx.serialization.core)

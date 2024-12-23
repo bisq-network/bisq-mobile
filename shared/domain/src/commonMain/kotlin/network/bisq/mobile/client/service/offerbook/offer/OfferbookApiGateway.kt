@@ -1,11 +1,11 @@
 package network.bisq.mobile.client.service.offerbook.offer
 
-import network.bisq.mobile.client.replicated_model.common.currency.Market
 import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.domain.data.model.OfferListItem
+import network.bisq.mobile.domain.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.utils.Logging
 
 class OfferbookApiGateway(
@@ -15,15 +15,15 @@ class OfferbookApiGateway(
     private val basePath = "offerbook"
 
     // Requests
-    suspend fun getMarkets(): List<Market> {
+    suspend fun getMarkets(): Result<List<MarketVO>> {
         return webSocketApiClient.get("$basePath/markets")
     }
 
-    suspend fun getNumOffersByMarketCode(): Map<String, Int> {
+    suspend fun getNumOffersByMarketCode(): Result<Map<String, Int>> {
         return webSocketApiClient.get("$basePath/markets/offers/count")
     }
 
-    suspend fun getOffers(code: String): List<OfferListItem> {
+    suspend fun getOffers(code: String): Result<List<OfferListItemVO>> {
         return webSocketApiClient.get("$basePath/markets/$code/offers")
     }
 

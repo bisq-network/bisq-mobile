@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.service.market
 
-import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.websocket.subscription.Topic
@@ -13,15 +12,11 @@ class MarketPriceApiGateway(
 ) : Logging {
     private val basePath = "market-price"
 
-    suspend fun getQuotes(): MarketPriceResponse {
+    suspend fun getQuotes(): Result<QuotesResponse> {
         return webSocketApiClient.get("$basePath/quotes")
     }
 
     suspend fun subscribeMarketPrice(): WebSocketEventObserver? {
         return webSocketClient.subscribe(Topic.MARKET_PRICE)
     }
-
-    @Serializable
-    data class MarketPriceResponse(val quotes: Map<String, Long>)
 }
-

@@ -1,34 +1,34 @@
 package network.bisq.mobile.client.service.user_profile
 
-import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
+import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
 
 class UserProfileApiGateway(
     private val webSocketApiClient: WebSocketApiClient
 ) {
     private val basePath = "user-identities"
-    suspend fun requestPreparedData(): network.bisq.mobile.domain.replicated.user.identity.PreparedData {
-        return webSocketApiClient.get("$basePath/prepared-data")
+    suspend fun getKeyMaterial(): Result<KeyMaterialResponse> {
+        return webSocketApiClient.get("$basePath/key-material")
     }
 
     suspend fun createAndPublishNewUserProfile(
         nickName: String,
-        preparedData: network.bisq.mobile.domain.replicated.user.identity.PreparedData
-    ): UserProfileResponse {
+        keyMaterialResponse: KeyMaterialResponse
+    ): Result<CreateUserIdentityResponse> {
         val createUserIdentityRequest = CreateUserIdentityRequest(
             nickName,
             "",
             "",
-            preparedData
+            keyMaterialResponse
         )
         return webSocketApiClient.post(basePath, createUserIdentityRequest)
     }
 
-    suspend fun getUserIdentityIds(): List<String> {
+    suspend fun getUserIdentityIds(): Result<List<String>> {
         return webSocketApiClient.get("$basePath/ids")
     }
 
-    suspend fun getSelectedUserProfile(): UserProfile {
+    suspend fun getSelectedUserProfile(): Result<UserProfileVO> {
         return webSocketApiClient.get("$basePath/selected/user-profile")
     }
 }

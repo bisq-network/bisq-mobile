@@ -1,12 +1,15 @@
 package network.bisq.mobile.client.service.user_profile
 
+import io.ktor.util.decodeBase64Bytes
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
-import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.replicated.user.profile.id
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.utils.Logging
 import network.bisq.mobile.utils.hexToByteArray
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.random.Random
@@ -16,44 +19,57 @@ class ClientUserProfileServiceFacade(
     private val clientCatHashService: ClientCatHashService<PlatformImage>
 ) : UserProfileServiceFacade, Logging {
 
-    private var preparedData: network.bisq.mobile.domain.replicated.user.identity.PreparedData? = null
+    private var keyMaterialResponse: KeyMaterialResponse? = null
 
     // API
     override suspend fun hasUserProfile(): Boolean {
         return getUserIdentityIds().isNotEmpty()
     }
 
+    @OptIn(ExperimentalEncodingApi::class)
     override suspend fun generateKeyPair(result: (String, String, PlatformImage?) -> Unit) {
         val ts = Clock.System.now().toEpochMilliseconds()
-        val preparedData = apiGateway.requestPreparedData()
+        val apiResult = apiGateway.getKeyMaterial()
+        if (apiResult.isFailure) {
+            throw apiResult.exceptionOrNull()!!
+        }
+
+        val preparedData = apiResult.getOrThrow()
         createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
         val pubKeyHash: ByteArray = preparedData.id.hexToByteArray()
-        val powSolution = preparedData.proofOfWork.solution
+        val powSolutionBase64 = preparedData.proofOfWork.solution
         val image: PlatformImage? = clientCatHashService.getImage(
             pubKeyHash,
-            powSolution,
+            powSolutionBase64.decodeBase64Bytes(),
             0,
             120
         )
 
         result(preparedData.id, preparedData.nym, image)
-        this.preparedData = preparedData
+        this.keyMaterialResponse = preparedData
     }
 
     override suspend fun createAndPublishNewUserProfile(nickName: String) {
-        preparedData?.let { preparedData ->
-            val response: UserProfileResponse =
-                apiGateway.createAndPublishNewUserProfile(
-                    nickName,
-                    preparedData
-                )
-            this.preparedData = null
-            log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = ${response.userProfileId}" }
+        if (keyMaterialResponse == null) {
+            return
         }
+        val apiResult = apiGateway.createAndPublishNewUserProfile(nickName, keyMaterialResponse!!)
+        if (apiResult.isFailure) {
+            throw apiResult.exceptionOrNull()!!
+        }
+
+        val response: CreateUserIdentityResponse = apiResult.getOrThrow()
+        this.keyMaterialResponse = null
+        log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = ${response.userProfileId}" }
     }
 
     override suspend fun getUserIdentityIds(): List<String> {
-        return apiGateway.getUserIdentityIds()
+        val apiResult = apiGateway.getUserIdentityIds()
+        if (apiResult.isFailure) {
+            throw apiResult.exceptionOrNull()!!
+        }
+
+        return apiResult.getOrThrow()
     }
 
     override suspend fun applySelectedUserProfile(): Triple<String?, String?, String?> {
@@ -62,8 +78,12 @@ class ClientUserProfileServiceFacade(
     }
 
     // Private
-    override suspend fun getSelectedUserProfile(): UserProfile {
-        return apiGateway.getSelectedUserProfile()
+    private suspend fun getSelectedUserProfile(): UserProfileVO {
+        val apiResult = apiGateway.getSelectedUserProfile()
+        if (apiResult.isFailure) {
+            throw apiResult.exceptionOrNull()!!
+        }
+        return apiResult.getOrThrow()
     }
 
     private suspend fun createSimulatedDelay(requestDuration: Long) {

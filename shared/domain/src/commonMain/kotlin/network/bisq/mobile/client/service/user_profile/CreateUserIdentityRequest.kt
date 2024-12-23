@@ -7,5 +7,5 @@ data class CreateUserIdentityRequest(
     val nickName: String,
     val terms: String = "",
     val statement: String = "",
-    val preparedData: network.bisq.mobile.domain.replicated.user.identity.PreparedData
+    val keyMaterialResponse: KeyMaterialResponse
 )

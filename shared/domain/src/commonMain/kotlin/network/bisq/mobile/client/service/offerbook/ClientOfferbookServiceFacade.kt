@@ -6,25 +6,23 @@ import network.bisq.mobile.client.service.offerbook.market.ClientMarketListItemS
 import network.bisq.mobile.client.service.offerbook.market.ClientSelectedOfferbookMarketService
 import network.bisq.mobile.client.service.offerbook.offer.ClientOfferbookListItemService
 import network.bisq.mobile.client.service.offerbook.offer.OfferbookApiGateway
-import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.domain.data.model.MarketListItem
-import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.domain.data.model.OfferbookMarket
+import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.utils.Logging
 
 class ClientOfferbookServiceFacade(
     apiGateway: OfferbookApiGateway,
-    webSocketClient: WebSocketClient,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val json: Json
+    json: Json
 ) :
     OfferbookServiceFacade, Logging {
 
     // Properties
     override val offerbookMarketItems: List<MarketListItem> get() = marketListItemService.marketListItems
-    override val offerListItems: StateFlow<List<OfferListItem>> get() = offerbookListItemService.offerListItems
+    override val offerListItems: StateFlow<List<OfferListItemVO>> get() = offerbookListItemService.offerListItems
     override val selectedOfferbookMarket: StateFlow<OfferbookMarket> get() = selectedOfferbookMarketService.selectedOfferbookMarket
 
     // Misc
@@ -49,7 +47,7 @@ class ClientOfferbookServiceFacade(
     }
 
     // API
-    override fun selectMarket(marketListItem: MarketListItem) {
+    override fun selectOfferbookMarket(marketListItem: MarketListItem) {
         marketPriceServiceFacade.selectMarket(marketListItem)
         selectedOfferbookMarketService.selectMarket(marketListItem)
         offerbookListItemService.selectMarket(marketListItem)

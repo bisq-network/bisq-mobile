@@ -4,12 +4,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.replicated_model.common.currency.Market
 import network.bisq.mobile.client.service.offerbook.offer.OfferbookApiGateway
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.MarketListItem
+import network.bisq.mobile.domain.replicated.common.currency.MarketVO
 import network.bisq.mobile.utils.Logging
 
 
@@ -31,9 +31,14 @@ class ClientMarketListItemService(
     override fun activate() {
         cancelJob()
         job = coroutineScope.launch {
-            val markets = apiGateway.getMarkets()
-            fillMarketListItems(markets)
+            val result = apiGateway.getMarkets()
+            if (result.isFailure) {
+                log.e { "GetMarkets request failed with exception ${result.exceptionOrNull()!!}" }
+                return@launch
+            }
 
+            val markets = result.getOrThrow()
+            fillMarketListItems(markets)
             val observer = apiGateway.subscribeNumOffers()
             observer?.webSocketEvent?.collect { webSocketEvent ->
                 if (webSocketEvent?.deferredPayload == null) {
@@ -58,17 +63,12 @@ class ClientMarketListItemService(
         _marketListItems.clear()
     }
 
-    private fun fillMarketListItems(markets: List<Market>) {
-        val list = markets.map { marketDto ->
-            val market = Market(
-                marketDto.baseCurrencyCode,
-                marketDto.quoteCurrencyCode,
-                marketDto.baseCurrencyName,
-                marketDto.quoteCurrencyName,
-            )
-            MarketListItem(market)
+    private fun fillMarketListItems(markets: List<MarketVO>) {
+        val marketListItems = markets.map { marketVO ->
+            MarketListItem(marketVO)
         }
-        _marketListItems.addAll(list)
+        _marketListItems.clear()
+        _marketListItems.addAll(marketListItems)
     }
 
     private fun cancelJob() {

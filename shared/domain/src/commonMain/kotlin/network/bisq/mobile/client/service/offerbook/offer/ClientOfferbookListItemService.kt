@@ -12,7 +12,7 @@ import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.MarketListItem
-import network.bisq.mobile.domain.data.model.OfferListItem
+import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.utils.Logging
 
 class ClientOfferbookListItemService(
@@ -23,15 +23,15 @@ class ClientOfferbookListItemService(
 
 
     // Properties
-    private val _offerListItems = MutableStateFlow<List<OfferListItem>>(emptyList())
-    val offerListItems: StateFlow<List<OfferListItem>> get() = _offerListItems
+    private val _offerListItems = MutableStateFlow<List<OfferListItemVO>>(emptyList())
+    val offerListItems: StateFlow<List<OfferListItemVO>> get() = _offerListItems
 
     // Misc
     private var job: Job? = null
     private var selectedMarket: MarketListItem? = null
     private val coroutineScope = CoroutineScope(BackgroundDispatcher)
     private var sequenceNumber = atomic(-1)
-    private var offerListItemsByMarket: MutableMap<String, MutableSet<OfferListItem>> =
+    private var offerListItemsByMarket: MutableMap<String, MutableSet<OfferListItemVO>> =
         mutableMapOf()
 
     // Life cycle
@@ -57,22 +57,22 @@ class ClientOfferbookListItemService(
                     }
 
                     sequenceNumber.value = webSocketEvent.sequenceNumber
-                    val webSocketEventPayload: WebSocketEventPayload<List<OfferListItem>> =
+                    val webSocketEventPayload: WebSocketEventPayload<List<OfferListItemVO>> =
                         WebSocketEventPayload.from(json, webSocketEvent)
-                    val payload: List<OfferListItem> = webSocketEventPayload.payload
+                    val payload: List<OfferListItemVO> = webSocketEventPayload.payload
                     if (webSocketEvent.modificationType == ModificationType.REPLACE ||
                         webSocketEvent.modificationType == ModificationType.ADDED
                     ) {
                         payload.forEach { item ->
-                            offerListItemsByMarket.getOrPut(item.quoteCurrencyCode) { mutableSetOf() }
+                            offerListItemsByMarket.getOrPut(item.bisqEasyOffer.market.quoteCurrencyCode) { mutableSetOf() }
                                 .add(item)
                         }
                     } else if (webSocketEvent.modificationType == ModificationType.REMOVED) {
                         payload.forEach { item ->
-                            offerListItemsByMarket[item.quoteCurrencyCode]?.let { set ->
+                            offerListItemsByMarket[item.bisqEasyOffer.market.quoteCurrencyCode]?.let { set ->
                                 set.remove(item)
                                 if (set.isEmpty()) {
-                                    offerListItemsByMarket.remove(item.quoteCurrencyCode)
+                                    offerListItemsByMarket.remove(item.bisqEasyOffer.market.quoteCurrencyCode)
                                 }
                             }
                         }

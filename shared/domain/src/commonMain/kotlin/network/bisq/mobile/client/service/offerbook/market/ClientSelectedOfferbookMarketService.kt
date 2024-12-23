@@ -50,7 +50,9 @@ class ClientSelectedOfferbookMarketService(
     private fun observeMarketPrice(): Job {
         return coroutineScope.launch {
             marketPriceServiceFacade.selectedMarketPriceItem.collectLatest { marketPriceItem ->
-                _selectedOfferbookMarket.value.setFormattedPrice(marketPriceItem.formattedPrice)
+                if (marketPriceItem != null) {
+                    _selectedOfferbookMarket.value.setFormattedPrice(marketPriceItem.formattedPrice)
+                }
             }
         }
     }

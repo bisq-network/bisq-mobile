@@ -32,6 +32,11 @@ fun ByteArray.toHex(): String {
     }
 }
 
+
+fun String.base64ToByteArray(): ByteArray {
+    return decodeBase64()?.toByteArray()!!
+}
+
 fun String.hexToByteArray(): ByteArray {
     require(length % 2 == 0) { "Hex string must have an even length" }
 
