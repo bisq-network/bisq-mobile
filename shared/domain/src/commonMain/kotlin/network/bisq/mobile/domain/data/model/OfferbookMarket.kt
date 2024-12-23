@@ -2,16 +2,13 @@ package network.bisq.mobile.domain.data.model
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.serialization.Serializable
-import network.bisq.mobile.client.replicated_model.common.currency.Market
+import network.bisq.mobile.domain.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.replicated.common.currency.Markets
 
 /**
  * Provides data for the offerbook header showing the selected market data
  */
-@Serializable
-data class OfferbookMarket(
-    val market: Market
-) : BaseModel() {
+data class OfferbookMarket(val market: MarketVO) {
     private val _formattedPrice = MutableStateFlow("")
     val formattedPrice: StateFlow<String> get() = _formattedPrice
     fun setFormattedPrice(value: String) {
@@ -26,6 +23,6 @@ data class OfferbookMarket(
     }
 
     companion object {
-        val EMPTY: OfferbookMarket = OfferbookMarket(Market.EMPTY)
+        val EMPTY: OfferbookMarket = OfferbookMarket(Markets.EMPTY)
     }
 }

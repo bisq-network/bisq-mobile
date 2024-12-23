@@ -28,7 +28,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.LifeCycleAware
-import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.domain.utils.Logging
 import java.text.DateFormat
 import java.util.Date

@@ -12,7 +12,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.LanguageIcon

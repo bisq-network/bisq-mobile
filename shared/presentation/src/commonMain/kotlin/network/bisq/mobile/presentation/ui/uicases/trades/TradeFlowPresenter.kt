@@ -2,9 +2,8 @@ package network.bisq.mobile.presentation.ui.uicases.trades
 
 import androidx.compose.runtime.Composable
 import cafe.adriel.lyricist.LocalStrings
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import network.bisq.mobile.domain.data.model.OfferListItem
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter

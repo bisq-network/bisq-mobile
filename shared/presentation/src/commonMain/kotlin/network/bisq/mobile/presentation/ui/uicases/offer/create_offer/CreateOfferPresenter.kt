@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.MarketListItem
-import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.domain.data.model.OfferbookMarket
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter

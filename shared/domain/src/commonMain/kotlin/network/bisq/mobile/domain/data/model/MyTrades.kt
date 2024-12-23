@@ -1,7 +1,7 @@
 package network.bisq.mobile.domain.data.model
 
 // TODO: Update later based on model class from bisq2 lib
-data class BisqOffer (
+data class MockOffer(
     val id: String = "offer_283UANJD19A",
     val isBuy: Boolean = true,
     val amIMaker: Boolean = false,
@@ -15,7 +15,7 @@ data class BisqOffer (
     val partyDP: String = "", // Image URL
 )
 
-class MyTrades(val trades: List<BisqOffer> = listOf()): BaseModel()
+class MyTrades(val trades: List<MockOffer> = listOf()) : BaseModel()
 
 interface MyTradesFactory {
     fun createMyTrades(): MyTrades

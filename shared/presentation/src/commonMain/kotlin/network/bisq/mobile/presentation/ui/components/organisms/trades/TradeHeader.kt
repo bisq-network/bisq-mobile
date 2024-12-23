@@ -17,16 +17,14 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UpIcon
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfile
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxStyle
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun TradeHeader(
