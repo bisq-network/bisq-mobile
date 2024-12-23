@@ -8,7 +8,7 @@ data class MockOffer(
     val price: Number = 97000,
     val currency: String = "USD",
     val fiatAmount: Number = 1000, //Should be a range
-    val satsAmount: Number= 1030927, //Should be a range
+    val satsAmount: Number = 1030927, //Should be a range
 
     val partyName: String = "satoshi",
     val partyRatings: Double = 4.2,

@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.utils.Logging
 
-abstract class ApplicationBootstrapFacade: LifeCycleAware, Logging {
+abstract class ApplicationBootstrapFacade : LifeCycleAware, Logging {
     private val _state = MutableStateFlow("")
     val state: StateFlow<String> = _state
     fun setState(value: String) {

@@ -9,7 +9,7 @@ import network.bisq.mobile.domain.utils.Logging
  * This service allows to interact with the underlaying connectivity system
  * against the trusted node for the client.
  */
-class TrustedNodeService(private val websocketClient: WebSocketClient): Logging {
+class TrustedNodeService(private val websocketClient: WebSocketClient) : Logging {
     private val backgroundScope = CoroutineScope(BackgroundDispatcher)
 
     // TODO websocketClient.isConnected should be observable so that we emit
