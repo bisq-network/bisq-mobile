@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.user_profile
+package network.bisq.mobile.client.service.user_profile
 
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock

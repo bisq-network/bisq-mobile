@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.offerbook.offer
+package network.bisq.mobile.client.service.offerbook.offer
 
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope

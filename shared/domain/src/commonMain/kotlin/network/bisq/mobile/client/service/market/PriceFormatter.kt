@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.market
+package network.bisq.mobile.client.service.market
 
 import network.bisq.mobile.client.replicated_model.common.currency.Market
 import kotlin.math.pow

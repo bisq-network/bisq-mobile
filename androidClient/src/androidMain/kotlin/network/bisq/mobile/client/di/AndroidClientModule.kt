@@ -1,6 +1,6 @@
 package network.bisq.mobile.client.di
 
-import network.bisq.mobile.client.user_profile.ClientCatHashService
+import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.service.AndroidClientCatHashService
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind

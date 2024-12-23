@@ -1,10 +1,10 @@
-package network.bisq.mobile.client.market
+package network.bisq.mobile.client.service.market
 
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
-import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.websocket.subscription.Topic
+import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.utils.Logging
 
 class MarketPriceApiGateway(

@@ -4,7 +4,7 @@ import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.Sign
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
-import network.bisq.mobile.client.user_profile.ClientCatHashService
+import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.utils.Logging
 import network.bisq.mobile.utils.concat

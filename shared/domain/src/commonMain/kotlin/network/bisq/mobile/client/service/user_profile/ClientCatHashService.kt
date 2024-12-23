@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.user_profile
+package network.bisq.mobile.client.service.user_profile
 
 interface ClientCatHashService<T> {
     fun getImage(

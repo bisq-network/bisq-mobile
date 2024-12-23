@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.offerbook.market
+package network.bisq.mobile.client.service.offerbook.market
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job

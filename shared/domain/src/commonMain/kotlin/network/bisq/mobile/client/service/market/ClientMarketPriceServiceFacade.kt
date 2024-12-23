@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.market
+package network.bisq.mobile.client.service.market
 
 import io.ktor.util.collections.ConcurrentMap
 import kotlinx.coroutines.CoroutineScope

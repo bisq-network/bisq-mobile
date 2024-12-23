@@ -1,11 +1,11 @@
-package network.bisq.mobile.client.offerbook
+package network.bisq.mobile.client.service.offerbook
 
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.offerbook.market.ClientMarketListItemService
-import network.bisq.mobile.client.offerbook.market.ClientSelectedOfferbookMarketService
-import network.bisq.mobile.client.offerbook.offer.ClientOfferbookListItemService
-import network.bisq.mobile.client.offerbook.offer.OfferbookApiGateway
+import network.bisq.mobile.client.service.offerbook.market.ClientMarketListItemService
+import network.bisq.mobile.client.service.offerbook.market.ClientSelectedOfferbookMarketService
+import network.bisq.mobile.client.service.offerbook.offer.ClientOfferbookListItemService
+import network.bisq.mobile.client.service.offerbook.offer.OfferbookApiGateway
 import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.domain.data.model.MarketListItem
 import network.bisq.mobile.domain.data.model.OfferListItem

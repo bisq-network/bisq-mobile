@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.offerbook.market
+package network.bisq.mobile.client.service.offerbook.market
 val DEFAULT_MARKETS = """
        [
             {"baseCurrencyCode":"BTC","quoteCurrencyCode":"USD","baseCurrencyName":"Bitcoin","quoteCurrencyName":"US Dollar"},

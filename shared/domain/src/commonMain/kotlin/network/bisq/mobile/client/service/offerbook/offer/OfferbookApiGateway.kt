@@ -1,10 +1,10 @@
-package network.bisq.mobile.client.offerbook.offer
+package network.bisq.mobile.client.service.offerbook.offer
 
 import network.bisq.mobile.client.replicated_model.common.currency.Market
 import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
-import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.websocket.subscription.Topic
+import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.utils.Logging
 

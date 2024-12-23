@@ -1,11 +1,11 @@
-package network.bisq.mobile.client.offerbook.market
+package network.bisq.mobile.client.service.offerbook.market
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.offerbook.offer.OfferbookApiGateway
 import network.bisq.mobile.client.replicated_model.common.currency.Market
+import network.bisq.mobile.client.service.offerbook.offer.OfferbookApiGateway
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.BackgroundDispatcher

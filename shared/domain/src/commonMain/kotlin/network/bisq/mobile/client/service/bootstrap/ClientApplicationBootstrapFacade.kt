@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.bootstrap
+package network.bisq.mobile.client.service.bootstrap
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch

@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.user_profile
+package network.bisq.mobile.client.service.user_profile
 
 import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
