@@ -2,12 +2,10 @@ package network.bisq.mobile.presentation.ui.uicases.offers
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.client.replicated_model.offer.Direction
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 
@@ -17,8 +15,8 @@ open class OffersListPresenter(
 ) : BasePresenter(mainPresenter), IOffersListPresenter {
     override val offerListItems: StateFlow<List<OfferListItem>> = offerbookServiceFacade.offerListItems
 
-    private val _selectedDirection = MutableStateFlow(Direction.SELL)
-    override val selectedDirection: StateFlow<Direction> = _selectedDirection
+    private val _selectedDirection = MutableStateFlow(network.bisq.mobile.domain.replicated.offer.Direction.SELL)
+    override val selectedDirection: StateFlow<network.bisq.mobile.domain.replicated.offer.Direction> = _selectedDirection
 
     override fun onViewAttached() {
     }
@@ -36,7 +34,7 @@ open class OffersListPresenter(
         log.i { "chat for offer clicked " }
     }
 
-    override fun onSelectDirection(direction: Direction) {
+    override fun onSelectDirection(direction: network.bisq.mobile.domain.replicated.offer.Direction) {
         _selectedDirection.value = direction
     }
 }

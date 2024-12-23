@@ -1,14 +1,12 @@
-package network.bisq.mobile.client.replicated_model.user.profile
+package network.bisq.mobile.domain.replicated.user.profile
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.client.replicated_model.network.identity.NetworkId
-import network.bisq.mobile.client.replicated_model.security.pow.ProofOfWork
 
 @Serializable
 data class UserProfile(
     val nickName: String? = null,
-    val proofOfWork: ProofOfWork? = null,
-    val networkId: NetworkId? = null,
+    val proofOfWork: network.bisq.mobile.domain.replicated.security.pow.ProofOfWork? = null,
+    val networkId: network.bisq.mobile.domain.replicated.network.identity.NetworkId? = null,
     val terms: String? = null,
     val statement: String? = null,
     val avatarVersion: Int? = null,

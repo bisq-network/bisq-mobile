@@ -7,8 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import network.bisq.mobile.client.replicated_model.offer.Direction
-import network.bisq.mobile.client.replicated_model.user.reputation.ReputationScore
 import network.bisq.mobile.domain.data.model.MarketListItem
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.domain.data.model.OfferbookMarket
@@ -36,7 +34,7 @@ interface ICreateOfferPresenter : ViewPresenter {
 
     val state: StateFlow<CreateOffer>
 
-    val direction: StateFlow<Direction>
+    val direction: StateFlow<network.bisq.mobile.domain.replicated.offer.Direction>
 
     val fixedAmount: StateFlow<Float>
 
@@ -86,13 +84,13 @@ open class CreateOfferPresenter(
                 messageId = "12345",
                 offerId = "abcde",
                 isMyMessage = true,
-                direction = Direction.BUY,
+                direction = network.bisq.mobile.domain.replicated.offer.Direction.BUY,
                 offerTitle = "Sample Offer",
                 date = 1638316800000,  // Example timestamp
                 formattedDate = "Dec 5, 2024",
                 nym = "user123",
                 userName = "John Doe",
-                reputationScore = ReputationScore.NONE,
+                reputationScore = network.bisq.mobile.domain.replicated.user.reputation.ReputationScore.NONE,
                 formattedQuoteAmount = "500 USD",
                 formattedPrice = "1000 USD",
                 quoteSidePaymentMethods = listOf("Amazon-Gift-Card", "ACH-Transfer", "Cash-App"),
@@ -105,8 +103,8 @@ open class CreateOfferPresenter(
     private val _state = MutableStateFlow(CreateOffer())
     override val state = _state.asStateFlow()
 
-    private val _direction = MutableStateFlow(Direction.BUY)
-    override val direction: StateFlow<Direction> = _direction.asStateFlow()
+    private val _direction = MutableStateFlow(network.bisq.mobile.domain.replicated.offer.Direction.BUY)
+    override val direction: StateFlow<network.bisq.mobile.domain.replicated.offer.Direction> = _direction.asStateFlow()
 
     private val _fixedAmount = MutableStateFlow(0.0f)
     override val fixedAmount: StateFlow<Float> = _fixedAmount.asStateFlow()
@@ -147,12 +145,12 @@ open class CreateOfferPresenter(
     }
 
     override fun buyBitcoinClicked() {
-        _direction.value = Direction.BUY
+        _direction.value = network.bisq.mobile.domain.replicated.offer.Direction.BUY
         navigateToCurrencySelector()
     }
 
     override fun sellBitcoinClicked() {
-        _direction.value = Direction.SELL
+        _direction.value = network.bisq.mobile.domain.replicated.offer.Direction.SELL
         navigateToCurrencySelector()
     }
 

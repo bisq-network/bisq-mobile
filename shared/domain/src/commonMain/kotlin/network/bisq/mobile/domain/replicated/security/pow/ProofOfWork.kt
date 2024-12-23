@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.replicated_model.security.pow
+package network.bisq.mobile.domain.replicated.security.pow
 
 import kotlinx.serialization.Contextual
 import kotlinx.serialization.Serializable
@@ -16,7 +16,7 @@ data class ProofOfWork(
         if (this === other) return true
         if (other == null || this::class != other::class) return false
 
-        other as ProofOfWork
+        other as network.bisq.mobile.domain.replicated.security.pow.ProofOfWork
 
         if (!payload.contentEquals(other.payload)) return false
         if (counter != other.counter) return false

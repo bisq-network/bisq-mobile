@@ -2,7 +2,6 @@ package network.bisq.mobile.client.service.user_profile
 
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
-import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -17,7 +16,7 @@ class ClientUserProfileServiceFacade(
     private val clientCatHashService: ClientCatHashService<PlatformImage>
 ) : UserProfileServiceFacade, Logging {
 
-    private var preparedData: PreparedData? = null
+    private var preparedData: network.bisq.mobile.domain.replicated.user.identity.PreparedData? = null
 
     // API
     override suspend fun hasUserProfile(): Boolean {

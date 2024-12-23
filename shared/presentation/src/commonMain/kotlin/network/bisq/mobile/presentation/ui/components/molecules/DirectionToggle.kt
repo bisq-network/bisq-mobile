@@ -23,17 +23,15 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
-import kotlinx.coroutines.selects.select
-import network.bisq.mobile.client.replicated_model.offer.Direction
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun DirectionToggle(
-    directions: List<Direction>,
-    initialDirection: Direction,
+    directions: List<network.bisq.mobile.domain.replicated.offer.Direction>,
+    initialDirection: network.bisq.mobile.domain.replicated.offer.Direction,
     transitionX: Dp,
-    onStateChange: (Direction) -> Unit
+    onStateChange: (network.bisq.mobile.domain.replicated.offer.Direction) -> Unit
 ) {
     val strings = LocalStrings.current.common
     var selectedDirection by remember {

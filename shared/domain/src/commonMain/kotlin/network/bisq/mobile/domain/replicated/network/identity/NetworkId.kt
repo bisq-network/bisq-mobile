@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.replicated_model.network.identity
+package network.bisq.mobile.domain.replicated.network.identity
 
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.client.replicated_model.common.network.Address

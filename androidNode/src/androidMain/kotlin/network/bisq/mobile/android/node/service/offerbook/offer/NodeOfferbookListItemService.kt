@@ -27,7 +27,6 @@ import com.google.common.base.Joiner
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.client.replicated_model.user.reputation.ReputationScore
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.utils.Logging
@@ -134,13 +133,13 @@ class NodeOfferbookListItemService(private val applicationService: AndroidApplic
         val reputationScore =
             senderUserProfile.flatMap(reputationService::findReputationScore)
                 .map {
-                    ReputationScore(
+                    network.bisq.mobile.domain.replicated.user.reputation.ReputationScore(
                         it.totalScore,
                         it.fiveSystemScore,
                         it.ranking
                     )
                 }
-                .orElse(ReputationScore.NONE)
+                .orElse(network.bisq.mobile.domain.replicated.user.reputation.ReputationScore.NONE)
         val amountSpec: AmountSpec = bisqEasyOffer.amountSpec
         val priceSpec: PriceSpec = bisqEasyOffer.priceSpec
         val hasAmountRange = amountSpec is RangeAmountSpec
@@ -167,11 +166,11 @@ class NodeOfferbookListItemService(private val applicationService: AndroidApplic
         val supportedLanguageCodes: String =
             Joiner.on(",").join(bisqEasyOffer.supportedLanguageCodes)
         val isMyMessage = message.isMyMessage(userIdentityService)
-        val direction: network.bisq.mobile.client.replicated_model.offer.Direction =
+        val direction: network.bisq.mobile.domain.replicated.offer.Direction =
             if (bisqEasyOffer.direction.isBuy) {
-                network.bisq.mobile.client.replicated_model.offer.Direction.BUY
+                network.bisq.mobile.domain.replicated.offer.Direction.BUY
             } else {
-                network.bisq.mobile.client.replicated_model.offer.Direction.SELL
+                network.bisq.mobile.domain.replicated.offer.Direction.SELL
             }
 
         val offerTitle = getOfferTitle(message, isMyMessage)

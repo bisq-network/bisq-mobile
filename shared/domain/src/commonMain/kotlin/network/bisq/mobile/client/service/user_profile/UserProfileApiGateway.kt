@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.service.user_profile
 
-import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 
@@ -8,13 +7,13 @@ class UserProfileApiGateway(
     private val webSocketApiClient: WebSocketApiClient
 ) {
     private val basePath = "user-identities"
-    suspend fun requestPreparedData(): PreparedData {
+    suspend fun requestPreparedData(): network.bisq.mobile.domain.replicated.user.identity.PreparedData {
         return webSocketApiClient.get("$basePath/prepared-data")
     }
 
     suspend fun createAndPublishNewUserProfile(
         nickName: String,
-        preparedData: PreparedData
+        preparedData: network.bisq.mobile.domain.replicated.user.identity.PreparedData
     ): UserProfileResponse {
         val createUserIdentityRequest = CreateUserIdentityRequest(
             nickName,

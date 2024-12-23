@@ -1,12 +1,11 @@
 package network.bisq.mobile.client.service.user_profile
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.client.replicated_model.user.identity.PreparedData
 
 @Serializable
 data class CreateUserIdentityRequest(
     val nickName: String,
     val terms: String = "",
     val statement: String = "",
-    val preparedData: PreparedData
+    val preparedData: network.bisq.mobile.domain.replicated.user.identity.PreparedData
 )

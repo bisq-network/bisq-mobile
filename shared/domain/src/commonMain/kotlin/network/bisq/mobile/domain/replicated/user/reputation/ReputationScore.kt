@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
-package network.bisq.mobile.client.replicated_model.user.reputation
+package network.bisq.mobile.domain.replicated.user.reputation
 
 import kotlinx.serialization.Serializable
 
@@ -26,7 +26,8 @@ data class ReputationScore(
 ) {
 
     companion object {
-        val NONE: ReputationScore = ReputationScore(0, 0.0, Int.MAX_VALUE)
+        val NONE: network.bisq.mobile.domain.replicated.user.reputation.ReputationScore =
+            network.bisq.mobile.domain.replicated.user.reputation.ReputationScore(0, 0.0, Int.MAX_VALUE)
     }
 
     override fun toString(): String {

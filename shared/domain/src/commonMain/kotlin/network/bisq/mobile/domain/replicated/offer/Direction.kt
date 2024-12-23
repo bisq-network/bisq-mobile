@@ -14,19 +14,19 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
-package network.bisq.mobile.client.replicated_model.offer
+package network.bisq.mobile.domain.replicated.offer
 
 enum class Direction {
     BUY,
     SELL;
 
     val isBuy: Boolean
-        get() = this == BUY
+        get() = this == network.bisq.mobile.domain.replicated.offer.Direction.BUY
 
     val isSell: Boolean
-        get() = this == SELL
+        get() = this == network.bisq.mobile.domain.replicated.offer.Direction.SELL
 
-    fun mirror(): Direction {
-        return if (isBuy) SELL else BUY
+    fun mirror(): network.bisq.mobile.domain.replicated.offer.Direction {
+        return if (isBuy) network.bisq.mobile.domain.replicated.offer.Direction.SELL else network.bisq.mobile.domain.replicated.offer.Direction.BUY
     }
 }

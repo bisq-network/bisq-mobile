@@ -9,7 +9,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.client.replicated_model.offer.Direction
 import network.bisq.mobile.domain.data.model.OfferListItem
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -22,11 +21,11 @@ import org.koin.compose.koinInject
 
 interface IOffersListPresenter : ViewPresenter {
     val offerListItems: StateFlow<List<OfferListItem>>
-    val selectedDirection: StateFlow<Direction>
+    val selectedDirection: StateFlow<network.bisq.mobile.domain.replicated.offer.Direction>
 
     fun takeOffer(offer: OfferListItem)
     fun chatForOffer(offer: OfferListItem)
-    fun onSelectDirection(direction: Direction)
+    fun onSelectDirection(direction: network.bisq.mobile.domain.replicated.offer.Direction)
 }
 
 @Composable
@@ -37,9 +36,9 @@ fun OffersListScreen() {
     RememberPresenterLifecycle(presenter)
 
     // Offers are mirrored to what user wants. E.g. I want to buy Bitcoin using a sell offer
-    val offerDirections: List<Direction> = listOf(
-        Direction.SELL,
-        Direction.BUY
+    val offerDirections: List<network.bisq.mobile.domain.replicated.offer.Direction> = listOf(
+        network.bisq.mobile.domain.replicated.offer.Direction.SELL,
+        network.bisq.mobile.domain.replicated.offer.Direction.BUY
     )
 
     val offerListItems = presenter.offerListItems.collectAsState().value

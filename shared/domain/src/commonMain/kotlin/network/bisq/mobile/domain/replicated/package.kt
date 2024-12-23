@@ -8,5 +8,5 @@
  * In future we might move it to an independent library project to make them re-usable for other
  * Kotlin based projects using the Bisq 2 REST API.
  */
-package network.bisq.mobile.client.replicated_model
+package network.bisq.mobile.domain.replicated
 

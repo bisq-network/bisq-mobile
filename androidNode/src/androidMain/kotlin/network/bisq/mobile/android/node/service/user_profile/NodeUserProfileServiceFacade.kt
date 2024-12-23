@@ -10,7 +10,6 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.client.replicated_model.common.network.Address
 import network.bisq.mobile.client.replicated_model.common.network.TransportType
-import network.bisq.mobile.client.replicated_model.network.identity.NetworkId
 import network.bisq.mobile.client.replicated_model.security.keys.PubKey
 import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.domain.PlatformImage
@@ -109,7 +108,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         return userService.userIdentityService.selectedUserIdentity?.userProfile?.let {
             UserProfile(
                 it.nickName,
-                network.bisq.mobile.client.replicated_model.security.pow.ProofOfWork(
+                network.bisq.mobile.domain.replicated.security.pow.ProofOfWork(
                     it.proofOfWork.solution,
                     it.proofOfWork.counter,
                     it.proofOfWork.challenge,
@@ -117,10 +116,12 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
                     it.proofOfWork.payload,
                     it.proofOfWork.duration
                 ),
-                NetworkId(it.networkId.addressByTransportTypeMap.map{
-                    (key, value) ->
-                        TransportType.entries[key.ordinal] to Address(value.host, value.port) }.toMap(),
-                          PubKey( it.networkId.pubKey.publicKey.toString(),  it.networkId.pubKey.keyId)),
+                network.bisq.mobile.domain.replicated.network.identity.NetworkId(
+                    it.networkId.addressByTransportTypeMap.map { (key, value) ->
+                        TransportType.entries[key.ordinal] to Address(value.host, value.port)
+                    }.toMap(),
+                    PubKey(it.networkId.pubKey.publicKey.toString(), it.networkId.pubKey.keyId)
+                ),
                 it.terms,
                 it.statement,
                 it.avatarVersion,
