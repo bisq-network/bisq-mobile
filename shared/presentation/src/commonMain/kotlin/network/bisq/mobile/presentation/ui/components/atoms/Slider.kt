@@ -8,7 +8,10 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
@@ -18,11 +21,10 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BisqSlider(
-    value: Float,
-    onValueChange: (Float) -> Unit,
-    minAmount: Float,
-    maxAmount: Float,
+    initialValue: Float,
+    onValueChange: (Float) -> Unit
 ) {
+    var value by remember { mutableFloatStateOf(initialValue) }
 
     val colors = SliderColors(
         thumbColor = BisqTheme.colors.primary,
@@ -40,8 +42,11 @@ fun BisqSlider(
     Slider(
         modifier = Modifier.fillMaxWidth(),
         value = value,
-        onValueChange = { onValueChange(it) },
-        valueRange = minAmount..maxAmount,
+        onValueChange = {
+            value = it
+            onValueChange(it)
+        },
+        valueRange = 0f..1f,
         thumb = {
             SliderDefaults.Thumb(
                 interactionSource = remember { MutableInteractionSource() },

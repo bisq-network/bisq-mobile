@@ -67,6 +67,10 @@ class TakeOfferAmountPresenter(
         applySliderValue(sliderPosition)
     }
 
+    fun onTextValueChanged(textInput: String) {
+        //todo parse input string and apply it to model
+    }
+
     fun onBack() {
         commitToModel()
         rootNavigator.popBackStack()

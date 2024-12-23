@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_no_trades
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.data.model.BisqOffer
+import network.bisq.mobile.domain.data.model.MockOffer
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -28,7 +28,7 @@ import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 interface IMyTrades : ViewPresenter {
-    val myTrades: StateFlow<List<BisqOffer>>
+    val myTrades: StateFlow<List<MockOffer>>
 
     fun navigateToCurrencyList()
 }
@@ -37,7 +37,7 @@ interface IMyTrades : ViewPresenter {
 fun MyTradesScreen() {
     val presenter: IMyTrades = koinInject()
 
-    val myTrades: List<BisqOffer> = presenter.myTrades.collectAsState().value
+    val myTrades: List<MockOffer> = presenter.myTrades.collectAsState().value
 
     RememberPresenterLifecycle(presenter)
 
@@ -51,7 +51,7 @@ fun MyTradesScreen() {
 
 
 @Composable
-fun TradeList(presenter: IMyTrades, myTrades: List<BisqOffer>) {
+fun TradeList(presenter: IMyTrades, myTrades: List<MockOffer>) {
 
     LazyColumn(modifier = Modifier.padding(top = 48.dp)) {
         items(myTrades) { offer ->

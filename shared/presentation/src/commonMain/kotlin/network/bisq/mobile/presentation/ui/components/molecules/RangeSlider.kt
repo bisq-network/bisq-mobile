@@ -8,7 +8,10 @@ import androidx.compose.material3.RangeSlider
 import androidx.compose.material3.SliderColors
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.DpSize
@@ -18,11 +21,12 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BisqRangeSlider(
-    value: ClosedFloatingPointRange<Float>,
-    onValueChange: (ClosedFloatingPointRange<Float>) -> Unit,
-    minAmount: Float,
-    maxAmount: Float,
-){
+    initialSliderPosition: ClosedFloatingPointRange<Float>,
+    onValueChange: (ClosedFloatingPointRange<Float>) -> Unit
+) {
+
+    var value by remember { mutableStateOf(initialSliderPosition) }
+
     val colors = SliderColors(
         thumbColor = BisqTheme.colors.primary,
         activeTrackColor = BisqTheme.colors.grey2,
@@ -39,14 +43,17 @@ fun BisqRangeSlider(
     RangeSlider(
         modifier = Modifier.fillMaxWidth(),
         value = value,
-        onValueChange = {onValueChange(it)},
-        valueRange = minAmount .. maxAmount,
-        track = { rangeSliderState  ->
+        onValueChange = {
+            value = it
+            onValueChange(it)
+        },
+        valueRange = 0f..1f,
+        track = { rangeSliderState ->
             SliderDefaults.Track(
                 trackInsideCornerSize = 0.dp,
                 thumbTrackGapSize = 0.dp,
                 modifier = Modifier.height(2.dp),
-                rangeSliderState  = rangeSliderState ,
+                rangeSliderState = rangeSliderState,
                 colors = colors,
                 drawStopIndicator = null
             )

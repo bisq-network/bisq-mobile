@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.components.molecules.info
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.offset
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,9 +32,12 @@ fun InfoBox(
 ) {
 
     val valueWidget: @Composable () -> Unit = if (value != null) {
+        // todo just a quick fix for min-max values to allow to display them without breaking layout
+        val adjustedValueType = if (value.length > 14) InfoBoxValueType.SmallValue else valueType
         {
-            when (valueType) {
-                InfoBoxValueType.BoldValue -> if (style == InfoBoxStyle.Style1) BisqText.h6Regular(text = value) else (BisqText.baseRegular(text = value))
+            when (adjustedValueType) {
+                InfoBoxValueType.BoldValue -> if (style == InfoBoxStyle.Style1) BisqText.h6Regular(text = value)
+                else (BisqText.baseRegular(text = value))
                 InfoBoxValueType.SmallValue -> BisqText.baseRegular(text = value)
                 InfoBoxValueType.TitleSmall -> BisqText.h4Regular(text = value)
             }
@@ -57,6 +62,7 @@ fun InfoBox(
                 valueWidget()
             }
         }
+
         InfoBoxStyle.Style2 -> {
             Column(
                 horizontalAlignment = if (rightAlign) Alignment.End else Alignment.Start,

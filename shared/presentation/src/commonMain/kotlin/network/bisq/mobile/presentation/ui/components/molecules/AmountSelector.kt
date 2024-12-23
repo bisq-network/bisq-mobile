@@ -1,28 +1,50 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.presentation.ui.components.atoms.*
-import network.bisq.mobile.presentation.ui.helpers.*
+import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.presentation.ui.components.atoms.BisqSlider
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun BisqAmountSelector(
-    minAmount: Double,
-    maxAmount: Double,
-    exchangeRate: Double,
-    currency: String,
-    onValueChange: ((Double) -> Unit)? = null
+    fiatCurrencyCode: String,
+    formattedMinAmount: String,
+    formattedMaxAmount: String,
+    initialSliderPosition: Float,
+    formattedFiatAmount: StateFlow<String>,
+    formattedBtcAmount: StateFlow<String>,
+    onSliderValueChange: (sliderValue: Float) -> Unit,
+    onTextValueChange: (String) -> Unit
 ) {
-    var fiatValue by remember { mutableDoubleStateOf((minAmount + maxAmount) * 0.5) }
-    val sats = (100_000_000L * (fiatValue.toDouble()) / exchangeRate).toLong()
+    val formattedFiatAmountValue = formattedFiatAmount.collectAsState().value
+    val formattedBtcAmountValue = formattedBtcAmount.collectAsState().value
 
-    LaunchedEffect(fiatValue) {
-        onValueChange?.invoke(fiatValue)
-    }
+    val btcAmountValueHighLightedZeros = formattedBtcAmountValue
+        .takeWhile { it == '0' || it == '.' }
+    val btcAmountValue = formattedBtcAmountValue
+        .dropWhile { it == '0' || it == '.' }
+        .reversed()
+        .chunked(3)
+        .joinToString(" ")
+        .reversed()
+
+    /* var fiatValue by remember { mutableDoubleStateOf((minAmount + maxAmount) * 0.5) }
+     val sats = (100_000_000L * (fiatValue.toDouble()) / exchangeRate).toLong()
+
+     LaunchedEffect(fiatValue) {
+         onValueChange?.invoke(fiatValue)
+     }*/
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -31,23 +53,21 @@ fun BisqAmountSelector(
     ) {
 
         FiatInputField(
-            text = fiatValue.toInt().toString(),
-            onValueChanged = { fiatValue = it.toDoubleOrNull() ?: (0.0) },
-            currency = currency
+            text = formattedFiatAmountValue,
+            onValueChanged = { onTextValueChange.invoke(it) },
+            currency = fiatCurrencyCode
         )
 
-        if (fiatValue < minAmount || fiatValue > maxAmount) {
+        /*if (fiatValue < minAmount || fiatValue > maxAmount) {
             BisqText.baseRegular("Amount out of range", color = BisqTheme.colors.danger)
-        }
+        }*/
 
-        BtcSatsText(sats)
+        BtcSatsText(formattedBtcAmountValue)
 
         Column {
             BisqSlider(
-                fiatValue.toFloat(),
-                onValueChange = { fiatValue = it.toDouble() },
-                minAmount.toFloat(),
-                maxAmount.toFloat(),
+                initialSliderPosition,
+                { onSliderValueChange(it) }
             )
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -55,11 +75,11 @@ fun BisqAmountSelector(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
             ) {
                 BisqText.smallRegular(
-                    text = "Min ${minAmount.toStringWith2Decimals()} $currency",
+                    text = "Min $formattedMinAmount",
                     color = BisqTheme.colors.grey2
                 )
                 BisqText.smallRegular(
-                    text = "Max ${maxAmount.toStringWith2Decimals()} $currency",
+                    text = "Max $formattedMaxAmount",
                     color = BisqTheme.colors.grey2
                 )
             }

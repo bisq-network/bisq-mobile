@@ -77,8 +77,7 @@ class ClientUserProfileServiceFacade(
         return Triple(userProfile.nickName, userProfile.nym, userProfile.id)
     }
 
-    // Private
-    private suspend fun getSelectedUserProfile(): UserProfileVO {
+    override suspend fun getSelectedUserProfile(): UserProfileVO {
         val apiResult = apiGateway.getSelectedUserProfile()
         if (apiResult.isFailure) {
             throw apiResult.exceptionOrNull()!!
@@ -86,6 +85,7 @@ class ClientUserProfileServiceFacade(
         return apiResult.getOrThrow()
     }
 
+    // Private
     private suspend fun createSimulatedDelay(requestDuration: Long) {
         // Proof of work creation for difficulty 65536 takes about 50 ms to 100 ms on a 4 GHz Intel Core i7.
         // The API request is likely also quite fast

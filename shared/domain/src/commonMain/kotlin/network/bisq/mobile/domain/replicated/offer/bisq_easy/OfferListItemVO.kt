@@ -32,5 +32,5 @@ data class OfferListItemVO(
     val formattedPrice: String,
     val formattedPriceSpec: String,
     val quoteSidePaymentMethods: List<String>,
-    val baseSidePaymentMethods: List<String>
+    val baseSidePaymentMethods: List<String>,
 )

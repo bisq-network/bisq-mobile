@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -32,7 +33,7 @@ open class TradeFlowPresenter(
     private val offerbookServiceFacade: OfferbookServiceFacade,
 ) : BasePresenter(mainPresenter), ITradeFlowPresenter {
 
-    override val offerListItems: StateFlow<List<OfferListItem>> = offerbookServiceFacade.offerListItems
+    override val offerListItems: StateFlow<List<OfferListItemVO>> = offerbookServiceFacade.offerListItems
 
     override val steps = listOf(
         TradeFlowScreenSteps.ACCOUNT_DETAILS,

@@ -101,7 +101,6 @@ object OfferListItemMapping {
             .stream()
             .map { obj: BitcoinPaymentMethod -> obj.name }
             .collect(Collectors.toList())
-
         return OfferListItemVO(
             bisqEasyOfferVO,
             isMyOffer,

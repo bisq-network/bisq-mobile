@@ -9,10 +9,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.presentation.ui.components.CurrencyProfileCard
-import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
+import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -25,7 +25,6 @@ fun CreateOfferCurrencySelectorScreen() {
     val presenter: CreateOfferMarketPresenter = koinInject()
     presenter.appStrings = LocalStrings.current // TODO find a more elegant solution
     RememberPresenterLifecycle(presenter)
-    // val isBuy = presenter.isBuy.collectAsState().value
 
     MultiScreenWizardScaffold(
         commonStrings.currency,
@@ -65,7 +64,7 @@ fun CreateOfferCurrencySelectorScreen() {
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             items(presenter.marketListItemWithNumOffers) { item ->
-                CurrencyProfileCard(
+                CurrencyCard(
                     item,
                     isSelected = presenter.market == item.market,
                     onClick = { presenter.onSelectMarket(item) }

@@ -88,7 +88,8 @@ fun CreateOfferAmountSelectorScreen() {
                     presenter.fixedAmountSliderPosition,
                     presenter.formattedQuoteSideFixedAmount,
                     presenter.formattedBaseSideFixedAmount,
-                    { sliderValue -> presenter.onFixedAmountSliderChanged(sliderValue) }
+                    { presenter.onFixedAmountSliderChanged(it) },
+                    { presenter.onFixedAmountTextValueChanged(it) }
                 )
             } else {
                 RangeAmountSelector(
@@ -100,8 +101,9 @@ fun CreateOfferAmountSelectorScreen() {
                     presenter.formattedBaseSideMinRangeAmount,
                     presenter.formattedQuoteSideMaxRangeAmount,
                     presenter.formattedBaseSideMaxRangeAmount,
-
-                    { sliderValue -> presenter.onRangeAmountSliderChanged(sliderValue) }
+                    { presenter.onRangeAmountSliderChanged(it) },
+                    { presenter.onMinAmountTextValueChanged(it) },
+                    { presenter.onMaxAmountTextValueChanged(it) }
                 )
             }
 

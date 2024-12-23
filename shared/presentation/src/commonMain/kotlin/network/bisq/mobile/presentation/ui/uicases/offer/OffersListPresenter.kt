@@ -2,38 +2,43 @@ package network.bisq.mobile.presentation.ui.uicases.offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPresenter
 
 
-open class OffersListPresenter(
+class OffersListPresenter(
     mainPresenter: MainPresenter,
-    private val offerbookServiceFacade: OfferbookServiceFacade,
-) : BasePresenter(mainPresenter), IOffersListPresenter {
-    override val offerListItems: StateFlow<List<OfferListItem>> = offerbookServiceFacade.offerListItems
+    offerbookServiceFacade: OfferbookServiceFacade,
+    private val takeOfferPresenter: TakeOfferPresenter
+) : BasePresenter(mainPresenter) {
+    val offerListItems: StateFlow<List<OfferListItemVO>> =
+        offerbookServiceFacade.offerListItems
 
-    private val _selectedDirection = MutableStateFlow(network.bisq.mobile.domain.replicated.offer.Direction.SELL)
-    override val selectedDirection: StateFlow<network.bisq.mobile.domain.replicated.offer.Direction> = _selectedDirection
+    private val _selectedDirection = MutableStateFlow(DirectionEnum.SELL)
+    val selectedDirection: StateFlow<DirectionEnum> = _selectedDirection
 
-    override fun onViewAttached() {
+    fun takeOffer(offerListItem: OfferListItemVO) {
+        takeOfferPresenter.selectOfferToTake(offerListItem)
+
+        if (takeOfferPresenter.showAmountScreen()) {
+            rootNavigator.navigate(Routes.TakeOfferTradeAmount.name)
+        } else if (takeOfferPresenter.showPaymentMethodsScreen()) {
+            rootNavigator.navigate(Routes.TakeOfferPaymentMethod.name)
+        } else {
+            rootNavigator.navigate(Routes.TakeOfferReviewTrade.name)
+        }
     }
 
-    override fun onViewUnattaching() {
-    }
-
-    override fun takeOffer(offer: OfferListItem) {
-        log.i { "take offer clicked " }
-        //todo show take offer screen
-        rootNavigator.navigate(Routes.TakeOfferTradeAmount.name)
-    }
-
-    override fun chatForOffer(offer: OfferListItem) {
+    fun chatForOffer(offerListItem: OfferListItemVO) {
         log.i { "chat for offer clicked " }
     }
 
-    override fun onSelectDirection(direction: network.bisq.mobile.domain.replicated.offer.Direction) {
+    fun onSelectDirection(direction: DirectionEnum) {
         _selectedDirection.value = direction
     }
 }

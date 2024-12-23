@@ -6,8 +6,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.presentation.ui.components.atoms.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.BisqAmountSelector
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -50,7 +50,8 @@ fun TakeOfferTradeAmountScreen() {
             presenter.sliderPosition,
             presenter.formattedQuoteAmount,
             presenter.formattedBaseAmount,
-            { sliderValue -> presenter.onSliderValueChanged(sliderValue) }
+            { sliderValue -> presenter.onSliderValueChanged(sliderValue) },
+            { textInput -> presenter.onTextValueChanged(textInput) }
         )
     }
 }

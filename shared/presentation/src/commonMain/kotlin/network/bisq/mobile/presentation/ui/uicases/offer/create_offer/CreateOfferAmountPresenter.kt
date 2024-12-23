@@ -95,6 +95,18 @@ class CreateOfferAmountPresenter(
         _amountType.value = value
     }
 
+    fun onFixedAmountTextValueChanged(textInput: String) {
+        //todo parse input string and apply it to model
+    }
+
+    fun onMinAmountTextValueChanged(textInput: String) {
+        //todo parse input string and apply it to model
+    }
+
+    fun onMaxAmountTextValueChanged(textInput: String) {
+        //todo parse input string and apply it to model
+    }
+
     fun onFixedAmountSliderChanged(value: Float) {
         applyFixedAmountSliderValue(value)
     }
@@ -138,11 +150,6 @@ class CreateOfferAmountPresenter(
 
         baseSideMaxRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMaxRangeAmount) as CoinVO
         _formattedBaseSideMaxRangeAmount.value = AmountFormatter.formatAmount(baseSideMaxRangeAmount, false)
-
-        log.e { "_formattedQuoteSideMinRangeAmount" + _formattedQuoteSideMinRangeAmount.value }
-        log.e { "_formattedBaseSideMinRangeAmount" + _formattedBaseSideMinRangeAmount.value }
-        log.e { "_formattedQuoteSideMaxRangeAmount" + _formattedQuoteSideMaxRangeAmount.value }
-        log.e { "_formattedBaseSideMaxRangeAmount" + _formattedBaseSideMaxRangeAmount.value }
     }
 
     private fun applyFixedAmountSliderValue(fixedAmountSliderPosition: Float) {

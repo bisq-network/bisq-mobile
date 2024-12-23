@@ -2,7 +2,11 @@ package network.bisq.mobile.presentation.ui.uicases.offer
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.model.MarketListItem
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
@@ -15,6 +19,9 @@ class MarketListPresenter(
     mainPresenter: MainPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade,
 ) : BasePresenter(mainPresenter) {
+
+    //todo
+    //var marketListItemWithNumOffers: List<MarketListItem> = offerbookServiceFacade.getSortedOfferbookMarketItems()
 
     private var mainCurrencies = OfferbookServiceFacade.mainCurrencies
 
@@ -36,31 +43,17 @@ class MarketListPresenter(
         _searchText.value = newValue
     }
 
-    /*
-    var marketListItems: List<MarketListItem> = offerbookServiceFacade.offerbookMarketItems
-        .sortedWith(
-            compareByDescending<MarketListItem> { it.numOffers.value }
-                .thenByDescending { mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) } // [1]
-                .thenBy { item ->
-                    if (!mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) item.market.quoteCurrencyName
-                    else null // Null values will naturally be sorted together
-                }
-        )
-        */
-    // [1] thenBy doesn’t work as expected for boolean expressions because true and false are
-    // sorted alphabetically (false before true), thus we use thenByDescending
-
     val marketListItemWithNumOffers: StateFlow<List<MarketListItem>> = combine(
-            _filter,
-            _searchText,
-            _sortBy
-        ) { filter: MarketFilter, searchText: String, sortBy: MarketSortBy ->
-            computeMarketList(filter, searchText, sortBy)
-        }.stateIn(
-            CoroutineScope(Dispatchers.Main),
-            SharingStarted.Lazily,
-            emptyList()
-        )
+        _filter,
+        _searchText,
+        _sortBy
+    ) { filter: MarketFilter, searchText: String, sortBy: MarketSortBy ->
+        computeMarketList(filter, searchText, sortBy)
+    }.stateIn(
+        CoroutineScope(Dispatchers.Main),
+        SharingStarted.Lazily,
+        emptyList()
+    )
 
     private fun computeMarketList(
         filter: MarketFilter,
@@ -76,8 +69,8 @@ class MarketListPresenter(
             }
             .filter { item ->
                 searchText.isEmpty() ||
-                    item.market.quoteCurrencyCode.contains(searchText, ignoreCase = true) ||
-                    item.market.quoteCurrencyName.contains(searchText, ignoreCase = true)
+                        item.market.quoteCurrencyCode.contains(searchText, ignoreCase = true) ||
+                        item.market.quoteCurrencyName.contains(searchText, ignoreCase = true)
             }
             .sortedWith(
                 compareByDescending<MarketListItem> {
@@ -101,7 +94,7 @@ class MarketListPresenter(
     }
 
     fun onSelectMarket(marketListItem: MarketListItem) {
-        offerbookServiceFacade.selectMarket(marketListItem)
+        offerbookServiceFacade.selectOfferbookMarket(marketListItem)
         rootNavigator.navigate(Routes.Offerbook.name)
     }
 

@@ -2,13 +2,13 @@ package network.bisq.mobile.presentation.ui.uicases.offer
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
-import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.domain.replicated.offer.DirectionEnum
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.DirectionToggle
@@ -17,32 +17,23 @@ import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
-interface IOffersListPresenter : ViewPresenter {
-    val offerListItems: StateFlow<List<OfferListItem>>
-    val selectedDirection: StateFlow<network.bisq.mobile.domain.replicated.offer.Direction>
-
-    fun takeOffer(offer: OfferListItem)
-    fun chatForOffer(offer: OfferListItem)
-    fun onSelectDirection(direction: network.bisq.mobile.domain.replicated.offer.Direction)
-}
-
 @Composable
 fun OffersListScreen() {
     val commonStrings = LocalStrings.current.common
-    val presenter: IOffersListPresenter = koinInject()
+    val presenter: OffersListPresenter = koinInject()
 
     RememberPresenterLifecycle(presenter)
 
     // Offers are mirrored to what user wants. E.g. I want to buy Bitcoin using a sell offer
-    val offerDirections: List<network.bisq.mobile.domain.replicated.offer.Direction> = listOf(
-        network.bisq.mobile.domain.replicated.offer.Direction.SELL,
-        network.bisq.mobile.domain.replicated.offer.Direction.BUY
+    val offerDirections: List<DirectionEnum> = listOf(
+        DirectionEnum.SELL,
+        DirectionEnum.BUY
     )
 
     val offerListItems = presenter.offerListItems.collectAsState().value
     val selectedDirection = presenter.selectedDirection.collectAsState().value
-    val filteredList = offerListItems.filter { it.direction == selectedDirection }
-    val sortedList = filteredList.sortedByDescending { it.date }
+    val filteredList = offerListItems.filter { it.bisqEasyOffer.direction == selectedDirection }
+    val sortedList = filteredList.sortedByDescending { it.bisqEasyOffer.date }
 
     RememberPresenterLifecycle(presenter)
 
@@ -55,9 +46,7 @@ fun OffersListScreen() {
             offerDirections,
             presenter.selectedDirection.value,
             130.dp
-        ) { direction ->
-            presenter.onSelectDirection(direction)
-        }
+        ) { direction -> presenter.onSelectDirection(direction) }
 
         BisqGap.V1()
 
@@ -69,7 +58,7 @@ fun OffersListScreen() {
                 OfferCard(
                     item,
                     onClick = { presenter.takeOffer(item) },
-                            onChatClick = { presenter.chatForOffer(item) }
+                    onChatClick = { presenter.chatForOffer(item) }
                 )
             }
         }

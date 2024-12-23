@@ -9,11 +9,13 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter
 
 class GettingStartedPresenter(
     mainPresenter: MainPresenter,
     private val bisqStatsRepository: BisqStatsRepository,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter), IGettingStarted {
 
     private val _offersOnline = MutableStateFlow(145)
@@ -27,8 +29,9 @@ class GettingStartedPresenter(
     private var job: Job? = null
 
     override fun navigateToCreateOffer() {
+        //rootNavigator.popBackStack(Routes.TabContainer.name, inclusive = false, saveState = false)
+        createOfferPresenter.onStartCreateOffer()
         rootNavigator.navigate(Routes.CreateOfferDirection.name)
-        // rootNavigator.navigate(Routes.CreateOfferReviewOffer.name)
     }
 
     private fun refresh() {
