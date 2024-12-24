@@ -2,14 +2,13 @@ package network.bisq.mobile.presentation
 
 import androidx.annotation.CallSuper
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.controller.NotificationServiceController
 import network.bisq.mobile.presentation.ui.AppPresenter
@@ -45,10 +44,12 @@ open class MainPresenter(private val notificationServiceController: Notification
     //    override val greetingText: StateFlow<String> = _greetingText
 
     init {
+        val localeCode = getDeviceLanguageCode()
         log.i { "Shared Version: ${BuildConfig.SHARED_LIBS_VERSION}" }
         log.i { "iOS Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Node Version: ${BuildNodeConfig.APP_VERSION}" }
+        log.i { "Device language code: $localeCode"}
     }
 
     @CallSuper

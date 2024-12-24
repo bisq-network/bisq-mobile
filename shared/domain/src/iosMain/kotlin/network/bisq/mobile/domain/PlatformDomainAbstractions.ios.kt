@@ -8,11 +8,12 @@ import com.russhwolf.settings.Settings
 import kotlinx.cinterop.*
 import kotlinx.serialization.Serializable
 import platform.Foundation.NSData
+import platform.Foundation.*
+import platform.UIKit.UIDevice
 import platform.UIKit.UIImage
 import platform.Foundation.create
 import platform.UIKit.UIImagePNGRepresentation
 
-import platform.UIKit.UIDevice
 import platform.posix.memcpy
 
 @OptIn(ExperimentalSettingsImplementation::class)
@@ -22,7 +23,11 @@ actual fun getPlatformSettings(): Settings {
     return KeychainSettings("Settings")
 }
 
-class IOSPlatformInfo: PlatformInfo {
+actual fun getDeviceLanguageCode(): String {
+    return NSLocale.currentLocale.languageCode ?: "en"
+}
+
+class IOSPlatformInfo : PlatformInfo {
     override val name: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
 }
 

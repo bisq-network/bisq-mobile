@@ -17,6 +17,8 @@ interface PlatformInfo {
     val name: String
 }
 
+expect fun getDeviceLanguageCode(): String
+
 expect fun getPlatformInfo(): PlatformInfo
 
 @Serializable(with = PlatformImageSerializer::class)
