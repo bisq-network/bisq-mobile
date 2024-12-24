@@ -3,7 +3,10 @@ package network.bisq.mobile.i18n
 class I18nSupport {
     companion object {
         fun initialize(languageCode: String) {
-            bundles = BUNDLE_NAMES.map { ResourceBundle.getBundle(it, languageCode) }
+            // bundles = BUNDLE_NAMES.map { ResourceBundle.getBundle(it, languageCode) }
+            val bundleMapsByName: Map<String, Map<String, String>> = GeneratedResourceBundles.bundlesByCode[languageCode] ?: emptyMap()
+            val maps: Collection<Map<String, String>> = bundleMapsByName.values
+            bundles = maps.map { ResourceBundle(it) }
         }
     }
 }

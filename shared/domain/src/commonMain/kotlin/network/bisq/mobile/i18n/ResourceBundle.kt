@@ -4,7 +4,7 @@ import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.loadProperties
 import network.bisq.mobile.utils.getLogger
 
-class ResourceBundle(val bundleName: String, val languageCode: String, val map: Map<String, String>) {
+class ResourceBundle(val map: Map<String, String>) {
     companion object {
         fun getBundle(bundleName: String, languageCode: String): ResourceBundle {
             var map: Map<String, String>? = null
@@ -14,13 +14,13 @@ class ResourceBundle(val bundleName: String, val languageCode: String, val map: 
                 getLogger("ResourceBundle").e("Failed to load bundle i18n for $languageCode", e)
                 if (map == null) {
                     getLogger("ResourceBundle").i("Defaulting to english")
-                    map = loadMappings(bundleName,"en")
+                    map = loadMappings(bundleName, "en")
                 }
             } finally {
                 if (map == null) {
                     throw IllegalArgumentException("Could not find mappings for bundle $bundleName and language $languageCode")
                 }
-                return ResourceBundle(bundleName, languageCode, map)
+                return ResourceBundle(map)
             }
         }
 
