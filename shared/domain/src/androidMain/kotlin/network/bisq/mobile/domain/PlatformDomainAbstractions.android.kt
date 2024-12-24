@@ -11,6 +11,11 @@ import androidx.compose.ui.graphics.asImageBitmap
 import com.russhwolf.settings.Settings
 import kotlinx.serialization.Serializable
 import java.io.ByteArrayOutputStream
+import java.util.Locale
+
+actual fun getDeviceLanguageCode(): String {
+    return Locale.getDefault().language
+}
 
 actual fun getPlatformSettings(): Settings {
     return Settings()
