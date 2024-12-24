@@ -32,32 +32,6 @@ class ResourceBundle(val bundleName: String, val languageCode: String, val map: 
             getLogger("ResourceBundle").i("Loading $bundleName took ${Clock.System.now() - ts}")
             return loadProperties(fileName)
         }
-
-        // Preprocess content to merge lines ending with '\n\n\'
-        private fun preprocessContent(content: String): String {
-            val lines = content.lineSequence().toMutableList()
-            val mergedLines = mutableListOf<String>()
-            var currentLine = ""
-
-            for (line in lines) {
-                if (line.endsWith("\\n\\n\\")) {
-                    // Remove the trailing '\n\n\' and append it to the current line
-                    currentLine += line.removeSuffix("\\n\\n\\")
-                } else {
-                    // Add the completed current line and reset it
-                    currentLine += line
-                    mergedLines.add(currentLine)
-                    currentLine = ""
-                }
-            }
-
-            // Add any remaining line
-            if (currentLine.isNotEmpty()) {
-                mergedLines.add(currentLine)
-            }
-
-            return mergedLines.joinToString("\n")
-        }
     }
 
     fun containsKey(key: String): Boolean {
