@@ -22,8 +22,14 @@ import platform.UIKit.UIImagePNGRepresentation
 import platform.Foundation.NSString
 import platform.Foundation.stringWithFormat
 import platform.Foundation.NSDictionary
+import platform.Foundation.NSLocale
 import platform.Foundation.allKeys
 import platform.Foundation.dictionaryWithContentsOfFile
+import platform.Foundation.create
+import platform.Foundation.currentLocale
+import platform.Foundation.dictionaryWithContentsOfFile
+import platform.Foundation.languageCode
+import platform.UIKit.UIImagePNGRepresentation
 import platform.posix.memcpy
 import kotlin.collections.set
 
