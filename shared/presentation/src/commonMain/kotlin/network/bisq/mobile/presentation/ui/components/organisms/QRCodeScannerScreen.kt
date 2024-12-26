@@ -42,10 +42,7 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.SvgImage
 import network.bisq.mobile.presentation.ui.components.atoms.SvgImageNames
-import network.bisq.mobile.presentation.ui.components.atoms.icons.FlashLightIcon
-import network.bisq.mobile.presentation.ui.components.atoms.icons.GalleryIcon
-import network.bisq.mobile.presentation.ui.components.atoms.icons.StarFillIcon
-import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
+import network.bisq.mobile.presentation.ui.components.atoms.icons.*
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -55,6 +52,7 @@ import qrscanner.CameraLens
 import qrscanner.OverlayShape
 import qrscanner.QrScanner
 
+// FinalTODO: De-couple from TrustedNodeSetup Presenter
 @Composable
 fun QRCodeScannerScreen() {
     val presenter: ITrustedNodeSetupPresenter = koinInject()
@@ -117,9 +115,7 @@ fun QRCodeScannerScreen() {
         ) {
             BisqButton(
                 text = "Upload from gallery",
-                onClick = {
-                    openImagePicker = true
-                },
+                onClick = { openImagePicker = true },
                 leftIcon = { GalleryIcon() }
             )
         }
@@ -131,14 +127,9 @@ fun QRCodeScannerScreen() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Icon(
-                    Icons.Filled.Close,
-                    "close",
-                    modifier = Modifier.size(24.dp).clickable {
-                        presenter.goBack()
-                    },
-                    tint = Color.White
-                )
+                IconButton(onClick = { presenter.goBack() }) {
+                    CloseIcon()
+                }
                 IconButton(
                     modifier = Modifier.clip(RoundedCornerShape(24.dp)).background(
                         if (flashlightOn) {
@@ -147,204 +138,11 @@ fun QRCodeScannerScreen() {
                             Color.Transparent
                         }
                     ),
-                    onClick = {
-                        flashlightOn = !flashlightOn
-                    }
+                    onClick = { flashlightOn = !flashlightOn }
                 ) {
                     FlashLightIcon()
                 }
             }
         }
     }
-}
-
-
-private fun DrawScope.drawQrBorderCanvas(
-    borderColor: Color = Color.White,
-    curve: Dp,
-    strokeWidth: Dp,
-    capSize: Dp,
-    cap: StrokeCap = StrokeCap.Square,
-    lineCap: StrokeCap = StrokeCap.Round,
-    width: Float = 0f,
-    height: Float = 0f,
-    top: Float = 0f,
-    left: Float = 0f
-) {
-
-    val curvePx = curve.toPx()
-
-    val mCapSize = capSize.toPx()
-
-    val sweepAngle = 90 / 2f
-
-    val mCurve = curvePx * 2
-
-    val borderOutline = 5
-    // bottom-right Arc
-    drawArc(
-        color = borderColor,
-        style = Stroke(strokeWidth.toPx(), cap = cap),
-        startAngle = 0f,
-        sweepAngle = sweepAngle,
-        useCenter = false,
-        size = Size(mCurve, mCurve),
-        topLeft = Offset(
-            width + left + borderOutline - mCurve, height + top + borderOutline - mCurve
-        )
-    )
-    drawArc(
-        color = borderColor,
-        style = Stroke(strokeWidth.toPx(), cap = cap),
-        startAngle = 90 - sweepAngle,
-        sweepAngle = sweepAngle,
-        useCenter = false,
-        size = Size(mCurve, mCurve),
-        topLeft = Offset(
-            width + left + borderOutline - mCurve, height + top + borderOutline - mCurve
-        )
-    )
-
-    //bottom-left Arc
-    drawArc(
-        color = borderColor,
-        style = Stroke(strokeWidth.toPx(), cap = cap),
-        startAngle = 90f,
-        sweepAngle = sweepAngle,
-        useCenter = false,
-        size = Size(mCurve, mCurve),
-        topLeft = Offset(
-            left - borderOutline, height + top + borderOutline - mCurve
-        )
-    )
-    drawArc(
-        color = borderColor,
-        style = Stroke(strokeWidth.toPx(), cap = cap),
-        startAngle = 180 - sweepAngle,
-        sweepAngle = sweepAngle,
-        useCenter = false,
-        size = Size(mCurve, mCurve),
-        topLeft = Offset(
-            left - borderOutline, height + top + borderOutline - mCurve
-        )
-    )
-
-    //Top-Left Arc
-    drawArc(
-        color = borderColor,
-        style = Stroke(strokeWidth.toPx(), cap = cap),
-        startAngle = 180f,
-        sweepAngle = sweepAngle,
-        useCenter = false,
-        size = Size(mCurve, mCurve),
-        topLeft = Offset(
-            left - borderOutline, top - borderOutline
-        )
-    )
-
-    drawArc(
-        color = borderColor,
-        style = Stroke(strokeWidth.toPx(), cap = cap),
-        startAngle = 270 - sweepAngle,
-        sweepAngle = sweepAngle,
-        useCenter = false,
-        size = Size(mCurve, mCurve),
-        topLeft = Offset(
-            left - borderOutline, top - borderOutline
-        )
-    )
-
-    // Top-right Arc
-    drawArc(
-        color = borderColor,
-        style = Stroke(strokeWidth.toPx(), cap = cap),
-        startAngle = 270f,
-        sweepAngle = sweepAngle,
-        useCenter = false,
-        size = Size(mCurve, mCurve),
-        topLeft = Offset(
-            width + left + borderOutline - mCurve, top - borderOutline
-        )
-    )
-
-    drawArc(
-        color = borderColor,
-        style = Stroke(strokeWidth.toPx(), cap = cap),
-        startAngle = 360 - sweepAngle,
-        sweepAngle = sweepAngle,
-        useCenter = false,
-        size = Size(mCurve, mCurve),
-        topLeft = Offset(
-            width + left + borderOutline - mCurve, top - borderOutline
-        )
-    )
-
-    //bottom-right Line
-    drawLine(
-        SolidColor(borderColor),
-        Offset(width + left + borderOutline, height + top - curvePx),
-        Offset(width + left + borderOutline, height + top - mCapSize),
-        strokeWidth.toPx(),
-        lineCap,
-    )
-
-    drawLine(
-        SolidColor(borderColor),
-        Offset(width + left - mCapSize, height + top + borderOutline),
-        Offset(width + left - curvePx, height + top + borderOutline),
-        strokeWidth.toPx(),
-        lineCap,
-    )
-
-    //bottom-left Line
-    drawLine(
-        SolidColor(borderColor),
-        Offset(left + mCapSize, height + top + borderOutline),
-        Offset(left + curvePx, height + top + borderOutline),
-        strokeWidth.toPx(),
-        lineCap,
-    )
-
-    drawLine(
-        SolidColor(borderColor),
-        Offset(left - borderOutline, height + top - curvePx),
-        Offset(left - borderOutline, height + top - mCapSize),
-        strokeWidth.toPx(),
-        lineCap
-    )
-
-    // Top-left line
-    drawLine(
-        SolidColor(borderColor),
-        Offset(left - borderOutline, curvePx + top),
-        Offset(left - borderOutline, mCapSize + top),
-        strokeWidth.toPx(),
-        lineCap,
-    )
-
-    drawLine(
-        SolidColor(borderColor),
-        Offset(curvePx + left, top - borderOutline),
-        Offset(left + mCapSize, top - borderOutline),
-        strokeWidth.toPx(),
-        lineCap,
-    )
-
-    // Top-right line
-    drawLine(
-        SolidColor(borderColor),
-        Offset(width + left - curvePx, top - borderOutline),
-        Offset(width + left - mCapSize, top - borderOutline),
-        strokeWidth.toPx(),
-        lineCap,
-    )
-
-    drawLine(
-        SolidColor(borderColor),
-        Offset(width + left + borderOutline, curvePx + top),
-        Offset(width + left + borderOutline, mCapSize + top),
-        strokeWidth.toPx(),
-        lineCap
-    )
-
 }
