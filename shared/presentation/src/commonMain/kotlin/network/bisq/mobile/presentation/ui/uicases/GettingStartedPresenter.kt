@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases
 
+import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -7,6 +8,7 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -16,7 +18,8 @@ open class GettingStartedPresenter(
     mainPresenter: MainPresenter,
     private val bisqStatsRepository: BisqStatsRepository,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val createOfferPresenter: CreateOfferPresenter
+    private val createOfferPresenter: CreateOfferPresenter,
+    private val offerbookServiceFacade: OfferbookServiceFacade
 ) : BasePresenter(mainPresenter), IGettingStarted {
     override val title: String = "Bisq Easy Client"
 
@@ -63,9 +66,12 @@ open class GettingStartedPresenter(
     private fun refresh() {
         job = backgroundScope.launch {
             try {
+                // TODO get published profiles data from service
                 val bisqStats = bisqStatsRepository.fetch()
-                _offersOnline.value = bisqStats?.offersOnline ?: 0
                 _publishedProfiles.value = bisqStats?.publishedProfiles ?: 0
+                offerbookServiceFacade.offerListItems.collect {
+                    _offersOnline.value = it.size
+                }
             } catch (e: Exception) {
                 // Handle errors
                 println("Error: ${e.message}")

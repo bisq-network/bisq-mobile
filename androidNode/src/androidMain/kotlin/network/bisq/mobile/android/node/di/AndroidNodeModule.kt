@@ -70,7 +70,7 @@ val androidNodeModule = module {
     }
 
     single<GettingStartedPresenter> {
-        NodeGettingStartedPresenter(get(), get(), get(), get())
+        NodeGettingStartedPresenter(get(), get(), get(), get(), get())
     }
 
     single<SettingsPresenter> { NodeSettingsPresenter(get(), get()) } bind ISettingsPresenter::class
