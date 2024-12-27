@@ -129,6 +129,7 @@ fun WelcomeCard(
             // Primary Button
             Button(
                 onClick={ presenter.navigateToCreateOffer() },
+                enabled = presenter.isInteractive.collectAsState().value,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = BisqTheme.colors.primary),
                 shape = RoundedCornerShape(8.dp)

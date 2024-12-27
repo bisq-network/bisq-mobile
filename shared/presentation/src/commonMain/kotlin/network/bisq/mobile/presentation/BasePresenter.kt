@@ -2,14 +2,8 @@ package network.bisq.mobile.presentation
 
 import androidx.annotation.CallSuper
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.*
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.i18n.AppStrings
@@ -20,6 +14,12 @@ import network.bisq.mobile.domain.utils.Logging
  * Presenter methods accesible by all views. Views should extend this interface when defining the behaviour expected for their presenter.
  */
 interface ViewPresenter {
+
+    /**
+     * allows to enable/disable UI components from the presenters
+     */
+    val isInteractive: StateFlow<Boolean>
+
     /**
      * @return root navigation controller
      */
@@ -68,6 +68,10 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
 
+    // Presenter is interactive by default
+    private val _isInteractive = MutableStateFlow(true)
+    override val isInteractive: StateFlow<Boolean> = _isInteractive
+
     /**
      * @throws IllegalStateException if this presenter has no root
      * @return Nav controller for navigation from the root
@@ -78,6 +82,17 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
 
     init {
         rootPresenter?.registerChild(child = this)
+    }
+
+    protected fun enableInteractive(enable: Boolean) {
+        if (enable) {
+            presenterScope.launch {
+                delay(250L)
+                _isInteractive.value = enable
+            }
+        } else {
+            _isInteractive.value = enable
+        }
     }
 
     /**

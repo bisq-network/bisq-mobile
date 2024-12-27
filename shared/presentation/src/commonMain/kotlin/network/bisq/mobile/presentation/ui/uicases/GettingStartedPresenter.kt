@@ -12,13 +12,13 @@ import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter
 
-class GettingStartedPresenter(
+open class GettingStartedPresenter(
     mainPresenter: MainPresenter,
     private val bisqStatsRepository: BisqStatsRepository,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter), IGettingStarted {
-    override val title: String = "Bisq Easy - Trusted node edition"
+    override val title: String = "Bisq Easy Client"
 
     override val bulletPoints: List<String> = listOf(
         "Experience Bisq with the guidance of a trusted friend or connect remotely to your own full node.",
@@ -37,13 +37,16 @@ class GettingStartedPresenter(
     private var job: Job? = null
 
     override fun navigateToCreateOffer() {
-        //rootNavigator.popBackStack(Routes.TabContainer.name, inclusive = false, saveState = false)
+        enableInteractive(false)
         createOfferPresenter.onStartCreateOffer()
         rootNavigator.navigate(Routes.CreateOfferDirection.name)
+        enableInteractive(true)
     }
 
     override fun navigateLearnMore() {
+        enableInteractive(false)
         navigateToUrl("https://bisq.wiki/Bisq_Easy")
+        enableInteractive(true)
     }
 
     private fun refresh() {
