@@ -7,12 +7,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.data.model.OfferListItem
+import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 
 // TODO: Get params and render apt
 @Composable
-fun PaymentMethods(item: OfferListItem) {
+fun PaymentMethods(item: OfferListItemVO) {
     val baseSidePaymentMethods = item.baseSidePaymentMethods
     val quoteSidePaymentMethods = item.quoteSidePaymentMethods
     var customMethodCounter = 1

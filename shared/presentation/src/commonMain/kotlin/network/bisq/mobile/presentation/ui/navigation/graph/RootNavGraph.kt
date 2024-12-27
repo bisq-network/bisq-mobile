@@ -11,19 +11,24 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferPaymentMethodScreen
-import network.bisq.mobile.presentation.ui.navigation.*
+import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.uicases.*
-import network.bisq.mobile.presentation.ui.uicases.offers.OffersListScreen
-import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.*
-import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferReviewTradeScreen
-import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TakeOfferTradeAmountScreen
+import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
+import network.bisq.mobile.presentation.ui.uicases.offer.OffersListScreen
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferAmountSelectorScreen
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferBuySellScreen
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferCurrencySelectorScreen
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPaymentMethodSelectorScreen
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferReviewOfferScreen
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferTradePriceSelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScreen
+import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPaymentMethodScreen
+import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferReviewTradeScreen
+import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferTradeAmountScreen
 import network.bisq.mobile.presentation.ui.uicases.trades.TradeFlowScreen
 
 @Composable
@@ -53,7 +58,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
             TabContainerScreen()
         }
 
-        addScreen(Routes.OfferList.name) {
+        addScreen(Routes.Offerbook.name) {
             OffersListScreen()
         }
 
@@ -73,11 +78,11 @@ fun RootNavGraph(rootNavController: NavHostController) {
             TradeFlowScreen()
         }
 
-        addScreen(Routes.CreateOfferBuySell.name) {
+        addScreen(Routes.CreateOfferDirection.name) {
             CreateOfferBuySellScreen()
         }
 
-        addScreen(Routes.CreateOfferCurrency.name, wizardTransition = true) {
+        addScreen(Routes.CreateOfferMarket.name, wizardTransition = true) {
             CreateOfferCurrencySelectorScreen()
         }
 
@@ -85,7 +90,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
             CreateOfferAmountSelectorScreen()
         }
 
-        addScreen(Routes.CreateOfferTradePrice.name, wizardTransition = true) {
+        addScreen(Routes.CreateOfferPrice.name, wizardTransition = true) {
             CreateOfferTradePriceSelectorScreen()
         }
 

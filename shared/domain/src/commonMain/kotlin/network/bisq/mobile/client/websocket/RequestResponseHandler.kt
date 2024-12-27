@@ -8,7 +8,7 @@ import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.websocket.messages.WebSocketMessage
 import network.bisq.mobile.client.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketResponse
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 
 /**
  * Handles request-response communication over a WebSocket connection.

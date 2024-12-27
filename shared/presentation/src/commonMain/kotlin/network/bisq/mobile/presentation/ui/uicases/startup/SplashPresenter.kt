@@ -51,33 +51,62 @@ open class SplashPresenter(
         CoroutineScope(Dispatchers.Main).launch {
             val settings: Settings = settingsRepository.fetch() ?: Settings()
             val user: User? = userRepository.fetch()
+            val hasProfile: Boolean = userProfileService.hasUserProfile()
 
-            if (user == null) {
-                navigateToCreateProfile()
+            // Scenario 1: All good and setup for both androidNode and xClients
+            if (user != null && hasProfile) {
+                // TOOD:
+                // 1) Is this the right condition?
+                // 2a) androidNode being able to connect with other peers and
+                // 2b) xClients being able to connect with remote instance happening successfuly as part of services init?
+                navigateToHome()
+            // Scenario 2: Loading up for first time for both androidNode and xClients
+            } else if (settings.firstLaunch) {
+                navigateToOnboarding()
+            // Scenario 3: Handle others based on app type
             } else {
-                if (userProfileService.hasUserProfile()) {
-                    if (!doCustomNavigationLogic(settings)) {
-                        navigateToHome()
-                    }
-                } else {
-                    // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
-                    // If not, goto CreateProfile
-                    if (settings.firstLaunch) {
-                        // TODO after onboarding need to make sure the rest is configured?
-                        rootNavigator.navigate(Routes.Onboarding.name) {
-                            popUpTo(Routes.Splash.name) { inclusive = true }
-                        }
-                    } else {
-                        rootNavigator.navigate(Routes.CreateProfile.name) {
-                            popUpTo(Routes.Splash.name) { inclusive = true }
-                        }
-                    }
-                }
+                doCustomNavigationLogic(settings, hasProfile)
             }
+
+
+//            if (user == null) {
+//                navigateToCreateProfile()
+//            } else {
+//                if (userProfileService.hasUserProfile()) {
+//                    if (!doCustomNavigationLogic(settings)) {
+//                        navigateToHome()
+//                    }
+//                } else {
+//                    // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
+//                    // If not, goto CreateProfile
+//                    if (settings.firstLaunch) {
+//                        // TODO after onboarding need to make sure the rest is configured?
+//                        rootNavigator.navigate(Routes.Onboarding.name) {
+//                            popUpTo(Routes.Splash.name) { inclusive = true }
+//                        }
+//                    } else {
+//                        rootNavigator.navigate(Routes.CreateProfile.name) {
+//                            popUpTo(Routes.Splash.name) { inclusive = true }
+//                        }
+//                    }
+//                }
+//            }
         }
     }
 
-    private fun navigateToCreateProfile() {
+    private fun navigateToTrustedNodeSetup() {
+        rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
+            popUpTo(Routes.Splash.name) { inclusive = true }
+        }
+    }
+
+    private fun navigateToOnboarding() {
+        rootNavigator.navigate(Routes.Onboarding.name) {
+            popUpTo(Routes.Splash.name) { inclusive = true }
+        }
+    }
+
+    protected fun navigateToCreateProfile() {
         rootNavigator.navigate(Routes.CreateProfile.name) {
             popUpTo(Routes.Splash.name) { inclusive = true }
         }
@@ -93,16 +122,21 @@ open class SplashPresenter(
      * Default implementation in shared is for xClients. Override on node to avoid this.
      * @return true if handled, false otherwise
      */
-    open fun doCustomNavigationLogic(settings: Settings): Boolean {
+    open fun doCustomNavigationLogic(settings: Settings, hasProfile: Boolean): Boolean {
         when {
-            settings.bisqApiUrl.isEmpty() -> {
-                rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
-                    popUpTo(Routes.Splash.name) { inclusive = true }
-                }
-            }
-//            settings.firstLaunch -> navigateToCreateProfile()
-            else -> navigateToHome()
+            settings.bisqApiUrl.isEmpty() -> navigateToTrustedNodeSetup()
+            settings.bisqApiUrl.isNotEmpty() && hasProfile -> navigateToCreateProfile()
+            else -> navigateToHome() // TODO: Ideally this shouldn't happen here
         }
+//        when {
+//            settings.bisqApiUrl.isEmpty() -> {
+//                rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
+//                    popUpTo(Routes.Splash.name) { inclusive = true }
+//                }
+//            }
+////            settings.firstLaunch -> navigateToCreateProfile()
+//            else -> navigateToHome()
+//        }
         return true
     }
 

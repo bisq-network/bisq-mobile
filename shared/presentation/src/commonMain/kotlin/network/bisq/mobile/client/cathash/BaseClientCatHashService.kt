@@ -3,13 +3,15 @@ package network.bisq.mobile.client.cathash
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.Sign
 import kotlinx.datetime.Clock
-import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
-import network.bisq.mobile.client.user_profile.ClientCatHashService
+import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.utils.Logging
-import network.bisq.mobile.utils.concat
-import network.bisq.mobile.utils.hexToByteArray
-import network.bisq.mobile.utils.toHex
+import network.bisq.mobile.domain.replicated.security.pow.solutionAsByteArray
+import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.replicated.user.profile.id
+import network.bisq.mobile.domain.replicated.user.profile.pubKeyHashAsByteArray
+import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.concat
+import network.bisq.mobile.domain.utils.toHex
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.SYSTEM
@@ -29,19 +31,15 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
     protected abstract fun writeRawImage(image: PlatformImage, iconFilePath: String)
     protected abstract fun readRawImage(iconFilePath: String): PlatformImage?
 
-    fun getImage(userProfile: UserProfile, size: Int): PlatformImage? {
-        try {
-            val pubKeyHash = userProfile.pubKeyHash!!.hexToByteArray()
-            return getImage(
-                pubKeyHash,
-                userProfile.proofOfWork!!.solution,
-                userProfile.avatarVersion!!,
-                size
-            )
-        } catch (e: Exception) {
-            log.e(e) { "Failed to get image from profile" }
-            return null
-        }
+    fun getImage(userProfile: UserProfileVO, size: Int): PlatformImage? {
+        val pubKeyHash: ByteArray = userProfile.pubKeyHashAsByteArray
+        val powSolution: ByteArray = userProfile.proofOfWork.solutionAsByteArray
+        return getImage(
+            pubKeyHash,
+            powSolution,
+            userProfile.avatarVersion,
+            size
+        )
     }
 
     override fun getImage(
@@ -106,7 +104,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
         }
     }
 
-    fun pruneOutdatedProfileIcons(userProfiles: Collection<UserProfile>) {
+    fun pruneOutdatedProfileIcons(userProfiles: Collection<UserProfileVO>) {
         if (userProfiles.isEmpty()) return
 
         val iconsDirectory = baseDirPath.toPath().resolve(CATHASH_ICONS_PATH)

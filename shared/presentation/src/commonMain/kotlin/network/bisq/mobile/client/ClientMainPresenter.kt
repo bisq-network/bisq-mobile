@@ -12,11 +12,12 @@ class ClientMainPresenter(
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val trustedNodeService: TrustedNodeService,
     private val offerbookServiceFacade: OfferbookServiceFacade,
-    private val  marketPriceServiceFacade: MarketPriceServiceFacade
+    private val marketPriceServiceFacade: MarketPriceServiceFacade
 ) : MainPresenter(notificationServiceController) {
 
     override fun onViewAttached() {
         super.onViewAttached()
+
         runCatching {
             applicationBootstrapFacade.activate()
             offerbookServiceFacade.activate()

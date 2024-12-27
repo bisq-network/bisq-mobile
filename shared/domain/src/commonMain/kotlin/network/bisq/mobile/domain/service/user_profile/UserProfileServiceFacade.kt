@@ -1,7 +1,7 @@
 package network.bisq.mobile.domain.service.user_profile
 
-import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
 
 interface UserProfileServiceFacade {
     /**
@@ -43,10 +43,10 @@ interface UserProfileServiceFacade {
      * Applies the selected user identity to the user profile model
      * @return Triple containing nickname, nym and id
      */
-    suspend fun applySelectedUserProfile():Triple<String?, String?, String?>
+    suspend fun applySelectedUserProfile(): Triple<String?, String?, String?>
 
     /**
      * @return UserProfile if existent, null otherwise
      */
-    suspend fun getSelectedUserProfile(): UserProfile?
+    suspend fun getSelectedUserProfile(): UserProfileVO?
 }

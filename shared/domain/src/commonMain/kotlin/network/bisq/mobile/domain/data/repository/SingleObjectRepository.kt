@@ -8,7 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.data.persistance.PersistenceSource
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 
 
 /**

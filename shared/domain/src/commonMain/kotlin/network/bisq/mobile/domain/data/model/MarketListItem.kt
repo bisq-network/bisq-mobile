@@ -18,14 +18,13 @@ package network.bisq.mobile.domain.data.model
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.serialization.Serializable
-import network.bisq.mobile.client.replicated_model.common.currency.Market
+import network.bisq.mobile.domain.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.replicated.common.currency.Markets
 
 /**
  * Provides data for offerbook market list items
  */
-@Serializable
-data class MarketListItem(val market: Market) : BaseModel() {
+data class MarketListItem(val market: MarketVO) {
     private val _numOffers = MutableStateFlow(0)
     val numOffers: StateFlow<Int> get() = _numOffers
     fun setNumOffers(value: Int) {
@@ -38,7 +37,6 @@ data class MarketListItem(val market: Market) : BaseModel() {
     }
 
     companion object {
-        val EMPTY: MarketListItem = MarketListItem(Market.EMPTY)
-        val USD: MarketListItem = MarketListItem(Market.USD)
+        val USD: MarketListItem = MarketListItem(Markets.USD)
     }
 }

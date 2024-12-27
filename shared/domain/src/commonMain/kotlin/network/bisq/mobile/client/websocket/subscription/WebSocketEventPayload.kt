@@ -4,7 +4,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.serializer
 import network.bisq.mobile.client.websocket.messages.WebSocketEvent
-import network.bisq.mobile.utils.getLogger
+import network.bisq.mobile.domain.utils.getLogger
 
 data class WebSocketEventPayload<T>(val payload: T) {
     companion object {

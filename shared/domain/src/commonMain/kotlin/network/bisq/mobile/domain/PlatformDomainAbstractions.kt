@@ -3,11 +3,13 @@
 package network.bisq.mobile.domain
 
 import com.russhwolf.settings.Settings
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
-import kotlinx.serialization.descriptors.*
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -26,6 +28,7 @@ expect class PlatformImage {
     companion object {
         fun deserialize(data: ByteArray): PlatformImage
     }
+
     fun serialize(): ByteArray
 }
 
@@ -44,3 +47,10 @@ object PlatformImageSerializer : KSerializer<PlatformImage> {
         return PlatformImage.deserialize(byteArray)
     }
 }
+
+
+interface DecimalFormatter {
+    fun format(value: Double, precision: Int): String
+}
+
+expect val decimalFormatter: DecimalFormatter

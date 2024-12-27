@@ -2,9 +2,9 @@ package network.bisq.mobile.presentation.ui.uicases.trades
 
 import androidx.compose.runtime.Composable
 import cafe.adriel.lyricist.LocalStrings
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import network.bisq.mobile.domain.data.model.OfferListItem
+import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -33,7 +33,7 @@ open class TradeFlowPresenter(
     private val offerbookServiceFacade: OfferbookServiceFacade,
 ) : BasePresenter(mainPresenter), ITradeFlowPresenter {
 
-    override val offerListItems: StateFlow<List<OfferListItem>> = offerbookServiceFacade.offerListItems
+    override val offerListItems: StateFlow<List<OfferListItemVO>> = offerbookServiceFacade.offerListItems
 
     override val steps = listOf(
         TradeFlowScreenSteps.ACCOUNT_DETAILS,
@@ -71,7 +71,7 @@ open class TradeFlowPresenter(
 
     override fun closeTradeConfirm() {
         setShowCloseTradeDialog(false)
-        rootNavigator.popBackStack(Routes.OfferList.name, inclusive = false, saveState = false)
+        rootNavigator.popBackStack(Routes.Offerbook.name, inclusive = false, saveState = false)
     }
 
     override fun openWalletGuideLink() {

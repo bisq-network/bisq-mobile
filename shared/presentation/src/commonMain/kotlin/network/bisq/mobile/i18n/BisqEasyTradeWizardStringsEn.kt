@@ -1,7 +1,5 @@
 package network.bisq.mobile.i18n
 
-import cafe.adriel.lyricist.LyricistStrings
-
 // @LyricistStrings(languageTag = Locales.EN, default = true)
 val EnBisqEasyTradeWizardStrings = BisqEasyTradeWizardStrings(
     bisqEasy_tradeWizard_progress_directionAndMarket = "Offer type",
@@ -10,7 +8,8 @@ val EnBisqEasyTradeWizardStrings = BisqEasyTradeWizardStrings(
     bisqEasy_tradeWizard_progress_paymentMethods = "Payment methods",
     bisqEasy_tradeWizard_progress_takeOffer = "Select offer",
     bisqEasy_tradeWizard_progress_review = "Review",
-    bisqEasy_tradeWizard_directionAndMarket_headline = "Do you want to buy or sell Bitcoin with",
+    bisqEasy_tradeWizard_directionAndMarket_headline = "Do you want to buy or sell Bitcoin?",
+    bisqEasy_tradeWizard_directionAndMarket_headlineWithCode = { code -> "Do you want to buy or sell Bitcoin with $code" },
     bisqEasy_tradeWizard_directionAndMarket_buy = "Buy Bitcoin",
     bisqEasy_tradeWizard_directionAndMarket_sell = "Sell Bitcoin",
     bisqEasy_tradeWizard_directionAndMarket_feedback_headline = "How to build up reputation?",
@@ -143,8 +142,8 @@ val EnBisqEasyTradeWizardStrings = BisqEasyTradeWizardStrings(
     bisqEasy_tradeWizard_review_price = "{0} <{1} style=trade-wizard-review-code>",
     bisqEasy_tradeWizard_review_priceDescription_taker = "Trade price",
     bisqEasy_tradeWizard_review_priceDescription_maker = "Offer price",
-    bisqEasy_tradeWizard_review_priceDetails_fix = "Fix price. {0} {1} market price of {2}",
-    bisqEasy_tradeWizard_review_priceDetails_fix_atMarket = "Fix price. Same as market price of {0}",
+    bisqEasy_tradeWizard_review_priceDetails_fix = { percentage, direction, rate -> "Fix price. $percentage $direction market price of $rate" },
+    bisqEasy_tradeWizard_review_priceDetails_fix_atMarket = { price -> "Fix price. Same as market price of $price" },
     bisqEasy_tradeWizard_review_priceDetails_float = { percentage, direction, rate -> "Float price. $percentage $direction market price of $rate" },
     bisqEasy_tradeWizard_review_priceDetails = "Floats with the market price",
     bisqEasy_tradeWizard_review_nextButton_createOffer = "Create offer",

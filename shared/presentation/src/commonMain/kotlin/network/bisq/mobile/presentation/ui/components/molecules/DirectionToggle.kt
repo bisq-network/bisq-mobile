@@ -23,17 +23,17 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
-import kotlinx.coroutines.selects.select
-import network.bisq.mobile.client.replicated_model.offer.Direction
+import network.bisq.mobile.domain.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.replicated.offer.isBuy
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun DirectionToggle(
-    directions: List<Direction>,
-    initialDirection: Direction,
+    directions: List<DirectionEnum>,
+    initialDirection: DirectionEnum,
     transitionX: Dp,
-    onStateChange: (Direction) -> Unit
+    onStateChange: (DirectionEnum) -> Unit
 ) {
     val strings = LocalStrings.current.common
     var selectedDirection by remember {
@@ -72,7 +72,7 @@ fun DirectionToggle(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                directions.forEach{ direction ->
+                directions.forEach { direction ->
                     Box(
                         modifier = Modifier
                             .padding(horizontal = 32.dp, vertical = 12.dp)

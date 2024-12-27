@@ -4,14 +4,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.client.replicated_model.user.profile.UserProfile
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.UserRepository
+import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.replicated.user.profile.id
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.utils.DateUtils
 
 class UserProfileSettingsPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
@@ -77,19 +78,19 @@ class UserProfileSettingsPresenter(
         _lastUserActivity.value = user.lastActivity?.let { DateUtils.toDateString(it) } ?: DEFAULT_UNKNOWN_VALUE
     }
 
-    private fun setBotId(userProfile: UserProfile) {
+    private fun setBotId(userProfile: UserProfileVO) {
         _botId.value = userProfile.nym ?: DEFAULT_UNKNOWN_VALUE
     }
 
-    private fun setNickname(userProfile: UserProfile) {
+    private fun setNickname(userProfile: UserProfileVO) {
         _nickname.value = userProfile.nickName ?: DEFAULT_UNKNOWN_VALUE
     }
 
-    private fun setProfileId(userProfile: UserProfile) {
+    private fun setProfileId(userProfile: UserProfileVO) {
         _profileId.value = userProfile.id ?: DEFAULT_UNKNOWN_VALUE
     }
 
-    private fun setProfileAge(userProfile: UserProfile) {
+    private fun setProfileAge(userProfile: UserProfileVO) {
         userProfile.publishDate?.let { pd ->
             _profileAge.value = DateUtils.periodFrom(pd).let {
                 listOfNotNull(

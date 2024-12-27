@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.i18n.AppStrings
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 
 
 /**

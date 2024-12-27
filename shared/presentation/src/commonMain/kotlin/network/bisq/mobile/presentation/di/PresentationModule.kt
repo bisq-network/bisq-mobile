@@ -6,17 +6,15 @@ import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.IOffersListPresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.MarketListPresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.OffersListPresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.ITakeOfferPaymentMethodPresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.ITakeOfferReviewTradePresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.ITakeOfferTradeAmountPresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.PaymentMethodPresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.ReviewTradePresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.takeOffer.TradeAmountPresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.CreateOfferPresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.createOffer.ICreateOfferPresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.MarketListPresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.OffersListPresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferAmountPresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferDirectionPresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferMarketPresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPaymentMethodPresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPricePresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferReviewPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfileSettingsPresenter
@@ -29,6 +27,10 @@ import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPres
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupPresenter
+import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferAmountPresenter
+import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPaymentMethodPresenter
+import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferReviewPresenter
 import network.bisq.mobile.presentation.ui.uicases.trades.IMyTrades
 import network.bisq.mobile.presentation.ui.uicases.trades.ITradeFlowPresenter
 import network.bisq.mobile.presentation.ui.uicases.trades.MyTradesPresenter
@@ -51,19 +53,15 @@ val presentationModule = module {
         )
     }
 
-    single { OnBoardingPresenter(get(), get()) } bind IOnboardingPresenter::class
+//    single { TabContainerPresenter(get()) } bind ITabContainerPresenter::class
+
+    single { OnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
 
     single<SettingsPresenter> { SettingsPresenter(get(), get()) } bind ISettingsPresenter::class
 
     single<UserProfileSettingsPresenter> { UserProfileSettingsPresenter(get(), get(), get()) } bind IUserProfileSettingsPresenter::class
 
-    single<GettingStartedPresenter> {
-        GettingStartedPresenter(
-            get(),
-            bisqStatsRepository = get(),
-            get()
-        )
-    }
+    single<GettingStartedPresenter> { GettingStartedPresenter(get(), get(), get(), get()) }
 
     single {
         CreateProfilePresenter(
@@ -82,13 +80,7 @@ val presentationModule = module {
 
     single<MarketListPresenter> { MarketListPresenter(get(), get()) }
 
-    single<OffersListPresenter> { OffersListPresenter(get(), get()) } bind IOffersListPresenter::class
-
-    single<TradeAmountPresenter> { TradeAmountPresenter(get(), get()) } bind ITakeOfferTradeAmountPresenter::class
-
-    single { PaymentMethodPresenter(get(), get()) } bind ITakeOfferPaymentMethodPresenter::class
-
-    single{ ReviewTradePresenter(get(), get()) } bind ITakeOfferReviewTradePresenter::class
+    single<OffersListPresenter> { OffersListPresenter(get(), get(), get()) }
 
     single {
         MyTradesPresenter(
@@ -97,9 +89,22 @@ val presentationModule = module {
         )
     } bind IMyTrades::class
 
-    single{ TradeFlowPresenter(get(), get()) } bind ITradeFlowPresenter::class
+    single { TradeFlowPresenter(get(), get()) } bind ITradeFlowPresenter::class
 
-    single{ CreateOfferPresenter(get(), get()) } bind ICreateOfferPresenter::class
+    single { PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
 
-    single{ PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
+    // Take offer
+    single { TakeOfferPresenter(get(), get(), get()) }
+    single { TakeOfferAmountPresenter(get(), get()) }
+    single { TakeOfferPaymentMethodPresenter(get(), get()) }
+    single { TakeOfferReviewPresenter(get(), get(), get()) }
+
+    // Create offer
+    single { CreateOfferPresenter(get(), get(), get()) }
+    single { CreateOfferDirectionPresenter(get(), get()) }
+    single { CreateOfferMarketPresenter(get(), get(), get()) }
+    single { CreateOfferPricePresenter(get(), get()) }
+    single { CreateOfferAmountPresenter(get(), get(), get()) }
+    single { CreateOfferPaymentMethodPresenter(get(), get()) }
+    single { CreateOfferReviewPresenter(get(), get()) }
 }

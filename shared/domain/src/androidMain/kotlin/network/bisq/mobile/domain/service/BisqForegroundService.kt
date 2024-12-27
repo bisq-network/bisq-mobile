@@ -2,7 +2,6 @@ package network.bisq.mobile.domain.service
 
 import android.app.Notification
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
@@ -11,14 +10,13 @@ import android.content.pm.ServiceInfo
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import androidx.core.content.ContextCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import network.bisq.mobile.utils.Logging
+import network.bisq.mobile.domain.utils.Logging
 
 /**
  * Implements foreground service (api >= 26) or background service accordingly

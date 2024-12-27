@@ -1,30 +1,43 @@
 package network.bisq.mobile.presentation.ui.uicases.trades
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.data.model.OfferListItem
+import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.presentation.ViewPresenter
-import network.bisq.mobile.presentation.ui.components.atoms.*
-import network.bisq.mobile.presentation.ui.components.atoms.layout.*
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.organisms.trades.CloseTradeCard
-import network.bisq.mobile.presentation.ui.components.organisms.trades.*
+import network.bisq.mobile.presentation.ui.components.organisms.trades.StepperSection
+import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeFlowAccountDetails
+import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeFlowBtcPayment
+import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeFlowCompleted
+import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeFlowFiatPayment
+import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeHeader
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 interface ITradeFlowPresenter : ViewPresenter {
     // TODO: Update later to refer to a single state specific object
-    val offerListItems: StateFlow<List<OfferListItem>>
+    val offerListItems: StateFlow<List<OfferListItemVO>>
 
     val steps: List<TradeFlowScreenSteps>
 

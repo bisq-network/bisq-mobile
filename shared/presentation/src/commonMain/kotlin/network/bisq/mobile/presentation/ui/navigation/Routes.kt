@@ -1,7 +1,5 @@
 package network.bisq.mobile.presentation.ui.navigation
 
-import org.jetbrains.compose.resources.StringResource
-
 object Graph {
     const val MAIN_SCREEN_GRAPH_KEY = "mainScreenGraph"
 }
@@ -17,17 +15,17 @@ enum class Routes(val title: String) {
     TabMyTrades(title = "tab_my_trades"),
     TabSettings(title = "tab_settings"),
     UserProfileSettings(title = "user_profile_settings"),
-    OfferList(title = "offer_list"),
+    Offerbook(title = "offer_list"),
     TakeOfferTradeAmount(title = "take_offer_trade_amount"),
     TakeOfferPaymentMethod(title = "take_offer_payment_method"),
     TakeOfferReviewTrade(title = "take_offer_review_trade"),
 
     TradeFlow(title = "trade_flow"),
 
-    CreateOfferBuySell(title = "create_offer_buy_sel"),
-    CreateOfferCurrency(title = "create_offer_currency"),
+    CreateOfferDirection(title = "create_offer_buy_sel"),
+    CreateOfferMarket(title = "create_offer_currency"),
     CreateOfferAmount(title = "create_offer_amount"),
-    CreateOfferTradePrice(title = "create_offer_trade_price"),
+    CreateOfferPrice(title = "create_offer_trade_price"),
     CreateOfferPaymentMethod(title = "create_offer_payment_method"),
     CreateOfferReviewOffer(title = "create_offer_review_offer"),
 }

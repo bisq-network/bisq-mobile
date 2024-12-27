@@ -15,10 +15,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonTransformingSerializer
-import kotlinx.serialization.json.jsonObject
 import network.bisq.mobile.client.websocket.messages.SubscriptionRequest
 import network.bisq.mobile.client.websocket.messages.SubscriptionResponse
 import network.bisq.mobile.client.websocket.messages.WebSocketEvent
@@ -29,8 +25,8 @@ import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.utils.Logging
-import network.bisq.mobile.utils.createUuid
+import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.createUuid
 
 class WebSocketClient(
     private val httpClient: HttpClient,
@@ -96,11 +92,7 @@ class WebSocketClient(
     suspend fun subscribe(topic: Topic, parameter: String? = null): WebSocketEventObserver? {
         val subscriberId = createUuid()
         log.i { "Subscribe for topic $topic and subscriberId $subscriberId" }
-        val responseClassName = SubscriptionResponse::class.qualifiedName!!
-        val webSocketEventClassName = WebSocketEvent::class.qualifiedName!!
         val subscriptionRequest = SubscriptionRequest(
-            responseClassName,
-            webSocketEventClassName,
             subscriberId,
             topic,
             parameter
@@ -150,7 +142,7 @@ class WebSocketClient(
                     //todo add input validation
                     log.i { "Received raw text $message" }
                     val webSocketMessage: WebSocketMessage =
-                        json.decodeFromString(ServerEventSerializer, message)
+                        json.decodeFromString(WebSocketMessage.serializer(), message)
                     log.i { "Received webSocketMessage $webSocketMessage" }
                     if (webSocketMessage is WebSocketResponse) {
                         onWebSocketResponse(webSocketMessage)
@@ -172,12 +164,12 @@ class WebSocketClient(
         webSocketEventObservers[event.subscriberId]?.setEvent(event)
     }
 
-    object ServerEventSerializer :
-        JsonTransformingSerializer<WebSocketMessage>(WebSocketMessage.serializer()) {
-        override fun transformDeserialize(element: JsonElement): JsonElement {
-            // Ignore deferredPayload at deserialization as we do not know that type at that
-            // moment
-            return JsonObject(element.jsonObject.filterKeys { it != "deferredPayload" })
-        }
-    }
+    /* object ServerEventSerializer :
+         JsonTransformingSerializer<WebSocketMessage>(WebSocketMessage.serializer()) {
+         override fun transformDeserialize(element: JsonElement): JsonElement {
+             // Ignore deferredPayload at deserialization as we do not know that type at that
+             // moment
+             return JsonObject(element.jsonObject.filterKeys { it != "deferredPayload" })
+         }
+     }*/
 }

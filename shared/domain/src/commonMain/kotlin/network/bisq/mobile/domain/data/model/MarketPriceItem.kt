@@ -1,10 +1,10 @@
 package network.bisq.mobile.domain.data.model
 
-import network.bisq.mobile.client.replicated_model.common.currency.Market
+import kotlinx.serialization.Serializable
+import network.bisq.mobile.domain.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.replicated.common.monetary.PriceQuoteVO
 
-data class MarketPriceItem(val market: Market, val quote: Long, val formattedPrice: String) :
+@Serializable
+data class MarketPriceItem(val market: MarketVO, val priceQuote: PriceQuoteVO, val formattedPrice: String) :
     BaseModel() {
-    companion object {
-        val EMPTY: MarketPriceItem = MarketPriceItem(Market.EMPTY, 0, "")
-    }
 }

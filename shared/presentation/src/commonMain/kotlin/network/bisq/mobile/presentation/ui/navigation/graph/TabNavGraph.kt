@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation.ui.navigation.graph
 
 import androidx.compose.foundation.background
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -14,11 +13,10 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.navigation.Graph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedScreen
-import network.bisq.mobile.presentation.ui.uicases.offers.MarketListScreen
+import network.bisq.mobile.presentation.ui.uicases.offer.MarketListScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.trades.MyTradesScreen
 import org.koin.compose.koinInject
-import org.koin.core.qualifier.named
 
 @Composable
 fun TabNavGraph() {

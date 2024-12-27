@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.data.model.BisqOffer
+import network.bisq.mobile.domain.data.model.MockOffer
 import network.bisq.mobile.domain.data.repository.MyTradesRepository
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -17,8 +17,8 @@ class MyTradesPresenter(
     private val myTradesRepository: MyTradesRepository
 ) : BasePresenter(mainPresenter), IMyTrades {
 
-    private val _myTrades = MutableStateFlow<List<BisqOffer>>(emptyList())
-    override val myTrades: StateFlow<List<BisqOffer>> = _myTrades
+    private val _myTrades = MutableStateFlow<List<MockOffer>>(emptyList())
+    override val myTrades: StateFlow<List<MockOffer>> = _myTrades
 
     override fun navigateToCurrencyList() {
         val tabController = getRootTabNavController()

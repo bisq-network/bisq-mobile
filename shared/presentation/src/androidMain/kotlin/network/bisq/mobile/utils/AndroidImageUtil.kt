@@ -7,6 +7,7 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import network.bisq.mobile.domain.utils.Logging
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
