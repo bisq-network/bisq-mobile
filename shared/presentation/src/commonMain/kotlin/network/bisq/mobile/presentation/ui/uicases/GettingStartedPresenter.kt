@@ -4,6 +4,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
@@ -17,6 +18,13 @@ class GettingStartedPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter), IGettingStarted {
+    override val title: String = "Bisq Easy - Trusted node edition"
+
+    override val bulletPoints: List<String> = listOf(
+        "Experience Bisq with the guidance of a trusted friend or connect remotely to your own full node.",
+        "Connect to Trusted Nodes: Start trading with confidence by connecting to a trusted Bisq node hosted by someone you trust.",
+        "Remote Management for Experts: Manage your trades on the go by connecting securely to your own desktop-based Bisq node, no matter where you are."
+    )
 
     private val _offersOnline = MutableStateFlow(145)
     override val offersOnline: StateFlow<Int> = _offersOnline
@@ -32,6 +40,10 @@ class GettingStartedPresenter(
         //rootNavigator.popBackStack(Routes.TabContainer.name, inclusive = false, saveState = false)
         createOfferPresenter.onStartCreateOffer()
         rootNavigator.navigate(Routes.CreateOfferDirection.name)
+    }
+
+    override fun navigateLearnMore() {
+        navigateToUrl("https://bisq.wiki/Bisq_Easy")
     }
 
     private fun refresh() {

@@ -232,7 +232,10 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     fun setStrings(localStrings: AppStrings) {
-        BasePresenter.strings = localStrings
+        strings = localStrings
     }
 
+    open fun navigateToUrl(url: String) {
+        rootPresenter?.navigateToUrl(url)
+    }
 }

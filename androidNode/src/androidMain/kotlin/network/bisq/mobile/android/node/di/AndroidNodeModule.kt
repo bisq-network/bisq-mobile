@@ -13,6 +13,8 @@ import network.bisq.mobile.android.node.service.offer.NodeOfferServiceFacade
 import network.bisq.mobile.android.node.service.offerbook.NodeOfferbookServiceFacade
 import network.bisq.mobile.android.node.service.trade.NodeTradeServiceFacade
 import network.bisq.mobile.android.node.service.user_profile.NodeUserProfileServiceFacade
+import network.bisq.mobile.domain.AndroidUrlLauncher
+import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offer.OfferServiceFacade
@@ -53,9 +55,11 @@ val androidNodeModule = module {
 
     single<TradeServiceFacade> { NodeTradeServiceFacade(get()) }
 
+    single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
+
     // this line showcases both, the possibility to change behaviour of the app by changing one definition
     // and binding the same obj to 2 different abstractions
-    single<MainPresenter> { NodeMainPresenter(get(), get(), get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
+    single<MainPresenter> { NodeMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
 
     single<SplashPresenter> {
         NodeSplashPresenter(

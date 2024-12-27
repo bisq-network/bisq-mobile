@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.di
 
 import network.bisq.mobile.client.ClientMainPresenter
+import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
@@ -39,7 +40,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val presentationModule = module {
-    single<MainPresenter> { ClientMainPresenter(get(), get(), get(), get(), get()) } bind AppPresenter::class
+    single<MainPresenter> { ClientMainPresenter(get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
 
     single<TopBarPresenter> { TopBarPresenter(get(), get()) } bind ITopBarPresenter::class
 
