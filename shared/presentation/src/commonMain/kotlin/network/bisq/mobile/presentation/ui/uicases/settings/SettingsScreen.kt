@@ -37,10 +37,15 @@ fun SettingsScreen(isTabSelected: Boolean) {
     // Column is used leaving the possibility to the leaf views to set the scrolling as they please
     Column {
         BreadcrumbNavigation(path = menuPath) { index ->
-            currentMenu.value = menuPath[index]
-            // TODO might need complex index logic?
-            selectedLeaf.value = null
-            menuPath.removeRange(index + 1, menuPath.size)
+            if (index == menuPath.size - 1) {
+//                TODO Default: Do nth, otherwise we can choose the below
+//                currentMenu.value = menuPath[index - 1]
+//                menuPath.removeRange(index, menuPath.size)
+            } else {
+                currentMenu.value = menuPath[index]
+                menuPath.removeRange(index + 1, menuPath.size)
+                selectedLeaf.value = null
+            }
         }
 
         if (selectedLeaf.value == null) {

@@ -36,11 +36,22 @@ open class GettingStartedPresenter(
 
     private var job: Job? = null
 
-    override fun navigateToCreateOffer() {
+    override fun onStartTrading() {
         enableInteractive(false)
-        createOfferPresenter.onStartCreateOffer()
-        rootNavigator.navigate(Routes.CreateOfferDirection.name)
+        navigateToTradingTab()
         enableInteractive(true)
+    }
+
+    private fun navigateToTradingTab() {
+        getRootTabNavController().navigate(Routes.TabCurrencies.name) {
+            getRootTabNavController().graph.startDestinationRoute?.let { route ->
+                popUpTo(route) {
+                    saveState = true
+                }
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
     }
 
     override fun navigateLearnMore() {

@@ -39,7 +39,7 @@ interface IGettingStarted : ViewPresenter {
     val offersOnline: StateFlow<Number>
     val publishedProfiles: StateFlow<Number>
 
-    fun navigateToCreateOffer()
+    fun onStartTrading()
     fun navigateLearnMore()
 }
 
@@ -128,7 +128,7 @@ fun WelcomeCard(
 
             // Primary Button
             Button(
-                onClick={ presenter.navigateToCreateOffer() },
+                onClick={ presenter.onStartTrading() },
                 enabled = presenter.isInteractive.collectAsState().value,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = BisqTheme.colors.primary),
