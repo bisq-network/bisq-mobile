@@ -28,6 +28,4 @@ enum class Routes(val title: String) {
     CreateOfferPrice(title = "create_offer_trade_price"),
     CreateOfferPaymentMethod(title = "create_offer_payment_method"),
     CreateOfferReviewOffer(title = "create_offer_review_offer"),
-
-    QRCodeScanner(title = "qr_code_scanner"),
 }

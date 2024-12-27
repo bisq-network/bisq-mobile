@@ -70,7 +70,7 @@ class TrustedNodeSetupPresenter(
     }
     
     override fun openQrScanner() {
-        rootNavigator.navigate(Routes.QRCodeScanner.name)
+        // rootNavigator.navigate(Routes.QRCodeScanner.name)
     }
 
     override fun goBackToSetupScreen() {

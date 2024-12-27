@@ -66,7 +66,6 @@ kotlin {
             implementation(libs.lyricist)
             implementation(libs.bignum)
             implementation(libs.coil.compose)
-            implementation(libs.qr.kit)
         }
         androidUnitTest.dependencies {
             implementation(libs.mock.io)
