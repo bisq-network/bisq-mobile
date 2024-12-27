@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
+import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.exchange_h_arrow
 import bisqapps.shared.presentation.generated.resources.exchange_v_arrow
@@ -17,6 +18,7 @@ import bisqapps.shared.presentation.generated.resources.icon_arrow_down
 import bisqapps.shared.presentation.generated.resources.icon_bell
 import bisqapps.shared.presentation.generated.resources.icon_chat_outlined
 import bisqapps.shared.presentation.generated.resources.icon_copy
+import bisqapps.shared.presentation.generated.resources.icon_gallery
 import bisqapps.shared.presentation.generated.resources.icon_info
 import bisqapps.shared.presentation.generated.resources.icon_language_grey
 import bisqapps.shared.presentation.generated.resources.icon_qr
