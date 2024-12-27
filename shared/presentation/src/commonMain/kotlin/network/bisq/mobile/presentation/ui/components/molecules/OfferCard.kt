@@ -60,14 +60,15 @@ fun OfferCard(
             Column(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.weight(2f)
+                modifier = Modifier.weight(3f)
             ) {
                 // Len: 13 - "300 - 600 USD"
                 // Len: 17 - "3,000 - 6,000 XYZ"
                 // Len: 23 - "150,640 - 1,200,312 CRC"
                 //if (offerListItem.formattedQuoteAmount.length < 18) {
+                // TODO: Currency is hardcoded now
                 BisqText.baseRegular(
-                    text = offerListItem.formattedQuoteAmount,
+                    text = "${offerListItem.formattedPrice} ${offerListItem.bisqEasyOffer.market.quoteCurrencyCode}",
                     color = BisqTheme.colors.primary
                 )
                 /* } else {
@@ -77,7 +78,8 @@ fun OfferCard(
                      )
                  }*/
                 BisqGap.H1()
-                Row {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    /*
                     BisqText.smallRegular(
                         text = "@ ",
                         color = BisqTheme.colors.grey2
@@ -86,8 +88,7 @@ fun OfferCard(
                         text = offerListItem.formattedPriceSpec,
                         color = BisqTheme.colors.light1
                     )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                    */
                     LanguageIcon()
                     BisqText.smallRegular(
                         text = " : ",
@@ -97,6 +98,14 @@ fun OfferCard(
                         text = offerListItem.bisqEasyOffer.supportedLanguageCodes.joinToString(", ").uppercase(),
                         color = BisqTheme.colors.light1
                     )
+                    BisqGap.H1()
+                    BisqText.smallRegular(
+                        text = offerListItem.formattedPriceSpec,
+                        color = BisqTheme.colors.light1
+                    )
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+
 //                    Row(verticalAlignment = Alignment.CenterVertically) {
 //                        LanguageIcon()
 //                        BisqText.largeRegular(
