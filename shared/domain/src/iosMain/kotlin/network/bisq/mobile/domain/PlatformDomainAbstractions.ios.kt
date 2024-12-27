@@ -18,6 +18,8 @@ import platform.Foundation.create
 import platform.Foundation.NSString
 import platform.Foundation.stringWithFormat
 import platform.UIKit.*
+import platform.Foundation.NSURL
+import platform.UIKit.UIApplication
 import platform.posix.memcpy
 
 @OptIn(ExperimentalSettingsImplementation::class)
@@ -35,7 +37,8 @@ class IOSUrlLauncher : UrlLauncher {
     override fun openUrl(url: String) {
         val nsUrl = NSURL.URLWithString(url)
         if (nsUrl != null) {
-            UIApplication.sharedApplication.openURL(nsUrl)
+            // fake secondary parameters are important so that iOS compiler knows which override to use
+            UIApplication.sharedApplication.openURL(nsUrl, options = mapOf<Any?,String>(), completionHandler = null)
         }
     }
 }
