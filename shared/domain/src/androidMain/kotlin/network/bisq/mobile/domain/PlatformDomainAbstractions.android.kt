@@ -13,6 +13,7 @@ import kotlinx.serialization.Serializable
 import java.io.ByteArrayOutputStream
 import java.util.Locale
 import java.text.DecimalFormat
+import java.util.Properties
 
 actual fun getPlatformSettings(): Settings {
     return Settings()
@@ -27,6 +28,17 @@ class AndroidPlatformInfo : PlatformInfo {
 }
 
 actual fun getPlatformInfo(): PlatformInfo = AndroidPlatformInfo()
+
+
+actual fun loadProperties(fileName: String): Map<String, String> {
+    val properties = Properties()
+    val classLoader = Thread.currentThread().contextClassLoader
+    val resource = classLoader?.getResourceAsStream(fileName)
+        ?: throw IllegalArgumentException("Resource not found: $fileName")
+    properties.load(resource)
+
+    return properties.entries.associate { it.key.toString() to it.value.toString() }
+}
 
 @Serializable(with = PlatformImageSerializer::class)
 actual class PlatformImage(val bitmap: ImageBitmap) {
