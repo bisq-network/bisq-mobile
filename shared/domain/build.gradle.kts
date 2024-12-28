@@ -74,7 +74,8 @@ kotlin {
 
     sourceSets {
         val commonMain by getting {
-            kotlin.srcDir("build/generated/commonMain")
+            kotlin.srcDir(layout.buildDirectory.dir("generated/commonMain/kotlin"))
+//            kotlin.src(layout.buildDirectory.file("generated/commonMain/kotlin/network/bisq/mobile/i18n/GeneratedResourceBundles.kt"))
         }
 
         val androidMain by getting {
@@ -188,67 +189,79 @@ abstract class GenerateResourceBundlesTask : DefaultTask() {
     fun generate() {
         val resourceDir = inputDir.asFile.get()
         val outputFile = outputFile.asFile.get()
+        val outputDir = outputFile.parentFile
 
         val bundleNames: List<String> = listOf(
-            "default",
-            "application",
-            "bisq_easy",
-            "reputation",
-            // "trade_apps", // Not used
-            // "academy", // Not used
-            "chat",
-            "support",
-            "user",
-            "network",
-            "settings",
-            // "wallet", // Not used
-            // "authorized_role", // Not used
-            "payment_method",
-            "offer",
-            "mobile" // custom for mobile client
+            "default", "application", "bisq_easy", "reputation", "chat", "support",
+            "user", "network", "settings", "payment_method", "offer", "mobile"
         )
         val languageCodes = listOf("en", "af_ZA", "cs", "de", "es", "it", "pcm", "pt_BR", "ru")
-        val bundlesByCode: Map<String, List<ResourceBundle>> = languageCodes.associateWith { languageCode ->
-            bundleNames.map { bundleName ->
-                val code = if (languageCode.lowercase() == "en") "" else "_$languageCode"
-                val fileName = "$bundleName$code.properties"
-                var file = Path(resourceDir.path, fileName).toFile()
-                if (!file.exists()) {
-                    // If no translation file we fall back to english default properties
-                    file = Path(resourceDir.path, "$bundleName.properties").toFile()
-                }
-                val properties = Properties()
-                properties.load(file.inputStream())
-                val map = properties.entries.associate { it.key.toString() to it.value.toString() }
-                ResourceBundle(map, bundleName, languageCode)
 
-            }
+        // Generate a class for each language code
+        languageCodes.forEach { languageCode ->
+            generateLanguageClass(resourceDir, outputDir, bundleNames, languageCode)
         }
+
+        // Generate the main class that references all language classes
+        generateMainClass(outputFile, languageCodes)
+    }
+
+    private fun generateLanguageClass(resourceDir: File, outputDir: File, bundleNames: List<String>, languageCode: String) {
+        val bundles = bundleNames.map { bundleName ->
+            val code = if (languageCode.lowercase() == "en") "" else "_$languageCode"
+            val fileName = "$bundleName$code.properties"
+            var file = Path(resourceDir.path, fileName).toFile()
+            if (!file.exists()) {
+                file = Path(resourceDir.path, "$bundleName.properties").toFile()
+            }
+            val properties = Properties()
+            properties.load(file.inputStream())
+            val map = properties.entries.associate { it.key.toString() to it.value.toString() }
+            ResourceBundle(map, bundleName, languageCode)
+        }
+
+        val className = "GeneratedResourceBundle_${languageCode.replace("-", "_")}"
+        val generatedCode = StringBuilder().apply {
+            appendLine("package network.bisq.mobile.i18n")
+            appendLine()
+            appendLine("// Auto-generated file. Do not modify manually.")
+            appendLine("internal object $className {")
+            appendLine("    val bundles = mapOf(")
+            bundles.forEach { bundle ->
+                appendLine("        \"${bundle.bundleName}\" to mapOf(")
+                bundle.map.forEach { (key, value) ->
+                    val escapedValue = value
+                        .replace("\\", "\\\\")
+                        .replace("\"", "\\\"")
+                        .replace("\n", "\\n")
+                    appendLine("            \"$key\" to \"$escapedValue\",")
+                }
+                appendLine("        ),")
+            }
+            appendLine("    )")
+            appendLine("}")
+        }
+
+        val outputFile = File(outputDir, "$className.kt")
+        outputFile.parentFile.mkdirs()
+        outputFile.writeText(generatedCode.toString())
+    }
+
+    private fun generateMainClass(outputFile: File, languageCodes: List<String>) {
         val generatedCode = StringBuilder().apply {
             appendLine("package network.bisq.mobile.i18n")
             appendLine()
             appendLine("// Auto-generated file. Do not modify manually.")
             appendLine("object GeneratedResourceBundles {")
             appendLine("    val bundlesByCode = mapOf(")
-        }
-        bundlesByCode.forEach { (languageCode, bundles) ->
-            generatedCode.appendLine("        \"$languageCode\" to mapOf(")
-            bundles.forEach { bundle ->
-                generatedCode.appendLine("            \"${bundle.bundleName}\" to mapOf(")
-                //            "default" to mapOf(
-                bundle.map.forEach { (key, value) ->
-                    val escapedValue = value
-                        .replace("\\", "\\\\") // Escape backslashes
-                        .replace("\"", "\\\"") // Escape double quotes
-                        .replace("\n", "\\n") // Escape newlines
-                    generatedCode.appendLine("                \"$key\" to \"$escapedValue\",")
-                }
-                generatedCode.appendLine("            ),")
+            languageCodes.forEach { languageCode ->
+                val className = "GeneratedResourceBundle_${languageCode.replace("-", "_")}"
+                appendLine("        \"$languageCode\" to $className.bundles,")
             }
-            generatedCode.appendLine("        ),")
+            appendLine("    )")
+            appendLine("}")
         }
-        generatedCode.appendLine("    )")
-        generatedCode.appendLine("}")
+
         outputFile.parentFile.mkdirs()
         outputFile.writeText(generatedCode.toString())
     }
@@ -260,9 +273,16 @@ tasks.register<GenerateResourceBundlesTask>("generateResourceBundles") {
     group = "build"
     description = "Generate a Kotlin file with hardcoded ResourceBundle data"
     inputDir.set(layout.projectDirectory.dir("src/commonMain/resources/mobile"))
-    outputFile.set(layout.buildDirectory.file("generated/commonMain/network/bisq/mobile/i18n/GeneratedResourceBundles.kt"))
+    outputFile.set(layout.buildDirectory.file("generated/commonMain/kotlin/network/bisq/mobile/i18n/GeneratedResourceBundles.kt"))
+    outputs.file(outputFile)
 }
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    dependsOn("generateResourceBundles")
+    mustRunAfter("generateResourceBundles")
 }
+
+//tasks.named("compileCommonMainKotlinMetadata") {
+//    dependsOn("generateResourceBundles")
+//}
+
+kotlin.sourceSets["commonMain"].kotlin.srcDir(tasks.named("generateResourceBundles"))
