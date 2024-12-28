@@ -7,6 +7,7 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class TopBarPresenter(
     private val userRepository: UserRepository,
@@ -27,6 +28,12 @@ open class TopBarPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         refresh()
+    }
+
+    override fun onAvatarClicked() {
+        enableInteractive(false)
+        getRootNavController().navigate(Routes.UserProfileSettings.name)
+        enableInteractive(true)
     }
 
     private fun refresh() {

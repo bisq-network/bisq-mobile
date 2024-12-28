@@ -19,6 +19,10 @@ interface PlatformInfo {
     val name: String
 }
 
+interface UrlLauncher {
+    fun openUrl(url: String)
+}
+
 expect fun getDeviceLanguageCode(): String
 
 expect fun getPlatformInfo(): PlatformInfo

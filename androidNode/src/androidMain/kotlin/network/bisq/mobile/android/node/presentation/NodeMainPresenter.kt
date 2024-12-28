@@ -3,6 +3,7 @@ package network.bisq.mobile.android.node.presentation
 import android.app.Activity
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
+import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -13,6 +14,7 @@ import network.bisq.mobile.presentation.MainPresenter
 
 class NodeMainPresenter(
     notificationServiceController: NotificationServiceController,
+    urlLauncher: UrlLauncher,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
@@ -20,7 +22,7 @@ class NodeMainPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val offerServiceFacade: OfferServiceFacade,
     private val tradeServiceFacade: TradeServiceFacade,
-) : MainPresenter(notificationServiceController) {
+) : MainPresenter(notificationServiceController, urlLauncher) {
 
     private var applicationServiceCreated = false
     override fun onViewAttached() {

@@ -1,5 +1,6 @@
 package network.bisq.mobile.client
 
+import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.controller.NotificationServiceController
@@ -12,8 +13,9 @@ class ClientMainPresenter(
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val trustedNodeService: TrustedNodeService,
     private val offerbookServiceFacade: OfferbookServiceFacade,
-    private val marketPriceServiceFacade: MarketPriceServiceFacade
-) : MainPresenter(notificationServiceController) {
+    private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    urlLauncher: UrlLauncher
+) : MainPresenter(notificationServiceController, urlLauncher) {
 
     override fun onViewAttached() {
         super.onViewAttached()

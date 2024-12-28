@@ -2,8 +2,11 @@
 
 package network.bisq.mobile.domain
 
+import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Build
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
@@ -20,6 +23,14 @@ actual fun getPlatformSettings(): Settings {
 
 actual fun getDeviceLanguageCode(): String {
     return Locale.getDefault().language
+}
+
+class AndroidUrlLauncher(private val context: Context) : UrlLauncher {
+    override fun openUrl(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        context.startActivity(intent)
+    }
 }
 
 class AndroidPlatformInfo : PlatformInfo {
