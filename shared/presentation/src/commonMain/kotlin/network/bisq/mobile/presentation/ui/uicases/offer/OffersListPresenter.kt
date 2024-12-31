@@ -8,13 +8,15 @@ import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPresenter
 
 
 class OffersListPresenter(
     mainPresenter: MainPresenter,
     offerbookServiceFacade: OfferbookServiceFacade,
-    private val takeOfferPresenter: TakeOfferPresenter
+    private val takeOfferPresenter: TakeOfferPresenter,
+    private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter), IOffersListPresenter {
     override val offerListItems: StateFlow<List<OfferListItemVO>> =
         offerbookServiceFacade.offerListItems
@@ -35,7 +37,8 @@ class OffersListPresenter(
     }
 
     override fun createOffer() {
-        log.i { "chat for offer clicked " }
+        createOfferPresenter.onStartCreateOffer()
+        rootNavigator.navigate(Routes.CreateOfferDirection.name)
     }
 
     override fun chatForOffer(offer: OfferListItemVO) {

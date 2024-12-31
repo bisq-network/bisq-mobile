@@ -14,11 +14,12 @@ import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter
 
 class MyTradesPresenter(
     mainPresenter: MainPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade,
-    // private val myTradesRepository: MyTradesRepository,
+    private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter), IMyTrades {
 
     private val _myTrades = MutableStateFlow<List<MockOffer>>(emptyList())
@@ -40,6 +41,7 @@ class MyTradesPresenter(
 
     override fun createOffer() {
         log.i { "Goto create offer" }
+        createOfferPresenter.onStartCreateOffer()
         rootNavigator.navigate(Routes.CreateOfferDirection.name)
     }
 

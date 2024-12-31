@@ -82,12 +82,13 @@ val presentationModule = module {
 
     single<MarketListPresenter> { MarketListPresenter(get(), get()) }
 
-    single { OffersListPresenter(get(), get(), get()) } bind IOffersListPresenter::class
+    single { OffersListPresenter(get(), get(), get(), get()) } bind IOffersListPresenter::class
 
     single {
         MyTradesPresenter(
             get(),
-            get()
+            get(),
+            get(),
         )
     } bind IMyTrades::class
 
