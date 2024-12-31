@@ -68,10 +68,6 @@ class TrustedNodeSetupPresenter(
     override fun navigateToNextScreen() {
         rootNavigator.navigate(Routes.CreateProfile.name)
     }
-    
-    override fun openQrScanner() {
-        // rootNavigator.navigate(Routes.QRCodeScanner.name)
-    }
 
     override fun goBackToSetupScreen() {
         rootNavigator.popBackStack()

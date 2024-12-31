@@ -51,16 +51,6 @@ class MyTradesPresenter(
     }
 
     private fun refresh() {
-//        CoroutineScope(BackgroundDispatcher).launch {
-//            try {
-//                delay(1000) // TODO: To simulate loading. Yet to be handled
-//                val trades = myTradesRepository.fetch()
-//                _myTrades.value = trades?.trades ?: emptyList()
-//            } catch (e: Exception) {
-//                // Handle errors
-//                println("Error: ${e.message}")
-//            }
-//        }
     }
 
     override fun onViewAttached() {

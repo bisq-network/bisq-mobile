@@ -62,33 +62,12 @@ fun OfferCard(
                 verticalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.weight(3f)
             ) {
-                // Len: 13 - "300 - 600 USD"
-                // Len: 17 - "3,000 - 6,000 XYZ"
-                // Len: 23 - "150,640 - 1,200,312 CRC"
-                //if (offerListItem.formattedQuoteAmount.length < 18) {
-                // TODO: Currency is hardcoded now
                 BisqText.baseRegular(
                     text = "${offerListItem.formattedPrice} ${offerListItem.bisqEasyOffer.market.quoteCurrencyCode}",
                     color = BisqTheme.colors.primary
                 )
-                /* } else {
-                     BisqText.smallRegular(
-                         text = offerListItem.formattedQuoteAmount,
-                         color = BisqTheme.colors.primary
-                     )
-                 }*/
                 BisqGap.H1()
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    /*
-                    BisqText.smallRegular(
-                        text = "@ ",
-                        color = BisqTheme.colors.grey2
-                    )
-                    BisqText.smallRegular(
-                        text = offerListItem.formattedPriceSpec,
-                        color = BisqTheme.colors.light1
-                    )
-                    */
                     LanguageIcon()
                     BisqText.smallRegular(
                         text = " : ",
@@ -105,14 +84,6 @@ fun OfferCard(
                     )
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
-
-//                    Row(verticalAlignment = Alignment.CenterVertically) {
-//                        LanguageIcon()
-//                        BisqText.largeRegular(
-//                            text = ": ${offerListItem. }",
-//                            color = BisqTheme.colors.grey1
-//                        )
-//                    }
                     BisqGap.H1()
                     // Len: 13 - "300 - 600 USD"
                     // Len: 17 - "3,000 - 6,000 XYZ"
@@ -131,6 +102,7 @@ fun OfferCard(
                 }
             }
             /*
+            // TODO: This code is kept here, so ChatButton can be added back in future, when required
             if (!myTrade) {
                 BisqVDivider()
                 Column(

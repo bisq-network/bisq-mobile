@@ -43,7 +43,6 @@ interface ITrustedNodeSetupPresenter: ViewPresenter {
 
     fun navigateToNextScreen()
 
-    fun openQrScanner()
     fun goBackToSetupScreen()
 }
 
@@ -101,9 +100,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
                 BisqButton(
                     text = "Scan",
-                    onClick = {
-                        presenter.openQrScanner()
-                    },
+                    onClick = {},
                     leftIcon= { ScanIcon() }
                 )
             }

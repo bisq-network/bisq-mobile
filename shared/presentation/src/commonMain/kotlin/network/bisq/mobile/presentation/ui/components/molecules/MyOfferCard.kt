@@ -76,12 +76,6 @@ fun MyOfferCard(
                     text = "mockOffer.formattedQuoteAmount",
                     color = BisqTheme.colors.primary
                 )
-                /* } else {
-                     BisqText.smallRegular(
-                         text = offerListItem.formattedQuoteAmount,
-                         color = BisqTheme.colors.primary
-                     )
-                 }*/
                 BisqGap.H1()
                 Row {
                     BisqText.smallRegular(
@@ -103,33 +97,11 @@ fun MyOfferCard(
                         text = "mockOffer.bisqEasyOffer.supportedLanguageCodes.joinToString().uppercase()",
                         color = BisqTheme.colors.light1
                     )
-//                    Row(verticalAlignment = Alignment.CenterVertically) {
-//                        LanguageIcon()
-//                        BisqText.largeRegular(
-//                            text = ": ${offerListItem. }",
-//                            color = BisqTheme.colors.grey1
-//                        )
-//                    }
                     BisqGap.H1()
-                    // Len: 13 - "300 - 600 USD"
-                    // Len: 17 - "3,000 - 6,000 XYZ"
-                    // Len: 23 - "150,640 - 1,200,312 CRC"
-                    /*
-                    if (offerListItem.formattedQuoteAmount.length < 18) {
-                        BisqText.baseRegular(
-                            text = offerListItem.formattedQuoteAmount,
-                            color = BisqTheme.colors.light1
-                        )
-                    } else {
-                        BisqText.smallRegular(
-                            text = offerListItem.formattedQuoteAmount,
-                            color = BisqTheme.colors.light1
-                        )
-                    }
-                    */
                 }
             }
             /*
+            // TODO: Keeping this code for later. If we want to have Chat button here again
             if (!myTrade) {
                 BisqVDivider()
                 Column(
