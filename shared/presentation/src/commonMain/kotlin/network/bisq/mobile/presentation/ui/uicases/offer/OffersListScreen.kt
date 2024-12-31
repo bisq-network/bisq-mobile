@@ -51,8 +51,8 @@ fun OffersListScreen() {
 
     val offerListItems = presenter.offerListItems.collectAsState().value
     val selectedDirection = presenter.selectedDirection.collectAsState().value
-    // val filteredList = offerListItems.filter { it.bisqEasyOffer.direction == selectedDirection }
-    val sortedList = offerListItems.sortedByDescending { it.bisqEasyOffer.date }
+    val filteredList = offerListItems.filter { it.bisqEasyOffer.direction == selectedDirection }
+    val sortedList = filteredList.sortedByDescending { it.bisqEasyOffer.date }
 
     RememberPresenterLifecycle(presenter)
 

@@ -52,6 +52,13 @@ class TakeOfferPaymentMethodPresenter(
             commitToModel()
             rootNavigator.navigate(Routes.TakeOfferReviewTrade.name)
         } else {
+            var warningMessage = "Please select both Fiat and Bitcoin payment methods"
+            if (quoteSidePaymentMethod == null && baseSidePaymentMethod != null) {
+                warningMessage = "Please select fiat payment method"
+            } else if (quoteSidePaymentMethod != null && baseSidePaymentMethod == null) {
+                warningMessage = "Please select settlement method"
+            }
+            showSnackbar(warningMessage)
             //TODO show user feedback if one or both are not selected.
             // Note the data is set at the service layer, so if there is only one payment method we
             // have it set at the service. We do not need to check here if we have the multiple options.
