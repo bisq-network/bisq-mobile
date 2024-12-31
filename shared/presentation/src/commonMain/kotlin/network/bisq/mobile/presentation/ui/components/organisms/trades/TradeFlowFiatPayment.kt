@@ -16,7 +16,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.layout.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.ui.uicases.trades.ITradeFlowPresenter
+import network.bisq.mobile.presentation.ui.uicases.trade.ITradeFlowPresenter
 import org.koin.compose.koinInject
 
 /**

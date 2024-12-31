@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.trades
+package network.bisq.mobile.presentation.ui.uicases.trade
 
 import androidx.compose.runtime.mutableStateOf
 import kotlinx.coroutines.CoroutineScope

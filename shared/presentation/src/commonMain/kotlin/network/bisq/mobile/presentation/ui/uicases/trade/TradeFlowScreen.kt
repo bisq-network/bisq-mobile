@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.trades
+package network.bisq.mobile.presentation.ui.uicases.trade
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box

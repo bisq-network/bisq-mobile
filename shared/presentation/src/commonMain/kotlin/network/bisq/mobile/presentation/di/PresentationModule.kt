@@ -17,7 +17,7 @@ import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOffe
 import network.bisq.mobile.presentation.ui.uicases.ITabContainerPresenter
 import network.bisq.mobile.presentation.ui.uicases.TabContainerPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.IOffersListPresenter
-import network.bisq.mobile.presentation.ui.uicases.offers.OffersListPresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.OffersListPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfileSettingsPresenter
@@ -34,10 +34,10 @@ import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferAmo
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPaymentMethodPresenter
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferReviewPresenter
-import network.bisq.mobile.presentation.ui.uicases.trades.IMyTrades
-import network.bisq.mobile.presentation.ui.uicases.trades.ITradeFlowPresenter
-import network.bisq.mobile.presentation.ui.uicases.trades.MyTradesPresenter
-import network.bisq.mobile.presentation.ui.uicases.trades.TradeFlowPresenter
+import network.bisq.mobile.presentation.ui.uicases.trade.IMyTrades
+import network.bisq.mobile.presentation.ui.uicases.trade.ITradeFlowPresenter
+import network.bisq.mobile.presentation.ui.uicases.trade.MyTradesPresenter
+import network.bisq.mobile.presentation.ui.uicases.trade.TradeFlowPresenter
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -82,7 +82,7 @@ val presentationModule = module {
 
     single<MarketListPresenter> { MarketListPresenter(get(), get()) }
 
-    single { OffersListPresenter(get(), get()) } bind IOffersListPresenter::class
+    single { OffersListPresenter(get(), get(), get()) } bind IOffersListPresenter::class
 
     single {
         MyTradesPresenter(

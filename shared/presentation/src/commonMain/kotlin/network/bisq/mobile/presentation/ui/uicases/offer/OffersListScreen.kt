@@ -15,6 +15,7 @@ import network.bisq.mobile.domain.replicated.offer.DirectionEnum
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.AddIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
@@ -50,8 +51,8 @@ fun OffersListScreen() {
 
     val offerListItems = presenter.offerListItems.collectAsState().value
     val selectedDirection = presenter.selectedDirection.collectAsState().value
-    val filteredList = offerListItems.filter { it.bisqEasyOffer.direction == selectedDirection }
-    val sortedList = filteredList.sortedByDescending { it.bisqEasyOffer.date }
+    // val filteredList = offerListItems.filter { it.bisqEasyOffer.direction == selectedDirection }
+    val sortedList = offerListItems.sortedByDescending { it.bisqEasyOffer.date }
 
     RememberPresenterLifecycle(presenter)
 
