@@ -151,7 +151,7 @@ fun PaymentAccountSettingsScreen() {
                 accountDescription = presenter.selectedAccount.value.description
                 showConfirmationDialog = false
             },
-            onDismissRequest = {
+            onDismiss = {
                 showConfirmationDialog = false
             }
         )

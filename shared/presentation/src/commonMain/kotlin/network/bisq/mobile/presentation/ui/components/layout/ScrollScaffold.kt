@@ -2,13 +2,17 @@ package network.bisq.mobile.presentation.ui.components.layout
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import network.bisq.mobile.presentation.ui.components.organisms.BisqSnackbar
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
+// FinalTODO: Merge StaticScaffold and ScrollScaffold
 @Composable
 fun BisqScrollScaffold(
     padding: PaddingValues = PaddingValues(
@@ -19,14 +23,23 @@ fun BisqScrollScaffold(
     ),
     topBar: @Composable (() -> Unit)? = null,
     bottomBar: @Composable (() -> Unit)? = null,
+    snackbarHostState: SnackbarHostState? = null,
+    fab: @Composable (() -> Unit)? = null,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     content: @Composable ColumnScope.() -> Unit
 ) {
+
     Scaffold(
         containerColor = BisqTheme.colors.backgroundColor,
         topBar = topBar ?: {},
         bottomBar = bottomBar ?: {},
+        snackbarHost = {
+            if (snackbarHostState != null) {
+                BisqSnackbar(snackbarHostState = snackbarHostState)
+            }
+        },
+        floatingActionButton = fab ?: {},
         content = {
             BisqScrollLayout(
                 padding = if (topBar != null) it else padding,

@@ -1,11 +1,9 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardColors
 import androidx.compose.runtime.Composable
@@ -16,17 +14,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun BisqDialog(
     onDismissRequest: () -> Unit = {},
+    horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
-    Dialog(onDismissRequest = onDismissRequest, properties = DialogProperties(dismissOnClickOutside = true)) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(dismissOnClickOutside = true)
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 86.dp)
+                .padding(top = BisqUIConstants.ScreenPadding5X)
         ) {
             Card(
                 modifier = Modifier
@@ -40,7 +43,15 @@ fun BisqDialog(
                 ),
                 shape = RoundedCornerShape(16.dp),
             ) {
-                content()
+                // TODO: When content is too long, footer buttons will be hidden at bottom now.
+                // Dialog should have Header, Footer with scrollable only for content
+                Column(
+                    modifier = Modifier.padding(BisqUIConstants.ScreenPadding2X).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+                    horizontalAlignment = horizontalAlignment,
+                ) {
+                    content()
+                }
             }
         }
     }

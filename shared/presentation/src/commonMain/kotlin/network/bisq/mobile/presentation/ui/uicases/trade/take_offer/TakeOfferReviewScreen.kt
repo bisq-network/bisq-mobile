@@ -57,7 +57,7 @@ fun TakeOfferReviewTradeScreen() {
         }
 
         BisqHDivider()
-        Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoBox(
                 label = strings.bisqEasy_tradeWizard_review_priceDescription_taker,
                 valueComposable = {

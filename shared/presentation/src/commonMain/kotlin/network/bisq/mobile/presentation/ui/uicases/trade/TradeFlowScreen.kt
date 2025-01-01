@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.trades
+package network.bisq.mobile.presentation.ui.uicases.trade
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Box
@@ -23,15 +23,14 @@ import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
-import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
-import network.bisq.mobile.presentation.ui.components.organisms.trades.CloseTradeCard
 import network.bisq.mobile.presentation.ui.components.organisms.trades.StepperSection
 import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeFlowAccountDetails
 import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeFlowBtcPayment
 import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeFlowCompleted
 import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeFlowFiatPayment
 import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeHeader
+import network.bisq.mobile.presentation.ui.components.organisms.trades.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
@@ -55,6 +54,13 @@ interface ITradeFlowPresenter : ViewPresenter {
 
     fun closeTradeConfirm()
 
+    val showCancelTradeDialog: StateFlow<Boolean>
+    fun setShowCancelTradeDialog(value: Boolean)
+    fun cancelTrade()
+
+    val showMediationDialog: StateFlow<Boolean>
+    fun setShowMediationDialog(value: Boolean)
+
     fun openWalletGuideLink()
     fun openTradeGuideLink()
 
@@ -70,38 +76,57 @@ fun TradeFlowScreen() {
 
     val offer = presenter.offerListItems.collectAsState().value.first()
     val showCloseTradeDialog = presenter.showCloseTradeDialog.collectAsState().value
+    val showCancelTradeDialog = presenter.showCancelTradeDialog.collectAsState().value
+    val showMediationDialog = presenter.showMediationDialog.collectAsState().value
+
+    val showDialog = showCloseTradeDialog || showCancelTradeDialog || showMediationDialog
 
     BisqStaticScaffold(
-        topBar = { TopBar("Trade - 07b9bab1") }
+        topBar = { TopBar("Trade - 07b9bab1", backConfirmation = true) }
     ) {
-        Box(modifier = Modifier.fillMaxSize().blur(if (showCloseTradeDialog) 12.dp else 0.dp)) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .blur(if (showDialog) 12.dp else 0.dp)
+        ) {
             Column(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())
                     .fillMaxSize()
             ) {
 
-                TradeHeader(offer)
+                TradeHeader(
+                    offer,
+                    onCancel = { presenter.setShowCancelTradeDialog(true) }
+                )
 
                 BisqGap.V2()
 
                 TradeFlowStepper()
 
             }
+
             if (showCloseTradeDialog) {
-                BisqDialog() {
-                    CloseTradeCard(
-                        onDismissRequest = {
-                            presenter.setShowCloseTradeDialog(false)
-                        },
-                        onConfirm = {
-                            presenter.closeTradeConfirm()
-                        }
-                    )
-
-                }
-
+                CloseTradeDialog(
+                    onConfirm = { presenter.closeTradeConfirm() },
+                    onDismissRequest = { presenter.setShowCloseTradeDialog(false) },
+                )
             }
+
+            if (showCancelTradeDialog) {
+                CancelTradeDialog(
+                    onCancelConfirm= { presenter.setShowCancelTradeDialog(false) },
+                    onDismiss= { presenter.setShowCancelTradeDialog(false) }
+                )
+            }
+
+            if (showMediationDialog) {
+                MediationRequestDialog(
+                    onConfirm= { presenter.setShowMediationDialog(false) },
+                    onDismiss= { presenter.setShowMediationDialog(false) },
+                )
+            }
+
         }
     }
 }

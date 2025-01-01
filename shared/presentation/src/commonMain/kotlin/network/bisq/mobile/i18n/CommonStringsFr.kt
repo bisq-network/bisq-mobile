@@ -10,6 +10,10 @@ val FrCommonStrings = CommonStrings(
 
     common_offers = "[FR] offers",
     common_search = "[FR] Search",
+    common_buy = "[FR] Buy",
+    common_sell = "[FR] Sell",
+    common_yes = "[FR] Yes",
+    common_no = "[FR] No",
 
     offers_list_buy_from = "[FR] Buy from",
     offers_list_sell_to = "[FR] Sell to",

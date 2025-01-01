@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
+import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -22,11 +23,12 @@ val navigationListItem = listOf(
     BottomNavigationItem("Settings", Routes.TabSettings.name, Res.drawable.icon_settings),
 )
 
+interface ITabContainerPresenter : ViewPresenter {}
 
 @Composable
 fun TabContainerScreen() {
-    val mainPresenter: AppPresenter = koinInject()
-    val navController: NavHostController = mainPresenter.getRootTabNavController()
+    val presenter: ITabContainerPresenter = koinInject()
+    val navController: NavHostController = presenter.getRootTabNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute by remember(navBackStackEntry) {
         derivedStateOf {
@@ -69,6 +71,7 @@ fun TabContainerScreen() {
                     }
                 })
         },
+        snackbarHostState = presenter.getSnackState(),
         content = { TabNavGraph() }
 
     )

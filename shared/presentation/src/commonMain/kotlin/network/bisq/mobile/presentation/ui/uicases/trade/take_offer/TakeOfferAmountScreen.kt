@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.trade.take_offer
 
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -25,7 +24,8 @@ fun TakeOfferTradeAmountScreen() {
         stepIndex = 1,
         stepsLength = 3,
         prevOnClick = { presenter.onBack() },
-        nextOnClick = { presenter.onNext() }
+        nextOnClick = { presenter.onNext() },
+        useStaticScaffold = true
     ) {
         BisqText.h3Regular(
             text = strings.bisqEasy_takeOffer_amount_headline_buyer,
@@ -41,17 +41,20 @@ fun TakeOfferTradeAmountScreen() {
             color = BisqTheme.colors.grey2
         )
 
-        Spacer(modifier = Modifier.height(128.dp))
-
-        BisqAmountSelector(
-            presenter.quoteCurrencyCode,
-            presenter.formattedMinAmountWithCode,
-            presenter.formattedMaxAmountWithCode,
-            presenter.sliderPosition,
-            presenter.formattedQuoteAmount,
-            presenter.formattedBaseAmount,
-            { sliderValue -> presenter.onSliderValueChanged(sliderValue) },
-            { textInput -> presenter.onTextValueChanged(textInput) }
-        )
+        Column(
+            modifier = Modifier.fillMaxHeight(),
+            verticalArrangement = Arrangement.Center,
+        ) {
+            BisqAmountSelector(
+                presenter.quoteCurrencyCode,
+                presenter.formattedMinAmountWithCode,
+                presenter.formattedMaxAmountWithCode,
+                presenter.sliderPosition,
+                presenter.formattedQuoteAmount,
+                presenter.formattedBaseAmount,
+                { sliderValue -> presenter.onSliderValueChanged(sliderValue) },
+                { textInput -> presenter.onTextValueChanged(textInput) }
+            )
+        }
     }
 }

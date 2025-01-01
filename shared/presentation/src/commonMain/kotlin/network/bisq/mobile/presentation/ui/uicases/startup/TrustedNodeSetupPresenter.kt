@@ -59,10 +59,17 @@ class TrustedNodeSetupPresenter(
             }
 
             settingsRepository.update(updatedSettings)
+
+            showSnackbar("Connected successfully")
+            // showSnackbar("Connected successfully and long text message with long list of english words")
         }
     }
 
     override fun navigateToNextScreen() {
         rootNavigator.navigate(Routes.CreateProfile.name)
+    }
+
+    override fun goBackToSetupScreen() {
+        rootNavigator.popBackStack()
     }
 }

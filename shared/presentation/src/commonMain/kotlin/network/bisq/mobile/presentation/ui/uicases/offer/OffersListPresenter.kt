@@ -8,22 +8,24 @@ import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPresenter
 
 
 class OffersListPresenter(
     mainPresenter: MainPresenter,
     offerbookServiceFacade: OfferbookServiceFacade,
-    private val takeOfferPresenter: TakeOfferPresenter
-) : BasePresenter(mainPresenter) {
-    val offerListItems: StateFlow<List<OfferListItemVO>> =
+    private val takeOfferPresenter: TakeOfferPresenter,
+    private val createOfferPresenter: CreateOfferPresenter
+) : BasePresenter(mainPresenter), IOffersListPresenter {
+    override val offerListItems: StateFlow<List<OfferListItemVO>> =
         offerbookServiceFacade.offerListItems
 
     private val _selectedDirection = MutableStateFlow(DirectionEnum.SELL)
-    val selectedDirection: StateFlow<DirectionEnum> = _selectedDirection
+    override val selectedDirection: StateFlow<DirectionEnum> = _selectedDirection
 
-    fun takeOffer(offerListItem: OfferListItemVO) {
-        takeOfferPresenter.selectOfferToTake(offerListItem)
+    override fun takeOffer(offer: OfferListItemVO) {
+        takeOfferPresenter.selectOfferToTake(offer)
 
         if (takeOfferPresenter.showAmountScreen()) {
             rootNavigator.navigate(Routes.TakeOfferTradeAmount.name)
@@ -34,11 +36,16 @@ class OffersListPresenter(
         }
     }
 
-    fun chatForOffer(offerListItem: OfferListItemVO) {
+    override fun createOffer() {
+        createOfferPresenter.onStartCreateOffer()
+        rootNavigator.navigate(Routes.CreateOfferDirection.name)
+    }
+
+    override fun chatForOffer(offer: OfferListItemVO) {
         log.i { "chat for offer clicked " }
     }
 
-    fun onSelectDirection(direction: DirectionEnum) {
+    override fun onSelectDirection(direction: DirectionEnum) {
         _selectedDirection.value = direction
     }
 }

@@ -9,6 +9,10 @@ val EnCommonStrings = CommonStrings(
 
     common_offers = "Offers",
     common_search = "Search",
+    common_buy = "Buy",
+    common_sell = "Sell",
+    common_yes = "Yes",
+    common_no = "No",
 
     offers_list_buy_from = "Buy from",
     offers_list_sell_to = "Sell to",

@@ -9,6 +9,10 @@ data class CommonStrings(
 
     val common_offers: String,
     val common_search: String,
+    val common_buy: String,
+    val common_sell: String,
+    val common_yes: String,
+    val common_no: String,
 
     val offers_list_buy_from: String,
     val offers_list_sell_to: String,

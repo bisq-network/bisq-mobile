@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,12 +27,15 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SearchIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
@@ -50,6 +54,7 @@ fun BisqTextField(
     isTextArea: Boolean = false,
     paddingValues: PaddingValues = PaddingValues(all = 12.dp),
     disabled: Boolean = false,
+    showCopy: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -134,6 +139,11 @@ fun BisqTextField(
                             innerTextField()
                         }
 
+
+                        if (showCopy) {
+                            CopyIconButton(value)
+                        }
+                        
                         if (rightSuffix != null) {
                             Box(modifier = Modifier.width(50.dp)) {
                                 rightSuffix()

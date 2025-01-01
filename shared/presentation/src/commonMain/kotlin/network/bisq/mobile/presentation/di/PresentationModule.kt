@@ -7,7 +7,6 @@ import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.MarketListPresenter
-import network.bisq.mobile.presentation.ui.uicases.offer.OffersListPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferAmountPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferDirectionPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferMarketPresenter
@@ -15,6 +14,11 @@ import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOffe
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPricePresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferReviewPresenter
+import network.bisq.mobile.presentation.ui.uicases.ITabContainerPresenter
+import network.bisq.mobile.presentation.ui.uicases.TabContainerPresenter
+import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
+import network.bisq.mobile.presentation.ui.uicases.offer.IOffersListPresenter
+import network.bisq.mobile.presentation.ui.uicases.offer.OffersListPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfileSettingsPresenter
@@ -31,10 +35,10 @@ import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferAmo
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPaymentMethodPresenter
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferReviewPresenter
-import network.bisq.mobile.presentation.ui.uicases.trades.IMyTrades
-import network.bisq.mobile.presentation.ui.uicases.trades.ITradeFlowPresenter
-import network.bisq.mobile.presentation.ui.uicases.trades.MyTradesPresenter
-import network.bisq.mobile.presentation.ui.uicases.trades.TradeFlowPresenter
+import network.bisq.mobile.presentation.ui.uicases.trade.IMyTrades
+import network.bisq.mobile.presentation.ui.uicases.trade.ITradeFlowPresenter
+import network.bisq.mobile.presentation.ui.uicases.trade.MyTradesPresenter
+import network.bisq.mobile.presentation.ui.uicases.trade.TradeFlowPresenter
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -53,9 +57,8 @@ val presentationModule = module {
         )
     }
 
-//    single { TabContainerPresenter(get()) } bind ITabContainerPresenter::class
-
     single { OnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
+    single { TabContainerPresenter(get()) } bind ITabContainerPresenter::class
 
     single<SettingsPresenter> { SettingsPresenter(get(), get()) } bind ISettingsPresenter::class
 
@@ -80,12 +83,13 @@ val presentationModule = module {
 
     single<MarketListPresenter> { MarketListPresenter(get(), get()) }
 
-    single<OffersListPresenter> { OffersListPresenter(get(), get(), get()) }
+    single { OffersListPresenter(get(), get(), get(), get()) } bind IOffersListPresenter::class
 
     single {
         MyTradesPresenter(
             get(),
-            myTradesRepository = get()
+            get(),
+            get(),
         )
     } bind IMyTrades::class
 
