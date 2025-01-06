@@ -18,6 +18,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.draw.alpha
 import androidx.navigation.compose.currentBackStackEntryAsState
 import network.bisq.mobile.presentation.ui.components.atoms.animations.ShineOverlay
@@ -29,6 +30,8 @@ import org.koin.compose.koinInject
 import org.koin.core.qualifier.named
 
 interface ITopBarPresenter: ViewPresenter {
+    fun onAvatarClicked()
+
     val uniqueAvatar: StateFlow<PlatformImage?>
 }
 
@@ -44,6 +47,8 @@ fun TopBar(
     val presenter: ITopBarPresenter = koinInject()
     val navController: NavHostController = presenter.getRootNavController()
     val tabNavController: NavHostController = presenter.getRootTabNavController()
+
+    val interactionEnabled = presenter.isInteractive.collectAsState().value
 
     val currentTab = tabNavController.currentBackStackEntryAsState().value?.destination?.route
 
@@ -113,8 +118,8 @@ fun TopBar(
 //                                 .fillMaxSize()
                                  .alpha(if (currentTab == Routes.TabSettings.name) 0.5f else 1.0f)
                                  .clickable {
-                                     if (currentTab != Routes.TabSettings.name) {
-                                         navController.navigate(Routes.UserProfileSettings.name)
+                                     if (currentTab != Routes.TabSettings.name && interactionEnabled) {
+                                         presenter.onAvatarClicked()
                                      }
                                  })
                 }

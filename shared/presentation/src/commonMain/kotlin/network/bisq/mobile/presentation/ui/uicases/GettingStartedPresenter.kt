@@ -1,22 +1,32 @@
 package network.bisq.mobile.presentation.ui.uicases
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter
 
-class GettingStartedPresenter(
+open class GettingStartedPresenter(
     mainPresenter: MainPresenter,
     private val bisqStatsRepository: BisqStatsRepository,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val createOfferPresenter: CreateOfferPresenter
+    private val offerbookServiceFacade: OfferbookServiceFacade
 ) : BasePresenter(mainPresenter), IGettingStarted {
+    override val title: String = "Bisq Easy Client"
+
+    override val bulletPoints: List<String> = listOf(
+        "Experience Bisq with the guidance of a trusted friend or connect remotely to your own full node.",
+        "Connect to Trusted Nodes: Start trading with confidence by connecting to a trusted Bisq node hosted by someone you trust.",
+        "Remote Management for Experts: Manage your trades on the go by connecting securely to your own desktop-based Bisq node, no matter where you are."
+    )
 
     private val _offersOnline = MutableStateFlow(145)
     override val offersOnline: StateFlow<Int> = _offersOnline
@@ -28,23 +38,52 @@ class GettingStartedPresenter(
 
     private var job: Job? = null
 
-    override fun navigateToCreateOffer() {
-        //rootNavigator.popBackStack(Routes.TabContainer.name, inclusive = false, saveState = false)
-        createOfferPresenter.onStartCreateOffer()
-        rootNavigator.navigate(Routes.CreateOfferDirection.name)
+    override fun onStartTrading() {
+        enableInteractive(false)
+        navigateToTradingTab()
+        enableInteractive(true)
+    }
+
+    private fun navigateToTradingTab() {
+        getRootTabNavController().navigate(Routes.TabCurrencies.name) {
+            getRootTabNavController().graph.startDestinationRoute?.let { route ->
+                popUpTo(route) {
+                    saveState = true
+                }
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+
+    override fun navigateLearnMore() {
+        enableInteractive(false)
+        navigateToUrl("https://bisq.wiki/Bisq_Easy")
+        enableInteractive(true)
     }
 
     private fun refresh() {
         job = backgroundScope.launch {
             try {
+                enableInteractive(false)
+                // TODO get published profiles data from service
                 val bisqStats = bisqStatsRepository.fetch()
-                _offersOnline.value = bisqStats?.offersOnline ?: 0
                 _publishedProfiles.value = bisqStats?.publishedProfiles ?: 0
+                offerbookServiceFacade.offerListItems.collect {
+                    _offersOnline.value = it.size
+                }
             } catch (e: Exception) {
                 // Handle errors
                 println("Error: ${e.message}")
             }
+        }.also {
+            enableInteractive(true)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refresh()
     }
 
     override fun onViewAttached() {
@@ -56,10 +95,5 @@ class GettingStartedPresenter(
         super.onViewUnattaching()
         job?.cancel()
         job = null
-    }
-
-    override fun onResume() {
-        super.onResume()
-        refresh()
     }
 }

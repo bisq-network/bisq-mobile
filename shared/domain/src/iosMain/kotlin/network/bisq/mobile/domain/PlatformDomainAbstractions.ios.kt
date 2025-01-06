@@ -14,14 +14,12 @@ import kotlinx.cinterop.usePinned
 import kotlinx.serialization.Serializable
 import platform.Foundation.NSData
 import platform.Foundation.*
-import platform.UIKit.UIDevice
-import platform.UIKit.UIImage
 import platform.Foundation.create
-import platform.UIKit.UIImagePNGRepresentation
 import platform.Foundation.NSString
-import platform.Foundation.create
 import platform.Foundation.stringWithFormat
-import platform.UIKit.UIImagePNGRepresentation
+import platform.UIKit.*
+import platform.Foundation.NSURL
+import platform.UIKit.UIApplication
 import platform.posix.memcpy
 
 @OptIn(ExperimentalSettingsImplementation::class)
@@ -33,6 +31,16 @@ actual fun getPlatformSettings(): Settings {
 
 actual fun getDeviceLanguageCode(): String {
     return NSLocale.currentLocale.languageCode ?: "en"
+}
+
+class IOSUrlLauncher : UrlLauncher {
+    override fun openUrl(url: String) {
+        val nsUrl = NSURL.URLWithString(url)
+        if (nsUrl != null) {
+            // fake secondary parameters are important so that iOS compiler knows which override to use
+            UIApplication.sharedApplication.openURL(nsUrl, options = mapOf<Any?,String>(), completionHandler = null)
+        }
+    }
 }
 
 class IOSPlatformInfo : PlatformInfo {

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.controller.NotificationServiceController
@@ -18,7 +19,10 @@ import kotlin.random.Random
 /**
  * Main Presenter as an example of implementation for now.
  */
-open class MainPresenter(private val notificationServiceController: NotificationServiceController) :
+open class MainPresenter(
+    private val notificationServiceController: NotificationServiceController,
+    private val urlLauncher: UrlLauncher
+) :
     BasePresenter(null), AppPresenter {
     companion object {
         // FIXME this will be erased eventually, for now you can turn on to see the notifications working
@@ -33,15 +37,6 @@ open class MainPresenter(private val notificationServiceController: Notification
     // Observable state
     private val _isContentVisible = MutableStateFlow(false)
     override val isContentVisible: StateFlow<Boolean> = _isContentVisible
-
-
-    // passthrough example
-    //    private val _greetingText: StateFlow<String> = stateFlowFromRepository(
-    //        repositoryFlow = greetingRepository.data,
-    //        transform = { it?.greet() ?: "" },
-    //        initialValue = "Welcome!"
-    //    )
-    //    override val greetingText: StateFlow<String> = _greetingText
 
     init {
         val localeCode = getDeviceLanguageCode()
@@ -87,6 +82,10 @@ open class MainPresenter(private val notificationServiceController: Notification
 
     override fun getRootTabNavController(): NavHostController {
         return tabNavController
+    }
+
+    final override fun navigateToUrl(url: String) {
+        urlLauncher.openUrl(url)
     }
 
 }
