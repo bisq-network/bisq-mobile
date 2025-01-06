@@ -1,11 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases
 
-import androidx.compose.runtime.collectAsState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.UrlLauncher
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
@@ -18,7 +18,6 @@ open class GettingStartedPresenter(
     mainPresenter: MainPresenter,
     private val bisqStatsRepository: BisqStatsRepository,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val createOfferPresenter: CreateOfferPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade
 ) : BasePresenter(mainPresenter), IGettingStarted {
     override val title: String = "Bisq Easy Client"
@@ -66,6 +65,7 @@ open class GettingStartedPresenter(
     private fun refresh() {
         job = backgroundScope.launch {
             try {
+                enableInteractive(false)
                 // TODO get published profiles data from service
                 val bisqStats = bisqStatsRepository.fetch()
                 _publishedProfiles.value = bisqStats?.publishedProfiles ?: 0
@@ -76,7 +76,14 @@ open class GettingStartedPresenter(
                 // Handle errors
                 println("Error: ${e.message}")
             }
+        }.also {
+            enableInteractive(true)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refresh()
     }
 
     override fun onViewAttached() {
@@ -88,10 +95,5 @@ open class GettingStartedPresenter(
         super.onViewUnattaching()
         job?.cancel()
         job = null
-    }
-
-    override fun onResume() {
-        super.onResume()
-        refresh()
     }
 }

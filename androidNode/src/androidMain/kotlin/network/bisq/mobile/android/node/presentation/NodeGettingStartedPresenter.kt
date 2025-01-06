@@ -13,7 +13,7 @@ class NodeGettingStartedPresenter(
     marketPriceServiceFacade: MarketPriceServiceFacade,
     createOfferPresenter: CreateOfferPresenter,
     offerbookServiceFacade: OfferbookServiceFacade
-) : GettingStartedPresenter(mainPresenter, bisqStatsRepository, marketPriceServiceFacade, createOfferPresenter, offerbookServiceFacade) {
+) : GettingStartedPresenter(mainPresenter, bisqStatsRepository, marketPriceServiceFacade,   offerbookServiceFacade) {
     override val title: String = "Bisq Easy Node"
     override val bulletPoints: List<String> = listOf(
         "Take control of your trading experience with the full power of Bisq, now on your mobile.",

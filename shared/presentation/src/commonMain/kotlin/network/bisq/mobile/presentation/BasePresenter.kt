@@ -83,14 +83,12 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     init {
         rootPresenter?.registerChild(child = this)
     }
-
+    
     protected fun enableInteractive(enable: Boolean) {
-        if (enable) {
-            presenterScope.launch {
+        uiScope.launch {
+            if (enable) {
                 delay(250L)
-                _isInteractive.value = enable
             }
-        } else {
             _isInteractive.value = enable
         }
     }
@@ -170,7 +168,9 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
         } catch (e: Exception) {
             log.e("Custom cleanup failed", e)
         } finally {
-            rootPresenter?.unregisterChild(this)
+//          we can't get read of the link here since link is done at construction only
+//            and we are using singletons
+//            rootPresenter?.unregisterChild(this)
         }
     }
 

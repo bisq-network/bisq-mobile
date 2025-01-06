@@ -62,7 +62,7 @@ val presentationModule = module {
 
     single<UserProfileSettingsPresenter> { UserProfileSettingsPresenter(get(), get(), get()) } bind IUserProfileSettingsPresenter::class
 
-    single<GettingStartedPresenter> { GettingStartedPresenter(get(), get(), get(), get(), get()) }
+    single<GettingStartedPresenter> { GettingStartedPresenter(get(), get(), get(), get()) }
 
     single {
         CreateProfilePresenter(
