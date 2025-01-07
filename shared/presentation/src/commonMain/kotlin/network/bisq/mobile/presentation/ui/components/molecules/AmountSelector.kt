@@ -15,7 +15,13 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqSlider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
+// ToDiscuss:
+// buddha: Ideally this component should deal only with Fiat values (as Double) and have one valueChange() event
+// so `initialSliderPosition` will become `defaultValue`,
+// which will be some value between `formattedMinAmount` and `formattedMaxAmount`
+// onSliderValueChange() / onTextValueChange() will become onValueChange(value: Double) -> Unit
 @Composable
 fun BisqAmountSelector(
     fiatCurrencyCode: String,
@@ -48,7 +54,7 @@ fun BisqAmountSelector(
 
     Column(
         modifier = Modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 

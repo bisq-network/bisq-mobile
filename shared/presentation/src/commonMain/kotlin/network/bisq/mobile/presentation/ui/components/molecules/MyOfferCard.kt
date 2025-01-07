@@ -15,6 +15,7 @@ import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.LanguageIcon
 import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.domain.data.model.MockOffer
 import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.LanguageIcon
@@ -24,8 +25,8 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
-fun OfferCard(
-    offerListItem: OfferListItemVO,
+fun MyOfferCard(
+    offerListItem: MockOffer,
     myTrade: Boolean = false,
     onClick: () -> Unit,
     onChatClick: () -> Unit,
@@ -40,6 +41,7 @@ fun OfferCard(
     ) {
         Row(
             modifier = Modifier
+                .weight(1f)
                 .fillMaxWidth()
                 .padding(BisqUIConstants.ScreenPadding)
                 .clickable(
@@ -52,21 +54,39 @@ fun OfferCard(
         ) {
             Column(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.weight(3f),
+                        modifier = Modifier.weight(3f),
             ) {
+                BisqText.baseRegular("TODO: User profile")
+                BisqText.baseRegular("TODO: Payment methods")
+                /*
                 UserProfile(offerListItem)
                 PaymentMethods(offerListItem)
+                */
             }
             Column(
                 horizontalAlignment = Alignment.End,
                 verticalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.weight(3f)
+                modifier = Modifier.weight(2f)
             ) {
+                // Len: 13 - "300 - 600 USD"
+                // Len: 17 - "3,000 - 6,000 XYZ"
+                // Len: 23 - "150,640 - 1,200,312 CRC"
+                //if (offerListItem.formattedQuoteAmount.length < 18) {
                 BisqText.baseRegular(
-                    text = "${offerListItem.formattedPrice} ${offerListItem.bisqEasyOffer.market.quoteCurrencyCode}",
+                    text = "mockOffer.formattedQuoteAmount",
                     color = BisqTheme.colors.primary
                 )
                 BisqGap.H1()
+                Row {
+                    BisqText.smallRegular(
+                        text = "@ ",
+                        color = BisqTheme.colors.grey2
+                    )
+                    BisqText.smallRegular(
+                        text = "mockOffer.formattedPriceSpec",
+                        color = BisqTheme.colors.light1
+                    )
+                }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     LanguageIcon()
                     BisqText.smallRegular(
@@ -74,35 +94,14 @@ fun OfferCard(
                         color = BisqTheme.colors.grey2
                     )
                     BisqText.smallRegular(
-                        text = offerListItem.bisqEasyOffer.supportedLanguageCodes.joinToString(", ").uppercase(),
+                        text = "mockOffer.bisqEasyOffer.supportedLanguageCodes.joinToString().uppercase()",
                         color = BisqTheme.colors.light1
                     )
                     BisqGap.H1()
-                    BisqText.smallRegular(
-                        text = offerListItem.formattedPriceSpec,
-                        color = BisqTheme.colors.light1
-                    )
-                }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    BisqGap.H1()
-                    // Len: 13 - "300 - 600 USD"
-                    // Len: 17 - "3,000 - 6,000 XYZ"
-                    // Len: 23 - "150,640 - 1,200,312 CRC"
-                    if (offerListItem.formattedQuoteAmount.length < 18) {
-                        BisqText.baseRegular(
-                            text = offerListItem.formattedQuoteAmount,
-                            color = BisqTheme.colors.light1
-                        )
-                    } else {
-                        BisqText.smallRegular(
-                            text = offerListItem.formattedQuoteAmount,
-                            color = BisqTheme.colors.light1
-                        )
-                    }
                 }
             }
             /*
-            // TODO: This code is kept here, so ChatButton can be added back in future, when required
+            // TODO: Keeping this code for later. If we want to have Chat button here again
             if (!myTrade) {
                 BisqVDivider()
                 Column(

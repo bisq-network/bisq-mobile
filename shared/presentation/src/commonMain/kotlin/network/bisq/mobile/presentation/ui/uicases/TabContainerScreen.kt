@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
+import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -22,11 +23,12 @@ val navigationListItem = listOf(
     BottomNavigationItem("Settings", Routes.TabSettings.name, Res.drawable.icon_settings),
 )
 
+interface ITabContainerPresenter : ViewPresenter {}
 
 @Composable
 fun TabContainerScreen() {
-    val mainPresenter: AppPresenter = koinInject()
-    val navController: NavHostController = mainPresenter.getRootTabNavController()
+    val presenter: ITabContainerPresenter = koinInject()
+    val navController: NavHostController = presenter.getRootTabNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute by remember(navBackStackEntry) {
         derivedStateOf {
@@ -50,6 +52,20 @@ fun TabContainerScreen() {
                     Routes.TabSettings.name -> "Settings"
                     else -> "App"
                 },
+                backBehavior = {
+                    if (currentRoute != Routes.TabHome.name) {
+                        navController.navigate(Routes.TabHome.name) {
+                            navController.graph.startDestinationRoute?.let { route ->
+                                popUpTo(route) { saveState = false }
+                            }
+                            launchSingleTop = true
+                            restoreState = false
+                        }
+                    } else {
+                        presenter.showSnackbar("Press back again to exit")
+                        presenter.goBack()
+                    }
+                }
             )
 
         },
@@ -69,6 +85,7 @@ fun TabContainerScreen() {
                     }
                 })
         },
+        snackbarHostState = presenter.getSnackState(),
         content = { TabNavGraph() }
 
     )

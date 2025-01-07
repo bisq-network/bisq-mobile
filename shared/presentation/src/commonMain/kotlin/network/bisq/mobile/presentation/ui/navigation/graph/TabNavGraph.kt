@@ -15,7 +15,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedScreen
 import network.bisq.mobile.presentation.ui.uicases.offer.MarketListScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsScreen
-import network.bisq.mobile.presentation.ui.uicases.trades.MyTradesScreen
+import network.bisq.mobile.presentation.ui.uicases.trade.MyTradesScreen
 import org.koin.compose.koinInject
 
 @Composable

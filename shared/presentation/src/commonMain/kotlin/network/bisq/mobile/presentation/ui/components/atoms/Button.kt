@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 enum class BisqButtonType {
     Default,
@@ -31,10 +32,13 @@ enum class BisqButtonType {
 @Composable
 fun BisqButton(
     text: String? = "Button",
-    onClick: () -> Unit,
+    onClick: (() -> Unit)? = null,
     color: Color = BisqTheme.colors.light1,
     backgroundColor: Color = BisqTheme.colors.primary,
-    padding: PaddingValues = PaddingValues(horizontal = 48.dp, vertical = 4.dp),
+    padding: PaddingValues = PaddingValues(
+        horizontal = BisqUIConstants.ScreenPadding4X,
+        vertical = BisqUIConstants.ScreenPaddingHalf
+    ),
     iconOnly: (@Composable () -> Unit)? = null,
     leftIcon: (@Composable () -> Unit)? = null,
     rightIcon: (@Composable () -> Unit)? = null,
@@ -64,7 +68,7 @@ fun BisqButton(
     val finalContentColor = color
 
     Button(
-        onClick = { onClick() },
+        onClick = { onClick?.invoke() },
         contentPadding = if (iconOnly != null) PaddingValues(horizontal = 0.dp, vertical = 0.dp) else padding,
         colors = ButtonColors(
             containerColor = finalBackgroundColor,

@@ -111,7 +111,9 @@ class TakeOfferReviewPresenter(
     }
 
     fun onGoToOpenTrades() {
-        rootNavigator.navigate(Routes.TradeFlow.name)
+        rootNavigator.navigate(Routes.TradeFlow.name) {
+            popUpTo(Routes.Offerbook.name)
+        }
     }
 
 

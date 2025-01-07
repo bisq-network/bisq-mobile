@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.components.layout
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,6 +25,7 @@ fun MultiScreenWizardScaffold(
     nextOnClick: (() -> Unit)? = null,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     useStaticScaffold: Boolean = false,
+    snackbarHostState: SnackbarHostState? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
 
@@ -33,24 +35,27 @@ fun MultiScreenWizardScaffold(
         bottomBar: @Composable (() -> Unit)?,
         hAlignment: Alignment.Horizontal,
         vArrangement: Arrangement.Vertical,
+        snackbarHostState: SnackbarHostState?,
         content: @Composable ColumnScope.() -> Unit
     ) -> Unit =
-        if (useStaticScaffold) { padding, topBar, bottomBar, hAlignment, verticalArrangement, innerContent ->
+        if (useStaticScaffold) { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState, innerContent ->
             BisqStaticScaffold(
                 padding = padding,
                 topBar = topBar,
                 bottomBar = bottomBar,
                 horizontalAlignment = hAlignment,
                 verticalArrangement = verticalArrangement,
+                snackbarHostState = snackState,
                 content = innerContent
             )
-        } else { padding, topBar, bottomBar, hAlignment, verticalArrangement, innerContent ->
+        } else { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState, innerContent ->
             BisqScrollScaffold(
                 padding = padding,
                 topBar = topBar,
                 bottomBar = bottomBar,
                 horizontalAlignment = hAlignment,
                 verticalArrangement = verticalArrangement,
+                snackbarHostState = snackState,
                 content = innerContent
             )
         }
@@ -98,6 +103,7 @@ fun MultiScreenWizardScaffold(
         },
         horizontalAlignment,
         Arrangement.Top,
+        snackbarHostState,
     ) {
 
         BisqProgressBar(

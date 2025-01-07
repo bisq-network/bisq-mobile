@@ -12,6 +12,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
 import network.bisq.mobile.presentation.ui.uicases.offer.OffersListScreen
@@ -29,7 +30,7 @@ import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScree
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPaymentMethodScreen
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferReviewTradeScreen
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferTradeAmountScreen
-import network.bisq.mobile.presentation.ui.uicases.trades.TradeFlowScreen
+import network.bisq.mobile.presentation.ui.uicases.trade.TradeFlowScreen
 
 @Composable
 fun RootNavGraph(rootNavController: NavHostController) {
@@ -105,7 +106,6 @@ fun RootNavGraph(rootNavController: NavHostController) {
         composable(Routes.UserProfileSettings.name) {
             UserProfileSettingsScreen(showBackNavigation = true)
         }
-
     }
 }
 

@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
@@ -41,6 +42,8 @@ interface ITrustedNodeSetupPresenter: ViewPresenter {
     fun testConnection(isTested: Boolean)
 
     fun navigateToNextScreen()
+
+    fun goBackToSetupScreen()
 }
 
 @OptIn(ExperimentalResourceApi::class)
@@ -52,10 +55,13 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
     val bisqApiUrl = presenter.bisqApiUrl.collectAsState().value
     val isConnected = presenter.isConnected.collectAsState().value
+    val clipboardManager = LocalClipboardManager.current
 
     RememberPresenterLifecycle(presenter)
 
-    BisqScrollScaffold {
+    BisqScrollScaffold(
+        snackbarHostState = presenter.getSnackState()
+    ) {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
         Column(
@@ -82,7 +88,11 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             ) {
                 BisqButton(
                     text = "Paste",
-                    onClick = {},
+                    onClick = {
+                        val annotatedString = clipboardManager.getText()
+                        if(annotatedString != null) {
+                            presenter.updateBisqApiUrl(annotatedString.text)
+                        }                    },
                     backgroundColor = BisqTheme.colors.dark5,
                     color = BisqTheme.colors.light1,
                     leftIcon= { CopyIcon() }

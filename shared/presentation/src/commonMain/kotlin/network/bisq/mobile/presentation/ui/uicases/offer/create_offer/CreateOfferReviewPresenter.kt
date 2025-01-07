@@ -116,6 +116,6 @@ class CreateOfferReviewPresenter(
     }
 
     fun onGoToOfferList() {
-        rootNavigator.navigate(Routes.Offerbook.name)
+        rootNavigator.popBackStack(Routes.Offerbook.name, false, false)
     }
 }

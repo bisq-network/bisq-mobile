@@ -19,20 +19,23 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.alpha
 import androidx.navigation.compose.currentBackStackEntryAsState
+import network.bisq.mobile.presentation.ui.components.BackHandler
 import network.bisq.mobile.presentation.ui.components.atoms.animations.ShineOverlay
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
-import org.koin.core.qualifier.named
 
-interface ITopBarPresenter: ViewPresenter {
-    fun onAvatarClicked()
-
+interface ITopBarPresenter : ViewPresenter {
     val uniqueAvatar: StateFlow<PlatformImage?>
+    fun onAvatarClicked()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -41,6 +44,8 @@ fun TopBar(
     title: String = "",
     isHome: Boolean = false,
     customBackButton: @Composable (() -> Unit)? = null,
+    backConfirmation: Boolean = false,
+    backBehavior: (() -> Unit)? = null,
     isFlowScreen: Boolean = false,
     stepText: String = ""
 ) {
@@ -49,6 +54,7 @@ fun TopBar(
     val tabNavController: NavHostController = presenter.getRootTabNavController()
 
     val interactionEnabled = presenter.isInteractive.collectAsState().value
+    var showBackConfirmationDialog by remember { mutableStateOf(false) }
 
     val currentTab = tabNavController.currentBackStackEntryAsState().value?.destination?.route
 
@@ -57,7 +63,13 @@ fun TopBar(
     val defaultBackButton: @Composable () -> Unit = {
         IconButton(onClick = {
             if (navController.previousBackStackEntry != null) {
-                presenter.goBack()
+                if (backConfirmation) {
+                    if (!showBackConfirmationDialog) {
+                        showBackConfirmationDialog = true
+                    }
+                } else {
+                    presenter.goBack()
+                }
             }
         }) {
             Icon(
@@ -106,24 +118,51 @@ fun TopBar(
         },
         actions = {
             Row(
-                modifier = Modifier.padding(top = if (isFlowScreen) 15.dp  else 0.dp, end = 16.dp),
+                modifier = Modifier.padding(top = if (isFlowScreen) 15.dp else 0.dp, end = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
 //                TODO implement full feature after MVP
 //                BellIcon()
                 Spacer(modifier = Modifier.width(12.dp))
                 ShineOverlay {
-                    UserIcon(presenter.uniqueAvatar.value,
-                             modifier = Modifier.size(30.dp)
-//                                 .fillMaxSize()
-                                 .alpha(if (currentTab == Routes.TabSettings.name) 0.5f else 1.0f)
-                                 .clickable {
-                                     if (currentTab != Routes.TabSettings.name && interactionEnabled) {
-                                         presenter.onAvatarClicked()
-                                     }
-                                 })
+                    UserIcon(
+                        presenter.uniqueAvatar.value,
+                        modifier = Modifier.size(30.dp)
+                            .alpha(if (currentTab == Routes.TabSettings.name) 0.5f else 1.0f)
+                            .clickable {
+                                if (currentTab != Routes.TabSettings.name) {
+                                    navController.navigate(Routes.UserProfileSettings.name)
+                                }
+                            })
                 }
             }
         },
     )
+
+    // TODO: What if both backBehavior and backConfirmation are set
+    if (backBehavior != null) {
+        BackHandler(onBackPressed = {
+            backBehavior.invoke()
+        })
+    }
+
+    if (backConfirmation) {
+        BackHandler(onBackPressed = {
+            showBackConfirmationDialog = true
+        })
+    }
+
+    if (showBackConfirmationDialog) {
+        ConfirmationDialog(
+            message = "Are you sure want to exit the Trade?",
+            subMessage = "You can resume later",
+            onConfirm = {
+                showBackConfirmationDialog = false
+                presenter.goBack()
+            },
+            onDismiss = {
+                showBackConfirmationDialog = false
+            }
+        )
+    }
 }

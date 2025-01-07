@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.trades
+package network.bisq.mobile.presentation.ui.uicases.trade
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -21,9 +21,12 @@ import network.bisq.mobile.domain.data.model.MockOffer
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
+import network.bisq.mobile.presentation.ui.components.molecules.MyOfferCard
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
@@ -31,6 +34,10 @@ interface IMyTrades : ViewPresenter {
     val myTrades: StateFlow<List<MockOffer>>
 
     fun navigateToCurrencyList()
+
+    fun createOffer()
+
+    fun gotoTradeScreen(offer: MockOffer)
 }
 
 @Composable
@@ -53,9 +60,17 @@ fun MyTradesScreen() {
 @Composable
 fun TradeList(presenter: IMyTrades, myTrades: List<MockOffer>) {
 
-    LazyColumn(modifier = Modifier.padding(top = 48.dp)) {
+    LazyColumn(
+        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
         items(myTrades) { offer ->
-            //OfferCard( onClick = {} )
+            MyOfferCard(
+                offerListItem = offer,
+                myTrade = true,
+                onClick = { presenter.gotoTradeScreen(offer) },
+                onChatClick = {},
+            )
         }
     }
 
@@ -65,22 +80,28 @@ fun TradeList(presenter: IMyTrades, myTrades: List<MockOffer>) {
 fun NoTradesSection(presenter: IMyTrades) {
     BisqScrollLayout(verticalArrangement = Arrangement.Center) {
         Column(
-            modifier = Modifier.padding(vertical = 52.dp),
+            modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding2X),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(64.dp)
         ) {
             Image(
                 painterResource(Res.drawable.img_no_trades), "",
-                modifier = Modifier.height(272.dp).width(350.dp)
+                modifier = Modifier.height(220.dp).width(284.dp)
             )
+            BisqGap.V2()
             BisqText.h3Regular(
                 text = "A journey of a thousand miles begins with a first step!",
                 color = BisqTheme.colors.light1,
                 textAlign = TextAlign.Center
             )
+            BisqGap.V4()
             BisqButton(
                 text = "Start your first trade",
-                onClick = { presenter.navigateToCurrencyList() }
+                onClick = { presenter.navigateToCurrencyList() },
+            )
+            BisqGap.V1()
+            BisqButton(
+                text = "Create a offer",
+                onClick = { presenter.createOffer() }
             )
         }
     }

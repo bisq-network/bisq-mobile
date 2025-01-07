@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.trades
+package network.bisq.mobile.presentation.ui.uicases.trade
 
 import androidx.compose.runtime.Composable
 import cafe.adriel.lyricist.LocalStrings
@@ -67,6 +67,22 @@ open class TradeFlowPresenter(
 
     override fun closeTrade() {
         setShowCloseTradeDialog(true)
+    }
+
+    private val _showCancelTradeDialog = MutableStateFlow(false)
+    override val showCancelTradeDialog: StateFlow<Boolean> get() = _showCancelTradeDialog
+    override fun setShowCancelTradeDialog(value: Boolean) {
+        _showCancelTradeDialog.value = value
+    }
+
+    override fun cancelTrade() {
+        setShowCancelTradeDialog(true)
+    }
+
+    private val _showMediationDialog = MutableStateFlow(false)
+    override val showMediationDialog: StateFlow<Boolean> get() = _showMediationDialog
+    override fun setShowMediationDialog(value: Boolean) {
+        _showMediationDialog.value = value
     }
 
     override fun closeTradeConfirm() {

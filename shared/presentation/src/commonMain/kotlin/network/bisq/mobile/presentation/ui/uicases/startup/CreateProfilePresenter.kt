@@ -102,7 +102,7 @@ open class CreateProfilePresenter(
                          popUpTo(Routes.CreateProfile.name) { inclusive = true }
                      }  */
                     rootNavigator.navigate(Routes.TabContainer.name) {
-                        popUpTo(Routes.CreateProfile.name) { inclusive = true }
+                        popUpTo(Routes.Onboarding.name) { inclusive = true }
                     }
                 }.onFailure { e ->
                     // TODO give user feedback (we could have a general error screen covering usual
