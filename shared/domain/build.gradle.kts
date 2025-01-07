@@ -74,23 +74,6 @@ kotlin {
     }
 
     sourceSets {
-        /* val commonMain by getting {
-             kotlin.srcDir("build/generated/commonMain")
-         }
-
-         val androidMain by getting {
-             dependsOn(commonMain)
-         }
-         val iosX64Main by getting {
-             dependsOn(commonMain)
-         }
-         val iosArm64Main by getting {
-             dependsOn(commonMain)
-         }
-         val iosSimulatorArm64Main by getting {
-             dependsOn(commonMain)
-         }*/
-
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
         }
@@ -274,9 +257,4 @@ tasks.register<GenerateResourceBundlesTask>("generateResourceBundles") {
     // Using build dir still not working on iOS
     // Thus we use the source dir as target
     outputDir.set(layout.projectDirectory.dir("src/commonMain/kotlin/network/bisq/mobile/i18n"))
-    //outputDir.set(layout.buildDirectory.dir("generated/commonMain/network/bisq/mobile/i18n/"))
 }
-
-/*tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    dependsOn("generateResourceBundles")
-}*/
