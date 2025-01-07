@@ -56,7 +56,7 @@ kotlin {
                 "src/androidMain/kotlin",
                 "${layout.buildDirectory}/generated/source/proto/debug/java",
                 "${layout.buildDirectory}/generated/source/proto/release/java",
-                "${layout.buildDirectory}/generated/commonMain"
+                //"${layout.buildDirectory}/generated/commonMain"
             )
         }
     }

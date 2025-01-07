@@ -14,29 +14,22 @@ import kotlinx.cinterop.usePinned
 import kotlinx.serialization.Serializable
 import platform.Foundation.NSBundle
 import platform.Foundation.NSData
-import platform.Foundation.*
-import platform.Foundation.create
-import platform.Foundation.NSString
-import platform.Foundation.stringWithFormat
-import platform.UIKit.*
-import platform.Foundation.NSURL
-import platform.UIKit.UIApplication
 import platform.Foundation.NSDictionary
 import platform.Foundation.NSLocale
-import platform.posix.memcpy
-import platform.UIKit.UIImagePNGRepresentation
-import platform.Foundation.stringWithContentsOfFile
+import platform.Foundation.NSString
+import platform.Foundation.NSURL
 import platform.Foundation.allKeys
 import platform.Foundation.create
 import platform.Foundation.currentLocale
 import platform.Foundation.dictionaryWithContentsOfFile
 import platform.Foundation.languageCode
+import platform.Foundation.stringWithFormat
+import platform.UIKit.UIApplication
 import platform.UIKit.UIDevice
 import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation
 import platform.posix.memcpy
 import kotlin.collections.set
-import platform.Foundation.NSDictionary
 
 @OptIn(ExperimentalSettingsImplementation::class)
 actual fun getPlatformSettings(): Settings {
@@ -54,7 +47,7 @@ class IOSUrlLauncher : UrlLauncher {
         val nsUrl = NSURL.URLWithString(url)
         if (nsUrl != null) {
             // fake secondary parameters are important so that iOS compiler knows which override to use
-            UIApplication.sharedApplication.openURL(nsUrl, options = mapOf<Any?,String>(), completionHandler = null)
+            UIApplication.sharedApplication.openURL(nsUrl, options = mapOf<Any?, String>(), completionHandler = null)
         }
     }
 }
@@ -64,13 +57,6 @@ class IOSPlatformInfo : PlatformInfo {
 }
 
 actual fun getPlatformInfo(): PlatformInfo = IOSPlatformInfo()
-
-actual fun loadFromResources(fileName: String): String {
-    val path = NSBundle.mainBundle.pathForResource(fileName, "txt")
-        ?: throw IllegalArgumentException("File not found: $fileName")
-    return NSString.stringWithContentsOfFile(path) as String
-}
-
 
 actual fun loadProperties(fileName: String): Map<String, String> {
     val bundle = NSBundle.mainBundle

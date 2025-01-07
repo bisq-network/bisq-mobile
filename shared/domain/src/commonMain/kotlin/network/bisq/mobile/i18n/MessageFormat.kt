@@ -1,6 +1,6 @@
 package network.bisq.mobile.i18n
 
-import network.bisq.mobile.utils.getLogger
+import network.bisq.mobile.domain.utils.getLogger
 
 object MessageFormat {
 

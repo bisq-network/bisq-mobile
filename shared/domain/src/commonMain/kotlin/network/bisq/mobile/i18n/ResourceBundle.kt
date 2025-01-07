@@ -2,7 +2,7 @@ package network.bisq.mobile.i18n
 
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.loadProperties
-import network.bisq.mobile.utils.getLogger
+import network.bisq.mobile.domain.utils.getLogger
 
 class ResourceBundle(val map: Map<String, String>) {
     companion object {
