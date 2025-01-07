@@ -52,6 +52,20 @@ fun TabContainerScreen() {
                     Routes.TabSettings.name -> "Settings"
                     else -> "App"
                 },
+                backBehavior = {
+                    if (currentRoute != Routes.TabHome.name) {
+                        navController.navigate(Routes.TabHome.name) {
+                            navController.graph.startDestinationRoute?.let { route ->
+                                popUpTo(route) { saveState = false }
+                            }
+                            launchSingleTop = true
+                            restoreState = false
+                        }
+                    } else {
+                        presenter.showSnackbar("Press back again to exit")
+                        presenter.goBack()
+                    }
+                }
             )
 
         },

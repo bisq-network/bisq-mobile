@@ -112,7 +112,7 @@ class TakeOfferReviewPresenter(
 
     fun onGoToOpenTrades() {
         rootNavigator.navigate(Routes.TradeFlow.name) {
-            popUpTo(Routes.TakeOfferTradeAmount.name) { inclusive = true }
+            popUpTo(Routes.Offerbook.name)
         }
     }
 

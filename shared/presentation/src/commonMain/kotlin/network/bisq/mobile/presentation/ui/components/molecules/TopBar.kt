@@ -45,6 +45,7 @@ fun TopBar(
     isHome: Boolean = false,
     customBackButton: @Composable (() -> Unit)? = null,
     backConfirmation: Boolean = false,
+    backBehavior: (() -> Unit)? = null,
     isFlowScreen: Boolean = false,
     stepText: String = ""
 ) {
@@ -138,8 +139,15 @@ fun TopBar(
         },
     )
 
+    // TODO: What if both backBehavior and backConfirmation are set
+    if (backBehavior != null) {
+        BackHandler(onBackPressed = {
+            backBehavior.invoke()
+        })
+    }
+
     if (backConfirmation) {
-        BackHandler( onBackPressed = {
+        BackHandler(onBackPressed = {
             showBackConfirmationDialog = true
         })
     }
