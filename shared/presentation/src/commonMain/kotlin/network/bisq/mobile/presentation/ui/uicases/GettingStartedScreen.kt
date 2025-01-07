@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases
 
-import androidx.compose.foundation.*
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +28,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
@@ -84,7 +87,7 @@ fun GettingStartedScreen() {
             title = presenter.title,
             bulletPoints = presenter.bulletPoints,
             primaryButtonText = "Start Trading",
-            footerLink = "Learn more"
+            footerLink = "action.learnMore".i18n()
         )
     }
 }

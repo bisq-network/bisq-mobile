@@ -27,6 +27,8 @@ expect fun getDeviceLanguageCode(): String
 
 expect fun getPlatformInfo(): PlatformInfo
 
+expect fun loadProperties(fileName: String): Map<String, String>
+
 @Serializable(with = PlatformImageSerializer::class)
 expect class PlatformImage {
     companion object {
