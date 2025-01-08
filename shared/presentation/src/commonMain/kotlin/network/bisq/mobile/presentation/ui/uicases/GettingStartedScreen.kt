@@ -82,6 +82,10 @@ fun GettingStartedScreen() {
                 }
             }
         }
+<<<<<<< HEAD
+=======
+        BisqButton("Chat", onClick = { presenter.navigateToChat() })
+>>>>>>> c35161c44 (Chat - Basic UI with loads of TODOs)
         WelcomeCard(
             presenter = presenter,
             title = presenter.title,

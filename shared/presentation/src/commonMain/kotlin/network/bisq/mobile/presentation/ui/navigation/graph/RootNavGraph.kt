@@ -14,6 +14,7 @@ import androidx.navigation.compose.composable
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.navigation.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.uicases.ChatScreen
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
 import network.bisq.mobile.presentation.ui.uicases.offer.OffersListScreen
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferAmountSelectorScreen
@@ -105,6 +106,10 @@ fun RootNavGraph(rootNavController: NavHostController) {
 
         composable(Routes.UserProfileSettings.name) {
             UserProfileSettingsScreen(showBackNavigation = true)
+        }
+
+        addScreen(Routes.ChatScreen.name, wizardTransition = true) {
+            ChatScreen()
         }
     }
 }

@@ -47,7 +47,7 @@ fun TopBar(
     backConfirmation: Boolean = false,
     backBehavior: (() -> Unit)? = null,
     isFlowScreen: Boolean = false,
-    stepText: String = ""
+    stepText: String = "",
 ) {
     val presenter: ITopBarPresenter = koinInject()
     val navController: NavHostController = presenter.getRootNavController()
@@ -60,6 +60,9 @@ fun TopBar(
 
     val showBackButton = customBackButton == null && navController.previousBackStackEntry != null
 
+    val topBarState = rememberTopAppBarState()
+    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topBarState, canScroll = { false })
+    
     val defaultBackButton: @Composable () -> Unit = {
         IconButton(onClick = {
             if (navController.previousBackStackEntry != null) {
