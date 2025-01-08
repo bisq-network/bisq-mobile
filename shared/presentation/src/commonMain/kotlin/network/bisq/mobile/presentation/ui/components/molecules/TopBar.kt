@@ -142,14 +142,11 @@ fun TopBar(
         },
     )
 
-    // TODO: What if both backBehavior and backConfirmation are set
     if (backBehavior != null) {
         BackHandler(onBackPressed = {
             backBehavior.invoke()
         })
-    }
-
-    if (backConfirmation) {
+    } else if (backConfirmation) {
         BackHandler(onBackPressed = {
             showBackConfirmationDialog = true
         })

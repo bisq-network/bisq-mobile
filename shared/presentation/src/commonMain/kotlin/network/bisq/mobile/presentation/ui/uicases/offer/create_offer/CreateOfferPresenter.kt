@@ -72,11 +72,15 @@ class CreateOfferPresenter(
 
     lateinit var createOfferModel: CreateOfferModel
 
-    fun onStartCreateOffer() {
+    fun onStartCreateOffer(market: MarketVO? = null) {
         createOfferModel = CreateOfferModel()
 
         createOfferModel.apply {
             priceQuote = marketPriceServiceFacade.selectedMarketPriceItem.value!!.priceQuote
+        }
+
+        if (market != null) {
+            commitMarket(market)
         }
     }
 
@@ -87,7 +91,8 @@ class CreateOfferPresenter(
     fun commitMarket(value: MarketVO) {
         createOfferModel.market = value
         createOfferModel.priceQuote = getMostRecentPriceQuote(value)
-        createOfferModel.availableQuoteSidePaymentMethods = FiatPaymentRailUtil.getPaymentRailNames(value.quoteCurrencyCode)
+        createOfferModel.availableQuoteSidePaymentMethods =
+            FiatPaymentRailUtil.getPaymentRailNames(value.quoteCurrencyCode)
     }
 
     fun commitAmount(

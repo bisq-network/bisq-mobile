@@ -14,7 +14,7 @@ import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPre
 
 class OffersListPresenter(
     mainPresenter: MainPresenter,
-    offerbookServiceFacade: OfferbookServiceFacade,
+    private val offerbookServiceFacade: OfferbookServiceFacade,
     private val takeOfferPresenter: TakeOfferPresenter,
     private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter), IOffersListPresenter {
@@ -37,7 +37,7 @@ class OffersListPresenter(
     }
 
     override fun createOffer() {
-        createOfferPresenter.onStartCreateOffer()
+        createOfferPresenter.onStartCreateOffer(offerbookServiceFacade.selectedOfferbookMarket.value.market)
         rootNavigator.navigate(Routes.CreateOfferDirection.name)
     }
 

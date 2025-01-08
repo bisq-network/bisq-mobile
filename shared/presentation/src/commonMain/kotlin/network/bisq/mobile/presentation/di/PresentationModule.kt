@@ -59,7 +59,7 @@ val presentationModule = module {
     }
 
     single { OnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
-    single { TabContainerPresenter(get()) } bind ITabContainerPresenter::class
+    single { TabContainerPresenter(get(), get()) } bind ITabContainerPresenter::class
 
     single<SettingsPresenter> { SettingsPresenter(get(), get()) } bind ISettingsPresenter::class
 

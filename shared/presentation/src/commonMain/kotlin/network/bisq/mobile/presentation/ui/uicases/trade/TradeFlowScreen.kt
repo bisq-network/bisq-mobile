@@ -1,12 +1,10 @@
 package network.bisq.mobile.presentation.ui.uicases.trade
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -67,6 +66,8 @@ interface ITradeFlowPresenter : ViewPresenter {
     fun exportTrade()
 
     fun openMediation()
+
+    fun goToChat()
 }
 
 @Composable
@@ -82,7 +83,16 @@ fun TradeFlowScreen() {
     val showDialog = showCloseTradeDialog || showCancelTradeDialog || showMediationDialog
 
     BisqStaticScaffold(
-        topBar = { TopBar("Trade - 07b9bab1", backConfirmation = true) }
+        topBar = { TopBar("Trade - 07b9bab1", backConfirmation = true) },
+        fab = {
+            FloatingActionButton(
+                onClick = { presenter.goToChat() },
+                containerColor = BisqTheme.colors.primary,
+                contentColor = BisqTheme.colors.primary2,
+            ) {
+                ChatIcon(modifier = Modifier.size(48.dp)) // TODO: Find better icon? Without outline?
+            }
+        }
     ) {
         Box(
             modifier = Modifier

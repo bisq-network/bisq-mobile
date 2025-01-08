@@ -71,7 +71,7 @@ fun BellIcon(modifier: Modifier = Modifier.size(30.dp)) {
 }
 
 @Composable
-fun ChatIcon(modifier: Modifier = Modifier) {
+fun ChatIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_chat_outlined), "Chat icon", modifier = modifier)
 }
 
