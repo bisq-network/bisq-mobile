@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.components.atoms
+package network.bisq.mobile.presentation.ui.components.atoms.button
 
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable

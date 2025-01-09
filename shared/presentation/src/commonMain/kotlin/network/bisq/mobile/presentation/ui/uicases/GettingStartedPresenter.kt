@@ -59,6 +59,10 @@ open class GettingStartedPresenter(
         enableInteractive(true)
     }
 
+    fun navigateToChat() {
+        rootNavigator.navigate(Routes.ChatScreen.name)
+    }
+
     private fun refresh() {
         job = backgroundScope.launch {
             try {

@@ -113,4 +113,8 @@ open class TradeFlowPresenter(
 
     override fun onViewUnattaching() {
     }
+
+    override fun goToChat() {
+        rootNavigator.navigate(Routes.ChatScreen.name)
+    }
 }

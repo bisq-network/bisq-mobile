@@ -43,6 +43,16 @@ fun CloseIcon(modifier: Modifier = Modifier.size(24.dp)) {
         modifier = modifier,
         tint = Color.White
     )
+//    Icon(
+//        Icons.Default.Close,
+//        tint = Color.White,
+//        contentDescription = null
+//    )
+}
+
+@Composable
+fun ClosedEyeIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_closed_eye), "Closed eye icon", modifier = modifier)
 }
 
 @Composable
@@ -61,13 +71,18 @@ fun BellIcon(modifier: Modifier = Modifier.size(30.dp)) {
 }
 
 @Composable
-fun ChatIcon(modifier: Modifier = Modifier) {
+fun ChatIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_chat_outlined), "Chat icon", modifier = modifier)
 }
 
 @Composable
 fun CopyIcon(modifier: Modifier = Modifier) {
     Image(painterResource(Res.drawable.icon_copy), "Copy icon", modifier = modifier)
+}
+
+@Composable
+fun FlagIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_flag), "Flag icon", modifier = modifier)
 }
 
 @Composable
@@ -106,8 +121,18 @@ fun QuestionIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun ReplyIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_reply), "Reply icon", modifier = modifier)
+}
+
+@Composable
 fun ScanIcon(modifier: Modifier = Modifier) {
     Image(painterResource(Res.drawable.icon_qr), "Scan icon", modifier = modifier)
+}
+
+@Composable
+fun SendIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_send), "Send icon", modifier = modifier)
 }
 
 @Composable

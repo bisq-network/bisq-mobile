@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -82,6 +83,7 @@ fun GettingStartedScreen() {
                 }
             }
         }
+        BisqButton("Chat", onClick = { presenter.navigateToChat() })
         WelcomeCard(
             presenter = presenter,
             title = presenter.title,

@@ -35,19 +35,21 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SearchIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun BisqTextField(
-    label: String,
+    label: String = "",
     value: String,
     onValueChanged: (String) -> Unit = {},
     placeholder: String = "",
     labelRightSuffix: (@Composable () -> Unit)? = null,
     leftSuffix: (@Composable () -> Unit)? = null,
     rightSuffix: (@Composable () -> Unit)? = null,
+    rightSuffixModifier: Modifier = Modifier.width(50.dp),
     isSearch: Boolean = false,
     helperText: String = "",
     indicatorColor: Color = BisqTheme.colors.primary,
@@ -143,9 +145,9 @@ fun BisqTextField(
                         if (showCopy) {
                             CopyIconButton(value)
                         }
-                        
+
                         if (rightSuffix != null) {
-                            Box(modifier = Modifier.width(50.dp)) {
+                            Box(modifier = rightSuffixModifier) {
                                 rightSuffix()
                             }
                         }

@@ -34,7 +34,10 @@ fun MarketListScreen() {
 
     RememberPresenterLifecycle(presenter)
 
-    BisqStaticLayout(padding = PaddingValues(all = 0.dp), verticalArrangement = Arrangement.Top) {
+    BisqStaticLayout(
+        padding = PaddingValues(all = 0.dp),
+        verticalArrangement = Arrangement.Top
+    ) {
 
         BisqSearchField(
             value = presenter.searchText.collectAsState().value,

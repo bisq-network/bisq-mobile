@@ -5,7 +5,9 @@ import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
+import network.bisq.mobile.presentation.ui.uicases.ChatPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
+import network.bisq.mobile.presentation.ui.uicases.IChatPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.MarketListPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferAmountPresenter
 import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferDirectionPresenter
@@ -57,7 +59,7 @@ val presentationModule = module {
     }
 
     single { OnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
-    single { TabContainerPresenter(get()) } bind ITabContainerPresenter::class
+    single { TabContainerPresenter(get(), get()) } bind ITabContainerPresenter::class
 
     single<SettingsPresenter> { SettingsPresenter(get(), get()) } bind ISettingsPresenter::class
 
@@ -110,4 +112,6 @@ val presentationModule = module {
     single { CreateOfferAmountPresenter(get(), get(), get()) }
     single { CreateOfferPaymentMethodPresenter(get(), get()) }
     single { CreateOfferReviewPresenter(get(), get()) }
+
+    single { ChatPresenter(get()) } bind IChatPresenter::class
 }

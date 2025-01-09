@@ -111,7 +111,7 @@ fun OfferCard(
                     modifier = Modifier.width(36.dp).height(108.dp).background(color = BisqTheme.colors.dark4)
                 ) {
                     IconButton(onClick = onChatClick) {
-                        ChatIcon(modifier = Modifier.size(24.dp))
+                        ChatIcon()
                     }
                 }
             }
