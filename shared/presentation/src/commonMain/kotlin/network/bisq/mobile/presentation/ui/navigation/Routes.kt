@@ -7,6 +7,7 @@ object Graph {
 //todo is title used for anything?
 enum class Routes(val title: String) {
     Splash(title = "splash"),
+    Agreement(title = "agreement"),
     Onboarding(title = "onboarding"),
     CreateProfile(title = "create_profile"),
     TrustedNodeSetup(title = "trusted_node_setup"),

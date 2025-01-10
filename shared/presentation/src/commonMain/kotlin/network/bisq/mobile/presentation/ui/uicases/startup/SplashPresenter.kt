@@ -62,7 +62,9 @@ open class SplashPresenter(
             val settings: Settings = settingsRepository.fetch() ?: Settings()
             val user: User? = userRepository.fetch()
 
-            if (hasConnectivity()) {
+            if (user == null || !user.acceptedTerms) {
+                navigateToAgreement()
+            } else if (hasConnectivity()) {
                 // only fetch profile with connectivity
                 val hasProfile: Boolean = userProfileService.hasUserProfile()
 
@@ -113,6 +115,12 @@ open class SplashPresenter(
     open suspend fun hasConnectivity(): Boolean {
         webSocketClientProvider?.get().takeIf { it != null }.let {
             return webSocketClientProvider?.testClient(it!!.host, it.port) == true
+        }
+    }
+
+    private fun navigateToAgreement() {
+        navigateTo(Routes.Agreement) {
+            it.popUpTo(Routes.Splash.name) { inclusive = true }
         }
     }
 

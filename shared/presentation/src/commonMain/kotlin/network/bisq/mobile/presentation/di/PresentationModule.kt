@@ -41,6 +41,7 @@ import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferAmountPre
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPaymentMethodPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferReviewPresenter
+import network.bisq.mobile.presentation.ui.uicases.startup.*
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
@@ -60,6 +61,8 @@ val presentationModule = module {
             get()
         )
     }
+
+    factory<AgreementPresenter> { AgreementPresenter(get(), get()) } bind IAgreementPresenter::class
 
     single { OnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
     single { TabContainerPresenter(get(), get()) } bind ITabContainerPresenter::class

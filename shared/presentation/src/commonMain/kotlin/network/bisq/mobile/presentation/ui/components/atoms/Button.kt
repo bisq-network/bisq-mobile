@@ -39,6 +39,7 @@ fun BisqButton(
     color: Color = BisqTheme.colors.light1,
     textColor: Color = BisqTheme.colors.light1,
     backgroundColor: Color = BisqTheme.colors.primary,
+    fullWidth: Boolean = false,
     padding: PaddingValues = PaddingValues(
         horizontal = BisqUIConstants.ScreenPadding4X,
         vertical = BisqUIConstants.ScreenPaddingHalf
@@ -84,7 +85,7 @@ fun BisqButton(
         shape = RoundedCornerShape(cornerRadius),
         enabled = enabled,
         border = finalBorder,
-        modifier = modifier
+        modifier = if(fullWidth) modifier.fillMaxWidth() else modifier
     ) {
         if (iconOnly == null && text == null && textComponent == null) {
             BisqText.baseMedium("Error: Pass either text or customText or icon")
