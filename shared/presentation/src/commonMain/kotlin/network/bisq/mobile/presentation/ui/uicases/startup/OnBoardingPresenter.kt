@@ -68,11 +68,11 @@ open class OnBoardingPresenter(
     }
 
     protected fun navigateToCreateProfile() {
-        rootNavigator.navigate(Routes.CreateProfile.name)
+        navigateTo(Routes.CreateProfile)
     }
 
     protected fun navigateToTrustedNodeSetup() {
-        rootNavigator.navigate(Routes.TrustedNodeSetup.name)
+        navigateTo(Routes.TrustedNodeSetup)
     }
 
     open fun doCustomNavigationLogic(isBisqUrlSet: Boolean, hasProfile: Boolean) {

@@ -87,7 +87,7 @@ open class TradeFlowPresenter(
 
     override fun closeTradeConfirm() {
         setShowCloseTradeDialog(false)
-        rootNavigator.popBackStack(Routes.Offerbook.name, inclusive = false, saveState = false)
+        navigateBackTo(Routes.Offerbook)
     }
 
     override fun openWalletGuideLink() {
@@ -115,6 +115,6 @@ open class TradeFlowPresenter(
     }
 
     override fun goToChat() {
-        rootNavigator.navigate(Routes.ChatScreen.name)
+        navigateTo(Routes.ChatScreen)
     }
 }

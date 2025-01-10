@@ -26,28 +26,19 @@ class MyTradesPresenter(
     override val myTrades: StateFlow<List<MockOffer>> = _myTrades
 
     override fun navigateToCurrencyList() {
-        val tabController = getRootTabNavController()
-        tabController.navigate(Routes.TabCurrencies.name) {
-            tabController.graph.startDestinationRoute?.let { route ->
-                popUpTo(route) {
-                    saveState = true
-                }
-            }
-            launchSingleTop = true
-            restoreState = true
-        }
+        navigateToTab(Routes.TabCurrencies)
     }
 
 
     override fun createOffer() {
         log.i { "Goto create offer" }
         createOfferPresenter.onStartCreateOffer()
-        rootNavigator.navigate(Routes.CreateOfferDirection.name)
+        navigateTo(Routes.CreateOfferDirection)
     }
 
     override fun gotoTradeScreen(offer: MockOffer) {
         log.i { "Goto trade screen" }
-        rootNavigator.navigate(Routes.TradeFlow.name)
+        navigateTo(Routes.TradeFlow)
     }
 
     private fun refresh() {

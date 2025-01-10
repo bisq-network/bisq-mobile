@@ -42,15 +42,7 @@ open class GettingStartedPresenter(
     }
 
     private fun navigateToTradingTab() {
-        getRootTabNavController().navigate(Routes.TabCurrencies.name) {
-            getRootTabNavController().graph.startDestinationRoute?.let { route ->
-                popUpTo(route) {
-                    saveState = true
-                }
-            }
-            launchSingleTop = true
-            restoreState = true
-        }
+        navigateToTab(Routes.TabCurrencies)
     }
 
     override fun navigateLearnMore() {
@@ -60,7 +52,7 @@ open class GettingStartedPresenter(
     }
 
     fun navigateToChat() {
-        rootNavigator.navigate(Routes.ChatScreen.name)
+        navigateTo(Routes.ChatScreen)
     }
 
     private fun refresh() {

@@ -79,7 +79,7 @@ class TakeOfferReviewPresenter(
     }
 
     fun onBack() {
-        rootNavigator.popBackStack()
+        navigateBack()
     }
 
     fun onTakeOffer() {
@@ -111,8 +111,8 @@ class TakeOfferReviewPresenter(
     }
 
     fun onGoToOpenTrades() {
-        rootNavigator.navigate(Routes.TradeFlow.name) {
-            popUpTo(Routes.Offerbook.name)
+        navigateTo(Routes.TradeFlow) {
+            it.popUpTo(Routes.Offerbook.name)
         }
     }
 

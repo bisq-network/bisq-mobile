@@ -70,13 +70,13 @@ class CreateOfferPaymentMethodPresenter(
 
     fun onBack() {
         commitToModel()
-        rootNavigator.popBackStack()
+        navigateBack()
     }
 
     fun onNext() {
         if (isValid()) {
             commitToModel()
-            rootNavigator.navigate(Routes.CreateOfferReviewOffer.name)
+            navigateTo(Routes.CreateOfferReviewOffer)
         }
     }
 

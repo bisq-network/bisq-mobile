@@ -28,17 +28,17 @@ class OffersListPresenter(
         takeOfferPresenter.selectOfferToTake(offer)
 
         if (takeOfferPresenter.showAmountScreen()) {
-            rootNavigator.navigate(Routes.TakeOfferTradeAmount.name)
+            navigateTo(Routes.TakeOfferTradeAmount)
         } else if (takeOfferPresenter.showPaymentMethodsScreen()) {
-            rootNavigator.navigate(Routes.TakeOfferPaymentMethod.name)
+            navigateTo(Routes.TakeOfferPaymentMethod)
         } else {
-            rootNavigator.navigate(Routes.TakeOfferReviewTrade.name)
+            navigateTo(Routes.TakeOfferReviewTrade)
         }
     }
 
     override fun createOffer() {
         createOfferPresenter.onStartCreateOffer(offerbookServiceFacade.selectedOfferbookMarket.value.market)
-        rootNavigator.navigate(Routes.CreateOfferDirection.name)
+        navigateTo(Routes.CreateOfferDirection)
     }
 
     override fun chatForOffer(offer: OfferListItemVO) {

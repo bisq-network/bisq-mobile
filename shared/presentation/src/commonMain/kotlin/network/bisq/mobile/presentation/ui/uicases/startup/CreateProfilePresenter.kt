@@ -98,11 +98,11 @@ open class CreateProfilePresenter(
                     setCreateAndPublishInProgress(false)
 
                     // Skip for now the TrustedNodeSetup until its fully implemented with persisting the api URL.
-                    /* rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
-                         popUpTo(Routes.CreateProfile.name) { inclusive = true }
+                    /* navigateTo(Routes.TrustedNodeSetup) {
+                         it.popUpTo(Routes.CreateProfile.name) { inclusive = true }
                      }  */
-                    rootNavigator.navigate(Routes.TabContainer.name) {
-                        popUpTo(Routes.Onboarding.name) { inclusive = true }
+                    navigateTo(Routes.TabContainer) {
+                        it.popUpTo(Routes.Onboarding.name) { inclusive = true }
                     }
                 }.onFailure { e ->
                     // TODO give user feedback (we could have a general error screen covering usual

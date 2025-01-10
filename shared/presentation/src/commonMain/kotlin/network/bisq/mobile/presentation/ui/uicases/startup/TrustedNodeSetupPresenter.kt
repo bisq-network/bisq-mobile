@@ -66,10 +66,10 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun navigateToNextScreen() {
-        rootNavigator.navigate(Routes.CreateProfile.name)
+        navigateTo(Routes.CreateProfile)
     }
 
     override fun goBackToSetupScreen() {
-        rootNavigator.popBackStack()
+        navigateBack()
     }
 }
