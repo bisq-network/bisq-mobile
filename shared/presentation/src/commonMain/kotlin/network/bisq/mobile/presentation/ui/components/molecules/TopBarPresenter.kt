@@ -32,7 +32,7 @@ open class TopBarPresenter(
 
     override fun onAvatarClicked() {
         enableInteractive(false)
-        getRootNavController().navigate(Routes.UserProfileSettings.name)
+        navigateTo(Routes.UserProfileSettings)
         enableInteractive(true)
     }
 

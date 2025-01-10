@@ -73,16 +73,16 @@ class TakeOfferAmountPresenter(
 
     fun onBack() {
         commitToModel()
-        rootNavigator.popBackStack()
+        navigateBack()
     }
 
     fun onNext() {
         commitToModel()
 
         if (takeOfferPresenter.showPaymentMethodsScreen()) {
-            rootNavigator.navigate(Routes.TakeOfferPaymentMethod.name)
+            navigateTo(Routes.TakeOfferPaymentMethod)
         } else {
-            rootNavigator.navigate(Routes.TakeOfferReviewTrade.name)
+            navigateTo(Routes.TakeOfferReviewTrade)
         }
     }
 

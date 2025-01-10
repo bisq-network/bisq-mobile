@@ -48,13 +48,13 @@ class TakeOfferPaymentMethodPresenter(
 
     fun onBack() {
         commitToModel()
-        rootNavigator.popBackStack()
+        navigateBack()
     }
 
     fun onNext() {
         if (isValid()) {
             commitToModel()
-            rootNavigator.navigate(Routes.TakeOfferReviewTrade.name)
+            navigateTo(Routes.TakeOfferReviewTrade)
         } else {
             var warningMessage = "Please select both Fiat and Bitcoin payment methods"
             if (quoteSidePaymentMethod == null && baseSidePaymentMethod != null) {

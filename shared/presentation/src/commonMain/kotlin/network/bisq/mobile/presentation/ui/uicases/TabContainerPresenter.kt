@@ -18,7 +18,7 @@ class TabContainerPresenter(
 
     override fun createOffer() {
         createOfferPresenter.onStartCreateOffer()
-        rootNavigator.navigate(Routes.CreateOfferDirection.name)
+        navigateTo(Routes.CreateOfferDirection)
     }
 
 }

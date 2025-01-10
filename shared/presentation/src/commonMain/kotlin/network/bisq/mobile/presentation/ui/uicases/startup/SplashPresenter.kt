@@ -81,11 +81,11 @@ open class SplashPresenter(
 //                    // If not, goto CreateProfile
 //                    if (settings.firstLaunch) {
 //                        // TODO after onboarding need to make sure the rest is configured?
-//                        rootNavigator.navigate(Routes.Onboarding.name) {
+//                        navigateTo(Routes.Onboarding.name) {
 //                            popUpTo(Routes.Splash.name) { inclusive = true }
 //                        }
 //                    } else {
-//                        rootNavigator.navigate(Routes.CreateProfile.name) {
+//                        navigateTo(Routes.CreateProfile.name) {
 //                            popUpTo(Routes.Splash.name) { inclusive = true }
 //                        }
 //                    }
@@ -95,26 +95,26 @@ open class SplashPresenter(
     }
 
     private fun navigateToTrustedNodeSetup() {
-        rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
-            popUpTo(Routes.Splash.name) { inclusive = true }
+        navigateTo(Routes.TrustedNodeSetup) {
+            it.popUpTo(Routes.Splash.name) { inclusive = true }
         }
     }
 
     private fun navigateToOnboarding() {
-        rootNavigator.navigate(Routes.Onboarding.name) {
-            popUpTo(Routes.Splash.name) { inclusive = true }
+        navigateTo(Routes.Onboarding) {
+            it.popUpTo(Routes.Splash.name) { inclusive = true }
         }
     }
 
     protected fun navigateToCreateProfile() {
-        rootNavigator.navigate(Routes.CreateProfile.name) {
-            popUpTo(Routes.Splash.name) { inclusive = true }
+        navigateTo(Routes.CreateProfile) {
+            it.popUpTo(Routes.Splash.name) { inclusive = true }
         }
     }
 
     private fun navigateToHome() {
-        rootNavigator.navigate(Routes.TabContainer.name) {
-            popUpTo(Routes.Splash.name) { inclusive = true }
+        navigateTo(Routes.TabContainer) {
+            it.popUpTo(Routes.Splash.name) { inclusive = true }
         }
     }
 
@@ -130,7 +130,7 @@ open class SplashPresenter(
         }
 //        when {
 //            settings.bisqApiUrl.isEmpty() -> {
-//                rootNavigator.navigate(Routes.TrustedNodeSetup.name) {
+//                navigateTo(Routes.TrustedNodeSetup.name) {
 //                    popUpTo(Routes.Splash.name) { inclusive = true }
 //                }
 //            }

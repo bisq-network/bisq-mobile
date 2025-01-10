@@ -87,13 +87,13 @@ class CreateOfferPricePresenter(
         if (isValid(percentagePriceValue)) {
             commitToModel()
         }
-        rootNavigator.popBackStack()
+        navigateBack()
     }
 
     fun onNext() {
         if (isValid(percentagePriceValue)) {
             commitToModel()
-            rootNavigator.navigate(Routes.CreateOfferPaymentMethod.name)
+            navigateTo(Routes.CreateOfferPaymentMethod)
         }
     }
 

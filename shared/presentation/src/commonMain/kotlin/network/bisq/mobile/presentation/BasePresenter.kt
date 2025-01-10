@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation
 import androidx.compose.material3.SnackbarHostState
 import androidx.annotation.CallSuper
 import androidx.navigation.NavHostController
+import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.flow.SharingStarted
@@ -13,6 +14,7 @@ import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.presentation.ui.navigation.Routes
 
 /**
  * Presenter methods accesible by all views. Views should extend this interface when defining the behaviour expected for their presenter.
@@ -39,7 +41,7 @@ interface ViewPresenter {
     /**
      * Navigate back in the stack
      */
-    fun goBack()
+    fun goBack(): Boolean
 
     /**
      * This can be used as initialization method AFTER view gets attached (so view is available)
@@ -78,7 +80,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     // Presenter is interactive by default
     private val _isInteractive = MutableStateFlow(true)
     override val isInteractive: StateFlow<Boolean> = _isInteractive
-    val snackbarHostState: SnackbarHostState = SnackbarHostState()
+    private val snackbarHostState: SnackbarHostState = SnackbarHostState()
 
     override fun getSnackState(): SnackbarHostState {
         return snackbarHostState
@@ -94,7 +96,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
      * @throws IllegalStateException if this presenter has no root
      * @return Nav controller for navigation from the root
      */
-    protected val rootNavigator: NavHostController
+    private val rootNavigator: NavHostController
         get() = (rootPresenter ?: throw IllegalStateException("This presenter has no root")).navController
 
 
@@ -131,12 +133,48 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
         return rootPresenter!!.getRootTabNavController()
     }
 
-    override fun goBack() {
+    /**
+     * Navigate to given destination
+     */
+    protected fun navigateTo(destination: Routes, customSetup: (NavOptionsBuilder) -> Unit = {}) {
+        rootNavigator.navigate(destination.name) {
+            customSetup(this)
+        }
+    }
+
+    protected fun navigateBack(): Boolean {
+        return goBack()
+    }
+
+    /**
+     * Back navigation poping back stack
+     */
+    protected fun navigateBackTo(destination: Routes, shouldInclusive: Boolean = false, shouldSaveState: Boolean = false) {
+        rootNavigator.popBackStack(destination.name, inclusive = shouldInclusive, saveState = shouldSaveState)
+    }
+
+    /**
+     * Navigates to the given tab route inside the main presentation, with default parameters.
+     */
+    protected fun navigateToTab(destination: Routes, saveStateOnPopUp: Boolean = true, shouldLaunchSingleTop: Boolean = true, shouldRestoreState: Boolean = true) {
+        getRootTabNavController().navigate(destination.name) {
+            getRootTabNavController().graph.startDestinationRoute?.let { route ->
+                popUpTo(route) {
+                    saveState = saveStateOnPopUp
+                }
+            }
+            launchSingleTop = shouldLaunchSingleTop
+            restoreState = shouldRestoreState
+        }
+    }
+
+    override fun goBack(): Boolean {
         try {
             log.i { "goBack defaut implementation" }
-            rootNavigator.popBackStack()
+            return rootNavigator.popBackStack()
         } catch (e: Exception) {
             log.e(e) { "Faled to navigate back" }
+            return false
         }
     }
 

@@ -117,12 +117,12 @@ class CreateOfferAmountPresenter(
 
     fun onBack() {
         commitToModel()
-        rootNavigator.popBackStack()
+        navigateBack()
     }
 
     fun onNext() {
         commitToModel()
-        rootNavigator.navigate(Routes.CreateOfferPrice.name)
+        navigateTo(Routes.CreateOfferPrice)
     }
 
     private fun applyRangeAmountSliderValue(rangeSliderPosition: ClosedFloatingPointRange<Float>) {

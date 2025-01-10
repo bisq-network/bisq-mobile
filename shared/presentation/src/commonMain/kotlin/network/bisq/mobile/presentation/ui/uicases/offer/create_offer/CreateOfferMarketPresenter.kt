@@ -43,7 +43,7 @@ class CreateOfferMarketPresenter(
 
     fun onBack() {
         commitToModel()
-        rootNavigator.popBackStack()
+        navigateBack()
     }
 
     fun onNext() {
@@ -54,7 +54,7 @@ class CreateOfferMarketPresenter(
 
     private fun navigateNext() {
         commitToModel()
-        rootNavigator.navigate(Routes.CreateOfferAmount.name)
+        navigateTo(Routes.CreateOfferAmount)
     }
 
     private fun commitToModel() {
