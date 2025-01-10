@@ -9,5 +9,4 @@ open class User : BaseModel() {
     var statement: String? = null
     var lastActivity: Long? = null
     var uniqueAvatar: PlatformImage? = null
-    var acceptedTerms: Boolean = false
 }

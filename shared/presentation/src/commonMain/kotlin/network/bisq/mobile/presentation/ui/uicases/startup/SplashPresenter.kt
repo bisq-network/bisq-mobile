@@ -62,7 +62,7 @@ open class SplashPresenter(
             val settings: Settings = settingsRepository.fetch() ?: Settings()
             val user: User? = userRepository.fetch()
 
-            if (user == null || !user.acceptedTerms) {
+            if (!settings.agreementAccepted) {
                 navigateToAgreement()
             } else if (hasConnectivity()) {
                 // only fetch profile with connectivity
