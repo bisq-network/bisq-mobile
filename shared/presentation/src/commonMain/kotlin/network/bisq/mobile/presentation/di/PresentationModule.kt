@@ -2,9 +2,11 @@ package network.bisq.mobile.presentation.di
 
 import network.bisq.mobile.client.ClientMainPresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.getPlatformCurrentTimeProvider
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
+import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import network.bisq.mobile.presentation.ui.uicases.ChatPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.IChatPresenter
@@ -138,4 +140,8 @@ val presentationModule = module {
     factory { OpenTradePresenter(get(), get(), get()) }
 
     single { ChatPresenter(get()) } bind IChatPresenter::class
+
+
+    factory<TimeProvider> { getPlatformCurrentTimeProvider() }
+
 }

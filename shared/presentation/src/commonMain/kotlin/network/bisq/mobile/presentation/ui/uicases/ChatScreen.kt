@@ -10,12 +10,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.launch
+import kotlinx.datetime.LocalTime
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.chat.BisqChatInputField
 import network.bisq.mobile.presentation.ui.components.organisms.chat.ChatWidget
 import network.bisq.mobile.presentation.ui.composeModels.ChatMessage
 import network.bisq.mobile.presentation.ui.composeModels.ChatMessageReplyOf
+import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import org.koin.compose.koinInject
 
 @Composable
@@ -25,6 +28,7 @@ fun ChatScreen() {
     val scope = rememberCoroutineScope() // TODO: How scopes are to be used?
     val presenter: ChatPresenter = koinInject()
     val messages by presenter.messages.collectAsState()
+    val currentTimeProvider: TimeProvider = koinInject()
     var quotedMessage by remember {
         mutableStateOf<ChatMessage?>(null)
     }
@@ -40,7 +44,7 @@ fun ChatScreen() {
         )
         BisqChatInputField(
             value = chatText,
-            placeholder = "Type a new message",
+            placeholder = "chat.message.input.prompt".i18n(),
             onValueChanged = { chatText = it },
             onMessageSent = { inputText, message ->
                 chatText = ""
@@ -49,12 +53,16 @@ fun ChatScreen() {
                         messageID = (messages.size * 10).toString(),
                         "me",
                         inputText,
-                        timestamp = "8.00PM", //TODO:
+                        timestamp = currentTimeProvider.getCurrentTime(),
                         reaction = "",
                         chatMessageReplyOf = if (quotedMessage == null) null else ChatMessageReplyOf(
                             messageID = quotedMessage!!.messageID,
                             author = quotedMessage!!.author,
-                            content = quotedMessage!!.content
+                            content = if (quotedMessage!!.content.length > 80) {
+                                quotedMessage!!.content.take(80) + "..."
+                            } else {
+                                quotedMessage!!.content
+                            }
                         )
                     )
                 )
