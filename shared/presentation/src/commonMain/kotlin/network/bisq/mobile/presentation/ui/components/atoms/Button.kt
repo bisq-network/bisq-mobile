@@ -109,7 +109,7 @@ fun BisqButton(
                 } else {
                     BisqText.baseMedium(
                         text = text,
-                        color = textColor,
+                        color = finalContentColor, // TOOD: conflict with using textColor?
                     )
                 }
                 if (rightIcon != null) Spacer(modifier = Modifier.width(10.dp))
