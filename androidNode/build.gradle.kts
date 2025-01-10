@@ -3,6 +3,7 @@ import com.google.protobuf.gradle.proto
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.*
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -61,9 +62,21 @@ kotlin {
     }
 }
 
+val localProperties = Properties()
+localProperties.load(File(rootDir, "local.properties").inputStream())
+
 android {
     namespace = "network.bisq.mobile.node"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+
+    signingConfigs {
+        create("release") {
+            storeFile = file( localProperties["KEYSTORE_PATH"] as String)
+            storePassword = localProperties["KEYSTORE_PASSWORD"] as String
+            keyAlias = localProperties["KEY_ALIAS"] as String
+            keyPassword = localProperties["KEY_PASSWORD"] as String
+        }
+    }
 
     sourceSets {
         getByName("main") {
@@ -105,7 +118,28 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            signingConfig = signingConfigs.getByName("release")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            isDebuggable = false
+        }
+        getByName("debug") {
+            isDebuggable = true
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
+    }
+    applicationVariants.all {
+        val variant = this
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            val appName = "Bisq"
+            val version = variant.versionName
+            val fileName = "$appName-$version.apk"
+            output.outputFileName = fileName
         }
     }
     buildFeatures {

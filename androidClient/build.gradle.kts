@@ -1,5 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.*
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -46,9 +47,21 @@ kotlin {
     }
 }
 
+val localProperties = Properties()
+localProperties.load(File(rootDir, "local.properties").inputStream())
+
 android {
     namespace = "network.bisq.mobile.client"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+
+    signingConfigs {
+        create("release") {
+            storeFile = file( localProperties["KEYSTORE_PATH"] as String)
+            storePassword = localProperties["KEYSTORE_PASSWORD"] as String
+            keyAlias = localProperties["CLI_KEY_ALIAS"] as String
+            keyPassword = localProperties["CLI_KEY_PASSWORD"] as String
+        }
+    }
 
     defaultConfig {
         applicationId = "network.bisq.mobile.client"
@@ -59,6 +72,7 @@ android {
         buildConfigField("String", "APP_VERSION", "\"${version}\"")
         buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
@@ -69,7 +83,28 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            signingConfig = signingConfigs.getByName("release")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
+            isDebuggable = false
+        }
+        getByName("debug") {
+            isDebuggable = true
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
+    }
+    applicationVariants.all {
+        val variant = this
+        outputs.all {
+            val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
+            val appName = "BisqCli"
+            val version = variant.versionName
+            val fileName = "$appName-$version.apk"
+            output.outputFileName = fileName
         }
     }
     buildFeatures {

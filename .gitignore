@@ -18,6 +18,9 @@ replay_pid*
 xcuserdata
 local.properties
 
+# for release
+credentials
+
 ## iOS - we currently have this tracked by the repo
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj
