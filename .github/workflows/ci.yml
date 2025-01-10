@@ -67,8 +67,18 @@ jobs:
 #          sudo xcode-select -s /Applications/Xcode_15.0.app
 
 #      TODO: restore androidNode once dependant bisq2 jars get published in a public maven repo
+      # Create a fake local.properties file
+      - name: Create fake local.properties
+        run: |
+          echo "KEYSTORE_PATH=/path/to/keystore" > local.properties
+          echo "KEYSTORE_PASSWORD=yourKeystorePassword" >> local.properties
+          echo "KEY_ALIAS=yourKeyAlias" >> local.properties
+          echo "CLI_KEY_ALIAS=yourCliKeyAlias" >> local.properties
+          echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
+          echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
+                                                                        
       - name: Build project
-        run: ./gradlew clean build -x androidNode:build --info
+        run: ./gradlew clean assembleDebug -x androidNode:assembleDebug --info
 
       - name: Run all project tests
         run: ./gradlew test -x androidNode:test
