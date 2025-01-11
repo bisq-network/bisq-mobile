@@ -11,7 +11,8 @@ import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScree
  */
 open class SettingsPresenter(
     private val settingsRepository: SettingsRepository,
-    mainPresenter: MainPresenter): BasePresenter(mainPresenter), ISettingsPresenter {
+    mainPresenter: MainPresenter
+) : BasePresenter(mainPresenter), ISettingsPresenter {
 
     final override fun menuTree(): MenuItem {
         val defaultList: MutableList<MenuItem> = mutableListOf(
@@ -19,14 +20,15 @@ open class SettingsPresenter(
                 label = "Account",
                 children = listOf(
                     MenuItem.Leaf(label = "User Profile", content = { UserProfileSettingsScreen() }),
-                    MenuItem.Leaf(label = "Payment Accounts", content = { PaymentAccountSettingsScreen() })
+                    MenuItem.Leaf(label = "Payment Accounts", content = { PaymentAccountSettingsScreen() }) ,
                 )
-            )
+            ),
+                    MenuItem.Leaf(label = "General Settings", content = { GeneralSettingsScreen() })
         )
         return MenuItem.Parent(
             label = "Bisq",
             children = addCustomSettings(defaultList)
-            )
+        )
     }
 
     protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {

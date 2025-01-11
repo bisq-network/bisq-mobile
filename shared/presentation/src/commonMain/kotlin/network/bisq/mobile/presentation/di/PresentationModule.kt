@@ -43,6 +43,7 @@ import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferAmountPre
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPaymentMethodPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferReviewPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.*
 import network.bisq.mobile.presentation.ui.uicases.startup.*
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -90,6 +91,24 @@ val presentationModule = module {
             get()
         )
     } bind ITrustedNodeSetupPresenter::class
+
+    /*
+    single<MarketListPresenter> { MarketListPresenter(get(), get()) }
+
+    single { OffersListPresenter(get(), get(), get(), get()) } bind IOffersListPresenter::class
+
+    single {
+        MyTradesPresenter(
+            get(),
+            get(),
+            get(),
+        )
+    } bind IMyTrades::class
+    */
+
+    single { TradeFlowPresenter(get(), get()) } bind ITradeFlowPresenter::class
+
+    single { GeneralSettingsPresenter(get(), get()) } bind IGeneralSettingsPresenter::class
 
     single { PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
 

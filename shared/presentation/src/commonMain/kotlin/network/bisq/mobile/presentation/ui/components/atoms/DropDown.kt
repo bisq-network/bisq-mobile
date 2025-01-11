@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.DropdownMenu
@@ -13,7 +14,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.style.TextAlign
+import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun BisqDropDown(
@@ -36,15 +39,15 @@ fun BisqDropDown(
 
         BisqButton(
             onClick = { expanded = true },
-            modifier = Modifier.fillMaxWidth(),
-            backgroundColor = BisqTheme.colors.grey5,
-            textComponent = {
-                BisqText.baseRegular(
-                    text = value,
-                    color = BisqTheme.colors.light1,
-                    textAlign = TextAlign.Start
-                )
-            },
+            fullWidth = true,
+            padding = PaddingValues(
+                horizontal = BisqUIConstants.ScreenPadding,
+                vertical = BisqUIConstants.ScreenPaddingHalf
+            ),
+            backgroundColor = BisqTheme.colors.secondary,
+            text = value,
+            textAlign = TextAlign.Start,
+            rightIcon = { ArrowDownIcon() }
         )
 
         DropdownMenu(
