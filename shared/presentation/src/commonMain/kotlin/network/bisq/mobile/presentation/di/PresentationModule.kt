@@ -104,11 +104,11 @@ val presentationModule = module {
             get(),
         )
     } bind IMyTrades::class
-    */
 
     single { TradeFlowPresenter(get(), get()) } bind ITradeFlowPresenter::class
+    */
 
-    single { GeneralSettingsPresenter(get(), get()) } bind IGeneralSettingsPresenter::class
+    single { GeneralSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
     single { PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
 

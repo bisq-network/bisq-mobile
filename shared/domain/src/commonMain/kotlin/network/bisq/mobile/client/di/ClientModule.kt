@@ -12,6 +12,7 @@ import kotlinx.serialization.modules.subclass
 import network.bisq.mobile.client.service.bootstrap.ClientApplicationBootstrapFacade
 import network.bisq.mobile.client.service.explorer.ClientExplorerServiceFacade
 import network.bisq.mobile.client.service.explorer.ExplorerApiGateway
+import network.bisq.mobile.client.service.common.ClientLanguageServiceFacade
 import network.bisq.mobile.client.service.market.ClientMarketPriceServiceFacade
 import network.bisq.mobile.client.service.market.MarketPriceApiGateway
 import network.bisq.mobile.client.service.mediation.ClientMediationServiceFacade
@@ -55,6 +56,7 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
+import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -187,4 +189,6 @@ val clientModule = module {
 
     single { SettingsApiGateway(get()) }
     single<SettingsServiceFacade> { ClientSettingsServiceFacade(get()) }
+    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get(), get()) }
+
 }

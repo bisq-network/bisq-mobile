@@ -49,8 +49,8 @@ open class AgreementPresenter(
     }
 
     private fun navigateToOnboarding() {
-        rootNavigator.navigate(Routes.Onboarding.name) {
-            popUpTo(Routes.Agreement.name) { inclusive = true }
+        navigateTo(Routes.Onboarding) {
+            it.popUpTo(Routes.Agreement.name) { inclusive = true }
         }
     }
 

@@ -29,12 +29,19 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
 interface IGeneralSettingsPresenter : ViewPresenter {
+    val i18nCodes: StateFlow<List<String>>
+
+    val selectedLanguage: StateFlow<String>
+    fun selectLanguage(langCode: String)
 
 }
 
 @Composable
 fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
     val presenter: IGeneralSettingsPresenter = koinInject()
+
+    val i18nCodes = presenter.i18nCodes.collectAsState().value
+    val selectedLauguage = presenter.selectedLanguage.collectAsState().value
 
     RememberPresenterLifecycle(presenter)
 
@@ -44,6 +51,13 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
     ) {
 
         BisqScrollLayout(onModifier = { modifier -> modifier.weight(1f) }) {
+
+            BisqDropDown(
+                label = "settings.language.headline".i18n(),
+                items = i18nCodes,
+                value = selectedLauguage,
+                onValueChanged = { newValue -> presenter.selectLanguage(newValue) },
+            )
 
             BisqDropDown(
                 label = "settings.language.headline".i18n(),

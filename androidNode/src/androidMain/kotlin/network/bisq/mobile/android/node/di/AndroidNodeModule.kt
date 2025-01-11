@@ -10,6 +10,7 @@ import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.android.node.service.bootstrap.NodeApplicationBootstrapFacade
 import network.bisq.mobile.android.node.service.explorer.NodeExplorerServiceFacade
+import network.bisq.mobile.android.node.service.common.NodeLanguageServiceFacade
 import network.bisq.mobile.android.node.service.market_price.NodeMarketPriceServiceFacade
 import network.bisq.mobile.android.node.service.mediation.NodeMediationServiceFacade
 import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
@@ -20,6 +21,7 @@ import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
+import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -65,11 +67,13 @@ val androidNodeModule = module {
 
     single<SettingsServiceFacade> { NodeSettingsServiceFacade(get()) }
 
+    single<LanguageServiceFacade> { NodeLanguageServiceFacade(get()) }
+
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 
     // this line showcases both, the possibility to change behaviour of the app by changing one definition
     // and binding the same obj to 2 different abstractions
-    single<MainPresenter> { NodeMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
+    single<MainPresenter> { NodeMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
 
     single<SplashPresenter> {
         NodeSplashPresenter(
