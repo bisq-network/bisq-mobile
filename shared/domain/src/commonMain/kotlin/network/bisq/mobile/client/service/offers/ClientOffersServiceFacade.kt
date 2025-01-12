@@ -41,7 +41,7 @@ class ClientOffersServiceFacade(
     override val offerbookMarketItems: List<MarketListItem> get() = _offerbookMarketItems
 
     // Misc
-    private var offerbookListItemsByMarket: MutableMap<String, MutableSet<OfferItemPresentationModel>> = mutableMapOf()
+    private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
 
     private val coroutineScope = CoroutineScope(BackgroundDispatcher)
     private var offersSequenceNumber = atomic(-1)
@@ -183,15 +183,15 @@ class ClientOffersServiceFacade(
                     ) {
                         payload.forEach { item ->
                             val model = OfferItemPresentationModel(item)
-                            offerbookListItemsByMarket.getOrPut(item.bisqEasyOffer.market.quoteCurrencyCode) { mutableSetOf() }
-                                .add(model)
+                            offerbookListItemsByMarket.getOrPut(item.bisqEasyOffer.market.quoteCurrencyCode) { mutableMapOf() }
+                                .put(model.offerId, model)
                         }
                     } else if (webSocketEvent.modificationType == ModificationType.REMOVED) {
                         payload.forEach { item ->
-                            offerbookListItemsByMarket[item.bisqEasyOffer.market.quoteCurrencyCode]?.let { set ->
+                            offerbookListItemsByMarket[item.bisqEasyOffer.market.quoteCurrencyCode]?.let { map ->
                                 val model = OfferItemPresentationModel(item)
-                                set.remove(model)
-                                if (set.isEmpty()) {
+                                map.remove(model.offerId)
+                                if (map.isEmpty()) {
                                     offerbookListItemsByMarket.remove(item.bisqEasyOffer.market.quoteCurrencyCode)
                                 }
                             }
@@ -203,18 +203,15 @@ class ClientOffersServiceFacade(
         }
     }
 
-
     private fun applyOffersToSelectedMarket() {
-        _offerbookListItems.value =
-            offerbookListItemsByMarket[selectedOfferbookMarket.value.market.quoteCurrencyCode]?.toList() ?: emptyList()
+        val list = offerbookListItemsByMarket[selectedOfferbookMarket.value.market.quoteCurrencyCode]?.values?.toList()
+        _offerbookListItems.value = list ?: emptyList()
     }
-
 
     private fun cancelSubscribeOffersJob() {
         subscribeOffersJob?.cancel()
         subscribeOffersJob = null
     }
-
 
     private fun cancelObserveMarketPriceJob() {
         observeMarketPriceJob?.cancel()
