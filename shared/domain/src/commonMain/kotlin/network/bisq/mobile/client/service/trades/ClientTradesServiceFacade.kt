@@ -100,7 +100,11 @@ class ClientTradesServiceFacade(
     }
 
     override suspend fun closeTrade(): Result<Unit> {
-        return apiGateway.closeTrade(requireNotNull(tradeId))
+        val result = apiGateway.closeTrade(requireNotNull(tradeId))
+        if (result.isSuccess) {
+            _selectedTrade.value = null
+        }
+        return result
     }
 
     override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> {
