@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.offer.create_offer
+package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.PaddingValues

@@ -5,7 +5,7 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
-import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 
 class NodeGettingStartedPresenter(
     mainPresenter: MainPresenter,

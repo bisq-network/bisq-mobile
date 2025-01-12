@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.offer.create_offer
+package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,7 +21,7 @@ import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.helpers.StringHelper
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter.AmountType
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.AmountType
 import org.koin.compose.koinInject
 
 @Composable

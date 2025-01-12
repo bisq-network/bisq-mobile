@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import network.bisq.mobile.presentation.ui.components.atoms.BisqDropDown
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.ui.uicases.offer.MarketListPresenter
+import network.bisq.mobile.presentation.ui.uicases.offerbook.MarketListPresenter
 import org.koin.compose.koinInject
 
 enum class MarketSortBy(val displayName: String) {

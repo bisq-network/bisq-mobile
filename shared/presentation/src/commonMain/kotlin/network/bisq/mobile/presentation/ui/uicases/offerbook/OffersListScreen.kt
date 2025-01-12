@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.offer
+package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.size

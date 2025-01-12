@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.offer.create_offer
+package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.replicated.account.payment_method.BitcoinPaymentRailEnum

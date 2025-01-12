@@ -13,7 +13,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.navigation.Graph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedScreen
-import network.bisq.mobile.presentation.ui.uicases.offer.MarketListScreen
+import network.bisq.mobile.presentation.ui.uicases.offerbook.MarketListScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.trade.MyTradesScreen
 import org.koin.compose.koinInject

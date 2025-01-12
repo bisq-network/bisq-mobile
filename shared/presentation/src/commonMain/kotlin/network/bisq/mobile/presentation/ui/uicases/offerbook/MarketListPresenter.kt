@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.offer
+package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

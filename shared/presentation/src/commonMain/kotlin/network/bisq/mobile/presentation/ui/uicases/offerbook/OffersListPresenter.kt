@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.offer
+package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -8,7 +8,7 @@ import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPresenter
 
 

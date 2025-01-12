@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.offer.create_offer
+package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +17,7 @@ import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter.AmountType
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.AmountType
 import kotlin.math.roundToLong
 
 class CreateOfferAmountPresenter(
