@@ -244,6 +244,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     fun detachView() {
+        presenterScope.cancel()
+
         onViewUnattaching()
         this.view = null
         log.i { "Lifecycle: View Dettached from Presenter" }
