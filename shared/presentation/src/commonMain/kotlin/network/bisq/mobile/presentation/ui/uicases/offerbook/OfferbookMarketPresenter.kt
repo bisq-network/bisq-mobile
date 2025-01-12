@@ -15,7 +15,7 @@ import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFil
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketSortBy
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-class MarketListPresenter(
+class OfferbookMarketPresenter(
     mainPresenter: MainPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade,
 ) : BasePresenter(mainPresenter) {

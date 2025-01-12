@@ -15,22 +15,22 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.ChatScreen
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
-import network.bisq.mobile.presentation.ui.uicases.offerbook.OffersListScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountSelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferBuySellScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferCurrencySelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPaymentMethodSelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferReviewOfferScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferTradePriceSelectorScreen
+import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScreen
+import network.bisq.mobile.presentation.ui.uicases.trade.TradeFlowScreen
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPaymentMethodScreen
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferReviewTradeScreen
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferTradeAmountScreen
-import network.bisq.mobile.presentation.ui.uicases.trade.TradeFlowScreen
 
 @Composable
 fun RootNavGraph(rootNavController: NavHostController) {
@@ -60,7 +60,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
         }
 
         addScreen(Routes.Offerbook.name) {
-            OffersListScreen()
+            OfferbookScreen()
         }
 
         addScreen(Routes.TakeOfferTradeAmount.name) {

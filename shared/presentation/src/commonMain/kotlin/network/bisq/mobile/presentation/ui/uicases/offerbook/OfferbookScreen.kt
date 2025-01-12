@@ -34,7 +34,7 @@ interface IOffersListPresenter : ViewPresenter {
 }
 
 @Composable
-fun OffersListScreen() {
+fun OfferbookScreen() {
     val commonStrings = LocalStrings.current.common
     val presenter: IOffersListPresenter = koinInject()
 

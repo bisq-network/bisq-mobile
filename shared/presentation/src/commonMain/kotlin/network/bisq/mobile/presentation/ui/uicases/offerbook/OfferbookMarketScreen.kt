@@ -25,9 +25,9 @@ import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
-fun MarketListScreen() {
+fun OfferbookMarketScreen() {
     val strings = LocalStrings.current.common
-    val presenter: MarketListPresenter = koinInject()
+    val presenter: OfferbookMarketPresenter = koinInject()
     var showFilterDialog by remember { mutableStateOf(false) }
 
     val marketItems = presenter.marketListItemWithNumOffers.collectAsState().value

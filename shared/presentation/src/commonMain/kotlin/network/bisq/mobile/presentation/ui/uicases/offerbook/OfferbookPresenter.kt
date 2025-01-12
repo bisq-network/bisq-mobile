@@ -12,7 +12,7 @@ import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPrese
 import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPresenter
 
 
-class OffersListPresenter(
+class OfferbookPresenter(
     mainPresenter: MainPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade,
     private val takeOfferPresenter: TakeOfferPresenter,
