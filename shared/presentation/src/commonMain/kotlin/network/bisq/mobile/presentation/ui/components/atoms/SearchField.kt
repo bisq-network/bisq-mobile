@@ -48,7 +48,7 @@ fun BisqSearchField(
     BisqTextField(
         label = label,
         value = value,
-        onValueChanged = onValueChanged,
+        onValueChange = onValueChanged,
         placeholder = placeholder,
         leftSuffix = { SearchIcon() },
         rightSuffix = rightSuffix,

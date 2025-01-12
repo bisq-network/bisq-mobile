@@ -53,7 +53,7 @@ fun BisqChatInputField(
         }
         BisqTextField(
             value = textState,
-            onValueChanged = {
+            onValueChange = {
                 textState = it
                 onValueChanged(textState)
             },

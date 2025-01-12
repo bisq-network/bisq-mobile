@@ -73,24 +73,24 @@ fun CreateOfferTradePriceSelectorScreen() {
                     BisqTextField(
                         label = bisqEasyTradeWizardStrings.bisqEasy_price_percentage_inputBoxText,
                         value = formattedPercentagePrice,
-                        onValueChanged = { presenter.onPercentagePriceChanged(it) },
+                        onValueChange = { presenter.onPercentagePriceChanged(it) },
                     )
                     BisqTextField(
                         label = presenter.fixPriceDescription,
                         value = formattedPrice,
-                        onValueChanged = {}, // Deactivated
+                        onValueChange = {}, // Deactivated
                         indicatorColor = BisqTheme.colors.grey1
                     )
                 } else {
                     BisqTextField(
                         label = presenter.fixPriceDescription,
                         value = formattedPrice,
-                        onValueChanged = { presenter.onFixPriceChanged(it) },
+                        onValueChange = { presenter.onFixPriceChanged(it) },
                     )
                     BisqTextField(
                         label = bisqEasyTradeWizardStrings.bisqEasy_price_percentage_inputBoxText,
                         value = formattedPercentagePrice,
-                        onValueChanged = {},// Deactivated
+                        onValueChange = {},// Deactivated
                         indicatorColor = BisqTheme.colors.grey1
                     )
                 }

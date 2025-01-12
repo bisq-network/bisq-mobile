@@ -120,7 +120,7 @@ fun PaymentAccountSettingsScreen() {
 
         BisqTextField(
             value = accountDescription,
-            onValueChanged = { accountDescription = it },
+            onValueChange = { accountDescription = it },
             label = strings.user_paymentAccounts_accountData,
             isTextArea = true
         )

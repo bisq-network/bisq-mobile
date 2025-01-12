@@ -23,6 +23,7 @@ fun BisqDropDown(
     label: String = "",
     items: List<String>,
     value: String,
+    displayText: String? = null,
     onValueChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
     placeholder: String = "Select an item"
@@ -45,7 +46,7 @@ fun BisqDropDown(
                 vertical = BisqUIConstants.ScreenPaddingHalf
             ),
             backgroundColor = BisqTheme.colors.secondary,
-            text = value,
+            text = displayText ?: value,
             textAlign = TextAlign.Start,
             rightIcon = { ArrowDownIcon() }
         )

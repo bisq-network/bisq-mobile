@@ -68,7 +68,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
         ) {
             BisqTextField(
                 label = "Trusted Bisq Node URL",
-                onValueChanged = { presenter.updateBisqApiUrl(it) },
+                onValueChange = { presenter.updateBisqApiUrl(it) },
                 value = bisqApiUrl,
                 placeholder = "ws://10.0.2.2:8090",
                 labelRightSuffix = {

@@ -39,7 +39,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 fun BisqTextField(
     label: String = "",
     value: String = "",
-    onValueChanged: (String) -> Unit = {},
+    onValueChange: (String) -> Unit = {},
     placeholder: String = "",
     labelRightSuffix: (@Composable () -> Unit)? = null,
     leftSuffix: (@Composable () -> Unit)? = null,
@@ -101,7 +101,7 @@ fun BisqTextField(
         ) {
             BasicTextField(
                 value = value,
-                onValueChange = onValueChanged,
+                onValueChange = onValueChange,
                 modifier = Modifier
                     .padding(paddingValues)
                     .fillMaxWidth()

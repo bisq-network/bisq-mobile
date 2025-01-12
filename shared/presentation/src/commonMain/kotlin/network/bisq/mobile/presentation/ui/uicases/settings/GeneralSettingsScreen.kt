@@ -23,16 +23,38 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 interface IGeneralSettingsPresenter : ViewPresenter {
     val i18nCodes: StateFlow<List<String>>
-
     val selectedLanguage: StateFlow<String>
     fun selectLanguage(langCode: String)
+
+    val tradeNotification: StateFlow<Boolean>
+    fun setTradeNotification(value: Boolean)
+
+    val chatNotification: StateFlow<String>
+    fun setChatNotification(value: String)
+
+    val closeOfferWhenTradeTaken: StateFlow<Boolean>
+    fun setCloseOfferWhenTradeTaken(value: Boolean)
+
+    val tradePriceTolerance: StateFlow<String>
+    fun setTradePriceTolerance(value: String)
+
+    val useAnimations: StateFlow<Boolean>
+    fun setUseAnimations(value: Boolean)
+
+    val powFactor: StateFlow<String>
+    fun setPowFactor(value: String)
+
+    val ignorePow: StateFlow<Boolean>
+    fun setIgnorePow(value: Boolean)
 
 }
 
@@ -42,62 +64,103 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
 
     val i18nCodes = presenter.i18nCodes.collectAsState().value
     val selectedLauguage = presenter.selectedLanguage.collectAsState().value
+    val tradeNotification = presenter.tradeNotification.collectAsState().value
+    val closeOfferWhenTradeTaken = presenter.closeOfferWhenTradeTaken.collectAsState().value
+    val tradePriceTolerance = presenter.tradePriceTolerance.collectAsState().value
+    val useAnimations = presenter.useAnimations.collectAsState().value
+    val powFactor = presenter.powFactor.collectAsState().value
+    val ignorePow = presenter.ignorePow.collectAsState().value
 
     RememberPresenterLifecycle(presenter)
 
     Column(
         modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
 
-        BisqScrollLayout(onModifier = { modifier -> modifier.weight(1f) }) {
+        BisqScrollLayout(
+            horizontalAlignment = Alignment.Start,
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+            onModifier = { modifier -> modifier.weight(1f) }
+        ) {
+
+            BisqText.h4Regular("settings.language".i18n())
 
             BisqDropDown(
                 label = "settings.language.headline".i18n(),
                 items = i18nCodes,
                 value = selectedLauguage,
-                onValueChanged = { newValue -> presenter.selectLanguage(newValue) },
+                displayText = selectedLauguage, // TODO
+                onValueChanged = { presenter.selectLanguage(it) },
             )
 
             BisqDropDown(
-                label = "settings.language.headline".i18n(),
-                items = listOf("English", "Spanish", "French"),
-                value = "English",
-                onValueChanged = { newValue -> println(newValue) },
+                label = "settings.language.supported.headline".i18n() + " :TODO",
+                items = i18nCodes,
+                value = selectedLauguage,
+                displayText = selectedLauguage, // TODO
+                onValueChanged = { presenter.selectLanguage(it) },
             )
+
+            BisqHDivider()
+
+            BisqText.h4Regular("settings.notification.options".i18n())
 
             BisqSwitch(
-                label = "Trade Notification",
-                checked = true,
-                onSwitch = { newValue -> println(newValue) }
+                label = "Trade Notification", // TODO:i18n
+                checked = tradeNotification,
+                onSwitch = { presenter.setTradeNotification(it) }
             )
 
-            BisqText.baseRegular("[TODO] Chat Notifs :: With Segment control")
+            BisqSegmentButton(
+                label = "Chat Notification", // TODO:i18n
+                items = listOf(
+                    "chat.notificationsSettingsMenu.all".i18n(),
+                    "chat.notificationsSettingsMenu.mention".i18n(),
+                    "chat.notificationsSettingsMenu.off".i18n(),
+                ),
+                onValueChange = { presenter.setChatNotification(it) }
+            )
+
+            BisqHDivider()
+
+            BisqText.h4Regular("settings.trade.headline".i18n())
 
             BisqSwitch(
-                label = "Close my offer when trade taken",
-                checked = true,
-                onSwitch = { newValue -> println(newValue) }
+                label = "settings.trade.closeMyOfferWhenTaken".i18n(),
+                checked = closeOfferWhenTradeTaken,
+                onSwitch = { presenter.setCloseOfferWhenTradeTaken(it) }
             )
 
-            SettingsTextField(
-                label = "Max trade price tolerance",
-                value = "5%",
-                onValueChange = { newValue -> println(newValue) },
-                editable = true,
+            BisqTextField(
+                label = "settings.trade.maxTradePriceDeviation".i18n(),
+                value = tradePriceTolerance,
+                onValueChange = { presenter.setTradePriceTolerance(it) },
             )
+
+            BisqHDivider()
+
+            BisqText.h4Regular("settings.display.headline".i18n())
 
             BisqSwitch(
-                label = "Display: Use animations",
-                checked = true,
-                onSwitch = { newValue -> println(newValue) }
+                label = "settings.display.useAnimations".i18n(),
+                checked = useAnimations,
+                onSwitch = { presenter.setUseAnimations(it) }
             )
 
-            SettingsTextField(
-                label = "PoW difficulty adjustment factor",
-                value = "1",
-                onValueChange = { newValue -> println(newValue) },
-                editable = true,
+            BisqHDivider()
+
+            BisqText.h4Regular("settings.network.headline".i18n())
+
+            BisqTextField(
+                label = "settings.network.difficultyAdjustmentFactor.description.self".i18n(),
+                value = powFactor,
+                onValueChange = { presenter.setPowFactor(it) },
+            )
+            BisqSwitch(
+                label = "settings.network.difficultyAdjustmentFactor.ignoreValueFromSecManager".i18n(),
+                checked = ignorePow,
+                onSwitch = { presenter.setIgnorePow(it) }
             )
 
         }

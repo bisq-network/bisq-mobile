@@ -54,7 +54,7 @@ fun CreateProfileScreen(
         BisqTextField(
             label = strings.onboarding_createProfile_nickName,
             value = presenter.nickName.collectAsState().value,
-            onValueChanged = { presenter.setNickname(it) },
+            onValueChange = { presenter.setNickname(it) },
             placeholder = strings.onboarding_createProfile_nickName_prompt
         )
         Spacer(modifier = Modifier.height(36.dp))

@@ -49,13 +49,13 @@ fun AppPaymentAccountCard(
             )
         BisqTextField(
             value = accountName,
-            onValueChanged = { accountName = it },
+            onValueChange = { accountName = it },
             placeholder = strings.user_paymentAccounts_createAccount_accountName_prompt,
             label = strings.user_userProfile_payment_account
         )
         BisqTextField(
             value = accountDescription,
-            onValueChanged = { accountDescription = it },
+            onValueChange = { accountDescription = it },
             placeholder = strings.user_paymentAccounts_createAccount_accountData_prompt,
             label = strings.user_paymentAccounts_accountData,
             isTextArea = true

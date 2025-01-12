@@ -28,7 +28,7 @@ fun BisqEditableDropDown(
 
     BisqTextField(
         value = value,
-        onValueChanged = onValueChanged,
+        onValueChange = onValueChanged,
         label = label,
         rightSuffix = {
             Box(
