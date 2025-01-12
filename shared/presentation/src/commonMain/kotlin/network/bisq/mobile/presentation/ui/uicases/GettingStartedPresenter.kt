@@ -42,7 +42,7 @@ open class GettingStartedPresenter(
     }
 
     private fun navigateToTradingTab() {
-        navigateToTab(Routes.TabCurrencies)
+        navigateToTab(Routes.TabOfferbook)
     }
 
     override fun navigateLearnMore() {

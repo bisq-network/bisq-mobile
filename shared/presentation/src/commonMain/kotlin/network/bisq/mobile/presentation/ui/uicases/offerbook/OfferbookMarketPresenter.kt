@@ -95,7 +95,7 @@ class OfferbookMarketPresenter(
 
     fun onSelectMarket(marketListItem: MarketListItem) {
         offerbookServiceFacade.selectOfferbookMarket(marketListItem)
-        navigateTo(Routes.Offerbook)
+        navigateTo(Routes.OffersByMarket)
     }
 
     override fun onViewAttached() {

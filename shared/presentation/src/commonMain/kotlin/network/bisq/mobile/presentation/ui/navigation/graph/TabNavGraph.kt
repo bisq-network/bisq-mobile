@@ -37,12 +37,12 @@ fun TabNavGraph() {
                 selectedTab.value = Routes.TabHome.name
                 GettingStartedScreen()
             }
-            composable(route = Routes.TabCurrencies.name) {
-                selectedTab.value = Routes.TabCurrencies.name
+            composable(route = Routes.TabOfferbook.name) {
+                selectedTab.value = Routes.TabOfferbook.name
                 OfferbookMarketScreen()
             }
-            composable(route = Routes.TabMyTrades.name) {
-                selectedTab.value = Routes.TabMyTrades.name
+            composable(route = Routes.TabOpenTradeList.name) {
+                selectedTab.value = Routes.TabOpenTradeList.name
                 MyTradesScreen()
             }
             composable(route = Routes.TabSettings.name) {

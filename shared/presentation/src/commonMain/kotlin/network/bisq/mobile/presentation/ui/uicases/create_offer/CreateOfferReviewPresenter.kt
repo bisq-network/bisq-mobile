@@ -116,6 +116,6 @@ class CreateOfferReviewPresenter(
     }
 
     fun onGoToOfferList() {
-        navigateBackTo(Routes.Offerbook)
+        navigateBackTo(Routes.OffersByMarket)
     }
 }

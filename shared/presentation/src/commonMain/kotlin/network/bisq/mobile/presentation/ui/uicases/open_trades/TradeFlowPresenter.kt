@@ -87,7 +87,7 @@ open class TradeFlowPresenter(
 
     override fun closeTradeConfirm() {
         setShowCloseTradeDialog(false)
-        navigateBackTo(Routes.Offerbook)
+        navigateBackTo(Routes.OffersByMarket)
     }
 
     override fun openWalletGuideLink() {

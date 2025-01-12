@@ -110,8 +110,8 @@ class TakeOfferReviewPresenter(
     }
 
     fun onGoToOpenTrades() {
-        navigateTo(Routes.TradeFlow) {
-            it.popUpTo(Routes.Offerbook.name)
+        navigateTo(Routes.OpenTrade) {
+            it.popUpTo(Routes.OffersByMarket.name)
         }
     }
 

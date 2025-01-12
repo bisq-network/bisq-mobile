@@ -59,7 +59,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
             TabContainerScreen()
         }
 
-        addScreen(Routes.Offerbook.name) {
+        addScreen(Routes.OffersByMarket.name) {
             OfferbookScreen()
         }
 
@@ -75,7 +75,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
             TakeOfferReviewTradeScreen()
         }
 
-        addScreen(Routes.TradeFlow.name) {
+        addScreen(Routes.OpenTrade.name) {
             TradeFlowScreen()
         }
 

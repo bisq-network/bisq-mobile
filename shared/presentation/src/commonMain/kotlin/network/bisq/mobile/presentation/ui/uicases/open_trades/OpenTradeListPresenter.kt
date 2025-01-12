@@ -19,7 +19,7 @@ class OpenTradeListPresenter(
     override val myTrades: StateFlow<List<MockOffer>> = _myTrades
 
     override fun navigateToCurrencyList() {
-        navigateToTab(Routes.TabCurrencies)
+        navigateToTab(Routes.TabOfferbook)
     }
 
 
@@ -31,7 +31,7 @@ class OpenTradeListPresenter(
 
     override fun gotoTradeScreen(offer: MockOffer) {
         log.i { "Goto trade screen" }
-        navigateTo(Routes.TradeFlow)
+        navigateTo(Routes.OpenTrade)
     }
 
     private fun refresh() {
