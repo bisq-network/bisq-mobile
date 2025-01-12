@@ -27,10 +27,10 @@ import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScreen
+import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPaymentMethodScreen
+import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferReviewTradeScreen
+import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferTradeAmountScreen
 import network.bisq.mobile.presentation.ui.uicases.trade.TradeFlowScreen
-import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPaymentMethodScreen
-import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferReviewTradeScreen
-import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferTradeAmountScreen
 
 @Composable
 fun RootNavGraph(rootNavController: NavHostController) {

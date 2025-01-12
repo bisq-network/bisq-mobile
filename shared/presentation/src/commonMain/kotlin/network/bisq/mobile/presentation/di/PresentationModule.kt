@@ -32,14 +32,14 @@ import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPres
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupPresenter
+import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferAmountPresenter
+import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPaymentMethodPresenter
+import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferReviewPresenter
 import network.bisq.mobile.presentation.ui.uicases.trade.IMyTrades
 import network.bisq.mobile.presentation.ui.uicases.trade.ITradeFlowPresenter
 import network.bisq.mobile.presentation.ui.uicases.trade.MyTradesPresenter
 import network.bisq.mobile.presentation.ui.uicases.trade.TradeFlowPresenter
-import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferAmountPresenter
-import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPaymentMethodPresenter
-import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPresenter
-import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferReviewPresenter
 import org.koin.dsl.bind
 import org.koin.dsl.module
 

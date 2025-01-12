@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.trade.take_offer
+package network.bisq.mobile.presentation.ui.uicases.take_offer
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf

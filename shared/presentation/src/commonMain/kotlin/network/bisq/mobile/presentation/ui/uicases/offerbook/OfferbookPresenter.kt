@@ -9,7 +9,7 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
-import network.bisq.mobile.presentation.ui.uicases.trade.take_offer.TakeOfferPresenter
+import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
 
 
 class OfferbookPresenter(
