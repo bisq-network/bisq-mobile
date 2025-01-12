@@ -135,9 +135,10 @@ class TradeFlowPresenter(
         }
         presenterScope.launch {
             // When a trade gets closed we set selectedTrade to null
+            //todo maybe we should not rely on selectedTrade but us a more dedicated method
             tradesServiceFacade.selectedTrade.collect() { selectedTrade ->
                 if (selectedTrade == null) {
-                    goBack()
+                    navigateBack()
                 }
             }
         }

@@ -17,12 +17,12 @@ class ClientSettingsServiceFacade(val apiGateway: SettingsApiGateway) : Settings
 
     // API
     override suspend fun getSettings(): Result<SettingsVO> {
-        val settingsResult = apiGateway.getSettings()
-        if (settingsResult.isSuccess) {
-            _isTacAccepted.value = settingsResult.getOrThrow().isTacAccepted
-            _tradeRulesConfirmed.value = settingsResult.getOrThrow().tradeRulesConfirmed
+        val result = apiGateway.getSettings()
+        if (result.isSuccess) {
+            _isTacAccepted.value = result.getOrThrow().isTacAccepted
+            _tradeRulesConfirmed.value = result.getOrThrow().tradeRulesConfirmed
         }
-        return settingsResult
+        return result
     }
 
     override suspend fun confirmTacAccepted(value: Boolean) {
