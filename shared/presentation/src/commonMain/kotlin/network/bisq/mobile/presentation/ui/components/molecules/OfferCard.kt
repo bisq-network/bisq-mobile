@@ -3,7 +3,12 @@ package network.bisq.mobile.presentation.ui.components.molecules
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -11,15 +16,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
+import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.OfferListItemVO
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.LanguageIcon
-import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.presentation.ui.components.atoms.*
-import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
-import network.bisq.mobile.presentation.ui.components.atoms.icons.LanguageIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqVDivider
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 

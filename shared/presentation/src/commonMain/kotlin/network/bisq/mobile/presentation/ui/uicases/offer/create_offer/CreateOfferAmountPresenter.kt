@@ -2,13 +2,13 @@ package network.bisq.mobile.presentation.ui.uicases.offer.create_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.from
+import network.bisq.mobile.domain.data.replicated.common.monetary.toBaseSideMonetary
+import network.bisq.mobile.domain.data.replicated.offer.isBuy
 import network.bisq.mobile.domain.formatters.AmountFormatter
-import network.bisq.mobile.domain.replicated.common.monetary.CoinVO
-import network.bisq.mobile.domain.replicated.common.monetary.FiatVO
-import network.bisq.mobile.domain.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.replicated.common.monetary.from
-import network.bisq.mobile.domain.replicated.common.monetary.toBaseSideMonetary
-import network.bisq.mobile.domain.replicated.offer.isBuy
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.DEFAULT_MIN_USD_TRADE_AMOUNT

@@ -2,13 +2,13 @@ package network.bisq.mobile.presentation.ui.uicases.offer.create_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.data.replicated.common.currency.marketCodes
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.fromPrice
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.parser.PercentageParser
 import network.bisq.mobile.domain.parser.PriceParser
-import network.bisq.mobile.domain.replicated.common.currency.marketCodes
-import network.bisq.mobile.domain.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.replicated.common.monetary.fromPrice
 import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.presentation.BasePresenter

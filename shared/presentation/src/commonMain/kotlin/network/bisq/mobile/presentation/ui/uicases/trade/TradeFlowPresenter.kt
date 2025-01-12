@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter

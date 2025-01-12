@@ -1,8 +1,8 @@
 package network.bisq.mobile.client.websocket.subscription
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.domain.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.OfferListItemVO
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 

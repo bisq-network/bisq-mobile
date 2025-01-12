@@ -35,7 +35,7 @@ import bisq.user.reputation.ReputationScore
 import bisq.user.reputation.ReputationService
 import network.bisq.mobile.android.node.mapping.Mappings.BisqEasyOfferMapping
 import network.bisq.mobile.android.node.mapping.Mappings.ReputationScoreMapping
-import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.OfferListItemVO
 import java.text.DateFormat
 import java.util.Date
 import java.util.stream.Collectors

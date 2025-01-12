@@ -18,10 +18,10 @@ import bisq.user.identity.UserIdentity
 import bisq.user.identity.UserIdentityService
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
-import network.bisq.mobile.domain.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.replicated.offer.amount.spec.AmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.service.offer.OfferServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import java.util.Date

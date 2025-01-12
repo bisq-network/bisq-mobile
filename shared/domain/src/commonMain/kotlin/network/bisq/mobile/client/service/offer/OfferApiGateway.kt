@@ -4,10 +4,10 @@ import network.bisq.mobile.client.service.trade.TakeOfferRequest
 import network.bisq.mobile.client.service.trade.TakeOfferResponse
 import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
-import network.bisq.mobile.domain.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.replicated.offer.amount.spec.AmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.utils.Logging
 
 class OfferApiGateway(

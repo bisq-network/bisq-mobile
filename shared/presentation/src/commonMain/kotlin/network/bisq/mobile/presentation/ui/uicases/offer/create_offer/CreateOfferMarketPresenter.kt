@@ -1,8 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.offer.create_offer
 
 import network.bisq.mobile.domain.data.model.MarketListItem
-import network.bisq.mobile.domain.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.replicated.offer.isBuy
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.data.replicated.offer.isBuy
 import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
 import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.presentation.BasePresenter

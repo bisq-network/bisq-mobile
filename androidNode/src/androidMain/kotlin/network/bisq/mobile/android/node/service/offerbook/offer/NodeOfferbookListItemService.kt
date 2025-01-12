@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.OfferListItemMapping
 import network.bisq.mobile.domain.LifeCycleAware
-import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.domain.utils.Logging
 import java.util.Optional
 

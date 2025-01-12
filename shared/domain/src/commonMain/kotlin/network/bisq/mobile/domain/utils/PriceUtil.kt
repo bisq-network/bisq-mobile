@@ -1,13 +1,12 @@
 package network.bisq.mobile.domain.utils
 
-import network.bisq.mobile.domain.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.replicated.common.monetary.asDouble
-import network.bisq.mobile.domain.replicated.common.monetary.fromPrice
-import network.bisq.mobile.domain.replicated.offer.price.spec.FixPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.FloatPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.MarketPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.asDouble
+import network.bisq.mobile.domain.data.replicated.common.monetary.fromPrice
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.MathUtils.roundTo
 
@@ -50,7 +49,7 @@ object PriceUtil {
             percentage = getPercentageToMarketPrice(marketPrice, fixPrice)
         } else if (priceSpec is MarketPriceSpecVO) {
             percentage = 0.0
-        } else if (priceSpec is FloatPriceSpecVO) {
+        } else if (priceSpec is network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO) {
             percentage = priceSpec.percentage
         } else {
             throw IllegalStateException("Not supported priceSpec. priceSpec=$priceSpec")

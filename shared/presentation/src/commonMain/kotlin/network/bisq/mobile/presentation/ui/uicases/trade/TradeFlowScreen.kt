@@ -1,7 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.trade
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.FloatingActionButton
@@ -16,20 +20,22 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.replicated.offer.bisq_easy.OfferListItemVO
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.OfferListItemVO
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.organisms.trades.CancelTradeDialog
+import network.bisq.mobile.presentation.ui.components.organisms.trades.CloseTradeDialog
+import network.bisq.mobile.presentation.ui.components.organisms.trades.MediationRequestDialog
 import network.bisq.mobile.presentation.ui.components.organisms.trades.StepperSection
 import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeFlowAccountDetails
 import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeFlowBtcPayment
 import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeFlowCompleted
 import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeFlowFiatPayment
 import network.bisq.mobile.presentation.ui.components.organisms.trades.TradeHeader
-import network.bisq.mobile.presentation.ui.components.organisms.trades.*
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 

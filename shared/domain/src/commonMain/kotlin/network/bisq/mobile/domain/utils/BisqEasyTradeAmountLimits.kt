@@ -1,12 +1,12 @@
 package network.bisq.mobile.domain.utils
 
-import network.bisq.mobile.domain.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.replicated.common.currency.Markets
-import network.bisq.mobile.domain.replicated.common.monetary.FiatVO
-import network.bisq.mobile.domain.replicated.common.monetary.MonetaryVO
-import network.bisq.mobile.domain.replicated.common.monetary.fromFaceValue
-import network.bisq.mobile.domain.replicated.common.monetary.toBaseSideMonetary
-import network.bisq.mobile.domain.replicated.common.monetary.toQuoteSideMonetary
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.data.replicated.common.currency.Markets
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.fromFaceValue
+import network.bisq.mobile.domain.data.replicated.common.monetary.toBaseSideMonetary
+import network.bisq.mobile.domain.data.replicated.common.monetary.toQuoteSideMonetary
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import kotlin.math.roundToLong
 

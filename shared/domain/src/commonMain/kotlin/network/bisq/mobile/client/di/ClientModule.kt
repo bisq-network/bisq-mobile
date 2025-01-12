@@ -30,22 +30,24 @@ import network.bisq.mobile.client.websocket.messages.WebSocketMessage
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.domain.data.EnvironmentController
-import network.bisq.mobile.domain.replicated.common.monetary.CoinVO
-import network.bisq.mobile.domain.replicated.common.monetary.FiatVO
-import network.bisq.mobile.domain.replicated.common.monetary.MonetaryVO
-import network.bisq.mobile.domain.replicated.offer.amount.spec.AmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.amount.spec.BaseSideFixedAmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.amount.spec.BaseSideRangeAmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.options.OfferOptionVO
-import network.bisq.mobile.domain.replicated.offer.options.ReputationOptionVO
-import network.bisq.mobile.domain.replicated.offer.options.TradeTermsOptionVO
-import network.bisq.mobile.domain.replicated.offer.payment_method.BitcoinPaymentMethodSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.FixPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.FloatPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.MarketPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.BaseSideFixedAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.BaseSideRangeAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.options.OfferOptionVO
+import network.bisq.mobile.domain.data.replicated.offer.options.ReputationOptionVO
+import network.bisq.mobile.domain.data.replicated.offer.options.TradeTermsOptionVO
+import network.bisq.mobile.domain.data.replicated.offer.payment_method.BitcoinPaymentMethodSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.payment_method.FiatPaymentMethodSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.payment_method.PaymentMethodSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -83,11 +85,11 @@ val clientModule = module {
                 subclass(ReputationOptionVO::class, ReputationOptionVO.serializer())
                 subclass(TradeTermsOptionVO::class, TradeTermsOptionVO.serializer())
             }
-            polymorphic(network.bisq.mobile.domain.replicated.offer.payment_method.PaymentMethodSpecVO::class) {
+            polymorphic(PaymentMethodSpecVO::class) {
                 subclass(BitcoinPaymentMethodSpecVO::class, BitcoinPaymentMethodSpecVO.serializer())
                 subclass(
-                    network.bisq.mobile.domain.replicated.offer.payment_method.FiatPaymentMethodSpecVO::class,
-                    network.bisq.mobile.domain.replicated.offer.payment_method.FiatPaymentMethodSpecVO.serializer()
+                    FiatPaymentMethodSpecVO::class,
+                    FiatPaymentMethodSpecVO.serializer()
                 )
             }
 

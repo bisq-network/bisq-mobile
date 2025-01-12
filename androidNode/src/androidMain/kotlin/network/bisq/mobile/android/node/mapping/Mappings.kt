@@ -53,47 +53,46 @@ import bisq.security.keys.PubKey
 import bisq.security.pow.ProofOfWork
 import bisq.user.profile.UserProfile
 import bisq.user.reputation.ReputationScore
-import network.bisq.mobile.domain.replicated.account.protocol_type.TradeProtocolTypeEnum
-import network.bisq.mobile.domain.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.replicated.common.monetary.CoinVO
-import network.bisq.mobile.domain.replicated.common.monetary.FiatVO
-import network.bisq.mobile.domain.replicated.common.monetary.MonetaryVO
-import network.bisq.mobile.domain.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.replicated.common.monetary.from
-import network.bisq.mobile.domain.replicated.common.network.AddressByTransportTypeMapVO
-import network.bisq.mobile.domain.replicated.common.network.AddressVO
-import network.bisq.mobile.domain.replicated.common.network.TransportTypeEnum
-import network.bisq.mobile.domain.replicated.network.identity.NetworkIdVO
-import network.bisq.mobile.domain.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.replicated.offer.amount.spec.AmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.amount.spec.BaseSideFixedAmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.amount.spec.BaseSideRangeAmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.amount.spec.FixedAmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.amount.spec.RangeAmountSpecVO
-import network.bisq.mobile.domain.replicated.offer.amount.spec.from
-import network.bisq.mobile.domain.replicated.offer.bisq_easy.BisqEasyOfferVO
-import network.bisq.mobile.domain.replicated.offer.options.OfferOptionVO
-import network.bisq.mobile.domain.replicated.offer.options.ReputationOptionVO
-import network.bisq.mobile.domain.replicated.offer.options.TradeTermsOptionVO
-import network.bisq.mobile.domain.replicated.offer.options.from
-import network.bisq.mobile.domain.replicated.offer.payment_method.BitcoinPaymentMethodSpecVO
-import network.bisq.mobile.domain.replicated.offer.payment_method.FiatPaymentMethodSpecVO
-import network.bisq.mobile.domain.replicated.offer.payment_method.PaymentMethodSpecVO
-import network.bisq.mobile.domain.replicated.offer.payment_method.from
-import network.bisq.mobile.domain.replicated.offer.price.spec.FixPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.FloatPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.MarketPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.PriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.from
-import network.bisq.mobile.domain.replicated.security.keys.KeyPairVO
-import network.bisq.mobile.domain.replicated.security.keys.PrivateKeyVO
-import network.bisq.mobile.domain.replicated.security.keys.PubKeyVO
-import network.bisq.mobile.domain.replicated.security.keys.PublicKeyVO
-import network.bisq.mobile.domain.replicated.security.pow.ProofOfWorkVO
-import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.domain.data.replicated.account.protocol_type.TradeProtocolTypeEnum
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.from
+import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
+import network.bisq.mobile.domain.data.replicated.common.network.AddressVO
+import network.bisq.mobile.domain.data.replicated.common.network.TransportTypeEnum
+import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.BaseSideFixedAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.BaseSideRangeAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.FixedAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.from
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.domain.data.replicated.offer.options.OfferOptionVO
+import network.bisq.mobile.domain.data.replicated.offer.options.ReputationOptionVO
+import network.bisq.mobile.domain.data.replicated.offer.options.TradeTermsOptionVO
+import network.bisq.mobile.domain.data.replicated.offer.options.from
+import network.bisq.mobile.domain.data.replicated.offer.payment_method.BitcoinPaymentMethodSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.payment_method.FiatPaymentMethodSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.payment_method.PaymentMethodSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.payment_method.from
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.from
+import network.bisq.mobile.domain.data.replicated.security.keys.KeyPairVO
+import network.bisq.mobile.domain.data.replicated.security.keys.PrivateKeyVO
+import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
+import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
+import network.bisq.mobile.domain.data.replicated.security.pow.ProofOfWorkVO
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.PublicKey
@@ -476,12 +475,12 @@ class Mappings {
     }
 
     object FloatPriceSpecMapping {
-        fun toPojo(vo: FloatPriceSpecVO): FloatPriceSpec {
+        fun toPojo(vo: network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO): FloatPriceSpec {
             return FloatPriceSpec(vo.percentage)
         }
 
-        fun from(value: FloatPriceSpec): FloatPriceSpecVO {
-            return FloatPriceSpecVO.from(value.percentage)
+        fun from(value: FloatPriceSpec): network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO {
+            return network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO.from(value.percentage)
         }
     }
 
@@ -500,7 +499,7 @@ class Mappings {
             return when (vo) {
                 is MarketPriceSpecVO -> MarketPriceSpecMapping.toPojo(vo)
                 is FixPriceSpecVO -> FixPriceSpecMapping.toPojo(vo)
-                is FloatPriceSpecVO -> FloatPriceSpecMapping.toPojo(vo)
+                is network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO -> FloatPriceSpecMapping.toPojo(vo)
                 else -> throw IllegalArgumentException("Unsupported PriceSpecVO $vo")
             }
         }

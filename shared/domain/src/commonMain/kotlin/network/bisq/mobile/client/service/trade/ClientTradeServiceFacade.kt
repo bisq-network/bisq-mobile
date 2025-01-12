@@ -1,8 +1,8 @@
 package network.bisq.mobile.client.service.trade
 
 import kotlinx.coroutines.flow.MutableStateFlow
-import network.bisq.mobile.domain.replicated.common.monetary.MonetaryVO
-import network.bisq.mobile.domain.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.service.trade.TakeOfferStatus
 import network.bisq.mobile.domain.service.trade.TradeServiceFacade
 import network.bisq.mobile.domain.utils.Logging

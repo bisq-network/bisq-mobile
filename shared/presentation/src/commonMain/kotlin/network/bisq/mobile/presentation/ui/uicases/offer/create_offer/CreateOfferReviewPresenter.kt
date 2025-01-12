@@ -3,11 +3,11 @@ package network.bisq.mobile.presentation.ui.uicases.offer.create_offer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.data.replicated.common.currency.marketCodes
+import network.bisq.mobile.domain.data.replicated.offer.isBuy
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
-import network.bisq.mobile.domain.replicated.common.currency.marketCodes
-import network.bisq.mobile.domain.replicated.offer.isBuy
 import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.i18n.toDisplayString
 import network.bisq.mobile.presentation.BasePresenter

@@ -5,10 +5,10 @@ import com.ionspin.kotlin.bignum.integer.Sign
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.replicated.security.pow.solutionAsByteArray
-import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.replicated.user.profile.id
-import network.bisq.mobile.domain.replicated.user.profile.pubKeyHashAsByteArray
+import network.bisq.mobile.domain.data.replicated.security.pow.solutionAsByteArray
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.data.replicated.user.profile.id
+import network.bisq.mobile.domain.data.replicated.user.profile.pubKeyHashAsByteArray
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.concat
 import network.bisq.mobile.domain.utils.toHex

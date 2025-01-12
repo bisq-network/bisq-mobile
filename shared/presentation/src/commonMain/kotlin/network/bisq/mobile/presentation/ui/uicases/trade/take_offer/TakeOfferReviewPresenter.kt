@@ -5,14 +5,13 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.data.replicated.common.currency.marketCodes
+import network.bisq.mobile.domain.data.replicated.offer.isBuy
+import network.bisq.mobile.domain.data.replicated.offer.mirror
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
-import network.bisq.mobile.domain.replicated.common.currency.marketCodes
-import network.bisq.mobile.domain.replicated.offer.isBuy
-import network.bisq.mobile.domain.replicated.offer.mirror
-import network.bisq.mobile.domain.replicated.offer.price.spec.FloatPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.trade.TakeOfferStatus
 import network.bisq.mobile.domain.utils.PriceUtil
@@ -122,13 +121,13 @@ class TakeOfferReviewPresenter(
         val priceSpec = takeOfferModel.offerListItem.bisqEasyOffer.priceSpec
         val percent =
             PriceUtil.findPercentFromMarketPrice(marketPriceServiceFacade, priceSpec, takeOfferModel.offerListItem.bisqEasyOffer.market)
-        if ((priceSpec is FloatPriceSpecVO || priceSpec is MarketPriceSpecVO) && percent == 0.0) {
+        if ((priceSpec is network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO || priceSpec is MarketPriceSpecVO) && percent == 0.0) {
             priceDetails = i18n.bisqEasy_tradeWizard_review_priceDetails
         } else {
             val priceWithCode = PriceQuoteFormatter.format(takeOfferModel.priceQuote, true, true)
             val percentagePrice = PercentageFormatter.format(percent, true)
             val aboveOrBelow: String = if (percent > 0) "above" else "below" //todo
-            if (priceSpec is FloatPriceSpecVO) {
+            if (priceSpec is network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO) {
                 priceDetails = i18n.bisqEasy_tradeWizard_review_priceDetails_float(percentagePrice, aboveOrBelow, priceWithCode)
             } else {
                 if (percent == 0.0) {
