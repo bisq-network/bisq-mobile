@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.trade
+package network.bisq.mobile.presentation.ui.uicases.open_trades
 
 import androidx.compose.runtime.Composable
 import cafe.adriel.lyricist.LocalStrings

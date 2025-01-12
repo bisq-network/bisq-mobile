@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases.trade
+package network.bisq.mobile.presentation.ui.uicases.open_trades
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -9,7 +9,7 @@ import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 
-class MyTradesPresenter(
+class OpenTradeListPresenter(
     mainPresenter: MainPresenter,
     private val offerbookServiceFacade: OfferbookServiceFacade,
     private val createOfferPresenter: CreateOfferPresenter
