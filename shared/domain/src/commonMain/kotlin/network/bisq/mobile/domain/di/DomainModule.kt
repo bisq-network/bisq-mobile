@@ -5,8 +5,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.domain.data.persistance.KeyValueStorage
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
-import network.bisq.mobile.domain.data.repository.BtcPriceRepository
-import network.bisq.mobile.domain.data.repository.MyTradesRepository
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.getPlatformSettings
@@ -27,8 +25,6 @@ val domainModule = module {
 
     // Repositories
     single<BisqStatsRepository> { BisqStatsRepository() }
-    single<BtcPriceRepository> { BtcPriceRepository() }
-    single<MyTradesRepository> { MyTradesRepository() }
     single<SettingsRepository> { SettingsRepository(get()) }
     single<UserRepository> { UserRepository(get()) }
 }

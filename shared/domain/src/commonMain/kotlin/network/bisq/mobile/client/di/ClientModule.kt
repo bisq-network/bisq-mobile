@@ -7,18 +7,21 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
-import kotlinx.serialization.modules.contextual
 import kotlinx.serialization.modules.polymorphic
 import kotlinx.serialization.modules.subclass
 import network.bisq.mobile.client.service.bootstrap.ClientApplicationBootstrapFacade
+import network.bisq.mobile.client.service.explorer.ClientExplorerServiceFacade
+import network.bisq.mobile.client.service.explorer.ExplorerApiGateway
 import network.bisq.mobile.client.service.market.ClientMarketPriceServiceFacade
 import network.bisq.mobile.client.service.market.MarketPriceApiGateway
-import network.bisq.mobile.client.service.offer.ClientOfferServiceFacade
-import network.bisq.mobile.client.service.offer.OfferApiGateway
-import network.bisq.mobile.client.service.offerbook.ClientOfferbookServiceFacade
-import network.bisq.mobile.client.service.offerbook.offer.OfferbookApiGateway
-import network.bisq.mobile.client.service.trade.ClientTradeServiceFacade
-import network.bisq.mobile.client.service.trade.TradeApiGateway
+import network.bisq.mobile.client.service.mediation.ClientMediationServiceFacade
+import network.bisq.mobile.client.service.mediation.MediationApiGateway
+import network.bisq.mobile.client.service.offers.ClientOffersServiceFacade
+import network.bisq.mobile.client.service.offers.OfferbookApiGateway
+import network.bisq.mobile.client.service.settings.ClientSettingsServiceFacade
+import network.bisq.mobile.client.service.settings.SettingsApiGateway
+import network.bisq.mobile.client.service.trades.ClientTradesServiceFacade
+import network.bisq.mobile.client.service.trades.TradesApiGateway
 import network.bisq.mobile.client.service.user_profile.ClientUserProfileServiceFacade
 import network.bisq.mobile.client.service.user_profile.UserProfileApiGateway
 import network.bisq.mobile.client.websocket.WebSocketClient
@@ -50,12 +53,13 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSp
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offer.OfferServiceFacade
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
-import network.bisq.mobile.domain.service.trade.TradeServiceFacade
+import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
+import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.utils.ByteArrayAsBase64Serializer
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -64,8 +68,6 @@ val clientModule = module {
     val json = Json {
         prettyPrint = true
         serializersModule = SerializersModule {
-            contextual(ByteArrayAsBase64Serializer)
-
             polymorphic(MonetaryVO::class) {
                 subclass(CoinVO::class, CoinVO.serializer())
                 subclass(FiatVO::class, FiatVO.serializer())
@@ -83,10 +85,16 @@ val clientModule = module {
             }
             polymorphic(OfferOptionVO::class) {
                 subclass(ReputationOptionVO::class, ReputationOptionVO.serializer())
-                subclass(TradeTermsOptionVO::class, TradeTermsOptionVO.serializer())
+                subclass(
+                    TradeTermsOptionVO::class,
+                    TradeTermsOptionVO.serializer()
+                )
             }
             polymorphic(PaymentMethodSpecVO::class) {
-                subclass(BitcoinPaymentMethodSpecVO::class, BitcoinPaymentMethodSpecVO.serializer())
+                subclass(
+                    BitcoinPaymentMethodSpecVO::class,
+                    BitcoinPaymentMethodSpecVO.serializer()
+                )
                 subclass(
                     FiatPaymentMethodSpecVO::class,
                     FiatPaymentMethodSpecVO.serializer()
@@ -154,12 +162,18 @@ val clientModule = module {
     single<UserProfileServiceFacade> { ClientUserProfileServiceFacade(get(), get()) }
 
     single { OfferbookApiGateway(get(), get()) }
-    single<OfferbookServiceFacade> { ClientOfferbookServiceFacade(get(), get(), get()) }
+    single<OffersServiceFacade> { ClientOffersServiceFacade(get(), get(), get()) }
 
-    single { OfferApiGateway(get(), get()) }
-    single<OfferServiceFacade> { ClientOfferServiceFacade(get()) }
+    single { TradesApiGateway(get(), get()) }
+    single<TradesServiceFacade> { ClientTradesServiceFacade(get(), get(), get()) }
 
-    single { TradeApiGateway(get(), get()) }
-    single<TradeServiceFacade> { ClientTradeServiceFacade(get()) }
 
+    single { ExplorerApiGateway(get()) }
+    single<ExplorerServiceFacade> { ClientExplorerServiceFacade(get()) }
+
+    single { MediationApiGateway(get(), get()) }
+    single<MediationServiceFacade> { ClientMediationServiceFacade(get()) }
+
+    single { SettingsApiGateway(get()) }
+    single<SettingsServiceFacade> { ClientSettingsServiceFacade(get()) }
 }

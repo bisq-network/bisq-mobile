@@ -22,7 +22,3 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("ReputationOption")
 data class ReputationOptionVO(val requiredTotalReputationScore: Long) : OfferOptionVO
-
-fun ReputationOptionVO.Companion.from(requiredTotalReputationScore: Long): ReputationOptionVO {
-    return ReputationOptionVO(requiredTotalReputationScore)
-}

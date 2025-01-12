@@ -4,6 +4,7 @@ object Graph {
     const val MAIN_SCREEN_GRAPH_KEY = "mainScreenGraph"
 }
 
+//todo is title used for anything?
 enum class Routes(val title: String) {
     Splash(title = "splash"),
     Onboarding(title = "onboarding"),

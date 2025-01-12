@@ -22,7 +22,3 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("QuoteSideFixedAmountSpec")
 data class QuoteSideFixedAmountSpecVO(@SerialName("amount") override val amount: Long) : FixedAmountSpecVO
-
-fun QuoteSideFixedAmountSpecVO.Companion.from(amount: Long): QuoteSideFixedAmountSpecVO {
-    return QuoteSideFixedAmountSpecVO(amount)
-}

@@ -23,7 +23,3 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 @Serializable
 @SerialName("FixPriceSpec")
 data class FixPriceSpecVO(@SerialName("priceQuote") val priceQuote: PriceQuoteVO) : PriceSpecVO
-
-fun FixPriceSpecVO.Companion.from(priceQuote: PriceQuoteVO): FixPriceSpecVO {
-    return FixPriceSpecVO(priceQuote)
-}

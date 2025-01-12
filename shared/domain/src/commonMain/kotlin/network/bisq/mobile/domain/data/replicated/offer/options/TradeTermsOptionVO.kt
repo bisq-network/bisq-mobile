@@ -22,7 +22,3 @@ import kotlinx.serialization.Serializable
 @Serializable
 @SerialName("TradeTermsOption")
 data class TradeTermsOptionVO(val makersTradeTerms: String) : OfferOptionVO
-
-fun TradeTermsOptionVO.Companion.from(makersTradeTerms: String): TradeTermsOptionVO {
-    return TradeTermsOptionVO(makersTradeTerms)
-}

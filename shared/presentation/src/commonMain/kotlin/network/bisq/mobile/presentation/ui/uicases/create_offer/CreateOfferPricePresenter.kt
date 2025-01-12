@@ -2,9 +2,10 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.data.replicated.common.currency.marketCodes
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.fromPrice
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.parser.PercentageParser
@@ -76,7 +77,7 @@ class CreateOfferPricePresenter(
 
     fun onFixPriceChanged(value: String) {
         val valueAsDouble = PriceParser.parse(value)
-        priceQuote = PriceQuoteVO.fromPrice(valueAsDouble, createOfferModel.market!!)
+        priceQuote = PriceQuoteVOFactory.fromPrice(valueAsDouble, createOfferModel.market!!)
         _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
         val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         percentagePriceValue = PriceUtil.getPercentageToMarketPrice(marketPriceQuote, priceQuote)

@@ -1,19 +1,24 @@
 package network.bisq.mobile.presentation
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.annotation.CallSuper
+import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
-import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 /**
@@ -36,6 +41,7 @@ interface ViewPresenter {
     fun getRootTabNavController(): NavHostController
 
     fun getSnackState(): SnackbarHostState
+
     fun showSnackbar(message: String, isError: Boolean = true)
 
     /**
@@ -147,7 +153,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     /**
-     * Back navigation poping back stack
+     * Back navigation popping back stack
      */
     protected fun navigateBackTo(destination: Routes, shouldInclusive: Boolean = false, shouldSaveState: Boolean = false) {
         rootNavigator.popBackStack(destination.name, inclusive = shouldInclusive, saveState = shouldSaveState)
@@ -170,10 +176,10 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
 
     override fun goBack(): Boolean {
         try {
-            log.i { "goBack defaut implementation" }
+            log.i { "goBack default implementation" }
             return rootNavigator.popBackStack()
         } catch (e: Exception) {
-            log.e(e) { "Faled to navigate back" }
+            log.e(e) { "Failed to navigate back" }
             return false
         }
     }

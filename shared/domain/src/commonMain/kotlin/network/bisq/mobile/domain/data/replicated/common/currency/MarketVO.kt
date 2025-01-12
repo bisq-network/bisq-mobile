@@ -25,11 +25,3 @@ data class MarketVO(
     val baseCurrencyName: String = baseCurrencyCode,
     val quoteCurrencyName: String = quoteCurrencyCode
 )
-
-val MarketVO.marketCodes: String
-    get() = "$baseCurrencyCode/$quoteCurrencyCode"
-
-object Markets {
-    val EMPTY: MarketVO = MarketVO("", "")
-    val USD: MarketVO = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
-}

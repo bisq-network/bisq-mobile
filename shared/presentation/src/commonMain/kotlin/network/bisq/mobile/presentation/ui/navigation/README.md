@@ -16,11 +16,12 @@ The app uses **Jetpack Compose Navigation**.
   - /onboarding -> OnboardingScreen
 
 ### 3. Tab Navigation
-- `TabNavGraph.kt` manages nested tab-based screens (`Home`, `Exchange`, `MyTrades`, `Settings`).
+
+- `TabNavGraph.kt` manages nested tab-based screens (`Home`, `Offerbook`, `My Trades`, `Settings`).
 
 ### 4. Bottom Navigation
 - Composable that renders the bottom navigation bar.
-- Exact tabbar items are received via `items` prop.
+- Exact tab bar items are received via `items` prop.
 
 ###
 
@@ -30,8 +31,8 @@ The app uses **Jetpack Compose Navigation**.
                                 v
                             [Tab Nav]
                                 |
-                                |- [Tab1] Getting Started
-                                |- [Tab2] Buy / Sell
+                                |- [Tab1] Home
+                                |- [Tab2] Offerbook
                                 |- [Tab3] My Trades
                                 |- [Tab4] Settings
 ```

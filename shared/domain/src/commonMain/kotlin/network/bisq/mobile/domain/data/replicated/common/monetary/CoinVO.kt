@@ -28,21 +28,3 @@ data class CoinVO(
     override val precision: Int,
     override val lowPrecision: Int,
 ) : MonetaryVO
-
-
-fun CoinVO.Companion.from(id: String, value: Long, code: String, precision: Int, lowPrecision: Int): CoinVO {
-    return CoinVO(id, value, code, precision, lowPrecision)
-}
-
-fun CoinVO.Companion.from(value: Long, code: String): CoinVO {
-    return CoinVO(code, value, code, 8, 4)
-}
-
-fun CoinVO.Companion.from(value: Long, code: String, precision: Int): CoinVO {
-    return CoinVO(code, value, code, precision, 4)
-}
-
-fun CoinVO.Companion.fromFaceValue(faceValue: Double, code: String): CoinVO {
-    val value = faceValueToLong(faceValue, 8)
-    return CoinVO.from(value, code)
-}

@@ -1,10 +1,10 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -25,8 +25,7 @@ fun TakeOfferTradeAmountScreen() {
         stepIndex = 1,
         stepsLength = 3,
         prevOnClick = { presenter.onBack() },
-        nextOnClick = { presenter.onNext() },
-        useStaticScaffold = true
+        nextOnClick = { presenter.onNext() }
     ) {
         BisqText.h3Regular(
             text = strings.bisqEasy_takeOffer_amount_headline_buyer,
@@ -42,20 +41,17 @@ fun TakeOfferTradeAmountScreen() {
             color = BisqTheme.colors.grey2
         )
 
-        Column(
-            modifier = Modifier.fillMaxHeight(),
-            verticalArrangement = Arrangement.Center,
-        ) {
-            BisqAmountSelector(
-                presenter.quoteCurrencyCode,
-                presenter.formattedMinAmountWithCode,
-                presenter.formattedMaxAmountWithCode,
-                presenter.sliderPosition,
-                presenter.formattedQuoteAmount,
-                presenter.formattedBaseAmount,
-                { sliderValue -> presenter.onSliderValueChanged(sliderValue) },
-                { textInput -> presenter.onTextValueChanged(textInput) }
-            )
-        }
+        Spacer(modifier = Modifier.height(128.dp))
+
+        BisqAmountSelector(
+            presenter.quoteCurrencyCode,
+            presenter.formattedMinAmountWithCode,
+            presenter.formattedMaxAmountWithCode,
+            presenter.sliderPosition,
+            presenter.formattedQuoteAmount,
+            presenter.formattedBaseAmount,
+            { sliderValue -> presenter.onSliderValueChanged(sliderValue) },
+            { textInput -> presenter.onTextValueChanged(textInput) }
+        )
     }
 }

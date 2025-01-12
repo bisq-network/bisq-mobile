@@ -1,7 +1,7 @@
 package network.bisq.mobile.domain.formatters
 
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.asDouble
+import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVOExtensions.asDouble
 import network.bisq.mobile.domain.decimalFormatter
 
 object AmountFormatter {

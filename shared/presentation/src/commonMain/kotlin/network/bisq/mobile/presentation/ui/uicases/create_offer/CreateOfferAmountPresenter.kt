@@ -4,10 +4,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.from
-import network.bisq.mobile.domain.data.replicated.common.monetary.toBaseSideMonetary
-import network.bisq.mobile.domain.data.replicated.offer.isBuy
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
@@ -80,9 +81,9 @@ class CreateOfferAmountPresenter(
         minAmount = BisqEasyTradeAmountLimits.getMinAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
         maxAmount = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
 
-        formattedMinAmount = AmountFormatter.formatAmount(FiatVO.from(minAmount, quoteCurrencyCode))
-        formattedMinAmountWithCode = AmountFormatter.formatAmount(FiatVO.from(minAmount, quoteCurrencyCode), true, true)
-        formattedMaxAmountWithCode = AmountFormatter.formatAmount(FiatVO.from(maxAmount, quoteCurrencyCode), true, true)
+        formattedMinAmount = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode))
+        formattedMinAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode), true, true)
+        formattedMaxAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
 
         fixedAmountSliderPosition = createOfferModel.fixedAmountSliderPosition
         applyFixedAmountSliderValue(fixedAmountSliderPosition)
@@ -135,20 +136,22 @@ class CreateOfferAmountPresenter(
         val minValue: Float = minAmount + (min * range)
         val roundedMinQuoteValue: Long = (minValue / 10000f).roundToLong() * 10000
 
-        quoteSideMinRangeAmount = FiatVO.from(roundedMinQuoteValue, quoteCurrencyCode)
+        quoteSideMinRangeAmount = FiatVOFactory.from(roundedMinQuoteValue, quoteCurrencyCode)
         _formattedQuoteSideMinRangeAmount.value = AmountFormatter.formatAmount(quoteSideMinRangeAmount)
 
-        baseSideMinRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMinRangeAmount) as CoinVO
+        baseSideMinRangeAmount =
+            priceQuote.toBaseSideMonetary(quoteSideMinRangeAmount) as network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
         _formattedBaseSideMinRangeAmount.value = AmountFormatter.formatAmount(baseSideMinRangeAmount, false)
 
         val max = rangeSliderPosition.endInclusive
         val maxValue: Float = minAmount + (max * range)
         val roundedMaxQuoteValue: Long = (maxValue / 10000f).roundToLong() * 10000
 
-        quoteSideMaxRangeAmount = FiatVO.from(roundedMaxQuoteValue, quoteCurrencyCode)
+        quoteSideMaxRangeAmount = FiatVOFactory.from(roundedMaxQuoteValue, quoteCurrencyCode)
         _formattedQuoteSideMaxRangeAmount.value = AmountFormatter.formatAmount(quoteSideMaxRangeAmount)
 
-        baseSideMaxRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMaxRangeAmount) as CoinVO
+        baseSideMaxRangeAmount =
+            priceQuote.toBaseSideMonetary(quoteSideMaxRangeAmount) as network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
         _formattedBaseSideMaxRangeAmount.value = AmountFormatter.formatAmount(baseSideMaxRangeAmount, false)
     }
 
@@ -162,10 +165,11 @@ class CreateOfferAmountPresenter(
         val roundedQuoteValue: Long = (value / 10000f).roundToLong() * 10000
 
         // We do not apply the data to the model yet to avoid unnecessary model clones
-        quoteSideFixedAmount = FiatVO.from(roundedQuoteValue, quoteCurrencyCode)
+        quoteSideFixedAmount = FiatVOFactory.from(roundedQuoteValue, quoteCurrencyCode)
         _formattedQuoteSideFixedAmount.value = AmountFormatter.formatAmount(quoteSideFixedAmount)
 
-        baseSideFixedAmount = priceQuote.toBaseSideMonetary(quoteSideFixedAmount) as CoinVO
+        baseSideFixedAmount =
+            priceQuote.toBaseSideMonetary(quoteSideFixedAmount) as network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
         _formattedBaseSideFixedAmount.value = AmountFormatter.formatAmount(baseSideFixedAmount, false)
     }
 

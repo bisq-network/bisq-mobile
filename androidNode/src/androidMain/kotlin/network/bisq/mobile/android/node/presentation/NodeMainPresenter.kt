@@ -7,9 +7,9 @@ import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offer.OfferServiceFacade
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
-import network.bisq.mobile.domain.service.trade.TradeServiceFacade
+import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
 class NodeMainPresenter(
@@ -18,10 +18,10 @@ class NodeMainPresenter(
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
-    private val offerbookServiceFacade: OfferbookServiceFacade,
+    private val settingsServiceFacade: SettingsServiceFacade,
+    private val offersServiceFacade: OffersServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val offerServiceFacade: OfferServiceFacade,
-    private val tradeServiceFacade: TradeServiceFacade,
+    private val tradesServiceFacade: TradesServiceFacade
 ) : MainPresenter(notificationServiceController, urlLauncher) {
 
     private var applicationServiceCreated = false
@@ -42,25 +42,27 @@ class NodeMainPresenter(
                 provider.applicationService = applicationService
 
                 applicationBootstrapFacade.activate()
+                settingsServiceFacade.activate()
                 log.i { "Start initializing applicationService" }
                 applicationService.initialize()
                     .whenComplete { r: Boolean?, throwable: Throwable? ->
                         if (throwable == null) {
                             log.i { "ApplicationService initialized" }
                             applicationBootstrapFacade.deactivate()
-                            offerbookServiceFacade.activate()
+
+                            offersServiceFacade.activate()
                             marketPriceServiceFacade.activate()
-                            offerServiceFacade.activate()
-                            tradeServiceFacade.activate()
+                            tradesServiceFacade.activate()
                         } else {
                             log.e("Initializing applicationService failed", throwable)
                         }
                     }
             } else {
-                offerbookServiceFacade.activate()
+                settingsServiceFacade.activate()
+                offersServiceFacade.activate()
                 marketPriceServiceFacade.activate()
-                offerServiceFacade.activate()
-                tradeServiceFacade.activate()
+                tradesServiceFacade.activate()
+
             }
         }.onFailure { e ->
             // TODO give user feedback (we could have a general error screen covering usual
@@ -71,10 +73,10 @@ class NodeMainPresenter(
 
     override fun onViewUnattaching() {
         applicationBootstrapFacade.deactivate()
-        offerbookServiceFacade.deactivate()
+        settingsServiceFacade.deactivate()
+        offersServiceFacade.deactivate()
         marketPriceServiceFacade.deactivate()
-        offerServiceFacade.deactivate()
-        tradeServiceFacade.deactivate()
+        tradesServiceFacade.deactivate()
         super.onViewUnattaching()
     }
 

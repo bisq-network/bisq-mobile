@@ -2,50 +2,44 @@ package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.OfferListItemVO
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
 
 
 class OfferbookPresenter(
     mainPresenter: MainPresenter,
-    private val offerbookServiceFacade: OfferbookServiceFacade,
-    private val takeOfferPresenter: TakeOfferPresenter,
-    private val createOfferPresenter: CreateOfferPresenter
-) : BasePresenter(mainPresenter), IOffersListPresenter {
-    override val offerListItems: StateFlow<List<OfferListItemVO>> =
-        offerbookServiceFacade.offerListItems
+    private val offersServiceFacade: OffersServiceFacade,
+    private val takeOfferPresenter: TakeOfferPresenter
+) : BasePresenter(mainPresenter) {
+    val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = offersServiceFacade.offerbookListItems
 
-    private val _selectedDirection = MutableStateFlow(DirectionEnum.SELL)
-    override val selectedDirection: StateFlow<DirectionEnum> = _selectedDirection
+    //todo for dev testing its more convenient
+    private val _selectedDirection = MutableStateFlow(DirectionEnum.BUY)
+    val selectedDirection: StateFlow<DirectionEnum> = _selectedDirection
 
-    override fun takeOffer(offer: OfferListItemVO) {
-        takeOfferPresenter.selectOfferToTake(offer)
-
-        if (takeOfferPresenter.showAmountScreen()) {
-            navigateTo(Routes.TakeOfferTradeAmount)
-        } else if (takeOfferPresenter.showPaymentMethodsScreen()) {
-            navigateTo(Routes.TakeOfferPaymentMethod)
+    fun onSelectOffer(item: OfferItemPresentationModel) {
+        if (item.isMyOffer) {
+            //todo show dialogue if user really want to delete their offer
+            backgroundScope.launch { offersServiceFacade.deleteOffer(item.offerId) }
         } else {
-            navigateTo(Routes.TakeOfferReviewTrade)
+            takeOfferPresenter.selectOfferToTake(item)
+            if (takeOfferPresenter.showAmountScreen()) {
+                navigateTo(Routes.TakeOfferTradeAmount)
+            } else if (takeOfferPresenter.showPaymentMethodsScreen()) {
+                navigateTo(Routes.TakeOfferPaymentMethod)
+            } else {
+                navigateTo(Routes.TakeOfferReviewTrade)
+            }
         }
     }
 
-    override fun createOffer() {
-        createOfferPresenter.onStartCreateOffer(offerbookServiceFacade.selectedOfferbookMarket.value.market)
-        navigateTo(Routes.CreateOfferDirection)
-    }
-
-    override fun chatForOffer(offer: OfferListItemVO) {
-        log.i { "chat for offer clicked " }
-    }
-
-    override fun onSelectDirection(direction: DirectionEnum) {
+    fun onSelectDirection(direction: DirectionEnum) {
         _selectedDirection.value = direction
     }
 }

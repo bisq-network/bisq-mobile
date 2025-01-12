@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import network.bisq.mobile.domain.data.model.MarketListItem
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
+import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFilter
@@ -17,13 +17,13 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class OfferbookMarketPresenter(
     mainPresenter: MainPresenter,
-    private val offerbookServiceFacade: OfferbookServiceFacade,
+    private val offersServiceFacade: OffersServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
     //todo
     //var marketListItemWithNumOffers: List<MarketListItem> = offerbookServiceFacade.getSortedOfferbookMarketItems()
 
-    private var mainCurrencies = OfferbookServiceFacade.mainCurrencies
+    private var mainCurrencies = OffersServiceFacade.mainCurrencies
 
     private var _sortBy = MutableStateFlow(MarketSortBy.MostOffers)
     var sortBy: StateFlow<MarketSortBy> = _sortBy
@@ -31,7 +31,7 @@ class OfferbookMarketPresenter(
         _sortBy.value = newValue
     }
 
-    private var _filter = MutableStateFlow(MarketFilter.WithOffers)
+    private var _filter = MutableStateFlow(MarketFilter.All)
     var filter: StateFlow<MarketFilter> = _filter
     fun setFilter(newValue: MarketFilter) {
         _filter.value = newValue
@@ -60,7 +60,7 @@ class OfferbookMarketPresenter(
         searchText: String,
         sortBy: MarketSortBy
     ): List<MarketListItem> {
-        return offerbookServiceFacade.offerbookMarketItems
+        return offersServiceFacade.offerbookMarketItems
             .filter { item ->
                 when (filter) {
                     MarketFilter.WithOffers -> item.numOffers.value > 0
@@ -94,7 +94,7 @@ class OfferbookMarketPresenter(
     }
 
     fun onSelectMarket(marketListItem: MarketListItem) {
-        offerbookServiceFacade.selectOfferbookMarket(marketListItem)
+        offersServiceFacade.selectOfferbookMarket(marketListItem)
         navigateTo(Routes.OffersByMarket)
     }
 

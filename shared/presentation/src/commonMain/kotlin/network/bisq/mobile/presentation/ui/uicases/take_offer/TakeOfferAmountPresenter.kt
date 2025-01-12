@@ -4,9 +4,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.from
-import network.bisq.mobile.domain.data.replicated.common.monetary.toBaseSideMonetary
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.DEFAULT_MIN_USD_TRADE_AMOUNT
@@ -40,19 +41,20 @@ class TakeOfferAmountPresenter(
 
     override fun onViewAttached() {
         takeOfferModel = takeOfferPresenter.takeOfferModel
-        val offerListItem = takeOfferModel.offerListItem
+        val offerListItem = takeOfferModel.offerItemPresentationVO
         quoteCurrencyCode = offerListItem.bisqEasyOffer.market.quoteCurrencyCode
 
-        val rangeAmountSpec: RangeAmountSpecVO = offerListItem.bisqEasyOffer.amountSpec as RangeAmountSpecVO
+        val rangeAmountSpec: RangeAmountSpecVO =
+            offerListItem.bisqEasyOffer.amountSpec as RangeAmountSpecVO
         minAmount = maxOf(getMinAmountValue(), rangeAmountSpec.minAmount)
         maxAmount = minOf(getMaxAmountValue(), rangeAmountSpec.maxAmount)
 
-        formattedMinAmount = AmountFormatter.formatAmount(FiatVO.from(minAmount, quoteCurrencyCode))
-        formattedMinAmountWithCode = AmountFormatter.formatAmount(FiatVO.from(minAmount, quoteCurrencyCode), true, true)
-        formattedMaxAmountWithCode = AmountFormatter.formatAmount(FiatVO.from(maxAmount, quoteCurrencyCode), true, true)
+        formattedMinAmount = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode))
+        formattedMinAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode), true, true)
+        formattedMaxAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
 
         _formattedQuoteAmount.value = offerListItem.formattedQuoteAmount
-        _formattedBaseAmount.value = offerListItem.formattedBaseAmount
+        _formattedBaseAmount.value = offerListItem.formattedBaseAmount.value
 
         sliderPosition = 0.5f
         applySliderValue(sliderPosition)
@@ -93,7 +95,7 @@ class TakeOfferAmountPresenter(
         val roundedFiatValue: Long = (value / 10000.0f).roundToLong() * 10000
 
         // We do not apply the data to the model yet to avoid unnecessary model clones
-        quoteAmount = FiatVO.from(roundedFiatValue, quoteCurrencyCode)
+        quoteAmount = FiatVOFactory.from(roundedFiatValue, quoteCurrencyCode)
         _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount)
 
         priceQuote = takeOfferPresenter.getMostRecentPriceQuote()

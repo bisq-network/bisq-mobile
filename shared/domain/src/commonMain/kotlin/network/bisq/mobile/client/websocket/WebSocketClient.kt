@@ -89,7 +89,7 @@ class WebSocketClient(
     }
 
 
-    suspend fun subscribe(topic: Topic, parameter: String? = null): WebSocketEventObserver? {
+    suspend fun subscribe(topic: Topic, parameter: String? = null): WebSocketEventObserver {
         val subscriberId = createUuid()
         log.i { "Subscribe for topic $topic and subscriberId $subscriberId" }
         val subscriptionRequest = SubscriptionRequest(
@@ -98,26 +98,22 @@ class WebSocketClient(
             parameter
         )
         val response: WebSocketResponse? = sendRequestAndAwaitResponse(subscriptionRequest)
-        if (response is SubscriptionResponse) {
-            log.i {
-                "Received SubscriptionResponse for topic $topic and subscriberId $subscriberId.\n" +
-                        "SubscriptionResponse=$response"
-            }
-            val webSocketEventObserver = WebSocketEventObserver()
-            webSocketEventObservers[subscriberId] = webSocketEventObserver
-            val webSocketEvent = WebSocketEvent(
-                topic,
-                subscriberId,
-                response.payload,
-                ModificationType.REPLACE,
-                0
-            )
-            webSocketEventObserver.setEvent(webSocketEvent)
-            return webSocketEventObserver
-        } else {
-            log.e { "Response not of expected type. response=$response" }
-            return null
+        require(response is SubscriptionResponse)
+        log.i {
+            "Received SubscriptionResponse for topic $topic and subscriberId $subscriberId."
         }
+        val webSocketEventObserver = WebSocketEventObserver()
+        webSocketEventObservers[subscriberId] = webSocketEventObserver
+        val webSocketEvent = WebSocketEvent(
+            topic,
+            subscriberId,
+            response.payload,
+            ModificationType.REPLACE,
+            0
+        )
+        webSocketEventObserver.setEvent(webSocketEvent)
+        log.i { "Subscription for $topic and subscriberId $subscriberId completed." }
+        return webSocketEventObserver
     }
 
     suspend fun unSubscribe(topic: Topic, requestId: String) {
@@ -140,7 +136,7 @@ class WebSocketClient(
                 if (frame is Frame.Text) {
                     val message = frame.readText()
                     //todo add input validation
-                    log.i { "Received raw text $message" }
+                    log.d { "Received raw text $message" }
                     val webSocketMessage: WebSocketMessage =
                         json.decodeFromString(WebSocketMessage.serializer(), message)
                     log.i { "Received webSocketMessage $webSocketMessage" }
@@ -161,7 +157,12 @@ class WebSocketClient(
     private fun onWebSocketEvent(event: WebSocketEvent) {
         // We have the payload not serialized yet as we would not know the expected type.
         // We delegate that at the caller who is aware of the expected type
-        webSocketEventObservers[event.subscriberId]?.setEvent(event)
+        val webSocketEventObserver = webSocketEventObservers[event.subscriberId]
+        if (webSocketEventObserver != null) {
+            webSocketEventObserver.setEvent(event)
+        } else {
+            log.w { "We received a WebSocketEvent but no webSocketEventObserver was found for subscriberId ${event.subscriberId}" }
+        }
     }
 
     /* object ServerEventSerializer :

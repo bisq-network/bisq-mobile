@@ -11,17 +11,14 @@ import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 class NodeSplashPresenter(
     mainPresenter: MainPresenter,
     applicationBootstrapFacade: ApplicationBootstrapFacade,
-    private val userProfileService: UserProfileServiceFacade,
-    private val userRepository: UserRepository,
-    private val settingsRepository: SettingsRepository
+    userProfileService: UserProfileServiceFacade,
+    userRepository: UserRepository,
+    settingsRepository: SettingsRepository
 ) : SplashPresenter(mainPresenter, applicationBootstrapFacade, userProfileService, userRepository, settingsRepository) {
 
-    /**
-     * 
-     */
     override fun doCustomNavigationLogic(settings: Settings, hasProfile: Boolean): Boolean {
         navigateToCreateProfile()
-        // do nothin
+        // do nothing
         return false
     }
 }

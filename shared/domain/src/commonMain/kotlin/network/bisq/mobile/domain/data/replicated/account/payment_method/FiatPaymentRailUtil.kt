@@ -16,6 +16,8 @@
  */
 package network.bisq.mobile.domain.data.replicated.account.payment_method
 
+import network.bisq.mobile.domain.data.replicated.account.payment_method.FiatPaymentRailEnumExtensions.supportsCurrency
+
 
 object FiatPaymentRailUtil {
     fun getPaymentRails(currencyCode: String): List<FiatPaymentRailEnum> {

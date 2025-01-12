@@ -21,9 +21,4 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("BitcoinPaymentMethodSpec")
-data class BitcoinPaymentMethodSpecVO(override val paymentMethod: String, override val saltedMakerAccountId: String?) :
-    PaymentMethodSpecVO
-
-fun BitcoinPaymentMethodSpecVO.Companion.from(paymentMethod: String, saltedMakerAccountId: String?): BitcoinPaymentMethodSpecVO {
-    return BitcoinPaymentMethodSpecVO(paymentMethod, saltedMakerAccountId)
-}
+data class BitcoinPaymentMethodSpecVO(override val paymentMethod: String, override val saltedMakerAccountId: String?) : PaymentMethodSpecVO

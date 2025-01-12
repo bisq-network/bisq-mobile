@@ -1,16 +1,13 @@
 package network.bisq.mobile.domain.data.replicated.security.pow
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.domain.utils.hexToByteArray
 
 @Serializable
 data class ProofOfWorkVO(
-    val payload: String,
+    val payloadEncoded: String,
     val counter: Long,
-    val challenge: String?,
+    val challengeEncoded: String?,
     val difficulty: Double,
-    val solution: String,
+    val solutionEncoded: String,
     val duration: Long
 )
-
-val ProofOfWorkVO.solutionAsByteArray: ByteArray get() = solution.hexToByteArray()

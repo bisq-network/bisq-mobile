@@ -23,15 +23,3 @@ enum class DirectionEnum {
     BUY,
     SELL
 }
-
-val DirectionEnum.isBuy: Boolean
-    get() {
-        return this == DirectionEnum.BUY
-    }
-
-val DirectionEnum.isSell: Boolean
-    get() {
-        return this == DirectionEnum.SELL
-    }
-
-fun DirectionEnum.mirror(): DirectionEnum = if (this == DirectionEnum.BUY) DirectionEnum.SELL else DirectionEnum.BUY

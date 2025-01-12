@@ -28,20 +28,3 @@ data class FiatVO(
     override val precision: Int,
     override val lowPrecision: Int,
 ) : MonetaryVO
-
-fun FiatVO.Companion.from(id: String, value: Long, code: String, precision: Int, lowPrecision: Int): FiatVO {
-    return FiatVO(id, value, code, precision, lowPrecision)
-}
-
-fun FiatVO.Companion.from(value: Long, code: String): FiatVO {
-    return FiatVO(code, value, code, 4, 2)
-}
-
-fun FiatVO.Companion.from(value: Long, code: String, precision: Int): FiatVO {
-    return FiatVO(code, value, code, precision, 2)
-}
-
-fun FiatVO.Companion.fromFaceValue(faceValue: Double, code: String): FiatVO {
-    val value = faceValueToLong(faceValue, 4)
-    return FiatVO.from(value, code)
-}

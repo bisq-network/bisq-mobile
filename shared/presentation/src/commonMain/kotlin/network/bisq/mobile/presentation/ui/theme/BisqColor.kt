@@ -5,7 +5,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 
 @Immutable
-data class BisqColors (
+data class BisqColors(
     val dark1: Color,
     val dark2: Color,
     val dark3: Color,

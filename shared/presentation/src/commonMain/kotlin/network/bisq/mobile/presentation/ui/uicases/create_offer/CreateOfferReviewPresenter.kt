@@ -1,10 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.replicated.common.currency.marketCodes
-import network.bisq.mobile.domain.data.replicated.offer.isBuy
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
@@ -13,7 +11,6 @@ import network.bisq.mobile.i18n.toDisplayString
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
-
 
 class CreateOfferReviewPresenter(
     mainPresenter: MainPresenter,
@@ -107,7 +104,7 @@ class CreateOfferReviewPresenter(
     }
 
     fun onCreateOffer() {
-        CoroutineScope(Dispatchers.Main).launch {
+        backgroundScope.launch {
             // TODO deactivate buttons, show waiting state
             createOfferPresenter.createOffer()
             // TODO hide waiting state, show successfully published state, show button to open offer book, clear navigation backstack
@@ -115,7 +112,16 @@ class CreateOfferReviewPresenter(
         }
     }
 
-    fun onGoToOfferList() {
-        navigateBackTo(Routes.OffersByMarket)
+    private fun onGoToOfferList() {
+        presenterScope.launch {
+            // FIXME without clearing the backstack it does not work
+            val rootNavController = getRootNavController()
+            var currentBackStack = rootNavController.currentBackStack.value
+            while (currentBackStack.size > 2) {
+                rootNavController.popBackStack()
+                currentBackStack = rootNavController.currentBackStack.value
+            }
+            navigateToTab(Routes.TabOfferbook)
+        }
     }
 }

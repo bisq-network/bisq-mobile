@@ -17,13 +17,12 @@ import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPayme
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPricePresenter
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferReviewPresenter
-import network.bisq.mobile.presentation.ui.uicases.offerbook.IOffersListPresenter
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookMarketPresenter
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookPresenter
-import network.bisq.mobile.presentation.ui.uicases.open_trades.IMyTrades
-import network.bisq.mobile.presentation.ui.uicases.open_trades.ITradeFlowPresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.OpenTradeListPresenter
-import network.bisq.mobile.presentation.ui.uicases.open_trades.TradeFlowPresenter
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.InterruptedTradePresenter
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.OpenTradePresenter
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeDetailsHeaderPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfileSettingsPresenter
@@ -44,7 +43,7 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val presentationModule = module {
-    single<MainPresenter> { ClientMainPresenter(get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
+    single<MainPresenter> { ClientMainPresenter(get(), get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
 
     single<TopBarPresenter> { TopBarPresenter(get(), get()) } bind ITopBarPresenter::class
 
@@ -82,21 +81,11 @@ val presentationModule = module {
         )
     } bind ITrustedNodeSetupPresenter::class
 
-    single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get()) }
-
-    single { OfferbookPresenter(get(), get(), get(), get()) } bind IOffersListPresenter::class
-
-    single {
-        OpenTradeListPresenter(
-            get(),
-            get(),
-            get(),
-        )
-    } bind IMyTrades::class
-
-    single { TradeFlowPresenter(get(), get()) } bind ITradeFlowPresenter::class
-
     single { PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
+
+    // Offerbook
+    single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get()) }
+    single<OfferbookPresenter> { OfferbookPresenter(get(), get(), get()) }
 
     // Take offer
     single { TakeOfferPresenter(get(), get(), get()) }
@@ -112,6 +101,12 @@ val presentationModule = module {
     single { CreateOfferAmountPresenter(get(), get(), get()) }
     single { CreateOfferPaymentMethodPresenter(get(), get()) }
     single { CreateOfferReviewPresenter(get(), get()) }
+
+    // Trade process
+    single { OpenTradeListPresenter(get(), get(), get()) }
+    single { TradeDetailsHeaderPresenter(get(), get()) }
+    single { InterruptedTradePresenter(get(), get(), get()) }
+    single { OpenTradePresenter(get(), get(), get(), get(), get()) }
 
     single { ChatPresenter(get()) } bind IChatPresenter::class
 }

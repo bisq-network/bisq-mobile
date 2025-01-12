@@ -1,19 +1,18 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.replicated.common.currency.marketCodes
-import network.bisq.mobile.domain.data.replicated.offer.isBuy
-import network.bisq.mobile.domain.data.replicated.offer.mirror
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.trade.TakeOfferStatus
+import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.i18n.toDisplayString
@@ -24,7 +23,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 class TakeOfferReviewPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val takeOfferPresenter: TakeOfferPresenter
+    private val takeOfferPresenter: TakeOfferPresenter,
 ) : BasePresenter(mainPresenter) {
 
     lateinit var headLine: String
@@ -55,8 +54,8 @@ class TakeOfferReviewPresenter(
         val formattedQuoteAmount = AmountFormatter.formatAmount(takeOfferModel.quoteAmount, true, true)
         val formattedBaseAmount = AmountFormatter.formatAmount(takeOfferModel.baseAmount, false, true)
 
-        val offerListItem = takeOfferModel.offerListItem
-        val takersDirection = offerListItem.bisqEasyOffer.direction.mirror()
+        val offerListItem = takeOfferModel.offerItemPresentationVO
+        val takersDirection = offerListItem.bisqEasyOffer.direction.mirror
         headLine = "${takersDirection.name.uppercase()} Bitcoin"
 
         val i18n = appStrings.bisqEasyTradeWizard
@@ -73,7 +72,7 @@ class TakeOfferReviewPresenter(
         }
 
         marketCodes = offerListItem.bisqEasyOffer.market.marketCodes
-        price = offerListItem.formattedPrice
+        price = offerListItem.formattedPrice.value //todo we need updated price not static offer price
         applyPriceDetails()
     }
 
@@ -82,52 +81,62 @@ class TakeOfferReviewPresenter(
     }
 
     fun onTakeOffer() {
-        CoroutineScope(Dispatchers.Main).launch {
+        presenterScope.launch {
+            launch {
+                takeOfferStatus.collect { value ->
+                    log.i { "takeOfferStatus: $value" }
+                    //todo show state
+                }
+            }
+            launch {
+                takeOfferErrorMessage.collect { value ->
+                    log.i { "takeOfferErrorMessage: $value" }
+                    //todo show error
+                }
+            }
+        }
+        backgroundScope.launch {
             // TODO deactivate buttons, show waiting state
             try {
-                launch {
-                    takeOfferStatus.collect { value ->
-                        log.i { "takeOfferStatus: $value" }
-                        //todo show state
-                    }
-                }
-
-                launch {
-                    takeOfferErrorMessage.collect { value ->
-                        log.i { "takeOfferErrorMessage: $value" }
-                        //todo show error
-                    }
-                }
-
                 takeOfferPresenter.takeOffer(takeOfferStatus, takeOfferErrorMessage)
             } catch (e: Exception) {
                 log.e("Take offer failed", e)
                 // show error to user
             }
             // TODO hide waiting state, show successfully published state, show button to open offer book, clear navigation backstack
-            onGoToOpenTrades()
+            onNavigateToMyTrades()
         }
     }
 
-    fun onGoToOpenTrades() {
-        navigateTo(Routes.OpenTrade) {
-            it.popUpTo(Routes.OffersByMarket.name)
+    private fun onNavigateToMyTrades() {
+        presenterScope.launch {
+            // FIXME without clearing the backstack it does not work
+            val rootNavController = getRootNavController()
+            var currentBackStack = rootNavController.currentBackStack.value
+            while (currentBackStack.size > 2) {
+                rootNavController.popBackStack()
+                currentBackStack = rootNavController.currentBackStack.value
+            }
+            navigateToTab(Routes.TabOpenTradeList)
         }
     }
-
 
     private fun applyPriceDetails() {
         val i18n = appStrings.bisqEasyTradeWizard
-        val priceSpec = takeOfferModel.offerListItem.bisqEasyOffer.priceSpec
+        val priceSpec = takeOfferModel.offerItemPresentationVO.bisqEasyOffer.priceSpec
         val percent =
-            PriceUtil.findPercentFromMarketPrice(marketPriceServiceFacade, priceSpec, takeOfferModel.offerListItem.bisqEasyOffer.market)
-        if ((priceSpec is network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO || priceSpec is MarketPriceSpecVO) && percent == 0.0) {
+            PriceUtil.findPercentFromMarketPrice(
+                marketPriceServiceFacade,
+                priceSpec,
+                takeOfferModel.offerItemPresentationVO.bisqEasyOffer.market
+            )
+        if ((priceSpec is FloatPriceSpecVO || priceSpec is MarketPriceSpecVO) && percent == 0.0) {
             priceDetails = i18n.bisqEasy_tradeWizard_review_priceDetails
         } else {
             val priceWithCode = PriceQuoteFormatter.format(takeOfferModel.priceQuote, true, true)
             val percentagePrice = PercentageFormatter.format(percent, true)
             val aboveOrBelow: String = if (percent > 0) "above" else "below" //todo
-            if (priceSpec is network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO) {
+            if (priceSpec is FloatPriceSpecVO) {
                 priceDetails = i18n.bisqEasy_tradeWizard_review_priceDetails_float(percentagePrice, aboveOrBelow, priceWithCode)
             } else {
                 if (percent == 0.0) {

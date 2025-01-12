@@ -43,9 +43,5 @@ enum class FiatPaymentRailEnum(val countryCodes: List<String> = emptyList(), val
     UPI(ArrayList(), listOf("INR")),
     BIZUM(listOf("ES"), listOf("EUR")),
     CASH_APP(listOf("US"), listOf("USD"));
-
-    fun supportsCurrency(currencyCode: String): Boolean {
-        return currencyCodes.contains(currencyCode)
-    }
 }
 

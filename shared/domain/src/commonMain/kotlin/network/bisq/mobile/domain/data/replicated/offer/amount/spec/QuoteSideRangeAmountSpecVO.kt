@@ -21,9 +21,4 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 @SerialName("QuoteSideRangeAmountSpec")
-data class QuoteSideRangeAmountSpecVO(override val minAmount: Long, override val maxAmount: Long) :
-    RangeAmountSpecVO
-
-fun QuoteSideRangeAmountSpecVO.Companion.from(minAmount: Long, maxAmount: Long): QuoteSideRangeAmountSpecVO {
-    return QuoteSideRangeAmountSpecVO(minAmount, maxAmount)
-}
+data class QuoteSideRangeAmountSpecVO(override val minAmount: Long, override val maxAmount: Long) : RangeAmountSpecVO

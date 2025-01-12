@@ -11,15 +11,13 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.from
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.from
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.getPriceQuoteVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVOExtensions.getPriceQuoteVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offer.OfferServiceFacade
+import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 
@@ -27,7 +25,7 @@ import network.bisq.mobile.presentation.MainPresenter
 class CreateOfferPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val offerServiceFacade: OfferServiceFacade
+    private val offersServiceFacade: OffersServiceFacade
 ) : BasePresenter(mainPresenter) {
     enum class PriceType {
         PERCENTAGE,
@@ -72,15 +70,11 @@ class CreateOfferPresenter(
 
     lateinit var createOfferModel: CreateOfferModel
 
-    fun onStartCreateOffer(market: MarketVO? = null) {
+    fun onStartCreateOffer() {
         createOfferModel = CreateOfferModel()
 
         createOfferModel.apply {
             priceQuote = marketPriceServiceFacade.selectedMarketPriceItem.value!!.priceQuote
-        }
-
-        if (market != null) {
-            commitMarket(market)
         }
     }
 
@@ -91,8 +85,7 @@ class CreateOfferPresenter(
     fun commitMarket(value: MarketVO) {
         createOfferModel.market = value
         createOfferModel.priceQuote = getMostRecentPriceQuote(value)
-        createOfferModel.availableQuoteSidePaymentMethods =
-            FiatPaymentRailUtil.getPaymentRailNames(value.quoteCurrencyCode)
+        createOfferModel.availableQuoteSidePaymentMethods = FiatPaymentRailUtil.getPaymentRailNames(value.quoteCurrencyCode)
     }
 
     fun commitAmount(
@@ -134,22 +127,22 @@ class CreateOfferPresenter(
 
         var amountSpec: AmountSpecVO
         if (createOfferModel.amountType == AmountType.FIXED_AMOUNT) {
-            amountSpec = QuoteSideFixedAmountSpecVO.from(createOfferModel.quoteSideFixedAmount!!.value)
+            amountSpec = QuoteSideFixedAmountSpecVO(createOfferModel.quoteSideFixedAmount!!.value)
         } else {
-            amountSpec = QuoteSideRangeAmountSpecVO.from(
+            amountSpec = QuoteSideRangeAmountSpecVO(
                 createOfferModel.quoteSideMinRangeAmount!!.value,
                 createOfferModel.quoteSideMaxRangeAmount!!.value
             )
         }
         val priceSpec: PriceSpecVO = if (createOfferModel.priceType == PriceType.FIXED) {
-            FixPriceSpecVO.from(createOfferModel.priceQuote)
+            FixPriceSpecVO(createOfferModel.priceQuote)
         } else {
-            if (createOfferModel.percentagePriceValue == 0.0) MarketPriceSpecVO.from()
-            else FloatPriceSpecVO.from(createOfferModel.percentagePriceValue)
+            if (createOfferModel.percentagePriceValue == 0.0) MarketPriceSpecVO()
+            else FloatPriceSpecVO(createOfferModel.percentagePriceValue)
         }
 
         val supportedLanguageCodes: Set<String> = setOf("en") //todo
-        offerServiceFacade.createOffer(
+        offersServiceFacade.createOffer(
             direction,
             market,
             bitcoinPaymentMethods,
@@ -162,6 +155,6 @@ class CreateOfferPresenter(
 
     fun getMostRecentPriceQuote(market: MarketVO): PriceQuoteVO {
         val marketPriceItem: MarketPriceItem = marketPriceServiceFacade.findMarketPriceItem(market)!!
-        return MarketPriceSpecVO.from().getPriceQuoteVO(marketPriceItem)
+        return MarketPriceSpecVO().getPriceQuoteVO(marketPriceItem)
     }
 }

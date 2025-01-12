@@ -28,7 +28,7 @@ import org.koin.compose.koinInject
 
 val navigationListItem = listOf(
     BottomNavigationItem("Home", Routes.TabHome.name, Res.drawable.icon_home),
-    BottomNavigationItem("Buy/Sell", Routes.TabOfferbook.name, Res.drawable.icon_market),
+    BottomNavigationItem("Offerbook", Routes.TabOfferbook.name, Res.drawable.icon_market),
     BottomNavigationItem("My Trades", Routes.TabOpenTradeList.name, Res.drawable.icon_trades),
     BottomNavigationItem("Settings", Routes.TabSettings.name, Res.drawable.icon_settings),
 )
@@ -59,8 +59,8 @@ fun TabContainerScreen() {
                 isHome = currentRoute == Routes.TabHome.name,
                 title = when (currentRoute) {
                     Routes.TabHome.name -> "Home"
-                    Routes.TabOfferbook.name -> "Buy/Sell"
-                    Routes.TabOpenTradeList.name -> "My Trades"
+                    Routes.TabOfferbook.name -> "Offerbook"
+                    Routes.TabOpenTradeList.name -> "My Open Trades"
                     Routes.TabSettings.name -> "Settings"
                     else -> "App"
                 },

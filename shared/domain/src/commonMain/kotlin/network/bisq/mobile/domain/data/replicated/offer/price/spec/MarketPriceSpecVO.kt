@@ -32,7 +32,3 @@ class MarketPriceSpecVO : PriceSpecVO {
         return this::class.hashCode()
     }
 }
-
-fun MarketPriceSpecVO.Companion.from(): MarketPriceSpecVO {
-    return MarketPriceSpecVO()
-}

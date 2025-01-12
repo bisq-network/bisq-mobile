@@ -3,7 +3,6 @@ package network.bisq.mobile.domain.data.replicated.user.profile
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.domain.data.replicated.security.pow.ProofOfWorkVO
-import network.bisq.mobile.domain.utils.hexToByteArray
 
 @Serializable
 data class UserProfileVO(
@@ -19,7 +18,3 @@ data class UserProfileVO(
     val userName: String,
     val publishDate: Long
 )
-
-val UserProfileVO.id get() = networkId.pubKey.id
-
-val UserProfileVO.pubKeyHashAsByteArray: ByteArray get() = networkId.pubKey.hash.hexToByteArray()

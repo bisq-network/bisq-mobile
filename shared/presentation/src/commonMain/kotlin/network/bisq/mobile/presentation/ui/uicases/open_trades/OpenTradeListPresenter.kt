@@ -2,48 +2,62 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.data.model.MockOffer
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.TradeItemPresentationModel
+import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 
 class OpenTradeListPresenter(
     mainPresenter: MainPresenter,
-    private val offerbookServiceFacade: OfferbookServiceFacade,
-    private val createOfferPresenter: CreateOfferPresenter
-) : BasePresenter(mainPresenter), IMyTrades {
+    private val tradesServiceFacade: TradesServiceFacade,
+    private val settingsServiceFacade: SettingsServiceFacade
+) : BasePresenter(mainPresenter) {
 
-    private val _myTrades = MutableStateFlow<List<MockOffer>>(emptyList())
-    override val myTrades: StateFlow<List<MockOffer>> = _myTrades
+    val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = tradesServiceFacade.openTradeItems
+    val tradeRulesConfirmed: StateFlow<Boolean> = settingsServiceFacade.tradeRulesConfirmed
 
-    override fun navigateToCurrencyList() {
-        navigateToTab(Routes.TabOfferbook)
-    }
-
-
-    override fun createOffer() {
-        log.i { "Goto create offer" }
-        createOfferPresenter.onStartCreateOffer()
-        navigateTo(Routes.CreateOfferDirection)
-    }
-
-    override fun gotoTradeScreen(offer: MockOffer) {
-        log.i { "Goto trade screen" }
-        navigateTo(Routes.OpenTrade)
-    }
-
-    private fun refresh() {
-    }
+    private val _tradeGuideVisible = MutableStateFlow(false)
+    val tradeGuideVisible: StateFlow<Boolean> get() = _tradeGuideVisible
 
     override fun onViewAttached() {
-        super.onViewAttached()
-        refresh()
     }
 
-    override fun onResume() {
-        super.onResume()
-        refresh()
+    override fun onViewUnattaching() {
+    }
+
+    fun onOpenTradeGuide() {
+        _tradeGuideVisible.value = true
+    }
+
+    fun onCloseTradeGuide() {
+        _tradeGuideVisible.value = false
+    }
+
+    fun onConfirmTradeRules(value: Boolean) {
+        _tradeGuideVisible.value = false
+        presenterScope.launch {
+            settingsServiceFacade.confirmTradeRules(value)
+        }
+    }
+
+    fun onSelect(openTradeItem: TradeItemPresentationModel) {
+        if (tradeRulesConfirmed.value) {
+            backgroundScope.launch {
+                tradesServiceFacade.selectOpenTrade(openTradeItem.tradeId)
+                presenterScope.launch {
+                    navigateTo(Routes.OpenTrade)
+                }
+            }
+        } else {
+            // todo show dialogue to open trade guide
+            _tradeGuideVisible.value = true
+        }
+    }
+
+    fun onNavigateToOfferbook() {
+        navigateToTab(Routes.TabOfferbook)
     }
 }

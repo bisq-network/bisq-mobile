@@ -43,11 +43,7 @@ class CreateOfferDirectionPresenter(
 
     private fun navigateNext() {
         commitToModel()
-        if (createOfferPresenter.createOfferModel.market == null) {
-            navigateTo(Routes.CreateOfferMarket)
-        } else {
-            navigateTo(Routes.CreateOfferAmount)
-        }
+        navigateTo(Routes.CreateOfferMarket)
     }
 
     private fun commitToModel() {

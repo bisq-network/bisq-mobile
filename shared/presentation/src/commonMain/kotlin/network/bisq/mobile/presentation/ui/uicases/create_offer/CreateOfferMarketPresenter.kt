@@ -1,9 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import network.bisq.mobile.domain.data.model.MarketListItem
+import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.offer.isBuy
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -11,7 +11,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class CreateOfferMarketPresenter(
     mainPresenter: MainPresenter,
-    offerbookServiceFacade: OfferbookServiceFacade,
+    offersServiceFacade: OffersServiceFacade,
     private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter) {
 
@@ -19,7 +19,7 @@ class CreateOfferMarketPresenter(
     lateinit var headline: String
     var market: MarketVO? = null
 
-    var marketListItemWithNumOffers: List<MarketListItem> = offerbookServiceFacade.getSortedOfferbookMarketItems()
+    var marketListItemWithNumOffers: List<MarketListItem> = offersServiceFacade.getSortedOfferbookMarketItems()
 
     override fun onViewAttached() {
         val createOfferModel = createOfferPresenter.createOfferModel

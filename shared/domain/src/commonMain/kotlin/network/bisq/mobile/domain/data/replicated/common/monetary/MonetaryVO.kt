@@ -16,10 +16,6 @@
  */
 package network.bisq.mobile.domain.data.replicated.common.monetary
 
-import com.ionspin.kotlin.bignum.decimal.BigDecimal
-import com.ionspin.kotlin.bignum.decimal.DecimalMode
-import com.ionspin.kotlin.bignum.decimal.RoundingMode
-
 sealed interface MonetaryVO {
     val id: String
     val value: Long
@@ -27,29 +23,3 @@ sealed interface MonetaryVO {
     val precision: Int
     val lowPrecision: Int
 }
-
-fun isFiat(code: String): Boolean {
-    return !isCoin(code)
-}
-
-fun isCoin(code: String): Boolean {
-    return code == "BTC"
-}
-
-fun faceValueToLong(faceValue: Double, precision: Int): Long {
-    val maxValue: Double = BigDecimal.fromLong(Long.MAX_VALUE).moveDecimalPoint(-precision).doubleValue(false)
-    if (faceValue > maxValue) {
-        throw RuntimeException("Provided value would lead to an overflow")
-    }
-    return BigDecimal.fromDouble(faceValue).moveDecimalPoint(precision).longValue(false)
-}
-
-fun MonetaryVO.toDouble(value: Long): Double {
-    return BigDecimal.fromLong(value).moveDecimalPoint(-precision).scale(precision.toLong()).doubleValue(false)
-}
-
-fun MonetaryVO.asDouble(): Double {
-    return toDouble(value)
-}
-
-val MonetaryVO.decimalMode: DecimalMode get() = DecimalMode(precision.toLong(), RoundingMode.ROUND_HALF_AWAY_FROM_ZERO)

@@ -37,7 +37,7 @@ fun CreateOfferPaymentMethodSelectorScreen() {
             color = BisqTheme.colors.light1
         )
 
-        BisqGap.V2()
+        BisqGap.V1()
 
         PaymentMethodCard(
             title = presenter.quoteSideHeadline,
