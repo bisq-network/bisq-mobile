@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.components.molecules
+package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
