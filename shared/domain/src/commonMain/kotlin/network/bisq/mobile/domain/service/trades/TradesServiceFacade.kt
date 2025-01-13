@@ -3,9 +3,9 @@ package network.bisq.mobile.domain.service.trades
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.LifeCycleAware
+import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
-import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.TradeItemPresentationModel
 
 interface TradesServiceFacade : LifeCycleAware {
     val selectedTrade: StateFlow<TradeItemPresentationModel?>

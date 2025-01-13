@@ -7,7 +7,7 @@ import bisq.i18n.Res
 import bisq.support.mediation.MediationRequestService
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
-import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.TradeItemPresentationModel
+import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 

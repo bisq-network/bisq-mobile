@@ -23,34 +23,34 @@ import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScor
 /**
  * This model is used in the UI and will get the mutual fields updated from domain services.
  */
-class OfferItemPresentationModel(offerItemPresentationVO: OfferItemPresentationVO) {
+class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentationDto) {
     // Delegates
-    val bisqEasyOffer = offerItemPresentationVO.bisqEasyOffer
-    val isMyOffer = offerItemPresentationVO.isMyOffer
-    val makersUserProfile = offerItemPresentationVO.userProfile
-    val formattedDate = offerItemPresentationVO.formattedDate
-    val formattedQuoteAmount = offerItemPresentationVO.formattedQuoteAmount
-    val formattedPriceSpec = offerItemPresentationVO.formattedQuoteAmount
-    val quoteSidePaymentMethods = offerItemPresentationVO.quoteSidePaymentMethods
-    val baseSidePaymentMethods = offerItemPresentationVO.baseSidePaymentMethods
+    val bisqEasyOffer = offerItemPresentationDto.bisqEasyOffer
+    val isMyOffer = offerItemPresentationDto.isMyOffer
+    val makersUserProfile = offerItemPresentationDto.userProfile
+    val formattedDate = offerItemPresentationDto.formattedDate
+    val formattedQuoteAmount = offerItemPresentationDto.formattedQuoteAmount
+    val formattedPriceSpec = offerItemPresentationDto.formattedQuoteAmount
+    val quoteSidePaymentMethods = offerItemPresentationDto.quoteSidePaymentMethods
+    val baseSidePaymentMethods = offerItemPresentationDto.baseSidePaymentMethods
 
     // convenience fields
     val offerId = bisqEasyOffer.id
 
     // In case of market price or float is used, the price and the base amount need to be updated at market price updates.
-    private val _formattedPrice = MutableStateFlow(offerItemPresentationVO.formattedPrice)
+    private val _formattedPrice = MutableStateFlow(offerItemPresentationDto.formattedPrice)
     val formattedPrice: StateFlow<String> get() = _formattedPrice
 
-    private val _formattedBaseAmount = MutableStateFlow(offerItemPresentationVO.formattedQuoteAmount)
+    private val _formattedBaseAmount = MutableStateFlow(offerItemPresentationDto.formattedQuoteAmount)
     val formattedBaseAmount: StateFlow<String> get() = _formattedBaseAmount
 
     // The user name is the nickname and the nym in case there are multiple nicknames in the network.
     // We get that set by the backend in the makersUserProfile but we need to update it after initial retrieval by websocket events.
     // At Bisq 2 the UserNameLookup class handles that.
-    private val _userName = MutableStateFlow(offerItemPresentationVO.userProfile.userName)
+    private val _userName = MutableStateFlow(offerItemPresentationDto.userProfile.userName)
     val userName: StateFlow<String> get() = _userName
 
-    private val _makersReputationScore = MutableStateFlow(offerItemPresentationVO.reputationScore)
+    private val _makersReputationScore = MutableStateFlow(offerItemPresentationDto.reputationScore)
     val makersReputationScore: StateFlow<ReputationScoreVO> get() = _makersReputationScore
 
     // TODO

@@ -4,7 +4,7 @@ import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationVO
+import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
@@ -26,7 +26,7 @@ class OfferbookApiGateway(
         return webSocketApiClient.get("$basePath/markets/offers/count")
     }
 
-    suspend fun getOffers(code: String): Result<List<OfferItemPresentationVO>> {
+    suspend fun getOffers(code: String): Result<List<OfferItemPresentationDto>> {
         return webSocketApiClient.get("$basePath/markets/$code/offers")
     }
 

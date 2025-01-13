@@ -7,9 +7,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.from
-import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.TradeItemPresentationModel
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade

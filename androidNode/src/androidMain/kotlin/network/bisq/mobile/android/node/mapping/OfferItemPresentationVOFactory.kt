@@ -32,7 +32,7 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import network.bisq.mobile.android.node.mapping.Mappings.BisqEasyOfferMapping
-import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationVO
+import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationDto
 import java.text.DateFormat
 import java.util.Date
 import java.util.stream.Collectors
@@ -45,7 +45,7 @@ object OfferItemPresentationVOFactory {
         marketPriceService: MarketPriceService,
         reputationService: ReputationService,
         bisqEasyOfferbookMessage: BisqEasyOfferbookMessage
-    ): OfferItemPresentationVO {
+    ): OfferItemPresentationDto {
         val bisqEasyOffer = bisqEasyOfferbookMessage.bisqEasyOffer.get()
         val bisqEasyOfferVO = BisqEasyOfferMapping.fromBisq2Model(bisqEasyOffer)
         val isMyOffer = bisqEasyOfferbookMessage.isMyMessage(userIdentityService)
@@ -97,7 +97,7 @@ object OfferItemPresentationVOFactory {
         val reputationScore = reputationService.getReputationScore(authorUserProfileId)
         val reputationScoreVO = Mappings.ReputationScoreMapping.fromBisq2Model(reputationScore)
 
-        return OfferItemPresentationVO(
+        return OfferItemPresentationDto(
             bisqEasyOfferVO,
             isMyOffer,
             authorUserProfile,

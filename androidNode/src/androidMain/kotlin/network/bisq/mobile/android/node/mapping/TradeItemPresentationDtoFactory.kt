@@ -25,7 +25,7 @@ import bisq.trade.bisq_easy.BisqEasyTradeUtils
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import network.bisq.mobile.android.node.mapping.Mappings.ReputationScoreMapping
-import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationVO
+import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 
@@ -35,7 +35,7 @@ object TradeItemPresentationDtoFactory {
         channel: BisqEasyOpenTradeChannel,
         userProfileService: UserProfileService,
         reputationService: ReputationService
-    ): TradeItemPresentationVO {
+    ): TradeItemPresentationDto {
 
         val myUserProfile = userProfileService.getManagedUserProfile(channel.myUserIdentity.userProfile)
         val myUserProfileVO = Mappings.UserProfileMapping.fromBisq2Model(myUserProfile)
@@ -79,7 +79,7 @@ object TradeItemPresentationDtoFactory {
         val peersReputationScore = reputationService.getReputationScore(peersUserProfile.id)
         val peersRReputationScoreVO = ReputationScoreMapping.fromBisq2Model(peersReputationScore)
 
-        return TradeItemPresentationVO(
+        return TradeItemPresentationDto(
             channelVO,
             tradeVO,
             makerUserProfile,

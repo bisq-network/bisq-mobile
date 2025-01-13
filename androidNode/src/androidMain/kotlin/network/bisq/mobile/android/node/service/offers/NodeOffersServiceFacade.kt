@@ -30,8 +30,8 @@ import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
+import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationModel
-import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
@@ -214,7 +214,7 @@ class NodeOffersServiceFacade(
         }
     }
 
-    private fun createOfferListItem(bisqEasyOfferbookMessage: BisqEasyOfferbookMessage): OfferItemPresentationVO {
+    private fun createOfferListItem(bisqEasyOfferbookMessage: BisqEasyOfferbookMessage): OfferItemPresentationDto {
         return OfferItemPresentationVOFactory.create(
             userProfileService,
             userIdentityService,
@@ -233,8 +233,8 @@ class NodeOffersServiceFacade(
             chatMessages.addObserver(object : CollectionObserver<BisqEasyOfferbookMessage> {
                 override fun add(message: BisqEasyOfferbookMessage) {
                     if (message.hasBisqEasyOffer()) {
-                        val offerItemPresentationVO: OfferItemPresentationVO = createOfferListItem(message)
-                        val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationVO)
+                        val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
+                        val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
                         _offerbookListItems.value += offerItemPresentationModel
                         bisqEasyOfferbookMessages.add(message)
                         log.i { "add offer $offerItemPresentationModel" }

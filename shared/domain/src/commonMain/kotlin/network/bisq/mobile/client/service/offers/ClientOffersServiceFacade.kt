@@ -13,8 +13,8 @@ import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
+import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationModel
-import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
@@ -175,9 +175,9 @@ class ClientOffersServiceFacade(
                     }
 
                     offersSequenceNumber.value = webSocketEvent.sequenceNumber
-                    val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationVO>> =
+                    val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
                         WebSocketEventPayload.from(json, webSocketEvent)
-                    val payload: List<OfferItemPresentationVO> = webSocketEventPayload.payload
+                    val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
                     if (webSocketEvent.modificationType == ModificationType.REPLACE ||
                         webSocketEvent.modificationType == ModificationType.ADDED
                     ) {

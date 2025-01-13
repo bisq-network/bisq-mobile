@@ -9,10 +9,10 @@ import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Subscription
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationVO
+import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationDto
+import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
-import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.TradeItemPresentationModel
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -37,7 +37,7 @@ class ClientTradesServiceFacade(
     // Misc
     private val tradeId get() = selectedTrade.value?.tradeId
     private val coroutineScope = CoroutineScope(BackgroundDispatcher)
-    private val openTradesSubscription: Subscription<TradeItemPresentationVO> =
+    private val openTradesSubscription: Subscription<TradeItemPresentationDto> =
         Subscription(webSocketClient, json, Topic.TRADES, this::handleTradeItemPresentationChange)
 
     private val tradePropertiesSubscription: Subscription<Map<String, TradeProperties>> =
@@ -137,7 +137,7 @@ class ClientTradesServiceFacade(
     }
 
     // Private
-    private fun handleTradeItemPresentationChange(payload: List<TradeItemPresentationVO>, modificationType: ModificationType) {
+    private fun handleTradeItemPresentationChange(payload: List<TradeItemPresentationDto>, modificationType: ModificationType) {
         if (modificationType == ModificationType.REPLACE ||
             modificationType == ModificationType.ADDED
         ) {

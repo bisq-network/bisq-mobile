@@ -26,7 +26,7 @@ import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScor
  * the client code. It contains initial values for some mutual fields
  */
 @Serializable
-data class OfferItemPresentationVO(
+data class OfferItemPresentationDto(
     val bisqEasyOffer: BisqEasyOfferVO,
     val isMyOffer: Boolean,
     val userProfile: UserProfileVO,  // The userName inside userProfile can change when multiple nicknames are in the network
