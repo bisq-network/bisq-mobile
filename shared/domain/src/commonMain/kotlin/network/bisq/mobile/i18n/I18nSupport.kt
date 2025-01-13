@@ -27,7 +27,8 @@ class I18nSupport {
 // and: "chat.notifications.offerTaken.message".i18n(1234) with one argument (or more if needed)
 fun String.i18n(vararg arguments: Any): String {
     val pattern = i18n()
-    return MessageFormat.format(pattern, arguments)
+    val result = MessageFormat.format(pattern, arguments).replace("''", "'")
+    return result
 }
 
 fun String.i18n(): String {

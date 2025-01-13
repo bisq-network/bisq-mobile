@@ -1,22 +1,30 @@
 package network.bisq.mobile.android.node.di
 
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.presentation.*
+import network.bisq.mobile.android.node.presentation.NodeGettingStartedPresenter
+import network.bisq.mobile.android.node.presentation.NodeMainPresenter
+import network.bisq.mobile.android.node.presentation.NodeSettingsPresenter
+import network.bisq.mobile.android.node.presentation.NodeSplashPresenter
+import network.bisq.mobile.android.node.presentation.OnBoardingNodePresenter
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.android.node.service.bootstrap.NodeApplicationBootstrapFacade
+import network.bisq.mobile.android.node.service.explorer.NodeExplorerServiceFacade
 import network.bisq.mobile.android.node.service.market_price.NodeMarketPriceServiceFacade
-import network.bisq.mobile.android.node.service.offer.NodeOfferServiceFacade
-import network.bisq.mobile.android.node.service.offerbook.NodeOfferbookServiceFacade
-import network.bisq.mobile.android.node.service.trade.NodeTradeServiceFacade
+import network.bisq.mobile.android.node.service.mediation.NodeMediationServiceFacade
+import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
+import network.bisq.mobile.android.node.service.settings.NodeSettingsServiceFacade
+import network.bisq.mobile.android.node.service.trades.NodeTradesServiceFacade
 import network.bisq.mobile.android.node.service.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offer.OfferServiceFacade
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
-import network.bisq.mobile.domain.service.trade.TradeServiceFacade
+import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
+import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
@@ -47,11 +55,15 @@ val androidNodeModule = module {
 
     single<UserProfileServiceFacade> { NodeUserProfileServiceFacade(get()) }
 
-    single<OfferbookServiceFacade> { NodeOfferbookServiceFacade(get(), get()) }
+    single<OffersServiceFacade> { NodeOffersServiceFacade(get(), get()) }
 
-    single<OfferServiceFacade> { NodeOfferServiceFacade(get()) }
+    single<ExplorerServiceFacade> { NodeExplorerServiceFacade(get()) }
 
-    single<TradeServiceFacade> { NodeTradeServiceFacade(get()) }
+    single<TradesServiceFacade> { NodeTradesServiceFacade(get()) }
+
+    single<MediationServiceFacade> { NodeMediationServiceFacade(get()) }
+
+    single<SettingsServiceFacade> { NodeSettingsServiceFacade(get()) }
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 
@@ -66,11 +78,12 @@ val androidNodeModule = module {
             get(),
             get(),
             get(),
+            get(),
         )
     }
 
     single<GettingStartedPresenter> {
-        NodeGettingStartedPresenter(get(), get(), get(), get(), get())
+        NodeGettingStartedPresenter(get(), get(), get(), get())
     }
 
     single<SettingsPresenter> { NodeSettingsPresenter(get(), get()) } bind ISettingsPresenter::class

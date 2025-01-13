@@ -1,8 +1,11 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
@@ -34,6 +37,7 @@ fun BisqButton(
     text: String? = "Button",
     onClick: (() -> Unit)? = null,
     color: Color = BisqTheme.colors.light1,
+    textColor: Color = BisqTheme.colors.light1,
     backgroundColor: Color = BisqTheme.colors.primary,
     padding: PaddingValues = PaddingValues(
         horizontal = BisqUIConstants.ScreenPadding4X,
@@ -48,7 +52,8 @@ fun BisqButton(
     disabled: Boolean = false,
     isLoading: Boolean = false,
     border: BorderStroke? = null,
-    type: BisqButtonType = BisqButtonType.Default
+    type: BisqButtonType = BisqButtonType.Default,
+    borderColor: Color = BisqTheme.colors.primary,
 ) {
 
     val enabled = !disabled && !isLoading
@@ -61,7 +66,7 @@ fun BisqButton(
 
     val finalBorder = when (type) {
         BisqButtonType.Default -> border
-        BisqButtonType.Outline -> BorderStroke(1.dp, BisqTheme.colors.primary)
+        BisqButtonType.Outline -> BorderStroke(1.dp, borderColor)
         BisqButtonType.Clear -> null
     }
 
@@ -104,7 +109,7 @@ fun BisqButton(
                 } else {
                     BisqText.baseMedium(
                         text = text,
-                        color = BisqTheme.colors.light1,
+                        color = textColor,
                     )
                 }
                 if (rightIcon != null) Spacer(modifier = Modifier.width(10.dp))

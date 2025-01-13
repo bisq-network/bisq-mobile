@@ -1,13 +1,14 @@
 package network.bisq.mobile.domain.utils
 
-import network.bisq.mobile.domain.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.replicated.common.monetary.asDouble
-import network.bisq.mobile.domain.replicated.common.monetary.fromPrice
-import network.bisq.mobile.domain.replicated.offer.price.spec.FixPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.FloatPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.MarketPriceSpecVO
-import network.bisq.mobile.domain.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.asDouble
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.MathUtils.roundTo
 
@@ -24,7 +25,7 @@ object PriceUtil {
     fun fromMarketPriceMarkup(marketPrice: PriceQuoteVO, percentage: Double): PriceQuoteVO {
         require(percentage >= -1) { "Percentage must not be lower than -100%" }
         val price = marketPrice.asDouble() * (1 + percentage)
-        return PriceQuoteVO.fromPrice(price, marketPrice.market);
+        return PriceQuoteVOFactory.fromPrice(price, marketPrice.market);
     }
 
     /**
@@ -41,7 +42,11 @@ object PriceUtil {
         //return MathUtils.roundDouble(priceQuote.getValue() / marketPrice.getValue() as Double - 1, 4)
     }
 
-    fun findPercentFromMarketPrice(marketPriceService: MarketPriceServiceFacade, priceSpec: PriceSpecVO, market: MarketVO): Double {
+    fun findPercentFromMarketPrice(
+        marketPriceService: MarketPriceServiceFacade,
+        priceSpec: PriceSpecVO,
+        market: MarketVO
+    ): Double {
         val percentage: Double
         if (priceSpec is FixPriceSpecVO) {
             val fixPrice: PriceQuoteVO = priceSpec.priceQuote

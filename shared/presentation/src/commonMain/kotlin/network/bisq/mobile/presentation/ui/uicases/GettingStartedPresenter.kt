@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -15,7 +15,7 @@ open class GettingStartedPresenter(
     mainPresenter: MainPresenter,
     private val bisqStatsRepository: BisqStatsRepository,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val offerbookServiceFacade: OfferbookServiceFacade
+    private val offersServiceFacade: OffersServiceFacade
 ) : BasePresenter(mainPresenter), IGettingStarted {
     override val title: String = "Bisq Easy Client"
 
@@ -42,7 +42,7 @@ open class GettingStartedPresenter(
     }
 
     private fun navigateToTradingTab() {
-        navigateToTab(Routes.TabCurrencies)
+        navigateToTab(Routes.TabOfferbook)
     }
 
     override fun navigateLearnMore() {
@@ -62,7 +62,7 @@ open class GettingStartedPresenter(
                 // TODO get published profiles data from service
                 val bisqStats = bisqStatsRepository.fetch()
                 _publishedProfiles.value = bisqStats?.publishedProfiles ?: 0
-                offerbookServiceFacade.offerListItems.collect {
+                offersServiceFacade.offerbookListItems.collect {
                     _offersOnline.value = it.size
                 }
             } catch (e: Exception) {

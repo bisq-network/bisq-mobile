@@ -2,15 +2,20 @@ package network.bisq.mobile.presentation.ui.uicases
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.FloatingActionButton
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.icon_home
+import bisqapps.shared.presentation.generated.resources.icon_market
+import bisqapps.shared.presentation.generated.resources.icon_settings
+import bisqapps.shared.presentation.generated.resources.icon_trades
 import network.bisq.mobile.presentation.ViewPresenter
-import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.icons.AddIcon
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -20,12 +25,11 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.navigation.graph.TabNavGraph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
-import org.koin.core.qualifier.named
 
 val navigationListItem = listOf(
     BottomNavigationItem("Home", Routes.TabHome.name, Res.drawable.icon_home),
-    BottomNavigationItem("Buy/Sell", Routes.TabCurrencies.name, Res.drawable.icon_market),
-    BottomNavigationItem("My Trades", Routes.TabMyTrades.name, Res.drawable.icon_trades),
+    BottomNavigationItem("Offerbook", Routes.TabOfferbook.name, Res.drawable.icon_market),
+    BottomNavigationItem("My Trades", Routes.TabOpenTradeList.name, Res.drawable.icon_trades),
     BottomNavigationItem("Settings", Routes.TabSettings.name, Res.drawable.icon_settings),
 )
 
@@ -55,8 +59,8 @@ fun TabContainerScreen() {
                 isHome = currentRoute == Routes.TabHome.name,
                 title = when (currentRoute) {
                     Routes.TabHome.name -> "Home"
-                    Routes.TabCurrencies.name -> "Buy/Sell"
-                    Routes.TabMyTrades.name -> "My Trades"
+                    Routes.TabOfferbook.name -> "Offerbook"
+                    Routes.TabOpenTradeList.name -> "My Open Trades"
                     Routes.TabSettings.name -> "Settings"
                     else -> "App"
                 },
@@ -95,7 +99,7 @@ fun TabContainerScreen() {
         },
         fab = {
 
-            if (currentRoute == Routes.TabCurrencies.name) {
+            if (currentRoute == Routes.TabOfferbook.name) {
                 FloatingActionButton(
                     onClick = { presenter.createOffer() },
                     containerColor = BisqTheme.colors.primary,

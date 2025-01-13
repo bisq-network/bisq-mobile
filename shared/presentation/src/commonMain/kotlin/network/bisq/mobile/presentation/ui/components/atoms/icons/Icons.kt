@@ -10,25 +10,31 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
-import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.exchange_h_arrow
 import bisqapps.shared.presentation.generated.resources.exchange_v_arrow
+import bisqapps.shared.presentation.generated.resources.icon_add_filled_green
 import bisqapps.shared.presentation.generated.resources.icon_arrow_down
 import bisqapps.shared.presentation.generated.resources.icon_bell
 import bisqapps.shared.presentation.generated.resources.icon_chat_outlined
+import bisqapps.shared.presentation.generated.resources.icon_closed_eye
 import bisqapps.shared.presentation.generated.resources.icon_copy
+import bisqapps.shared.presentation.generated.resources.icon_flag
+import bisqapps.shared.presentation.generated.resources.icon_flash_light
 import bisqapps.shared.presentation.generated.resources.icon_gallery
 import bisqapps.shared.presentation.generated.resources.icon_info
 import bisqapps.shared.presentation.generated.resources.icon_language_grey
 import bisqapps.shared.presentation.generated.resources.icon_qr
 import bisqapps.shared.presentation.generated.resources.icon_question_mark
+import bisqapps.shared.presentation.generated.resources.icon_reply
 import bisqapps.shared.presentation.generated.resources.icon_search_dimmed
+import bisqapps.shared.presentation.generated.resources.icon_send
 import bisqapps.shared.presentation.generated.resources.icon_sort
 import bisqapps.shared.presentation.generated.resources.icon_star_green
 import bisqapps.shared.presentation.generated.resources.icon_star_grey_hollow
 import bisqapps.shared.presentation.generated.resources.icon_star_half_green
 import bisqapps.shared.presentation.generated.resources.img_bot_image
+import bisqapps.shared.presentation.generated.resources.remove_offer
 import bisqapps.shared.presentation.generated.resources.up_arrow
 import network.bisq.mobile.domain.PlatformImage
 import org.jetbrains.compose.resources.painterResource
@@ -73,6 +79,11 @@ fun BellIcon(modifier: Modifier = Modifier.size(30.dp)) {
 @Composable
 fun ChatIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_chat_outlined), "Chat icon", modifier = modifier)
+}
+
+@Composable
+fun RemoveOfferIcon(modifier: Modifier = Modifier) {
+    Image(painterResource(Res.drawable.remove_offer), "Remove offer icon", modifier = modifier)
 }
 
 @Composable

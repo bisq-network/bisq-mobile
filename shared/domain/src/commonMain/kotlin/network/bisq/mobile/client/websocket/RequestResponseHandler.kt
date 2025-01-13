@@ -29,7 +29,7 @@ class RequestResponseHandler(private val sendFunction: suspend (WebSocketMessage
 
     suspend fun request(
         webSocketRequest: WebSocketRequest,
-        timeoutMillis: Long = 10_000
+        timeoutMillis: Long = 10000_000
     ): WebSocketResponse? {
         log.i { "Sending request with ID: ${webSocketRequest.requestId}" }
         mutex.withLock {
@@ -45,9 +45,11 @@ class RequestResponseHandler(private val sendFunction: suspend (WebSocketMessage
             }
         }
         return try {
-            withTimeout(timeoutMillis) {
-                deferredWebSocketResponse?.await()
+            val rr = withTimeout(timeoutMillis) {
+                val response: WebSocketResponse? = deferredWebSocketResponse?.await()
+                response
             }
+            rr
         } catch (e: TimeoutCancellationException) {
             log.w(e) { "WARN: Operation timed out after $timeoutMillis ms" }
             throw e

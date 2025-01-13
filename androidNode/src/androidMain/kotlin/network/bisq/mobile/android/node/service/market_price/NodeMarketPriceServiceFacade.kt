@@ -7,10 +7,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
-import network.bisq.mobile.domain.data.model.MarketListItem
+import network.bisq.mobile.android.node.mapping.Mappings.MarketMapping
 import network.bisq.mobile.domain.data.model.MarketPriceItem
+import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.formatters.MarketPriceFormatter
-import network.bisq.mobile.domain.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
@@ -48,15 +49,15 @@ class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplic
 
     // API
     override fun selectMarket(marketListItem: MarketListItem) {
-        val market = Mappings.MarketMapping.toPojo(marketListItem.market)
+        val market = MarketMapping.toBisq2Model(marketListItem.market)
         marketPriceService.setSelectedMarket(market)
     }
 
     override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? {
-        val market = Mappings.MarketMapping.toPojo(marketVO)
+        val market = MarketMapping.toBisq2Model(marketVO)
         return marketPriceService.findMarketPrice(market)
             .map { it.priceQuote }
-            .map { Mappings.PriceQuoteMapping.from(it) }
+            .map { Mappings.PriceQuoteMapping.fromBisq2Model(it) }
             .map { priceQuoteVO ->
                 val formattedPrice = MarketPriceFormatter.format(priceQuoteVO.value, marketVO)
                 MarketPriceItem(marketVO, priceQuoteVO, formattedPrice)
@@ -86,10 +87,10 @@ class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplic
         if (market != null) {
             marketPriceService.findMarketPriceQuote(market)
                 .ifPresent { priceQuote ->
-                    val marketVO = Mappings.MarketMapping.from(market)
+                    val marketVO = MarketMapping.fromBisq2Model(market)
                     val formattedPrice = PriceFormatter.formatWithCode(priceQuote)
                     _selectedFormattedMarketPrice.value = formattedPrice
-                    val priceQuoteVO = Mappings.PriceQuoteMapping.from(priceQuote)
+                    val priceQuoteVO = Mappings.PriceQuoteMapping.fromBisq2Model(priceQuote)
                     _selectedMarketPriceItem.value = MarketPriceItem(marketVO, priceQuoteVO, formattedPrice)
                 }
         }

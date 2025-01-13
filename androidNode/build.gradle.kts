@@ -1,9 +1,8 @@
-
 import com.google.protobuf.gradle.proto
 import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.util.*
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -71,10 +70,12 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file( localProperties["KEYSTORE_PATH"] as String)
-            storePassword = localProperties["KEYSTORE_PASSWORD"] as String
-            keyAlias = localProperties["KEY_ALIAS"] as String
-            keyPassword = localProperties["KEY_PASSWORD"] as String
+            if (localProperties["KEYSTORE_PATH"] != null) {
+                storeFile = file(localProperties["KEYSTORE_PATH"] as String)
+                storePassword = localProperties["KEYSTORE_PASSWORD"] as String
+                keyAlias = localProperties["KEY_ALIAS"] as String
+                keyPassword = localProperties["KEY_PASSWORD"] as String
+            }
         }
     }
 

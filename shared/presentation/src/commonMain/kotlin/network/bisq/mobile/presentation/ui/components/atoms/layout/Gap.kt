@@ -10,8 +10,18 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 object BisqGap {
 
     @Composable()
+    fun VQuarter() {
+        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPaddingQuarter))
+    }
+
+    @Composable()
     fun VHalf() {
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPaddingHalf))
+    }
+
+    @Composable()
+    fun VHalfQuarter() {
+        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPaddingHalfQuarter))
     }
 
     @Composable()

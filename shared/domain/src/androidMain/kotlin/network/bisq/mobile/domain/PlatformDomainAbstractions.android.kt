@@ -14,11 +14,8 @@ import androidx.compose.ui.graphics.asImageBitmap
 import com.russhwolf.settings.Settings
 import kotlinx.serialization.Serializable
 import java.io.ByteArrayOutputStream
-import java.util.Locale
 import java.text.DecimalFormat
-import java.io.IOException
-import java.io.InputStream
-import java.util.Scanner
+import java.util.Locale
 import java.util.Properties
 
 actual fun getPlatformSettings(): Settings {

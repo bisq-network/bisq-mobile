@@ -1,19 +1,21 @@
 package network.bisq.mobile.client
 
 import network.bisq.mobile.domain.UrlLauncher
-import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
 class ClientMainPresenter(
     notificationServiceController: NotificationServiceController,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
-    private val trustedNodeService: TrustedNodeService,
-    private val offerbookServiceFacade: OfferbookServiceFacade,
+    private val offersServiceFacade: OffersServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val tradesServiceFacade: TradesServiceFacade,
+    private val settingsServiceFacade: SettingsServiceFacade,
     urlLauncher: UrlLauncher
 ) : MainPresenter(notificationServiceController, urlLauncher) {
 
@@ -22,8 +24,10 @@ class ClientMainPresenter(
 
         runCatching {
             applicationBootstrapFacade.activate()
-            offerbookServiceFacade.activate()
+            offersServiceFacade.activate()
             marketPriceServiceFacade.activate()
+            tradesServiceFacade.activate()
+            settingsServiceFacade.activate()
         }.onFailure { e ->
             // TODO give user feedback (we could have a general error screen covering usual
             //  issues like connection issues and potential solutions)
@@ -37,8 +41,10 @@ class ClientMainPresenter(
         // coroutineScope.launch {  webSocketClient.disconnect() }
 
         applicationBootstrapFacade.deactivate()
-        offerbookServiceFacade.deactivate()
+        offersServiceFacade.deactivate()
         marketPriceServiceFacade.deactivate()
+        tradesServiceFacade.deactivate()
+        settingsServiceFacade.deactivate()
         super.onViewUnattaching()
     }
 }

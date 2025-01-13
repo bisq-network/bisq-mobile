@@ -17,7 +17,7 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun CircularLoadingImage(
     image: DrawableResource,
-    isLoading: Boolean
+    isLoading: Boolean,
 ) {
     Box(
         contentAlignment = Alignment.Center
@@ -31,8 +31,8 @@ fun CircularLoadingImage(
                 modifier = Modifier
                     .align(Alignment.Center)
                     .size(60.dp),
-                color = BisqTheme.colors.primaryDisabled,
-                strokeWidth = 2.dp
+                color = BisqTheme.colors.primary,
+                strokeWidth = 1.dp
             )
         }
     }

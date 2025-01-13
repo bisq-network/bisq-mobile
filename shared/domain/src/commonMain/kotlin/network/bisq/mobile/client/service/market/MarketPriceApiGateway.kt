@@ -16,7 +16,7 @@ class MarketPriceApiGateway(
         return webSocketApiClient.get("$basePath/quotes")
     }
 
-    suspend fun subscribeMarketPrice(): WebSocketEventObserver? {
+    suspend fun subscribeMarketPrice(): WebSocketEventObserver {
         return webSocketClient.subscribe(Topic.MARKET_PRICE)
     }
 }

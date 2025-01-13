@@ -9,12 +9,12 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.data.model.MarketListItem
 import network.bisq.mobile.domain.data.model.MarketPriceItem
+import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.formatters.MarketPriceFormatter
-import network.bisq.mobile.domain.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.replicated.common.currency.Markets
-import network.bisq.mobile.domain.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
@@ -33,14 +33,14 @@ class ClientMarketPriceServiceFacade(
     // Misc
     private val coroutineScope = CoroutineScope(BackgroundDispatcher)
     private var job: Job? = null
-    private var selectedMarket: MarketVO = Markets.USD// todo use persisted or user default
+    private var selectedMarket: MarketVO = MarketVOFactory.USD// todo use persisted or user default
     private val quotes = ConcurrentMap<String, PriceQuoteVO>()
 
     // Life cycle
     override fun activate() {
         job = coroutineScope.launch {
             val observer = apiGateway.subscribeMarketPrice()
-            observer?.webSocketEvent?.collect { webSocketEvent ->
+            observer.webSocketEvent.collect { webSocketEvent ->
                 try {
                     if (webSocketEvent?.deferredPayload == null) {
                         return@collect

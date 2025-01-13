@@ -3,7 +3,7 @@ Chat UI structure
 ChatScreen
   |- ChatWidget
   |    |- ChatOuterBubble (repeated for each msgs in LazyColumn)
-  |    |    |- ChatSystemMessage (incase of System message)
+| | |- ChatSystemMessage (in case of System message)
   |    |    |    (or)
   |    |    |- Author Timestamp
   |    |    |- QuoteMessageBubble (Only if current message quotes any prev msg)

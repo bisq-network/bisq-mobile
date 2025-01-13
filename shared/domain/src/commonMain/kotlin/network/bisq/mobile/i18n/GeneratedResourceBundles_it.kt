@@ -1363,6 +1363,7 @@ object GeneratedResourceBundles_it {
         ),
         "mobile" to mapOf(
             "bootstrap.connectedToTrustedNode" to "Connected to trusted node",
+            "error.exception" to "Exception",
         ),
     )
 }
