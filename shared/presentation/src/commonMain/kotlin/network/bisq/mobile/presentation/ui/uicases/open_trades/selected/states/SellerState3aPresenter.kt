@@ -49,7 +49,7 @@ class SellerState3aPresenter(
 
     fun onConfirmedBtcSent() {
         require(paymentProof.value.isNotEmpty())
-        job = CoroutineScope(BackgroundDispatcher).launch {
+        job = backgroundScope.launch {
             tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
         }
     }
