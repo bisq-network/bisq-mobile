@@ -29,9 +29,9 @@ class WebSocketApiClient(
     val apiPath = "/api/v1/"
     var apiUrl = "http://$host:$port$apiPath"
 
-    // POST request still not working, but issue is likely on the bisq2 side.
+    // POST and PATCH request are not working yes on the backend.
     // So we use httpClient instead.
-    val useHttpClientForPost = true
+    val useHttpClient = true
 
     suspend inline fun <reified T> get(path: String): Result<T> {
         return request<T>("GET", path)
@@ -55,7 +55,7 @@ class WebSocketApiClient(
     }
 
     suspend inline fun <reified T, reified R> patch(path: String, requestBody: R): Result<T> {
-        if (useHttpClientForPost) {
+        if (useHttpClient) {
             try {
                 val response: HttpResponse = httpClient.patch(apiUrl + path) {
                     contentType(ContentType.Application.Json)
@@ -76,7 +76,7 @@ class WebSocketApiClient(
     }
 
     suspend inline fun <reified T, reified R> post(path: String, requestBody: R): Result<T> {
-        if (useHttpClientForPost) {
+        if (useHttpClient) {
             try {
                 val response: HttpResponse = httpClient.post(apiUrl + path) {
                     contentType(ContentType.Application.Json)
