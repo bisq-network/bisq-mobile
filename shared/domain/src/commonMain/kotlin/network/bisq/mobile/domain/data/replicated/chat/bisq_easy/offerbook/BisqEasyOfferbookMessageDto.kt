@@ -22,7 +22,7 @@ import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 
 @Serializable
-data class BisqEasyOfferbookMessageVO(
+data class BisqEasyOfferbookMessageDto(
     val id: String,
     val channelId: String,
     val authorUserProfileId: String,

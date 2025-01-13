@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
-package network.bisq.mobile.domain.data.presentation.offerbook
+package network.bisq.mobile.domain.data.replicated.presentation.offerbook
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow

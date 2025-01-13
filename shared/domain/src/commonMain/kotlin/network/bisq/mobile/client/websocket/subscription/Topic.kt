@@ -1,10 +1,10 @@
 package network.bisq.mobile.client.websocket.subscription
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.client.service.trades.TradeProperties
-import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationDto
-import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationDto
+import network.bisq.mobile.client.service.trades.TradePropertiesDto
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
+import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationDto
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -14,5 +14,5 @@ enum class Topic(val typeOf: KType) {
     NUM_OFFERS(typeOf<Map<String, Int>>()),
     OFFERS(typeOf<List<OfferItemPresentationDto>>()),
     TRADES(typeOf<List<TradeItemPresentationDto>>()),
-    TRADE_PROPERTIES(typeOf<List<Map<String, TradeProperties>>>()),
+    TRADE_PROPERTIES(typeOf<List<Map<String, TradePropertiesDto>>>()),
 }

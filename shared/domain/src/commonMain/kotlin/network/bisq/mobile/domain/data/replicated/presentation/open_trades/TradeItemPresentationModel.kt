@@ -1,17 +1,17 @@
-package network.bisq.mobile.domain.data.presentation.open_trades
+package network.bisq.mobile.domain.data.replicated.presentation.open_trades
 
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeDto
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeModel
-import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeVO
 
 /**
  * This model is used in the UI and will get the mutual fields updated from domain services.
  */
 class TradeItemPresentationModel(tradeItemPresentationDto: TradeItemPresentationDto) {
-    private val bisqEasyTradeVO: BisqEasyTradeVO = tradeItemPresentationDto.trade
+    private val bisqEasyTradeDto: BisqEasyTradeDto = tradeItemPresentationDto.trade
     val bisqEasyOpenTradeChannelModel = BisqEasyOpenTradeChannelModel(tradeItemPresentationDto.channel)
-    val bisqEasyTradeModel = BisqEasyTradeModel(bisqEasyTradeVO)
+    val bisqEasyTradeModel = BisqEasyTradeModel(bisqEasyTradeDto)
 
     // Delegates of tradeItemPresentationVO
     val makerUserProfile = tradeItemPresentationDto.makerUserProfile

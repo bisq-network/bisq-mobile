@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Bisq. If not, see <http://www.gnu.org/licenses/>.
  */
-package network.bisq.mobile.domain.data.presentation.offerbook
+package network.bisq.mobile.domain.data.replicated.presentation.offerbook
 
 import kotlinx.serialization.Serializable
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO

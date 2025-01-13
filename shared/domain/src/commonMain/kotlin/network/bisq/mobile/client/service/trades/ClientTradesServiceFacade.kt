@@ -9,10 +9,10 @@ import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Subscription
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationDto
-import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationDto
+import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -40,7 +40,7 @@ class ClientTradesServiceFacade(
     private val openTradesSubscription: Subscription<TradeItemPresentationDto> =
         Subscription(webSocketClient, json, Topic.TRADES, this::handleTradeItemPresentationChange)
 
-    private val tradePropertiesSubscription: Subscription<Map<String, TradeProperties>> =
+    private val tradePropertiesSubscription: Subscription<Map<String, TradePropertiesDto>> =
         Subscription(webSocketClient, json, Topic.TRADE_PROPERTIES, this::handleTradePropertiesChange)
 
     //private var openTradesSubscriptionJob: Job? = null
@@ -155,7 +155,7 @@ class ClientTradesServiceFacade(
         //applyOffersToSelectedMarket()
     }
 
-    private fun handleTradePropertiesChange(payload: List<Map<String, TradeProperties>>, modificationType: ModificationType) {
+    private fun handleTradePropertiesChange(payload: List<Map<String, TradePropertiesDto>>, modificationType: ModificationType) {
         payload.flatMap { it.entries }
             .forEach { (tradeId, data) ->
                 findOpenTradeItemModel(tradeId)?.apply {

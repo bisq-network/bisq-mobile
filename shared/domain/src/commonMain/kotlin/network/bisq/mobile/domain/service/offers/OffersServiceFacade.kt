@@ -4,11 +4,11 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
-import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 
 interface OffersServiceFacade : LifeCycleAware {
     val offerbookMarketItems: List<MarketListItem>

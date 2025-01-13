@@ -5,7 +5,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter

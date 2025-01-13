@@ -8,7 +8,7 @@ import network.bisq.mobile.domain.data.replicated.trade.TradeRoleEnum
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 
 @Serializable
-data class BisqEasyTradeVO(
+data class BisqEasyTradeDto(
     val contract: BisqEasyContractVO,
     val id: String,
     val tradeRole: TradeRoleEnum,

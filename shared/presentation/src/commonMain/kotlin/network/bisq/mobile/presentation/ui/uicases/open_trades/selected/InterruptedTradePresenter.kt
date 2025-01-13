@@ -3,8 +3,8 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.contract.RoleEnum
+import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade

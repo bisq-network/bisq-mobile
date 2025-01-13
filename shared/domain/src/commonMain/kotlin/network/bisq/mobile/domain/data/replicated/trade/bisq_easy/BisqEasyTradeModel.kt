@@ -10,14 +10,14 @@ import network.bisq.mobile.domain.data.replicated.trade.TradeRoleEnumExtensions.
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 
 
-class BisqEasyTradeModel(bisqEasyTradeVO: BisqEasyTradeVO) {
+class BisqEasyTradeModel(bisqEasyTradeDto: BisqEasyTradeDto) {
     // Delegates of bisqEasyTradeVO
-    val taker = bisqEasyTradeVO.taker
-    val maker = bisqEasyTradeVO.maker
-    val contract: BisqEasyContractVO = bisqEasyTradeVO.contract
-    val id: String = bisqEasyTradeVO.id
-    val tradeRole: TradeRoleEnum = bisqEasyTradeVO.tradeRole
-    val myIdentity: IdentityVO = bisqEasyTradeVO.myIdentity
+    val taker = bisqEasyTradeDto.taker
+    val maker = bisqEasyTradeDto.maker
+    val contract: BisqEasyContractVO = bisqEasyTradeDto.contract
+    val id: String = bisqEasyTradeDto.id
+    val tradeRole: TradeRoleEnum = bisqEasyTradeDto.tradeRole
+    val myIdentity: IdentityVO = bisqEasyTradeDto.myIdentity
 
     // Delegates of BisqEasyContractVO
     val offer = contract.offer
@@ -55,19 +55,19 @@ class BisqEasyTradeModel(bisqEasyTradeVO: BisqEasyTradeVO) {
         }
 
     // MutableStateFlow
-    val tradeState: MutableStateFlow<BisqEasyTradeStateEnum> = MutableStateFlow(bisqEasyTradeVO.tradeState)
+    val tradeState: MutableStateFlow<BisqEasyTradeStateEnum> = MutableStateFlow(bisqEasyTradeDto.tradeState)
 
     // The role who cancelled or rejected the trade
-    val interruptTradeInitiator: MutableStateFlow<RoleEnum?> = MutableStateFlow(bisqEasyTradeVO.interruptTradeInitiator)
-    val paymentAccountData: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeVO.paymentAccountData)
+    val interruptTradeInitiator: MutableStateFlow<RoleEnum?> = MutableStateFlow(bisqEasyTradeDto.interruptTradeInitiator)
+    val paymentAccountData: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.paymentAccountData)
 
     // btc address in case of mainChain, or LN invoice if LN is used
-    val bitcoinPaymentData: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeVO.bitcoinPaymentData)
+    val bitcoinPaymentData: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.bitcoinPaymentData)
 
     // txId in case of mainChain, or preimage if LN is used
-    val paymentProof: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeVO.paymentProof)
-    val errorMessage: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeVO.errorMessage)
-    val errorStackTrace: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeVO.errorStackTrace)
-    val peersErrorMessage: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeVO.peersErrorMessage)
-    val peersErrorStackTrace: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeVO.peersErrorStackTrace)
+    val paymentProof: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.paymentProof)
+    val errorMessage: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.errorMessage)
+    val errorStackTrace: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.errorStackTrace)
+    val peersErrorMessage: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.peersErrorMessage)
+    val peersErrorStackTrace: MutableStateFlow<String?> = MutableStateFlow(bisqEasyTradeDto.peersErrorStackTrace)
 }

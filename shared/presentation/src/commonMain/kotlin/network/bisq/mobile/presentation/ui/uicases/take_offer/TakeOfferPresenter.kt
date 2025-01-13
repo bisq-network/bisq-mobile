@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation.ui.uicases.take_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.from
@@ -15,6 +14,7 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOEx
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.BaseSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVOExtensions.getPriceQuoteVO
+import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade

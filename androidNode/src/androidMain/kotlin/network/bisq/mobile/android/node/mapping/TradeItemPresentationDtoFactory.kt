@@ -25,7 +25,7 @@ import bisq.trade.bisq_easy.BisqEasyTradeUtils
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import network.bisq.mobile.android.node.mapping.Mappings.ReputationScoreMapping
-import network.bisq.mobile.domain.data.presentation.open_trades.TradeItemPresentationDto
+import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 

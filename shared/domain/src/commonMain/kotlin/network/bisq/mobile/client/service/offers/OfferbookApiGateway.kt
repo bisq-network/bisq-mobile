@@ -4,11 +4,11 @@ import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.utils.Logging
 
 class OfferbookApiGateway(

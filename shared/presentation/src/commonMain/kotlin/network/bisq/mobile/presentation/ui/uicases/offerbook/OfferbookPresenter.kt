@@ -3,8 +3,8 @@ package network.bisq.mobile.presentation.ui.uicases.offerbook
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter

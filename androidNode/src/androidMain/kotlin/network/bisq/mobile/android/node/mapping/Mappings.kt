@@ -79,11 +79,10 @@ import network.bisq.mobile.domain.data.replicated.account.protocol_type.TradePro
 import network.bisq.mobile.domain.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.offerbook.BisqEasyOfferbookMessageVO
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelVO
+import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.offerbook.BisqEasyOfferbookMessageDto
+import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelDto
+import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageVO
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOfferbookMessageReactionVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
@@ -133,9 +132,9 @@ import network.bisq.mobile.domain.data.replicated.security.keys.TorKeyPairVO
 import network.bisq.mobile.domain.data.replicated.security.pow.ProofOfWorkVO
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.replicated.trade.TradeRoleEnum
+import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeDto
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradePartyVO
-import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeVO
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -241,7 +240,7 @@ class Mappings {
     // chat.bisq_easy.offerbook
 
     object BisqEasyOfferbookMessageMapping {
-        fun toBisq2Model(value: BisqEasyOfferbookMessageVO): BisqEasyOfferbookMessage {
+        fun toBisq2Model(value: BisqEasyOfferbookMessageDto): BisqEasyOfferbookMessage {
             return BisqEasyOfferbookMessage(
                 value.id,
                 ChatChannelDomain.BISQ_EASY_OFFERBOOK,
@@ -256,8 +255,8 @@ class Mappings {
             )
         }
 
-        fun fromBisq2Model(value: BisqEasyOfferbookMessage): BisqEasyOfferbookMessageVO {
-            return BisqEasyOfferbookMessageVO(
+        fun fromBisq2Model(value: BisqEasyOfferbookMessage): BisqEasyOfferbookMessageDto {
+            return BisqEasyOfferbookMessageDto(
                 value.id,
                 value.channelId,
                 value.authorUserProfileId,
@@ -288,8 +287,8 @@ class Mappings {
              )
          }*/
 
-        fun fromBisq2Model(value: BisqEasyOpenTradeChannel): BisqEasyOpenTradeChannelVO {
-            return BisqEasyOpenTradeChannelVO(
+        fun fromBisq2Model(value: BisqEasyOpenTradeChannel): BisqEasyOpenTradeChannelDto {
+            return BisqEasyOpenTradeChannelDto(
                 value.id,
                 value.tradeId,
                 BisqEasyOfferMapping.fromBisq2Model(value.bisqEasyOffer),
@@ -300,72 +299,15 @@ class Mappings {
         }
     }
 
-    object BisqEasyOpenTradeChannelModelMapping {
-        fun toBisq2Model(model: BisqEasyOpenTradeChannelModel): BisqEasyOpenTradeChannel {
-            val vo = model.bisqEasyOpenTradeChannel
-            return BisqEasyOpenTradeChannel(
-                vo.id,
-                vo.tradeId,
-                BisqEasyOfferMapping.toBisq2Model(vo.bisqEasyOffer),
-                UserIdentityMapping.toBisq2Model(vo.myUserIdentity),
-                vo.traders.map { UserProfileMapping.toBisq2Model(it) }.toSet(),
-                Optional.ofNullable(vo.mediator?.let { UserProfileMapping.toBisq2Model(it) }),
-                model.chatMessages.map { BisqEasyOpenTradeMessageModelMapping.toBisq2Model(it) }.toSet(),
-                model.isInMediation.value,
-                ChatChannelNotificationTypeMapping.toBisq2Model(model.chatChannelNotificationType.value),
-            )
-        }
-
-        fun fromBisq2Model(value: BisqEasyOpenTradeChannel): BisqEasyOpenTradeChannelModel {
-            return BisqEasyOpenTradeChannelModel(BisqEasyOpenTradeChannelVOMapping.fromBisq2Model(value))
-                .apply {
-                    isInMediation.value = value.isInMediation
-                    chatMessages.addAll(value.chatMessages.map { BisqEasyOpenTradeMessageModelMapping.fromBisq2Model(it) })
-                    chatChannelNotificationType.value =
-                        ChatChannelNotificationTypeMapping.fromBisq2Model(value.chatChannelNotificationType.get())
-                    userProfileIdsOfActiveParticipants.addAll(value.userProfileIdsOfActiveParticipants)
-                    numMessagesByAuthorId.putAll(value.numMessagesByAuthorId.entries.associate { it.key to it.value.get() })
-                    userProfileIdsOfSendingLeaveMessage.addAll(value.userProfileIdsOfSendingLeaveMessage)
-                }
-        }
-    }
-
     object BisqEasyOpenTradeMessageModelMapping {
-        fun toBisq2Model(value: BisqEasyOpenTradeMessageModel): BisqEasyOpenTradeMessage {
-            val vo = value.bisqEasyOpenTradeMessage
-            return BisqEasyOpenTradeMessage(
-                vo.tradeId,
-                vo.id,
-                ChatChannelDomainMapping.toBisq2Model(vo.chatChannelDomain),
-                vo.channelId,
-                UserProfileMapping.toBisq2Model(vo.senderUserProfile),
-                vo.receiverUserProfileId,
-                NetworkIdMapping.toBisq2Model(vo.receiverNetworkId),
-                vo.text,
-                Optional.ofNullable(vo.citation?.let { CitationMapping.toBisq2Model(it) }),
-                vo.date,
-                vo.wasEdited,
-                Optional.ofNullable(vo.mediator?.let { UserProfileMapping.toBisq2Model(it) }),
-                ChatMessageTypeMapping.toBisq2Model(vo.chatMessageType),
-                Optional.ofNullable(vo.bisqEasyOffer?.let { BisqEasyOfferMapping.toBisq2Model(it) }),
-                value.chatMessageReactions.map { BisqEasyOpenTradeMessageReactionMapping.toBisq2Model(it) }.toSet(),
-            )
-        }
-
         fun fromBisq2Model(value: BisqEasyOpenTradeMessage): BisqEasyOpenTradeMessageModel {
-            return BisqEasyOpenTradeMessageModel(
-                BisqEasyOpenTradeMessageVOMapping.fromBisq2Model(value),
-                value.chatMessageReactions.map { BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(it) }.toMutableSet()
-            )
+            return BisqEasyOpenTradeMessageModel(BisqEasyOpenTradeMessageVOMapping.fromBisq2Model(value))
         }
     }
 
     object BisqEasyOpenTradeMessageVOMapping {
-        // toBisq2Model no supported as BisqEasyOpenTradeMessageVO is missing mutable data.
-        // Use BisqEasyOpenTradeMessageModelMapping.toBisq2Model instead
-
-        fun fromBisq2Model(value: BisqEasyOpenTradeMessage): BisqEasyOpenTradeMessageVO {
-            return BisqEasyOpenTradeMessageVO(
+        fun fromBisq2Model(value: BisqEasyOpenTradeMessage): BisqEasyOpenTradeMessageDto {
+            return BisqEasyOpenTradeMessageDto(
                 value.id,
                 ChatChannelDomainMapping.fromBisq2Model(value.chatChannelDomain),
                 value.channelId,
@@ -1195,21 +1137,8 @@ class Mappings {
     // trade
 
     object BisqEasyTradeVOMapping {
-        //todo BisqEasyTradeState is mutable value
-        /* fun toBisq2Model(value: BisqEasyTradeVO): BisqEasyTrade {
-             return BisqEasyTrade(
-                 BisqEasyContractMapping.toBisq2Model(value.contract),
-                 BisqEasyTradeState.INIT, //todo
-                 value.id,
-                 TradeRoleMapping.toBisq2Model(value.tradeRole),
-                 IdentityMapping.toBisq2Model(value.myIdentity),
-                 BisqEasyTradePartyVOMapping.toBisq2Model(value.taker),
-                 BisqEasyTradePartyVOMapping.toBisq2Model(value.maker),
-             )
-         }*/
-
-        fun fromBisq2Model(value: BisqEasyTrade): BisqEasyTradeVO {
-            return BisqEasyTradeVO(
+        fun fromBisq2Model(value: BisqEasyTrade): BisqEasyTradeDto {
+            return BisqEasyTradeDto(
                 BisqEasyContractMapping.fromBisq2Model(value.contract),
                 value.id,
                 TradeRoleMapping.fromBisq2Model(value.tradeRole),
@@ -1230,18 +1159,6 @@ class Mappings {
     }
 
     object BisqEasyTradeModelMapping {
-        /*  fun toBisq2Model(value: BisqEasyTradeModel): BisqEasyTrade {
-              return BisqEasyTrade(
-                  BisqEasyContractMapping.toBisq2Model(value.contract),
-                  BisqEasyTradeStateMapping.toBisq2Model(value.tradeState.value),
-                  value.id,
-                  TradeRoleMapping.toBisq2Model(value.tradeRole),
-                  IdentityMapping.toBisq2Model(value.myIdentity),
-                  BisqEasyTradePartyModelMapping.toBisq2Model(value.taker),
-                  BisqEasyTradePartyModelMapping.toBisq2Model(value.maker),
-              )
-          }*/
-
         fun fromBisq2Model(value: BisqEasyTrade): BisqEasyTradeModel {
             return BisqEasyTradeModel(
                 BisqEasyTradeVOMapping.fromBisq2Model(value),

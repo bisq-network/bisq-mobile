@@ -1,8 +1,8 @@
-package network.bisq.mobile.domain.data.presentation.open_trades
+package network.bisq.mobile.domain.data.replicated.presentation.open_trades
 
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelVO
-import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeVO
+import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelDto
+import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeDto
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 
@@ -12,8 +12,8 @@ import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScor
  */
 @Serializable
 data class TradeItemPresentationDto(
-    val channel: BisqEasyOpenTradeChannelVO,
-    val trade: BisqEasyTradeVO,
+    val channel: BisqEasyOpenTradeChannelDto,
+    val trade: BisqEasyTradeDto,
     val makerUserProfile: UserProfileVO, // The userName inside userProfile can change when multiple nicknames are in the network
     val takerUserProfile: UserProfileVO, // The userName inside userProfile can change when multiple nicknames are in the network
     val mediatorUserProfile: UserProfileVO?,

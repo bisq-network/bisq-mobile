@@ -5,7 +5,7 @@ import network.bisq.mobile.domain.data.replicated.contract.RoleEnum
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 
 @Serializable
-data class TradeProperties(
+data class TradePropertiesDto(
     var tradeState: BisqEasyTradeStateEnum? = null,
     var interruptTradeInitiator: RoleEnum? = null,
     var paymentAccountData: String? = null,

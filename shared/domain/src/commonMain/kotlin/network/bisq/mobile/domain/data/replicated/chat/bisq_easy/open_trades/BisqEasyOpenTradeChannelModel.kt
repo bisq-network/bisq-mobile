@@ -7,15 +7,15 @@ import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 
-
-class BisqEasyOpenTradeChannelModel(val bisqEasyOpenTradeChannel: BisqEasyOpenTradeChannelVO) {
+//todo will get completed with work on chat
+class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTradeChannelDto) {
     // Delegates of bisqEasyOpenTradeChannelVO
-    val id: String = bisqEasyOpenTradeChannel.id
-    val tradeId: String = bisqEasyOpenTradeChannel.tradeId
-    val bisqEasyOffer: BisqEasyOfferVO = bisqEasyOpenTradeChannel.bisqEasyOffer
-    val myUserIdentity: UserIdentityVO = bisqEasyOpenTradeChannel.myUserIdentity
-    val traders: Set<UserProfileVO> = bisqEasyOpenTradeChannel.traders
-    val mediator: UserProfileVO? = bisqEasyOpenTradeChannel.mediator
+    val id: String = bisqEasyOpenTradeChannelDto.id
+    val tradeId: String = bisqEasyOpenTradeChannelDto.tradeId
+    val bisqEasyOffer: BisqEasyOfferVO = bisqEasyOpenTradeChannelDto.bisqEasyOffer
+    val myUserIdentity: UserIdentityVO = bisqEasyOpenTradeChannelDto.myUserIdentity
+    val traders: Set<UserProfileVO> = bisqEasyOpenTradeChannelDto.traders
+    val mediator: UserProfileVO? = bisqEasyOpenTradeChannelDto.mediator
 
     // Mutable properties
     val isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)

@@ -23,10 +23,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.displayString
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
+import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.LanguageIcon

@@ -32,7 +32,7 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import network.bisq.mobile.android.node.mapping.Mappings.BisqEasyOfferMapping
-import network.bisq.mobile.domain.data.presentation.offerbook.OfferItemPresentationDto
+import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import java.text.DateFormat
 import java.util.Date
 import java.util.stream.Collectors
