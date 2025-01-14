@@ -9,6 +9,7 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.navigation.Routes
 
 
 class TradeDetailsHeaderPresenter(
@@ -154,12 +155,25 @@ class TradeDetailsHeaderPresenter(
         backgroundScope.launch {
             require(selectedTrade.value != null)
 
+            var result: Result<Unit>? = null
             if (tradeCloseType == TradeCloseType.REJECT) {
-                tradesServiceFacade.rejectTrade()
+                result = tradesServiceFacade.rejectTrade()
             } else if (tradeCloseType == TradeCloseType.CANCEL) {
-                tradesServiceFacade.cancelTrade()
+                result = tradesServiceFacade.cancelTrade()
+            }
+            if (result != null) {
+                when {
+                    // TODO review
+                    result.isFailure -> closeWorkflow()
+                    result.isSuccess -> closeWorkflow()
+                }
             }
         }
+    }
+
+    fun closeWorkflow() {
+        // doing a shark navigateBack causes white broken UI screen
+        navigateToTab(Routes.TabOpenTradeList)
     }
 
     private fun reset() {

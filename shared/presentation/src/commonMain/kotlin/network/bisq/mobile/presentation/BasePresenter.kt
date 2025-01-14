@@ -149,6 +149,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     protected fun navigateBack(): Boolean {
+        log.d { "Navigating back" }
         return goBack()
     }
 
