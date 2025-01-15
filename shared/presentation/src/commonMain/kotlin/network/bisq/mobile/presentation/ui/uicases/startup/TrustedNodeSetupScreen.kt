@@ -13,7 +13,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.icons.QuestionIcon
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -22,15 +21,11 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.koin.compose.koinInject
-import org.koin.core.qualifier.named
-import org.koin.core.parameter.parametersOf
-import cafe.adriel.lyricist.LocalStrings
 
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
-import network.bisq.mobile.presentation.ui.components.atoms.icons.ScanIcon
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 
 interface ITrustedNodeSetupPresenter: ViewPresenter {
@@ -39,7 +34,7 @@ interface ITrustedNodeSetupPresenter: ViewPresenter {
 
     fun updateBisqApiUrl(newUrl: String)
 
-    fun testConnection(isTested: Boolean)
+    fun testConnection()
 
     fun navigateToNextScreen()
 
@@ -49,9 +44,7 @@ interface ITrustedNodeSetupPresenter: ViewPresenter {
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
-    val strings = LocalStrings.current
     val presenter: ITrustedNodeSetupPresenter = koinInject()
-    val navController: NavHostController = presenter.getRootNavController()
 
     val bisqApiUrl = presenter.bisqApiUrl.collectAsState().value
     val isConnected = presenter.isConnected.collectAsState().value
@@ -64,15 +57,20 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     ) {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
+        BisqText.largeRegular(
+            text = "To use Bisq through your trusted node, please enter the URL to connect to. E.g. ws://10.0.0.1:8090",
+            color = BisqTheme.colors.light1,
+        )
+        Spacer(modifier = Modifier.height(24.dp))
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxSize().padding(horizontal = 0.dp)
         ) {
             BisqTextField(
-                label = "Bisq URL",
+                label = "Trusted Bisq Node URL",
                 onValueChanged = { presenter.updateBisqApiUrl(it) },
                 value = bisqApiUrl,
-                placeholder = "",
+                placeholder = "ws://10.0.2.2:8090",
                 labelRightSuffix = {
                     BisqButton(
                         iconOnly = { QuestionIcon() },
@@ -90,19 +88,19 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     text = "Paste",
                     onClick = {
                         val annotatedString = clipboardManager.getText()
-                        if(annotatedString != null) {
+                        if (annotatedString != null) {
                             presenter.updateBisqApiUrl(annotatedString.text)
                         }                    },
                     backgroundColor = BisqTheme.colors.dark5,
                     color = BisqTheme.colors.light1,
                     leftIcon= { CopyIcon() }
                 )
-
-                BisqButton(
-                    text = "Scan",
-                    onClick = {},
-                    leftIcon= { ScanIcon() }
-                )
+//              TODO uncomment when feature gets implemented
+//                BisqButton(
+//                    text = "Scan",
+//                    onClick = {},
+//                    leftIcon= { ScanIcon() }
+//                )
             }
             Spacer(modifier = Modifier.height(36.dp))
             BisqText.baseRegular(
@@ -133,7 +131,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 text = "Test Connection",
                 color = if (bisqApiUrl.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
                 onClick = {
-                    presenter.testConnection(true)
+                    presenter.testConnection()
                           },
                 padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                 )
@@ -149,7 +147,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     BisqButton(
                         text = "Test Connection",
                         color = if (bisqApiUrl.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
-                        onClick = { presenter.testConnection(true) },
+                        onClick = { presenter.testConnection() },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )
                 }
@@ -162,7 +160,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     BisqButton(
                         text = if (isWorkflow) "Next" else "Save",
                         color = BisqTheme.colors.light1,
-                        onClick = { if (isWorkflow) presenter.navigateToNextScreen() else presenter.testConnection(true) },
+                        onClick = { if (isWorkflow) presenter.navigateToNextScreen() else presenter.testConnection() },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )
                 }

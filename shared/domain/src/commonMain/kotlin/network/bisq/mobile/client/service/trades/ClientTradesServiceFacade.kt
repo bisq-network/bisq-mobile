@@ -4,7 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.websocket.WebSocketClient
+import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Subscription
 import network.bisq.mobile.client.websocket.subscription.Topic
@@ -19,7 +19,7 @@ import network.bisq.mobile.domain.utils.Logging
 
 class ClientTradesServiceFacade(
     private val apiGateway: TradesApiGateway,
-    webSocketClient: WebSocketClient,
+    webSocketClientProvider: WebSocketClientProvider,
     json: Json
 ) :
     TradesServiceFacade, Logging {
@@ -38,10 +38,10 @@ class ClientTradesServiceFacade(
     private val tradeId get() = selectedTrade.value?.tradeId
     private val coroutineScope = CoroutineScope(BackgroundDispatcher)
     private val openTradesSubscription: Subscription<TradeItemPresentationDto> =
-        Subscription(webSocketClient, json, Topic.TRADES, this::handleTradeItemPresentationChange)
+        Subscription(webSocketClientProvider, json, Topic.TRADES, this::handleTradeItemPresentationChange)
 
     private val tradePropertiesSubscription: Subscription<Map<String, TradePropertiesDto>> =
-        Subscription(webSocketClient, json, Topic.TRADE_PROPERTIES, this::handleTradePropertiesChange)
+        Subscription(webSocketClientProvider, json, Topic.TRADE_PROPERTIES, this::handleTradePropertiesChange)
 
     //private var openTradesSubscriptionJob: Job? = null
     // private var tradePropertiesSubscriptionJob: Job? = null

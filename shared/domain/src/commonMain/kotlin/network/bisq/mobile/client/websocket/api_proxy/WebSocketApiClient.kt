@@ -12,7 +12,7 @@ import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.websocket.WebSocketClient
+import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.domain.utils.Logging
@@ -21,7 +21,7 @@ import kotlin.uuid.Uuid
 
 class WebSocketApiClient(
     val httpClient: HttpClient,
-    val webSocketClient: WebSocketClient,
+    val webSocketClientProvider: WebSocketClientProvider,
     val json: Json,
     host: String,
     port: Int
@@ -108,7 +108,7 @@ class WebSocketApiClient(
             bodyAsJson
         )
         try {
-            val response = webSocketClient.sendRequestAndAwaitResponse(webSocketRestApiRequest)
+            val response = webSocketClientProvider.get().sendRequestAndAwaitResponse(webSocketRestApiRequest)
             require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
             val body = response.body
             if (response.isSuccess()) {

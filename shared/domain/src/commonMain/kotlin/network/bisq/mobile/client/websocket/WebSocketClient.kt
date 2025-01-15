@@ -10,6 +10,7 @@ import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -31,8 +32,8 @@ import network.bisq.mobile.domain.utils.createUuid
 class WebSocketClient(
     private val httpClient: HttpClient,
     val json: Json,
-    host: String,
-    port: Int
+    var host: String,
+    var port: Int
 ) : Logging {
 
     private val webSocketUrl: String = "ws://$host:$port/websocket"
@@ -48,9 +49,11 @@ class WebSocketClient(
         if (!isConnected) {
             try {
                 session = httpClient.webSocketSession { url(webSocketUrl) }
-                isConnected = true
-                CoroutineScope(BackgroundDispatcher).launch { startListening() }
-                connectionReady.complete(true)
+                if (session != null && session!!.isActive) {
+                    isConnected = true
+                    CoroutineScope(BackgroundDispatcher).launch { startListening() }
+                    connectionReady.complete(true)
+                }
             } catch (e: Exception) {
                 log.e("Connecting websocket failed", e)
                 throw e
