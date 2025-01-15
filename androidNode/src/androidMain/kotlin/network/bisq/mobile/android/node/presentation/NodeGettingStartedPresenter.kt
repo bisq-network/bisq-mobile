@@ -2,18 +2,16 @@ package network.bisq.mobile.android.node.presentation
 
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offerbook.OfferbookServiceFacade
+import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
-import network.bisq.mobile.presentation.ui.uicases.offer.create_offer.CreateOfferPresenter
 
 class NodeGettingStartedPresenter(
     mainPresenter: MainPresenter,
     bisqStatsRepository: BisqStatsRepository,
     marketPriceServiceFacade: MarketPriceServiceFacade,
-    createOfferPresenter: CreateOfferPresenter,
-    offerbookServiceFacade: OfferbookServiceFacade
-) : GettingStartedPresenter(mainPresenter, bisqStatsRepository, marketPriceServiceFacade,   offerbookServiceFacade) {
+    offersServiceFacade: OffersServiceFacade
+) : GettingStartedPresenter(mainPresenter, bisqStatsRepository, marketPriceServiceFacade, offersServiceFacade) {
     override val title: String = "Bisq Easy Node"
     override val bulletPoints: List<String> = listOf(
         "Take control of your trading experience with the full power of Bisq, now on your mobile.",

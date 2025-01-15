@@ -1,8 +1,8 @@
 package network.bisq.mobile.domain.formatters
 
+import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVOExtensions.asDouble
 import network.bisq.mobile.domain.decimalFormatter
-import network.bisq.mobile.domain.replicated.common.monetary.MonetaryVO
-import network.bisq.mobile.domain.replicated.common.monetary.asDouble
 
 object AmountFormatter {
     fun formatRangeAmount(

@@ -1,22 +1,22 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
-import androidx.compose.runtime.Composable
 import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.sp
-import org.jetbrains.compose.resources.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
+import androidx.compose.ui.unit.sp
 import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_light
-import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_regular
-import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_medium
 import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_bold
+import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_light
+import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_medium
+import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_regular
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import org.jetbrains.compose.resources.Font
 
 enum class FontWeight {
     LIGHT,
@@ -46,7 +46,7 @@ object BisqText {
         fontSize: FontSize = FontSize.BASE,
         fontWeight: FontWeight = FontWeight.REGULAR,
         textAlign: TextAlign = TextAlign.Start,
-        lineHeight: TextUnit = TextUnit.Unspecified,
+        lineHeight: TextUnit = TextUnit(fontSize.size.times(1.15).value, TextUnitType.Sp),
         maxLines: Int = Int.MAX_VALUE,
         overflow: TextOverflow = TextOverflow.Clip,
         modifier: Modifier = Modifier,
@@ -223,7 +223,6 @@ object BisqText {
             fontWeight = FontWeight.LIGHT,
             color = color,
             textAlign = textAlign,
-            lineHeight = TextUnit(16.0f, TextUnitType.Sp),
             modifier = modifier,
         )
     }
@@ -242,7 +241,6 @@ object BisqText {
             fontWeight = FontWeight.REGULAR,
             color = color,
             textAlign = textAlign,
-            lineHeight = TextUnit(16.0f, TextUnitType.Sp),
             maxLines = if (singleLine) 1 else Int.MAX_VALUE,
             overflow = if (singleLine) TextOverflow.Ellipsis else TextOverflow.Clip,
             modifier = modifier,
@@ -262,7 +260,6 @@ object BisqText {
             fontWeight = FontWeight.MEDIUM,
             color = color,
             textAlign = textAlign,
-            lineHeight = TextUnit(16.0f, TextUnitType.Sp),
             modifier = modifier,
         )
     }
@@ -280,7 +277,6 @@ object BisqText {
             fontWeight = FontWeight.BOLD,
             color = color,
             textAlign = textAlign,
-            lineHeight = TextUnit(16.0f, TextUnitType.Sp),
             modifier = modifier,
         )
     }

@@ -1,19 +1,24 @@
 package network.bisq.mobile.presentation
 
-import androidx.compose.material3.SnackbarHostState
 import androidx.annotation.CallSuper
+import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
-import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 /**
@@ -36,6 +41,7 @@ interface ViewPresenter {
     fun getRootTabNavController(): NavHostController
 
     fun getSnackState(): SnackbarHostState
+
     fun showSnackbar(message: String, isError: Boolean = true)
 
     /**
@@ -87,7 +93,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     override fun showSnackbar(message: String, isError: Boolean) {
-        uiScope.launch {
+        uiScope.launch(Dispatchers.Main) {
             snackbarHostState.showSnackbar(message, withDismissAction = true)
         }
     }
@@ -143,39 +149,47 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     protected fun navigateBack(): Boolean {
+        log.d { "Navigating back" }
         return goBack()
     }
 
     /**
-     * Back navigation poping back stack
+     * Back navigation popping back stack
      */
     protected fun navigateBackTo(destination: Routes, shouldInclusive: Boolean = false, shouldSaveState: Boolean = false) {
-        rootNavigator.popBackStack(destination.name, inclusive = shouldInclusive, saveState = shouldSaveState)
+        uiScope.launch(Dispatchers.Main) {
+            rootNavigator.popBackStack(destination.name, inclusive = shouldInclusive, saveState = shouldSaveState)
+        }
     }
 
     /**
      * Navigates to the given tab route inside the main presentation, with default parameters.
      */
     protected fun navigateToTab(destination: Routes, saveStateOnPopUp: Boolean = true, shouldLaunchSingleTop: Boolean = true, shouldRestoreState: Boolean = true) {
-        getRootTabNavController().navigate(destination.name) {
-            getRootTabNavController().graph.startDestinationRoute?.let { route ->
-                popUpTo(route) {
-                    saveState = saveStateOnPopUp
+        uiScope.launch(Dispatchers.Main) {
+            getRootTabNavController().navigate(destination.name) {
+                getRootTabNavController().graph.startDestinationRoute?.let { route ->
+                    popUpTo(route) {
+                        saveState = saveStateOnPopUp
+                    }
                 }
+                launchSingleTop = shouldLaunchSingleTop
+                restoreState = shouldRestoreState
             }
-            launchSingleTop = shouldLaunchSingleTop
-            restoreState = shouldRestoreState
         }
     }
 
     override fun goBack(): Boolean {
-        try {
-            log.i { "goBack defaut implementation" }
-            return rootNavigator.popBackStack()
-        } catch (e: Exception) {
-            log.e(e) { "Faled to navigate back" }
-            return false
+        var wentBack = false
+        uiScope.launch(Dispatchers.Main) {
+            try {
+                log.i { "goBack default implementation" }
+                wentBack = rootNavigator.popBackStack()
+            } catch (e: Exception) {
+                log.e(e) { "Failed to navigate back" }
+            }
         }
+        return wentBack;
     }
 
     @CallSuper
@@ -238,6 +252,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     fun detachView() {
+        presenterScope.cancel()
+
         onViewUnattaching()
         this.view = null
         log.i { "Lifecycle: View Dettached from Presenter" }

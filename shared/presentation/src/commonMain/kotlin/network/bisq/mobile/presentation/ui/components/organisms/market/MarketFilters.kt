@@ -1,13 +1,14 @@
 package network.bisq.mobile.presentation.ui.components.organisms.market
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.presentation.ui.components.atoms.BisqDropDown
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.ui.uicases.offer.MarketListPresenter
+import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookMarketPresenter
 import org.koin.compose.koinInject
 
 enum class MarketSortBy(val displayName: String) {
@@ -28,7 +29,7 @@ fun MarketFilters(
     onCancel: () -> Unit,
 ) {
 
-    val presenter: MarketListPresenter = koinInject()
+    val presenter: OfferbookMarketPresenter = koinInject()
 
     Column(modifier = Modifier.padding(all = BisqUIConstants.ScreenPadding2X)) {
 

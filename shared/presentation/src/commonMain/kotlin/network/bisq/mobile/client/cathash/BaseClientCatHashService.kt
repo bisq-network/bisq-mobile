@@ -5,16 +5,17 @@ import com.ionspin.kotlin.bignum.integer.Sign
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.replicated.security.pow.solutionAsByteArray
-import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.replicated.user.profile.id
-import network.bisq.mobile.domain.replicated.user.profile.pubKeyHashAsByteArray
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.pubKeyHashAsByteArray
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.base64ToByteArray
 import network.bisq.mobile.domain.utils.concat
 import network.bisq.mobile.domain.utils.toHex
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import okio.SYSTEM
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 abstract class BaseClientCatHashService(private val baseDirPath: String) :
     ClientCatHashService<PlatformImage?>, Logging {
@@ -31,9 +32,10 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
     protected abstract fun writeRawImage(image: PlatformImage, iconFilePath: String)
     protected abstract fun readRawImage(iconFilePath: String): PlatformImage?
 
+    @OptIn(ExperimentalEncodingApi::class)
     fun getImage(userProfile: UserProfileVO, size: Int): PlatformImage? {
         val pubKeyHash: ByteArray = userProfile.pubKeyHashAsByteArray
-        val powSolution: ByteArray = userProfile.proofOfWork.solutionAsByteArray
+        val powSolution: ByteArray = userProfile.proofOfWork.solutionEncoded.base64ToByteArray()
         return getImage(
             pubKeyHash,
             powSolution,

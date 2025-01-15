@@ -1,6 +1,6 @@
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.util.*
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -19,7 +19,7 @@ kotlin {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
-    
+
     listOf(
         iosX64(),
         iosArm64(),
@@ -30,7 +30,7 @@ kotlin {
             isStatic = false
         }
     }
-    
+
     sourceSets {
         androidMain.dependencies {
             implementation(compose.preview)
@@ -56,10 +56,12 @@ android {
 
     signingConfigs {
         create("release") {
-            storeFile = file( localProperties["KEYSTORE_PATH"] as String)
-            storePassword = localProperties["KEYSTORE_PASSWORD"] as String
-            keyAlias = localProperties["CLI_KEY_ALIAS"] as String
-            keyPassword = localProperties["CLI_KEY_PASSWORD"] as String
+            if (localProperties["KEYSTORE_PATH"] != null) {
+                storeFile = file(localProperties["KEYSTORE_PATH"] as String)
+                storePassword = localProperties["KEYSTORE_PASSWORD"] as String
+                keyAlias = localProperties["CLI_KEY_ALIAS"] as String
+                keyPassword = localProperties["CLI_KEY_PASSWORD"] as String
+            }
         }
     }
 

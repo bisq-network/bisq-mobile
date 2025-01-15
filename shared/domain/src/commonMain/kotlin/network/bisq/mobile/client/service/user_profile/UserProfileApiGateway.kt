@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.service.user_profile
 
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
-import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 class UserProfileApiGateway(
     private val webSocketApiClient: WebSocketApiClient

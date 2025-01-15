@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -27,23 +26,19 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButton
-import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
-import network.bisq.mobile.presentation.ui.components.atoms.icons.SearchIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun BisqTextField(
     label: String = "",
-    value: String,
+    value: String = "",
     onValueChanged: (String) -> Unit = {},
     placeholder: String = "",
     labelRightSuffix: (@Composable () -> Unit)? = null,
@@ -52,10 +47,12 @@ fun BisqTextField(
     rightSuffixModifier: Modifier = Modifier.width(50.dp),
     isSearch: Boolean = false,
     helperText: String = "",
+    errorText: String = "",
     indicatorColor: Color = BisqTheme.colors.primary,
     isTextArea: Boolean = false,
     paddingValues: PaddingValues = PaddingValues(all = 12.dp),
     disabled: Boolean = false,
+    color: Color = BisqTheme.colors.light2,
     showCopy: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
@@ -76,9 +73,10 @@ fun BisqTextField(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                BisqText.baseRegular(
+                BisqText.baseLight(
                     text = label,
                     color = BisqTheme.colors.light2,
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
                 )
                 if (labelRightSuffix != null) {
                     labelRightSuffix()
@@ -113,7 +111,7 @@ fun BisqTextField(
                 singleLine = !isTextArea,
                 maxLines = if (isTextArea) 4 else 1,
                 textStyle = TextStyle(
-                    color = Color.White,
+                    color = color,
                     fontSize = 18.sp,
                     textDecoration = TextDecoration.None
                 ),
@@ -133,9 +131,9 @@ fun BisqTextField(
 
                         Box(modifier = Modifier.weight(1f)) {
                             if (value.isEmpty()) {
-                                BisqText.largeRegular(
+                                BisqText.largeLight(
                                     text = placeholder,
-                                    color = BisqTheme.colors.secondaryHover
+                                    color = BisqTheme.colors.grey2
                                 )
                             }
                             innerTextField()
@@ -155,9 +153,17 @@ fun BisqTextField(
                 }
             )
         }
-        if (helperText.isNotEmpty()) {
+        // Error text has priority over help field
+        if (errorText.isNotEmpty()) {
+            BisqText.smallRegular(
+                text = errorText,
+                modifier = Modifier.padding(start = 4.dp, top = 1.dp, bottom = 4.dp),
+                color = BisqTheme.colors.danger
+            )
+        } else if (helperText.isNotEmpty()) {
             BisqText.smallRegular(
                 text = helperText,
+                modifier = Modifier.padding(start = 4.dp, top = 1.dp, bottom = 4.dp),
                 color = BisqTheme.colors.grey1
             )
         }

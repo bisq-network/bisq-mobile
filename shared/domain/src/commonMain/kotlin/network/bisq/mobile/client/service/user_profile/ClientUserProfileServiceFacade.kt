@@ -4,8 +4,8 @@ import io.ktor.util.decodeBase64Bytes
 import kotlinx.coroutines.delay
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.replicated.user.profile.id
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.hexToByteArray
@@ -37,10 +37,10 @@ class ClientUserProfileServiceFacade(
         val preparedData = apiResult.getOrThrow()
         createSimulatedDelay(Clock.System.now().toEpochMilliseconds() - ts)
         val pubKeyHash: ByteArray = preparedData.id.hexToByteArray()
-        val powSolutionBase64 = preparedData.proofOfWork.solution
+        val solutionEncoded = preparedData.proofOfWork.solutionEncoded
         val image: PlatformImage? = clientCatHashService.getImage(
             pubKeyHash,
-            powSolutionBase64.decodeBase64Bytes(),
+            solutionEncoded.decodeBase64Bytes(),
             0,
             120
         )

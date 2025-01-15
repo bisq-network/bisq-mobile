@@ -59,8 +59,7 @@ open class CreateProfilePresenter(
     }
 
     // Misc
-    private val coroutineScope =
-        CoroutineScope(Dispatchers.Main) // rootNavigator.navigate requires Dispatchers.Main
+    private val coroutineScope = CoroutineScope(Dispatchers.Main) // rootNavigator.navigate requires Dispatchers.Main
     private var job: Job? = null
 
     // Lifecycle

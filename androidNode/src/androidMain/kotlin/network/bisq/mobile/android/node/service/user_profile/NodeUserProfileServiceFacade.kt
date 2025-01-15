@@ -10,8 +10,8 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.replicated.user.profile.id
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import java.security.KeyPair
@@ -102,7 +102,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun getSelectedUserProfile(): UserProfileVO? {
-        return userService.userIdentityService.selectedUserIdentity?.userProfile?.let { Mappings.UserProfileMapping.from(it) }
+        return userService.userIdentityService.selectedUserIdentity?.userProfile?.let { Mappings.UserProfileMapping.fromBisq2Model(it) }
     }
 
     // Private
