@@ -9,13 +9,13 @@ import network.bisq.mobile.client.service.trades.TradeEventTypeEnum.REJECT_TRADE
 import network.bisq.mobile.client.service.trades.TradeEventTypeEnum.SELLER_CONFIRM_BTC_SENT
 import network.bisq.mobile.client.service.trades.TradeEventTypeEnum.SELLER_CONFIRM_FIAT_RECEIPT
 import network.bisq.mobile.client.service.trades.TradeEventTypeEnum.SELLER_SENDS_PAYMENT_ACCOUNT
-import network.bisq.mobile.client.websocket.WebSocketClient
+import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.domain.utils.Logging
 
 class TradesApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
-    private val webSocketClient: WebSocketClient,
+    private val webSocketClientProvider: WebSocketClientProvider,
 ) : Logging {
     private val basePath = "trades"
 

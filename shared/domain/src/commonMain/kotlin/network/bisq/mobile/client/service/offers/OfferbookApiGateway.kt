@@ -1,6 +1,6 @@
 package network.bisq.mobile.client.service.offers
 
-import network.bisq.mobile.client.websocket.WebSocketClient
+import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
@@ -13,7 +13,7 @@ import network.bisq.mobile.domain.utils.Logging
 
 class OfferbookApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
-    private val webSocketClient: WebSocketClient,
+    private val webSocketClientProvider: WebSocketClientProvider,
 ) : Logging {
     private val basePath = "offerbook"
 
@@ -58,7 +58,7 @@ class OfferbookApiGateway(
 
     // Subscriptions
     suspend fun subscribeNumOffers(): WebSocketEventObserver {
-        return webSocketClient.subscribe(Topic.NUM_OFFERS)
+        return webSocketClientProvider.get().subscribe(Topic.NUM_OFFERS)
     }
 
     /**
@@ -66,7 +66,7 @@ class OfferbookApiGateway(
      *              If null or empty string we receive for all markets the offer updates.
      */
     suspend fun subscribeOffers(code: String? = null): WebSocketEventObserver {
-        return webSocketClient.subscribe(Topic.OFFERS, code)
+        return webSocketClientProvider.get().subscribe(Topic.OFFERS, code)
     }
 }
 

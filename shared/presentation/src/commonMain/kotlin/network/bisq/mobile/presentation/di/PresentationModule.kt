@@ -78,7 +78,8 @@ val presentationModule = module {
     single {
         TrustedNodeSetupPresenter(
             get(),
-            settingsRepository = get()
+            settingsRepository = get(),
+            get()
         )
     } bind ITrustedNodeSetupPresenter::class
 
