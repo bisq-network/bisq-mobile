@@ -26,7 +26,7 @@ sealed class BaseModel {
             return false
         if (other is BaseModel) {
             if (other.id != UNDEFINED_ID && id != UNDEFINED_ID)
-                return other.id.equals(id)
+                return other.id == id
             return super.equals(other)
         }
         return false

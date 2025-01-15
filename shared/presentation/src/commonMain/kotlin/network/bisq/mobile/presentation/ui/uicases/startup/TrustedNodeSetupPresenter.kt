@@ -30,12 +30,12 @@ class TrustedNodeSetupPresenter(
 
     private fun initialize() {
         log.i { "View attached to Trusted node presenter"}
-        CoroutineScope(BackgroundDispatcher).launch {
+        backgroundScope.launch {
             try {
                 settingsRepository.fetch()
                 settingsRepository.data.value.let {
                     it?.let {
-                        log.d { "Settings connected:${it.isConnected} url:${it.bisqApiUrl}" }
+                        log.d { "Settings url:${it.bisqApiUrl}" }
                         updateBisqApiUrl(it.bisqApiUrl)
                     }
                 }
@@ -52,23 +52,27 @@ class TrustedNodeSetupPresenter(
 
     override fun testConnection() {
         backgroundScope.launch {
-            val updatedSettings = (settingsRepository.data.value ?: Settings()).apply {
-                bisqApiUrl = _bisqApiUrl.value
-                isConnected = _isConnected.value
-            }
-
-            settingsRepository.update(updatedSettings)
-
-            webSocketClientProvider.get().connect()
-            if (webSocketClientProvider.get().isConnected) {
-                showSnackbar("Connected successfully")
-                _isConnected.value = true
-                // showSnackbar("Connected successfully and long text message with long list of english words")
-            } else {
-                showSnackbar("Couldn't connect to given url ${_bisqApiUrl.value}, please try again with another setup")
-                _isConnected.value = false
+            WebSocketClientProvider.parseUri(_bisqApiUrl.value).let { connectionSettings ->
+                if (webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)) {
+                    updateTrustedNodeSettings()
+                    _isConnected.value = true
+                    showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
+                    // showSnackbar("Connected successfully and long text message with long list of english words")
+                } else {
+                    showSnackbar("Could not connect to given url ${_bisqApiUrl.value}, please try again with another setup")
+                    _isConnected.value = false
+                }
             }
         }
+    }
+
+    private suspend fun updateTrustedNodeSettings() {
+        val currentSettings = settingsRepository.fetch()
+        val updatedSettings = Settings().apply {
+            bisqApiUrl = _bisqApiUrl.value
+            firstLaunch = currentSettings?.firstLaunch ?: false
+        }
+        settingsRepository.update(updatedSettings)
     }
 
     override fun navigateToNextScreen() {
