@@ -52,7 +52,8 @@ open class OnBoardingPresenter(
 
             if (pagerState.currentPage == indexesToShow.lastIndex) {
 
-                val updatedSettings = (settings ?: Settings()).apply {
+                val updatedSettings = Settings().apply {
+                    bisqApiUrl = settings?.bisqApiUrl ?: ""
                     firstLaunch = false
                 }
 

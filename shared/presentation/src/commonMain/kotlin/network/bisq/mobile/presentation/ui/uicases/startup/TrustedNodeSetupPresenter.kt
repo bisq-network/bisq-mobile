@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
@@ -13,7 +14,8 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class TrustedNodeSetupPresenter(
     mainPresenter: MainPresenter,
-    private val settingsRepository: SettingsRepository
+    private val settingsRepository: SettingsRepository,
+    private val webSocketClientProvider: WebSocketClientProvider
 ) : BasePresenter(mainPresenter), ITrustedNodeSetupPresenter {
 
     private val _bisqApiUrl = MutableStateFlow("")
@@ -28,14 +30,13 @@ class TrustedNodeSetupPresenter(
 
     private fun initialize() {
         log.i { "View attached to Trusted node presenter"}
-        CoroutineScope(BackgroundDispatcher).launch {
+        backgroundScope.launch {
             try {
                 settingsRepository.fetch()
                 settingsRepository.data.value.let {
                     it?.let {
-                        log.d { "Settings connected:${it.isConnected} url:${it.bisqApiUrl}" }
-                        _bisqApiUrl.value = it.bisqApiUrl
-                        _isConnected.value = it.isConnected
+                        log.d { "Settings url:${it.bisqApiUrl}" }
+                        updateBisqApiUrl(it.bisqApiUrl)
                     }
                 }
             } catch (e: Exception) {
@@ -45,24 +46,34 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun updateBisqApiUrl(newUrl: String) {
+        // TODO apply validation of the URL format ws://<IP>:<PORT> after Buddha's support for it
         _bisqApiUrl.value = newUrl
+        _isConnected.value = false
     }
 
-    override fun testConnection(isTested: Boolean) {
-        _isConnected.value = isTested
-
-        CoroutineScope(BackgroundDispatcher).launch {
-            // TODO only update repository if the test connection succeds. (will need a service for this)
-            val updatedSettings = (settingsRepository.data.value ?: Settings()).apply {
-                bisqApiUrl = _bisqApiUrl.value
-                isConnected = _isConnected.value
+    override fun testConnection() {
+        backgroundScope.launch {
+            WebSocketClientProvider.parseUri(_bisqApiUrl.value).let { connectionSettings ->
+                if (webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)) {
+                    updateTrustedNodeSettings()
+                    _isConnected.value = true
+                    showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
+                    // showSnackbar("Connected successfully and long text message with long list of english words")
+                } else {
+                    showSnackbar("Could not connect to given url ${_bisqApiUrl.value}, please try again with another setup")
+                    _isConnected.value = false
+                }
             }
-
-            settingsRepository.update(updatedSettings)
-
-            showSnackbar("Connected successfully")
-            // showSnackbar("Connected successfully and long text message with long list of english words")
         }
+    }
+
+    private suspend fun updateTrustedNodeSettings() {
+        val currentSettings = settingsRepository.fetch()
+        val updatedSettings = Settings().apply {
+            bisqApiUrl = _bisqApiUrl.value
+            firstLaunch = currentSettings?.firstLaunch ?: false
+        }
+        settingsRepository.update(updatedSettings)
     }
 
     override fun navigateToNextScreen() {
