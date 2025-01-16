@@ -71,7 +71,7 @@ class TrustedNodeSetupPresenter(
         val currentSettings = settingsRepository.fetch()
         val updatedSettings = Settings().apply {
             bisqApiUrl = _bisqApiUrl.value
-            firstLaunch = currentSettings?.firstLaunch ?: false
+            firstLaunch = currentSettings?.firstLaunch ?: true
         }
         settingsRepository.update(updatedSettings)
     }

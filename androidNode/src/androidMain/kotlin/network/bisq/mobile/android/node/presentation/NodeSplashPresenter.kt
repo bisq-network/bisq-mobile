@@ -22,12 +22,18 @@ class NodeSplashPresenter(
     userProfileService,
     userRepository,
     settingsRepository,
-    settingsServiceFacade
+    settingsServiceFacade,
+    null
 ) {
 
     override fun doCustomNavigationLogic(settings: Settings, hasProfile: Boolean): Boolean {
         navigateToCreateProfile()
         // do nothing
         return false
+    }
+
+    override suspend fun hasConnectivity(): Boolean {
+        // TODO implement for node
+        return true
     }
 }
