@@ -32,8 +32,8 @@ import network.bisq.mobile.domain.utils.createUuid
 class WebSocketClient(
     private val httpClient: HttpClient,
     val json: Json,
-    var host: String,
-    var port: Int
+    val host: String,
+    val port: Int
 ) : Logging {
 
     private val webSocketUrl: String = "ws://$host:$port/websocket"
@@ -49,7 +49,7 @@ class WebSocketClient(
         if (!isConnected) {
             try {
                 session = httpClient.webSocketSession { url(webSocketUrl) }
-                if (session != null && session!!.isActive) {
+                if (session?.isActive == true) {
                     isConnected = true
                     CoroutineScope(BackgroundDispatcher).launch { startListening() }
                     connectionReady.complete(true)
@@ -128,9 +128,7 @@ class WebSocketClient(
         log.i { "Send message $message" }
         val jsonString: String = json.encodeToString(message)
         log.i { "Send raw text $jsonString" }
-        if (session != null) {
-            session!!.send(Frame.Text(jsonString))
-        }
+        session?.send(Frame.Text(jsonString))
     }
 
     private suspend fun startListening() {
