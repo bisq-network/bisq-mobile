@@ -52,6 +52,7 @@ open class OnBoardingPresenter(
 
             if (pagerState.currentPage == indexesToShow.lastIndex) {
 
+                // to ensure event propagation, probably need to change settings equals definition to avoid this
                 val updatedSettings = Settings().apply {
                     bisqApiUrl = settings?.bisqApiUrl ?: ""
                     firstLaunch = false

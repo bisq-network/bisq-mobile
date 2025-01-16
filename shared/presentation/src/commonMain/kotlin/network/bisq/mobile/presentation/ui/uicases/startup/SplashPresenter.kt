@@ -6,6 +6,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
+import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.SettingsRepository
@@ -23,7 +24,8 @@ open class SplashPresenter(
     private val userProfileService: UserProfileServiceFacade,
     private val userRepository: UserRepository,
     private val settingsRepository: SettingsRepository,
-    private val settingsServiceFacade: SettingsServiceFacade
+    private val settingsServiceFacade: SettingsServiceFacade,
+    private val webSocketClientProvider: WebSocketClientProvider?,
 ) : BasePresenter(mainPresenter) {
 
     val state: StateFlow<String> = applicationBootstrapFacade.state
@@ -59,46 +61,28 @@ open class SplashPresenter(
         CoroutineScope(Dispatchers.Main).launch {
             val settings: Settings = settingsRepository.fetch() ?: Settings()
             val user: User? = userRepository.fetch()
-            val hasProfile: Boolean = userProfileService.hasUserProfile()
 
-            // Scenario 1: All good and setup for both androidNode and xClients
-            if (user != null && hasProfile) {
-                // TOOD:
-                // 1) Is this the right condition?
-                // 2a) androidNode being able to connect with other peers and
-                // 2b) xClients being able to connect with remote instance happening successfuly as part of services init?
-                navigateToHome()
-                // Scenario 2: Loading up for first time for both androidNode and xClients
-            } else if (settings.firstLaunch) {
-                navigateToOnboarding()
-                // Scenario 3: Handle others based on app type
+            if (hasConnectivity()) {
+                // only fetch profile with connectivity
+                val hasProfile: Boolean = userProfileService.hasUserProfile()
+
+                // Scenario 1: All good and setup for both androidNode and xClients
+                if (user != null && hasProfile) {
+                    // TOOD:
+                    // 1) Is this the right condition?
+                    // 2a) androidNode being able to connect with other peers and
+                    // 2b) xClients being able to connect with remote instance happening successfuly as part of services init?
+                    navigateToHome()
+                    // Scenario 2: Loading up for first time for both androidNode and xClients
+                } else if (settings.firstLaunch) {
+                    navigateToOnboarding()
+                    // Scenario 3: Handle others based on app type
+                } else {
+                    doCustomNavigationLogic(settings, hasProfile)
+                }
             } else {
-                doCustomNavigationLogic(settings, hasProfile)
+                navigateToTrustedNodeSetup()
             }
-
-
-//            if (user == null) {
-//                navigateToCreateProfile()
-//            } else {
-//                if (userProfileService.hasUserProfile()) {
-//                    if (!doCustomNavigationLogic(settings)) {
-//                        navigateToHome()
-//                    }
-//                } else {
-//                    // If firstTimeApp launch, goto Onboarding[clientMode] (androidNode / xClient)
-//                    // If not, goto CreateProfile
-//                    if (settings.firstLaunch) {
-//                        // TODO after onboarding need to make sure the rest is configured?
-//                        navigateTo(Routes.Onboarding.name) {
-//                            popUpTo(Routes.Splash.name) { inclusive = true }
-//                        }
-//                    } else {
-//                        navigateTo(Routes.CreateProfile.name) {
-//                            popUpTo(Routes.Splash.name) { inclusive = true }
-//                        }
-//                    }
-//                }
-//            }
         }
     }
 
@@ -123,6 +107,12 @@ open class SplashPresenter(
     private fun navigateToHome() {
         navigateTo(Routes.TabContainer) {
             it.popUpTo(Routes.Splash.name) { inclusive = true }
+        }
+    }
+
+    open suspend fun hasConnectivity(): Boolean {
+        webSocketClientProvider?.get().takeIf { it != null }.let {
+            return webSocketClientProvider?.testClient(it!!.host, it.port) == true
         }
     }
 
