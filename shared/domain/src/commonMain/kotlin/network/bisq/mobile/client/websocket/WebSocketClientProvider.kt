@@ -51,7 +51,7 @@ class WebSocketClientProvider(
                     }
                     // only update if there was actually a change
                     if (currentClient == null || currentClient!!.host != host || currentClient!!.port != port) {
-                        if (currentClient?.isConnected == true) {
+                        if (currentClient?.isConnected() == true) {
                             currentClient?.disconnect()
                         }
                         log.d { "Websocket client updated with url $host:$port" }
@@ -70,13 +70,13 @@ class WebSocketClientProvider(
         val url = "ws://$host:$port"
         return try {
             // if connection is refused, catch will execute returning false
-            client.connect()
-            return client.isConnected
+            client.connect(true)
+            return client.isConnected()
         } catch (e: Exception) {
             log.e("Error testing connection to $url: ${e.message}")
             false
         } finally {
-            client.disconnect() // Ensure the client is closed to free resources
+            client.disconnect(true) // Ensure the client is closed to free resources
         }
     }
 

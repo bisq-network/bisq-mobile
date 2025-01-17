@@ -171,9 +171,9 @@ class TradeDetailsHeaderPresenter(
         }
     }
 
-    fun closeWorkflow() {
-        // doing a shark navigateBack causes white broken UI screen
-        navigateToTab(Routes.TabOpenTradeList)
+    private fun closeWorkflow() {
+//        Do not navigate, close button on the same screen does it
+//        navigateBack()
     }
 
     private fun reset() {

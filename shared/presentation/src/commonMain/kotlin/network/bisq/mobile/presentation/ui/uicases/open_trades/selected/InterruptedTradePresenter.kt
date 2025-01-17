@@ -35,6 +35,7 @@ class InterruptedTradePresenter(
     var reportToMediatorButtonVisible: Boolean = false
 
     override fun onViewAttached() {
+        super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
         presenterScope.launch {
@@ -46,6 +47,7 @@ class InterruptedTradePresenter(
 
     override fun onViewUnattaching() {
         reset()
+        super.onViewUnattaching()
     }
 
     private fun tradeStateChanged(state: BisqEasyTradeStateEnum?) {
@@ -138,9 +140,10 @@ class InterruptedTradePresenter(
 
     fun onCloseTrade() {
         backgroundScope.launch {
-            require(selectedTrade.value != null)
-            tradesServiceFacade.closeTrade()
-            navigateToTab(Routes.TabOpenTradeList)
+            if (selectedTrade.value != null) {
+                tradesServiceFacade.closeTrade()
+            }
+            navigateBack()
         }
     }
 
