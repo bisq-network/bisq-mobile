@@ -148,6 +148,7 @@ class TradeFlowPresenter(
         _tradePhaseState.value = TradePhaseState.INIT
         isSeller = false
         isMainChain = false
+        super.onViewUnattaching()
     }
 
     private fun tradeStateChanged(state: BisqEasyTradeStateEnum?) {

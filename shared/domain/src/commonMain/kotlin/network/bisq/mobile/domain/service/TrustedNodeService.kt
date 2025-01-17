@@ -1,6 +1,7 @@
 package network.bisq.mobile.domain.service
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.utils.Logging
@@ -12,14 +13,16 @@ import network.bisq.mobile.domain.utils.Logging
 class TrustedNodeService(private val webSocketClientProvider: WebSocketClientProvider) : Logging {
     private val backgroundScope = CoroutineScope(BackgroundDispatcher)
 
-    // TODO websocketClient.isConnected should be observable so that we emit
-    // events when disconnected and UI can react
-    fun isConnected() = webSocketClientProvider.get().isConnected
+    var isConnected: Boolean = false
+    var observingConnectivity = false
 
     /**
      * Connects to the trusted node, throws an exception if connection fails
      */
     suspend fun connect() {
+        if (!observingConnectivity) {
+            observeConnectivity()
+        }
         runCatching {
             webSocketClientProvider.get().connect()
         }.onSuccess {
@@ -32,5 +35,15 @@ class TrustedNodeService(private val webSocketClientProvider: WebSocketClientPro
 
     suspend fun disconnect() {
         // TODO
+    }
+
+    private fun observeConnectivity() {
+        backgroundScope.launch {
+            webSocketClientProvider.get().connected.collect {
+                log.d { "connectivity status changed - connected = $it" }
+                isConnected = webSocketClientProvider.get().isConnected()
+            }
+        }
+        observingConnectivity = true
     }
 }

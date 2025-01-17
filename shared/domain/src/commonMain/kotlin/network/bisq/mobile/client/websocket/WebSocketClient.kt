@@ -10,6 +10,9 @@ import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -36,32 +39,57 @@ class WebSocketClient(
     val port: Int
 ) : Logging {
 
+    companion object {
+        const val DELAY_TO_RECONNECT = 3000L
+    }
+
     private val webSocketUrl: String = "ws://$host:$port/websocket"
     private var session: DefaultClientWebSocketSession? = null
-    var isConnected = false
     private val webSocketEventObservers = ConcurrentMap<String, WebSocketEventObserver>()
     private val requestResponseHandlers = mutableMapOf<String, RequestResponseHandler>()
     private var connectionReady = CompletableDeferred<Boolean>()
     private val requestResponseHandlersMutex = Mutex()
 
-    suspend fun connect() {
+    private val backgroundScope = CoroutineScope(BackgroundDispatcher)
+
+    enum class WebSockectClientStatus {
+        DISCONNECTED,
+        CONNECTING,
+        CONNECTED
+    }
+
+    val _connected = MutableStateFlow(WebSockectClientStatus.DISCONNECTED)
+    val connected: StateFlow<WebSockectClientStatus> = _connected
+
+    fun isConnected(): Boolean = connected.value == WebSockectClientStatus.CONNECTED
+
+    suspend fun connect(isTest: Boolean = false) {
         log.i("Connecting to websocket at: $webSocketUrl")
-        if (!isConnected) {
+        if (connected.value != WebSockectClientStatus.CONNECTED) {
             try {
+                _connected.value = WebSockectClientStatus.CONNECTING
                 session = httpClient.webSocketSession { url(webSocketUrl) }
                 if (session?.isActive == true) {
-                    isConnected = true
+                    _connected.value = WebSockectClientStatus.CONNECTED
                     CoroutineScope(BackgroundDispatcher).launch { startListening() }
                     connectionReady.complete(true)
+                    if (!isTest) {
+                        log.d { "Websocket connected" }
+                    }
                 }
             } catch (e: Exception) {
                 log.e("Connecting websocket failed", e)
-                throw e
+                _connected.value = WebSockectClientStatus.DISCONNECTED
+                if (isTest) {
+                    throw e
+                } else {
+                    reconnect()
+                }
             }
         }
     }
 
-    suspend fun disconnect() {
+    suspend fun disconnect(isTest: Boolean = false) {
         requestResponseHandlersMutex.withLock {
             requestResponseHandlers.values.forEach { it.dispose() }
             requestResponseHandlers.clear()
@@ -69,7 +97,19 @@ class WebSocketClient(
 
         session?.close()
         session = null
-        isConnected = false
+        _connected.value = WebSockectClientStatus.DISCONNECTED
+        if (!isTest) {
+            log.d { "WS disconnected" }
+        }
+    }
+
+    private fun reconnect() {
+        backgroundScope.launch {
+            log.d { "Launching reconnect" }
+            disconnect()
+            delay(DELAY_TO_RECONNECT) // Delay before reconnecting
+            connect()  // Try reconnecting recursively
+        }
     }
 
     // Blocking request until we get the associated response
@@ -133,21 +173,29 @@ class WebSocketClient(
 
     private suspend fun startListening() {
         session?.let { session ->
-            for (frame in session.incoming) {
-                if (frame is Frame.Text) {
-                    val message = frame.readText()
-                    //todo add input validation
-                    log.d { "Received raw text $message" }
-                    val webSocketMessage: WebSocketMessage =
-                        json.decodeFromString(WebSocketMessage.serializer(), message)
-                    log.i { "Received webSocketMessage $webSocketMessage" }
-                    if (webSocketMessage is WebSocketResponse) {
-                        onWebSocketResponse(webSocketMessage)
-                    } else if (webSocketMessage is WebSocketEvent) {
-                        onWebSocketEvent(webSocketMessage)
+            try {
+                for (frame in session.incoming) {
+                    if (frame is Frame.Text) {
+                        val message = frame.readText()
+                        //todo add input validation
+                        log.d { "Received raw text $message" }
+                        val webSocketMessage: WebSocketMessage =
+                            json.decodeFromString(WebSocketMessage.serializer(), message)
+                        log.i { "Received webSocketMessage $webSocketMessage" }
+                        if (webSocketMessage is WebSocketResponse) {
+                            onWebSocketResponse(webSocketMessage)
+                        } else if (webSocketMessage is WebSocketEvent) {
+                            onWebSocketEvent(webSocketMessage)
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                log.e(e) { "Exception ocurred whilst listening for WS messages - triggering reconnect" }
+            } finally {
+                log.d { "Not listining for WS messages anymore" }
+                reconnect()
             }
+
         }
     }
 
