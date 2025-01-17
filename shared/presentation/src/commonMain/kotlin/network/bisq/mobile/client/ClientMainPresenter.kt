@@ -1,5 +1,6 @@
 package network.bisq.mobile.client
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
@@ -41,11 +42,15 @@ class ClientMainPresenter(
             webSocketClientProvider.get().connected.collect {
                 if (webSocketClientProvider.get().isConnected()) {
                     log.d { "connectivity status changed to $it - reconnecting services" }
-                    deactivateServices()
-                    activateServices()
+                    reactiveServices()
                 }
             }
         }
+    }
+
+    private fun reactiveServices() {
+        deactivateServices()
+        activateServices()
     }
 
     private fun activateServices() {
