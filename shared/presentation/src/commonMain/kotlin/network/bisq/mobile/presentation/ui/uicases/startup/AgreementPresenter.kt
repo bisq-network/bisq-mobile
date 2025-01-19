@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
+import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -17,7 +18,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class AgreementPresenter(
     mainPresenter: MainPresenter,
-    private val settingsRepository: SettingsRepository,
+    private val settingsServiceFacade: SettingsServiceFacade,
 ) : BasePresenter(mainPresenter), IAgreementPresenter {
 
     private val _accepted = MutableStateFlow(false)
@@ -31,14 +32,7 @@ open class AgreementPresenter(
     override fun onAcceptClick() {
         CoroutineScope(Dispatchers.Main).launch {
             try {
-                // TODO: since this update is going to discarded in CreateProfilePresenter.
-                // AgreementScreen is going to be shown each time, before profile creation
-                // Will fix it after Henrik's next PR, where we have `agreementAccepted` saved in bisq2 settings
-                val settings: Settings = settingsRepository.fetch() ?: Settings()
-                settings.let {
-                    it.agreementAccepted = true
-                    settingsRepository.update(it)
-                }
+                settingsServiceFacade.confirmTacAccepted(true)
                 navigateToOnboarding()
             } catch (e: Exception) {
                 log.e(e) { "Failed to save user agreement acceptance" }
