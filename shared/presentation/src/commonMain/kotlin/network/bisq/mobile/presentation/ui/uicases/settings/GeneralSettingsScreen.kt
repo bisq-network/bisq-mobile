@@ -32,8 +32,12 @@ import org.koin.compose.koinInject
 
 interface IGeneralSettingsPresenter : ViewPresenter {
     val i18nCodes: StateFlow<List<String>>
-    val selectedLanguage: StateFlow<String>
-    fun selectLanguage(langCode: String)
+
+    val languageCode: StateFlow<String>
+    fun setLanguageCode(langCode: String)
+
+    val supportedLanguageCodes: StateFlow<Set<String>>
+    fun setSupportedLanguageCodes(langCodes: Set<String>)
 
     val tradeNotification: StateFlow<Boolean>
     fun setTradeNotification(value: Boolean)
@@ -44,8 +48,8 @@ interface IGeneralSettingsPresenter : ViewPresenter {
     val closeOfferWhenTradeTaken: StateFlow<Boolean>
     fun setCloseOfferWhenTradeTaken(value: Boolean)
 
-    val tradePriceTolerance: StateFlow<String>
-    fun setTradePriceTolerance(value: String)
+    val tradePriceTolerance: StateFlow<Double>
+    fun setTradePriceTolerance(value: Double)
 
     val useAnimations: StateFlow<Boolean>
     fun setUseAnimations(value: Boolean)
@@ -63,7 +67,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
     val presenter: IGeneralSettingsPresenter = koinInject()
 
     val i18nCodes = presenter.i18nCodes.collectAsState().value
-    val selectedLauguage = presenter.selectedLanguage.collectAsState().value
+    val selectedLauguage = presenter.languageCode.collectAsState().value
     val tradeNotification = presenter.tradeNotification.collectAsState().value
     val closeOfferWhenTradeTaken = presenter.closeOfferWhenTradeTaken.collectAsState().value
     val tradePriceTolerance = presenter.tradePriceTolerance.collectAsState().value
@@ -91,7 +95,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 items = i18nCodes,
                 value = selectedLauguage,
                 displayText = selectedLauguage, // TODO
-                onValueChanged = { presenter.selectLanguage(it) },
+                onValueChanged = { presenter.setLanguageCode(it) },
             )
 
             BisqDropDown(
@@ -99,7 +103,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 items = i18nCodes,
                 value = selectedLauguage,
                 displayText = selectedLauguage, // TODO
-                onValueChanged = { presenter.selectLanguage(it) },
+                onValueChanged = { presenter.setLanguageCode(it) },
             )
 
             BisqHDivider()
@@ -134,8 +138,8 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
 
             BisqTextField(
                 label = "settings.trade.maxTradePriceDeviation".i18n(),
-                value = tradePriceTolerance,
-                onValueChange = { presenter.setTradePriceTolerance(it) },
+                value = "$tradePriceTolerance%",
+                onValueChange = { presenter.setTradePriceTolerance(5.0) },
             )
 
             BisqHDivider()

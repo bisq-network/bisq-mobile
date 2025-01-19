@@ -18,7 +18,7 @@ class TrustedNodeSetupPresenter(
     private val webSocketClientProvider: WebSocketClientProvider
 ) : BasePresenter(mainPresenter), ITrustedNodeSetupPresenter {
 
-    private val _bisqApiUrl = MutableStateFlow("")
+    private val _bisqApiUrl = MutableStateFlow("ws://10.0.0.1:8090")
     override val bisqApiUrl: StateFlow<String> = _bisqApiUrl
 
     private val _isConnected = MutableStateFlow(false)
@@ -46,6 +46,7 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun updateBisqApiUrl(newUrl: String) {
+        log.w { newUrl }
         // TODO apply validation of the URL format ws://<IP>:<PORT> after Buddha's support for it
         _bisqApiUrl.value = newUrl
         _isConnected.value = false
@@ -53,6 +54,7 @@ class TrustedNodeSetupPresenter(
 
     override fun testConnection() {
         backgroundScope.launch {
+            log.w { "Test: " + _bisqApiUrl.value }
             WebSocketClientProvider.parseUri(_bisqApiUrl.value).let { connectionSettings ->
                 if (webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)) {
                     updateTrustedNodeSettings()
