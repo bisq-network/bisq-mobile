@@ -12,7 +12,6 @@ import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqE
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.PEER_CANCELLED
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.PEER_REJECTED
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.REJECTED
-import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -20,12 +19,8 @@ import network.bisq.mobile.presentation.MainPresenter
 class OpenTradePresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
-    private val tradeDetailsHeaderPresenter: TradeDetailsHeaderPresenter,
-    private val interruptedTradePresenter: InterruptedTradePresenter,
-    explorerServiceFacade: ExplorerServiceFacade
+    val tradeFlowPresenter: TradeFlowPresenter
 ) : BasePresenter(mainPresenter) {
-
-    val tradeFlowPresenter = TradeFlowPresenter(mainPresenter, tradesServiceFacade, explorerServiceFacade)
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
 
