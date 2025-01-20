@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -20,12 +19,23 @@ class OfferbookMarketPresenter(
     private val offersServiceFacade: OffersServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
+    companion object {
+        const val FILTER_REFRESH_FREQUENCY = 3000L
+    }
+
     //todo
     //var marketListItemWithNumOffers: List<MarketListItem> = offerbookServiceFacade.getSortedOfferbookMarketItems()
 
+    private val jobScope = CoroutineScope(SupervisorJob())
+    private var updateJob: Job? = null
+
     private var mainCurrencies = OffersServiceFacade.mainCurrencies
 
-    private var _sortBy = MutableStateFlow(MarketSortBy.MostOffers)
+    // flag to force market update trigger when needed
+    private val _forceTrigger = MutableStateFlow(false)
+    var forceTrigger: StateFlow<Boolean> = _forceTrigger
+
+    private val _sortBy = MutableStateFlow(MarketSortBy.MostOffers)
     var sortBy: StateFlow<MarketSortBy> = _sortBy
     fun setSortBy(newValue: MarketSortBy) {
         _sortBy.value = newValue
@@ -46,8 +56,9 @@ class OfferbookMarketPresenter(
     val marketListItemWithNumOffers: StateFlow<List<MarketListItem>> = combine(
         _filter,
         _searchText,
-        _sortBy
-    ) { filter: MarketFilter, searchText: String, sortBy: MarketSortBy ->
+        _sortBy,
+        _forceTrigger
+    ) { filter: MarketFilter, searchText: String, sortBy: MarketSortBy, forceTrigger: Boolean ->
         computeMarketList(filter, searchText, sortBy)
     }.stateIn(
         CoroutineScope(Dispatchers.Main),
@@ -99,8 +110,31 @@ class OfferbookMarketPresenter(
     }
 
     override fun onViewAttached() {
+        startUpdatingMarketPrices()
     }
 
     override fun onViewUnattaching() {
+        stopUpdatingMarketPrices()
+    }
+
+    private fun startUpdatingMarketPrices() {
+        // Launch a coroutine that updates the market prices every 3 seconds
+        updateJob = jobScope.launch {
+            while (updateJob != null) { // Ensure the loop stops when the coroutine is cancelled
+                updateMarketPrices()
+                delay(FILTER_REFRESH_FREQUENCY) // Wait for 3 seconds before the next update
+            }
+        }
+    }
+
+    private fun stopUpdatingMarketPrices() {
+        // Cancel the job to stop the background updates
+        updateJob?.cancel()
+        updateJob = null
+    }
+
+    private fun updateMarketPrices() {
+        // fake trigger a refresh
+        _forceTrigger.value = !_forceTrigger.value
     }
 }

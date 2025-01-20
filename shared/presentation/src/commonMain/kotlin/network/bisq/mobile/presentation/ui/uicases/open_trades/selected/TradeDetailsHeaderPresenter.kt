@@ -173,7 +173,7 @@ class TradeDetailsHeaderPresenter(
 
     private fun closeWorkflow() {
 //        Do not navigate, close button on the same screen does it
-//        navigateBack()
+        navigateBack()
     }
 
     private fun reset() {

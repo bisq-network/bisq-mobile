@@ -110,7 +110,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
         rootPresenter?.registerChild(child = this)
     }
     
-    protected fun enableInteractive(enable: Boolean) {
+    protected fun enableInteractive(enable: Boolean = true) {
         uiScope.launch {
             if (enable) {
                 delay(250L)
@@ -180,6 +180,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     override fun goBack(): Boolean {
+        enableInteractive(false)
         var wentBack = false
         uiScope.launch(Dispatchers.Main) {
             try {
@@ -187,6 +188,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
                 wentBack = rootNavigator.popBackStack()
             } catch (e: Exception) {
                 log.e(e) { "Failed to navigate back" }
+            } finally {
+                enableInteractive()
             }
         }
         return wentBack;
