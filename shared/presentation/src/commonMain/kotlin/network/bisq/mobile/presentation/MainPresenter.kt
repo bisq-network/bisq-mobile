@@ -12,7 +12,9 @@ import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.controller.NotificationServiceController
+import network.bisq.mobile.domain.setupUncaughtExceptionHandler
 import network.bisq.mobile.presentation.ui.AppPresenter
+import kotlin.jvm.JvmStatic
 import kotlin.random.Random
 
 
@@ -29,6 +31,16 @@ open class MainPresenter(
         // it will push a notification every 60 sec
         const val testNotifications = false
         const val PUSH_DELAY = 60000L
+
+        // TODO based on this flag show user a modal explaining internal crash, devs reporte,d with a button to quit the app
+        val _systemCrashed = MutableStateFlow(false)
+
+        @JvmStatic
+        fun init() {
+            setupUncaughtExceptionHandler({
+                _systemCrashed.value = true
+            })
+        }
     }
 
     override lateinit var navController: NavHostController

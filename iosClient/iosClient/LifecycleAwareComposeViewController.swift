@@ -9,6 +9,7 @@ class LifecycleAwareComposeViewController: UIViewController {
 
     init(presenter: MainPresenter) {
         self.presenter = presenter
+        MainPresenter.companion.doInit()
         super.init(nibName: nil, bundle: nil)
     }
 
