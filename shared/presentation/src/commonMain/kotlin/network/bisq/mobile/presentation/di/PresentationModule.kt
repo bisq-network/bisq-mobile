@@ -23,6 +23,8 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.OpenTradeListPres
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.InterruptedTradePresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.OpenTradePresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeDetailsHeaderPresenter
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlowPresenter
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.*
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfileSettingsPresenter
@@ -105,11 +107,32 @@ val presentationModule = module {
     single { CreateOfferPaymentMethodPresenter(get(), get()) }
     single { CreateOfferReviewPresenter(get(), get()) }
 
-    // Trade process
+    // Trade Seller
+    single { SellerState1Presenter(get(), get()) }
+    single { SellerState2aPresenter(get(), get()) }
+    single { SellerState2bPresenter(get(), get()) }
+    single { SellerState3aPresenter(get(), get()) }
+    single { SellerStateMainChain3bPresenter(get(), get(), get()) }
+    single { SellerStateLightning3bPresenter(get(), get()) }
+    single { SellerState4Presenter(get(), get()) }
+
+    // Trade Buyer
+    single { BuyerState1aPresenter(get(), get()) }
+    // BuyerState1bPresenter does not exist as it a static UI
+    single { BuyerState2aPresenter(get(), get()) }
+    single { BuyerState2bPresenter(get(), get()) }
+    single { BuyerState3aPresenter(get(), get()) }
+    single { BuyerStateMainChain3bPresenter(get(), get(), get()) }
+    single { BuyerStateLightning3bPresenter(get(), get()) }
+    single { BuyerState4Presenter(get(), get()) }
+
+    // Trade General process
+    single { TradeStatesProvider(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     single { OpenTradeListPresenter(get(), get(), get()) }
     single { TradeDetailsHeaderPresenter(get(), get()) }
     single { InterruptedTradePresenter(get(), get(), get()) }
-    single { OpenTradePresenter(get(), get(), get(), get(), get()) }
+    single { TradeFlowPresenter(get(), get(), get()) }
+    single { OpenTradePresenter(get(), get(), get()) }
 
     single { ChatPresenter(get()) } bind IChatPresenter::class
 }

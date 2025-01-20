@@ -9,10 +9,10 @@ class ClientExplorerServiceFacade(private val apiGateway: ExplorerApiGateway) : 
 
     override suspend fun getSelectedBlockExplorer(): Result<String> {
         val result = apiGateway.getSelectedBlockExplorer()
-        if (result.isSuccess) {
-            return Result.success(result.getOrThrow()["provider"]!!)
+        return if (result.isSuccess) {
+            Result.success(result.getOrThrow()["provider"]!!)
         } else {
-            return Result.failure(result.exceptionOrNull()!!)
+            Result.failure(result.exceptionOrNull()!!)
         }
     }
 
