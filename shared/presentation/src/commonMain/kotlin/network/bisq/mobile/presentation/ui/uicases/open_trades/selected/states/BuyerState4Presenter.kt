@@ -38,9 +38,8 @@ class BuyerState4Presenter(
         })
     }
 
-    fun closeWorkflow() {
-        // doing a shark navigateBack causes white broken UI screen
-        navigateToTab(Routes.TabOpenTradeList)
+    private fun closeWorkflow() {
+        navigateBack()
     }
 
     fun onExportTradeDate() {
