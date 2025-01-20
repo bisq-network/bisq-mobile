@@ -22,6 +22,10 @@ class MainActivity : ComponentActivity() {
     // TODO probably better to handle from presenter once the user reach home
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
 
+    init {
+        MainPresenter.init()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         presenter.attachView(this)

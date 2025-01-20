@@ -5,31 +5,21 @@ package network.bisq.mobile.domain
 import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.KeychainSettings
 import com.russhwolf.settings.Settings
-import kotlinx.cinterop.BetaInteropApi
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.MemScope
-import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.refTo
-import kotlinx.cinterop.usePinned
+import kotlinx.cinterop.*
 import kotlinx.serialization.Serializable
-import platform.Foundation.NSBundle
-import platform.Foundation.NSData
-import platform.Foundation.NSDictionary
-import platform.Foundation.NSLocale
-import platform.Foundation.NSString
-import platform.Foundation.NSURL
-import platform.Foundation.allKeys
-import platform.Foundation.create
-import platform.Foundation.currentLocale
-import platform.Foundation.dictionaryWithContentsOfFile
-import platform.Foundation.languageCode
-import platform.Foundation.stringWithFormat
+import platform.Foundation.*
 import platform.UIKit.UIApplication
 import platform.UIKit.UIDevice
 import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation
 import platform.posix.memcpy
 import kotlin.collections.set
+
+import platform.Foundation.NSException
+import platform.Foundation.NSSetUncaughtExceptionHandler
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
+import kotlin.experimental.ExperimentalNativeApi
 
 @OptIn(ExperimentalSettingsImplementation::class)
 actual fun getPlatformSettings(): Settings {
@@ -40,6 +30,40 @@ actual fun getPlatformSettings(): Settings {
 
 actual fun getDeviceLanguageCode(): String {
     return NSLocale.currentLocale.languageCode ?: "en"
+}
+
+private var globalOnCrash: (() -> Unit)? = null
+@OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
+@Throws(Exception::class)
+actual fun setupUncaughtExceptionHandler(onCrash: () -> Unit) {
+    // TODO this catches the exceptions but let them go through crashing the app, whether in android it will stop the propagation
+    globalOnCrash = onCrash
+    NSSetUncaughtExceptionHandler(staticCFunction { exception: NSException? ->
+        if (exception != null) {
+            println("Uncaught exception: ${exception.name}, reason: ${exception.reason}")
+            println("Stack trace: ${exception.callStackSymbols.joinToString("\n")}")
+
+            // TODO report to some sort non-survaillant crashlytics?
+
+            // Let the UI react
+            globalOnCrash?.invoke()
+
+            // needed on iOS
+            dispatch_async(dispatch_get_main_queue()) {
+                println("Performing cleanup after uncaught exception")
+            }
+        }
+//        setUnhandledExceptionHook { throwable ->
+//            println("Uncaught Kotlin exception: ${throwable.message}")
+//            throwable.printStackTrace()
+//
+//            // Perform cleanup on the main thread
+//            dispatch_async(dispatch_get_main_queue()) {
+//                println("Performing cleanup after uncaught Kotlin exception")
+//                globalOnCrash?.invoke()
+//            }
+//        }
+    })
 }
 
 class IOSUrlLauncher : UrlLauncher {

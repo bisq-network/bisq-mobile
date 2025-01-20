@@ -26,6 +26,18 @@ actual fun getDeviceLanguageCode(): String {
     return Locale.getDefault().language
 }
 
+actual fun setupUncaughtExceptionHandler(onCrash: () -> Unit) {
+    Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
+        println("Uncaught exception on thread: ${thread.name}")
+        throwable.printStackTrace()
+
+        // TODO report to some sort non-survaillant crashlytics?
+
+        // Let the UI react
+        onCrash()
+    }
+}
+
 class AndroidUrlLauncher(private val context: Context) : UrlLauncher {
     override fun openUrl(url: String) {
         val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
