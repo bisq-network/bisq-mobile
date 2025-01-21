@@ -15,6 +15,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BisqDropDown(
     label: String = "",
@@ -25,9 +26,11 @@ fun BisqDropDown(
     modifier: Modifier = Modifier,
     placeholder: String = "Select an item",
     searchable: Boolean = false,
+    chipMultiSelect: Boolean = false,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
+    var selected by remember { mutableStateOf(emptyList<String>()) }
 
     val filteredItems = if (searchable && searchText.isNotEmpty()) {
         items.filter { it.contains(searchText, ignoreCase = true) }
@@ -76,8 +79,31 @@ fun BisqDropDown(
                     onClick = {
                         onValueChanged.invoke(item)
                         expanded = false
+                        if (chipMultiSelect) {
+                            val updatedList = selected.toMutableList()
+                            if (!updatedList.contains(item)) { // Prevent duplicates
+                                updatedList.add(item)
+                            }
+                            selected = updatedList
+                        }
                     },
                 )
+            }
+        }
+
+        if (chipMultiSelect) {
+            // TODO: Should do BisqChipRow
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)
+            ) {
+                selected.forEach { item ->
+                    BisqChip(item, onRemove = {
+                        val updatedList = selected.toMutableList()
+                        updatedList.remove(item)
+                        selected = updatedList
+                    })
+                }
             }
         }
     }

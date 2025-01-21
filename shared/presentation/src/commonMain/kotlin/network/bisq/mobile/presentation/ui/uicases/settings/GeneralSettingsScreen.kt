@@ -36,6 +36,8 @@ interface IGeneralSettingsPresenter : ViewPresenter {
     val languageCode: StateFlow<String>
     fun setLanguageCode(langCode: String)
 
+    fun getDisplayLanguage(languageCode: String): String
+
     val supportedLanguageCodes: StateFlow<Set<String>>
     fun setSupportedLanguageCodes(langCodes: Set<String>)
 
@@ -100,6 +102,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 displayText = selectedLauguage, // TODO
                 onValueChanged = { presenter.setLanguageCode(it) },
                 searchable = true,
+                chipMultiSelect = true
             )
 
             BisqHDivider()
