@@ -1,5 +1,9 @@
 package network.bisq.mobile.domain.service.controller
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.StateFlow
+
 /**
  * And interface for a controller of a notification service
  */
@@ -8,5 +12,6 @@ expect class NotificationServiceController : ServiceController {
     fun pushNotification(title: String, message: String)
     override fun startService()
     override fun stopService()
+    override fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit)
     override fun isServiceRunning(): Boolean
 }

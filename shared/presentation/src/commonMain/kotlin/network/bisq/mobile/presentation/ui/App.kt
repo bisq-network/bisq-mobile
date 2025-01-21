@@ -31,8 +31,6 @@ interface AppPresenter : ViewPresenter {
     fun toggleContentVisibility()
 
     fun isIOS(): Boolean
-
-    fun setStrings(strings: AppStrings)
 }
 
 /**
@@ -59,7 +57,6 @@ fun App() {
 
     BisqTheme(darkTheme = true) {
         ProvideStrings(lyricist) {
-            presenter.setStrings(LocalStrings.current)
             if (isNavControllerSet) {
                 SwipeBackIOSNavigationHandler(rootNavController) {
                     RootNavGraph(rootNavController)

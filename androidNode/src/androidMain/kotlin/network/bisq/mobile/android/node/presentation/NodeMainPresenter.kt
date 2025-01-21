@@ -15,14 +15,14 @@ import network.bisq.mobile.presentation.MainPresenter
 class NodeMainPresenter(
     notificationServiceController: NotificationServiceController,
     urlLauncher: UrlLauncher,
+    tradesServiceFacade: TradesServiceFacade,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val offersServiceFacade: OffersServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val tradesServiceFacade: TradesServiceFacade
-) : MainPresenter(notificationServiceController, urlLauncher) {
+) : MainPresenter(tradesServiceFacade, notificationServiceController, urlLauncher) {
 
     private var applicationServiceCreated = false
     override fun onViewAttached() {
@@ -72,16 +72,22 @@ class NodeMainPresenter(
     }
 
     override fun onViewUnattaching() {
-        applicationBootstrapFacade.deactivate()
-        settingsServiceFacade.deactivate()
-        offersServiceFacade.deactivate()
-        marketPriceServiceFacade.deactivate()
-        tradesServiceFacade.deactivate()
+        deactivateServices()
         super.onViewUnattaching()
     }
 
     override fun onDestroying() {
-        provider.applicationService.onStop()
+//        TODO stop should be called here only if there are no open trades and no maker online users for this profile
+//        provider.applicationService.onStop()
         super.onDestroying()
+    }
+
+    private fun deactivateServices() {
+        applicationBootstrapFacade.deactivate()
+        settingsServiceFacade.deactivate()
+        offersServiceFacade.deactivate()
+        marketPriceServiceFacade.deactivate()
+//        TODO stop should be called here only if there are no open trades and no maker online users for this profile
+//        tradesServiceFacade.deactivate()
     }
 }

@@ -1,10 +1,8 @@
 package network.bisq.mobile.domain.service.controller
 
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.utils.Logging
 import platform.BackgroundTasks.*
 import platform.Foundation.NSDate
@@ -21,6 +19,8 @@ actual class NotificationServiceController: ServiceController, Logging {
         const val BACKGROUND_TASK_ID = "network.bisq.mobile.iosUC4273Y485"
         const val CHECK_NOTIFICATIONS_DELAY = 15 * 10000L
     }
+
+    private val serviceScope = CoroutineScope(SupervisorJob())
 
     private var isRunning = false
     private var isBackgroundTaskRegistered = false
@@ -81,6 +81,16 @@ actual class NotificationServiceController: ServiceController, Logging {
         BGTaskScheduler.sharedScheduler.cancelAllTaskRequests()
         logDebug("Background service stopped")
         isRunning = false
+    }
+
+
+    actual override fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit) {
+        // TODO this is duplicated code on both platforms needs to be on a base class or helper method
+        serviceScope.launch {
+            stateFlow.collect {
+                onStateChange(it)
+            }
+        }
     }
 
     actual fun pushNotification(title: String, message: String) {

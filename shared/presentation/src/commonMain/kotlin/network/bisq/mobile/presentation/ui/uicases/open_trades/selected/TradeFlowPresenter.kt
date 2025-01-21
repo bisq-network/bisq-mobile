@@ -99,6 +99,7 @@ class TradeFlowPresenter(
 
         presenterScope.launch {
             openTradeItemModel.bisqEasyTradeModel.tradeState.collect { tradeState ->
+                log.d { "Trade State Changed to: $tradeState" }
                 tradeStateChanged(tradeState)
             }
         }

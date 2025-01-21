@@ -14,14 +14,14 @@ import network.bisq.mobile.presentation.MainPresenter
 
 class ClientMainPresenter(
     notificationServiceController: NotificationServiceController,
+    tradesServiceFacade: TradesServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val offersServiceFacade: OffersServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val tradesServiceFacade: TradesServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
     urlLauncher: UrlLauncher
-) : MainPresenter(notificationServiceController, urlLauncher) {
+) : MainPresenter(tradesServiceFacade, notificationServiceController, urlLauncher) {
 
     override fun onViewAttached() {
         super.onViewAttached()

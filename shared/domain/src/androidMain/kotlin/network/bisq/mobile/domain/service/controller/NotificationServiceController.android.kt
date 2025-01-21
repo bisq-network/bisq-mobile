@@ -5,7 +5,12 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import androidx.compose.runtime.collectAsState
 import androidx.core.app.NotificationCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.BisqForegroundService
 import network.bisq.mobile.domain.utils.Logging
 
@@ -18,6 +23,7 @@ actual class NotificationServiceController (private val context: Context): Servi
     companion object {
         const val SERVICE_NAME = "Bisq Service"
     }
+    private val serviceScope = CoroutineScope(SupervisorJob())
     private var isRunning = false
 
     /**
@@ -48,6 +54,14 @@ actual class NotificationServiceController (private val context: Context): Servi
             val intent = Intent(context, BisqForegroundService::class.java)
             context.stopService(intent)
             isRunning = false
+        }
+    }
+
+    actual override fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit) {
+        serviceScope.launch {
+            stateFlow.collect {
+                onStateChange(it)
+            }
         }
     }
 

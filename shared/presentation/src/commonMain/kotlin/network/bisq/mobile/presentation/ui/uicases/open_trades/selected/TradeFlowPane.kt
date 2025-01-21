@@ -26,6 +26,7 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlo
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlowPresenter.TradePhaseState.SELLER_STATE_MAIN_CHAIN3B
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.*
 
+
 @Composable
 fun TradeFlowPane(presenter: TradeFlowPresenter) {
     val tradePhaseState by presenter.tradePhaseState.collectAsState()

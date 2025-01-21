@@ -139,6 +139,13 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
         return rootPresenter!!.getRootTabNavController()
     }
 
+    protected open fun pushNotification(title: String, content: String) {
+        if (isRoot()) {
+            throw IllegalStateException("You need to redefine this method in your root presenter implementation")
+        }
+        rootPresenter!!.pushNotification(title, content)
+    }
+
     /**
      * Navigate to given destination
      */
@@ -316,14 +323,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     private fun isRoot() = rootPresenter == null
-
-    companion object {
-        lateinit var strings: AppStrings
-    }
-
-    fun setStrings(localStrings: AppStrings) {
-        strings = localStrings
-    }
 
     open fun navigateToUrl(url: String) {
         rootPresenter?.navigateToUrl(url)
