@@ -39,8 +39,8 @@ interface IGeneralSettingsPresenter : ViewPresenter {
     val supportedLanguageCodes: StateFlow<Set<String>>
     fun setSupportedLanguageCodes(langCodes: Set<String>)
 
-    val tradeNotification: StateFlow<Boolean>
-    fun setTradeNotification(value: Boolean)
+//    val tradeNotification: StateFlow<Boolean>
+//    fun setTradeNotification(value: Boolean)
 
     val chatNotification: StateFlow<String>
     fun setChatNotification(value: String)
@@ -50,9 +50,6 @@ interface IGeneralSettingsPresenter : ViewPresenter {
 
     val tradePriceTolerance: StateFlow<Double>
     fun setTradePriceTolerance(value: Double)
-
-    val useAnimations: StateFlow<Boolean>
-    fun setUseAnimations(value: Boolean)
 
     val powFactor: StateFlow<String>
     fun setPowFactor(value: String)
@@ -68,10 +65,8 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
 
     val i18nCodes = presenter.i18nCodes.collectAsState().value
     val selectedLauguage = presenter.languageCode.collectAsState().value
-    val tradeNotification = presenter.tradeNotification.collectAsState().value
     val closeOfferWhenTradeTaken = presenter.closeOfferWhenTradeTaken.collectAsState().value
     val tradePriceTolerance = presenter.tradePriceTolerance.collectAsState().value
-    val useAnimations = presenter.useAnimations.collectAsState().value
     val powFactor = presenter.powFactor.collectAsState().value
     val ignorePow = presenter.ignorePow.collectAsState().value
 
@@ -104,17 +99,18 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 value = selectedLauguage,
                 displayText = selectedLauguage, // TODO
                 onValueChanged = { presenter.setLanguageCode(it) },
+                searchable = true,
             )
 
             BisqHDivider()
 
             BisqText.h4Regular("settings.notification.options".i18n())
 
-            BisqSwitch(
-                label = "Trade Notification", // TODO:i18n
-                checked = tradeNotification,
-                onSwitch = { presenter.setTradeNotification(it) }
-            )
+//            BisqSwitch(
+//                label = "Trade Notification", // TODO:i18n
+//                checked = tradeNotification,
+//                onSwitch = { presenter.setTradeNotification(it) }
+//            )
 
             BisqSegmentButton(
                 label = "Chat Notification", // TODO:i18n
@@ -140,16 +136,6 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 label = "settings.trade.maxTradePriceDeviation".i18n(),
                 value = "$tradePriceTolerance%",
                 onValueChange = { presenter.setTradePriceTolerance(5.0) },
-            )
-
-            BisqHDivider()
-
-            BisqText.h4Regular("settings.display.headline".i18n())
-
-            BisqSwitch(
-                label = "settings.display.useAnimations".i18n(),
-                checked = useAnimations,
-                onSwitch = { presenter.setUseAnimations(it) }
             )
 
             BisqHDivider()

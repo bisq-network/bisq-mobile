@@ -44,15 +44,15 @@ open class GeneralSettingsPresenter(
         }
     }
 
-    private val _tradeNotification: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    override val tradeNotification: MutableStateFlow<Boolean> = _tradeNotification
-
-    override fun setTradeNotification(value: Boolean) {
-        backgroundScope.launch {
-            _tradeNotification.value = value
-            // settingsServiceFacade.No(langCodes)
-        }
-    }
+//    private val _tradeNotification: MutableStateFlow<Boolean> = MutableStateFlow(true)
+//    override val tradeNotification: MutableStateFlow<Boolean> = _tradeNotification
+//
+//    override fun setTradeNotification(value: Boolean) {
+//        backgroundScope.launch {
+//            _tradeNotification.value = value
+//            // settingsServiceFacade.No(langCodes)
+//        }
+//    }
 
 
     private val _chatNotification: MutableStateFlow<String> =
@@ -78,15 +78,6 @@ open class GeneralSettingsPresenter(
         backgroundScope.launch {
             _tradePriceTolerance.value = value
             settingsServiceFacade.setMaxTradePriceDeviation(value)
-        }
-    }
-
-    private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    override val useAnimations: StateFlow<Boolean> = _useAnimations
-    override fun setUseAnimations(value: Boolean) {
-        backgroundScope.launch {
-            _useAnimations.value = value
-            settingsServiceFacade.setUseAnimations(value)
         }
     }
 

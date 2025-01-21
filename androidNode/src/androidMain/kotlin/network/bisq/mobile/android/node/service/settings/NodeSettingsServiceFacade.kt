@@ -45,11 +45,11 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
         // settingsService.supportedLanguageCodes.set(value)
     }
 
-    private val _tradeNotification = MutableStateFlow(true)
-    override val tradeNotification : StateFlow<Boolean> get() = _tradeNotification
-    override suspend fun setTradeNotification (value: Boolean) {
-        settingsService.tradeRulesConfirmed.set(value)
-    }
+//    private val _tradeNotification = MutableStateFlow(true)
+//    override val tradeNotification : StateFlow<Boolean> get() = _tradeNotification
+//    override suspend fun setTradeNotification (value: Boolean) {
+//        // settingsService.tradeRulesConfirmed.set(value)
+//    }
 
     private val _chatNotificationType: MutableStateFlow<ChatChannelNotificationTypeEnum> =
         MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
@@ -72,12 +72,6 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     override val maxTradePriceDeviation: StateFlow<Double> get() = _maxTradePriceDeviation
     override suspend fun setMaxTradePriceDeviation(value: Double) {
         settingsService.maxTradePriceDeviation.set(value)
-    }
-
-    private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    override val useAnimations: StateFlow<Boolean> get() = _useAnimations
-    override suspend fun setUseAnimations(value: Boolean) {
-        settingsService.useAnimations.set(value)
     }
 
     private val _difficultyAdjustmentFactor: MutableStateFlow<Double> = MutableStateFlow(1.0)

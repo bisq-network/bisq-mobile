@@ -1,10 +1,7 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.Composable
@@ -26,9 +23,17 @@ fun BisqDropDown(
     displayText: String? = null,
     onValueChanged: (String) -> Unit,
     modifier: Modifier = Modifier,
-    placeholder: String = "Select an item"
+    placeholder: String = "Select an item",
+    searchable: Boolean = false,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    var searchText by remember { mutableStateOf("") }
+
+    val filteredItems = if (searchable && searchText.isNotEmpty()) {
+        items.filter { it.contains(searchText, ignoreCase = true) }
+    } else {
+        items
+    }
 
     Column {
         if (label.isNotEmpty()) {
@@ -56,7 +61,16 @@ fun BisqDropDown(
             onDismissRequest = { expanded = false },
             modifier = Modifier.wrapContentSize().background(color = BisqTheme.colors.secondary)
         ) {
-            items.forEach { item ->
+            if (searchable) {
+                BisqTextField(
+                    value = searchText,
+                    onValueChange = { searchText = it },
+                    placeholder = "Search...",
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            filteredItems.forEach { item ->
                 DropdownMenuItem(
                     text = { BisqText.baseRegular(text = item) },
                     onClick = {

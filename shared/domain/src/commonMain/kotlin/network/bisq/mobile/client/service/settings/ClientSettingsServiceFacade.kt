@@ -76,16 +76,6 @@ class ClientSettingsServiceFacade(val apiGateway: SettingsApiGateway) : Settings
         }
     }
 
-    private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    override val useAnimations: StateFlow<Boolean> get() = _useAnimations
-    override suspend fun setUseAnimations(value: Boolean) {
-        TODO()
-    //        val result = apiGateway.confirmTacAccepted(value)
-    //        if (result.isSuccess) {
-    //            _isTacAccepted.value = value
-    //        }
-    }
-
     private val _difficultyAdjustmentFactor: MutableStateFlow<Double> = MutableStateFlow(1.0)
     override val difficultyAdjustmentFactor: StateFlow<Double> get() = _difficultyAdjustmentFactor
     override suspend fun setDifficultyAdjustmentFactor(value: Double) {
