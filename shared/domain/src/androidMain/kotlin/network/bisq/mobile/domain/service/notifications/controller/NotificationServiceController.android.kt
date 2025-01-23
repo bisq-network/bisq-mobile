@@ -101,7 +101,6 @@ actual class NotificationServiceController (private val context: Context): Servi
         observerJobs[stateFlow] = job
     }
 
-    // TODO
     actual override fun unregisterObserver(stateFlow: StateFlow<*>) {
         observerJobs[stateFlow]?.cancel()
         observerJobs.remove(stateFlow)
@@ -117,7 +116,7 @@ actual class NotificationServiceController (private val context: Context): Servi
         val intent = Intent(context, activityClassForIntents).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 //            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("destination", "my_trades") // Add extras to navigate to a specific screen
+            putExtra("destination", "tab_my_trades") // Add extras to navigate to a specific screen
         }
 
         // Create a PendingIntent to handle the notification click

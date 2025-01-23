@@ -31,9 +31,8 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
-        val destination = intent?.getStringExtra("destination")
-        if (destination == "my_trades") {
-            presenter.navigateToTab(Routes.TabOpenTradeList)
+        intent?.getStringExtra("destination")?.let { destination ->
+            Routes.fromString(destination)?.let { presenter.navigateToTab(it) }
         }
     }
 

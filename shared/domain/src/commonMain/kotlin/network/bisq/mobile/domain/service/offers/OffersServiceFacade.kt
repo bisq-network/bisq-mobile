@@ -46,7 +46,7 @@ interface OffersServiceFacade : LifeCycleAware {
     companion object {
         val mainCurrencies: List<String> = listOf("USD", "EUR", "GBP", "CAD", "AUD", "RUB", "CNY", "INR", "NGN")
 
-        fun isTerminalNode(tradeState: BisqEasyTradeStateEnum): Boolean {
+        fun isTerminalState(tradeState: BisqEasyTradeStateEnum): Boolean {
             return when (tradeState) {
                 BisqEasyTradeStateEnum.BTC_CONFIRMED,
                 BisqEasyTradeStateEnum.CANCELLED,

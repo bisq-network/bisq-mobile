@@ -39,7 +39,7 @@ class OpenTradesNotificationService(
         log.d { "open trade: $trade" }
         notificationServiceController.registerObserver(trade.bisqEasyTradeModel.tradeState) {
             log.d { "Open trade State Changed to: $it" }
-            if (OffersServiceFacade.isTerminalNode(it)) {
+            if (OffersServiceFacade.isTerminalState(it)) {
                 notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.tradeState)
                 notificationServiceController.pushNotification(
                     "Trade [${trade.shortTradeId}] completed",

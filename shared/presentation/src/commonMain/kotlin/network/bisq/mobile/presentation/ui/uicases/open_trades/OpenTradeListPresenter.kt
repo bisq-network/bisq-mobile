@@ -52,6 +52,7 @@ class OpenTradeListPresenter(
             }
         } else {
             log.w { "User hasn't accepted trade rules yet, showing dialog" }
+            // TODO show dialogue to open trade guide
             _tradeGuideVisible.value = true
         }
     }
