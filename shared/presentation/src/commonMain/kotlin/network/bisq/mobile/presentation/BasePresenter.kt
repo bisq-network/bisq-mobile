@@ -174,7 +174,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     /**
      * Navigates to the given tab route inside the main presentation, with default parameters.
      */
-    protected fun navigateToTab(destination: Routes, saveStateOnPopUp: Boolean = true, shouldLaunchSingleTop: Boolean = true, shouldRestoreState: Boolean = true) {
+    fun navigateToTab(destination: Routes, saveStateOnPopUp: Boolean = true, shouldLaunchSingleTop: Boolean = true, shouldRestoreState: Boolean = true) {
+        log.d { "Navigating to tab ${destination.name} "}
         uiScope.launch(Dispatchers.Main) {
             getRootTabNavController().navigate(destination.name) {
                 getRootTabNavController().graph.startDestinationRoute?.let { route ->

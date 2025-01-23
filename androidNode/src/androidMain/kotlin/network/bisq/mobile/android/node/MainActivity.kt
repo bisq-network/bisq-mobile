@@ -1,5 +1,6 @@
 package network.bisq.mobile.android.node
 
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -14,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.App
+import network.bisq.mobile.presentation.ui.navigation.Routes
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
@@ -26,6 +28,15 @@ class MainActivity : ComponentActivity() {
         MainPresenter.init()
     }
 
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+
+        val destination = intent?.getStringExtra("destination")
+        if (destination == "my_trades") {
+            presenter.navigateToTab(Routes.TabOpenTradeList)
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         presenter.attachView(this)
@@ -36,6 +47,7 @@ class MainActivity : ComponentActivity() {
 
         handleDynamicPermissions()
     }
+
     override fun onStart() {
         super.onStart()
         presenter.onStart()

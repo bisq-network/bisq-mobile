@@ -1,14 +1,14 @@
-package network.bisq.mobile.domain.service.controller
+package network.bisq.mobile.domain.service.notifications.controller
 
 import android.app.Activity
 import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
-import androidx.compose.runtime.collectAsState
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -32,6 +32,8 @@ actual class NotificationServiceController (private val context: Context): Servi
     private val observerJobs = mutableMapOf<StateFlow<*>, Job>()
     private var isForeground = false
     private var isRunning = false
+
+    var activityClassForIntents = context::class.java
 
     init {
         (context.applicationContext as Application).registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
@@ -110,13 +112,30 @@ actual class NotificationServiceController (private val context: Context): Servi
 //        if (isForeground) {
 //            log.w { "Skipping notification since app is in the foreground" }
 //        } else {
+
+        // Create an intent that brings the user back to the app
+        val intent = Intent(context, activityClassForIntents).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+//            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            putExtra("destination", "my_trades") // Add extras to navigate to a specific screen
+        }
+
+        // Create a PendingIntent to handle the notification click
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE // FLAG_IMMUTABLE is required on Android 12+
+        )
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notification = NotificationCompat.Builder(context, BisqForegroundService.CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(message)
             .setSmallIcon(android.R.drawable.ic_notification_overlay)
             .setPriority(NotificationCompat.PRIORITY_DEFAULT) // For android previous to O
-            .setOngoing(true)
+//            .setOngoing(true)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
             .build()
         notificationManager.notify(BisqForegroundService.PUSH_NOTIFICATION_ID, notification)
         log.d {"Pushed notification: $title: $message" }

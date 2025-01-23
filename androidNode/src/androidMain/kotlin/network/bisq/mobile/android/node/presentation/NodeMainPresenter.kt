@@ -2,29 +2,34 @@ package network.bisq.mobile.android.node.presentation
 
 import android.app.Activity
 import network.bisq.mobile.android.node.AndroidApplicationService
+import network.bisq.mobile.android.node.MainActivity
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
 class NodeMainPresenter(
-    notificationServiceController: NotificationServiceController,
     urlLauncher: UrlLauncher,
-    tradesServiceFacade: TradesServiceFacade,
+    private val tradesServiceFacade: TradesServiceFacade,
+    private val openTradesNotificationService: OpenTradesNotificationService,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val offersServiceFacade: OffersServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-) : MainPresenter(tradesServiceFacade, notificationServiceController, urlLauncher) {
+) : MainPresenter(openTradesNotificationService, urlLauncher) {
 
     private var applicationServiceCreated = false
+
+    init {
+        openTradesNotificationService.notificationServiceController.activityClassForIntents = MainActivity::class.java
+    }
     override fun onViewAttached() {
         super.onViewAttached()
 

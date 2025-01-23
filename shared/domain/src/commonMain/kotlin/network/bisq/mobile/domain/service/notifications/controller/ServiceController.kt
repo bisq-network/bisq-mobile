@@ -1,4 +1,4 @@
-package network.bisq.mobile.domain.service.controller
+package network.bisq.mobile.domain.service.notifications.controller
 
 import kotlinx.coroutines.flow.StateFlow
 

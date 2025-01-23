@@ -1,7 +1,5 @@
-package network.bisq.mobile.domain.service.controller
+package network.bisq.mobile.domain.service.notifications.controller
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
 
 /**
