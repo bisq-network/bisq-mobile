@@ -105,22 +105,22 @@ actual class NotificationServiceController (private val context: Context): Servi
         observerJobs.remove(stateFlow)
     }
 
-    // TODO support for on click
+    // TODO support for on click and decide if we block on foreground
     actual fun pushNotification(title: String, message: String) {
-        if (isForeground) {
-            log.w { "Skipping notification since app is in the foreground" }
-        } else {
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            val notification = NotificationCompat.Builder(context, BisqForegroundService.CHANNEL_ID)
-                .setContentTitle(title)
-                .setContentText(message)
-                .setSmallIcon(android.R.drawable.ic_notification_overlay)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT) // For android previous to O
-                .setOngoing(true)
-                .build()
-            notificationManager.notify(BisqForegroundService.PUSH_NOTIFICATION_ID, notification)
-            log.d {"Pushed notification: $title: $message" }
-        }
+//        if (isForeground) {
+//            log.w { "Skipping notification since app is in the foreground" }
+//        } else {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notification = NotificationCompat.Builder(context, BisqForegroundService.CHANNEL_ID)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setSmallIcon(android.R.drawable.ic_notification_overlay)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT) // For android previous to O
+            .setOngoing(true)
+            .build()
+        notificationManager.notify(BisqForegroundService.PUSH_NOTIFICATION_ID, notification)
+        log.d {"Pushed notification: $title: $message" }
+//        }
     }
 
     actual override fun isServiceRunning() = isRunning

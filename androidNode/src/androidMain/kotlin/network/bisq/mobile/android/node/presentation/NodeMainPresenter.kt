@@ -30,7 +30,6 @@ class NodeMainPresenter(
 
         runCatching {
             if (!applicationServiceCreated) {
-                applicationServiceCreated = true
                 val filesDirsPath = (view as Activity).filesDir.toPath()
                 val applicationContext = (view as Activity).applicationContext
                 val applicationService =
@@ -57,6 +56,7 @@ class NodeMainPresenter(
                             log.e("Initializing applicationService failed", throwable)
                         }
                     }
+                applicationServiceCreated = true
             } else {
                 settingsServiceFacade.activate()
                 offersServiceFacade.activate()
@@ -77,8 +77,10 @@ class NodeMainPresenter(
     }
 
     override fun onDestroying() {
-//        TODO stop should be called here only if there are no open trades and no maker online users for this profile
-//        provider.applicationService.onStop()
+//        TODO for notifications to work even if the app gets killed this needs to be commented out
+//        but it can't be done yet because of lack of support in bisq2 jars
+        provider.applicationService.onStop()
+        applicationServiceCreated = false
         super.onDestroying()
     }
 
@@ -87,7 +89,8 @@ class NodeMainPresenter(
         settingsServiceFacade.deactivate()
         offersServiceFacade.deactivate()
         marketPriceServiceFacade.deactivate()
-//        TODO stop should be called here only if there are no open trades and no maker online users for this profile
-//        tradesServiceFacade.deactivate()
+//        TODO for notifications to work even if the app gets killed this needs to be commented out
+//        but it can't be done yet because of lack of support in bisq2 jars
+        tradesServiceFacade.deactivate()
     }
 }
