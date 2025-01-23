@@ -8,6 +8,7 @@ import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.getPlatformSettings
+import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import org.koin.dsl.module
 
 val domainModule = module {
@@ -27,4 +28,7 @@ val domainModule = module {
     single<BisqStatsRepository> { BisqStatsRepository() }
     single<SettingsRepository> { SettingsRepository(get()) }
     single<UserRepository> { UserRepository(get()) }
+
+    // Services
+    single<OpenTradesNotificationService> { OpenTradesNotificationService(get(), get()) }
 }

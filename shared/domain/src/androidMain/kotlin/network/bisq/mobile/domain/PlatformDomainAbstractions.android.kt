@@ -13,6 +13,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.russhwolf.settings.Settings
 import kotlinx.serialization.Serializable
+import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import java.io.ByteArrayOutputStream
 import java.text.DecimalFormat
 import java.util.Locale

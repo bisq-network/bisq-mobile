@@ -1,27 +1,26 @@
 package network.bisq.mobile.client
 
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
 class ClientMainPresenter(
-    notificationServiceController: NotificationServiceController,
+    openTradesNotificationService: OpenTradesNotificationService,
+    private val tradesServiceFacade: TradesServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val offersServiceFacade: OffersServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val tradesServiceFacade: TradesServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
     urlLauncher: UrlLauncher
-) : MainPresenter(notificationServiceController, urlLauncher) {
+) : MainPresenter(openTradesNotificationService, urlLauncher) {
 
     override fun onViewAttached() {
         super.onViewAttached()

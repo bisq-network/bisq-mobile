@@ -108,31 +108,31 @@ val presentationModule = module {
     single { CreateOfferReviewPresenter(get(), get()) }
 
     // Trade Seller
-    single { SellerState1Presenter(get(), get()) }
-    single { SellerState2aPresenter(get(), get()) }
-    single { SellerState2bPresenter(get(), get()) }
-    single { SellerState3aPresenter(get(), get()) }
-    single { SellerStateMainChain3bPresenter(get(), get(), get()) }
-    single { SellerStateLightning3bPresenter(get(), get()) }
-    single { SellerState4Presenter(get(), get()) }
+    factory { SellerState1Presenter(get(), get()) }
+    factory { SellerState2aPresenter(get(), get()) }
+    factory { SellerState2bPresenter(get(), get()) }
+    factory { SellerState3aPresenter(get(), get()) }
+    factory { SellerStateMainChain3bPresenter(get(), get(), get()) }
+    factory { SellerStateLightning3bPresenter(get(), get()) }
+    factory { SellerState4Presenter(get(), get()) }
 
     // Trade Buyer
-    single { BuyerState1aPresenter(get(), get()) }
+    factory { BuyerState1aPresenter(get(), get()) }
     // BuyerState1bPresenter does not exist as it a static UI
-    single { BuyerState2aPresenter(get(), get()) }
-    single { BuyerState2bPresenter(get(), get()) }
-    single { BuyerState3aPresenter(get(), get()) }
-    single { BuyerStateMainChain3bPresenter(get(), get(), get()) }
-    single { BuyerStateLightning3bPresenter(get(), get()) }
-    single { BuyerState4Presenter(get(), get()) }
+    factory { BuyerState2aPresenter(get(), get()) }
+    factory { BuyerState2bPresenter(get(), get()) }
+    factory { BuyerState3aPresenter(get(), get()) }
+    factory { BuyerStateMainChain3bPresenter(get(), get(), get()) }
+    factory { BuyerStateLightning3bPresenter(get(), get()) }
+    factory { BuyerState4Presenter(get(), get()) }
 
     // Trade General process
-    single { TradeStatesProvider(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    single { OpenTradeListPresenter(get(), get(), get()) }
-    single { TradeDetailsHeaderPresenter(get(), get()) }
-    single { InterruptedTradePresenter(get(), get(), get()) }
-    single { TradeFlowPresenter(get(), get(), get()) }
-    single { OpenTradePresenter(get(), get(), get()) }
+    factory { TradeStatesProvider(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { OpenTradeListPresenter(get(), get(), get()) }
+    factory { TradeDetailsHeaderPresenter(get(), get()) }
+    factory { InterruptedTradePresenter(get(), get(), get()) }
+    factory { TradeFlowPresenter(get(), get(), get()) }
+    factory { OpenTradePresenter(get(), get(), get()) }
 
     single { ChatPresenter(get()) } bind IChatPresenter::class
 }

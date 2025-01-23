@@ -14,6 +14,7 @@ import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.navigation.Routes
 import org.koin.compose.koinInject
 
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
@@ -31,8 +32,6 @@ interface AppPresenter : ViewPresenter {
     fun toggleContentVisibility()
 
     fun isIOS(): Boolean
-
-    fun setStrings(strings: AppStrings)
 }
 
 /**
@@ -59,7 +58,6 @@ fun App() {
 
     BisqTheme(darkTheme = true) {
         ProvideStrings(lyricist) {
-            presenter.setStrings(LocalStrings.current)
             if (isNavControllerSet) {
                 SwipeBackIOSNavigationHandler(rootNavController) {
                     RootNavGraph(rootNavController)

@@ -2,35 +2,39 @@ package network.bisq.mobile.android.node.presentation
 
 import android.app.Activity
 import network.bisq.mobile.android.node.AndroidApplicationService
+import network.bisq.mobile.android.node.MainActivity
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
 class NodeMainPresenter(
-    notificationServiceController: NotificationServiceController,
     urlLauncher: UrlLauncher,
+    private val tradesServiceFacade: TradesServiceFacade,
+    private val openTradesNotificationService: OpenTradesNotificationService,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val offersServiceFacade: OffersServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val tradesServiceFacade: TradesServiceFacade
-) : MainPresenter(notificationServiceController, urlLauncher) {
+) : MainPresenter(openTradesNotificationService, urlLauncher) {
 
     private var applicationServiceCreated = false
+
+    init {
+        openTradesNotificationService.notificationServiceController.activityClassForIntents = MainActivity::class.java
+    }
     override fun onViewAttached() {
         super.onViewAttached()
 
         runCatching {
             if (!applicationServiceCreated) {
-                applicationServiceCreated = true
                 val filesDirsPath = (view as Activity).filesDir.toPath()
                 val applicationContext = (view as Activity).applicationContext
                 val applicationService =
@@ -57,6 +61,7 @@ class NodeMainPresenter(
                             log.e("Initializing applicationService failed", throwable)
                         }
                     }
+                applicationServiceCreated = true
             } else {
                 settingsServiceFacade.activate()
                 offersServiceFacade.activate()
@@ -72,16 +77,25 @@ class NodeMainPresenter(
     }
 
     override fun onViewUnattaching() {
-        applicationBootstrapFacade.deactivate()
-        settingsServiceFacade.deactivate()
-        offersServiceFacade.deactivate()
-        marketPriceServiceFacade.deactivate()
-        tradesServiceFacade.deactivate()
+        deactivateServices()
         super.onViewUnattaching()
     }
 
     override fun onDestroying() {
+//        TODO for notifications to work even if the app gets killed this needs to be commented out
+//        but it can't be done yet because of lack of support in bisq2 jars
         provider.applicationService.onStop()
+        applicationServiceCreated = false
         super.onDestroying()
+    }
+
+    private fun deactivateServices() {
+        applicationBootstrapFacade.deactivate()
+        settingsServiceFacade.deactivate()
+        offersServiceFacade.deactivate()
+        marketPriceServiceFacade.deactivate()
+//        TODO for notifications to work even if the app gets killed this needs to be commented out
+//        but it can't be done yet because of lack of support in bisq2 jars
+        tradesServiceFacade.deactivate()
     }
 }

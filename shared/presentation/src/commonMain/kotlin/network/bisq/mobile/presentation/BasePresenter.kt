@@ -139,12 +139,21 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
         return rootPresenter!!.getRootTabNavController()
     }
 
+    protected open fun pushNotification(title: String, content: String) {
+        if (isRoot()) {
+            throw IllegalStateException("You need to redefine this method in your root presenter implementation")
+        }
+        rootPresenter!!.pushNotification(title, content)
+    }
+
     /**
      * Navigate to given destination
      */
     protected fun navigateTo(destination: Routes, customSetup: (NavOptionsBuilder) -> Unit = {}) {
-        rootNavigator.navigate(destination.name) {
-            customSetup(this)
+        uiScope.launch(Dispatchers.Main) {
+            rootNavigator.navigate(destination.name) {
+                customSetup(this)
+            }
         }
     }
 
@@ -165,7 +174,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     /**
      * Navigates to the given tab route inside the main presentation, with default parameters.
      */
-    protected fun navigateToTab(destination: Routes, saveStateOnPopUp: Boolean = true, shouldLaunchSingleTop: Boolean = true, shouldRestoreState: Boolean = true) {
+    fun navigateToTab(destination: Routes, saveStateOnPopUp: Boolean = true, shouldLaunchSingleTop: Boolean = true, shouldRestoreState: Boolean = true) {
+        log.d { "Navigating to tab ${destination.name} "}
         uiScope.launch(Dispatchers.Main) {
             getRootTabNavController().navigate(destination.name) {
                 getRootTabNavController().graph.startDestinationRoute?.let { route ->
@@ -316,14 +326,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     private fun isRoot() = rootPresenter == null
-
-    companion object {
-        lateinit var strings: AppStrings
-    }
-
-    fun setStrings(localStrings: AppStrings) {
-        strings = localStrings
-    }
 
     open fun navigateToUrl(url: String) {
         rootPresenter?.navigateToUrl(url)

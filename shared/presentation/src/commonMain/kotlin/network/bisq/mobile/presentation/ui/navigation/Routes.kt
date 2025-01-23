@@ -35,5 +35,11 @@ enum class Routes(val title: String) {
 
     UserProfileSettings(title = "user_profile_settings"),
 
-    TabSettings(title = "tab_settings"),
+    TabSettings(title = "tab_settings");
+
+    companion object {
+        fun fromString(route: String): Routes? {
+            return entries.find { it.title.equals(route, ignoreCase = true) }
+        }
+    }
 }

@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -47,12 +48,11 @@ class OpenTradeListPresenter(
         if (tradeRulesConfirmed.value) {
             backgroundScope.launch {
                 tradesServiceFacade.selectOpenTrade(openTradeItem.tradeId)
-                presenterScope.launch {
-                    navigateTo(Routes.OpenTrade)
-                }
+                navigateTo(Routes.OpenTrade)
             }
         } else {
-            // todo show dialogue to open trade guide
+            log.w { "User hasn't accepted trade rules yet, showing dialog" }
+            // TODO show dialogue to open trade guide
             _tradeGuideVisible.value = true
         }
     }

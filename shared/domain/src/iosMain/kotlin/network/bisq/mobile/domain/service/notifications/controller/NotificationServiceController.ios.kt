@@ -1,15 +1,15 @@
-package network.bisq.mobile.domain.service.controller
+package network.bisq.mobile.domain.service.notifications.controller
 
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.utils.Logging
 import platform.BackgroundTasks.*
 import platform.Foundation.NSDate
 import platform.Foundation.NSUUID
 import platform.Foundation.setValue
+import platform.UIKit.UIApplication
+import platform.UIKit.UIApplicationState
 import platform.UserNotifications.*
 import platform.darwin.NSObject
 
@@ -21,6 +21,9 @@ actual class NotificationServiceController: ServiceController, Logging {
         const val BACKGROUND_TASK_ID = "network.bisq.mobile.iosUC4273Y485"
         const val CHECK_NOTIFICATIONS_DELAY = 15 * 10000L
     }
+
+    private val serviceScope = CoroutineScope(SupervisorJob())
+    private val observerJobs = mutableMapOf<StateFlow<*>, Job>()
 
     private var isRunning = false
     private var isBackgroundTaskRegistered = false
@@ -81,6 +84,25 @@ actual class NotificationServiceController: ServiceController, Logging {
         BGTaskScheduler.sharedScheduler.cancelAllTaskRequests()
         logDebug("Background service stopped")
         isRunning = false
+    }
+
+
+    actual override fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit) {
+        if (observerJobs.contains(stateFlow)) {
+            log.w { "State flow observer already registered, skipping registration" }
+        }
+        val job = serviceScope.launch {
+            stateFlow.collect {
+                onStateChange(it)
+            }
+        }
+        observerJobs[stateFlow] = job
+    }
+
+    // TODO
+    actual override fun unregisterObserver(stateFlow: StateFlow<*>) {
+        observerJobs[stateFlow]?.cancel()
+        observerJobs.remove(stateFlow)
     }
 
     actual fun pushNotification(title: String, message: String) {
@@ -166,5 +188,9 @@ actual class NotificationServiceController: ServiceController, Logging {
 
         isBackgroundTaskRegistered = true
         logDebug("Background task handler registered.")
+    }
+
+    actual fun isAppInForeground(): Boolean {
+        return UIApplication.sharedApplication.applicationState == UIApplicationState.UIApplicationStateActive
     }
 }
