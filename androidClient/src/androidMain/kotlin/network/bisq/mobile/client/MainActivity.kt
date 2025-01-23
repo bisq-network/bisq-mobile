@@ -1,5 +1,6 @@
 package network.bisq.mobile.client
 
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Build
@@ -17,6 +18,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.App
+import network.bisq.mobile.presentation.ui.navigation.Routes
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
@@ -27,6 +29,14 @@ class MainActivity : ComponentActivity() {
 
     init {
         MainPresenter.init()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+
+        intent?.getStringExtra("destination")?.let { destination ->
+            Routes.fromString(destination)?.let { presenter.navigateToTab(it) }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

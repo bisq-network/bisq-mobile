@@ -11,7 +11,10 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
-class ClientMainPresenter(
+/**
+ * Contains all the share code for each client. Each specific app might extend this class if needed.
+ */
+open class ClientMainPresenter(
     openTradesNotificationService: OpenTradesNotificationService,
     private val tradesServiceFacade: TradesServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider,

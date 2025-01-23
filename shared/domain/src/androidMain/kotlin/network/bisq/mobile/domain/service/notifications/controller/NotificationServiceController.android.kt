@@ -34,8 +34,10 @@ actual class NotificationServiceController (private val context: Context): Servi
     private var isRunning = false
 
     var activityClassForIntents = context::class.java
+    var defaultDestination = "tab_my_trades" // TODO minor refactor move this hardcode out of here and into client leaf code
 
     init {
+        // TODO move to a separate component for reusal injectable through Koin
         (context.applicationContext as Application).registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
             override fun onActivityResumed(activity: Activity) {
                 isForeground = true
@@ -116,7 +118,7 @@ actual class NotificationServiceController (private val context: Context): Servi
         val intent = Intent(context, activityClassForIntents).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
 //            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
-            putExtra("destination", "tab_my_trades") // Add extras to navigate to a specific screen
+            putExtra("destination", defaultDestination) // Add extras to navigate to a specific screen
         }
 
         // Create a PendingIntent to handle the notification click
@@ -159,7 +161,7 @@ actual class NotificationServiceController (private val context: Context): Servi
     }
 
     actual fun isAppInForeground(): Boolean {
-        TODO("Not yet implemented")
+        return isForeground
     }
 
 }

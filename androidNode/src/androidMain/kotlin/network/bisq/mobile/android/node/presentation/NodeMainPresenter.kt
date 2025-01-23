@@ -13,10 +13,13 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
+/**
+ * Node main presenter has a very different setup than the rest of the apps (bisq2 core dependencies)
+ */
 class NodeMainPresenter(
     urlLauncher: UrlLauncher,
+    openTradesNotificationService: OpenTradesNotificationService,
     private val tradesServiceFacade: TradesServiceFacade,
-    private val openTradesNotificationService: OpenTradesNotificationService,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
