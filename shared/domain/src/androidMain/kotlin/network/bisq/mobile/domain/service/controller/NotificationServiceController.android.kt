@@ -1,13 +1,17 @@
 package network.bisq.mobile.domain.service.controller
 
+import android.app.Activity
+import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Bundle
 import androidx.compose.runtime.collectAsState
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -23,14 +27,38 @@ actual class NotificationServiceController (private val context: Context): Servi
     companion object {
         const val SERVICE_NAME = "Bisq Service"
     }
+
     private val serviceScope = CoroutineScope(SupervisorJob())
+    private val observerJobs = mutableMapOf<StateFlow<*>, Job>()
+    private var isForeground = false
     private var isRunning = false
+
+    init {
+        (context.applicationContext as Application).registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
+            override fun onActivityResumed(activity: Activity) {
+                isForeground = true
+            }
+
+            override fun onActivityPaused(activity: Activity) {
+                isForeground = false
+            }
+
+            // Other lifecycle methods can be left empty
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+            override fun onActivityStarted(activity: Activity) {}
+            override fun onActivityStopped(activity: Activity) {}
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
+    }
 
     /**
      * Starts the service in the appropiate mode based on the current device running Android API
      */
     actual override fun startService() {
-        if (!isRunning) {
+        if (isRunning) {
+            log.w { "Service already running, skipping start call" }
+        } else {
             log.i { "Starting Bisq Service.."}
             createNotificationChannel()
             val intent = Intent(context, BisqForegroundService::class.java)
@@ -54,28 +82,45 @@ actual class NotificationServiceController (private val context: Context): Servi
             val intent = Intent(context, BisqForegroundService::class.java)
             context.stopService(intent)
             isRunning = false
+        } else {
+            log.w { "Service is not running, skipping stop call" }
         }
     }
 
     actual override fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit) {
-        serviceScope.launch {
+        if (observerJobs.contains(stateFlow)) {
+            log.w { "State flow observer already registered, skipping registration" }
+        }
+        val job = serviceScope.launch {
             stateFlow.collect {
                 onStateChange(it)
             }
         }
+        observerJobs[stateFlow] = job
+    }
+
+    // TODO
+    actual override fun unregisterObserver(stateFlow: StateFlow<*>) {
+        observerJobs[stateFlow]?.cancel()
+        observerJobs.remove(stateFlow)
     }
 
     // TODO support for on click
     actual fun pushNotification(title: String, message: String) {
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification = NotificationCompat.Builder(context, BisqForegroundService.CHANNEL_ID)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setSmallIcon(android.R.drawable.ic_notification_overlay)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT) // For android previous to O
-            .setOngoing(true)
-            .build()
-        notificationManager.notify(BisqForegroundService.PUSH_NOTIFICATION_ID, notification)
+        if (isForeground) {
+            log.w { "Skipping notification since app is in the foreground" }
+        } else {
+            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val notification = NotificationCompat.Builder(context, BisqForegroundService.CHANNEL_ID)
+                .setContentTitle(title)
+                .setContentText(message)
+                .setSmallIcon(android.R.drawable.ic_notification_overlay)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT) // For android previous to O
+                .setOngoing(true)
+                .build()
+            notificationManager.notify(BisqForegroundService.PUSH_NOTIFICATION_ID, notification)
+            log.d {"Pushed notification: $title: $message" }
+        }
     }
 
     actual override fun isServiceRunning() = isRunning
@@ -94,4 +139,9 @@ actual class NotificationServiceController (private val context: Context): Servi
             manager.deleteNotificationChannel(BisqForegroundService.CHANNEL_ID)
         }
     }
+
+    actual fun isAppInForeground(): Boolean {
+        TODO("Not yet implemented")
+    }
+
 }

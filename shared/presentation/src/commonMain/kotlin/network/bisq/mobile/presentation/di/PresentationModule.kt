@@ -127,12 +127,12 @@ val presentationModule = module {
     single { BuyerState4Presenter(get(), get()) }
 
     // Trade General process
-    single { TradeStatesProvider(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    single { OpenTradeListPresenter(get(), get(), get()) }
-    single { TradeDetailsHeaderPresenter(get(), get()) }
-    single { InterruptedTradePresenter(get(), get(), get()) }
-    single { TradeFlowPresenter(get(), get(), get()) }
-    single { OpenTradePresenter(get(), get(), get()) }
+    factory { TradeStatesProvider(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
+    factory { OpenTradeListPresenter(get(), get(), get()) }
+    factory { TradeDetailsHeaderPresenter(get(), get()) }
+    factory { InterruptedTradePresenter(get(), get(), get()) }
+    factory { TradeFlowPresenter(get(), get(), get()) }
+    factory { OpenTradePresenter(get(), get(), get()) }
 
     single { ChatPresenter(get()) } bind IChatPresenter::class
 }

@@ -49,4 +49,30 @@ class TradeItemPresentationModel(tradeItemPresentationDto: TradeItemPresentation
     val quoteCurrencyCode: String = bisqEasyOffer.market.quoteCurrencyCode
     val quoteAmountWithCode = "$formattedQuoteAmount $quoteCurrencyCode"
     val baseAmountWithCode = "$formattedBaseAmount $baseCurrencyCode"
+
+    override fun toString(): String {
+        return """
+        TradeItemPresentationModel(
+            tradeId=$tradeId,
+            shortTradeId=$shortTradeId,
+            offerId=$offerId,
+            baseCurrencyCode=$baseCurrencyCode,
+            quoteCurrencyCode=$quoteCurrencyCode,
+            quoteAmountWithCode=$quoteAmountWithCode,
+            baseAmountWithCode=$baseAmountWithCode,
+            makerUserName=${makerUserProfile.userName},
+            takerUserName=${takerUserProfile.userName},
+            myUserName=$myUserName,
+            peersUserName=$peersUserName,
+            formattedDate=$formattedDate,
+            formattedTime=$formattedTime,
+            market=$market,
+            price=$price,
+            formattedPrice=$formattedPrice,
+            bitcoinSettlementMethod=$bitcoinSettlementMethodDisplayString,
+            fiatPaymentMethod=$fiatPaymentMethodDisplayString,
+            mediatorUserName=$mediatorUserName
+        )
+    """.trimIndent()
+    }
 }

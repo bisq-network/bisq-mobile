@@ -76,11 +76,16 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
     override val isAnyTradeInMediation: StateFlow<Boolean> get() = _isAnyTradeInMediation
 
     // Misc
+    private var active = false
     private var tradesPin: Pin? = null
     private var channelsPin: Pin? = null
     private val pinsByTradeId: MutableMap<String, MutableSet<Pin>> = mutableMapOf()
 
     override fun activate() {
+        if (active) {
+            log.w { "deactivating first" }
+            deactivate()
+        }
         tradesPin = bisqEasyTradeService.trades.addObserver(object : CollectionObserver<BisqEasyTrade?> {
             override fun add(trade: BisqEasyTrade?) {
                 if (trade != null) {
@@ -116,13 +121,19 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
                 handleChannelsCleared()
             }
         })
+        active = true
     }
 
     override fun deactivate() {
+        if (!active) {
+            log.w { "Skipping deactivation as its already deactivated" }
+            return
+        }
         channelsPin?.unbind()
         tradesPin?.unbind()
 
         unbindPinsByTradeId()
+        active = false
     }
 
     // API

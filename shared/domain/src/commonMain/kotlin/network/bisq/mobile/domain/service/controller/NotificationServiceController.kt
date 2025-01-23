@@ -13,5 +13,7 @@ expect class NotificationServiceController : ServiceController {
     override fun startService()
     override fun stopService()
     override fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit)
+    override fun unregisterObserver(stateFlow: StateFlow<*>)
     override fun isServiceRunning(): Boolean
+    fun isAppInForeground(): Boolean
 }

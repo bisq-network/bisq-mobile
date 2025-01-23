@@ -8,6 +8,8 @@ import platform.BackgroundTasks.*
 import platform.Foundation.NSDate
 import platform.Foundation.NSUUID
 import platform.Foundation.setValue
+import platform.UIKit.UIApplication
+import platform.UIKit.UIApplicationState
 import platform.UserNotifications.*
 import platform.darwin.NSObject
 
@@ -21,6 +23,7 @@ actual class NotificationServiceController: ServiceController, Logging {
     }
 
     private val serviceScope = CoroutineScope(SupervisorJob())
+    private val observerJobs = mutableMapOf<StateFlow<*>, Job>()
 
     private var isRunning = false
     private var isBackgroundTaskRegistered = false
@@ -85,12 +88,21 @@ actual class NotificationServiceController: ServiceController, Logging {
 
 
     actual override fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit) {
-        // TODO this is duplicated code on both platforms needs to be on a base class or helper method
-        serviceScope.launch {
+        if (observerJobs.contains(stateFlow)) {
+            log.w { "State flow observer already registered, skipping registration" }
+        }
+        val job = serviceScope.launch {
             stateFlow.collect {
                 onStateChange(it)
             }
         }
+        observerJobs[stateFlow] = job
+    }
+
+    // TODO
+    actual override fun unregisterObserver(stateFlow: StateFlow<*>) {
+        observerJobs[stateFlow]?.cancel()
+        observerJobs.remove(stateFlow)
     }
 
     actual fun pushNotification(title: String, message: String) {
@@ -176,5 +188,9 @@ actual class NotificationServiceController: ServiceController, Logging {
 
         isBackgroundTaskRegistered = true
         logDebug("Background task handler registered.")
+    }
+
+    actual fun isAppInForeground(): Boolean {
+        return UIApplication.sharedApplication.applicationState == UIApplicationState.UIApplicationStateActive
     }
 }

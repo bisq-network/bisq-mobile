@@ -1,6 +1,5 @@
 package network.bisq.mobile.client
 
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher

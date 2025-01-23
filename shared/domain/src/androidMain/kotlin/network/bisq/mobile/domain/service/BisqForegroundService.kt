@@ -51,7 +51,7 @@ open class BisqForegroundService : Service(), Logging {
         log.i { "Service ready" }
 
         CoroutineScope(Dispatchers.Main).launch {
-            delay(10000)  // Wait for 10 seconds
+            delay(1000)
             // Create an Intent to open the MainActivity when the notification is tapped
             val pendingIntent = null
 //            val intent = Intent(this, MainActivity::class.java).apply {
@@ -66,8 +66,8 @@ open class BisqForegroundService : Service(), Logging {
 //                PendingIntent.FLAG_UPDATE_CURRENT // This flag updates the existing PendingIntent if it's already created
 //            )
             val updatedNotification: Notification = NotificationCompat.Builder(this@BisqForegroundService, CHANNEL_ID)
-                .setContentTitle("New Update!")
-                .setContentText("Tap to open the app")
+                .setContentTitle("Bisq Service Is Running")
+                .setContentText("It will notify you when any of your open trades have new activity")
                 .setSmallIcon(android.R.drawable.ic_notification_overlay)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setOngoing(true)  // Keeps the notification active

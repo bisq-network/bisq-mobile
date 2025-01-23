@@ -9,5 +9,6 @@ interface ServiceController {
     fun startService()
     fun stopService()
     fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit)
+    fun unregisterObserver(stateFlow: StateFlow<*>)
     fun isServiceRunning(): Boolean
 }
