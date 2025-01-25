@@ -11,5 +11,6 @@ data class SettingsChangeRequest(
     val languageCode: String? = null,
     val supportedLanguageCodes: Set<String>? = null,
     val maxTradePriceDeviation: Double? = null,
-    val selectedMarket: MarketVO? = null
+    val selectedMarket: MarketVO? = null,
+    val numDaysAfterRedactingTradeData: Int? = null,
 )
