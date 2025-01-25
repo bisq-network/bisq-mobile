@@ -1129,7 +1129,8 @@ class Mappings {
                 settingsService.supportedLanguageCodes,
                 settingsService.maxTradePriceDeviation.get(),
                 settingsService.useAnimations.get(),
-                MarketMapping.fromBisq2Model(settingsService.selectedMarket.get())
+                MarketMapping.fromBisq2Model(settingsService.selectedMarket.get()),
+                SettingsService.DEFAULT_NUM_DAYS_AFTER_REDACTING_TRADE_DATA
             )
         }
     }
