@@ -36,20 +36,14 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     override val languageCode: StateFlow<String> get() = _languageCode
     override suspend fun setLanguageCode(value: String) {
         settingsService.languageCode.set(value)
+        // settingsService.persist()
     }
 
     private val _supportedLanguageCodes: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
     override val supportedLanguageCodes: StateFlow<Set<String>> get() = _supportedLanguageCodes
     override suspend fun setSupportedLanguageCodes(value: Set<String>) {
-        TODO()
-        // settingsService.supportedLanguageCodes.set(value)
+        settingsService.supportedLanguageCodes.setAll(value)
     }
-
-//    private val _tradeNotification = MutableStateFlow(true)
-//    override val tradeNotification : StateFlow<Boolean> get() = _tradeNotification
-//    override suspend fun setTradeNotification (value: Boolean) {
-//        // settingsService.tradeRulesConfirmed.set(value)
-//    }
 
     private val _chatNotificationType: MutableStateFlow<ChatChannelNotificationTypeEnum> =
         MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
@@ -71,7 +65,8 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     private val _maxTradePriceDeviation = MutableStateFlow(5.0)
     override val maxTradePriceDeviation: StateFlow<Double> get() = _maxTradePriceDeviation
     override suspend fun setMaxTradePriceDeviation(value: Double) {
-        settingsService.maxTradePriceDeviation.set(value)
+        // TODO: settingsService.maxTradePriceDeviation is readyOnly? It's readyonly this after rebase and latest bisq2 code.
+        // settingsService.maxTradePriceDeviation.set(value)
     }
 
     private val _difficultyAdjustmentFactor: MutableStateFlow<Double> = MutableStateFlow(1.0)

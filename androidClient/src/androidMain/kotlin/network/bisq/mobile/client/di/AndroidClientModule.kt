@@ -28,5 +28,5 @@ val androidClientModule = module {
         NotificationServiceController(get())
     }
 
-    single<MainPresenter> { AndroidClientMainPresenter(get(), get(), get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
+    single<MainPresenter> { AndroidClientMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
 }

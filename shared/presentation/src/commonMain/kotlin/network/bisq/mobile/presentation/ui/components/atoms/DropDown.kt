@@ -15,25 +15,30 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
+// TODO: Should do Multi-select dropdown separately?
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BisqDropDown(
     label: String = "",
-    items: List<String>,
+    items: List<Pair<String, String>>,
     value: String,
-    displayText: String? = null,
-    onValueChanged: (String) -> Unit,
+    values: Set<String>? = null,
+    onValueChanged: ((Pair<String, String>) -> Unit)? = null,
+    onSetChanged: ((Set<Pair<String, String>>) -> Unit)? = null,
     modifier: Modifier = Modifier,
     placeholder: String = "Select an item",
     searchable: Boolean = false,
     chipMultiSelect: Boolean = false,
+    chipShowOnlyKey: Boolean = false,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
-    var selected by remember { mutableStateOf(emptyList<String>()) }
+    var selected by remember(items, values) {
+        mutableStateOf(items.filter { values?.contains(it.first) == true }.toSet())
+    }
 
     val filteredItems = if (searchable && searchText.isNotEmpty()) {
-        items.filter { it.contains(searchText, ignoreCase = true) }
+        items.filter { it.second.contains(searchText, ignoreCase = true) }
     } else {
         items
     }
@@ -54,7 +59,7 @@ fun BisqDropDown(
                 vertical = BisqUIConstants.ScreenPaddingHalf
             ),
             backgroundColor = BisqTheme.colors.secondary,
-            text = displayText ?: value,
+            text = items.find { it.first == value }?.second,
             textAlign = TextAlign.Start,
             rightIcon = { ArrowDownIcon() }
         )
@@ -73,19 +78,16 @@ fun BisqDropDown(
                 )
             }
 
-            filteredItems.forEach { item ->
+            filteredItems.forEachIndexed { index, item ->
                 DropdownMenuItem(
-                    text = { BisqText.baseRegular(text = item) },
+                    text = { BisqText.baseRegular(text = item.second) },
                     onClick = {
-                        onValueChanged.invoke(item)
+                        onValueChanged?.invoke(item)
                         expanded = false
                         if (chipMultiSelect) {
-                            val updatedList = selected.toMutableList()
-                            if (!updatedList.contains(item)) { // Prevent duplicates
-                                updatedList.add(item)
-                            }
-                            selected = updatedList
+                            selected = selected + item
                         }
+                        onSetChanged?.invoke(selected)
                     },
                 )
             }
@@ -97,12 +99,13 @@ fun BisqDropDown(
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)
             ) {
-                selected.forEach { item ->
-                    BisqChip(item, onRemove = {
-                        val updatedList = selected.toMutableList()
-                        updatedList.remove(item)
-                        selected = updatedList
-                    })
+                selected.forEach { pair ->
+                    BisqChip(
+                        if (chipShowOnlyKey) pair.first else pair.second,
+                        onRemove = {
+                            selected = selected - pair
+                            onSetChanged?.invoke(selected)
+                        })
                 }
             }
         }

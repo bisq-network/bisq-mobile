@@ -9,6 +9,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,18 +32,13 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 interface IGeneralSettingsPresenter : ViewPresenter {
-    val i18nCodes: StateFlow<List<String>>
+    val i18nPairs: StateFlow<List<Pair<String, String>>>
 
     val languageCode: StateFlow<String>
     fun setLanguageCode(langCode: String)
 
-    fun getDisplayLanguage(languageCode: String): String
-
     val supportedLanguageCodes: StateFlow<Set<String>>
     fun setSupportedLanguageCodes(langCodes: Set<String>)
-
-//    val tradeNotification: StateFlow<Boolean>
-//    fun setTradeNotification(value: Boolean)
 
     val chatNotification: StateFlow<String>
     fun setChatNotification(value: String)
@@ -65,8 +61,9 @@ interface IGeneralSettingsPresenter : ViewPresenter {
 fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
     val presenter: IGeneralSettingsPresenter = koinInject()
 
-    val i18nCodes = presenter.i18nCodes.collectAsState().value
+    val i18nPairs = presenter.i18nPairs.collectAsState().value
     val selectedLauguage = presenter.languageCode.collectAsState().value
+    val supportedLanguageCodes = presenter.supportedLanguageCodes.collectAsState().value
     val closeOfferWhenTradeTaken = presenter.closeOfferWhenTradeTaken.collectAsState().value
     val tradePriceTolerance = presenter.tradePriceTolerance.collectAsState().value
     val powFactor = presenter.powFactor.collectAsState().value
@@ -89,20 +86,23 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
 
             BisqDropDown(
                 label = "settings.language.headline".i18n(),
-                items = i18nCodes,
+                items = i18nPairs,
                 value = selectedLauguage,
-                displayText = selectedLauguage, // TODO
-                onValueChanged = { presenter.setLanguageCode(it) },
+                onValueChanged = { presenter.setLanguageCode(it.first) },
             )
 
             BisqDropDown(
-                label = "settings.language.supported.headline".i18n() + " :TODO",
-                items = i18nCodes,
-                value = selectedLauguage,
-                displayText = selectedLauguage, // TODO
-                onValueChanged = { presenter.setLanguageCode(it) },
+                label = "settings.language.supported.headline".i18n(),
+                items = i18nPairs,
+                value = if (supportedLanguageCodes.isNotEmpty()) supportedLanguageCodes.last() else selectedLauguage,
+                values = supportedLanguageCodes,
+                onSetChanged = { set ->
+                    val codes = set.map { it.first }.toSet()
+                    presenter.setSupportedLanguageCodes(codes)
+                },
                 searchable = true,
-                chipMultiSelect = true
+                chipMultiSelect = true,
+                chipShowOnlyKey = true
             )
 
             BisqHDivider()

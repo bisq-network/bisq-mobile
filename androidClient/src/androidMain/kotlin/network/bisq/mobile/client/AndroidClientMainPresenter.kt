@@ -3,6 +3,7 @@ package network.bisq.mobile.client
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -18,10 +19,12 @@ class AndroidClientMainPresenter(openTradesNotificationService: OpenTradesNotifi
                                  applicationBootstrapFacade: ApplicationBootstrapFacade,
                                  offersServiceFacade: OffersServiceFacade,
                                  marketPriceServiceFacade: MarketPriceServiceFacade,
-                                 settingsServiceFacade: SettingsServiceFacade, urlLauncher: UrlLauncher
+                                 settingsServiceFacade: SettingsServiceFacade,
+                                 languageServiceFacade: LanguageServiceFacade,
+                                 urlLauncher: UrlLauncher
 ) : ClientMainPresenter(
     openTradesNotificationService, tradesServiceFacade, webSocketClientProvider, applicationBootstrapFacade,
-    offersServiceFacade, marketPriceServiceFacade, settingsServiceFacade, urlLauncher
+    offersServiceFacade, marketPriceServiceFacade, settingsServiceFacade, languageServiceFacade, urlLauncher
 ) {
     init {
         openTradesNotificationService.notificationServiceController.activityClassForIntents = MainActivity::class.java

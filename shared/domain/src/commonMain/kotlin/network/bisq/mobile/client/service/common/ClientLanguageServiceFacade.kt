@@ -25,6 +25,13 @@ class ClientLanguageServiceFacade(
     private val _i18nCodes: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
     override val i18nCodes: StateFlow<List<String>> get() = _i18nCodes
 
+    private val _i18nPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(emptyList())
+    override val i18nPairs: StateFlow<List<Pair<String, String>>> = _i18nPairs
+
+    override fun getDisplayString(languageCode: String): String {
+        return "TODO" //LanguageRepository.getDisplayLanguage(languageCode)
+    }
+
     // Misc
     private val coroutineScope = CoroutineScope(BackgroundDispatcher)
     private var job: Job? = null

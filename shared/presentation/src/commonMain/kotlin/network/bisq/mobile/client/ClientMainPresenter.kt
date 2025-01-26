@@ -26,7 +26,7 @@ open class ClientMainPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
     urlLauncher: UrlLauncher
-) : MainPresenter(openTradesNotificationService, urlLauncher) {
+) : MainPresenter(openTradesNotificationService, settingsServiceFacade, urlLauncher) {
 
     override fun onViewAttached() {
         super.onViewAttached()

@@ -28,6 +28,8 @@ interface AppPresenter : ViewPresenter {
     // Observables for state
     val isContentVisible: StateFlow<Boolean>
 
+    val languageCode: StateFlow<String>
+
     // Actions
     fun toggleContentVisibility()
 
@@ -54,7 +56,8 @@ fun App() {
 
     val lyricist = rememberStrings()
     // TODO pass user language code
-    I18nSupport.initialize("en")
+    val languageCode = presenter.languageCode.collectAsState().value
+    I18nSupport.initialize(languageCode)
 
     BisqTheme(darkTheme = true) {
         ProvideStrings(lyricist) {

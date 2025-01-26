@@ -28,7 +28,7 @@ class NodeMainPresenter(
     private val offersServiceFacade: OffersServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
-) : MainPresenter(openTradesNotificationService, urlLauncher) {
+) : MainPresenter(openTradesNotificationService, settingsServiceFacade, urlLauncher) {
 
     private var applicationServiceCreated = false
 
