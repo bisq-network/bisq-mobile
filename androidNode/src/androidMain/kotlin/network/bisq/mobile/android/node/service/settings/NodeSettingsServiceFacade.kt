@@ -36,7 +36,6 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     override val languageCode: StateFlow<String> get() = _languageCode
     override suspend fun setLanguageCode(value: String) {
         settingsService.languageCode.set(value)
-        // settingsService.persist()
     }
 
     private val _supportedLanguageCodes: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
@@ -53,9 +52,12 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
             ChatChannelNotificationTypeEnum.ALL -> settingsService.chatNotificationType.set(ChatNotificationType.ALL)
             ChatChannelNotificationTypeEnum.MENTION -> settingsService.chatNotificationType.set(ChatNotificationType.MENTION)
             ChatChannelNotificationTypeEnum.OFF -> settingsService.chatNotificationType.set(ChatNotificationType.OFF)
-            ChatChannelNotificationTypeEnum.GLOBAL_DEFAULT -> settingsService.chatNotificationType.set(ChatNotificationType.ALL)
+            ChatChannelNotificationTypeEnum.GLOBAL_DEFAULT -> settingsService.chatNotificationType.set(
+                ChatNotificationType.ALL
+            )
         }
     }
+
     private val _closeMyOfferWhenTaken = MutableStateFlow(true)
     override val closeMyOfferWhenTaken: StateFlow<Boolean> get() = _closeMyOfferWhenTaken
     override suspend fun setCloseMyOfferWhenTaken(value: Boolean) {
@@ -100,6 +102,12 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
         }
         settingsService.maxTradePriceDeviation.addObserver { value ->
             _maxTradePriceDeviation.value = value
+        }
+        settingsService.difficultyAdjustmentFactor.addObserver { value ->
+            _difficultyAdjustmentFactor.value = value
+        }
+        settingsService.ignoreDiffAdjustmentFromSecManager.addObserver { value ->
+            _ignoreDiffAdjustmentFromSecManager.value = value
         }
     }
 

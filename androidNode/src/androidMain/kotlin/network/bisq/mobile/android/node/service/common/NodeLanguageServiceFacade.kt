@@ -24,11 +24,11 @@ class NodeLanguageServiceFacade(private val applicationService: AndroidApplicati
     }
 
     // Properties
-    private val _i18nCodes: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
-    override val i18nCodes: StateFlow<List<String>> get() = _i18nCodes
-
     private val _i18nPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(emptyList())
     override val i18nPairs: StateFlow<List<Pair<String, String>>> = _i18nPairs
+
+    private val _allPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(emptyList())
+    override val allPairs: StateFlow<List<Pair<String, String>>> = _allPairs
 
     override fun getDisplayString(languageCode: String): String {
         return LanguageRepository.getDisplayString(languageCode)
@@ -36,14 +36,19 @@ class NodeLanguageServiceFacade(private val applicationService: AndroidApplicati
 
     // Life cycle
     override fun activate() {
-        _i18nCodes.value = LanguageRepository.I18N_CODES
 
         val displayTextList = mutableListOf<String>()
         for (code in LanguageRepository.I18N_CODES) {
             displayTextList.add(LanguageRepository.getDisplayString(code))
         }
-
         _i18nPairs.value = LanguageRepository.I18N_CODES.zip(displayTextList)
+
+        displayTextList.clear()
+        for (code in LanguageRepository.CODES) {
+            displayTextList.add(LanguageRepository.getDisplayString(code))
+        }
+        _allPairs.value = LanguageRepository.CODES.zip(displayTextList)
+
     }
 
     override fun deactivate() {

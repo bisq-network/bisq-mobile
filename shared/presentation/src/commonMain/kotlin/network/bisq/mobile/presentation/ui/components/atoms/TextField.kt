@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -50,10 +51,13 @@ fun BisqTextField(
     errorText: String = "",
     indicatorColor: Color = BisqTheme.colors.primary,
     isTextArea: Boolean = false,
+    isNumber: Boolean = false,
     paddingValues: PaddingValues = PaddingValues(all = 12.dp),
     disabled: Boolean = false,
     color: Color = BisqTheme.colors.light2,
     showCopy: Boolean = false,
+    valuePrefix: String? = null,
+    valueSuffix: String? = null,
     modifier: Modifier = Modifier,
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -65,6 +69,15 @@ fun BisqTextField(
         isTextArea -> ImeAction.Next
         else -> ImeAction.Done
     }
+
+    val keyBoardType = when {
+        isNumber -> KeyboardType.Decimal
+        else -> KeyboardType.Unspecified
+    }
+
+    var finalValue = ""
+    finalValue = if (valuePrefix != null) valuePrefix + value else value
+    finalValue = if (valueSuffix != null) value + valueSuffix else value
 
     Column(modifier = modifier) {
         if (label.isNotEmpty()) {
@@ -100,8 +113,17 @@ fun BisqTextField(
                 }
         ) {
             BasicTextField(
-                value = value,
-                onValueChange = onValueChange,
+                value = finalValue,
+                onValueChange = {
+                    var cleanValue = it
+                    if (valuePrefix != null && cleanValue.startsWith(valuePrefix)) {
+                        cleanValue = cleanValue.removePrefix(valuePrefix)
+                    }
+                    if (valueSuffix != null && cleanValue.endsWith(valueSuffix)) {
+                        cleanValue = cleanValue.removeSuffix(valueSuffix)
+                    }
+                    onValueChange(cleanValue)
+                },
                 modifier = Modifier
                     .padding(paddingValues)
                     .fillMaxWidth()
@@ -115,7 +137,10 @@ fun BisqTextField(
                     fontSize = 18.sp,
                     textDecoration = TextDecoration.None
                 ),
-                keyboardOptions = KeyboardOptions(imeAction = imeAction),
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = keyBoardType,
+                    imeAction = imeAction
+                ),
                 cursorBrush = SolidColor(BisqTheme.colors.primary),
                 enabled = !disabled,
                 decorationBox = { innerTextField ->

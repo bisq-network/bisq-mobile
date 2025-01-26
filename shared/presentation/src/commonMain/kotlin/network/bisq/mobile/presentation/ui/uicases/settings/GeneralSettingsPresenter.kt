@@ -26,12 +26,14 @@ open class GeneralSettingsPresenter(
 ) : BasePresenter(mainPresenter), IGeneralSettingsPresenter {
 
     override val i18nPairs: StateFlow<List<Pair<String, String>>> = languageServiceFacade.i18nPairs
+    override val allLanguagePairs: StateFlow<List<Pair<String, String>>> = languageServiceFacade.allPairs
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
     override val languageCode: MutableStateFlow<String> = _languageCode
     override fun setLanguageCode(langCode: String) {
         backgroundScope.launch {
             _languageCode.value = langCode
             settingsServiceFacade.setLanguageCode(langCode)
+            // languageServiceFacade.activate()
             I18nSupport.initialize(langCode) // TODO: Is this right?
         }
     }
@@ -50,7 +52,10 @@ open class GeneralSettingsPresenter(
     override val chatNotification: StateFlow<String> = _chatNotification
 
     override fun setChatNotification(value: String) {
-        _chatNotification.value = value
+        backgroundScope.launch {
+            _chatNotification.value = value
+            // settingsServiceFacade.setChatNotificationType(value)
+        }
     }
 
     private val _closeOfferWhenTradeTaken: MutableStateFlow<Boolean> = MutableStateFlow(true)
@@ -71,16 +76,22 @@ open class GeneralSettingsPresenter(
         }
     }
 
-    private val _powFactor: MutableStateFlow<String> = MutableStateFlow("1")
-    override val powFactor: StateFlow<String> = _powFactor
-    override fun setPowFactor(value: String) {
-        _powFactor.value = value
+    private val _powFactor: MutableStateFlow<Double> = MutableStateFlow(1.0)
+    override val powFactor: StateFlow<Double> = _powFactor
+    override fun setPowFactor(value: Double) {
+        backgroundScope.launch {
+            _powFactor.value = value
+            settingsServiceFacade.setDifficultyAdjustmentFactor(value)
+        }
     }
 
     private val _ignorePow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val ignorePow: StateFlow<Boolean> = _ignorePow
     override fun setIgnorePow(value: Boolean) {
-        _ignorePow.value = value
+        backgroundScope.launch {
+            _ignorePow.value = value
+            settingsServiceFacade.setIgnoreDiffAdjustmentFromSecManager(value)
+        }
     }
 
     private var jobs: MutableSet<Job> = mutableSetOf()
@@ -98,9 +109,11 @@ open class GeneralSettingsPresenter(
             // _chatNotification.value =
             _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
             _tradePriceTolerance.value = settings.maxTradePriceDeviation
+
             // _useAnimations.value
-            // _powFactor.value
-            // _ignorePow.value
+
+            _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value
+            _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
         })
     }
 

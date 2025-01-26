@@ -22,11 +22,11 @@ class ClientLanguageServiceFacade(
 ) : LanguageServiceFacade, Logging {
 
     // Properties
-    private val _i18nCodes: MutableStateFlow<List<String>> = MutableStateFlow(emptyList())
-    override val i18nCodes: StateFlow<List<String>> get() = _i18nCodes
-
     private val _i18nPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(emptyList())
     override val i18nPairs: StateFlow<List<Pair<String, String>>> = _i18nPairs
+
+    private val _allPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(emptyList())
+    override val allPairs: StateFlow<List<Pair<String, String>>> = _allPairs
 
     override fun getDisplayString(languageCode: String): String {
         return "TODO" //LanguageRepository.getDisplayLanguage(languageCode)
@@ -39,9 +39,6 @@ class ClientLanguageServiceFacade(
     // Life cycle
     override fun activate() {
         job = coroutineScope.launch {
-            // TODO:Mock
-            _i18nCodes.value = listOf("en", "de", "es")
-
             // TODO: Fetch from API Gateway/WS
         }
     }

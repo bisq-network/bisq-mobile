@@ -33,6 +33,7 @@ import org.koin.compose.koinInject
 
 interface IGeneralSettingsPresenter : ViewPresenter {
     val i18nPairs: StateFlow<List<Pair<String, String>>>
+    val allLanguagePairs: StateFlow<List<Pair<String, String>>>
 
     val languageCode: StateFlow<String>
     fun setLanguageCode(langCode: String)
@@ -49,8 +50,8 @@ interface IGeneralSettingsPresenter : ViewPresenter {
     val tradePriceTolerance: StateFlow<Double>
     fun setTradePriceTolerance(value: Double)
 
-    val powFactor: StateFlow<String>
-    fun setPowFactor(value: String)
+    val powFactor: StateFlow<Double>
+    fun setPowFactor(value: Double)
 
     val ignorePow: StateFlow<Boolean>
     fun setIgnorePow(value: Boolean)
@@ -62,6 +63,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
     val presenter: IGeneralSettingsPresenter = koinInject()
 
     val i18nPairs = presenter.i18nPairs.collectAsState().value
+    val allLanguagePairs = presenter.allLanguagePairs.collectAsState().value
     val selectedLauguage = presenter.languageCode.collectAsState().value
     val supportedLanguageCodes = presenter.supportedLanguageCodes.collectAsState().value
     val closeOfferWhenTradeTaken = presenter.closeOfferWhenTradeTaken.collectAsState().value
@@ -93,7 +95,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
 
             BisqDropDown(
                 label = "settings.language.supported.headline".i18n(),
-                items = i18nPairs,
+                items = allLanguagePairs,
                 value = if (supportedLanguageCodes.isNotEmpty()) supportedLanguageCodes.last() else selectedLauguage,
                 values = supportedLanguageCodes,
                 onSetChanged = { set ->
@@ -102,21 +104,15 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 },
                 searchable = true,
                 chipMultiSelect = true,
-                chipShowOnlyKey = true
+                // chipShowOnlyKey = true
             )
 
             BisqHDivider()
 
             BisqText.h4Regular("settings.notification.options".i18n())
 
-//            BisqSwitch(
-//                label = "Trade Notification", // TODO:i18n
-//                checked = tradeNotification,
-//                onSwitch = { presenter.setTradeNotification(it) }
-//            )
-
             BisqSegmentButton(
-                label = "Chat Notification", // TODO:i18n
+                label = "Chat Notification (TODO)", // TODO:i18n
                 items = listOf(
                     "chat.notificationsSettingsMenu.all".i18n(),
                     "chat.notificationsSettingsMenu.mention".i18n(),
@@ -137,8 +133,17 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
 
             BisqTextField(
                 label = "settings.trade.maxTradePriceDeviation".i18n(),
-                value = "$tradePriceTolerance%",
-                onValueChange = { presenter.setTradePriceTolerance(5.0) },
+                value = tradePriceTolerance.toString(),
+                valueSuffix = "%",
+                isNumber = true,
+                onValueChange = {
+                    val parsedValue = it.toDoubleOrNull()
+                    if (parsedValue != null) {
+                        presenter.setTradePriceTolerance(parsedValue)
+                    } else {
+                        println("Invalid number: $it")
+                    }
+                },
             )
 
             BisqHDivider()
@@ -147,8 +152,16 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
 
             BisqTextField(
                 label = "settings.network.difficultyAdjustmentFactor.description.self".i18n(),
-                value = powFactor,
-                onValueChange = { presenter.setPowFactor(it) },
+                value = powFactor.toString(),
+                isNumber = true,
+                onValueChange = {
+                    val parsedValue = it.toDoubleOrNull()
+                    if (parsedValue != null) {
+                        presenter.setPowFactor(parsedValue)
+                    } else {
+                        println("Invalid number: $it")
+                    }
+                },
             )
             BisqSwitch(
                 label = "settings.network.difficultyAdjustmentFactor.ignoreValueFromSecManager".i18n(),

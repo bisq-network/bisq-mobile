@@ -88,6 +88,7 @@ fun BisqDropDown(
                             selected = selected + item
                         }
                         onSetChanged?.invoke(selected)
+                        searchText = ""
                     },
                 )
             }
@@ -105,6 +106,7 @@ fun BisqDropDown(
                         onRemove = {
                             selected = selected - pair
                             onSetChanged?.invoke(selected)
+                            searchText = ""
                         })
                 }
             }

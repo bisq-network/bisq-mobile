@@ -21,9 +21,6 @@ interface SettingsServiceFacade : LifeCycleAware {
     val supportedLanguageCodes: StateFlow<Set<String>>
     suspend fun setSupportedLanguageCodes(value: Set<String>)
 
-    // val tradeNotification: StateFlow<Boolean>
-    // suspend fun setTradeNotification(value: Boolean)
-
     val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum>
     suspend fun setChatNotificationType(value: ChatChannelNotificationTypeEnum)
 
