@@ -1,20 +1,18 @@
 package network.bisq.mobile.domain.service.notifications.controller
 
-import android.app.Activity
-import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.Bundle
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.service.BisqForegroundService
 import network.bisq.mobile.domain.utils.Logging
 
@@ -22,7 +20,9 @@ import network.bisq.mobile.domain.utils.Logging
  * Controller interacting with the bisq service
  */
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-actual class NotificationServiceController (private val context: Context): ServiceController, Logging {
+actual class NotificationServiceController (private val appForegroundController: AppForegroundController): ServiceController, Logging {
+
+    private val context = appForegroundController.context
 
     companion object {
         const val SERVICE_NAME = "Bisq Service"
@@ -30,31 +30,10 @@ actual class NotificationServiceController (private val context: Context): Servi
 
     private val serviceScope = CoroutineScope(SupervisorJob())
     private val observerJobs = mutableMapOf<StateFlow<*>, Job>()
-    private var isForeground = false
     private var isRunning = false
 
     var activityClassForIntents = context::class.java
-    var defaultDestination = "tab_my_trades" // TODO minor refactor move this hardcode out of here and into client leaf code
-
-    init {
-        // TODO move to a separate component for reusal injectable through Koin
-        (context.applicationContext as Application).registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
-            override fun onActivityResumed(activity: Activity) {
-                isForeground = true
-            }
-
-            override fun onActivityPaused(activity: Activity) {
-                isForeground = false
-            }
-
-            // Other lifecycle methods can be left empty
-            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
-            override fun onActivityStarted(activity: Activity) {}
-            override fun onActivityStopped(activity: Activity) {}
-            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
-            override fun onActivityDestroyed(activity: Activity) {}
-        })
-    }
+    var defaultDestination = "tab_my_trades" // TODO minor refactor move this hardcode out of here and into client leaf code    }
 
     /**
      * Starts the service in the appropiate mode based on the current device running Android API
@@ -110,9 +89,10 @@ actual class NotificationServiceController (private val context: Context): Servi
 
     // TODO support for on click and decide if we block on foreground
     actual fun pushNotification(title: String, message: String) {
-//        if (isForeground) {
-//            log.w { "Skipping notification since app is in the foreground" }
-//        } else {
+        if (isAppInForeground()) {
+            log.w { "Skipping notification since app is in the foreground" }
+            return
+        }
 
         // Create an intent that brings the user back to the app
         val intent = Intent(context, activityClassForIntents).apply {
@@ -161,7 +141,7 @@ actual class NotificationServiceController (private val context: Context): Servi
     }
 
     actual fun isAppInForeground(): Boolean {
-        return isForeground
+        return appForegroundController.isForeground.value
     }
 
 }

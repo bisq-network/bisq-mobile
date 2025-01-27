@@ -3,6 +3,7 @@ package network.bisq.mobile.domain.service.notifications.controller
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.utils.Logging
 import platform.BackgroundTasks.*
 import platform.Foundation.NSDate
@@ -15,7 +16,7 @@ import platform.darwin.NSObject
 
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-actual class NotificationServiceController: ServiceController, Logging {
+actual class NotificationServiceController(private val appForegroundController: AppForegroundController): ServiceController, Logging {
 
     companion object {
         const val BACKGROUND_TASK_ID = "network.bisq.mobile.iosUC4273Y485"
@@ -106,6 +107,11 @@ actual class NotificationServiceController: ServiceController, Logging {
     }
 
     actual fun pushNotification(title: String, message: String) {
+        if (isAppInForeground()) {
+            log.w { "Skipping notification since app is in the foreground" }
+            return
+        }
+        
         val content = UNMutableNotificationContent().apply {
             setValue(title, forKey = "title")
             setValue(message, forKey = "body")
@@ -191,6 +197,6 @@ actual class NotificationServiceController: ServiceController, Logging {
     }
 
     actual fun isAppInForeground(): Boolean {
-        return UIApplication.sharedApplication.applicationState == UIApplicationState.UIApplicationStateActive
+        return appForegroundController.isForeground.value
     }
 }
