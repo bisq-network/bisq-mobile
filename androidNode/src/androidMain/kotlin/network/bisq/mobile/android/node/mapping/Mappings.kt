@@ -1120,6 +1120,7 @@ class Mappings {
 
     object SettingsMapping {
         // toPojo method not implemented as we do not have a settings value object in the domain
+        private const val DEFAULT_DAYS_AFTER_REDACTING_TRADE_DATA = 0
         fun from(settingsService: SettingsService): SettingsVO {
             return SettingsVO(
                 settingsService.isTacAccepted.get(),
@@ -1129,7 +1130,8 @@ class Mappings {
                 settingsService.supportedLanguageCodes,
                 settingsService.maxTradePriceDeviation.get(),
                 settingsService.useAnimations.get(),
-                MarketMapping.fromBisq2Model(settingsService.selectedMarket.get())
+                MarketMapping.fromBisq2Model(settingsService.selectedMarket.get()),
+                DEFAULT_DAYS_AFTER_REDACTING_TRADE_DATA
             )
         }
     }
