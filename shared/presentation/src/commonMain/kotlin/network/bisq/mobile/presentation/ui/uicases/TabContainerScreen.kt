@@ -66,6 +66,7 @@ fun TabContainerScreen() {
                 },
                 backBehavior = {
                     if (currentRoute != Routes.TabHome.name) {
+                        // TODO this should be presenter code, with the proper main thread coroutine used (causes random crashes as is)
                         navController.navigate(Routes.TabHome.name) {
                             navController.graph.startDestinationRoute?.let { route ->
                                 popUpTo(route) { saveState = false }
@@ -86,6 +87,7 @@ fun TabContainerScreen() {
                 items = navigationListItem,
                 currentRoute = currentRoute.orEmpty(),
                 onItemClick = { currentNavigationItem ->
+                    // TODO this should be presenter code, with the proper main thread coroutine used (causes random crashes as is)
                     navController.navigate(currentNavigationItem.route) {
                         navController.graph.startDestinationRoute?.let { route ->
                             popUpTo(route) {

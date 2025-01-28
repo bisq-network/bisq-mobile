@@ -192,7 +192,7 @@ class WebSocketClient(
             } catch (e: Exception) {
                 log.e(e) { "Exception ocurred whilst listening for WS messages - triggering reconnect" }
             } finally {
-                log.d { "Not listining for WS messages anymore" }
+                log.d { "Not listening for WS messages anymore - launching reconnect" }
                 reconnect()
             }
 

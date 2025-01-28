@@ -134,6 +134,7 @@ fun TopBar(
                             .alpha(if (currentTab == Routes.TabSettings.name) 0.5f else 1.0f)
                             .clickable {
                                 if (currentTab != Routes.TabSettings.name) {
+                                    // TODO this should be presenter code, with the proper main thread coroutine used (causes random crashes as is)
                                     navController.navigate(Routes.UserProfileSettings.name)
                                 }
                             })

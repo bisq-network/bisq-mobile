@@ -3,6 +3,7 @@ package network.bisq.mobile.domain.service.notifications.controller
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.utils.Logging
 import platform.BackgroundTasks.*
 import platform.Foundation.NSDate
@@ -12,10 +13,12 @@ import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationState
 import platform.UserNotifications.*
 import platform.darwin.NSObject
+import platform.darwin.dispatch_get_main_queue
+import platform.darwin.dispatch_sync
 
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-actual class NotificationServiceController: ServiceController, Logging {
+actual class NotificationServiceController(private val appForegroundController: AppForegroundController): ServiceController, Logging {
 
     companion object {
         const val BACKGROUND_TASK_ID = "network.bisq.mobile.iosUC4273Y485"
@@ -60,6 +63,7 @@ actual class NotificationServiceController: ServiceController, Logging {
 
     actual override fun startService() {
         if (isRunning) {
+            logDebug("Notification Service already started, skipping launch")
             return
         }
         logDebug("Starting background service")
@@ -73,7 +77,6 @@ actual class NotificationServiceController: ServiceController, Logging {
                 // Once permission is granted, you can start scheduling background tasks
                 startBackgroundTaskLoop()
                 logDebug("Background service started")
-                isRunning = true
             } else {
                 logDebug("Notification permission denied: ${error?.localizedDescription}")
             }
@@ -90,6 +93,7 @@ actual class NotificationServiceController: ServiceController, Logging {
     actual override fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit) {
         if (observerJobs.contains(stateFlow)) {
             log.w { "State flow observer already registered, skipping registration" }
+            return
         }
         val job = serviceScope.launch {
             stateFlow.collect {
@@ -106,6 +110,11 @@ actual class NotificationServiceController: ServiceController, Logging {
     }
 
     actual fun pushNotification(title: String, message: String) {
+        if (isAppInForeground()) {
+            log.w { "Skipping notification since app is in the foreground" }
+            return
+        }
+        
         val content = UNMutableNotificationContent().apply {
             setValue(title, forKey = "title")
             setValue(message, forKey = "body")
@@ -141,6 +150,7 @@ actual class NotificationServiceController: ServiceController, Logging {
     }
 
     private fun startBackgroundTaskLoop() {
+        isRunning = true
         CoroutineScope(Dispatchers.Default).launch {
             while (isRunning) {
                 scheduleBackgroundTask()
@@ -165,7 +175,7 @@ actual class NotificationServiceController: ServiceController, Logging {
 
 
     private fun logDebug(message: String) {
-        logScope.launch {
+        logScope.launch { // (Dispatchers.Main)
             log.d { message }
         }
     }
@@ -174,7 +184,7 @@ actual class NotificationServiceController: ServiceController, Logging {
     // in iOS this needs to be done on app init or it will throw exception
     fun registerBackgroundTask() {
         if (isBackgroundTaskRegistered) {
-            logDebug("Background task is already registered.")
+            logDebug("Background task is already registered, skipping registration launch")
             return
         }
 
@@ -187,10 +197,14 @@ actual class NotificationServiceController: ServiceController, Logging {
         }
 
         isBackgroundTaskRegistered = true
-        logDebug("Background task handler registered.")
+        logDebug("Background task handler registered")
     }
 
     actual fun isAppInForeground(): Boolean {
-        return UIApplication.sharedApplication.applicationState == UIApplicationState.UIApplicationStateActive
+        var isForeground = false
+        dispatch_sync(dispatch_get_main_queue()) {
+            isForeground = (appForegroundController.isForeground.value)
+        }
+        return isForeground
     }
 }
