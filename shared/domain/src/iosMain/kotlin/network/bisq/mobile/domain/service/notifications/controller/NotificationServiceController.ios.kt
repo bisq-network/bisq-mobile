@@ -13,6 +13,8 @@ import platform.UIKit.UIApplication
 import platform.UIKit.UIApplicationState
 import platform.UserNotifications.*
 import platform.darwin.NSObject
+import platform.darwin.dispatch_get_main_queue
+import platform.darwin.dispatch_sync
 
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
@@ -61,6 +63,7 @@ actual class NotificationServiceController(private val appForegroundController: 
 
     actual override fun startService() {
         if (isRunning) {
+            logDebug("Notification Service already started, skipping launch")
             return
         }
         logDebug("Starting background service")
@@ -74,7 +77,6 @@ actual class NotificationServiceController(private val appForegroundController: 
                 // Once permission is granted, you can start scheduling background tasks
                 startBackgroundTaskLoop()
                 logDebug("Background service started")
-                isRunning = true
             } else {
                 logDebug("Notification permission denied: ${error?.localizedDescription}")
             }
@@ -91,6 +93,7 @@ actual class NotificationServiceController(private val appForegroundController: 
     actual override fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit) {
         if (observerJobs.contains(stateFlow)) {
             log.w { "State flow observer already registered, skipping registration" }
+            return
         }
         val job = serviceScope.launch {
             stateFlow.collect {
@@ -147,6 +150,7 @@ actual class NotificationServiceController(private val appForegroundController: 
     }
 
     private fun startBackgroundTaskLoop() {
+        isRunning = true
         CoroutineScope(Dispatchers.Default).launch {
             while (isRunning) {
                 scheduleBackgroundTask()
@@ -171,7 +175,7 @@ actual class NotificationServiceController(private val appForegroundController: 
 
 
     private fun logDebug(message: String) {
-        logScope.launch {
+        logScope.launch { // (Dispatchers.Main)
             log.d { message }
         }
     }
@@ -180,7 +184,7 @@ actual class NotificationServiceController(private val appForegroundController: 
     // in iOS this needs to be done on app init or it will throw exception
     fun registerBackgroundTask() {
         if (isBackgroundTaskRegistered) {
-            logDebug("Background task is already registered.")
+            logDebug("Background task is already registered, skipping registration launch")
             return
         }
 
@@ -193,10 +197,14 @@ actual class NotificationServiceController(private val appForegroundController: 
         }
 
         isBackgroundTaskRegistered = true
-        logDebug("Background task handler registered.")
+        logDebug("Background task handler registered")
     }
 
     actual fun isAppInForeground(): Boolean {
-        return appForegroundController.isForeground.value
+        var isForeground = false
+        dispatch_sync(dispatch_get_main_queue()) {
+            isForeground = (appForegroundController.isForeground.value)
+        }
+        return isForeground
     }
 }
