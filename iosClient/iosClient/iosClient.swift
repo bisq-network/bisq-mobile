@@ -1,8 +1,17 @@
 import SwiftUI
 import presentation
 
+class NotificationServiceWrapper: ObservableObject {
+    @Published var notificationServiceController: DomainNotificationServiceController
+
+    init() {
+        self.notificationServiceController = get()
+    }
+}
+
 @main
 struct iosClient: App {
+    @StateObject var notificationServiceWrapper = NotificationServiceWrapper()
 
     init() {
         DependenciesProviderHelper().doInitKoin()
@@ -11,7 +20,7 @@ struct iosClient: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .environmentObject(notificationServiceWrapper)
         }
     }
-
 }
