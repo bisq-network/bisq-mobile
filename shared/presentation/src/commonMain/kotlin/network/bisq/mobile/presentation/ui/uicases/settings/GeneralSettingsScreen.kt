@@ -1,33 +1,17 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
-import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.img_bitcoin_payment_waiting
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.*
-import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
@@ -94,7 +78,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
             )
 
             BisqDropDown(
-                label = "settings.language.supported.headline".i18n(),
+                label = "${"settings.language.supported.headline".i18n()} (${"settings.language.supported.subHeadLine".i18n()})",
                 items = allLanguagePairs,
                 value = if (supportedLanguageCodes.isNotEmpty()) supportedLanguageCodes.last() else selectedLauguage,
                 values = supportedLanguageCodes,
@@ -140,10 +124,20 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                     val parsedValue = it.toDoubleOrNull()
                     if (parsedValue != null) {
                         presenter.setTradePriceTolerance(parsedValue)
-                    } else {
-                        println("Invalid number: $it")
                     }
                 },
+                helperText = "settings.trade.maxTradePriceDeviation.help".i18n(),
+                validation = {
+                    val parsedValue = it.toDoubleOrNull()
+                    println(parsedValue)
+                    if (parsedValue == null) {
+                        return@BisqTextField "Value cannot be null"
+                    }
+                    if (parsedValue < 1 || parsedValue > 10) {
+                        return@BisqTextField "settings.trade.maxTradePriceDeviation.invalid".i18n(10)
+                    }
+                    return@BisqTextField null
+                }
             )
 
             BisqHDivider()
@@ -154,14 +148,24 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 label = "settings.network.difficultyAdjustmentFactor.description.self".i18n(),
                 value = powFactor.toString(),
                 isNumber = true,
+                disabled = !ignorePow,
                 onValueChange = {
                     val parsedValue = it.toDoubleOrNull()
                     if (parsedValue != null) {
                         presenter.setPowFactor(parsedValue)
-                    } else {
-                        println("Invalid number: $it")
                     }
                 },
+                validation = {
+                    val parsedValue = it.toDoubleOrNull()
+                    println(parsedValue)
+                    if (parsedValue == null) {
+                        return@BisqTextField "Value cannot be null"
+                    }
+                    if (parsedValue < 0 || parsedValue > 160_000) {
+                        return@BisqTextField "authorizedRole.securityManager.difficultyAdjustment.invalid".i18n(160000)
+                    }
+                    return@BisqTextField null
+                }
             )
             BisqSwitch(
                 label = "settings.network.difficultyAdjustmentFactor.ignoreValueFromSecManager".i18n(),

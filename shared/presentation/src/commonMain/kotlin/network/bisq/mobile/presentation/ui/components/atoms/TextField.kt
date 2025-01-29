@@ -58,9 +58,11 @@ fun BisqTextField(
     showCopy: Boolean = false,
     valuePrefix: String? = null,
     valueSuffix: String? = null,
+    validation: ((String) -> String?)? = null,
     modifier: Modifier = Modifier,
 ) {
     var isFocused by remember { mutableStateOf(false) }
+    var validationError by remember { mutableStateOf<String?>(null) }
 
     val focusManager = LocalFocusManager.current
 
@@ -79,6 +81,40 @@ fun BisqTextField(
     finalValue = if (valuePrefix != null) valuePrefix + value else value
     finalValue = if (valueSuffix != null) value + valueSuffix else value
 
+    val dangerColor = BisqTheme.colors.danger
+    val finalIndicatorColor by remember(errorText, validationError) {
+        mutableStateOf(
+            if (errorText.isEmpty() && (validationError == null || validationError?.isEmpty() == true))
+                indicatorColor
+            else
+                dangerColor
+        )
+    }
+
+    val secondaryColor = BisqTheme.colors.secondary
+    val secondaryDisabledColor = BisqTheme.colors.secondaryDisabled
+    val finalBackgroundColor by remember(disabled) {
+        mutableStateOf(
+            if (disabled) {
+                secondaryDisabledColor
+            } else {
+                secondaryColor
+            }
+        )
+    }
+
+    val light2Color = BisqTheme.colors.light2
+    val light5Color = BisqTheme.colors.grey1
+    val finalLabelColor by remember(disabled) {
+        mutableStateOf(
+            if (disabled) {
+                light5Color
+            } else {
+                light2Color
+            }
+        )
+    }
+
     Column(modifier = modifier) {
         if (label.isNotEmpty()) {
             Row(
@@ -88,7 +124,7 @@ fun BisqTextField(
             ) {
                 BisqText.baseLight(
                     text = label,
-                    color = BisqTheme.colors.light2,
+                    color = finalLabelColor,
                     modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
                 )
                 if (labelRightSuffix != null) {
@@ -100,11 +136,11 @@ fun BisqTextField(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(shape = RoundedCornerShape(6.dp))
-                .background(color = BisqTheme.colors.secondary)
+                .background(color = finalBackgroundColor)
                 .drawBehind {
                     if (!isSearch && isFocused) {
                         drawLine(
-                            color = indicatorColor,
+                            color = finalIndicatorColor,
                             start = Offset(0f, size.height),
                             end = Offset(size.width, size.height),
                             strokeWidth = 4.dp.toPx()
@@ -123,12 +159,17 @@ fun BisqTextField(
                         cleanValue = cleanValue.removeSuffix(valueSuffix)
                     }
                     onValueChange(cleanValue)
+                    validationError = validation?.invoke(cleanValue)
+                    println("validationError: ${validationError}")
                 },
                 modifier = Modifier
                     .padding(paddingValues)
                     .fillMaxWidth()
                     .onFocusChanged { focusState ->
                         isFocused = focusState.isFocused
+                        if (!focusState.isFocused) {
+                            validationError = validation?.invoke(value)
+                        }
                     },
                 singleLine = !isTextArea,
                 maxLines = if (isTextArea) 4 else 1,
@@ -182,6 +223,12 @@ fun BisqTextField(
         if (errorText.isNotEmpty()) {
             BisqText.smallRegular(
                 text = errorText,
+                modifier = Modifier.padding(start = 4.dp, top = 1.dp, bottom = 4.dp),
+                color = BisqTheme.colors.danger
+            )
+        } else if (validationError?.isNotEmpty() == true) {
+            BisqText.smallRegular(
+                text = validationError!!,
                 modifier = Modifier.padding(start = 4.dp, top = 1.dp, bottom = 4.dp),
                 color = BisqTheme.colors.danger
             )

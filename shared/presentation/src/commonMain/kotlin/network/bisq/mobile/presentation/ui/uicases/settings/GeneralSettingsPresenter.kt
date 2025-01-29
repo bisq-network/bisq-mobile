@@ -78,7 +78,9 @@ open class GeneralSettingsPresenter(
     override fun setTradePriceTolerance(value: Double) {
         backgroundScope.launch {
             _tradePriceTolerance.value = value
-            settingsServiceFacade.setMaxTradePriceDeviation(value)
+            if (value in 1.0..10.0) {
+                settingsServiceFacade.setMaxTradePriceDeviation(value)
+            }
         }
     }
 
@@ -87,7 +89,9 @@ open class GeneralSettingsPresenter(
     override fun setPowFactor(value: Double) {
         backgroundScope.launch {
             _powFactor.value = value
-            settingsServiceFacade.setDifficultyAdjustmentFactor(value)
+            if (value in 0.0..160000.0) {
+                settingsServiceFacade.setDifficultyAdjustmentFactor(value)
+            }
         }
     }
 
@@ -106,7 +110,7 @@ open class GeneralSettingsPresenter(
         jobs.add(backgroundScope.launch {
             val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
             _languageCode.value = settings.languageCode
-            _supportedLanguageCodes.value = if(settings.supportedLanguageCodes.isNotEmpty())
+            _supportedLanguageCodes.value = if (settings.supportedLanguageCodes.isNotEmpty())
                 settings.supportedLanguageCodes
             else
                 setOf("en") // setOf(i18nPairs.collectAsState().value.first().first)
@@ -115,8 +119,6 @@ open class GeneralSettingsPresenter(
             // _chatNotification.value =
             _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
             _tradePriceTolerance.value = settings.maxTradePriceDeviation
-
-            // _useAnimations.value
 
             _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value
             _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
