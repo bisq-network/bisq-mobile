@@ -135,8 +135,12 @@ actual class NotificationServiceController (private val appForegroundController:
 
     private fun deleteNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            manager.deleteNotificationChannel(BisqForegroundService.CHANNEL_ID)
+            try {
+                val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                manager.deleteNotificationChannel(BisqForegroundService.CHANNEL_ID)
+            } catch (e: Exception) {
+                log.e(e) { "Failed to delete bisq notification channel" }
+            }
         }
     }
 

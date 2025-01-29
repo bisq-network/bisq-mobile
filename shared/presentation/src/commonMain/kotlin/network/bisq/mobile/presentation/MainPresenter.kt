@@ -53,7 +53,16 @@ open class MainPresenter(
     @CallSuper
     override fun onViewAttached() {
         super.onViewAttached()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        openTradesNotificationService.stopNotificationService()
+    }
+
+    override fun onPause() {
         openTradesNotificationService.launchNotificationService()
+        super.onPause()
     }
 
     // Toggle action

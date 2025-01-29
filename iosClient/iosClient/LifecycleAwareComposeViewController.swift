@@ -6,9 +6,11 @@ import domain
 
 class LifecycleAwareComposeViewController: UIViewController {
     private let presenter: MainPresenter
+    private let notificationServiceWrapper: NotificationServiceWrapper
 
-    init(presenter: MainPresenter) {
+    init(presenter: MainPresenter, notificationServiceWrapper: NotificationServiceWrapper) {
         self.presenter = presenter
+        self.notificationServiceWrapper = notificationServiceWrapper
         MainPresenter.companion.doInit()
         super.init(nibName: nil, bundle: nil)
     }
@@ -26,11 +28,15 @@ class LifecycleAwareComposeViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         presenter.onResume()
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleDidBecomeActive),
-            name: UIApplication.didBecomeActiveNotification,
-            object: nil)
+        notificationServiceWrapper.notificationServiceController.stopService()
+        NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [self] _ in
+            notificationServiceWrapper.notificationServiceController.startService()
+            presenter.onPause()
+        }
+        NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [self] _ in
+            notificationServiceWrapper.notificationServiceController.stopService()
+            presenter.onResume()
+        }
     }
 
     @objc private func handleDidBecomeActive() {

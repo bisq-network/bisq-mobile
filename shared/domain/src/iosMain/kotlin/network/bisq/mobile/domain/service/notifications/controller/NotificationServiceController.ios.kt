@@ -9,8 +9,6 @@ import platform.BackgroundTasks.*
 import platform.Foundation.NSDate
 import platform.Foundation.NSUUID
 import platform.Foundation.setValue
-import platform.UIKit.UIApplication
-import platform.UIKit.UIApplicationState
 import platform.UserNotifications.*
 import platform.darwin.NSObject
 import platform.darwin.dispatch_get_main_queue
@@ -66,6 +64,7 @@ actual class NotificationServiceController(private val appForegroundController: 
             logDebug("Notification Service already started, skipping launch")
             return
         }
+        stopService() // needed in iOS to clear the id registration and avoid duplicates
         logDebug("Starting background service")
         UNUserNotificationCenter.currentNotificationCenter().requestAuthorizationWithOptions(
             UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
@@ -84,6 +83,7 @@ actual class NotificationServiceController(private val appForegroundController: 
     }
 
     actual override fun stopService() {
+//        unregisterAllObservers()
         BGTaskScheduler.sharedScheduler.cancelAllTaskRequests()
         logDebug("Background service stopped")
         isRunning = false
@@ -103,10 +103,13 @@ actual class NotificationServiceController(private val appForegroundController: 
         observerJobs[stateFlow] = job
     }
 
-    // TODO
     actual override fun unregisterObserver(stateFlow: StateFlow<*>) {
         observerJobs[stateFlow]?.cancel()
         observerJobs.remove(stateFlow)
+    }
+
+    private fun unregisterAllObservers() {
+        observerJobs?.keys?.forEach { unregisterObserver(it) }
     }
 
     actual fun pushNotification(title: String, message: String) {
@@ -144,9 +147,9 @@ actual class NotificationServiceController(private val appForegroundController: 
     }
 
     private fun handleBackgroundTask(task: BGProcessingTask) {
-        task.setTaskCompletedWithSuccess(true)  // Mark the task as completed
+        task.setTaskCompletedWithSuccess(true)
         logDebug("Background task completed successfully")
-        scheduleBackgroundTask()    // Re-schedule the next task
+        scheduleBackgroundTask()
     }
 
     private fun startBackgroundTaskLoop() {
@@ -169,11 +172,6 @@ actual class NotificationServiceController(private val appForegroundController: 
         logDebug("Background task scheduled")
     }
 
-//    fun setupTaskHandlers() {
-//        BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(BACKGROUND_TASK_ID, BGProcessingTask.class, ::handleBackgroundTask)
-//    }
-
-
     private fun logDebug(message: String) {
         logScope.launch { // (Dispatchers.Main)
             log.d { message }
@@ -188,23 +186,24 @@ actual class NotificationServiceController(private val appForegroundController: 
             return
         }
 
-        // Register for background task handler
-        BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(
-            identifier = BACKGROUND_TASK_ID,
-            usingQueue = null
-        ) { task ->
-            handleBackgroundTask(task as BGProcessingTask)
-        }
+        runCatching {
+            BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(
+                identifier = BACKGROUND_TASK_ID,
+                usingQueue = null
+            ) { task ->
+                handleBackgroundTask(task as BGProcessingTask)
+            }
 
-        isBackgroundTaskRegistered = true
-        logDebug("Background task handler registered")
+            isBackgroundTaskRegistered = true
+            logDebug("Background task handler registered")
+        }.onFailure {
+            log.e(it) { "Failed to register background task - notifications won't work" }
+            isBackgroundTaskRegistered = false
+        }
     }
 
     actual fun isAppInForeground(): Boolean {
-        var isForeground = false
-        dispatch_sync(dispatch_get_main_queue()) {
-            isForeground = (appForegroundController.isForeground.value)
-        }
-        return isForeground
+        // for iOS we handle this externally
+        return false
     }
 }
