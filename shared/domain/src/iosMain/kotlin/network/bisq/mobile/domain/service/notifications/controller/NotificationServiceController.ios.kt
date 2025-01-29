@@ -83,6 +83,7 @@ actual class NotificationServiceController(private val appForegroundController: 
     }
 
     actual override fun stopService() {
+//        unregisterAllObservers()
         BGTaskScheduler.sharedScheduler.cancelAllTaskRequests()
         logDebug("Background service stopped")
         isRunning = false
@@ -102,10 +103,13 @@ actual class NotificationServiceController(private val appForegroundController: 
         observerJobs[stateFlow] = job
     }
 
-    // TODO
     actual override fun unregisterObserver(stateFlow: StateFlow<*>) {
         observerJobs[stateFlow]?.cancel()
         observerJobs.remove(stateFlow)
+    }
+
+    private fun unregisterAllObservers() {
+        observerJobs?.keys?.forEach { unregisterObserver(it) }
     }
 
     actual fun pushNotification(title: String, message: String) {
@@ -143,9 +147,9 @@ actual class NotificationServiceController(private val appForegroundController: 
     }
 
     private fun handleBackgroundTask(task: BGProcessingTask) {
-        task.setTaskCompletedWithSuccess(true)  // Mark the task as completed
+        task.setTaskCompletedWithSuccess(true)
         logDebug("Background task completed successfully")
-        scheduleBackgroundTask()    // Re-schedule the next task
+        scheduleBackgroundTask()
     }
 
     private fun startBackgroundTaskLoop() {
@@ -168,11 +172,6 @@ actual class NotificationServiceController(private val appForegroundController: 
         logDebug("Background task scheduled")
     }
 
-//    fun setupTaskHandlers() {
-//        BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(BACKGROUND_TASK_ID, BGProcessingTask.class, ::handleBackgroundTask)
-//    }
-
-
     private fun logDebug(message: String) {
         logScope.launch { // (Dispatchers.Main)
             log.d { message }
@@ -188,7 +187,6 @@ actual class NotificationServiceController(private val appForegroundController: 
         }
 
         runCatching {
-            // Register for background task handler
             BGTaskScheduler.sharedScheduler.registerForTaskWithIdentifier(
                 identifier = BACKGROUND_TASK_ID,
                 usingQueue = null

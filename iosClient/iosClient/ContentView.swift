@@ -23,16 +23,5 @@ struct ContentView: View {
         ComposeView()
             .ignoresSafeArea(.keyboard) // Compose has own keyboard handler
             .environmentObject(notificationServiceWrapper)
-//            .onAppear {
-//                notificationServiceWrapper.notificationServiceController.stopService()
-//                NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { _ in
-//                    notificationServiceWrapper.notificationServiceController.startService()
-//                }
-//                NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { _ in
-//                    notificationServiceWrapper.notificationServiceController.stopService()
-//                }
-//            }.onDisappear {
-//                NotificationCenter.default.removeObserver(self)
-//            }
     }
 }
