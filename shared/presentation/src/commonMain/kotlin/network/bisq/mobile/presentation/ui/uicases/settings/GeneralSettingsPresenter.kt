@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
@@ -33,8 +34,13 @@ open class GeneralSettingsPresenter(
         backgroundScope.launch {
             _languageCode.value = langCode
             settingsServiceFacade.setLanguageCode(langCode)
-            // languageServiceFacade.activate()
-            I18nSupport.initialize(langCode) // TODO: Is this right?
+            // TODO: Is this right?
+            // Doing this to reload all bundles of the newly selected language,
+            // all String.i18n() across the app gets the text of selected language
+            I18nSupport.initialize(langCode)
+            // To update display values in i18Pairs, allLanguagePairs with the new language
+            languageServiceFacade.setDefaultLanguage(langCode)
+            languageServiceFacade.activate()
         }
     }
 

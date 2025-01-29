@@ -34,6 +34,10 @@ class NodeLanguageServiceFacade(private val applicationService: AndroidApplicati
         return LanguageRepository.getDisplayString(languageCode)
     }
 
+    override fun setDefaultLanguage(languageCode: String) {
+        return LanguageRepository.setDefaultLanguage(languageCode)
+    }
+
     // Life cycle
     override fun activate() {
 
@@ -42,6 +46,7 @@ class NodeLanguageServiceFacade(private val applicationService: AndroidApplicati
             displayTextList.add(LanguageRepository.getDisplayString(code))
         }
         _i18nPairs.value = LanguageRepository.I18N_CODES.zip(displayTextList)
+        println(_i18nPairs.value)
 
         displayTextList.clear()
         for (code in LanguageRepository.CODES) {

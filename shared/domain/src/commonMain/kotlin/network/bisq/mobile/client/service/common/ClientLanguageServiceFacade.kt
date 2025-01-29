@@ -32,6 +32,10 @@ class ClientLanguageServiceFacade(
         return "TODO" //LanguageRepository.getDisplayLanguage(languageCode)
     }
 
+    override fun setDefaultLanguage(languageCode: String) {
+        // TODO
+    }
+
     // Misc
     private val coroutineScope = CoroutineScope(BackgroundDispatcher)
     private var job: Job? = null

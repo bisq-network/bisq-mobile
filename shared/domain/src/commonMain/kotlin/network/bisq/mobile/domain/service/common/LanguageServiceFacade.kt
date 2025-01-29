@@ -9,5 +9,7 @@ interface LanguageServiceFacade : LifeCycleAware {
 
     val allPairs: StateFlow<List<Pair<String, String>>>
 
+    fun setDefaultLanguage(languageCode: String)
+
     fun getDisplayString(languageCode: String): String
 }
