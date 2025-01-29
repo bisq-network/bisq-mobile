@@ -155,7 +155,6 @@ fun BisqTextField(
                     }
                     onValueChange(cleanValue)
                     validationError = validation?.invoke(cleanValue)
-                    println("validationError: ${validationError}")
                 },
                 modifier = Modifier
                     .padding(paddingValues)

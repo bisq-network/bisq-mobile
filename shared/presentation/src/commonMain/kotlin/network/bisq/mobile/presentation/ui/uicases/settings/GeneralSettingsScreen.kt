@@ -41,6 +41,7 @@ interface IGeneralSettingsPresenter : ViewPresenter {
     val ignorePow: StateFlow<Boolean>
     fun setIgnorePow(value: Boolean)
 
+    val shouldShowPoWAdjustmentFactor: StateFlow<Boolean>
 }
 
 @Composable
@@ -55,6 +56,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
     val tradePriceTolerance = presenter.tradePriceTolerance.collectAsState().value
     val powFactor = presenter.powFactor.collectAsState().value
     val ignorePow = presenter.ignorePow.collectAsState().value
+    val shouldShowPoWAdjustmentFactor = presenter.shouldShowPoWAdjustmentFactor.collectAsState().value
 
     RememberPresenterLifecycle(presenter)
 
@@ -130,7 +132,6 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 helperText = "settings.trade.maxTradePriceDeviation.help".i18n(),
                 validation = {
                     val parsedValue = it.toDoubleOrNull()
-                    println(parsedValue)
                     if (parsedValue == null) {
                         return@BisqTextField "Value cannot be null"
                     }
@@ -141,38 +142,39 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 }
             )
 
-            BisqHDivider()
+            if (shouldShowPoWAdjustmentFactor) {
+                BisqHDivider()
 
-            BisqText.h4Regular("settings.network.headline".i18n())
+                BisqText.h4Regular("settings.network.headline".i18n())
 
-            BisqTextField(
-                label = "settings.network.difficultyAdjustmentFactor.description.self".i18n(),
-                value = powFactor.toString(),
-                keyboardType = KeyboardType.Decimal,
-                disabled = !ignorePow,
-                onValueChange = {
-                    val parsedValue = it.toDoubleOrNull()
-                    if (parsedValue != null) {
-                        presenter.setPowFactor(parsedValue)
+                BisqTextField(
+                    label = "settings.network.difficultyAdjustmentFactor.description.self".i18n(),
+                    value = powFactor.toString(),
+                    keyboardType = KeyboardType.Decimal,
+                    disabled = !ignorePow,
+                    onValueChange = {
+                        val parsedValue = it.toDoubleOrNull()
+                        if (parsedValue != null) {
+                            presenter.setPowFactor(parsedValue)
+                        }
+                                    },
+                    validation = {
+                        val parsedValue = it.toDoubleOrNull()
+                        if (parsedValue == null) {
+                            return@BisqTextField "Value cannot be null"
+                        }
+                        if (parsedValue < 0 || parsedValue > 160_000) {
+                            return@BisqTextField "authorizedRole.securityManager.difficultyAdjustment.invalid".i18n(160000)
+                        }
+                        return@BisqTextField null
                     }
-                },
-                validation = {
-                    val parsedValue = it.toDoubleOrNull()
-                    println(parsedValue)
-                    if (parsedValue == null) {
-                        return@BisqTextField "Value cannot be null"
-                    }
-                    if (parsedValue < 0 || parsedValue > 160_000) {
-                        return@BisqTextField "authorizedRole.securityManager.difficultyAdjustment.invalid".i18n(160000)
-                    }
-                    return@BisqTextField null
-                }
-            )
-            BisqSwitch(
-                label = "settings.network.difficultyAdjustmentFactor.ignoreValueFromSecManager".i18n(),
-                checked = ignorePow,
-                onSwitch = { presenter.setIgnorePow(it) }
-            )
+                )
+                BisqSwitch(
+                    label = "settings.network.difficultyAdjustmentFactor.ignoreValueFromSecManager".i18n(),
+                    checked = ignorePow,
+                    onSwitch = { presenter.setIgnorePow(it) }
+                )
+            }
 
         }
 

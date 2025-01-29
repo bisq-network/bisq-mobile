@@ -30,10 +30,6 @@ class NodeLanguageServiceFacade(private val applicationService: AndroidApplicati
     private val _allPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(emptyList())
     override val allPairs: StateFlow<List<Pair<String, String>>> = _allPairs
 
-    override fun getDisplayString(languageCode: String): String {
-        return LanguageRepository.getDisplayString(languageCode)
-    }
-
     override fun setDefaultLanguage(languageCode: String) {
         return LanguageRepository.setDefaultLanguage(languageCode)
     }
@@ -46,7 +42,6 @@ class NodeLanguageServiceFacade(private val applicationService: AndroidApplicati
             displayTextList.add(LanguageRepository.getDisplayString(code))
         }
         _i18nPairs.value = LanguageRepository.I18N_CODES.zip(displayTextList)
-        println(_i18nPairs.value)
 
         displayTextList.clear()
         for (code in LanguageRepository.CODES) {

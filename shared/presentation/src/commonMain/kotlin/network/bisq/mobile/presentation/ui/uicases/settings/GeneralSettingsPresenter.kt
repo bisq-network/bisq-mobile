@@ -38,6 +38,8 @@ open class GeneralSettingsPresenter(
             // Doing this to reload all bundles of the newly selected language,
             // all String.i18n() across the app gets the text of selected language
             I18nSupport.initialize(langCode)
+            // TODO: This will update the default language of remote instance.
+            // Is this okay? Considering we will have multiple clients to connect to same remote node in the future
             // To update display values in i18Pairs, allLanguagePairs with the new language
             languageServiceFacade.setDefaultLanguage(langCode)
             languageServiceFacade.activate()
@@ -103,6 +105,8 @@ open class GeneralSettingsPresenter(
             settingsServiceFacade.setIgnoreDiffAdjustmentFromSecManager(value)
         }
     }
+
+    override val shouldShowPoWAdjustmentFactor: StateFlow<Boolean> = MutableStateFlow(false)
 
     private var jobs: MutableSet<Job> = mutableSetOf()
 

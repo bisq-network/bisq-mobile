@@ -1,11 +1,7 @@
 package network.bisq.mobile.android.node.di
 
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.presentation.NodeGettingStartedPresenter
-import network.bisq.mobile.android.node.presentation.NodeMainPresenter
-import network.bisq.mobile.android.node.presentation.NodeSettingsPresenter
-import network.bisq.mobile.android.node.presentation.NodeSplashPresenter
-import network.bisq.mobile.android.node.presentation.OnBoardingNodePresenter
+import network.bisq.mobile.android.node.presentation.*
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.android.node.service.bootstrap.NodeApplicationBootstrapFacade
@@ -31,6 +27,8 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
@@ -91,6 +89,8 @@ val androidNodeModule = module {
     }
 
     single<SettingsPresenter> { NodeSettingsPresenter(get(), get()) } bind ISettingsPresenter::class
+
+    single<GeneralSettingsPresenter> { NodeGeneralSettingsPresenter(get(), get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
     single<IOnboardingPresenter> { OnBoardingNodePresenter(get(), get(), get()) } bind IOnboardingPresenter::class
 }

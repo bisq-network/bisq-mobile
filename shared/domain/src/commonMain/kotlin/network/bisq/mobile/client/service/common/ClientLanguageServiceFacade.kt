@@ -28,10 +28,6 @@ class ClientLanguageServiceFacade(
     private val _allPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(emptyList())
     override val allPairs: StateFlow<List<Pair<String, String>>> = _allPairs
 
-    override fun getDisplayString(languageCode: String): String {
-        return "TODO" //LanguageRepository.getDisplayLanguage(languageCode)
-    }
-
     override fun setDefaultLanguage(languageCode: String) {
         // TODO
     }
