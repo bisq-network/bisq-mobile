@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.icons.QuestionIcon
@@ -28,7 +29,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 
-interface ITrustedNodeSetupPresenter: ViewPresenter {
+interface ITrustedNodeSetupPresenter : ViewPresenter {
     val bisqApiUrl: StateFlow<String>
     val isConnected: StateFlow<Boolean>
 
@@ -71,12 +72,26 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 onValueChange = { presenter.updateBisqApiUrl(it) },
                 value = bisqApiUrl,
                 placeholder = "ws://10.0.2.2:8090",
+                keyboardType = KeyboardType.Uri,
                 labelRightSuffix = {
                     BisqButton(
                         iconOnly = { QuestionIcon() },
                         backgroundColor = BisqTheme.colors.backgroundColor,
                         onClick = { presenter.navigateToNextScreen() }
                     )
+                },
+                validation = {
+                    val wsUrlPattern =
+                        """^(ws|wss):\/\/(([a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|localhost)|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))(:\d{1,5})$""".toRegex()
+
+                    if (it.isEmpty()) {
+                        return@BisqTextField "URL cannot be empty" //TODO:i18n
+                    }
+                    if (!wsUrlPattern.matches(it)) {
+                        return@BisqTextField "Invalid WebSocket URL. Must be ws:// or wss:// followed by a domain/IP and port" //TODO:i18n
+                    }
+
+                    return@BisqTextField null
                 }
             )
 
@@ -90,10 +105,11 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         val annotatedString = clipboardManager.getText()
                         if (annotatedString != null) {
                             presenter.updateBisqApiUrl(annotatedString.text)
-                        }                    },
+                        }
+                    },
                     backgroundColor = BisqTheme.colors.dark5,
                     color = BisqTheme.colors.light1,
-                    leftIcon= { CopyIcon() }
+                    leftIcon = { CopyIcon() }
                 )
 //              TODO uncomment when feature gets implemented
 //                BisqButton(
@@ -132,9 +148,9 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 color = if (bisqApiUrl.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
                 onClick = {
                     presenter.testConnection()
-                          },
+                },
                 padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
-                )
+            )
         } else {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,

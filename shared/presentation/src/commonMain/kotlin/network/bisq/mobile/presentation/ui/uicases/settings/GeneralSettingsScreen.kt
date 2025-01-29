@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
@@ -119,7 +120,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 label = "settings.trade.maxTradePriceDeviation".i18n(),
                 value = tradePriceTolerance.toString(),
                 valueSuffix = "%",
-                isNumber = true,
+                keyboardType = KeyboardType.Decimal,
                 onValueChange = {
                     val parsedValue = it.toDoubleOrNull()
                     if (parsedValue != null) {
@@ -147,7 +148,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
             BisqTextField(
                 label = "settings.network.difficultyAdjustmentFactor.description.self".i18n(),
                 value = powFactor.toString(),
-                isNumber = true,
+                keyboardType = KeyboardType.Decimal,
                 disabled = !ignorePow,
                 onValueChange = {
                     val parsedValue = it.toDoubleOrNull()

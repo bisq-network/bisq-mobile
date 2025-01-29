@@ -51,7 +51,7 @@ fun BisqTextField(
     errorText: String = "",
     indicatorColor: Color = BisqTheme.colors.primary,
     isTextArea: Boolean = false,
-    isNumber: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Unspecified,
     paddingValues: PaddingValues = PaddingValues(all = 12.dp),
     disabled: Boolean = false,
     color: Color = BisqTheme.colors.light2,
@@ -70,11 +70,6 @@ fun BisqTextField(
         isSearch -> ImeAction.Search
         isTextArea -> ImeAction.Next
         else -> ImeAction.Done
-    }
-
-    val keyBoardType = when {
-        isNumber -> KeyboardType.Decimal
-        else -> KeyboardType.Unspecified
     }
 
     var finalValue = ""
@@ -179,7 +174,7 @@ fun BisqTextField(
                     textDecoration = TextDecoration.None
                 ),
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = keyBoardType,
+                    keyboardType = keyboardType,
                     imeAction = imeAction
                 ),
                 cursorBrush = SolidColor(BisqTheme.colors.primary),
