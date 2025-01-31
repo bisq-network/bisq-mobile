@@ -1,4 +1,4 @@
-# Bisq Cli proguard file
+# Bisq Connect proguard file
 
 ## Ktor
 ### Keep Ktor Client Core
