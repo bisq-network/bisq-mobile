@@ -13,6 +13,7 @@ import network.bisq.mobile.client.service.bootstrap.ClientApplicationBootstrapFa
 import network.bisq.mobile.client.service.explorer.ClientExplorerServiceFacade
 import network.bisq.mobile.client.service.explorer.ExplorerApiGateway
 import network.bisq.mobile.client.service.common.ClientLanguageServiceFacade
+import network.bisq.mobile.client.service.common.LanguageApiGateway
 import network.bisq.mobile.client.service.market.ClientMarketPriceServiceFacade
 import network.bisq.mobile.client.service.market.MarketPriceApiGateway
 import network.bisq.mobile.client.service.mediation.ClientMediationServiceFacade
@@ -167,6 +168,9 @@ val clientModule = module {
             get(named("WebsocketApiPort"))
         )
     }
+
+    single { LanguageApiGateway(get(), get()) }
+    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get(), get()) }
 
     single { MarketPriceApiGateway(get(), get()) }
     single<MarketPriceServiceFacade> { ClientMarketPriceServiceFacade(get(), get()) }

@@ -51,6 +51,10 @@ class NodeLanguageServiceFacade(private val applicationService: AndroidApplicati
 
     }
 
+    override suspend fun sync() {
+        activate()
+    }
+
     override fun deactivate() {
     }
 

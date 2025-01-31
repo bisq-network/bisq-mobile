@@ -52,10 +52,6 @@ class ClientSettingsServiceFacade(val apiGateway: SettingsApiGateway) : Settings
     override val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum> get() = _chatNotificationType
     override suspend fun setChatNotificationType(value: ChatChannelNotificationTypeEnum) {
         TODO()
-//        val result = apiGateway.confirmTacAccepted(value)
-//        if (result.isSuccess) {
-//            _isTacAccepted.value = value
-//        }
     }
 
     private val _closeMyOfferWhenTaken = MutableStateFlow(true)
@@ -79,21 +75,13 @@ class ClientSettingsServiceFacade(val apiGateway: SettingsApiGateway) : Settings
     private val _difficultyAdjustmentFactor: MutableStateFlow<Double> = MutableStateFlow(1.0)
     override val difficultyAdjustmentFactor: StateFlow<Double> get() = _difficultyAdjustmentFactor
     override suspend fun setDifficultyAdjustmentFactor(value: Double) {
-        TODO()
-    //        val result = apiGateway.confirmTacAccepted(value)
-    //        if (result.isSuccess) {
-    //            _isTacAccepted.value = value
-    //        }
+        // Not applicable for xClients
     }
 
     private val _ignoreDiffAdjustmentFromSecManager: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> get() = _ignoreDiffAdjustmentFromSecManager
     override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean) {
-        TODO()
-//            val result = apiGateway.
-//            if (result.isSuccess) {
-//                _isTacAccepted.value = value
-//            }
+        // Not applicable for xClients
     }
 
     // API
@@ -102,6 +90,8 @@ class ClientSettingsServiceFacade(val apiGateway: SettingsApiGateway) : Settings
         if (result.isSuccess) {
             _isTacAccepted.value = result.getOrThrow().isTacAccepted
             _tradeRulesConfirmed.value = result.getOrThrow().tradeRulesConfirmed
+            _languageCode.value = result.getOrThrow().languageCode
+            _supportedLanguageCodes.value = result.getOrThrow().supportedLanguageCodes
             _closeMyOfferWhenTaken.value = result.getOrThrow().closeMyOfferWhenTaken
             _maxTradePriceDeviation.value = result.getOrThrow().maxTradePriceDeviation
         }

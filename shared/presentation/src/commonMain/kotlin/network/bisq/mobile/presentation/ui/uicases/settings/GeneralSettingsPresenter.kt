@@ -32,7 +32,6 @@ open class GeneralSettingsPresenter(
     override val languageCode: MutableStateFlow<String> = _languageCode
     override fun setLanguageCode(langCode: String) {
         backgroundScope.launch {
-            _languageCode.value = langCode
             settingsServiceFacade.setLanguageCode(langCode)
             // TODO: Is this right?
             // Doing this to reload all bundles of the newly selected language,
@@ -42,7 +41,8 @@ open class GeneralSettingsPresenter(
             // Is this okay? Considering we will have multiple clients to connect to same remote node in the future
             // To update display values in i18Pairs, allLanguagePairs with the new language
             languageServiceFacade.setDefaultLanguage(langCode)
-            languageServiceFacade.activate()
+            languageServiceFacade.sync()
+            _languageCode.value = langCode
         }
     }
 
@@ -112,20 +112,24 @@ open class GeneralSettingsPresenter(
 
     override fun onViewAttached() {
         jobs.add(backgroundScope.launch {
-            val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
-            _languageCode.value = settings.languageCode
-            _supportedLanguageCodes.value = if (settings.supportedLanguageCodes.isNotEmpty())
-                settings.supportedLanguageCodes
-            else
-                setOf("en") // setOf(i18nPairs.collectAsState().value.first().first)
+            try {
+                val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
+                _languageCode.value = settings.languageCode
+                _supportedLanguageCodes.value = if (settings.supportedLanguageCodes.isNotEmpty())
+                    settings.supportedLanguageCodes
+                else
+                    setOf("en") // setOf(i18nPairs.collectAsState().value.first().first)
 
-            // _tradeNotification.value =
-            // _chatNotification.value =
-            _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
-            _tradePriceTolerance.value = settings.maxTradePriceDeviation
+                // _tradeNotification.value =
+                // _chatNotification.value =
+                _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
+                _tradePriceTolerance.value = settings.maxTradePriceDeviation
 
-            _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value
-            _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
+                _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value
+                _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
+            } catch (e: Exception) {
+                print(e)
+            }
         })
     }
 

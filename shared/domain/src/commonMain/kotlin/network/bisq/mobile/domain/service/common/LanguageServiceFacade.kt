@@ -10,4 +10,6 @@ interface LanguageServiceFacade : LifeCycleAware {
     val allPairs: StateFlow<List<Pair<String, String>>>
 
     fun setDefaultLanguage(languageCode: String)
+
+    suspend fun sync()
 }

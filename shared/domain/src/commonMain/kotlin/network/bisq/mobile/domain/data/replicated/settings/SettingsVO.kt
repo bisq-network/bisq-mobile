@@ -28,4 +28,4 @@ data class SettingsVO(
     val supportedLanguageCodes: Set<String>,
     val maxTradePriceDeviation: Double,
     val selectedMarket: MarketVO
-) 
+)
