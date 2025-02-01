@@ -29,8 +29,14 @@ class CreateOfferPricePresenter(
     var percentagePriceValue: Double = 0.0
     private val _formattedPercentagePrice = MutableStateFlow("")
     val formattedPercentagePrice: StateFlow<String> = _formattedPercentagePrice
+    private val _formattedPercentagePriceValid = MutableStateFlow(true)
+    val formattedPercentagePriceValid: StateFlow<Boolean> = _formattedPercentagePriceValid
+
     private val _formattedPrice = MutableStateFlow("")
     val formattedPrice: StateFlow<String> = _formattedPrice
+    private val _formattedPriceValid = MutableStateFlow(true)
+    val formattedPriceValid: StateFlow<Boolean> = _formattedPriceValid
+
     private val _priceType = MutableStateFlow(PriceType.PERCENTAGE)
     val priceType: StateFlow<PriceType> = _priceType
 
@@ -67,21 +73,31 @@ class CreateOfferPricePresenter(
         _priceType.value = value
     }
 
-    fun onPercentagePriceChanged(value: String) {
-        percentagePriceValue = PercentageParser.parse(value)
-        _formattedPercentagePrice.value = PercentageFormatter.format(this.percentagePriceValue, false)
-        val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
-        priceQuote = PriceUtil.fromMarketPriceMarkup(marketPriceQuote, this.percentagePriceValue)
-        _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
+    fun onPercentagePriceChanged(value: String, isValid: Boolean) {
+        try {
+            percentagePriceValue = PercentageParser.parse(value)
+            _formattedPercentagePrice.value = PercentageFormatter.format(this.percentagePriceValue, false)
+            val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
+            priceQuote = PriceUtil.fromMarketPriceMarkup(marketPriceQuote, this.percentagePriceValue)
+            _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
+        } catch(e: Exception) {
+
+        }
+
+        _formattedPercentagePriceValid.value = isValid
+        _formattedPriceValid.value = isValid
     }
 
-    fun onFixPriceChanged(value: String) {
+    fun onFixPriceChanged(value: String, isValid: Boolean) {
         val valueAsDouble = PriceParser.parse(value)
         priceQuote = PriceQuoteVOFactory.fromPrice(valueAsDouble, createOfferModel.market!!)
         _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
         val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         percentagePriceValue = PriceUtil.getPercentageToMarketPrice(marketPriceQuote, priceQuote)
         _formattedPercentagePrice.value = PercentageFormatter.format(percentagePriceValue, false)
+
+        _formattedPercentagePriceValid.value = isValid
+        _formattedPriceValid.value = isValid
     }
 
     fun onBack() {

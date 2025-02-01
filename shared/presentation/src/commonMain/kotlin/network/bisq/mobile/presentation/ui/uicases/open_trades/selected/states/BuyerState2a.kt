@@ -49,7 +49,6 @@ fun BuyerState2a(
             showCopy = true,
         )
 
-
         BisqGap.V1()
         BisqButton(
             // Confirm payment of {0}

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SendIcon
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.button.CloseIconButton
 import network.bisq.mobile.presentation.ui.composeModels.ChatMessage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -64,8 +66,7 @@ fun BisqChatInputField(
             modifier = Modifier.focusRequester(focusRequester),
             placeholder = placeholder,
             rightSuffix = {
-                IconButton(
-                    modifier = Modifier.size(BisqUIConstants.ScreenPadding2X),
+                BisqIconButton(
                     onClick = {
                         if (textState.isNotEmpty() && textValid) {
                             onMessageSent(textState, quotedMessage)
@@ -73,7 +74,7 @@ fun BisqChatInputField(
                             textState = ""
                         }
                     },
-                    enabled = textState.isNotEmpty() || !textValid
+                    disabled = textState.isEmpty() || !textValid
                 ) {
                     SendIcon()
                 }

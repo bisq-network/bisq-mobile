@@ -59,8 +59,6 @@ class TrustedNodeSetupPresenter(
         _isConnected.value = false
     }
 
-    ws://10.0.2.2:809
-
     override fun testConnection() {
         backgroundScope.launch {
             _isLoading.value = true

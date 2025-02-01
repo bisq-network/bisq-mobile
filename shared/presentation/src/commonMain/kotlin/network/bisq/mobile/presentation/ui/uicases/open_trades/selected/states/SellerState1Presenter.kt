@@ -18,6 +18,8 @@ class SellerState1Presenter(
 
     private var _paymentAccountData = MutableStateFlow("")
     val paymentAccountData: StateFlow<String> get() = _paymentAccountData
+    private var _paymentAccountDataValid = MutableStateFlow(false)
+    val paymentAccountDataValid: StateFlow<Boolean> get() = _paymentAccountDataValid
 
     private var job: Job? = null
 
@@ -30,8 +32,9 @@ class SellerState1Presenter(
         _paymentAccountData.value = ""
     }
 
-    fun onPaymentDataInput(value: String) {
+    fun onPaymentDataInput(value: String, isValid: Boolean) {
         _paymentAccountData.value = value.trim()
+        _paymentAccountDataValid.value = isValid
     }
 
     fun onSendPaymentData() {

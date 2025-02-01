@@ -106,8 +106,7 @@ fun AppPaymentAccountCard(
                 text = stringsCommon.buttons_save,
                 onClick = { onConfirm(accountName, accountDescription) },
                 padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp),
-                disabled = accountNameValid || accountDescriptionValid
-
+                disabled = !accountNameValid || !accountDescriptionValid
             )
         }
     }

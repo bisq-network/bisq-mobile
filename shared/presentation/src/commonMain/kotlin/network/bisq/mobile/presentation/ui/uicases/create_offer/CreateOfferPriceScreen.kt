@@ -34,6 +34,7 @@ fun CreateOfferTradePriceSelectorScreen() {
     RememberPresenterLifecycle(presenter)
 
     val formattedPercentagePrice by presenter.formattedPercentagePrice.collectAsState()
+    val formattedPercentagePriceValid by presenter.formattedPercentagePriceValid.collectAsState()
     val formattedPrice by presenter.formattedPrice.collectAsState()
     val priceType by presenter.priceType.collectAsState()
 
@@ -43,7 +44,8 @@ fun CreateOfferTradePriceSelectorScreen() {
         stepsLength = 6,
         prevOnClick = { presenter.onBack() },
         nextButtonText = commonStrings.buttons_next,
-        nextOnClick = { presenter.onNext() }
+        nextOnClick = { presenter.onNext() },
+        nextDisabled = !presenter.formattedPercentagePriceValid.collectAsState().value,
     ) {
         BisqText.h3Regular(
             text = bisqEasyTradeWizardStrings.bisqEasy_price_headline,
@@ -75,7 +77,7 @@ fun CreateOfferTradePriceSelectorScreen() {
                         label = bisqEasyTradeWizardStrings.bisqEasy_price_percentage_inputBoxText,
                         value = formattedPercentagePrice,
                         keyboardType = KeyboardType.Decimal,
-                        onValueChange = { it, isValid -> presenter.onPercentagePriceChanged(it) },
+                        onValueChange = { it, isValid -> presenter.onPercentagePriceChanged(it, isValid) },
                         validation = {
                             val parsedValue = it.toDoubleOrNull()
                             if (parsedValue == null) {
@@ -99,7 +101,7 @@ fun CreateOfferTradePriceSelectorScreen() {
                         label = presenter.fixPriceDescription,
                         value = formattedPrice,
                         keyboardType = KeyboardType.Decimal,
-                        onValueChange = { it, isValid -> presenter.onFixPriceChanged(it) },
+                        onValueChange = { it, isValid -> presenter.onFixPriceChanged(it, isValid) },
                         validation = {
                             val parsedValue = it.toDoubleOrNull()
                             if (parsedValue == null) {
