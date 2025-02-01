@@ -72,7 +72,7 @@ fun BisqDropDown(
             if (searchable) {
                 BisqTextField(
                     value = searchText,
-                    onValueChange = { searchText = it },
+                    onValueChange = { it, isValid -> searchText = it },
                     placeholder = "Search...",
                     modifier = Modifier.fillMaxWidth()
                 )

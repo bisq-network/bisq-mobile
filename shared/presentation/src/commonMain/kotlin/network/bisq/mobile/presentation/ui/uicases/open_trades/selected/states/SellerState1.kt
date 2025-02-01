@@ -36,7 +36,7 @@ fun SellerState1(
         BisqTextField(
             label = "bisqEasy.tradeState.info.seller.phase1.accountData".i18n(), // My payment account data
             value = paymentAccountData,
-            onValueChange = { presenter.onPaymentDataInput(it) },
+            onValueChange = { it, isValid -> presenter.onPaymentDataInput(it) },
         )
 
         BisqGap.V1()

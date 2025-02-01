@@ -13,11 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -40,7 +36,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 fun BisqTextField(
     label: String = "",
     value: String = "",
-    onValueChange: (String) -> Unit = {},
+    onValueChange: (String, Boolean) -> Unit = { it, isValid -> }, // Param1: newValue, Param2: validatity of newValue, based on validation()
     placeholder: String = "",
     labelRightSuffix: (@Composable () -> Unit)? = null,
     leftSuffix: (@Composable () -> Unit)? = null,
@@ -48,7 +44,6 @@ fun BisqTextField(
     rightSuffixModifier: Modifier = Modifier.width(50.dp),
     isSearch: Boolean = false,
     helperText: String = "",
-    errorText: String = "",
     indicatorColor: Color = BisqTheme.colors.primary,
     isTextArea: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Unspecified,
@@ -77,9 +72,9 @@ fun BisqTextField(
     finalValue = if (valueSuffix != null) value + valueSuffix else value
 
     val dangerColor = BisqTheme.colors.danger
-    val finalIndicatorColor by remember(errorText, validationError) {
+    val finalIndicatorColor by remember(validationError) {
         mutableStateOf(
-            if (errorText.isEmpty() && (validationError == null || validationError?.isEmpty() == true))
+            if (validationError == null || validationError?.isEmpty() == true)
                 indicatorColor
             else
                 dangerColor
@@ -108,6 +103,11 @@ fun BisqTextField(
                 light2Color
             }
         )
+    }
+
+    LaunchedEffect(value) {
+        validationError = validation?.invoke(value)
+        onValueChange(value, validationError == null)
     }
 
     Column(modifier = modifier) {
@@ -153,8 +153,8 @@ fun BisqTextField(
                     if (valueSuffix != null && cleanValue.endsWith(valueSuffix)) {
                         cleanValue = cleanValue.removeSuffix(valueSuffix)
                     }
-                    onValueChange(cleanValue)
                     validationError = validation?.invoke(cleanValue)
+                    onValueChange(cleanValue, validationError == null || validationError?.isEmpty() == true)
                 },
                 modifier = Modifier
                     .padding(paddingValues)
@@ -214,13 +214,7 @@ fun BisqTextField(
             )
         }
         // Error text has priority over help field
-        if (errorText.isNotEmpty()) {
-            BisqText.smallRegular(
-                text = errorText,
-                modifier = Modifier.padding(start = 4.dp, top = 1.dp, bottom = 4.dp),
-                color = BisqTheme.colors.danger
-            )
-        } else if (validationError?.isNotEmpty() == true) {
+        if (validationError?.isNotEmpty() == true) {
             BisqText.smallRegular(
                 text = validationError!!,
                 modifier = Modifier.padding(start = 4.dp, top = 1.dp, bottom = 4.dp),

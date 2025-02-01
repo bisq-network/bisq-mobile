@@ -30,10 +30,12 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 
 interface ITrustedNodeSetupPresenter : ViewPresenter {
+    val isBisqApiUrlValid: StateFlow<Boolean>
     val bisqApiUrl: StateFlow<String>
     val isConnected: StateFlow<Boolean>
+    val isLoading: StateFlow<Boolean>
 
-    fun updateBisqApiUrl(newUrl: String)
+    fun updateBisqApiUrl(newUrl: String, isValid: Boolean)
 
     fun testConnection()
 
@@ -49,6 +51,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
     val bisqApiUrl = presenter.bisqApiUrl.collectAsState().value
     val isConnected = presenter.isConnected.collectAsState().value
+    val isLoading = presenter.isLoading.collectAsState().value
     val clipboardManager = LocalClipboardManager.current
 
     RememberPresenterLifecycle(presenter)
@@ -69,15 +72,17 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
         ) {
             BisqTextField(
                 label = "Trusted Bisq Node URL",
-                onValueChange = { presenter.updateBisqApiUrl(it) },
+                onValueChange = { url, isValid -> presenter.updateBisqApiUrl(url, isValid) },
                 value = bisqApiUrl,
                 placeholder = "ws://10.0.2.2:8090",
                 keyboardType = KeyboardType.Uri,
+                disabled = isLoading,
                 labelRightSuffix = {
                     BisqButton(
                         iconOnly = { QuestionIcon() },
                         backgroundColor = BisqTheme.colors.backgroundColor,
-                        onClick = { presenter.navigateToNextScreen() }
+                        onClick = { /* presenter.navigateToNextScreen() */ },
+                        disabled = isLoading,
                     )
                 },
                 validation = {
@@ -104,9 +109,10 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     onClick = {
                         val annotatedString = clipboardManager.getText()
                         if (annotatedString != null) {
-                            presenter.updateBisqApiUrl(annotatedString.text)
+                            presenter.updateBisqApiUrl(annotatedString.text, false) // TODO: validation gets triggered?
                         }
                     },
+                    disabled = isLoading,
                     backgroundColor = BisqTheme.colors.dark5,
                     color = BisqTheme.colors.light1,
                     leftIcon = { CopyIcon() }
@@ -145,11 +151,12 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
         if (!isConnected) {
             BisqButton(
                 text = "Test Connection",
-                color = if (bisqApiUrl.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
                 onClick = {
                     presenter.testConnection()
                 },
                 padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
+                disabled = !presenter.isBisqApiUrlValid.collectAsState().value,
+                isLoading = isLoading,
             )
         } else {
             Row(

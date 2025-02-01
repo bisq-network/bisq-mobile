@@ -58,7 +58,7 @@ fun BisqButton(
     val enabled = !disabled && !isLoading
 
     val finalBackgroundColor = when (type) {
-        BisqButtonType.Default -> backgroundColor
+        BisqButtonType.Default -> if(disabled) backgroundColor.copy(alpha = 0.75F) else backgroundColor
         BisqButtonType.Outline -> Color.Transparent
         BisqButtonType.Clear -> Color.Transparent
     }
@@ -69,7 +69,10 @@ fun BisqButton(
         BisqButtonType.Clear -> null
     }
 
-    val finalContentColor = color
+    val finalContentColor = if (disabled)
+        BisqTheme.colors.grey1
+    else
+        color
 
     Button(
         onClick = { onClick?.invoke() },
@@ -83,7 +86,7 @@ fun BisqButton(
         shape = RoundedCornerShape(cornerRadius),
         enabled = enabled,
         border = finalBorder,
-        modifier = if  (fullWidth) modifier.fillMaxWidth() else modifier
+        modifier = if (fullWidth) modifier.fillMaxWidth() else modifier
     ) {
         if (iconOnly == null && text == null && textComponent == null) {
             BisqText.baseMedium("Error: Pass either text or customText or icon")
@@ -113,7 +116,7 @@ fun BisqButton(
                         text = text,
                         color = finalContentColor,
                         textAlign = textAlign,
-                        modifier = if  (fullWidth) Modifier.weight(1f) else Modifier,
+                        modifier = if (fullWidth) Modifier.weight(1f) else Modifier,
                     )
                 }
                 if (rightIcon != null) Spacer(modifier = Modifier.width(10.dp))

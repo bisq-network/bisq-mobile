@@ -46,6 +46,7 @@ fun BisqChatInputField(
 ) {
     val focusRequester = remember { FocusRequester() }
     var textState by remember { mutableStateOf(value) }
+    var textValid by remember { mutableStateOf(true) }
 
     Column {
         if (quotedMessage != null) {
@@ -53,8 +54,9 @@ fun BisqChatInputField(
         }
         BisqTextField(
             value = textState,
-            onValueChange = {
+            onValueChange = { it, isValid ->
                 textState = it
+                textValid = isValid
                 onValueChanged(textState)
             },
             indicatorColor = Color.Unspecified,
@@ -65,17 +67,24 @@ fun BisqChatInputField(
                 IconButton(
                     modifier = Modifier.size(BisqUIConstants.ScreenPadding2X),
                     onClick = {
-                        if (textState.isNotEmpty()) {
+                        if (textState.isNotEmpty() && textValid) {
                             onMessageSent(textState, quotedMessage)
                             resetScroll()
                             textState = ""
                         }
-                    }
+                    },
+                    enabled = textState.isNotEmpty() || !textValid
                 ) {
                     SendIcon()
                 }
             },
-            rightSuffixModifier = Modifier.width(BisqUIConstants.ScreenPadding2X)
+            rightSuffixModifier = Modifier.width(BisqUIConstants.ScreenPadding2X),
+            validation = {
+                if (it.length > 10000) {
+                    return@BisqTextField "Max length: 10,000 characters" //TODO:i18n
+                }
+                return@BisqTextField null
+            }
         )
 
     }

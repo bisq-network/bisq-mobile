@@ -123,7 +123,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 value = tradePriceTolerance.toString(),
                 valueSuffix = "%",
                 keyboardType = KeyboardType.Decimal,
-                onValueChange = {
+                onValueChange = { it, isValid ->
                     val parsedValue = it.toDoubleOrNull()
                     if (parsedValue != null) {
                         presenter.setTradePriceTolerance(parsedValue)
@@ -133,7 +133,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 validation = {
                     val parsedValue = it.toDoubleOrNull()
                     if (parsedValue == null) {
-                        return@BisqTextField "Value cannot be null"
+                        return@BisqTextField "Value cannot be empty"
                     }
                     if (parsedValue < 1 || parsedValue > 10) {
                         return@BisqTextField "settings.trade.maxTradePriceDeviation.invalid".i18n(10)
@@ -152,19 +152,21 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                     value = powFactor.toString(),
                     keyboardType = KeyboardType.Decimal,
                     disabled = !ignorePow,
-                    onValueChange = {
+                    onValueChange = { it, isValid ->
                         val parsedValue = it.toDoubleOrNull()
                         if (parsedValue != null) {
                             presenter.setPowFactor(parsedValue)
                         }
-                                    },
+                    },
                     validation = {
                         val parsedValue = it.toDoubleOrNull()
                         if (parsedValue == null) {
-                            return@BisqTextField "Value cannot be null"
+                            return@BisqTextField "Value cannot be empty"
                         }
                         if (parsedValue < 0 || parsedValue > 160_000) {
-                            return@BisqTextField "authorizedRole.securityManager.difficultyAdjustment.invalid".i18n(160000)
+                            return@BisqTextField "authorizedRole.securityManager.difficultyAdjustment.invalid".i18n(
+                                160000
+                            )
                         }
                         return@BisqTextField null
                     }
