@@ -14,5 +14,6 @@ data class SettingsChangeRequest(
     val supportedLanguageCodes: Set<String>? = null,
     val chatNotificationType: ChatChannelNotificationTypeEnum? = null,
     val maxTradePriceDeviation: Double? = null,
+    val useAnimations: Boolean? = null,
     val selectedMarket: MarketVO? = null
 )

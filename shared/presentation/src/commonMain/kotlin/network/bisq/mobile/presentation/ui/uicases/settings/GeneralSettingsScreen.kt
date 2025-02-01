@@ -35,6 +35,9 @@ interface IGeneralSettingsPresenter : ViewPresenter {
     val tradePriceTolerance: StateFlow<Double>
     fun setTradePriceTolerance(value: Double)
 
+    val useAnimations: StateFlow<Boolean>
+    fun setUseAnimations(value: Boolean)
+
     val powFactor: StateFlow<Double>
     fun setPowFactor(value: Double)
 
@@ -54,6 +57,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
     val supportedLanguageCodes = presenter.supportedLanguageCodes.collectAsState().value
     val closeOfferWhenTradeTaken = presenter.closeOfferWhenTradeTaken.collectAsState().value
     val tradePriceTolerance = presenter.tradePriceTolerance.collectAsState().value
+    val useAnimations = presenter.useAnimations.collectAsState().value
     val powFactor = presenter.powFactor.collectAsState().value
     val ignorePow = presenter.ignorePow.collectAsState().value
     val shouldShowPoWAdjustmentFactor = presenter.shouldShowPoWAdjustmentFactor.collectAsState().value
@@ -140,6 +144,16 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                     }
                     return@BisqTextField null
                 }
+            )
+
+            BisqHDivider()
+
+            BisqText.h4Regular("settings.display.headline".i18n())
+
+            BisqSwitch(
+                label = "settings.display.useAnimations".i18n(),
+                checked = useAnimations,
+                onSwitch = { presenter.setUseAnimations(it) }
             )
 
             if (shouldShowPoWAdjustmentFactor) {

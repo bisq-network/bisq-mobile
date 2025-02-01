@@ -66,6 +66,13 @@ class SettingsApiGateway(
         )
     }
 
+    suspend fun setUseAnimations(value: Boolean): Result<Unit> {
+        return webSocketApiClient.patch(
+            basePath,
+            SettingsChangeRequest(useAnimations = value)
+        )
+    }
+
     suspend fun setSelectedMarket(value: MarketVO): Result<Unit> {
         return webSocketApiClient.patch(
             basePath,

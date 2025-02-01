@@ -67,8 +67,14 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     private val _maxTradePriceDeviation = MutableStateFlow(5.0)
     override val maxTradePriceDeviation: StateFlow<Double> get() = _maxTradePriceDeviation
     override suspend fun setMaxTradePriceDeviation(value: Double) {
-        // TODO: settingsService.maxTradePriceDeviation is readyOnly? It's readyonly this after rebase and latest bisq2 code.
+        // TODO: settingsService.maxTradePriceDeviation is readyOnly? It's readyonly after rebase and latest bisq2 code.
         // settingsService.maxTradePriceDeviation.set(value)
+    }
+
+    private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    override val useAnimations: StateFlow<Boolean> get() = _useAnimations
+    override suspend fun setUseAnimations(value: Boolean) {
+        settingsService.useAnimations.set(value)
     }
 
     private val _difficultyAdjustmentFactor: MutableStateFlow<Double> = MutableStateFlow(1.0)
@@ -102,6 +108,9 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
         }
         settingsService.maxTradePriceDeviation.addObserver { value ->
             _maxTradePriceDeviation.value = value
+        }
+        settingsService.useAnimations.addObserver { value ->
+            _useAnimations.value = value
         }
         settingsService.difficultyAdjustmentFactor.addObserver { value ->
             _difficultyAdjustmentFactor.value = value

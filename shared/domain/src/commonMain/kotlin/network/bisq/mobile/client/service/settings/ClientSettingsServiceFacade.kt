@@ -72,6 +72,15 @@ class ClientSettingsServiceFacade(val apiGateway: SettingsApiGateway) : Settings
         }
     }
 
+    private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    override val useAnimations: StateFlow<Boolean> get() = _useAnimations
+    override suspend fun setUseAnimations(value: Boolean) {
+        val result = apiGateway.setUseAnimations(value)
+        if (result.isSuccess) {
+            _useAnimations.value = value
+        }
+    }
+
     private val _difficultyAdjustmentFactor: MutableStateFlow<Double> = MutableStateFlow(1.0)
     override val difficultyAdjustmentFactor: StateFlow<Double> get() = _difficultyAdjustmentFactor
     override suspend fun setDifficultyAdjustmentFactor(value: Double) {
@@ -94,6 +103,7 @@ class ClientSettingsServiceFacade(val apiGateway: SettingsApiGateway) : Settings
             _supportedLanguageCodes.value = result.getOrThrow().supportedLanguageCodes
             _closeMyOfferWhenTaken.value = result.getOrThrow().closeMyOfferWhenTaken
             _maxTradePriceDeviation.value = result.getOrThrow().maxTradePriceDeviation
+            _useAnimations.value = result.getOrThrow().useAnimations
         }
         return result
     }

@@ -86,6 +86,15 @@ open class GeneralSettingsPresenter(
         }
     }
 
+    private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    override val useAnimations: StateFlow<Boolean> = _useAnimations
+    override fun setUseAnimations(value: Boolean) {
+        backgroundScope.launch {
+            _useAnimations.value = value
+            settingsServiceFacade.setUseAnimations(value)
+        }
+    }
+
     private val _powFactor: MutableStateFlow<Double> = MutableStateFlow(1.0)
     override val powFactor: StateFlow<Double> = _powFactor
     override fun setPowFactor(value: Double) {
@@ -124,6 +133,7 @@ open class GeneralSettingsPresenter(
                 // _chatNotification.value =
                 _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
                 _tradePriceTolerance.value = settings.maxTradePriceDeviation
+                _useAnimations.value = settings.useAnimations
 
                 _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value
                 _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value

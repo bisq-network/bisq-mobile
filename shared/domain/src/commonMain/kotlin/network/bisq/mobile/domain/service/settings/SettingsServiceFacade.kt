@@ -30,6 +30,9 @@ interface SettingsServiceFacade : LifeCycleAware {
     val maxTradePriceDeviation: StateFlow<Double>
     suspend fun setMaxTradePriceDeviation(value: Double)
 
+    val useAnimations: StateFlow<Boolean>
+    suspend fun setUseAnimations(value: Boolean)
+
     val difficultyAdjustmentFactor: StateFlow<Double>
     suspend fun setDifficultyAdjustmentFactor(value: Double)
 
