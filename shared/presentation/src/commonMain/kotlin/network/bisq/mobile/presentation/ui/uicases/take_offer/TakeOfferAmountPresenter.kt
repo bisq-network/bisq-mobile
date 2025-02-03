@@ -40,24 +40,28 @@ class TakeOfferAmountPresenter(
     private lateinit var baseAmount: CoinVO
 
     override fun onViewAttached() {
-        takeOfferModel = takeOfferPresenter.takeOfferModel
-        val offerListItem = takeOfferModel.offerItemPresentationVO
-        quoteCurrencyCode = offerListItem.bisqEasyOffer.market.quoteCurrencyCode
+        runCatching {
+            takeOfferModel = takeOfferPresenter.takeOfferModel
+            val offerListItem = takeOfferModel.offerItemPresentationVO
+            quoteCurrencyCode = offerListItem.bisqEasyOffer.market.quoteCurrencyCode
 
-        val rangeAmountSpec: RangeAmountSpecVO =
-            offerListItem.bisqEasyOffer.amountSpec as RangeAmountSpecVO
-        minAmount = maxOf(getMinAmountValue(), rangeAmountSpec.minAmount)
-        maxAmount = minOf(getMaxAmountValue(), rangeAmountSpec.maxAmount)
+            val rangeAmountSpec: RangeAmountSpecVO =
+                offerListItem.bisqEasyOffer.amountSpec as RangeAmountSpecVO
+            minAmount = maxOf(getMinAmountValue(), rangeAmountSpec.minAmount)
+            maxAmount = minOf(getMaxAmountValue(), rangeAmountSpec.maxAmount)
 
-        formattedMinAmount = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode))
-        formattedMinAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode), true, true)
-        formattedMaxAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
+            formattedMinAmount = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode))
+            formattedMinAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode), true, true)
+            formattedMaxAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
 
-        _formattedQuoteAmount.value = offerListItem.formattedQuoteAmount
-        _formattedBaseAmount.value = offerListItem.formattedBaseAmount.value
+            _formattedQuoteAmount.value = offerListItem.formattedQuoteAmount
+            _formattedBaseAmount.value = offerListItem.formattedBaseAmount.value
 
-        sliderPosition = 0.5f
-        applySliderValue(sliderPosition)
+            sliderPosition = 0.5f
+            applySliderValue(sliderPosition)
+        }.onFailure { e ->
+            log.e(e) { "Failed to present view" }
+        }
     }
 
     //todo convert to selected currency from USD value

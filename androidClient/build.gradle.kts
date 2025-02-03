@@ -103,7 +103,7 @@ android {
         val variant = this
         outputs.all {
             val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            val appName = "BisqCli"
+            val appName = "Bisq Connect"
             val version = variant.versionName
             val fileName = "$appName-$version.apk"
             output.outputFileName = fileName

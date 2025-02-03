@@ -46,6 +46,18 @@ class TakeOfferReviewPresenter(
     private val takeOfferErrorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
 
     override fun onViewAttached() {
+        presenterScope.launch {
+            takeOfferStatus.collect { value ->
+                log.i { "takeOfferStatus: $value" }
+                //todo show state
+            }
+        }
+        presenterScope.launch {
+            takeOfferErrorMessage.collect { message ->
+                showSnackbar(message ?: "Unexpected error occurred, please try again", true)
+            }
+        }
+
         takeOfferModel = takeOfferPresenter.takeOfferModel
 
         quoteSidePaymentMethodDisplayString = appStrings.paymentMethod.toDisplayString(takeOfferModel.quoteSidePaymentMethod)
@@ -81,30 +93,18 @@ class TakeOfferReviewPresenter(
     }
 
     fun onTakeOffer() {
-        presenterScope.launch {
-            launch {
-                takeOfferStatus.collect { value ->
-                    log.i { "takeOfferStatus: $value" }
-                    //todo show state
-                }
-            }
-            launch {
-                takeOfferErrorMessage.collect { value ->
-                    log.i { "takeOfferErrorMessage: $value" }
-                    //todo show error
-                }
-            }
-        }
         backgroundScope.launch {
-            // TODO deactivate buttons, show waiting state
             try {
+                enableInteractive(false)
                 takeOfferPresenter.takeOffer(takeOfferStatus, takeOfferErrorMessage)
             } catch (e: Exception) {
                 log.e("Take offer failed", e)
-                // show error to user
+                // TODO this is not working (probably the snackbar is being rendered underneath?)
+                takeOfferErrorMessage.value = e.message ?: "Offer cannot be taken at this time"
+            } finally {
+                onNavigateToMyTrades()
+                enableInteractive()
             }
-            // TODO hide waiting state, show successfully published state, show button to open offer book, clear navigation backstack
-            onNavigateToMyTrades()
         }
     }
 
