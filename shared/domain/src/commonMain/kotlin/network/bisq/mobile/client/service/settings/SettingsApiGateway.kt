@@ -73,11 +73,5 @@ class SettingsApiGateway(
         )
     }
 
-    suspend fun setSelectedMarket(value: MarketVO): Result<Unit> {
-        return webSocketApiClient.patch(
-            basePath,
-            SettingsChangeRequest(selectedMarket = value)
-        )
-    }
 }
 

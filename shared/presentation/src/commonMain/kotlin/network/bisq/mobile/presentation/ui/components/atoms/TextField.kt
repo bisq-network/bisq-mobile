@@ -105,9 +105,13 @@ fun BisqTextField(
         )
     }
 
+    var hasInitialized by remember { mutableStateOf(false) }
     LaunchedEffect(value) {
-        validationError = validation?.invoke(value)
-        onValueChange(value, validationError == null)
+        if (hasInitialized) {
+            validationError = validation?.invoke(value)
+            onValueChange(value, validationError == null)
+        }
+        hasInitialized = true
     }
 
     Column(modifier = modifier) {

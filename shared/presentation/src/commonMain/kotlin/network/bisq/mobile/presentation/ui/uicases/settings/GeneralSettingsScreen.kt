@@ -123,7 +123,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
             )
 
             BisqTextField(
-                label = "settings.trade.maxTradePriceDeviation".i18n(),
+                label = "settings.trade.maxTradePriceDeviation".i18n() + " (TODO in androidNode)",
                 value = tradePriceTolerance.toString(),
                 valueSuffix = "%",
                 keyboardType = KeyboardType.Decimal,
