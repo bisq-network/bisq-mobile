@@ -33,7 +33,8 @@ fun BuyerState2a(
             // Amount to transfer
             label = "bisqEasy.tradeState.info.buyer.phase2a.quoteAmount".i18n(),
             value = quoteAmount,
-            disabled = true
+            disabled = true,
+            showCopy = true,
         )
 
         BisqGap.VHalf()
@@ -44,9 +45,9 @@ fun BuyerState2a(
             // Please leave the 'Reason for payment' field empty, in case you make a bank transfer
             helperText = "bisqEasy.tradeState.info.buyer.phase2a.reasonForPaymentInfo".i18n(),
             value = paymentAccountData,
-            disabled = true
+            disabled = true,
+            showCopy = true,
         )
-
 
         BisqGap.V1()
         BisqButton(

@@ -1,11 +1,7 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
@@ -14,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -35,10 +32,12 @@ enum class BisqButtonType {
 @Composable
 fun BisqButton(
     text: String? = "Button",
+    textAlign: TextAlign = TextAlign.Center,
     onClick: (() -> Unit)? = null,
     color: Color = BisqTheme.colors.light1,
     textColor: Color = BisqTheme.colors.light1,
     backgroundColor: Color = BisqTheme.colors.primary,
+    fullWidth: Boolean = false,
     padding: PaddingValues = PaddingValues(
         horizontal = BisqUIConstants.ScreenPadding4X,
         vertical = BisqUIConstants.ScreenPaddingHalf
@@ -59,7 +58,7 @@ fun BisqButton(
     val enabled = !disabled && !isLoading
 
     val finalBackgroundColor = when (type) {
-        BisqButtonType.Default -> backgroundColor
+        BisqButtonType.Default -> if(disabled) backgroundColor.copy(alpha = 0.75F) else backgroundColor
         BisqButtonType.Outline -> Color.Transparent
         BisqButtonType.Clear -> Color.Transparent
     }
@@ -70,7 +69,10 @@ fun BisqButton(
         BisqButtonType.Clear -> null
     }
 
-    val finalContentColor = color
+    val finalContentColor = if (disabled)
+        BisqTheme.colors.grey1
+    else
+        color
 
     Button(
         onClick = { onClick?.invoke() },
@@ -84,7 +86,7 @@ fun BisqButton(
         shape = RoundedCornerShape(cornerRadius),
         enabled = enabled,
         border = finalBorder,
-        modifier = modifier
+        modifier = if (fullWidth) modifier.fillMaxWidth() else modifier
     ) {
         if (iconOnly == null && text == null && textComponent == null) {
             BisqText.baseMedium("Error: Pass either text or customText or icon")
@@ -93,7 +95,10 @@ fun BisqButton(
         if (iconOnly != null) {
             iconOnly()
         } else if (text != null) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
@@ -109,7 +114,9 @@ fun BisqButton(
                 } else {
                     BisqText.baseMedium(
                         text = text,
-                        color = textColor,
+                        color = finalContentColor,
+                        textAlign = textAlign,
+                        modifier = if (fullWidth) Modifier.weight(1f) else Modifier,
                     )
                 }
                 if (rightIcon != null) Spacer(modifier = Modifier.width(10.dp))

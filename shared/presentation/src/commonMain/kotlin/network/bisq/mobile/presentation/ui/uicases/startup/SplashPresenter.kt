@@ -9,6 +9,7 @@ import kotlinx.datetime.Clock
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.User
+import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -59,10 +60,13 @@ open class SplashPresenter(
 
     private fun navigateToNextScreen() {
         CoroutineScope(Dispatchers.Main).launch {
-            val settings: Settings = settingsRepository.fetch() ?: Settings()
+            val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
+            val settingsMobile: Settings = settingsRepository.fetch() ?: Settings()
             val user: User? = userRepository.fetch()
 
-            if (hasConnectivity()) {
+            if (!settings.isTacAccepted) {
+                navigateToAgreement()
+            } else if (hasConnectivity()) {
                 // only fetch profile with connectivity
                 val hasProfile: Boolean = userProfileService.hasUserProfile()
 
@@ -74,11 +78,11 @@ open class SplashPresenter(
                     // 2b) xClients being able to connect with remote instance happening successfuly as part of services init?
                     navigateToHome()
                     // Scenario 2: Loading up for first time for both androidNode and xClients
-                } else if (settings.firstLaunch) {
+                } else if (settingsMobile.firstLaunch) {
                     navigateToOnboarding()
                     // Scenario 3: Handle others based on app type
                 } else {
-                    doCustomNavigationLogic(settings, hasProfile)
+                    doCustomNavigationLogic(settingsMobile, hasProfile)
                 }
             } else {
                 navigateToTrustedNodeSetup()
@@ -113,6 +117,12 @@ open class SplashPresenter(
     open suspend fun hasConnectivity(): Boolean {
         webSocketClientProvider?.get().takeIf { it != null }.let {
             return webSocketClientProvider?.testClient(it!!.host, it.port) == true
+        }
+    }
+
+    private fun navigateToAgreement() {
+        navigateTo(Routes.Agreement) {
+            it.popUpTo(Routes.Splash.name) { inclusive = true }
         }
     }
 

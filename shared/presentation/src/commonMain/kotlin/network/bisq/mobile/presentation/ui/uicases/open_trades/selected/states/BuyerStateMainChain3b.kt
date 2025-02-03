@@ -42,7 +42,8 @@ fun BuyerStateMainChain3b(
     val txId = tradeItemModel.bisqEasyTradeModel.paymentProof.value ?: "data.na".i18n()
 
     val role = if (tradeItemModel.bisqEasyTradeModel.isBuyer) "buyer" else "seller"
-    val waitingText = "bisqEasy.tradeState.info.$role.phase3b.balance.prompt".i18n(txId)  // Waiting for blockchain data...
+    val waitingText =
+        "bisqEasy.tradeState.info.$role.phase3b.balance.prompt".i18n(txId)  // Waiting for blockchain data...
     val balanceLabel = "bisqEasy.tradeState.info.$role.phase3b.balance".i18n() // Bitcoin payment
     Column {
         BisqGap.V1()
@@ -72,7 +73,14 @@ fun BuyerStateMainChain3b(
                 // Transaction ID
                 label = "bisqEasy.tradeState.info.phase3b.txId".i18n(),
                 value = txId,
-                disabled = true
+                disabled = true,
+                showCopy = true,
+                validation = {
+                    if (explorerRequestError?.isNotEmpty() == true) {
+                        return@BisqTextField explorerRequestError
+                    }
+                    return@BisqTextField null
+                }
             )
 
             BisqGap.VQuarter()
@@ -85,9 +93,14 @@ fun BuyerStateMainChain3b(
                         label = balanceLabel,
                         placeholder = waitingText,
                         helperText = "bisqEasy.tradeState.info.phase3b.balance.help.explorerLookup".i18n(blockExplorer), // Looking up transaction at block explorer ''{0}''
-                        errorText = explorerRequestError ?: "",
                         disabled = true,
-                        modifier = Modifier.alpha(0.5f)
+                        modifier = Modifier.alpha(0.5f),
+                        validation = {
+                            if (explorerRequestError?.isNotEmpty() == true) {
+                                return@BisqTextField explorerRequestError
+                            }
+                            return@BisqTextField null
+                        }
                     )
                 }
 
@@ -97,9 +110,14 @@ fun BuyerStateMainChain3b(
                         label = balanceLabel,
                         value = btcBalance,
                         helperText = "bisqEasy.tradeState.info.phase3b.balance.help.notConfirmed".i18n(), // Transaction seen in mempool but not confirmed yet
-                        errorText = explorerRequestError ?: "",
                         color = BisqTheme.colors.warning,
                         disabled = true,
+                        validation = {
+                            if (explorerRequestError?.isNotEmpty() == true) {
+                                return@BisqTextField explorerRequestError
+                            }
+                            return@BisqTextField null
+                        }
                     )
                 }
 
@@ -109,9 +127,14 @@ fun BuyerStateMainChain3b(
                         label = balanceLabel,
                         value = btcBalance,
                         helperText = "bisqEasy.tradeState.info.phase3b.balance.help.confirmed".i18n(), // Transaction is confirmed
-                        errorText = explorerRequestError ?: "",
                         //color = BisqTheme.colors.primary,
                         disabled = true,
+                        validation = {
+                            if (explorerRequestError?.isNotEmpty() == true) {
+                                return@BisqTextField explorerRequestError
+                            }
+                            return@BisqTextField null
+                        }
                     )
                 }
 
@@ -120,8 +143,13 @@ fun BuyerStateMainChain3b(
                     BisqTextField(
                         label = balanceLabel,
                         value = waitingText,
-                        errorText = explorerRequestError ?: "",
                         disabled = true,
+                        validation = {
+                            if (explorerRequestError?.isNotEmpty() == true) {
+                                return@BisqTextField explorerRequestError
+                            }
+                            return@BisqTextField null
+                        }
                     )
                 }
             }

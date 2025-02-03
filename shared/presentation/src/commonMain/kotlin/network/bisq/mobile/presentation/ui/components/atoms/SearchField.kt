@@ -39,7 +39,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 fun BisqSearchField(
     label: String = "",
     value: String,
-    onValueChanged: (String) -> Unit = {},
+    onValueChanged: (String, Boolean) -> Unit,
     placeholder: String = "",
     rightSuffix: (@Composable () -> Unit)? = null,
     disabled: Boolean = false,
@@ -48,7 +48,7 @@ fun BisqSearchField(
     BisqTextField(
         label = label,
         value = value,
-        onValueChanged = onValueChanged,
+        onValueChange = onValueChanged,
         placeholder = placeholder,
         leftSuffix = { SearchIcon() },
         rightSuffix = rightSuffix,

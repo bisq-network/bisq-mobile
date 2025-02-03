@@ -27,6 +27,7 @@ import bisq.bonded_roles.security_manager.alert.AlertNotificationsService
 import bisq.chat.ChatService
 import bisq.common.observable.Observable
 import bisq.common.util.ExceptionUtil
+import bisq.common.locale.LanguageRepository
 import bisq.contract.ContractService
 import bisq.identity.IdentityService
 import bisq.network.NetworkService
@@ -108,6 +109,9 @@ class AndroidApplicationService(
             Supplier { applicationService.favouriteMarketsService }
         var dontShowAgainService: Supplier<DontShowAgainService> =
             Supplier { applicationService.dontShowAgainService }
+
+        var languageRepository: Supplier<LanguageRepository> =
+            Supplier { applicationService.languageRepository }
     }
 
     companion object {
@@ -163,6 +167,7 @@ class AndroidApplicationService(
     val alertNotificationsService: AlertNotificationsService
     val favouriteMarketsService: FavouriteMarketsService
     val dontShowAgainService: DontShowAgainService
+    val languageRepository: LanguageRepository
 
     init {
         chatService = ChatService(
@@ -218,6 +223,8 @@ class AndroidApplicationService(
         favouriteMarketsService = FavouriteMarketsService(settingsService)
 
         dontShowAgainService = DontShowAgainService(settingsService)
+
+        languageRepository = LanguageRepository()
     }
 
     override fun initialize(): CompletableFuture<Boolean> {

@@ -8,6 +8,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -33,6 +34,7 @@ fun CreateOfferTradePriceSelectorScreen() {
     RememberPresenterLifecycle(presenter)
 
     val formattedPercentagePrice by presenter.formattedPercentagePrice.collectAsState()
+    val formattedPercentagePriceValid by presenter.formattedPercentagePriceValid.collectAsState()
     val formattedPrice by presenter.formattedPrice.collectAsState()
     val priceType by presenter.priceType.collectAsState()
 
@@ -42,7 +44,8 @@ fun CreateOfferTradePriceSelectorScreen() {
         stepsLength = 6,
         prevOnClick = { presenter.onBack() },
         nextButtonText = commonStrings.buttons_next,
-        nextOnClick = { presenter.onNext() }
+        nextOnClick = { presenter.onNext() },
+        nextDisabled = !presenter.formattedPercentagePriceValid.collectAsState().value,
     ) {
         BisqText.h3Regular(
             text = bisqEasyTradeWizardStrings.bisqEasy_price_headline,
@@ -73,24 +76,52 @@ fun CreateOfferTradePriceSelectorScreen() {
                     BisqTextField(
                         label = bisqEasyTradeWizardStrings.bisqEasy_price_percentage_inputBoxText,
                         value = formattedPercentagePrice,
-                        onValueChanged = { presenter.onPercentagePriceChanged(it) },
+                        keyboardType = KeyboardType.Decimal,
+                        onValueChange = { it, isValid -> presenter.onPercentagePriceChanged(it, isValid) },
+                        validation = {
+                            val parsedValue = it.toDoubleOrNull()
+                            if (parsedValue == null) {
+                                return@BisqTextField "Value cannot be empty"
+                            } else if (parsedValue < -10) {
+                                return@BisqTextField "Min: -10%"
+                            } else if (parsedValue > 50) {
+                                return@BisqTextField "Max: 50%"
+                            }
+                            return@BisqTextField null
+                        }
                     )
                     BisqTextField(
                         label = presenter.fixPriceDescription,
                         value = formattedPrice,
-                        onValueChanged = {}, // Deactivated
+                        onValueChange = { it, isValid -> }, // Deactivated
                         indicatorColor = BisqTheme.colors.grey1
                     )
                 } else {
                     BisqTextField(
                         label = presenter.fixPriceDescription,
                         value = formattedPrice,
-                        onValueChanged = { presenter.onFixPriceChanged(it) },
+                        keyboardType = KeyboardType.Decimal,
+                        onValueChange = { it, isValid -> presenter.onFixPriceChanged(it, isValid) },
+                        validation = {
+                            val parsedValue = it.toDoubleOrNull()
+                            if (parsedValue == null) {
+                                return@BisqTextField "Value cannot be empty"
+                            }
+                            val parsedPercent = formattedPercentagePrice.toDoubleOrNull()
+                            if (parsedPercent != null) {
+                                if (parsedPercent < -10) {
+                                    return@BisqTextField "Trade price should be greater than -10% of market price"
+                                } else if (parsedPercent > 50) {
+                                    return@BisqTextField "Trade price should be lesser than 50% of market price"
+                                }
+                            }
+                            return@BisqTextField null
+                        }
                     )
                     BisqTextField(
                         label = bisqEasyTradeWizardStrings.bisqEasy_price_percentage_inputBoxText,
                         value = formattedPercentagePrice,
-                        onValueChanged = {},// Deactivated
+                        onValueChange = { it, isValid -> },// Deactivated
                         indicatorColor = BisqTheme.colors.grey1
                     )
                 }

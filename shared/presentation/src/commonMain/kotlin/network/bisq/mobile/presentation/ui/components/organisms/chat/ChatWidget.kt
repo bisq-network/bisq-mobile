@@ -54,6 +54,14 @@ fun ChatWidget(
                     message = content,
                     isUserMe = content.author == "me",
                     onQuoteMessage = onQuoteMessage,
+                    onScrollToMessage = { messageId ->
+                        val index = messages.indexOfFirst { it.messageID == messageId }
+                        if (index >= 0) {
+                            scope.launch {
+                                scrollState.animateScrollToItem(index, -50)
+                            }
+                        }
+                    },
                 )
             }
         }

@@ -58,7 +58,8 @@ fun GettingStartedScreen() {
 
     BisqScrollLayout(
         padding = PaddingValues(all = 0.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp)
+        verticalArrangement = Arrangement.spacedBy(24.dp),
+        isInteractive = presenter.isInteractive.collectAsState().value
     ) {
 
         Column {
@@ -135,7 +136,6 @@ fun WelcomeCard(
             // Primary Button
             Button(
                 onClick={ presenter.onStartTrading() },
-                enabled = presenter.isInteractive.collectAsState().value,
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = BisqTheme.colors.primary),
                 shape = RoundedCornerShape(8.dp)

@@ -38,7 +38,7 @@ fun OfferbookMarketScreen() {
 
         BisqSearchField(
             value = presenter.searchText.collectAsState().value,
-            onValueChanged = { presenter.setSearchText(it) },
+            onValueChanged = { it, isValid -> presenter.setSearchText(it) },
             placeholder = strings.common_search,
             rightSuffix = {
                 // TODO: Height to be reduced with Icon only buttons

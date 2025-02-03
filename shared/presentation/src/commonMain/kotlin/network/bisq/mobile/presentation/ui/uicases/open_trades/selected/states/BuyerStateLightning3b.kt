@@ -56,6 +56,7 @@ fun BuyerStateLightning3b(
                     label = "bisqEasy.tradeState.info.phase3b.lightning.preimage".i18n(),
                     value = preImage,
                     disabled = true,
+                    showCopy = true
                 )
             }
 

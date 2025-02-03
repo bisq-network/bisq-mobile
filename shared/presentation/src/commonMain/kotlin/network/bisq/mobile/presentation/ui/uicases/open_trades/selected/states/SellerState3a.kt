@@ -93,7 +93,7 @@ fun SellerState3a(
             // Transaction ID / Preimage (optional)
             label = paymentProofDescription,
             value = paymentProof ?: "",
-            onValueChanged = { presenter.onPaymentProofInput(it) },
+            onValueChange = { it, isValid -> presenter.onPaymentProofInput(it) },
         )
 
         BisqGap.V1()

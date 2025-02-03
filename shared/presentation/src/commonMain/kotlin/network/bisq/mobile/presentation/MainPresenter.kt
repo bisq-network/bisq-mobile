@@ -11,6 +11,7 @@ import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.setupUncaughtExceptionHandler
+import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.ui.AppPresenter
 import kotlin.jvm.JvmStatic
 
@@ -20,6 +21,7 @@ import kotlin.jvm.JvmStatic
  */
 open class MainPresenter(
     private val openTradesNotificationService: OpenTradesNotificationService,
+    private val settingsService: SettingsServiceFacade,
     private val urlLauncher: UrlLauncher
 ) : BasePresenter(null), AppPresenter {
     companion object {
@@ -40,6 +42,8 @@ open class MainPresenter(
     // Observable state
     private val _isContentVisible = MutableStateFlow(false)
     override val isContentVisible: StateFlow<Boolean> = _isContentVisible
+
+    override val languageCode: StateFlow<String> = settingsService.languageCode
 
     init {
         val localeCode = getDeviceLanguageCode()

@@ -1,7 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
@@ -44,6 +48,18 @@ class TakeOfferReviewPresenter(
     // or error to the user
     private val takeOfferStatus: MutableStateFlow<TakeOfferStatus?> = MutableStateFlow(null)
     private val takeOfferErrorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
+
+    private val _showTakeOfferProgressDialog = MutableStateFlow(false)
+    val showTakeOfferProgressDialog: StateFlow<Boolean> get() = _showTakeOfferProgressDialog
+    fun setShowTakeOfferProgressDialog(value: Boolean) {
+        _showTakeOfferProgressDialog.value = value
+    }
+
+    private val _showTakeOfferSuccessDialog = MutableStateFlow(false)
+    val showTakeOfferSuccessDialog: StateFlow<Boolean> get() = _showTakeOfferSuccessDialog
+    fun setShowTakeOfferSuccessDialog(value: Boolean) {
+        _showTakeOfferSuccessDialog.value = value
+    }
 
     override fun onViewAttached() {
         presenterScope.launch {
@@ -94,6 +110,8 @@ class TakeOfferReviewPresenter(
 
     fun onTakeOffer() {
         backgroundScope.launch {
+            setShowTakeOfferProgressDialog(true)
+            // TODO deactivate buttons, show waiting state
             try {
                 enableInteractive(false)
                 takeOfferPresenter.takeOffer(takeOfferStatus, takeOfferErrorMessage)
@@ -102,24 +120,30 @@ class TakeOfferReviewPresenter(
                 // TODO this is not working (probably the snackbar is being rendered underneath?)
                 takeOfferErrorMessage.value = e.message ?: "Offer cannot be taken at this time"
             } finally {
-                onNavigateToMyTrades()
+                delay(3000L)
+                setShowTakeOfferProgressDialog(false)
+                setShowTakeOfferSuccessDialog(true)
                 enableInteractive()
             }
+            // TODO hide waiting state, show successfully published state, show button to open offer book, clear navigation backstack
+            // onGoToOpenTrades()
+
+
         }
     }
 
-    private fun onNavigateToMyTrades() {
-        presenterScope.launch {
-            // FIXME without clearing the backstack it does not work
-            val rootNavController = getRootNavController()
-            var currentBackStack = rootNavController.currentBackStack.value
-            while (currentBackStack.size > 2) {
-                rootNavController.popBackStack()
-                currentBackStack = rootNavController.currentBackStack.value
-            }
-            navigateToTab(Routes.TabOpenTradeList)
-        }
+    fun onGoToOpenTrades() {
+        setShowTakeOfferSuccessDialog(false)
+        closeWorkflow()
+        // ensure we go to the my trade tab
+        navigateToTab(Routes.TabOpenTradeList)
     }
+
+    private fun closeWorkflow() {
+        // TODO review better alternative than double call?
+        navigateBackTo(Routes.OffersByMarket)
+        navigateBack()
+   }
 
     private fun applyPriceDetails() {
         val i18n = appStrings.bisqEasyTradeWizard

@@ -36,14 +36,27 @@ fun SellerState1(
         BisqTextField(
             label = "bisqEasy.tradeState.info.seller.phase1.accountData".i18n(), // My payment account data
             value = paymentAccountData,
-            onValueChanged = { presenter.onPaymentDataInput(it) },
+            onValueChange = { it, isValid -> presenter.onPaymentDataInput(it, isValid) },
+            validation = {
+                // Same validation as PaymentAccountSettingsScreen.accountData field validation
+
+                if (it.length < 3) {
+                    return@BisqTextField "Min length: 3 characters"
+                }
+
+                if (it.length > 1024) {
+                    return@BisqTextField "Max length: 1024 characters"
+                }
+
+                return@BisqTextField null
+            }
         )
 
         BisqGap.V1()
         BisqButton(
             text = "bisqEasy.tradeState.info.seller.phase1.buttonText".i18n(), // Send account data
             onClick = { presenter.onSendPaymentData() },
-            disabled = paymentAccountData.isEmpty(),
+            disabled = !presenter.paymentAccountDataValid.collectAsState().value,
             padding = PaddingValues(
                 horizontal = 18.dp,
                 vertical = 6.dp

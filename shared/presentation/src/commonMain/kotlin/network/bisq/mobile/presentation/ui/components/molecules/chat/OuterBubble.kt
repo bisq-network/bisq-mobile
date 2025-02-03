@@ -38,7 +38,8 @@ enum class ReactionType(val fileName: String) {
 fun ChatOuterBubble(
     message: ChatMessage,
     isUserMe: Boolean,
-    onQuoteMessage: (ChatMessage) -> Unit = {}
+    onQuoteMessage: (ChatMessage) -> Unit = {},
+    onScrollToMessage: (String) -> Unit = {},
 ) {
 
     if (message.author == "SYSTEM") {
@@ -103,7 +104,9 @@ fun ChatOuterBubble(
                     modifier = Modifier.combinedClickable(onLongClick = { showMenu = true }, onClick = {}),
                 ) {
                     if (message.chatMessageReplyOf?.content?.isNotEmpty() == true) {
-                        QuoteMessageBubble(message) {
+                        QuoteMessageBubble(message, onClick = {
+                            onScrollToMessage(message.chatMessageReplyOf!!.messageID)
+                        }) {
                             ChatInnerBubble(message, isUserMe)
                         }
                     } else {

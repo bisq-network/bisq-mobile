@@ -171,6 +171,15 @@ class WebSocketClient(
         session?.send(Frame.Text(jsonString))
     }
 
+    suspend fun publicSend(subscriberId: String, topic: Topic, parameter: String? = null) {
+        val subscriptionRequest = SubscriptionRequest(
+            subscriberId,
+            topic,
+            parameter
+        );
+        send(subscriptionRequest)
+    }
+
     private suspend fun startListening() {
         session?.let { session ->
             try {

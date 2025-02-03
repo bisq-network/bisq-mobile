@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SendIcon
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.button.CloseIconButton
 import network.bisq.mobile.presentation.ui.composeModels.ChatMessage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -46,6 +48,7 @@ fun BisqChatInputField(
 ) {
     val focusRequester = remember { FocusRequester() }
     var textState by remember { mutableStateOf(value) }
+    var textValid by remember { mutableStateOf(true) }
 
     Column {
         if (quotedMessage != null) {
@@ -53,8 +56,9 @@ fun BisqChatInputField(
         }
         BisqTextField(
             value = textState,
-            onValueChanged = {
+            onValueChange = { it, isValid ->
                 textState = it
+                textValid = isValid
                 onValueChanged(textState)
             },
             indicatorColor = Color.Unspecified,
@@ -62,20 +66,26 @@ fun BisqChatInputField(
             modifier = Modifier.focusRequester(focusRequester),
             placeholder = placeholder,
             rightSuffix = {
-                IconButton(
-                    modifier = Modifier.size(BisqUIConstants.ScreenPadding2X),
+                BisqIconButton(
                     onClick = {
-                        if (textState.isNotEmpty()) {
+                        if (textState.isNotEmpty() && textValid) {
                             onMessageSent(textState, quotedMessage)
                             resetScroll()
                             textState = ""
                         }
-                    }
+                    },
+                    disabled = textState.isEmpty() || !textValid
                 ) {
                     SendIcon()
                 }
             },
-            rightSuffixModifier = Modifier.width(BisqUIConstants.ScreenPadding2X)
+            rightSuffixModifier = Modifier.width(BisqUIConstants.ScreenPadding2X),
+            validation = {
+                if (it.length > 10000) {
+                    return@BisqTextField "Max length: 10,000 characters" //TODO:i18n
+                }
+                return@BisqTextField null
+            }
         )
 
     }
