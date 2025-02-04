@@ -1,6 +1,5 @@
 package network.bisq.mobile.android.node.service.settings
 
-import androidx.compose.runtime.MutableState
 import bisq.common.observable.Pin
 import bisq.settings.ChatNotificationType
 import bisq.settings.SettingsService
@@ -67,8 +66,7 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     private val _maxTradePriceDeviation = MutableStateFlow(5.0)
     override val maxTradePriceDeviation: StateFlow<Double> get() = _maxTradePriceDeviation
     override suspend fun setMaxTradePriceDeviation(value: Double) {
-        // TODO: settingsService.maxTradePriceDeviation is readyOnly? It's readyonly after rebase and latest bisq2 code.
-        // settingsService.maxTradePriceDeviation.set(value)
+        settingsService.setMaxTradePriceDeviation(value)
     }
 
     private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
