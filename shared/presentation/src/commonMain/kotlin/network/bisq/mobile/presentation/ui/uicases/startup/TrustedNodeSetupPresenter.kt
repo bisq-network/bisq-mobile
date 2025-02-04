@@ -1,11 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
-import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.presentation.BasePresenter
@@ -21,7 +19,7 @@ class TrustedNodeSetupPresenter(
     private val _isBisqApiUrlValid = MutableStateFlow(false)
     override val isBisqApiUrlValid: StateFlow<Boolean> = _isBisqApiUrlValid
 
-    private val _bisqApiUrl = MutableStateFlow("ws://10.0.0.1:8090")
+    private val _bisqApiUrl = MutableStateFlow("ws://10.0.2.2:8090")
     override val bisqApiUrl: StateFlow<String> = _bisqApiUrl
 
     private val _isConnected = MutableStateFlow(false)

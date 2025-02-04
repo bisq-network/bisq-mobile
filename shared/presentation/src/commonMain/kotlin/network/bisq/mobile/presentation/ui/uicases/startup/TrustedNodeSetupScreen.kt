@@ -5,29 +5,39 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
-import network.bisq.mobile.presentation.ui.components.atoms.icons.QuestionIcon
-import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
-import network.bisq.mobile.presentation.ui.theme.*
-import org.jetbrains.compose.resources.ExperimentalResourceApi
-import org.koin.compose.koinInject
-
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
+import network.bisq.mobile.presentation.ui.components.atoms.icons.QuestionIcon
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import org.jetbrains.compose.resources.ExperimentalResourceApi
+import org.koin.compose.koinInject
 
 interface ITrustedNodeSetupPresenter : ViewPresenter {
     val isBisqApiUrlValid: StateFlow<Boolean>
@@ -62,7 +72,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
         BisqText.largeRegular(
-            text = "To use Bisq through your trusted node, please enter the URL to connect to. E.g. ws://10.0.0.1:8090",
+            text = "To use Bisq through your trusted node, please enter the URL to connect to. E.g. ws://10.0.2.2:8090",
             color = BisqTheme.colors.light1,
         )
         Spacer(modifier = Modifier.height(24.dp))
