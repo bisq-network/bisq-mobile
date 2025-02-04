@@ -9,7 +9,7 @@
       <BuildActionEntries>
          <BuildActionEntry
             buildForTesting = "NO"
-            buildForRunning = "NO"
+            buildForRunning = "YES"
             buildForProfiling = "NO"
             buildForArchiving = "NO"
             buildForAnalyzing = "NO">
@@ -53,9 +53,9 @@
          runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "74831B692D5088E600B729F4"
+            BlueprintIdentifier = "7555FF7A242A565900829871"
             BuildableName = "Bisq Connect.app"
-            BlueprintName = "Bisq Connect"
+            BlueprintName = "Bisq Connect Debug"
             ReferencedContainer = "container:iosClient.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
