@@ -39,7 +39,7 @@ fun BuyerState1a(
             label = description,  // Bitcoin address / Lightning invoice
             value = bitcoinPaymentData,
             helperText = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.walletHelp".i18n(), // If you have not set up a wallet yet, you can find help at the wallet guide
-            onValueChanged = { presenter.onBitcoinPaymentDataInput(it) },
+            onValueChange = { it, isValid -> presenter.onBitcoinPaymentDataInput(it) },
         )
 
         BisqGap.V1()

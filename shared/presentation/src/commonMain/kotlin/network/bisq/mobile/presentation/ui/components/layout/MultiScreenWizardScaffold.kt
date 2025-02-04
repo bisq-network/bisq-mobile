@@ -23,6 +23,8 @@ fun MultiScreenWizardScaffold(
     nextButtonText: String = LocalStrings.current.common.buttons_next,
     prevOnClick: (() -> Unit)? = null,
     nextOnClick: (() -> Unit)? = null,
+    prevDisabled: Boolean = false,
+    nextDisabled: Boolean = false,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     useStaticScaffold: Boolean = false,
     snackbarHostState: SnackbarHostState? = null,
@@ -85,7 +87,7 @@ fun MultiScreenWizardScaffold(
                             }
                         },
                         padding = PaddingValues(horizontal = 48.dp, vertical = 4.dp),
-                        disabled = prevOnClick == null
+                        disabled = prevOnClick == null || prevDisabled
                     )
                     BisqButton(
                         text = nextButtonText,
@@ -95,7 +97,7 @@ fun MultiScreenWizardScaffold(
                             }
                         },
                         padding = PaddingValues(horizontal = 48.dp, vertical = 4.dp),
-                        disabled = nextOnClick == null
+                        disabled = nextOnClick == null || nextDisabled
                     )
                 }
             }

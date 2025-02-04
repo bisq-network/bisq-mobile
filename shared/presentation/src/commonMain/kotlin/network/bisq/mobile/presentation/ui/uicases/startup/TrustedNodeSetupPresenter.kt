@@ -18,11 +18,17 @@ class TrustedNodeSetupPresenter(
     private val webSocketClientProvider: WebSocketClientProvider
 ) : BasePresenter(mainPresenter), ITrustedNodeSetupPresenter {
 
-    private val _bisqApiUrl = MutableStateFlow("")
+    private val _isBisqApiUrlValid = MutableStateFlow(false)
+    override val isBisqApiUrlValid: StateFlow<Boolean> = _isBisqApiUrlValid
+
+    private val _bisqApiUrl = MutableStateFlow("ws://10.0.0.1:8090")
     override val bisqApiUrl: StateFlow<String> = _bisqApiUrl
 
     private val _isConnected = MutableStateFlow(false)
     override val isConnected: StateFlow<Boolean> = _isConnected
+
+    private val _isLoading = MutableStateFlow(false)
+    override val isLoading: StateFlow<Boolean> = _isLoading
 
     init {
         initialize()
@@ -36,7 +42,7 @@ class TrustedNodeSetupPresenter(
                 settingsRepository.data.value.let {
                     it?.let {
                         log.d { "Settings url:${it.bisqApiUrl}" }
-                        updateBisqApiUrl(it.bisqApiUrl)
+                        updateBisqApiUrl(it.bisqApiUrl, true)
                     }
                 }
             } catch (e: Exception) {
@@ -45,14 +51,18 @@ class TrustedNodeSetupPresenter(
         }
     }
 
-    override fun updateBisqApiUrl(newUrl: String) {
+    override fun updateBisqApiUrl(newUrl: String, isValid: Boolean) {
+        log.w { "$newUrl: $isValid" }
         // TODO apply validation of the URL format ws://<IP>:<PORT> after Buddha's support for it
+        _isBisqApiUrlValid.value = isValid
         _bisqApiUrl.value = newUrl
         _isConnected.value = false
     }
 
     override fun testConnection() {
         backgroundScope.launch {
+            _isLoading.value = true
+            log.w { "Test: " + _bisqApiUrl.value }
             WebSocketClientProvider.parseUri(_bisqApiUrl.value).let { connectionSettings ->
                 if (webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)) {
                     updateTrustedNodeSettings()
@@ -63,6 +73,7 @@ class TrustedNodeSetupPresenter(
                     showSnackbar("Could not connect to given url ${_bisqApiUrl.value}, please try again with another setup")
                     _isConnected.value = false
                 }
+                _isLoading.value = false
             }
         }
     }

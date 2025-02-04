@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.service.settings
 
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
+import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.utils.Logging
@@ -29,13 +30,6 @@ class SettingsApiGateway(
         )
     }
 
-    suspend fun setCloseMyOfferWhenTaken(value: Boolean): Result<Unit> {
-        return webSocketApiClient.patch(
-            basePath,
-            SettingsChangeRequest(closeMyOfferWhenTaken = value)
-        )
-    }
-
     suspend fun setLanguageCode(value: String): Result<Unit> {
         return webSocketApiClient.patch(
             basePath,
@@ -50,6 +44,21 @@ class SettingsApiGateway(
         )
     }
 
+    suspend fun setChatNotificationType(value: ChatChannelNotificationTypeEnum): Result<Unit> {
+        // TODO: @Henrik: This is probably wrong. Can you please give me some hints
+        return webSocketApiClient.patch(
+            basePath,
+            SettingsChangeRequest(chatNotificationType = value)
+        )
+    }
+
+    suspend fun setCloseMyOfferWhenTaken(value: Boolean): Result<Unit> {
+        return webSocketApiClient.patch(
+            basePath,
+            SettingsChangeRequest(closeMyOfferWhenTaken = value)
+        )
+    }
+
     suspend fun setMaxTradePriceDeviation(value: Double): Result<Unit> {
         return webSocketApiClient.patch(
             basePath,
@@ -57,11 +66,12 @@ class SettingsApiGateway(
         )
     }
 
-    suspend fun setSelectedMarket(value: MarketVO): Result<Unit> {
+    suspend fun setUseAnimations(value: Boolean): Result<Unit> {
         return webSocketApiClient.patch(
             basePath,
-            SettingsChangeRequest(selectedMarket = value)
+            SettingsChangeRequest(useAnimations = value)
         )
     }
+
 }
 

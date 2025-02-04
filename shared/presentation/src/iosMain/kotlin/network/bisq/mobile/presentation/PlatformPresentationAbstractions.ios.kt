@@ -11,6 +11,8 @@ import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.useContents
 import kotlinx.cinterop.usePinned
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.presentation.ui.helpers.IOSCurrentTimeProvider
+import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import platform.CoreGraphics.CGContextRef
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSize
@@ -61,3 +63,5 @@ actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
         }
     }
 }
+
+actual fun getPlatformCurrentTimeProvider(): TimeProvider = IOSCurrentTimeProvider()

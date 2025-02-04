@@ -36,9 +36,9 @@ fun MarketFilters(
         BisqDropDown(
             label = "Sort by",
             value = presenter.sortBy.collectAsState().value.displayName,
-            items = MarketSortBy.entries.map { it.displayName },
+            items = MarketSortBy.entries.map { it.name to it.displayName },
             onValueChanged = {
-                val newValue = when (it) {
+                val newValue = when (it.second) {
                     MarketSortBy.MostOffers.displayName -> MarketSortBy.MostOffers
                     MarketSortBy.NameAZ.displayName -> MarketSortBy.NameAZ
                     else -> MarketSortBy.NameZA
@@ -52,9 +52,9 @@ fun MarketFilters(
         BisqDropDown(
             label = "Show markets",
             value = presenter.filter.collectAsState().value.displayName,
-            items = MarketFilter.entries.map { it.displayName },
+            items = MarketFilter.entries.map { it.name to  it.displayName },
             onValueChanged = {
-                val newValue = when (it) {
+                val newValue = when (it.second) {
                     MarketFilter.All.displayName -> MarketFilter.All
                     else -> MarketFilter.WithOffers
                 }

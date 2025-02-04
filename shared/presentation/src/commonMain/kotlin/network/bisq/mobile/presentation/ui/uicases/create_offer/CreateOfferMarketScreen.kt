@@ -51,7 +51,7 @@ fun CreateOfferCurrencySelectorScreen() {
 
         BisqTextField(
             placeholder = commonStrings.common_search,
-            onValueChanged = {},
+            onValueChange = { it, isValid -> },
             value = "",
             label = "",
         )

@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -13,6 +14,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.ui.components.organisms.offer.SellerReputationWarningDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -24,6 +26,8 @@ fun CreateOfferBuySellScreen() {
     val presenter: CreateOfferDirectionPresenter = koinInject()
     presenter.appStrings = LocalStrings.current // TODO find a more elegant solution
     RememberPresenterLifecycle(presenter)
+
+    val showSellerReputationWarning = presenter.showSellerReputationWarning.collectAsState().value
 
     MultiScreenWizardScaffold(
         strings.bisqEasy_tradeWizard_review_nextButton_createOffer,
@@ -62,5 +66,13 @@ fun CreateOfferBuySellScreen() {
             textComponent = { BisqText.h3Medium(text = strings.bisqEasy_tradeWizard_directionAndMarket_sell) }
         )
         BisqText.largeLight(strings.bisqEasy_tradeWizard_sell_description, color = BisqTheme.colors.grey2)
+
+        if (showSellerReputationWarning) {
+                SellerReputationWarningDialog(
+                    onConfirm = { presenter.onSellWithoutReputation() },
+                    onDismiss = { presenter.setShowSellerReputationWarning(false) },
+                    onLearnReputation = { presenter.showLearnReputation() },
+                )
+            }
     }
 }

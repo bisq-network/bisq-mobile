@@ -1128,6 +1128,7 @@ class Mappings {
                 settingsService.languageCode.get(),
                 settingsService.supportedLanguageCodes,
                 settingsService.maxTradePriceDeviation.get(),
+                settingsService.useAnimations.get(),
                 MarketMapping.fromBisq2Model(settingsService.selectedMarket.get())
             )
         }

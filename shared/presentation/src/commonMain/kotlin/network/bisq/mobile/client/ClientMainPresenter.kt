@@ -2,8 +2,10 @@ package network.bisq.mobile.client
 
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.service.common.ClientLanguageServiceFacade
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -22,8 +24,9 @@ open class ClientMainPresenter(
     private val offersServiceFacade: OffersServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
+    private val languageServiceFacade: LanguageServiceFacade,
     urlLauncher: UrlLauncher
-) : MainPresenter(openTradesNotificationService, urlLauncher) {
+) : MainPresenter(openTradesNotificationService, settingsServiceFacade, urlLauncher) {
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -62,6 +65,7 @@ open class ClientMainPresenter(
             marketPriceServiceFacade.activate()
             tradesServiceFacade.activate()
             settingsServiceFacade.activate()
+            languageServiceFacade.activate()
         }.onFailure { e ->
             // TODO give user feedback (we could have a general error screen covering usual
             //  issues like connection issues and potential solutions)
@@ -75,5 +79,7 @@ open class ClientMainPresenter(
         marketPriceServiceFacade.deactivate()
         tradesServiceFacade.deactivate()
         settingsServiceFacade.deactivate()
+        languageServiceFacade.deactivate()
+        super.onViewUnattaching()
     }
 }

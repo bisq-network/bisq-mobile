@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
@@ -13,6 +14,8 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
+import network.bisq.mobile.presentation.ui.components.organisms.offer.TakeOfferProgressDialog
+import network.bisq.mobile.presentation.ui.components.organisms.offer.TakeOfferSuccessDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -25,6 +28,9 @@ fun TakeOfferReviewTradeScreen() {
     val stringsTradeState = LocalStrings.current.bisqEasyTradeState
     val commonStrings = LocalStrings.current.common
     val presenter: TakeOfferReviewPresenter = koinInject()
+    val showProgressDialog = presenter.showTakeOfferProgressDialog.collectAsState().value
+    val showSuccessDialog = presenter.showTakeOfferSuccessDialog.collectAsState().value
+
     RememberPresenterLifecycle(presenter)
     presenter.appStrings = LocalStrings.current // TODO find a more elegant solution
 
@@ -105,5 +111,16 @@ fun TakeOfferReviewTradeScreen() {
                 }
             )
         }
+
+        if (showProgressDialog) {
+            TakeOfferProgressDialog()
+        }
+
+        if (showSuccessDialog) {
+            TakeOfferSuccessDialog(
+                onShowTrades = { presenter.onGoToOpenTrades() }
+            )
+        }
+
     }
 }

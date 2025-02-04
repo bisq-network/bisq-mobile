@@ -2,9 +2,11 @@ package network.bisq.mobile.presentation.di
 
 import network.bisq.mobile.client.ClientMainPresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.getPlatformCurrentTimeProvider
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
+import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import network.bisq.mobile.presentation.ui.uicases.ChatPresenter
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.IChatPresenter
@@ -41,11 +43,13 @@ import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferAmountPre
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPaymentMethodPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferReviewPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.*
+import network.bisq.mobile.presentation.ui.uicases.startup.*
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val presentationModule = module {
-    single<MainPresenter> { ClientMainPresenter(get(), get(), get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
+    single<MainPresenter> { ClientMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
 
     single<TopBarPresenter> { TopBarPresenter(get(), get()) } bind ITopBarPresenter::class
 
@@ -60,6 +64,8 @@ val presentationModule = module {
             get()
         )
     }
+
+    factory<AgreementPresenter> { AgreementPresenter(get(), get()) } bind IAgreementPresenter::class
 
     single { OnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
     single { TabContainerPresenter(get(), get()) } bind ITabContainerPresenter::class
@@ -85,6 +91,24 @@ val presentationModule = module {
             get()
         )
     } bind ITrustedNodeSetupPresenter::class
+
+    /*
+    single<MarketListPresenter> { MarketListPresenter(get(), get()) }
+
+    single { OffersListPresenter(get(), get(), get(), get()) } bind IOffersListPresenter::class
+
+    single {
+        MyTradesPresenter(
+            get(),
+            get(),
+            get(),
+        )
+    } bind IMyTrades::class
+
+    single { TradeFlowPresenter(get(), get()) } bind ITradeFlowPresenter::class
+    */
+
+    single { GeneralSettingsPresenter(get(), get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
     single { PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
 
@@ -135,4 +159,8 @@ val presentationModule = module {
     factory { OpenTradePresenter(get(), get(), get()) }
 
     single { ChatPresenter(get()) } bind IChatPresenter::class
+
+
+    factory<TimeProvider> { getPlatformCurrentTimeProvider() }
+
 }

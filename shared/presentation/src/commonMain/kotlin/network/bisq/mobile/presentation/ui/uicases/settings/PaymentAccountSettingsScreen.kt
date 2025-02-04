@@ -120,9 +120,21 @@ fun PaymentAccountSettingsScreen() {
 
         BisqTextField(
             value = accountDescription,
-            onValueChanged = { accountDescription = it },
+            onValueChange = { value, isValid -> accountDescription = value },
             label = strings.user_paymentAccounts_accountData,
-            isTextArea = true
+            isTextArea = true,
+            validation = {
+
+                if (it.length < 3) {
+                    return@BisqTextField "Min length: 3 characters"
+                }
+
+                if (it.length > 1024) {
+                    return@BisqTextField "Max length: 1024 characters"
+                }
+
+                return@BisqTextField null
+            }
         )
 
         Row(

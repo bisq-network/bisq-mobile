@@ -1,9 +1,12 @@
 package network.bisq.mobile.presentation.ui.components.molecules.chat
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -17,6 +20,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun QuoteMessageBubble(
     message: ChatMessage,
+    onClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
     val sideBorderColor = BisqTheme.colors.grey2
@@ -34,6 +38,11 @@ fun QuoteMessageBubble(
         Column(
             modifier = Modifier
                 .background(BisqTheme.colors.grey5)
+                .clickable(
+                    onClick = onClick,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                )
                 .clip(shape = RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf))
                 .drawBehind {
                     drawLine(

@@ -1,5 +1,11 @@
 source 'https://cdn.cocoapods.org'
-target 'iosClient' do
+target 'Bisq Connect Debug' do
+  use_frameworks!
+  platform :ios, '16.0'
+  pod 'presentation', :path => '../shared/presentation'
+  pod 'domain', :path => '../shared/domain'
+end
+target 'Bisq Connect' do
   use_frameworks!
   platform :ios, '16.0'
   pod 'presentation', :path => '../shared/presentation'

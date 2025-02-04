@@ -6,6 +6,7 @@ import network.bisq.mobile.android.node.MainActivity
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -26,7 +27,8 @@ class NodeMainPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val offersServiceFacade: OffersServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-) : MainPresenter(openTradesNotificationService, urlLauncher) {
+    private val languageServiceFacade: LanguageServiceFacade,
+) : MainPresenter(openTradesNotificationService, settingsServiceFacade, urlLauncher) {
 
     private var applicationServiceCreated = false
 
@@ -60,6 +62,7 @@ class NodeMainPresenter(
                             offersServiceFacade.activate()
                             marketPriceServiceFacade.activate()
                             tradesServiceFacade.activate()
+                            languageServiceFacade.activate()
                         } else {
                             log.e("Initializing applicationService failed", throwable)
                         }
@@ -71,6 +74,7 @@ class NodeMainPresenter(
                 marketPriceServiceFacade.activate()
                 tradesServiceFacade.activate()
 
+                languageServiceFacade.activate()
             }
         }.onFailure { e ->
             // TODO give user feedback (we could have a general error screen covering usual
@@ -100,5 +104,6 @@ class NodeMainPresenter(
 //        TODO for notifications to work even if the app gets killed this needs to be commented out
 //        but it can't be done yet because of lack of support in bisq2 jars
         tradesServiceFacade.deactivate()
+        languageServiceFacade.deactivate()
     }
 }

@@ -2,11 +2,13 @@ package network.bisq.mobile.presentation.ui.components.layout
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -15,16 +17,41 @@ fun BisqStaticLayout(
     padding: PaddingValues = PaddingValues(all = BisqUIConstants.ScreenPadding),
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.SpaceBetween,
+    isInteractive: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Column(
-        horizontalAlignment = horizontalAlignment,
-        verticalArrangement = verticalArrangement,
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(color = BisqTheme.colors.backgroundColor)
-            .padding(padding)
+            .background(BisqTheme.colors.backgroundColor)
     ) {
-        content()
+        Column(
+            horizontalAlignment = horizontalAlignment,
+            verticalArrangement = verticalArrangement,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(color = BisqTheme.colors.backgroundColor)
+                .padding(padding)
+        ) {
+            content()
+        }
+
+        // This covers only the Scaffold content, not the TopBar or BottomBar
+        if (!isInteractive) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pointerInput(Unit) {
+                        coroutineScope {
+                            awaitPointerEventScope {
+                                while (true) {
+                                    awaitPointerEvent()
+                                }
+                            }
+                        }
+                    }
+                    .clearAndSetSemantics { } // Disables accessibility interactions
+            )
+        }
     }
 }

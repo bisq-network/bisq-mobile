@@ -52,7 +52,7 @@ private val BUNDLE_NAMES: List<String> = listOf(
     "network",
     "settings",
     // "wallet", // Not used
-    // "authorized_role", // Not used
+    "authorized_role", // Not used; buddha: 1 key needed in settings page
     "payment_method",
     "offer",
     "mobile" // custom for mobile client

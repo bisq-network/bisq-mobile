@@ -30,35 +30,67 @@ fun AppPaymentAccountCard(
     val stringsCommon = LocalStrings.current.common
 
     var accountName by remember { mutableStateOf("") }
+    var accountNameValid by remember { mutableStateOf(false) }
     var accountDescription by remember { mutableStateOf("") }
+    var accountDescriptionValid by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier.padding(
             horizontal = BisqUIConstants.ScreenPadding,
         ), verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
     ) {
-            BisqText.h5Regular(
-                text = strings.user_paymentAccounts_createAccount_headline,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
-            BisqText.smallRegular(
-                text = strings.user_paymentAccounts_createAccount_subtitle,
-                color = BisqTheme.colors.grey1,
-                textAlign = TextAlign.Center
-            )
+        BisqText.h5Regular(
+            text = strings.user_paymentAccounts_createAccount_headline,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
+        )
+        BisqText.smallRegular(
+            text = strings.user_paymentAccounts_createAccount_subtitle,
+            color = BisqTheme.colors.grey1,
+            textAlign = TextAlign.Center
+        )
         BisqTextField(
             value = accountName,
-            onValueChanged = { accountName = it },
+            onValueChange = { it, isValid ->
+                accountName = it
+                accountNameValid = isValid
+            },
             placeholder = strings.user_paymentAccounts_createAccount_accountName_prompt,
-            label = strings.user_userProfile_payment_account
+            label = strings.user_userProfile_payment_account,
+            validation = {
+                if (it.isEmpty()) {
+                    return@BisqTextField "Name is mandatory"
+                }
+                if (it.length < 3) {
+                    return@BisqTextField "Min length: 3 characters"
+                }
+                if (it.length > 256) {
+                    return@BisqTextField "Max length: 256 characters"
+                }
+                return@BisqTextField null
+            }
         )
         BisqTextField(
             value = accountDescription,
-            onValueChanged = { accountDescription = it },
+            onValueChange = { it, isValid ->
+                accountDescription = it
+                accountDescriptionValid = isValid
+            },
             placeholder = strings.user_paymentAccounts_createAccount_accountData_prompt,
             label = strings.user_paymentAccounts_accountData,
-            isTextArea = true
+            isTextArea = true,
+            validation = {
+                if (it.isEmpty()) {
+                    return@BisqTextField "Account data is mandatory"
+                }
+                if (it.length < 3) {
+                    return@BisqTextField "Min length: 3 characters"
+                }
+                if (it.length > 256) {
+                    return@BisqTextField "Max length: 1024 characters"
+                }
+                return@BisqTextField null
+            }
         )
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
@@ -73,7 +105,8 @@ fun AppPaymentAccountCard(
             BisqButton(
                 text = stringsCommon.buttons_save,
                 onClick = { onConfirm(accountName, accountDescription) },
-                padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp)
+                padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp),
+                disabled = !accountNameValid || !accountDescriptionValid
             )
         }
     }

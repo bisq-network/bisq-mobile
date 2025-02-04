@@ -31,6 +31,7 @@ import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScree
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPaymentMethodScreen
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferReviewTradeScreen
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferTradeAmountScreen
+import network.bisq.mobile.presentation.ui.uicases.startup.*
 
 @Composable
 fun RootNavGraph(rootNavController: NavHostController) {
@@ -41,6 +42,10 @@ fun RootNavGraph(rootNavController: NavHostController) {
     ) {
         composable(route = Routes.Splash.name) {
             SplashScreen()
+        }
+
+        composable(route = Routes.Agreement.name) {
+            AgreementScreen()
         }
 
         addScreen(Routes.Onboarding.name) {
