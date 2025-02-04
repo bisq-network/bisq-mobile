@@ -11,6 +11,6 @@
 #endif
 
 
-FOUNDATION_EXPORT double Pods_iosClientVersionNumber;
-FOUNDATION_EXPORT const unsigned char Pods_iosClientVersionString[];
+FOUNDATION_EXPORT double Pods_Bisq_Connect_DebugVersionNumber;
+FOUNDATION_EXPORT const unsigned char Pods_Bisq_Connect_DebugVersionString[];
 

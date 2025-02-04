@@ -1,0 +1,3 @@
+${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-frameworks.sh
+${PODS_ROOT}/../../shared/domain/build/cocoapods/framework/domain.framework
+${PODS_ROOT}/../../shared/presentation/build/cocoapods/framework/presentation.framework
