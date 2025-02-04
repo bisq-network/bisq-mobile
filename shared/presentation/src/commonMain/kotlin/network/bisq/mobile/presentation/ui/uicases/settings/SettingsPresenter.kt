@@ -23,7 +23,8 @@ open class SettingsPresenter(
                     MenuItem.Leaf(label = "Payment Accounts", content = { PaymentAccountSettingsScreen() }) ,
                 )
             ),
-                    MenuItem.Leaf(label = "General Settings", content = { GeneralSettingsScreen() })
+// TODO General settings has several issues that needs to be fixed, uncomment when the functionality gets fully implemented including the usage of those settings
+//                    MenuItem.Leaf(label = "General", content = { GeneralSettingsScreen() })
         )
         return MenuItem.Parent(
             label = "Bisq",
