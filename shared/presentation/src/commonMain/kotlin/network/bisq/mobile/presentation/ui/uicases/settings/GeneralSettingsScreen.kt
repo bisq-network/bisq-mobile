@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.*
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -32,16 +33,16 @@ interface IGeneralSettingsPresenter : ViewPresenter {
     val closeOfferWhenTradeTaken: StateFlow<Boolean>
     fun setCloseOfferWhenTradeTaken(value: Boolean)
 
-    val tradePriceTolerance: StateFlow<Double>
-    fun setTradePriceTolerance(value: Double)
+    val tradePriceTolerance: StateFlow<String>
+    fun setTradePriceTolerance(value: String, isValid: Boolean)
 
     val useAnimations: StateFlow<Boolean>
     fun setUseAnimations(value: Boolean)
 
     val numDaysAfterRedactingTradeData: StateFlow<Int>
 
-    val powFactor: StateFlow<Double>
-    fun setPowFactor(value: Double)
+    val powFactor: StateFlow<String>
+    fun setPowFactor(value: String, isValid: Boolean)
 
     val ignorePow: StateFlow<Boolean>
     fun setIgnorePow(value: Boolean)
@@ -125,17 +126,13 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
             )
 
             BisqTextField(
-                label = "settings.trade.maxTradePriceDeviation".i18n() + " (TODO in androidNode)",
-                value = tradePriceTolerance.toString(),
-                valueSuffix = "%",
+                label = "settings.trade.maxTradePriceDeviation".i18n(),
+                value = tradePriceTolerance,
                 keyboardType = KeyboardType.Decimal,
-                onValueChange = { it, isValid ->
-                    val parsedValue = it.toDoubleOrNull()
-                    if (parsedValue != null) {
-                        presenter.setTradePriceTolerance(parsedValue)
-                    }
-                },
+                onValueChange = { it, isValid -> presenter.setTradePriceTolerance(it, isValid) },
                 helperText = "settings.trade.maxTradePriceDeviation.help".i18n(),
+                numberWithTwoDecimals = true,
+                valueSuffix = "%",
                 validation = {
                     val parsedValue = it.toDoubleOrNull()
                     if (parsedValue == null) {
@@ -168,12 +165,8 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                     value = powFactor.toString(),
                     keyboardType = KeyboardType.Decimal,
                     disabled = !ignorePow,
-                    onValueChange = { it, isValid ->
-                        val parsedValue = it.toDoubleOrNull()
-                        if (parsedValue != null) {
-                            presenter.setPowFactor(parsedValue)
-                        }
-                    },
+                    numberWithTwoDecimals = true,
+                    onValueChange = { it, isValid -> presenter.setPowFactor(it, isValid) },
                     validation = {
                         val parsedValue = it.toDoubleOrNull()
                         if (parsedValue == null) {
@@ -193,6 +186,17 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                     onSwitch = { presenter.setIgnorePow(it) }
                 )
             }
+
+            BisqGap.V5()
+            BisqGap.V5()
+            BisqGap.V5()
+            BisqGap.V5()
+            BisqGap.V5()
+            BisqGap.V5()
+            BisqGap.V5()
+            BisqGap.V5()
+            BisqGap.V5()
+            BisqGap.V5()
 
         }
 

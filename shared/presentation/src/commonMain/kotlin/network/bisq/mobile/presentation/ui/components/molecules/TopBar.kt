@@ -36,6 +36,8 @@ import org.koin.compose.koinInject
 interface ITopBarPresenter : ViewPresenter {
     val uniqueAvatar: StateFlow<PlatformImage?>
     fun onAvatarClicked()
+
+    val showAnimation: StateFlow<Boolean>
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +56,7 @@ fun TopBar(
     val tabNavController: NavHostController = presenter.getRootTabNavController()
 
     val interactionEnabled = presenter.isInteractive.collectAsState().value
+    val showAnimation = presenter.showAnimation.collectAsState().value
     var showBackConfirmationDialog by remember { mutableStateOf(false) }
 
     val currentTab = tabNavController.currentBackStackEntryAsState().value?.destination?.route
@@ -62,7 +65,7 @@ fun TopBar(
 
     val topBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topBarState, canScroll = { false })
-    
+
     val defaultBackButton: @Composable () -> Unit = {
         IconButton(onClick = {
             if (navController.previousBackStackEntry != null) {
@@ -124,20 +127,24 @@ fun TopBar(
                 modifier = Modifier.padding(top = if (isFlowScreen) 15.dp else 0.dp, end = 16.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
+                val userIconModifier = Modifier
+                    .size(30.dp)
+                    .alpha(if (currentTab == Routes.TabSettings.name) 0.5f else 1.0f)
+                    .clickable {
+                        if (currentTab != Routes.TabSettings.name) {
+                            // TODO this should be presenter code, with the proper main thread coroutine used (causes random crashes as is)
+                            navController.navigate(Routes.UserProfileSettings.name)
+                        }
+                    }
+
 //                TODO implement full feature after MVP
 //                BellIcon()
                 Spacer(modifier = Modifier.width(12.dp))
-                ShineOverlay {
-                    UserIcon(
-                        presenter.uniqueAvatar.value,
-                        modifier = Modifier.size(30.dp)
-                            .alpha(if (currentTab == Routes.TabSettings.name) 0.5f else 1.0f)
-                            .clickable {
-                                if (currentTab != Routes.TabSettings.name) {
-                                    // TODO this should be presenter code, with the proper main thread coroutine used (causes random crashes as is)
-                                    navController.navigate(Routes.UserProfileSettings.name)
-                                }
-                            })
+                if (showAnimation) {
+                    ShineOverlay { UserIcon(presenter.uniqueAvatar.value, modifier = userIconModifier) }
+                } else {
+                    UserIcon(presenter.uniqueAvatar.value, modifier = userIconModifier)
                 }
             }
         },

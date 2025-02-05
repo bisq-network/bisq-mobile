@@ -5,12 +5,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.repository.UserRepository
+import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class TopBarPresenter(
     private val userRepository: UserRepository,
+    private val settingsServiceFacade: SettingsServiceFacade,
     mainPresenter: MainPresenter
 ): BasePresenter(mainPresenter), ITopBarPresenter {
 
@@ -20,6 +22,8 @@ open class TopBarPresenter(
     private fun setUniqueAvatar(value: PlatformImage?) {
         _uniqueAvatar.value = value
     }
+
+    override val showAnimation: StateFlow<Boolean> get() = settingsServiceFacade.useAnimations
 
     init {
         refresh()

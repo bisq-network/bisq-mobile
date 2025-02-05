@@ -32,6 +32,11 @@ import androidx.compose.ui.unit.sp
 import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
+/**
+ * TODO:
+ * Should have a BisqNumberField with customizations like numberWithTwoDecimals
+ * and whose value is Double and onValueChange emits Double
+ */
 @Composable
 fun BisqTextField(
     label: String = "",
@@ -54,6 +59,7 @@ fun BisqTextField(
     valuePrefix: String? = null,
     valueSuffix: String? = null,
     validation: ((String) -> String?)? = null,
+    numberWithTwoDecimals: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
     var isFocused by remember { mutableStateOf(false) }
@@ -157,8 +163,16 @@ fun BisqTextField(
                     if (valueSuffix != null && cleanValue.endsWith(valueSuffix)) {
                         cleanValue = cleanValue.removeSuffix(valueSuffix)
                     }
-                    validationError = validation?.invoke(cleanValue)
-                    onValueChange(cleanValue, validationError == null || validationError?.isEmpty() == true)
+                    if (numberWithTwoDecimals) {
+                        val decimalPattern = Regex("^\\d*\\.?\\d{0,2}$")
+                        if (decimalPattern.matches(cleanValue)) {
+                            validationError = validation?.invoke(cleanValue)
+                            onValueChange(cleanValue, validationError == null || validationError?.isEmpty() == true)
+                        }
+                    } else {
+                        validationError = validation?.invoke(cleanValue)
+                        onValueChange(cleanValue, validationError == null || validationError?.isEmpty() == true)
+                    }
                 },
                 modifier = Modifier
                     .padding(paddingValues)

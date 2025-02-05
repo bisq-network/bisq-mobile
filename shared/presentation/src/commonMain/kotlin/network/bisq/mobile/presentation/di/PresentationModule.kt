@@ -51,7 +51,7 @@ import org.koin.dsl.module
 val presentationModule = module {
     single<MainPresenter> { ClientMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
 
-    single<TopBarPresenter> { TopBarPresenter(get(), get()) } bind ITopBarPresenter::class
+    single<TopBarPresenter> { TopBarPresenter(get(), get(), get()) } bind ITopBarPresenter::class
 
     single<SplashPresenter> {
         SplashPresenter(

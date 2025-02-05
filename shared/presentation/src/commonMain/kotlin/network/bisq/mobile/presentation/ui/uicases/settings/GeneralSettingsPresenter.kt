@@ -22,6 +22,7 @@ open class GeneralSettingsPresenter(
 
     override val i18nPairs: StateFlow<List<Pair<String, String>>> = languageServiceFacade.i18nPairs
     override val allLanguagePairs: StateFlow<List<Pair<String, String>>> = languageServiceFacade.allPairs
+
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
     override val languageCode: MutableStateFlow<String> = _languageCode
 
@@ -71,13 +72,14 @@ open class GeneralSettingsPresenter(
         }
     }
 
-    private val _tradePriceTolerance: MutableStateFlow<Double> = MutableStateFlow(5.0)
-    override val tradePriceTolerance: StateFlow<Double> = _tradePriceTolerance
-    override fun setTradePriceTolerance(value: Double) {
+    private val _tradePriceTolerance: MutableStateFlow<String> = MutableStateFlow("5")
+    override val tradePriceTolerance: StateFlow<String> = _tradePriceTolerance
+    override fun setTradePriceTolerance(value: String, isValid: Boolean) {
         backgroundScope.launch {
             _tradePriceTolerance.value = value
-            if (value in 1.0..10.0) {
-                settingsServiceFacade.setMaxTradePriceDeviation(value)
+            if (isValid) {
+                val _value = value.toDoubleOrNull()
+                settingsServiceFacade.setMaxTradePriceDeviation(_value ?: 0.0)
             }
         }
     }
@@ -91,13 +93,14 @@ open class GeneralSettingsPresenter(
         }
     }
 
-    private val _powFactor: MutableStateFlow<Double> = MutableStateFlow(1.0)
-    override val powFactor: StateFlow<Double> = _powFactor
-    override fun setPowFactor(value: Double) {
+    private val _powFactor: MutableStateFlow<String> = MutableStateFlow("1")
+    override val powFactor: StateFlow<String> = _powFactor
+    override fun setPowFactor(value: String, isValid: Boolean) {
         backgroundScope.launch {
             _powFactor.value = value
-            if (value in 0.0..160000.0) {
-                settingsServiceFacade.setDifficultyAdjustmentFactor(value)
+            if (isValid) {
+                val _value = value.toDoubleOrNull()
+                settingsServiceFacade.setDifficultyAdjustmentFactor(_value ?: 0.0)
             }
         }
     }
@@ -117,26 +120,21 @@ open class GeneralSettingsPresenter(
 
     override fun onViewAttached() {
         jobs.add(backgroundScope.launch {
-            try {
-                val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
-                _languageCode.value = settings.languageCode
-                _supportedLanguageCodes.value = if (settings.supportedLanguageCodes.isNotEmpty())
-                    settings.supportedLanguageCodes
-                else
-                    setOf("en") // setOf(i18nPairs.collectAsState().value.first().first)
+            val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
+            _languageCode.value = settings.languageCode
+            _supportedLanguageCodes.value = if (settings.supportedLanguageCodes.isNotEmpty())
+                settings.supportedLanguageCodes
+            else
+                setOf("en") // setOf(i18nPairs.collectAsState().value.first().first)
 
-                // _tradeNotification.value =
-                // _chatNotification.value =
-                _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
-                _tradePriceTolerance.value = settings.maxTradePriceDeviation
-                _useAnimations.value = settings.useAnimations
-
-                _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData
-                _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value
-                _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
-            } catch (e: Exception) {
-                print(e)
-            }
+            // _tradeNotification.value =
+            // _chatNotification.value =
+            _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
+            _tradePriceTolerance.value = settings.maxTradePriceDeviation.toString()
+            _useAnimations.value = settings.useAnimations
+            _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData
+            _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value.toString()
+            _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
         })
     }
 
