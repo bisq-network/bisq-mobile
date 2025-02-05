@@ -6,13 +6,13 @@ class I18nSupport {
             // bundles = BUNDLE_NAMES.map { ResourceBundle.getBundle(it, languageCode) }
             val bundleMapsByName: Map<String, Map<String, String>> = when (languageCode) {
                 "en" -> GeneratedResourceBundles_en.bundles
-                "af_ZA" -> GeneratedResourceBundles_af_ZA.bundles
+                "af-ZA" -> GeneratedResourceBundles_af_ZA.bundles
                 "cs" -> GeneratedResourceBundles_cs.bundles
                 "de" -> GeneratedResourceBundles_de.bundles
                 "es" -> GeneratedResourceBundles_es.bundles
                 "it" -> GeneratedResourceBundles_it.bundles
                 "pcm" -> GeneratedResourceBundles_pcm.bundles
-                "pt_BR" -> GeneratedResourceBundles_pt_BR.bundles
+                "pt-BR" -> GeneratedResourceBundles_pt_BR.bundles
                 "ru" -> GeneratedResourceBundles_ru.bundles
                 else -> GeneratedResourceBundles_en.bundles
             }

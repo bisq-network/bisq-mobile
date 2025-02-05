@@ -34,11 +34,10 @@ open class GeneralSettingsPresenter(
             // Doing this to reload all bundles of the newly selected language,
             // all String.i18n() across the app gets the text of selected language
             I18nSupport.initialize(langCode)
-            // TODO: This will update the default language of remote instance.
-            // Is this okay? Considering we will have multiple clients to connect to same remote node in the future
+            // As per chat with @Henrik Feb 4, it's okay not to translate these lists into selected languages, for now.
             // To update display values in i18Pairs, allLanguagePairs with the new language
-            languageServiceFacade.setDefaultLanguage(langCode)
-            languageServiceFacade.sync()
+            // languageServiceFacade.setDefaultLanguage(langCode)
+            // languageServiceFacade.sync()
             _languageCode.value = langCode
         }
     }

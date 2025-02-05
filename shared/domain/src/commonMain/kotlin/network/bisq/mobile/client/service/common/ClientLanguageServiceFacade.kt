@@ -45,52 +45,105 @@ class ClientLanguageServiceFacade(
     // Life cycle
     override fun activate() {
         job = coroutineScope.launch {
-            launch {
-                if (_i18nObserver.value == null) {
-                    _i18nObserver.value = apiGateway.subscribeI18NCodes(_defaultLanguage.value)
-                }
-                _i18nObserver.value!!.webSocketEvent.collect{ webSocketEvent ->
-                    try {
-                        if (webSocketEvent?.deferredPayload == null) {
-                            return@collect
-                        }
-                        val webSocketEventPayload: WebSocketEventPayload<Map<String, String>> =
-                            WebSocketEventPayload.from(json, webSocketEvent)
-                        val response = webSocketEventPayload.payload
-                        println(response)
-                        _i18nPairs.value = response.toList()
-                    } catch (e: Exception) {
-                        log.e(e.toString(), e)
-                    }
-                }
-            }
 
-            launch {
-                if (_allPairsObserver.value == null) {
-                    _allPairsObserver.value = apiGateway.subscribeAllLanguageCodes(_defaultLanguage.value)
-                }
-                _allPairsObserver.value!!.webSocketEvent.collect{ webSocketEvent ->
-                    try {
-                        if (webSocketEvent?.deferredPayload == null) {
-                            return@collect
-                        }
-                        val webSocketEventPayload: WebSocketEventPayload<Map<String, String>> =
-                            WebSocketEventPayload.from(json, webSocketEvent)
-                        val response = webSocketEventPayload.payload
-                        _allPairs.value = response.toList()
-                    } catch (e: Exception) {
-                        log.e(e.toString(), e)
-                    }
-                }
-            }
+            _i18nPairs.value = listOf(
+                "en" to "English (English)",
+                "de" to "German (Deutsch)",
+                "es" to "Spanish (español)",
+                "it" to "Italian (italiano)",
+                "pt-BR" to "Portuguese (português (Brasil))",
+                "cs" to "Czech (čeština)",
+                "pcm" to "Nigerian Pidgin (Naijíriá Píjin)",
+                "ru" to "Russian (русский)",
+                "af-ZA" to "Afrikaans (Afrikaans (Suid-Afrika))",
+            )
+
+            _allPairs.value = listOf(
+                "af" to "Afrikaans (Afrikaans)",
+                "sq" to "Albanian (shqip)",
+                "am" to "Amharic (አማርኛ)",
+                "ar" to "Arabic (العربية)",
+                "hy" to "Armenian (հայերեն)",
+                "az" to "Azerbaijani (azərbaycan)",
+                "bn" to "Bangla (বাংলা)",
+                "be" to "Belarusian (беларуская)",
+                "bi" to "Bislama (Bislama)",
+                "bs" to "Bosnian (bosanski)",
+                "bg" to "Bulgarian (български)",
+                "my" to "Burmese (မြန်မာ)",
+                "ca" to "Catalan (català)",
+                "zh" to "Chinese (中文)",
+                "hr" to "Croatian (hrvatski)",
+                "cs" to "Czech (čeština)",
+                "da" to "Danish (dansk)",
+                "dv" to "Divehi (Divehi)",
+                "nl" to "Dutch (Nederlands)",
+                "dz" to "Dzongkha (རྫོང་ཁ)",
+                "en" to "English (English)",
+                "et" to "Estonian (eesti)",
+                "fo" to "Faroese (føroyskt)",
+                "fi" to "Finnish (suomi)",
+                "fr" to "French (français)",
+                "ka" to "Georgian (ქართული)",
+                "de" to "German (Deutsch)",
+                "el" to "Greek (Ελληνικά)",
+                "he" to "Hebrew (עברית)",
+                "hi" to "Hindi (हिन्दी)",
+                "hu" to "Hungarian (magyar)",
+                "is" to "Icelandic (íslenska)",
+                "id" to "Indonesian (Indonesia)",
+                "ga" to "Irish (Gaeilge)",
+                "it" to "Italian (italiano)",
+                "ja" to "Japanese (日本語)",
+                "kl" to "Kalaallisut (kalaallisut)",
+                "kk" to "Kazakh (қазақ тілі)",
+                "km" to "Khmer (ខ្មែរ)",
+                "rw" to "Kinyarwanda (Kinyarwanda)",
+                "ko" to "Korean (한국어)",
+                "ky" to "Kyrgyz (кыргызча)",
+                "lo" to "Lao (ລາວ)",
+                "la" to "Latin (Latin)",
+                "lv" to "Latvian (latviešu)",
+                "lt" to "Lithuanian (lietuvių)",
+                "mk" to "Macedonian (македонски)",
+                "ms" to "Malay (Melayu)",
+                "mt" to "Maltese (Malti)",
+                "mn" to "Mongolian (монгол)",
+                "ne" to "Nepali (नेपाली)",
+                "no" to "Norwegian (norsk)",
+                "ps" to "Pashto (پښتو)",
+                "fa" to "Persian (فارسی)",
+                "pl" to "Polish (polski)",
+                "pt" to "Portuguese (português)",
+                "ro" to "Romanian (română)",
+                "ru" to "Russian (русский)",
+                "sm" to "Samoan (Samoan)",
+                "sr" to "Serbian (српски)",
+                "si" to "Sinhala (සිංහල)",
+                "sk" to "Slovak (slovenčina)",
+                "sl" to "Slovenian (slovenščina)",
+                "so" to "Somali (Soomaali)",
+                "es" to "Spanish (español)",
+                "sw" to "Swahili (Kiswahili)",
+                "sv" to "Swedish (svenska)",
+                "tg" to "Tajik (тоҷикӣ)",
+                "th" to "Thai (ไทย)",
+                "ti" to "Tigrinya (ትግርኛ)",
+                "tr" to "Turkish (Türkçe)",
+                "tk" to "Turkmen (türkmen dili)",
+                "uk" to "Ukrainian (українська)",
+                "uz" to "Uzbek (o‘zbek)",
+                "vi" to "Vietnamese (Tiếng Việt)"
+            )
 
         }
     }
 
     override suspend fun sync() {
-        val subscriberId = _i18nObserver.value?.webSocketEvent?.value?.subscriberId ?: ""
-        apiGateway.syncI18NCodes(subscriberId, _defaultLanguage.value)
-        apiGateway.syncAllLanguageCodes(subscriberId, _defaultLanguage.value)
+        activate()
+//        val subscriberId = _i18nObserver.value?.webSocketEvent?.value?.subscriberId ?: ""
+//        apiGateway.syncI18NCodes(subscriberId, _defaultLanguage.value)
+//        apiGateway.syncAllLanguageCodes(subscriberId, _defaultLanguage.value)
     }
 
     override fun deactivate() {

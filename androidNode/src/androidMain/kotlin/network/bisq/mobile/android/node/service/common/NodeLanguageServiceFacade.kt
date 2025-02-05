@@ -36,6 +36,9 @@ class NodeLanguageServiceFacade(private val applicationService: AndroidApplicati
 
     // Life cycle
     override fun activate() {
+        // To keep "en" the only language for language lists
+        val langCode = LanguageRepository.getDefaultLanguage() ?: "en"
+        LanguageRepository.setDefaultLanguage("en")
 
         val displayTextList = mutableListOf<String>()
         for (code in LanguageRepository.I18N_CODES) {
@@ -49,6 +52,7 @@ class NodeLanguageServiceFacade(private val applicationService: AndroidApplicati
         }
         _allPairs.value = LanguageRepository.CODES.zip(displayTextList)
 
+        LanguageRepository.setDefaultLanguage(langCode)
     }
 
     override suspend fun sync() {
