@@ -2,6 +2,9 @@
 
 ## TODO - more node specifics
 
+### protobuf deps
+-dontwarn java.lang.MatchException
+
 -dontwarn com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector
 -dontwarn com.sun.jdi.VirtualMachine
 -dontwarn com.sun.jdi.event.Event
