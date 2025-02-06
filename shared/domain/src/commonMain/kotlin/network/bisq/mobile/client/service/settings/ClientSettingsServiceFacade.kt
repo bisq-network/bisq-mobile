@@ -87,6 +87,12 @@ class ClientSettingsServiceFacade(val apiGateway: SettingsApiGateway) : Settings
         // Not applicable for xClients
     }
 
+    private val _numDaysAfterRedactingTradeData: MutableStateFlow<Int> = MutableStateFlow(90)
+    override val numDaysAfterRedactingTradeData: StateFlow<Int> get() = _numDaysAfterRedactingTradeData
+    override suspend fun setNumDaysAfterRedactingTradeData(days: Int) {
+        // Not applicable for xClients
+    }
+
     private val _ignoreDiffAdjustmentFromSecManager: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> get() = _ignoreDiffAdjustmentFromSecManager
     override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean) {
@@ -97,13 +103,16 @@ class ClientSettingsServiceFacade(val apiGateway: SettingsApiGateway) : Settings
     override suspend fun getSettings(): Result<SettingsVO> {
         val result = apiGateway.getSettings()
         if (result.isSuccess) {
-            _isTacAccepted.value = result.getOrThrow().isTacAccepted
-            _tradeRulesConfirmed.value = result.getOrThrow().tradeRulesConfirmed
-            _languageCode.value = result.getOrThrow().languageCode
-            _supportedLanguageCodes.value = result.getOrThrow().supportedLanguageCodes
-            _closeMyOfferWhenTaken.value = result.getOrThrow().closeMyOfferWhenTaken
-            _maxTradePriceDeviation.value = result.getOrThrow().maxTradePriceDeviation
-            _useAnimations.value = result.getOrThrow().useAnimations
+            result.getOrThrow().let {
+                _isTacAccepted.value = it.isTacAccepted
+                _tradeRulesConfirmed.value = it.tradeRulesConfirmed
+                _languageCode.value = it.languageCode
+                _supportedLanguageCodes.value = it.supportedLanguageCodes
+                _closeMyOfferWhenTaken.value = it.closeMyOfferWhenTaken
+                _maxTradePriceDeviation.value = it.maxTradePriceDeviation
+                _useAnimations.value = it.useAnimations
+                _numDaysAfterRedactingTradeData.value = it.numDaysAfterRedactingTradeData
+            }
         }
         return result
     }

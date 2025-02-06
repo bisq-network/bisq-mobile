@@ -1,12 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import androidx.collection.MutableScatterMap
-import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.flow.MutableStateFlow
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
@@ -17,7 +12,6 @@ import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.composeModels.PaymentAccount
 
 open class GeneralSettingsPresenter(
     private val settingsRepository: SettingsRepository,
@@ -30,6 +24,9 @@ open class GeneralSettingsPresenter(
     override val allLanguagePairs: StateFlow<List<Pair<String, String>>> = languageServiceFacade.allPairs
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
     override val languageCode: MutableStateFlow<String> = _languageCode
+
+    private val _numDaysAfterRedactingTradeData = MutableStateFlow(90)
+    override val numDaysAfterRedactingTradeData: StateFlow<Int> = _numDaysAfterRedactingTradeData
     override fun setLanguageCode(langCode: String) {
         backgroundScope.launch {
             settingsServiceFacade.setLanguageCode(langCode)
@@ -135,6 +132,7 @@ open class GeneralSettingsPresenter(
                 _tradePriceTolerance.value = settings.maxTradePriceDeviation
                 _useAnimations.value = settings.useAnimations
 
+                _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData
                 _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value
                 _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
             } catch (e: Exception) {

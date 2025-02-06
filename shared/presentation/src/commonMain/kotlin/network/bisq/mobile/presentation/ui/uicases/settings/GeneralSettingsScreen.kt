@@ -38,6 +38,8 @@ interface IGeneralSettingsPresenter : ViewPresenter {
     val useAnimations: StateFlow<Boolean>
     fun setUseAnimations(value: Boolean)
 
+    val numDaysAfterRedactingTradeData: StateFlow<Int>
+
     val powFactor: StateFlow<Double>
     fun setPowFactor(value: Double)
 

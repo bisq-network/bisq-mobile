@@ -39,4 +39,7 @@ interface SettingsServiceFacade : LifeCycleAware {
     val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean>
     suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean)
 
+    val numDaysAfterRedactingTradeData: StateFlow<Int>
+    suspend fun setNumDaysAfterRedactingTradeData(days: Int)
+
 }

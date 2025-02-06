@@ -81,6 +81,12 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
         settingsService.difficultyAdjustmentFactor.set(value)
     }
 
+    private val _numDaysAfterRedactingTradeData = MutableStateFlow(90)
+    override val numDaysAfterRedactingTradeData: StateFlow<Int> = _numDaysAfterRedactingTradeData
+    override suspend fun setNumDaysAfterRedactingTradeData(days: Int) {
+        settingsService.setNumDaysAfterRedactingTradeData(days)
+    }
+
     private val _ignoreDiffAdjustmentFromSecManager: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> get() = _ignoreDiffAdjustmentFromSecManager
     override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean) {
@@ -112,6 +118,9 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
         }
         settingsService.difficultyAdjustmentFactor.addObserver { value ->
             _difficultyAdjustmentFactor.value = value
+        }
+        settingsService.numDaysAfterRedactingTradeData.addObserver { value ->
+            _numDaysAfterRedactingTradeData.value = value
         }
         settingsService.ignoreDiffAdjustmentFromSecManager.addObserver { value ->
             _ignoreDiffAdjustmentFromSecManager.value = value
