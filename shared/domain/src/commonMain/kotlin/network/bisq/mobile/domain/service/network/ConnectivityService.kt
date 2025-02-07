@@ -38,7 +38,7 @@ abstract class ConnectivityService: Logging {
      */
     fun startMonitoring(period: Long = PERIOD) {
         job?.cancel()
-        job = coroutineScope.launch {
+        job = coroutineScope.launch(BackgroundDispatcher) {
             while (true) {
                 try {
                     withTimeout(TIMEOUT) {
