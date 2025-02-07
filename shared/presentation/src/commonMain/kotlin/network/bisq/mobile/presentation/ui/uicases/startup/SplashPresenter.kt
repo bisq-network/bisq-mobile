@@ -4,6 +4,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
@@ -12,7 +13,9 @@ import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
+import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
@@ -26,6 +29,7 @@ open class SplashPresenter(
     private val userRepository: UserRepository,
     private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
+    private val languageServiceFacade: LanguageServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider?,
 ) : BasePresenter(mainPresenter) {
 
@@ -36,6 +40,17 @@ open class SplashPresenter(
 
     override fun onViewAttached() {
         jobs.add(backgroundScope.launch {
+            val settingsMobile: Settings = settingsRepository.fetch() ?: Settings()
+            if (settingsMobile.firstLaunch) {
+                val deviceLanguageCode = getDeviceLanguageCode()
+                val i18nSupportedCodes = languageServiceFacade.i18nPairs.value.map { it.first }
+                if (i18nSupportedCodes.contains(deviceLanguageCode)) {
+                    settingsServiceFacade.setLanguageCode(deviceLanguageCode)
+                } else {
+                    settingsServiceFacade.setLanguageCode("en")
+                }
+            }
+
             userRepository.fetch()?.let {
                 it.lastActivity = Clock.System.now().toEpochMilliseconds()
                 userRepository.update(it)

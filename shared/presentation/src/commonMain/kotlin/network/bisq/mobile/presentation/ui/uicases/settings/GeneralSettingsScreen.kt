@@ -187,17 +187,6 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 )
             }
 
-            BisqGap.V5()
-            BisqGap.V5()
-            BisqGap.V5()
-            BisqGap.V5()
-            BisqGap.V5()
-            BisqGap.V5()
-            BisqGap.V5()
-            BisqGap.V5()
-            BisqGap.V5()
-            BisqGap.V5()
-
         }
 
     }

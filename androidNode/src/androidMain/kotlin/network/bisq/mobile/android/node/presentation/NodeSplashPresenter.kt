@@ -4,6 +4,7 @@ import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
@@ -15,7 +16,8 @@ class NodeSplashPresenter(
     userProfileService: UserProfileServiceFacade,
     userRepository: UserRepository,
     settingsRepository: SettingsRepository,
-    settingsServiceFacade: SettingsServiceFacade
+    settingsServiceFacade: SettingsServiceFacade,
+    languageServiceFacade: LanguageServiceFacade,
 ) : SplashPresenter(
     mainPresenter,
     applicationBootstrapFacade,
@@ -23,6 +25,7 @@ class NodeSplashPresenter(
     userRepository,
     settingsRepository,
     settingsServiceFacade,
+    languageServiceFacade,
     null
 ) {
 
