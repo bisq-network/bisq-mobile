@@ -7,6 +7,11 @@ class UserProfileApiGateway(
     private val webSocketApiClient: WebSocketApiClient
 ) {
     private val basePath = "user-identities"
+
+    suspend fun ping(): Result<KeyMaterialResponse> {
+        return webSocketApiClient.get("$basePath/ping")
+    }
+    
     suspend fun getKeyMaterial(): Result<KeyMaterialResponse> {
         return webSocketApiClient.get("$basePath/key-material")
     }

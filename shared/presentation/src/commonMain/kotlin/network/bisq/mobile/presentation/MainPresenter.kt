@@ -9,6 +9,7 @@ import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.getPlatformInfo
+import network.bisq.mobile.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.setupUncaughtExceptionHandler
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -20,6 +21,7 @@ import kotlin.jvm.JvmStatic
  * Main Presenter as an example of implementation for now.
  */
 open class MainPresenter(
+    private val connectivityService: ClientConnectivityService,
     private val openTradesNotificationService: OpenTradesNotificationService,
     private val settingsService: SettingsServiceFacade,
     private val urlLauncher: UrlLauncher
@@ -61,10 +63,12 @@ open class MainPresenter(
 
     override fun onResume() {
         super.onResume()
+        connectivityService.startMonitoring()
         openTradesNotificationService.stopNotificationService()
     }
 
     override fun onPause() {
+        connectivityService.stopMonitoring()
         openTradesNotificationService.launchNotificationService()
         super.onPause()
     }

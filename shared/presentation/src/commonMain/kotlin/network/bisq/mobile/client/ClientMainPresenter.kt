@@ -7,6 +7,7 @@ import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -17,6 +18,7 @@ import network.bisq.mobile.presentation.MainPresenter
  * Contains all the share code for each client. Each specific app might extend this class if needed.
  */
 open class ClientMainPresenter(
+    connectivityService: ClientConnectivityService,
     openTradesNotificationService: OpenTradesNotificationService,
     private val tradesServiceFacade: TradesServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider,
@@ -26,7 +28,7 @@ open class ClientMainPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
     urlLauncher: UrlLauncher
-) : MainPresenter(openTradesNotificationService, settingsServiceFacade, urlLauncher) {
+) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, urlLauncher) {
 
     override fun onViewAttached() {
         super.onViewAttached()
