@@ -55,7 +55,6 @@ fun App() {
     })
 
     val lyricist = rememberStrings()
-    // TODO pass user language code
     val languageCode = presenter.languageCode.collectAsState().value
     I18nSupport.initialize(languageCode)
 

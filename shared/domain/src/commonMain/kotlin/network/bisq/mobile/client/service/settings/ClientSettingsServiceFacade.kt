@@ -66,7 +66,7 @@ class ClientSettingsServiceFacade(val apiGateway: SettingsApiGateway) : Settings
     private val _maxTradePriceDeviation = MutableStateFlow(5.0)
     override val maxTradePriceDeviation: StateFlow<Double> get() = _maxTradePriceDeviation
     override suspend fun setMaxTradePriceDeviation(value: Double) {
-        val result = apiGateway.setMaxTradePriceDeviation(value / 100.0)
+        val result = apiGateway.setMaxTradePriceDeviation(value)
         if (result.isSuccess) {
             _maxTradePriceDeviation.value = value
         }
@@ -107,17 +107,11 @@ class ClientSettingsServiceFacade(val apiGateway: SettingsApiGateway) : Settings
                 _isTacAccepted.value = it.isTacAccepted
                 _tradeRulesConfirmed.value = it.tradeRulesConfirmed
                 _languageCode.value = it.languageCode
-                _supportedLanguageCodes.value = it.supportedLanguageCodes
-                _closeMyOfferWhenTaken.value = it.closeMyOfferWhenTaken
-                _maxTradePriceDeviation.value = (it.maxTradePriceDeviation * 100.0)
-                _supportedLanguageCodes.value = it.supportedLanguageCodes
-                _closeMyOfferWhenTaken.value = it.closeMyOfferWhenTaken
-                _useAnimations.value = it.useAnimations
                 _maxTradePriceDeviation.value = it.maxTradePriceDeviation
+                _supportedLanguageCodes.value = it.supportedLanguageCodes
+                _closeMyOfferWhenTaken.value = it.closeMyOfferWhenTaken
                 _useAnimations.value = it.useAnimations
                 _numDaysAfterRedactingTradeData.value = it.numDaysAfterRedactingTradeData
-                val updatedSettings = it.copy(maxTradePriceDeviation = it.maxTradePriceDeviation * 100.0)
-                return Result.success(updatedSettings)
             }
         }
         return result

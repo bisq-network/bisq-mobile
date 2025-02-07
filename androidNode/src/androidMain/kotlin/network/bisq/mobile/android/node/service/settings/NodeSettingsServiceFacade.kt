@@ -66,7 +66,7 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     private val _maxTradePriceDeviation = MutableStateFlow(5.0)
     override val maxTradePriceDeviation: StateFlow<Double> get() = _maxTradePriceDeviation
     override suspend fun setMaxTradePriceDeviation(value: Double) {
-        settingsService.maxTradePriceDeviation.set(value)
+        settingsService.setMaxTradePriceDeviation(value)
     }
 
     private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)

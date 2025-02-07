@@ -72,6 +72,8 @@ open class GeneralSettingsPresenter(
         }
     }
 
+    // This is internally represented as ratio. So 100% is saved as 1.0, 5% as 0.05.
+    // Hence the 100 multiplier and divider
     private val _tradePriceTolerance: MutableStateFlow<String> = MutableStateFlow("5")
     override val tradePriceTolerance: StateFlow<String> = _tradePriceTolerance
     override fun setTradePriceTolerance(value: String, isValid: Boolean) {
@@ -79,7 +81,7 @@ open class GeneralSettingsPresenter(
             _tradePriceTolerance.value = value
             if (isValid) {
                 val _value = value.toDoubleOrNull()
-                settingsServiceFacade.setMaxTradePriceDeviation(_value ?: 0.0)
+                settingsServiceFacade.setMaxTradePriceDeviation((_value ?: 0.0)/100)
             }
         }
     }
@@ -127,10 +129,9 @@ open class GeneralSettingsPresenter(
             else
                 setOf("en") // setOf(i18nPairs.collectAsState().value.first().first)
 
-            // _tradeNotification.value =
             // _chatNotification.value =
             _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
-            _tradePriceTolerance.value = settings.maxTradePriceDeviation.toString()
+            _tradePriceTolerance.value = (settings.maxTradePriceDeviation * 100).toString()
             _useAnimations.value = settings.useAnimations
             _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData
             _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value.toString()
