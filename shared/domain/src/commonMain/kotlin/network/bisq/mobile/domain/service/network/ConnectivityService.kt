@@ -7,7 +7,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.TimeoutCancellationException
 import network.bisq.mobile.domain.utils.Logging
@@ -29,6 +29,7 @@ abstract class ConnectivityService: Logging {
     }
 
     private val coroutineScope = CoroutineScope(BackgroundDispatcher)
+    private var job: Job? = null
     private val _status = MutableStateFlow(ConnectivityStatus.DISCONNECTED)
     val status: StateFlow<ConnectivityStatus> = _status
 
@@ -36,16 +37,21 @@ abstract class ConnectivityService: Logging {
      * Starts monitoring connectivity every given period (ms). Default is 10 seconds.
      */
     fun startMonitoring(period: Long = PERIOD) {
-        coroutineScope.launch {
+        job?.cancel()
+        job = coroutineScope.launch {
             while (true) {
                 try {
                     withTimeout(TIMEOUT) {
+                        val currentStatus = _status.value
                         val isConnected = isConnected()
                         val isSlow = isSlow()
                         when {
                             !isConnected -> _status.value = ConnectivityStatus.DISCONNECTED
                             isSlow -> _status.value = ConnectivityStatus.SLOW
                             else -> _status.value = ConnectivityStatus.CONNECTED
+                        }
+                        if (currentStatus != _status.value) {
+                            log.d { "Connectivity transition from $currentStatus to ${_status.value}" }
                         }
                     }
                 } catch (e: TimeoutCancellationException) {
@@ -61,7 +67,8 @@ abstract class ConnectivityService: Logging {
     }
 
     fun stopMonitoring() {
-        coroutineScope.cancel()
+        job?.cancel()
+        job = null
         onStop()
     }
 

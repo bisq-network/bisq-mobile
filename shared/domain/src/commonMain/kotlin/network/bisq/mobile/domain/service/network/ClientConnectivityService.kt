@@ -16,7 +16,7 @@ class ClientConnectivityService(
     @Throws(IllegalStateException::class)
     override suspend fun isSlow(): Boolean {
         try {
-            if (isConnected()) {
+            if (!isConnected()) {
                 throw IllegalStateException("No connectivity")
             }
             val startTime = Clock.System.now()
