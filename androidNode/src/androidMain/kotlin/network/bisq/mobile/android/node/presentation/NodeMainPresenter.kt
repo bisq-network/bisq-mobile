@@ -4,6 +4,7 @@ import android.app.Activity
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.MainActivity
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
+import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
@@ -18,6 +19,7 @@ import network.bisq.mobile.presentation.MainPresenter
  * Node main presenter has a very different setup than the rest of the apps (bisq2 core dependencies)
  */
 class NodeMainPresenter(
+    connectivityService: NodeConnectivityService,
     urlLauncher: UrlLauncher,
     openTradesNotificationService: OpenTradesNotificationService,
     private val tradesServiceFacade: TradesServiceFacade,
@@ -28,7 +30,7 @@ class NodeMainPresenter(
     private val offersServiceFacade: OffersServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
-) : MainPresenter(openTradesNotificationService, settingsServiceFacade, urlLauncher) {
+) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, urlLauncher) {
 
     private var applicationServiceCreated = false
 

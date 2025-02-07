@@ -9,6 +9,7 @@ import network.bisq.mobile.android.node.service.explorer.NodeExplorerServiceFaca
 import network.bisq.mobile.android.node.service.common.NodeLanguageServiceFacade
 import network.bisq.mobile.android.node.service.market_price.NodeMarketPriceServiceFacade
 import network.bisq.mobile.android.node.service.mediation.NodeMediationServiceFacade
+import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
 import network.bisq.mobile.android.node.service.settings.NodeSettingsServiceFacade
 import network.bisq.mobile.android.node.service.trades.NodeTradesServiceFacade
@@ -20,6 +21,7 @@ import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
+import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -67,11 +69,15 @@ val androidNodeModule = module {
 
     single<LanguageServiceFacade> { NodeLanguageServiceFacade(get()) }
 
+    single { NodeConnectivityService() } bind ConnectivityService::class
+
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 
     // this line showcases both, the possibility to change behaviour of the app by changing one definition
     // and binding the same obj to 2 different abstractions
-    single<MainPresenter> { NodeMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) } bind AppPresenter::class
+    single<MainPresenter> {
+        NodeMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
+    } bind AppPresenter::class
 
     single<SplashPresenter> {
         NodeSplashPresenter(
