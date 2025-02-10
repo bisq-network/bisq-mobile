@@ -388,7 +388,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
                     .thenAccept { result ->
                         // In case the user has switched to another market we want to select that market in the offer book
                         val chatChannelSelectionService: ChatChannelSelectionService =
-                            chatService.getChatChannelSelectionService(ChatChannelDomain.BISQ_EASY_OFFERBOOK)
+                            chatService. getChatChannelSelectionService(ChatChannelDomain.BISQ_EASY_OFFERBOOK)
                         bisqEasyOfferbookChannelService.findChannel(contract.offer.market)
                             .ifPresent { chatChannel: BisqEasyOfferbookChannel? -> chatChannelSelectionService.selectChannel(chatChannel) }
                         takeOfferStatus.value = TakeOfferStatus.SUCCESS

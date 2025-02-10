@@ -69,7 +69,7 @@ val androidNodeModule = module {
 
     single<LanguageServiceFacade> { NodeLanguageServiceFacade(get()) }
 
-    single { NodeConnectivityService() } bind ConnectivityService::class
+    single { NodeConnectivityService(get()) } bind ConnectivityService::class
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 

@@ -20,7 +20,25 @@ abstract class ConnectivityService: Logging {
     companion object {
         const val TIMEOUT = 5000L
         const val PERIOD = 10000L // default check every 10 sec
-        const val SLOW_THRESHOLD = 1000L
+        const val ROUND_TRIP_SLOW_THRESHOLD = 500L
+
+        const val DEFAULT_AVERAGE_TRIP_TIME = -1L // invalid
+        const val MIN_REQUESTS_TO_ASSESS_SPEED = 3 // invalid
+
+        private var sessionTotalRequests = 0L
+        private var averageTripTime = DEFAULT_AVERAGE_TRIP_TIME
+
+        suspend fun newRequestRoundTripTime(timeInMs: Long) {
+            averageTripTime = when (averageTripTime) {
+                DEFAULT_AVERAGE_TRIP_TIME -> {
+                    timeInMs
+                }
+                else -> {
+                    (averageTripTime + timeInMs) / 2
+                }
+            }
+            sessionTotalRequests++
+        }
     }
     enum class ConnectivityStatus {
         DISCONNECTED,
@@ -43,11 +61,9 @@ abstract class ConnectivityService: Logging {
                 try {
                     withTimeout(TIMEOUT) {
                         val currentStatus = _status.value
-                        val isConnected = isConnected()
-                        val isSlow = isSlow()
                         when {
-                            !isConnected -> _status.value = ConnectivityStatus.DISCONNECTED
-                            isSlow -> _status.value = ConnectivityStatus.SLOW
+                            !isConnected() -> _status.value = ConnectivityStatus.DISCONNECTED
+                            isSlow() -> _status.value = ConnectivityStatus.SLOW
                             else -> _status.value = ConnectivityStatus.CONNECTED
                         }
                         if (currentStatus != _status.value) {
@@ -72,12 +88,22 @@ abstract class ConnectivityService: Logging {
         onStop()
     }
 
-    protected fun onStop() {
+    protected open fun onStop() {
         // do nth
     }
 
     protected abstract fun isConnected(): Boolean
 
+    /**
+     * Default implementation uses round trip average measuring.
+     * It relays on other components updating it on each request.
+     */
     @Throws(IllegalStateException::class)
-    protected abstract suspend fun isSlow(): Boolean
+    protected open suspend fun isSlow(): Boolean {
+        if (sessionTotalRequests > MIN_REQUESTS_TO_ASSESS_SPEED) {
+//            log.d { "Current average trip time is ${averageTripTime}ms" }
+            return averageTripTime > ROUND_TRIP_SLOW_THRESHOLD
+        }
+        return false // asume is not slow on non mature connections
+    }
 }

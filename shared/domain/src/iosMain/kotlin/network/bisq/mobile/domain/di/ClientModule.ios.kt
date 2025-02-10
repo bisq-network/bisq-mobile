@@ -19,5 +19,5 @@ val iosClientModule = module {
         }
     }
 
-    single { ClientConnectivityService(get(), get()) } bind ConnectivityService::class
+    single { ClientConnectivityService(get()) } bind ConnectivityService::class
 }

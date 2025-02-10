@@ -25,7 +25,7 @@ val androidClientModule = module {
         AndroidClientCatHashService(context, filesDir)
     } bind ClientCatHashService::class
 
-    single { ClientConnectivityService(get(), get()) } bind ConnectivityService::class 
+    single { ClientConnectivityService(get()) } bind ConnectivityService::class 
 
     single<AppForegroundController> { AppForegroundController(androidContext()) } bind ForegroundDetector::class
     single<NotificationServiceController> {

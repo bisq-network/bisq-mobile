@@ -4,6 +4,8 @@ import kotlinx.datetime.*
 
 object DateUtils {
 
+    fun now() = Clock.System.now().toEpochMilliseconds()
+
     /**
      * @return years, months, days past since timestamp
      */

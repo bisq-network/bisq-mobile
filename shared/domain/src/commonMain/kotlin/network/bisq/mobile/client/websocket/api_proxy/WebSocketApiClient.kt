@@ -15,6 +15,8 @@ import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
+import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -108,7 +110,9 @@ class WebSocketApiClient(
             bodyAsJson
         )
         try {
+            val startTime = DateUtils.now()
             val response = webSocketClientProvider.get().sendRequestAndAwaitResponse(webSocketRestApiRequest)
+            ConnectivityService.newRequestRoundTripTime(DateUtils.now() - startTime)
             require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
             val body = response.body
             if (response.isSuccess()) {
