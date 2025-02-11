@@ -42,7 +42,7 @@ fun GlowEffect(connectivityStatus: ConnectivityService.ConnectivityStatus) {
     val name = when (connectivityStatus) {
         ConnectivityService.ConnectivityStatus.CONNECTED -> "green-small-dot.png"
         ConnectivityService.ConnectivityStatus.SLOW -> "yellow-small-dot.png"
-        ConnectivityService.ConnectivityStatus.DISCONNECTED -> "grey-small-dot.png"
+        ConnectivityService.ConnectivityStatus.DISCONNECTED -> "red-small-dot.png"
     }
     // For UserProfileSettingsScreen (scale > 20), need different offset to look right
     val offset = if (scale > 20)
