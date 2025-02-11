@@ -59,29 +59,3 @@ fun GlowEffect(connectivityStatus: ConnectivityService.ConnectivityStatus) {
             },
     )
 }
-
-/*
-@Composable
-fun GlowEffect() {
-    var scale by remember { mutableStateOf(0) }
-    Box(
-        modifier = Modifier
-            .size(width = scale.dp, height = scale.dp)
-            .padding(0.dp)
-            .offset(x = (-scale / 4).dp, y = (-scale / 4).dp)
-            .background(Color.Green.copy(alpha = 0.5F), CircleShape)
-            .onGloballyPositioned { layoutCoordinates ->
-                scale = (layoutCoordinates.parentLayoutCoordinates?.size?.width ?: 0) / 10
-            },
-        contentAlignment = Alignment.Center
-    ) {
-        Box(
-            modifier = Modifier
-                .size(width = (scale / 2).dp, height = (scale / 2).dp)
-                .shadow((scale / 4).dp, CircleShape)
-                .background(Color.Green, CircleShape)
-        )
-    }
-
-}
-*/

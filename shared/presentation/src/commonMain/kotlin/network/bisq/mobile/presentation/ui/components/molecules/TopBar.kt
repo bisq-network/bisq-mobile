@@ -145,7 +145,7 @@ fun TopBar(
 //                TODO implement full feature after MVP
 //                BellIcon()
                 Spacer(modifier = Modifier.width(12.dp))
-                if (showAnimation) {
+                if (showAnimation && connectivityStatus != ConnectivityService.ConnectivityStatus.DISCONNECTED) {
                     ShineOverlay {
                         UserIcon(
                             presenter.uniqueAvatar.value,
