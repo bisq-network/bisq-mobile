@@ -154,7 +154,7 @@ private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter, sh
             modifier = Modifier
                 .size(80.dp)
                 .clip(CircleShape)
-                .padding(8.dp)
+                .padding(12.dp)
                 .fillMaxWidth()
                 .background(BisqTheme.colors.dark1),
             contentAlignment = Alignment.Center
