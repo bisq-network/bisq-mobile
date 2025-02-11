@@ -58,8 +58,8 @@ fun ShineOverlay(
 
     // Layer composable with shine overlay
     Box(
-        modifier = modifier
-            .clip(CircleShape),
+        modifier = modifier,
+            //.clip(CircleShape),
         contentAlignment = Alignment.Center
     ) {
         // UserIcon composable

@@ -53,7 +53,7 @@ val presentationModule = module {
         ClientMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
     } bind AppPresenter::class
 
-    single<TopBarPresenter> { TopBarPresenter(get(), get(), get()) } bind ITopBarPresenter::class
+    single<TopBarPresenter> { TopBarPresenter(get(), get(), get(), get()) } bind ITopBarPresenter::class
 
     single<SplashPresenter> {
         SplashPresenter(
@@ -75,7 +75,7 @@ val presentationModule = module {
 
     single<SettingsPresenter> { SettingsPresenter(get(), get()) } bind ISettingsPresenter::class
 
-    single<UserProfileSettingsPresenter> { UserProfileSettingsPresenter(get(), get(), get()) } bind IUserProfileSettingsPresenter::class
+    single<UserProfileSettingsPresenter> { UserProfileSettingsPresenter(get(), get(), get(), get()) } bind IUserProfileSettingsPresenter::class
 
     single<GettingStartedPresenter> { GettingStartedPresenter(get(), get(), get(), get()) }
 

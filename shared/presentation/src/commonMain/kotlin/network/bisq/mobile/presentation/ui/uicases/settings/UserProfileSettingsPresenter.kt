@@ -9,6 +9,7 @@ import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.repository.UserRepository
+import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.presentation.BasePresenter
@@ -17,6 +18,7 @@ import network.bisq.mobile.presentation.MainPresenter
 class UserProfileSettingsPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val userRepository: UserRepository,
+    private val connectivityService: ConnectivityService,
     mainPresenter: MainPresenter): BasePresenter(mainPresenter), IUserProfileSettingsPresenter {
 
     companion object {
@@ -45,6 +47,8 @@ class UserProfileSettingsPresenter(
 
     private val _showLoading = MutableStateFlow(false)
     override val showLoading: StateFlow<Boolean> = _showLoading
+
+    override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> = connectivityService.status
 
     override fun onViewAttached() {
         super.onViewAttached()

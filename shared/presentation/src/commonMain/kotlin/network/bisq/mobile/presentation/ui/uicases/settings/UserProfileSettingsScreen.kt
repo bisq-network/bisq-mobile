@@ -19,6 +19,7 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bitcoin_payment_waiting
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
@@ -42,6 +43,8 @@ interface IUserProfileSettingsPresenter: ViewPresenter {
     val uniqueAvatar: StateFlow<PlatformImage?>
 
     val showLoading: StateFlow<Boolean>
+
+    val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus>
 
     fun onDelete()
     fun onSave()
@@ -127,6 +130,7 @@ fun UserProfileSettingsScreen(showBackNavigation: Boolean = false) {
 
 @Composable
 private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter, showBackNavigation: Boolean) {
+    val connectivityStatus = presenter.connectivityStatus.collectAsState().value
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -153,7 +157,6 @@ private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter, sh
         Box(
             modifier = Modifier
                 .size(80.dp)
-                .clip(CircleShape)
                 .padding(12.dp)
                 .fillMaxWidth()
                 .background(BisqTheme.colors.dark1),
@@ -161,7 +164,8 @@ private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter, sh
         ) {
             UserIcon(
                 presenter.uniqueAvatar.value,
-                modifier = Modifier.size(72.dp)
+                modifier = Modifier.size(72.dp),
+                connectivityStatus = connectivityStatus
             )
         }
     }

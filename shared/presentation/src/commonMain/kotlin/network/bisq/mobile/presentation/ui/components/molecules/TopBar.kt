@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.draw.alpha
 import androidx.navigation.compose.currentBackStackEntryAsState
+import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.presentation.ui.components.BackHandler
 import network.bisq.mobile.presentation.ui.components.atoms.animations.ShineOverlay
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
@@ -38,6 +39,7 @@ interface ITopBarPresenter : ViewPresenter {
     fun onAvatarClicked()
 
     val showAnimation: StateFlow<Boolean>
+    val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus>
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -65,6 +67,8 @@ fun TopBar(
 
     val topBarState = rememberTopAppBarState()
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topBarState, canScroll = { false })
+
+    val connectivityStatus = presenter.connectivityStatus.collectAsState().value
 
     val defaultBackButton: @Composable () -> Unit = {
         IconButton(onClick = {
@@ -142,9 +146,19 @@ fun TopBar(
 //                BellIcon()
                 Spacer(modifier = Modifier.width(12.dp))
                 if (showAnimation) {
-                    ShineOverlay { UserIcon(presenter.uniqueAvatar.value, modifier = userIconModifier) }
+                    ShineOverlay {
+                        UserIcon(
+                            presenter.uniqueAvatar.value,
+                            modifier = userIconModifier,
+                            connectivityStatus = connectivityStatus
+                        )
+                    }
                 } else {
-                    UserIcon(presenter.uniqueAvatar.value, modifier = userIconModifier)
+                    UserIcon(
+                        presenter.uniqueAvatar.value,
+                        modifier = userIconModifier,
+                        connectivityStatus = connectivityStatus
+                    )
                 }
             }
         },

@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.repository.UserRepository
+import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -13,6 +14,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 open class TopBarPresenter(
     private val userRepository: UserRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
+    private val connectivityService: ConnectivityService,
     mainPresenter: MainPresenter
 ): BasePresenter(mainPresenter), ITopBarPresenter {
 
@@ -24,6 +26,8 @@ open class TopBarPresenter(
     }
 
     override val showAnimation: StateFlow<Boolean> get() = settingsServiceFacade.useAnimations
+
+    override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> = connectivityService.status
 
     init {
         refresh()
