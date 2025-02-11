@@ -2,9 +2,13 @@ package network.bisq.mobile.presentation.ui.navigation.graph
 
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalGraphicsContext
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navigation
@@ -23,10 +27,16 @@ fun TabNavGraph() {
 
     val mainPresenter: AppPresenter = koinInject()
     val selectedTab = remember { mutableStateOf(Routes.TabHome.name) }
+    val navController = mainPresenter.getRootTabNavController()
+    val viewModelStoreOwner = LocalViewModelStoreOwner.current
+    DisposableEffect(viewModelStoreOwner) {
+        navController.setViewModelStore(viewModelStoreOwner!!.viewModelStore)
+        onDispose {}
+    }
 
     NavHost(
         modifier = Modifier.background(color = BisqTheme.colors.backgroundColor),
-        navController = mainPresenter.getRootTabNavController(),
+        navController = navController,
         startDestination = Graph.MAIN_SCREEN_GRAPH_KEY,
     ) {
         navigation(
