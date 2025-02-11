@@ -28,7 +28,8 @@ class TrustedNodeSetupPresenter(
     private val _isLoading = MutableStateFlow(false)
     override val isLoading: StateFlow<Boolean> = _isLoading
 
-    init {
+    override fun onViewAttached() {
+        super.onViewAttached()
         initialize()
     }
 
