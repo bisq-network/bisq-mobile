@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
@@ -74,33 +75,39 @@ open class SplashPresenter(
     }
 
     private fun navigateToNextScreen() {
-        CoroutineScope(Dispatchers.Main).launch {
-            val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
-            val settingsMobile: Settings = settingsRepository.fetch() ?: Settings()
-            val user: User? = userRepository.fetch()
-
-            if (!settings.isTacAccepted) {
-                navigateToAgreement()
-            } else if (hasConnectivity()) {
-                // only fetch profile with connectivity
-                val hasProfile: Boolean = userProfileService.hasUserProfile()
-
-                // Scenario 1: All good and setup for both androidNode and xClients
-                if (user != null && hasProfile) {
-                    // TOOD:
-                    // 1) Is this the right condition?
-                    // 2a) androidNode being able to connect with other peers and
-                    // 2b) xClients being able to connect with remote instance happening successfuly as part of services init?
-                    navigateToHome()
-                    // Scenario 2: Loading up for first time for both androidNode and xClients
-                } else if (settingsMobile.firstLaunch) {
-                    navigateToOnboarding()
-                    // Scenario 3: Handle others based on app type
-                } else {
-                    doCustomNavigationLogic(settingsMobile, hasProfile)
-                }
-            } else {
+        uiScope.launch {
+            if (!hasConnectivity()) {
                 navigateToTrustedNodeSetup()
+            }
+
+            runCatching {
+                val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
+                val settingsMobile: Settings = settingsRepository.fetch() ?: Settings()
+                val user: User? = userRepository.fetch()
+
+                if (!settings.isTacAccepted) {
+                    navigateToAgreement()
+                } else {
+                    // only fetch profile with connectivity
+                    val hasProfile: Boolean = userProfileService.hasUserProfile()
+
+                    // Scenario 1: All good and setup for both androidNode and xClients
+                    if (user != null && hasProfile) {
+                        // TOOD:
+                        // 1) Is this the right condition?
+                        // 2a) androidNode being able to connect with other peers and
+                        // 2b) xClients being able to connect with remote instance happening successfuly as part of services init?
+                        navigateToHome()
+                        // Scenario 2: Loading up for first time for both androidNode and xClients
+                    } else if (settingsMobile.firstLaunch) {
+                        navigateToOnboarding()
+                        // Scenario 3: Handle others based on app type
+                    } else {
+                        doCustomNavigationLogic(settingsMobile, hasProfile)
+                    }
+                }
+            }.onFailure {
+                log.e(it) { "Failed to navigate out of splash" }
             }
         }
     }
@@ -130,9 +137,7 @@ open class SplashPresenter(
     }
 
     open suspend fun hasConnectivity(): Boolean {
-        webSocketClientProvider?.get().takeIf { it != null }.let {
-            return webSocketClientProvider?.testClient(it!!.host, it.port) == true
-        }
+        return webSocketClientProvider?.get()?.isConnected() ?: false
     }
 
     private fun navigateToAgreement() {

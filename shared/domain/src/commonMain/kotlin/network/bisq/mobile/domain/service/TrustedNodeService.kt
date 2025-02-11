@@ -24,11 +24,13 @@ class TrustedNodeService(private val webSocketClientProvider: WebSocketClientPro
             observeConnectivity()
         }
         runCatching {
+            // first test connect and proceed to establish it if test passes
+            webSocketClientProvider.get().connect(true)
             webSocketClientProvider.get().connect()
         }.onSuccess {
             log.d { "Connected to trusted node" }
         }.onFailure {
-            log.e { "ERROR: FAILED to connect to trusted node - details above" }
+            log.e(it) { "ERROR: FAILED to connect to trusted node - details above" }
             throw it
         }
     }
