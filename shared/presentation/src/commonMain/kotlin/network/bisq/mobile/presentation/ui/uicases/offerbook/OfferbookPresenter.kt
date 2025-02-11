@@ -24,18 +24,23 @@ class OfferbookPresenter(
     val selectedDirection: StateFlow<DirectionEnum> = _selectedDirection
 
     fun onSelectOffer(item: OfferItemPresentationModel) {
-        if (item.isMyOffer) {
-            //todo show dialogue if user really want to delete their offer
-            backgroundScope.launch { offersServiceFacade.deleteOffer(item.offerId) }
-        } else {
-            takeOfferPresenter.selectOfferToTake(item)
-            if (takeOfferPresenter.showAmountScreen()) {
-                navigateTo(Routes.TakeOfferTradeAmount)
-            } else if (takeOfferPresenter.showPaymentMethodsScreen()) {
-                navigateTo(Routes.TakeOfferPaymentMethod)
+        runCatching {
+            if (item.isMyOffer) {
+                //todo show dialogue if user really want to delete their offer
+                backgroundScope.launch { offersServiceFacade.deleteOffer(item.offerId) }
             } else {
-                navigateTo(Routes.TakeOfferReviewTrade)
+                takeOfferPresenter.selectOfferToTake(item)
+                if (takeOfferPresenter.showAmountScreen()) {
+                    navigateTo(Routes.TakeOfferTradeAmount)
+                } else if (takeOfferPresenter.showPaymentMethodsScreen()) {
+                    navigateTo(Routes.TakeOfferPaymentMethod)
+                } else {
+                    navigateTo(Routes.TakeOfferReviewTrade)
+                }
             }
+        }.onFailure {
+            // TODO show error to users
+            log.e(it) { "Failed to select offer" }
         }
     }
 
