@@ -80,9 +80,20 @@ android {
     }
 
     sourceSets {
-        getByName("main") {
+        // TODO can we pick just the protos for each build type? release vs debug
+        getByName("debug") {
             java {
                 srcDir("src/main/resources")
+                srcDir("${layout.buildDirectory}/generated/source/proto/debug/java")
+                srcDir("${layout.buildDirectory}/generated/source/proto/release/java")
+                proto {
+                    srcDir("${layout.buildDirectory}/extracted-include-protos/debug")
+                }
+            }
+        }
+        getByName("release") {
+            java {
+                srcDir("src/release/resources")
                 srcDir("${layout.buildDirectory}/generated/source/proto/debug/java")
                 srcDir("${layout.buildDirectory}/generated/source/proto/release/java")
                 proto {
