@@ -1,25 +1,16 @@
 package network.bisq.mobile.presentation.ui.components.atoms.icons
 
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Paint
-import androidx.compose.ui.graphics.PaintingStyle
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import bisqapps.shared.presentation.generated.resources.*
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.exchange_h_arrow
 import bisqapps.shared.presentation.generated.resources.exchange_v_arrow
@@ -43,7 +34,6 @@ import bisqapps.shared.presentation.generated.resources.icon_sort
 import bisqapps.shared.presentation.generated.resources.icon_star_green
 import bisqapps.shared.presentation.generated.resources.icon_star_grey_hollow
 import bisqapps.shared.presentation.generated.resources.icon_star_half_green
-import bisqapps.shared.presentation.generated.resources.img_bot_image
 import bisqapps.shared.presentation.generated.resources.remove_offer
 import bisqapps.shared.presentation.generated.resources.up_arrow
 import network.bisq.mobile.domain.PlatformImage
@@ -124,6 +114,11 @@ fun InfoIcon(modifier: Modifier = Modifier.size(16.dp)) {
 @Composable
 fun GalleryIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_gallery), "Gallery icon", modifier = modifier)
+}
+
+@Composable
+fun PasteIcon(modifier: Modifier = Modifier) {
+    Image(painterResource(Res.drawable.icon_paste), "Paste icon", modifier = modifier)
 }
 
 @Composable

@@ -37,6 +37,8 @@ fun SellerState1(
             label = "bisqEasy.tradeState.info.seller.phase1.accountData".i18n(), // My payment account data
             value = paymentAccountData,
             onValueChange = { it, isValid -> presenter.onPaymentDataInput(it, isValid) },
+            isTextArea = true,
+            showPaste = true,
             validation = {
                 // Same validation as PaymentAccountSettingsScreen.accountData field validation
 

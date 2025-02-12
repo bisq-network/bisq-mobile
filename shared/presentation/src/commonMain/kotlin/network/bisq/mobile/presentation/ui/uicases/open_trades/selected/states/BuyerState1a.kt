@@ -40,6 +40,7 @@ fun BuyerState1a(
             value = bitcoinPaymentData,
             helperText = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.walletHelp".i18n(), // If you have not set up a wallet yet, you can find help at the wallet guide
             onValueChange = { it, isValid -> presenter.onBitcoinPaymentDataInput(it) },
+            showPaste = true,
         )
 
         BisqGap.V1()

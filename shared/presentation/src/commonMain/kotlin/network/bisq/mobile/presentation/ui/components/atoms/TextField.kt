@@ -30,6 +30,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButton
+import network.bisq.mobile.presentation.ui.components.atoms.button.PasteIconButton
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 /**
@@ -56,6 +57,7 @@ fun BisqTextField(
     disabled: Boolean = false,
     color: Color = BisqTheme.colors.light2,
     showCopy: Boolean = false,
+    showPaste: Boolean = false,
     valuePrefix: String? = null,
     valueSuffix: String? = null,
     validation: ((String) -> String?)? = null,
@@ -220,6 +222,13 @@ fun BisqTextField(
 
                         if (showCopy) {
                             CopyIconButton(value)
+                        }
+
+                        if (showPaste) {
+                            PasteIconButton(onPaste = {
+                                validationError = validation?.invoke(it)
+                                onValueChange(it, validationError == null)
+                            })
                         }
 
                         if (rightSuffix != null) {

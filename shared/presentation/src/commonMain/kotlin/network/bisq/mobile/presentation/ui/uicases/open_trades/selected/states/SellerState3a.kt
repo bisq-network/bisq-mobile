@@ -36,8 +36,10 @@ fun SellerState3a(
     val quoteAmount = openTradeItemModel.quoteAmountWithCode
     val baseAmount = openTradeItemModel.baseAmountWithCode
     val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
-    val bitcoinPaymentDescription = "bisqEasy.tradeState.info.seller.phase3a.bitcoinPayment.description.$paymentMethod".i18n()
-    val paymentProofDescription = "bisqEasy.tradeState.info.seller.phase3a.paymentProof.description.$paymentMethod".i18n()
+    val bitcoinPaymentDescription =
+        "bisqEasy.tradeState.info.seller.phase3a.bitcoinPayment.description.$paymentMethod".i18n()
+    val paymentProofDescription =
+        "bisqEasy.tradeState.info.seller.phase3a.paymentProof.description.$paymentMethod".i18n()
     val paymentProofPrompt = "bisqEasy.tradeState.info.seller.phase3a.paymentProof.prompt.$paymentMethod".i18n()
 
     val bitcoinPaymentData = openTradeItemModel.bisqEasyTradeModel.bitcoinPaymentData.value ?: "data.na".i18n()
@@ -69,7 +71,8 @@ fun SellerState3a(
             // Amount to send
             label = "bisqEasy.tradeState.info.seller.phase3a.baseAmount".i18n(),
             value = baseAmount,
-            disabled = true
+            disabled = true,
+            showCopy = true
         )
 
         BisqGap.VHalf()
@@ -78,14 +81,15 @@ fun SellerState3a(
             // Bitcoin address / Lightning invoice
             label = bitcoinPaymentDescription,
             value = bitcoinPaymentData,
-            disabled = true
+            disabled = true,
+            showCopy = true
         )
 
         BisqGap.V1()
         BisqText.baseRegular(
             // Fill in the Bitcoin transaction ID / Fill in the preimage if available
             text = paymentProofPrompt,
-            color = BisqTheme.colors.grey2
+            color = BisqTheme.colors.grey2,
         )
 
         BisqGap.VHalf()
@@ -94,6 +98,7 @@ fun SellerState3a(
             label = paymentProofDescription,
             value = paymentProof ?: "",
             onValueChange = { it, isValid -> presenter.onPaymentProofInput(it) },
+            showPaste = true
         )
 
         BisqGap.V1()
