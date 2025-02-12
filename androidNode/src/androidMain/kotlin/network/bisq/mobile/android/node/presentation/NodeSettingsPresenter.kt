@@ -11,6 +11,8 @@ class NodeSettingsPresenter(
     settingsRepository: SettingsRepository,
     mainPresenter: MainPresenter): SettingsPresenter(settingsRepository, mainPresenter), ISettingsPresenter {
 
+    override val appName: String = BuildNodeConfig.APP_NAME
+
     override fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
         return menuItems.toList()
     }

@@ -2,7 +2,6 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.background
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +17,7 @@ import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 interface ISettingsPresenter: ViewPresenter {
+    val appName: String
     fun menuTree(): MenuItem
     fun versioning(): Triple<String, String, String>
 }
@@ -75,12 +75,12 @@ fun SettingsScreen(isTabSelected: Boolean) {
                 selectedLeaf.value!!.content.invoke()
             }
         }
-        SettingsFooter(settingsPresenter.versioning())
+        SettingsFooter(settingsPresenter.appName, settingsPresenter.versioning())
     }
 }
 
 @Composable
-fun SettingsFooter(versioning: Triple<String, String, String>) {
+fun SettingsFooter(appName: String, versioning: Triple<String, String, String>) {
     val versionNumber = versioning.first
     val networkName = versioning.second
     val networkVersion = versioning.third
@@ -92,7 +92,7 @@ fun SettingsFooter(versioning: Triple<String, String, String>) {
         horizontalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Bisq Connect v$versionNumber ($networkName: v$networkVersion)",
+            text = "$appName v$versionNumber ($networkName: v$networkVersion)",
             fontSize = 12.sp,
             color = Color.White,
             modifier = Modifier.padding(vertical = 1.dp)

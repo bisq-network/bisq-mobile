@@ -15,6 +15,8 @@ open class SettingsPresenter(
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), ISettingsPresenter {
 
+    override val appName: String = BuildConfig.APP_NAME
+
     final override fun menuTree(): MenuItem {
         val defaultList: MutableList<MenuItem> = mutableListOf(
             MenuItem.Parent(
