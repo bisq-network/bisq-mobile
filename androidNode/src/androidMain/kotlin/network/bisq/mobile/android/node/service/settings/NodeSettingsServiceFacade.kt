@@ -22,19 +22,19 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     private val _isTacAccepted: MutableStateFlow<Boolean?> = MutableStateFlow(null)
     override val isTacAccepted: StateFlow<Boolean?> get() = _isTacAccepted
     override suspend fun confirmTacAccepted(value: Boolean) {
-        settingsService.isTacAccepted.set(value)
+        settingsService.setIsTacAccepted(value)
     }
 
     private val _tradeRulesConfirmed = MutableStateFlow(false)
     override val tradeRulesConfirmed: StateFlow<Boolean> get() = _tradeRulesConfirmed
     override suspend fun confirmTradeRules(value: Boolean) {
-        settingsService.tradeRulesConfirmed.set(value)
+        settingsService.setTradeRulesConfirmed(value)
     }
 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
     override val languageCode: StateFlow<String> get() = _languageCode
     override suspend fun setLanguageCode(value: String) {
-        settingsService.languageCode.set(value)
+        settingsService.setLanguageCode(value)
     }
 
     private val _supportedLanguageCodes: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
@@ -47,20 +47,21 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
         MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
     override val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum> get() = _chatNotificationType
     override suspend fun setChatNotificationType(value: ChatChannelNotificationTypeEnum) {
-        when (value) {
-            ChatChannelNotificationTypeEnum.ALL -> settingsService.chatNotificationType.set(ChatNotificationType.ALL)
-            ChatChannelNotificationTypeEnum.MENTION -> settingsService.chatNotificationType.set(ChatNotificationType.MENTION)
-            ChatChannelNotificationTypeEnum.OFF -> settingsService.chatNotificationType.set(ChatNotificationType.OFF)
-            ChatChannelNotificationTypeEnum.GLOBAL_DEFAULT -> settingsService.chatNotificationType.set(
-                ChatNotificationType.ALL
-            )
-        }
+        settingsService.setChatNotificationType(
+            when (value) {
+                ChatChannelNotificationTypeEnum.ALL -> ChatNotificationType.ALL
+                ChatChannelNotificationTypeEnum.MENTION -> ChatNotificationType.MENTION
+                ChatChannelNotificationTypeEnum.OFF -> ChatNotificationType.OFF
+                ChatChannelNotificationTypeEnum.GLOBAL_DEFAULT -> ChatNotificationType.ALL
+            }
+        )
+
     }
 
     private val _closeMyOfferWhenTaken = MutableStateFlow(true)
     override val closeMyOfferWhenTaken: StateFlow<Boolean> get() = _closeMyOfferWhenTaken
     override suspend fun setCloseMyOfferWhenTaken(value: Boolean) {
-        settingsService.closeMyOfferWhenTaken.set(value)
+        settingsService.setCloseMyOfferWhenTaken(value)
     }
 
     private val _maxTradePriceDeviation = MutableStateFlow(5.0)
@@ -72,13 +73,13 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
     override val useAnimations: StateFlow<Boolean> get() = _useAnimations
     override suspend fun setUseAnimations(value: Boolean) {
-        settingsService.useAnimations.set(value)
+        settingsService.setUseAnimations(value)
     }
 
     private val _difficultyAdjustmentFactor: MutableStateFlow<Double> = MutableStateFlow(1.0)
     override val difficultyAdjustmentFactor: StateFlow<Double> get() = _difficultyAdjustmentFactor
     override suspend fun setDifficultyAdjustmentFactor(value: Double) {
-        settingsService.difficultyAdjustmentFactor.set(value)
+        settingsService.setDifficultyAdjustmentFactor(value)
     }
 
     private val _numDaysAfterRedactingTradeData = MutableStateFlow(90)
@@ -90,7 +91,7 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     private val _ignoreDiffAdjustmentFromSecManager: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> get() = _ignoreDiffAdjustmentFromSecManager
     override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean) {
-        settingsService.ignoreDiffAdjustmentFromSecManager.set(value)
+        settingsService.setIgnoreDiffAdjustmentFromSecManager(value)
     }
 
     // Misc
