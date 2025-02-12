@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -30,6 +31,12 @@ open class SettingsPresenter(
             label = "Bisq",
             children = addCustomSettings(defaultList)
         )
+    }
+
+    override fun versioning(): Triple<String, String, String> {
+        val version = if (isIOS()) BuildConfig.IOS_APP_VERSION else BuildConfig.ANDROID_APP_VERSION
+        val wsApiVersion = BuildConfig.BISQ_API_VERSION
+        return Triple(version, "node", wsApiVersion)
     }
 
     protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {

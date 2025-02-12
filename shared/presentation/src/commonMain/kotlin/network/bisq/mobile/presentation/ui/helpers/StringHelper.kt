@@ -5,7 +5,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.*
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 object StringHelper {
     @Composable

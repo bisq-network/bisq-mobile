@@ -8,7 +8,6 @@ import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.getDeviceLanguageCode
-import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.setupUncaughtExceptionHandler
@@ -51,7 +50,7 @@ open class MainPresenter(
         val localeCode = getDeviceLanguageCode()
         log.i { "Shared Version: ${BuildConfig.SHARED_LIBS_VERSION}" }
         log.i { "iOS Client Version: ${BuildConfig.IOS_APP_VERSION}" }
-        log.i { "Android Client Version: ${BuildConfig.IOS_APP_VERSION}" }
+        log.i { "Android Client Version: ${BuildConfig.ANDROID_APP_VERSION}" }
         log.i { "Android Node Version: ${BuildNodeConfig.APP_VERSION}" }
         log.i { "Device language code: $localeCode"}
     }
@@ -76,12 +75,6 @@ open class MainPresenter(
     // Toggle action
     override fun toggleContentVisibility() {
         _isContentVisible.value = !_isContentVisible.value
-    }
-
-    override fun isIOS(): Boolean {
-        val platformInfo = getPlatformInfo()
-        val isIOS = platformInfo.name.lowercase().contains("ios")
-        return isIOS
     }
 
     override fun getRootNavController(): NavHostController {

@@ -12,6 +12,13 @@ plugins {
 
 version = project.findProperty("shared.version") as String
 
+val bisqCoreVersion: String by extra {
+    findTomlVersion("bisq-core")
+}
+val bisqApiVersion: String by extra {
+    findTomlVersion("bisq-api")
+}
+
 // NOTE: The following allow us to configure each app type independently and link for example with gradle.properties
 // local.properties overrides any property if you need to setup for example local networking
 // TODO potentially to be refactored into a shared/common module
@@ -25,6 +32,7 @@ buildConfig {
         )
         buildConfigField("IOS_APP_VERSION", project.findProperty("client.ios.version").toString())
         buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
+        buildConfigField("BISQ_API_VERSION", bisqApiVersion)
         buildConfigField("BUILD_TS", System.currentTimeMillis())
         // networking setup
         buildConfigField("WS_PORT", project.findProperty("client.x.trustednode.port").toString())
@@ -36,6 +44,7 @@ buildConfig {
         buildConfigField("APP_VERSION", project.findProperty("node.android.version").toString())
         buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
         buildConfigField("BUILD_TS", System.currentTimeMillis())
+        buildConfigField("BISQ_CORE_VERSION", bisqCoreVersion)
     }
 //    buildConfigField("APP_SECRET", "Z3JhZGxlLWphdmEtYnVpbGRjb25maWctcGx1Z2lu")
 //    buildConfigField<String>("OPTIONAL", null)
@@ -257,4 +266,12 @@ tasks.register<GenerateResourceBundlesTask>("generateResourceBundles") {
     // Using build dir still not working on iOS
     // Thus we use the source dir as target
     outputDir.set(layout.projectDirectory.dir("src/commonMain/kotlin/network/bisq/mobile/i18n"))
+}
+
+fun findTomlVersion(versionName: String): String {
+    val tomlFile = file("../../gradle/libs.versions.toml")
+    val tomlContent = tomlFile.readText()
+    val versionRegex = Regex("$versionName\\s*=\\s*\"([^\"]+)\"")
+    val matchResult = versionRegex.find(tomlContent)
+    return matchResult?.groups?.get(1)?.value ?: "unknown"
 }

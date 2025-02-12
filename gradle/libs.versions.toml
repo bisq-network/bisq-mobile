@@ -24,6 +24,8 @@ androidx-multidex = "2.0.1"
 atomicfu = "0.26.1"
 bignum-lib= "0.3.10"
 bisq-core = "2.1.4"
+# TODO would it differ from core?
+bisq-api = "2.1.4"
 coilCompose = "3.0.3"
 compose-plugin = "1.7.0"
 junit = "4.13.2"

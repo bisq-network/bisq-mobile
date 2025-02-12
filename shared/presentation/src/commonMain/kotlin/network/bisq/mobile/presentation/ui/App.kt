@@ -32,8 +32,6 @@ interface AppPresenter : ViewPresenter {
 
     // Actions
     fun toggleContentVisibility()
-
-    fun isIOS(): Boolean
 }
 
 /**

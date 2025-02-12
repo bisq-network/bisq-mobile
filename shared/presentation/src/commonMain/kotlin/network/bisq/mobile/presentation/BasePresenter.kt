@@ -7,6 +7,7 @@ import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import network.bisq.mobile.domain.getPlatformInfo
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,6 +31,9 @@ interface ViewPresenter {
      * allows to enable/disable UI components from the presenters
      */
     val isInteractive: StateFlow<Boolean>
+
+
+    fun isIOS(): Boolean
 
     /**
      * @return root navigation controller
@@ -117,6 +121,12 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
             }
             _isInteractive.value = enable
         }
+    }
+
+    override fun isIOS(): Boolean {
+        val platformInfo = getPlatformInfo()
+        val isIOS = platformInfo.name.lowercase().contains("ios")
+        return isIOS
     }
 
     /**
