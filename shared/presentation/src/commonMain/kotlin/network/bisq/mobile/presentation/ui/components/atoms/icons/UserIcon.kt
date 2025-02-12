@@ -3,13 +3,9 @@ package network.bisq.mobile.presentation.ui.components.atoms.icons
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bot_image
@@ -24,38 +20,24 @@ fun UserIcon(
     modifier: Modifier = Modifier,
     connectivityStatus: ConnectivityService.ConnectivityStatus
 ) {
-    if (platformImage == null) {
-        // show default
-        Image(painterResource(Res.drawable.img_bot_image), "User icon", modifier = modifier)
-    } else {
-        Box(modifier = modifier.padding(0.dp), contentAlignment = Alignment.BottomEnd) {
+    Box(modifier = modifier.padding(0.dp), contentAlignment = Alignment.BottomEnd) {
+        if (platformImage == null) {
+            // show default
+            Image(painterResource(Res.drawable.img_bot_image), "User icon", modifier = modifier)
+        } else {
             val painter = rememberPlatformImagePainter(platformImage)
             Image(painter = painter, contentDescription = "User icon", modifier = Modifier.fillMaxSize())
-            GlowEffect(connectivityStatus)
         }
+        GlowEffect(connectivityStatus, Modifier.align(Alignment.BottomEnd))
     }
 }
 
 @Composable
-fun GlowEffect(connectivityStatus: ConnectivityService.ConnectivityStatus) {
-    var scale by remember { mutableStateOf(0) }
+fun GlowEffect(connectivityStatus: ConnectivityService.ConnectivityStatus, modifier: Modifier = Modifier) {
     val name = when (connectivityStatus) {
         ConnectivityService.ConnectivityStatus.CONNECTED -> "green-small-dot.png"
         ConnectivityService.ConnectivityStatus.SLOW -> "yellow-small-dot.png"
         ConnectivityService.ConnectivityStatus.DISCONNECTED -> "red-small-dot.png"
     }
-    // For UserProfileSettingsScreen (scale > 20), need different offset to look right
-    val offset = if (scale > 20)
-        scale / 4
-    else
-        scale / 5
-    DynamicImage(
-        "drawable/chat/$name",
-        modifier = Modifier
-            .size(width = scale.dp, height = scale.dp)
-            .offset(x = offset.dp, y = offset.dp)
-            .onGloballyPositioned { layoutCoordinates ->
-                scale = (layoutCoordinates.parentLayoutCoordinates?.size?.width ?: 0) / 6
-            },
-    )
+    DynamicImage("drawable/chat/$name", modifier = modifier.scale(2.0F))
 }
