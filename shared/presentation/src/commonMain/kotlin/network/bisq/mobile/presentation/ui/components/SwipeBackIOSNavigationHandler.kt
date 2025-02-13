@@ -11,12 +11,10 @@ import androidx.navigation.NavController
 import network.bisq.mobile.presentation.ui.AppPresenter
 import org.koin.compose.koinInject
 
-// TODO:
-// Patch work to handle horizontal swipe in iOS and pop back
-// Will remove this once compose officially has this support for iOS
 // Ref links:
 // - https://github.com/adrielcafe/voyager/issues/144
 // - https://trycatchdebug.net/news/1426361/native-ios-swipe-back-gesture-in-compose
+// This swipe navigation is iOS style (left -> right) and should'nt be used for Android
 @Composable
 fun SwipeBackIOSNavigationHandler(
     navController: NavController,
@@ -50,13 +48,20 @@ fun SwipeBackIOSNavigationHandler(
                         cumulativeDrag += dragAmount.takeIf { it > 0 } ?: 0f
 
                         if (cumulativeDrag >= threshold) {
-                            if (navController.currentBackStackEntry != null) navController.popBackStack()
+                            if (navController.currentBackStackEntry != null) {
+                                if (presenter.isIOS()) {
+                                    presenter.onMainBackNavigation()
+                                } else {
+                                    navController.popBackStack()
+                                }
+                            }
                             cumulativeDrag = 0f
                         }
                     }
                 )
             }
         } else {
+            // Empty box if its android (these days native Android implements both swipe directions meaning "go back")
             Modifier
         }
     ) {

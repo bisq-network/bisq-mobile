@@ -40,7 +40,8 @@ enum class Routes(val title: String) {
 
     companion object {
         fun fromString(route: String): Routes? {
-            return entries.find { it.title.equals(route, ignoreCase = true) }
+            return entries.find { it.title.equals(route, ignoreCase = true) ||
+                    it.name.equals(route, ignoreCase = true) }
         }
     }
 }

@@ -18,12 +18,9 @@ import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSize
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSData
+import platform.Foundation.NSSelectorFromString
 import platform.Foundation.getBytes
-import platform.UIKit.UIGraphicsBeginImageContextWithOptions
-import platform.UIKit.UIGraphicsEndImageContext
-import platform.UIKit.UIGraphicsGetCurrentContext
-import platform.UIKit.UIImage
-import platform.UIKit.UIScreen
+import platform.UIKit.*
 
 @OptIn(ExperimentalForeignApi::class)
 fun NSData.toByteArray(): ByteArray {
@@ -62,6 +59,11 @@ actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
             UIGraphicsEndImageContext()
         }
     }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+actual fun exitApp() {
+    UIApplication.sharedApplication.performSelector(NSSelectorFromString("suspend"))
 }
 
 actual fun getPlatformCurrentTimeProvider(): TimeProvider = IOSCurrentTimeProvider()

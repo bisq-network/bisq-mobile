@@ -31,9 +31,9 @@ open class MainPresenter(
 
         @JvmStatic
         fun init() {
-            setupUncaughtExceptionHandler({
+            setupUncaughtExceptionHandler {
                 _systemCrashed.value = true
-            })
+            }
         }
     }
 

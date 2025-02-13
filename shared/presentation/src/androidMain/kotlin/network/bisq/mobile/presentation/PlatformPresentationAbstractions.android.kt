@@ -11,3 +11,7 @@ actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
 }
 
 actual fun getPlatformCurrentTimeProvider(): TimeProvider = AndroidCurrentTimeProvider()
+
+actual fun exitApp() {
+    // not used in Android
+}

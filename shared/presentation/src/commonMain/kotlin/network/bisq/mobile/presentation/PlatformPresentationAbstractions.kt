@@ -7,3 +7,5 @@ import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 expect fun getPlatformPainter(platformImage: PlatformImage): Painter
 
 expect fun getPlatformCurrentTimeProvider(): TimeProvider
+
+expect fun exitApp()
