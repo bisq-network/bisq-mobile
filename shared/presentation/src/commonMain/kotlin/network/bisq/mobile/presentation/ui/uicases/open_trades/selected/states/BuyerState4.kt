@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -17,15 +18,20 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun BuyerState4(
     presenter: BuyerState4Presenter,
 ) {
-    val tradeItemModel = presenter.selectedTrade.value!!
-    val quoteAmount = "${tradeItemModel.formattedQuoteAmount} ${tradeItemModel.quoteCurrencyCode}"
-    val baseAmount = "${tradeItemModel.formattedBaseAmount} ${tradeItemModel.baseCurrencyCode}"
+    RememberPresenterLifecycle(presenter)
+
+    val tradeItemModel = presenter.selectedTrade.value
+    val quoteAmount = tradeItemModel?.quoteAmountWithCode ?: ""
+    val baseAmount = tradeItemModel?.baseAmountWithCode ?: ""
+    val showCloseTradeDialog = presenter.showCloseTradeDialog.collectAsState().value
+    val genericErrorMessage = presenter.genericErrorMessage.collectAsState().value
 
     Column {
         BisqGap.V1()
@@ -46,13 +52,13 @@ fun BuyerState4(
             BisqTextField(
                 label = "bisqEasy.tradeCompleted.header.myDirection.seller".i18n(), // I sold
                 value = baseAmount,
-                disabled = true,
+                disabled = true
             )
             BisqGap.VHalf()
             BisqTextField(
                 label = "bisqEasy.tradeCompleted.header.myOutcome.seller".i18n(), // I paid
                 value = quoteAmount,
-                disabled = true,
+                disabled = true
             )
 
             BisqGap.V2()
@@ -67,7 +73,8 @@ fun BuyerState4(
                         horizontal = 18.dp,
                         vertical = 6.dp
                     ),
-                    backgroundColor = BisqTheme.colors.grey5, //todo add BisqButtonType
+                    color = BisqTheme.colors.light1,
+                    backgroundColor = BisqTheme.colors.dark5, //todo add BisqButtonType
                 )
                 BisqButton(
                     text = "bisqEasy.tradeState.info.phase4.leaveChannel".i18n(), // Close trade
@@ -79,6 +86,25 @@ fun BuyerState4(
                 )
             }
 
+            if (showCloseTradeDialog) {
+                CloseTradeDialog(
+                    onDismissCloseTrade = {
+                        presenter.onDismissCloseTrade()
+                    },
+                    onConfirmCloseTrade = {
+                        presenter.onConfirmCloseTrade()
+                    }
+                )
+            }
+
+            if (genericErrorMessage != null) {
+                GenericErrorPanel(
+                    presenter.genericErrorMessage.value!!,
+                    onClose = {
+                        presenter.onCloseGenericErrorPanel()
+                    }
+                )
+            }
         }
     }
 }

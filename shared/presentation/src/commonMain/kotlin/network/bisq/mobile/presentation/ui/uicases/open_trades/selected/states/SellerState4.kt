@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -26,9 +27,11 @@ fun SellerState4(
 ) {
     RememberPresenterLifecycle(presenter)
 
-    val tradeItemModel = presenter.selectedTrade.value!!
-    val quoteAmount = tradeItemModel.quoteAmountWithCode
-    val baseAmount = tradeItemModel.baseAmountWithCode
+    val tradeItemModel = presenter.selectedTrade.value
+    val quoteAmount = tradeItemModel?.quoteAmountWithCode ?: ""
+    val baseAmount = tradeItemModel?.baseAmountWithCode ?: ""
+    val showCloseTradeDialog = presenter.showCloseTradeDialog.collectAsState().value
+    val genericErrorMessage = presenter.genericErrorMessage.collectAsState().value
 
     Column {
         BisqGap.V1()
@@ -79,7 +82,27 @@ fun SellerState4(
                     padding = PaddingValues(
                         horizontal = 18.dp,
                         vertical = 6.dp
-                    ),
+                    )
+                )
+            }
+
+            if (showCloseTradeDialog) {
+                CloseTradeDialog(
+                    onDismissCloseTrade = {
+                        presenter.onDismissCloseTrade()
+                    },
+                    onConfirmCloseTrade = {
+                        presenter.onConfirmCloseTrade()
+                    }
+                )
+            }
+
+            if (genericErrorMessage != null) {
+                GenericErrorPanel(
+                    presenter.genericErrorMessage.value!!,
+                    onClose = {
+                        presenter.onCloseGenericErrorPanel()
+                    }
                 )
             }
         }
