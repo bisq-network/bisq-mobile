@@ -43,16 +43,21 @@ class BuyerState4Presenter(
         jobs.add(CoroutineScope(BackgroundDispatcher).launch {
             val result = tradesServiceFacade.closeTrade()
             when {
-                // TODO review
-                result.isFailure -> closeWorkflow()
-                result.isSuccess -> closeWorkflow()
+                result.isFailure -> {
+                    presenterScope.launch {
+                        _showCloseTradeDialog.value = false
+                        _genericErrorMessage.value = result.exceptionOrNull()!!.message
+                    }
+                }
+
+                result.isSuccess -> {
+                    presenterScope.launch {
+                        _showCloseTradeDialog.value = false
+                        navigateBack()
+                    }
+                }
             }
         })
-    }
-
-    private fun closeWorkflow() {
-        _showCloseTradeDialog.value = false
-        navigateBack()
     }
 
     fun onExportTradeDate() {

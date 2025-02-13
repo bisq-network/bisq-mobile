@@ -11,7 +11,6 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 
-
 class SellerState4Presenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
@@ -44,16 +43,21 @@ class SellerState4Presenter(
         jobs.add(CoroutineScope(BackgroundDispatcher).launch {
             val result = tradesServiceFacade.closeTrade()
             when {
-                // TODO review
-                result.isFailure -> closeWorkflow()
-                result.isSuccess -> closeWorkflow()
+                result.isFailure -> {
+                    presenterScope.launch {
+                        _showCloseTradeDialog.value = false
+                        _genericErrorMessage.value = result.exceptionOrNull()!!.message
+                    }
+                }
+
+                result.isSuccess -> {
+                    presenterScope.launch {
+                        _showCloseTradeDialog.value = false
+                        navigateBack()
+                    }
+                }
             }
         })
-    }
-
-    private fun closeWorkflow() {
-        _showCloseTradeDialog.value = false
-        navigateBack()
     }
 
     fun onExportTradeDate() {

@@ -7,7 +7,6 @@ import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import network.bisq.mobile.domain.getPlatformInfo
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,6 +17,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
+import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
@@ -103,6 +103,9 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     private val _isInteractive = MutableStateFlow(true)
     override val isInteractive: StateFlow<Boolean> = _isInteractive
     private val snackbarHostState: SnackbarHostState = SnackbarHostState()
+
+    val _genericErrorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
+    val genericErrorMessage: StateFlow<String?> = _genericErrorMessage
 
     override fun getSnackState(): SnackbarHostState {
         return snackbarHostState
@@ -393,5 +396,9 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
 
     open fun navigateToUrl(url: String) {
         rootPresenter?.navigateToUrl(url)
+    }
+
+    open fun onCloseGenericErrorPanel() {
+        _genericErrorMessage.value = null
     }
 }
