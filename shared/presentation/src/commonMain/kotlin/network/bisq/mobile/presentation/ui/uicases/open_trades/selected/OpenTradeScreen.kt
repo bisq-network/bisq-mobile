@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
@@ -63,8 +64,7 @@ fun OpenTradeScreen() {
                             ) {
                                 // todo Add warn icon
                                 BisqText.baseMedium(
-                                    // bisqEasy.openTrades.inMediation.info
-                                    text = "A mediator has joined the trade chat. Please use the trade chat below to get assistance from the mediator.",
+                                    text = "bisqEasy.openTrades.inMediation.info".i18n(),
                                     color = BisqTheme.colors.dark5 //todo maybe we can add a less dark grey as in bisq2
                                 )
                             }
