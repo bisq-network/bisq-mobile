@@ -80,7 +80,7 @@ fun TopBar(
                         showBackConfirmationDialog = true
                     }
                 } else {
-                    presenter.goBack()
+                    presenter.onMainBackNavigation()
                 }
             }
         }) {

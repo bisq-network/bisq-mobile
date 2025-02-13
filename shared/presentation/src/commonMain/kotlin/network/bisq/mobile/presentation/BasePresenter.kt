@@ -171,7 +171,14 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
 
     override fun isAtHome(): Boolean {
         val currentTab = getRootTabNavController().currentBackStackEntry?.destination?.route
-        return (currentTab == null || currentTab == Routes.TabHome.name)
+        log.d { "Current tab $currentTab" }
+        return isAtMainScreen() && (currentTab == null || currentTab == Routes.TabHome.name)
+    }
+
+    protected fun isAtMainScreen(): Boolean {
+        val currentScreen = getRootNavController().currentBackStackEntry?.destination?.route
+        log.d { "Current screen $currentScreen" }
+        return (currentScreen == null || currentScreen == Routes.TabContainer.name)
     }
 
     /**
@@ -218,11 +225,18 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     override fun onMainBackNavigation() {
-        if (isAtHome()) {
-            showSnackbar("Press back again to exit")
-            goBack()
-        } else {
-            navigateToTab(Routes.TabHome, saveStateOnPopUp = true, shouldLaunchSingleTop = true, shouldRestoreState = false)
+        when {
+            isAtHome() -> {
+                showSnackbar("Swipe one more time to exit")
+                goBack()
+            }
+            isAtMainScreen() -> {
+                navigateToTab(Routes.TabHome, saveStateOnPopUp = true, shouldLaunchSingleTop = true, shouldRestoreState = false)
+            }
+            else -> {
+                // normal back navigation
+                goBack()
+            }
         }
     }
 
