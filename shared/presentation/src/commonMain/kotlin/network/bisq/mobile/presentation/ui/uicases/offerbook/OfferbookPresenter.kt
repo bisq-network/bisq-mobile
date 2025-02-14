@@ -23,25 +23,57 @@ class OfferbookPresenter(
     private val _selectedDirection = MutableStateFlow(DirectionEnum.BUY)
     val selectedDirection: StateFlow<DirectionEnum> = _selectedDirection
 
+    private val _showDeleteConfirmation = MutableStateFlow(false)
+    val showDeleteConfirmation: StateFlow<Boolean> = _showDeleteConfirmation
+    var selectedOffer: OfferItemPresentationModel? = null
+
+    override fun onViewAttached() {
+        super.onViewAttached()
+        selectedOffer = null
+    }
+
     fun onSelectOffer(item: OfferItemPresentationModel) {
+        selectedOffer = item
+        if (item.isMyOffer) {
+            _showDeleteConfirmation.value = true
+        } else {
+            proceedWithOfferAction()
+        }
+    }
+
+    fun proceedWithOfferAction() {
         runCatching {
-            if (item.isMyOffer) {
-                //todo show dialogue if user really want to delete their offer
-                backgroundScope.launch { offersServiceFacade.deleteOffer(item.offerId) }
-            } else {
-                takeOfferPresenter.selectOfferToTake(item)
-                if (takeOfferPresenter.showAmountScreen()) {
-                    navigateTo(Routes.TakeOfferTradeAmount)
-                } else if (takeOfferPresenter.showPaymentMethodsScreen()) {
-                    navigateTo(Routes.TakeOfferPaymentMethod)
+            selectedOffer?.let { item ->
+                if (item.isMyOffer) {
+                    backgroundScope.launch {
+                        offersServiceFacade.deleteOffer(item.offerId)
+                        deselectOffer()
+                    }
                 } else {
-                    navigateTo(Routes.TakeOfferReviewTrade)
+                    takeOfferPresenter.selectOfferToTake(item)
+                    if (takeOfferPresenter.showAmountScreen()) {
+                        navigateTo(Routes.TakeOfferTradeAmount)
+                    } else if (takeOfferPresenter.showPaymentMethodsScreen()) {
+                        navigateTo(Routes.TakeOfferPaymentMethod)
+                    } else {
+                        navigateTo(Routes.TakeOfferReviewTrade)
+                    }
                 }
             }
         }.onFailure {
-            // TODO show error to users
-            log.e(it) { "Failed to select offer" }
+            log.e(it) { "Failed to ${if (selectedOffer?.isMyOffer == true) "delete" else "take"} offer" }
+            showSnackbar("Unable to ${if (selectedOffer?.isMyOffer == true) "delete" else "take"} offer ${selectedOffer?.offerId}, please try again", true)
+            deselectOffer()
         }
+    }
+
+    fun onCancelDelete() {
+        deselectOffer()
+    }
+
+    private fun deselectOffer() {
+        selectedOffer = null
+        _showDeleteConfirmation.value = false
     }
 
     fun onSelectDirection(direction: DirectionEnum) {
