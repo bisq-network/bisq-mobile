@@ -10,6 +10,7 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.ConfirmationDialog
@@ -53,7 +54,7 @@ fun OfferbookScreen() {
 
         if (showDeleteConfirmationDialog) {
             ConfirmationDialog(
-                message = "Are you sure you want to delete this offer?",
+                message = "bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n(),
 //                subMessage = "You can resume later",
                 onConfirm = {
                     presenter.proceedWithOfferAction()
