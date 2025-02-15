@@ -30,7 +30,9 @@ interface ViewPresenter {
      * allows to enable/disable UI components from the presenters
      */
     val isInteractive: StateFlow<Boolean>
+    val genericErrorMessage: StateFlow<String?>
 
+    fun onCloseGenericErrorPanel()
 
     fun isIOS(): Boolean
 
@@ -105,7 +107,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     private val snackbarHostState: SnackbarHostState = SnackbarHostState()
 
     val _genericErrorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
-    val genericErrorMessage: StateFlow<String?> = _genericErrorMessage
+    override val genericErrorMessage: StateFlow<String?> = _genericErrorMessage
 
     override fun getSnackState(): SnackbarHostState {
         return snackbarHostState
@@ -398,7 +400,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
         rootPresenter?.navigateToUrl(url)
     }
 
-    open fun onCloseGenericErrorPanel() {
+    override fun onCloseGenericErrorPanel() {
         _genericErrorMessage.value = null
     }
 }

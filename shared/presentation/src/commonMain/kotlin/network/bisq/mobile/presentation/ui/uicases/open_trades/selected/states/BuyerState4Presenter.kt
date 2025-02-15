@@ -13,56 +13,5 @@ import network.bisq.mobile.presentation.MainPresenter
 
 class BuyerState4Presenter(
     mainPresenter: MainPresenter,
-    private val tradesServiceFacade: TradesServiceFacade,
-) : BasePresenter(mainPresenter) {
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
-
-    private val _showCloseTradeDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showCloseTradeDialog: StateFlow<Boolean> = _showCloseTradeDialog
-
-    private var jobs: MutableSet<Job> = mutableSetOf()
-
-    override fun onViewAttached() {
-    }
-
-    override fun onViewUnattaching() {
-        _showCloseTradeDialog.value = false
-        jobs.forEach { it.cancel() }
-        jobs.clear()
-    }
-
-    fun onCloseTrade() {
-        _showCloseTradeDialog.value = true
-    }
-
-    fun onDismissCloseTrade() {
-        _showCloseTradeDialog.value = false
-    }
-
-    fun onConfirmCloseTrade() {
-        jobs.add(CoroutineScope(BackgroundDispatcher).launch {
-            val result = tradesServiceFacade.closeTrade()
-            when {
-                result.isFailure -> {
-                    presenterScope.launch {
-                        _showCloseTradeDialog.value = false
-                        _genericErrorMessage.value = result.exceptionOrNull()!!.message
-                    }
-                }
-
-                result.isSuccess -> {
-                    presenterScope.launch {
-                        _showCloseTradeDialog.value = false
-                        navigateBack()
-                    }
-                }
-            }
-        })
-    }
-
-    fun onExportTradeDate() {
-        jobs.add(CoroutineScope(BackgroundDispatcher).launch {
-            tradesServiceFacade.exportTradeDate()
-        })
-    }
-}
+    tradesServiceFacade: TradesServiceFacade,
+) : State4Presenter(mainPresenter, tradesServiceFacade)

@@ -1,20 +1,18 @@
 package network.bisq.mobile.presentation.ui
 
+import ErrorOverlay
 import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import cafe.adriel.lyricist.LocalStrings
 import cafe.adriel.lyricist.ProvideStrings
 import cafe.adriel.lyricist.rememberStrings
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.navigation.Routes
 import org.koin.compose.koinInject
 
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
@@ -45,6 +43,7 @@ fun App() {
     val tabNavController = rememberNavController()
     var isNavControllerSet by remember { mutableStateOf(false) }
     val presenter: AppPresenter = koinInject()
+    val errorMessage = presenter.genericErrorMessage.collectAsState().value
 
     RememberPresenterLifecycle(presenter, {
         presenter.navController = rootNavController
@@ -57,6 +56,7 @@ fun App() {
     I18nSupport.initialize(languageCode)
 
     BisqTheme(darkTheme = true) {
+//        TODO we need to get rid of lyricist and all its dependencies
         ProvideStrings(lyricist) {
             if (isNavControllerSet) {
                 SwipeBackIOSNavigationHandler(rootNavController) {
@@ -64,6 +64,9 @@ fun App() {
                 }
             }
         }
+        ErrorOverlay(errorMessage = errorMessage, onClose = {
+            presenter.onCloseGenericErrorPanel()
+        });
     }
 
 }
