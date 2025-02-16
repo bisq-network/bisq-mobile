@@ -110,23 +110,16 @@ fun TopBar(
             } else {
                 if (isFlowScreen) {
                     Column {
-                        BisqText.smallRegular(
+                        BisqText.smallRegularGrey(
                             text = "Step $stepText",
-                            color = BisqTheme.colors.grey2,
                             // modifier = Modifier.padding(top= 8.dp)
                             modifier = Modifier.offset(y = (8).dp)
                         )
                         BisqGap.V1()
-                        BisqText.h5Medium(
-                            text = title,
-                            color = BisqTheme.colors.white,
-                        )
+                        BisqText.h5Medium(text = title)
                     }
                 } else {
-                    BisqText.h4Medium(
-                        text = title,
-                        color = BisqTheme.colors.white,
-                    )
+                    BisqText.h4Medium(text = title)
                 }
             }
         },

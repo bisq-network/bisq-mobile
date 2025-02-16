@@ -90,14 +90,10 @@ fun PagerSingleItem(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                BisqText.h4Regular(
-                    text = title,
-                    color = BisqTheme.colors.white,
-                )
+                BisqText.h4Regular(text = title)
                 Spacer(modifier = Modifier.height(24.dp))
-                BisqText.largeRegular(
+                BisqText.largeRegularGrey(
                     text = desc,
-                    color = BisqTheme.colors.grey2,
                     modifier = Modifier.padding(horizontal = 16.dp),
                     textAlign = TextAlign.Center,
                 )
@@ -118,9 +114,7 @@ fun PagerLineIndicator(pagerState: PagerState) {
                 Box(
                     modifier = Modifier
                         .size(width = 76.dp, height = 2.dp)
-                        .background(
-                            color = BisqTheme.colors.grey2,
-                        )
+                        .background(color = BisqTheme.colors.grey2)
                 )
             }
         }

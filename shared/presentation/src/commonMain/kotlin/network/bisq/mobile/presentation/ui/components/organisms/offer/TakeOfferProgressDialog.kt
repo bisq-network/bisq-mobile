@@ -41,10 +41,9 @@ fun TakeOfferProgressDialog() {
 
             BisqGap.V1()
 
-            BisqText.baseRegular(
+            BisqText.baseRegularGrey(
                 text = "bisqEasy.takeOffer.review.sendTakeOfferMessageFeedback.info".i18n(),
                 textAlign = TextAlign.Center,
-                color = BisqTheme.colors.grey2
             )
         }
     }

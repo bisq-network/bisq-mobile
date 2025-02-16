@@ -59,10 +59,9 @@ fun SellerStateMainChain3b(
 
         Column {
             BisqGap.V1()
-            BisqText.baseLight(
+            BisqText.baseLightGrey(
                 // The Bitcoin payment require at least 1 blockchain confirmation to be considered complete.
                 text = "bisqEasy.tradeState.info.seller.phase3b.info.MAIN_CHAIN".i18n(),
-                color = BisqTheme.colors.grey2
             )
 
             BisqGap.V1()

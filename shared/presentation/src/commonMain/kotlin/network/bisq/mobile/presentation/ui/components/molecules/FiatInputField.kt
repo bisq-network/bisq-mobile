@@ -90,9 +90,8 @@ fun FiatInputField(
                     verticalAlignment = Alignment.Bottom
                 ) {
                     if (label.isNotEmpty()) {
-                        BisqText.h5Regular(
+                        BisqText.h5RegularGrey(
                             text = label,
-                            color = BisqTheme.colors.grey2,
                             modifier = Modifier.align(Alignment.CenterVertically)
                         )
                     }

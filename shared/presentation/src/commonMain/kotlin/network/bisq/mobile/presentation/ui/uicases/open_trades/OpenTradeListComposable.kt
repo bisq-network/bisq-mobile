@@ -75,10 +75,7 @@ fun OpenTradeListScreen() {
                         .padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    BisqText.h5Light(
-                        text = "My open trades",
-                        color = BisqTheme.colors.white,
-                    )
+                    BisqText.h5Light(text = "My open trades")
                     HorizontalDivider(
                         modifier = Modifier,
                         thickness = 0.5.dp,
@@ -114,15 +111,13 @@ fun WelcomeToFirstTradePane(presenter: OpenTradeListPresenter) {
     ) {
         BisqText.h1Light(
             text = "Welcome to your first Bisq Easy trade!", //bisqEasy.openTrades.welcome.headline
-            color = BisqTheme.colors.white,
             textAlign = TextAlign.Center
         )
         BisqGap.VHalf()
-        BisqText.baseRegular(
+        BisqText.baseRegularGrey(
             // bisqEasy.openTrades.welcome.info
             text = "Please make yourself familiar with the concept, process and rules for trading on Bisq Easy.\n" +
                     "After you have read and accepted the trade rules you can start the trade.",
-            color = BisqTheme.colors.grey2,
         )
         BisqGap.V1()
         Column(
@@ -157,10 +152,7 @@ fun IconWithTextLine(image: DrawableResource, title: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Image(painterResource(image), null, Modifier.size(30.dp))
         Spacer(modifier = Modifier.width(15.dp))
-        BisqText.baseRegular(
-            text = title,
-            color = BisqTheme.colors.white,
-        )
+        BisqText.baseRegular(text = title)
     }
 }
 
@@ -172,9 +164,8 @@ fun NoTradesSection(presenter: OpenTradeListPresenter) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(64.dp)
         ) {
-            BisqText.h4Light(
+            BisqText.h4LightGrey(
                 text = "You don't have any open trades", // bisqEasy.openTrades.noTrades
-                color = BisqTheme.colors.grey2,
                 textAlign = TextAlign.Center
             )
             BisqButton(
@@ -204,14 +195,8 @@ fun TradeGuide(presenter: OpenTradeListPresenter) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(12.dp)
             ) {
-                BisqText.h3Light(
-                    text = "Trade guide",
-                    color = BisqTheme.colors.white,
-                )
-                BisqText.baseRegular(
-                    text = "Trade guide content... TODO",
-                    color = BisqTheme.colors.grey2,
-                )
+                BisqText.h3Light(text = "Trade guide",)
+                BisqText.baseRegularGrey(text = "Trade guide content... TODO",)
                 BisqButton(
                     text = "Confirm trade rules",
                     onClick = { presenter.onConfirmTradeRules(true) },

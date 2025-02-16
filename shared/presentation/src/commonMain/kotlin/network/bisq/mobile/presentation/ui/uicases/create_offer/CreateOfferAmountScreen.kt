@@ -44,16 +44,14 @@ fun CreateOfferAmountSelectorScreen() {
 
         BisqText.h3Regular(
             text = presenter.headline,
-            color = BisqTheme.colors.white,
             textAlign = TextAlign.Center,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
 
-        BisqText.largeLight(
+        BisqText.largeLightGrey(
             text = strings.bisqEasy_tradeWizard_amount_description_fixAmount,
-            color = BisqTheme.colors.grey2,
             textAlign = TextAlign.Center,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )

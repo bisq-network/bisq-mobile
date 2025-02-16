@@ -41,7 +41,6 @@ fun CreateOfferReviewOfferScreen() {
     ) {
         BisqText.h3Regular(
             text = strings.bisqEasy_tradeWizard_review_headline_maker,
-            color = BisqTheme.colors.white,
             textAlign = TextAlign.Start,
             modifier = Modifier.fillMaxWidth()
         )
@@ -72,10 +71,7 @@ fun CreateOfferReviewOfferScreen() {
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             BisqText.h6Regular(text = presenter.formattedPrice)
-                            BisqText.baseRegular(
-                                text = presenter.marketCodes,
-                                color = BisqTheme.colors.grey2
-                            )
+                            BisqText.baseRegularGrey(text = presenter.marketCodes)
                         }
                         BisqText.smallRegular(
                             text = presenter.priceDetails,

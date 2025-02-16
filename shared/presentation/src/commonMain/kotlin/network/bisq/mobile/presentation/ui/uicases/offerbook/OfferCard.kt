@@ -129,14 +129,8 @@ fun OfferCard(
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 LanguageIcon()
-                BisqText.smallRegular(
-                    text = " : ",
-                    color = BisqTheme.colors.grey2
-                )
-                BisqText.smallRegular(
-                    text = item.bisqEasyOffer.supportedLanguageCodes.joinToString(", ").uppercase(),
-                    color = BisqTheme.colors.white
-                )
+                BisqText.smallRegularGrey(text = " : ")
+                BisqText.smallRegular(text = item.bisqEasyOffer.supportedLanguageCodes.joinToString(", ").uppercase())
             }
         }
 
@@ -162,14 +156,8 @@ fun OfferCard(
              }*/
 
             Row {
-                BisqText.smallRegular(
-                    text = "@ ",
-                    color = BisqTheme.colors.grey2
-                )
-                BisqText.smallRegular(
-                    text = item.formattedPriceSpec,
-                    color = BisqTheme.colors.white
-                )
+                BisqText.smallRegularGrey(text = "@ ")
+                BisqText.smallRegular(text = item.formattedPriceSpec)
             }
 
             PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)

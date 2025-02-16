@@ -39,14 +39,10 @@ fun CreateProfileScreen(
     BisqScrollScaffold {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
-        BisqText.h1Light(
-            text = strings.onboarding_createProfile_headline,
-            color = BisqTheme.colors.grey2,
-        )
+        BisqText.h1LightGrey(text = strings.onboarding_createProfile_headline)
         Spacer(modifier = Modifier.height(12.dp))
-        BisqText.baseRegular(
+        BisqText.baseRegularGrey(
             text = strings.onboarding_createProfile_subTitle,
-            color = BisqTheme.colors.grey2,
             modifier = Modifier.padding(horizontal = 24.dp),
             textAlign = TextAlign.Center,
         )
@@ -76,15 +72,9 @@ fun CreateProfileScreen(
         }
 
         Spacer(modifier = Modifier.height(32.dp))
-        BisqText.baseRegular(
-            text = presenter.nym.collectAsState().value,
-            color = BisqTheme.colors.white,
-        )
+        BisqText.baseRegular(text = presenter.nym.collectAsState().value)
         Spacer(modifier = Modifier.height(12.dp))
-        BisqText.baseRegular(
-            text = presenter.id.collectAsState().value,
-            color = BisqTheme.colors.grey2,
-        )
+        BisqText.baseRegularGrey(text = presenter.id.collectAsState().value)
         Spacer(modifier = Modifier.height(38.dp))
         BisqButton(
             text = strings.onboarding_createProfile_regenerate,

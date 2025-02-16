@@ -54,10 +54,9 @@ fun SellerState3a(
                 painterResource(Res.drawable.trade_check_circle), "",
                 modifier = Modifier.width(20.dp).height(20.dp)
             )
-            BisqText.baseRegular(
+            BisqText.baseRegularGrey(
                 // I confirmed to have received {0}
                 text = "bisqEasy.tradeState.info.seller.phase3a.fiatPaymentReceivedCheckBox".i18n(quoteAmount),
-                color = BisqTheme.colors.grey2
             )
         }
 
@@ -86,10 +85,9 @@ fun SellerState3a(
         )
 
         BisqGap.V1()
-        BisqText.baseRegular(
+        BisqText.baseRegularGrey(
             // Fill in the Bitcoin transaction ID / Fill in the preimage if available
             text = paymentProofPrompt,
-            color = BisqTheme.colors.grey2,
         )
 
         BisqGap.VHalf()

@@ -26,10 +26,9 @@ fun SellerState2b(
         BisqText.h5Light(text = "bisqEasy.tradeState.info.seller.phase2b.headline".i18n(quoteAmountWithCode))
 
         BisqGap.V1()
-        BisqText.baseLight(
+        BisqText.baseLightGrey(
             // Visit your bank account or payment provider app to confirm receipt of the buyer's payment.
             text = "bisqEasy.tradeState.info.seller.phase2b.info".i18n(quoteAmountWithCode),
-            color = BisqTheme.colors.grey2
         )
 
         BisqGap.V1()

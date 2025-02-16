@@ -47,17 +47,23 @@ fun BisqEditableDropDown(
 
     if (showDialog) {
         BisqDialog(onDismissRequest = { showDialog = false }) {
-            LazyColumn(modifier = Modifier.padding(16.dp)) {
-                items(items) { item ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth()
-                            .padding(vertical = 8.dp)
-                            .clickable {
-                                onValueChanged(item)
-                                showDialog = false
-                            }
-                    ) {
-                        BisqText.baseBold(text = item)
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 40.dp, max = 300.dp)
+            ) {
+                LazyColumn {
+                    items(items) { item ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                                .clickable {
+                                    onValueChanged(item)
+                                    showDialog = false
+                                }
+                        ) {
+                            BisqText.baseBold(text = item)
+                        }
                     }
                 }
             }

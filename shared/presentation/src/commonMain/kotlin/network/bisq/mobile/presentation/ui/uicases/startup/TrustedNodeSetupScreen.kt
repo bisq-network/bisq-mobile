@@ -134,10 +134,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 //                )
             }
             Spacer(modifier = Modifier.height(36.dp))
-            BisqText.baseRegular(
-                text = "STATUS",
-                color = BisqTheme.colors.grey2,
-            )
+            BisqText.baseRegularGrey(text = "STATUS")
             Spacer(modifier = Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 BisqText.largeRegular(

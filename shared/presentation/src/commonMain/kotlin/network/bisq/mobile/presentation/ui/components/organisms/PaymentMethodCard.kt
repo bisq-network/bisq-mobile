@@ -31,10 +31,7 @@ fun PaymentMethodCard(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        BisqText.largeLight(
-            text = title,
-            color = BisqTheme.colors.grey2
-        )
+        BisqText.largeLightGrey(text = title)
         Column(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 38.dp),
             horizontalAlignment = Alignment.Start,

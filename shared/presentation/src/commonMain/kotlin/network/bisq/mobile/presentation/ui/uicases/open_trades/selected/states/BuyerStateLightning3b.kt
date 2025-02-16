@@ -42,10 +42,9 @@ fun BuyerStateLightning3b(
         }
         Column {
             BisqGap.V1()
-            BisqText.baseLight(
+            BisqText.baseLightGrey(
                 // Transfers via the Lightning Network are typically near-instant....
                 text = "bisqEasy.tradeState.info.buyer.phase3b.info.ln".i18n(),
-                color = BisqTheme.colors.grey2
             )
 
             BisqGap.V1()

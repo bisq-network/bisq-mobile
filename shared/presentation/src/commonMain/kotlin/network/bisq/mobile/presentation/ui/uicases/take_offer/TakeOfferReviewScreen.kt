@@ -42,10 +42,7 @@ fun TakeOfferReviewTradeScreen() {
         nextButtonText = stringsBisqEasy.bisqEasy_takeOffer_review_takeOffer,
         nextOnClick = { presenter.onTakeOffer() }
     ) {
-        BisqText.h3Regular(
-            text = stringsBisqEasy.bisqEasy_takeOffer_progress_review,
-            color = BisqTheme.colors.white
-        )
+        BisqText.h3Regular(text = stringsBisqEasy.bisqEasy_takeOffer_progress_review)
         BisqGap.V2()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoRow(
@@ -73,15 +70,9 @@ fun TakeOfferReviewTradeScreen() {
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             BisqText.h6Regular(text = presenter.price)
-                            BisqText.baseRegular(
-                                text = presenter.marketCodes,
-                                color = BisqTheme.colors.grey2
-                            )
+                            BisqText.baseRegularGrey(text = presenter.marketCodes)
                         }
-                        BisqText.smallRegular(
-                            text = presenter.priceDetails,
-                            color = BisqTheme.colors.grey3
-                        )
+                        BisqText.smallRegularGrey(text = presenter.priceDetails)
                     }
                 }
             )
@@ -103,10 +94,7 @@ fun TakeOfferReviewTradeScreen() {
                         ) {
                             BisqText.h6Regular(text = presenter.fee)
                         }
-                        BisqText.smallRegular(
-                            text = presenter.feeDetails,
-                            color = BisqTheme.colors.grey2
-                        )
+                        BisqText.smallRegularGrey(text = presenter.feeDetails)
                     }
                 }
             )

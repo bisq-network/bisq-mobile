@@ -81,14 +81,8 @@ fun BisqAmountSelector(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
             ) {
-                BisqText.smallRegular(
-                    text = "Min $formattedMinAmount",
-                    color = BisqTheme.colors.grey2
-                )
-                BisqText.smallRegular(
-                    text = "Max $formattedMaxAmount",
-                    color = BisqTheme.colors.grey2
-                )
+                BisqText.smallRegularGrey(text = "Min $formattedMinAmount")
+                BisqText.smallRegularGrey(text = "Max $formattedMaxAmount")
             }
         }
     }

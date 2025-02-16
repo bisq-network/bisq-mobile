@@ -34,9 +34,8 @@ fun CloseTradeDialog(
             modifier = Modifier.padding(bottom= BisqUIConstants.ScreenPadding)
         )
 
-        BisqText.baseRegular(
+        BisqText.baseRegularGrey(
             text = stringsBisqEasy.bisqEasy_openTrades_closeTrade_warning_completed,
-            color = BisqTheme.colors.grey2,
             textAlign = TextAlign.Center
         )
 

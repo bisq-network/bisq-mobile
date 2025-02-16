@@ -49,14 +49,10 @@ fun CreateOfferTradePriceSelectorScreen() {
     ) {
         BisqText.h3Regular(
             text = bisqEasyTradeWizardStrings.bisqEasy_price_headline,
-            color = BisqTheme.colors.white,
             modifier = Modifier.align(Alignment.Start)
         )
         BisqGap.V1()
-        BisqText.largeLight(
-            text = bisqEasyTradeWizardStrings.bisqEasy_tradeWizard_price_subtitle,
-            color = BisqTheme.colors.grey2
-        )
+        BisqText.largeLightGrey(text = bisqEasyTradeWizardStrings.bisqEasy_tradeWizard_price_subtitle)
         Column(
             modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding2X),
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)

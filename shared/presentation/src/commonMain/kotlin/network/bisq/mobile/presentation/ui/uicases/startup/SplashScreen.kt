@@ -36,9 +36,8 @@ fun SplashScreen(
             // TODO: Get this from presenter
             val networkType = strings.application.splash_bootstrapState_network_TOR
 
-            BisqText.baseRegular(
+            BisqText.baseRegularGrey(
                 text = presenter.state.collectAsState().value,
-                color = BisqTheme.colors.grey2,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )

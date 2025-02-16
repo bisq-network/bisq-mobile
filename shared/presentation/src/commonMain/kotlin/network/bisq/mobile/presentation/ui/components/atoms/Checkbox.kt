@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,6 +23,18 @@ fun BisqCheckbox(
     onCheckedChange: ((Boolean) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
+    val grey2Color = BisqTheme.colors.grey2
+    val whiteColor = BisqTheme.colors.white
+    val finalLabelColor by remember(disabled) {
+        mutableStateOf(
+            if (disabled) {
+                grey2Color
+            } else {
+                whiteColor
+            }
+        )
+    }
+
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically) {
         Checkbox(
             checked = checked,
@@ -46,6 +60,7 @@ fun BisqCheckbox(
         )
         BisqText.baseRegular(
             label,
+            color = finalLabelColor,
             modifier = Modifier
                 .clickable(
                     enabled = !disabled,

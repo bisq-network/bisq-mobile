@@ -32,10 +32,7 @@ fun CreateOfferPaymentMethodSelectorScreen() {
         nextButtonText = commonStrings.buttons_next,
         nextOnClick = { presenter.onNext() }
     ) {
-        BisqText.h3Regular(
-            text = stringsBisqEasy.bisqEasy_takeOffer_paymentMethods_headline_fiatAndBitcoin,
-            color = BisqTheme.colors.white
-        )
+        BisqText.h3Regular(text = stringsBisqEasy.bisqEasy_takeOffer_paymentMethods_headline_fiatAndBitcoin)
 
         BisqGap.V1()
 

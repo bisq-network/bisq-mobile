@@ -32,10 +32,9 @@ fun BuyerState1b(
         }
         Column {
             BisqGap.V2()
-            BisqText.baseLight(
+            BisqText.baseLightGrey(
                 // You can use the chat below for getting in touch with the seller.
                 text = "bisqEasy.tradeState.info.buyer.phase1b.info".i18n(),
-                color = BisqTheme.colors.grey2
             )
         }
     }

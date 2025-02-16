@@ -63,7 +63,6 @@ fun DirectionToggle(
             ) {
                 BisqText.baseMedium(
                     text = toggleText,
-                    color = BisqTheme.colors.white,
                     modifier = Modifier
                         .padding(horizontal = 32.dp, vertical = 12.dp)
                         .alpha(0f),
@@ -86,10 +85,7 @@ fun DirectionToggle(
                             )
                     ) {
                         val label = if (direction.isBuy) strings.offers_list_buy_from else strings.offers_list_sell_to
-                        BisqText.baseMedium(
-                            text = label,
-                            color = BisqTheme.colors.white,
-                        )
+                        BisqText.baseMedium(text = label)
                     }
                 }
             }

@@ -39,10 +39,9 @@ fun BuyerState3a(
         }
         Column {
             BisqGap.V2()
-            BisqText.baseLight(
+            BisqText.baseLightGrey(
                 // Once the seller has received your payment of {0}, they will start the Bitcoin transfer to your provided {1}.
                 text = "bisqEasy.tradeState.info.buyer.phase3a.info".i18n(bitcoinPaymentData),
-                color = BisqTheme.colors.grey2
             )
         }
     }

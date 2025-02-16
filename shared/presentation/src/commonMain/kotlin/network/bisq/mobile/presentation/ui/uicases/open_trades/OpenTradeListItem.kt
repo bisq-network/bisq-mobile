@@ -49,25 +49,18 @@ fun OpenTradeListItem(
                 modifier = Modifier.weight(1f)
             ) {
                 Row {
-                    BisqText.baseLight(
+                    BisqText.baseLightGrey(
                         text = item.directionalTitle.uppercase().replace(":", ""), // 'Buying from:' or 'Selling to:'
-                        color = BisqTheme.colors.grey2
                     )
                 }
                 Row(modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)) {
                     UserProfile(item.peersUserProfile)
                 }
                 Row {
-                    BisqText.smallLight(
-                        text = "${item.formattedDate} ${item.formattedTime}",
-                        color = BisqTheme.colors.grey2
-                    )
+                    BisqText.smallLightGrey(text = "${item.formattedDate} ${item.formattedTime}")
                 }
                 Row {
-                    BisqText.smallLight(
-                        text = "Trade ID: ${item.shortTradeId}",
-                        color = BisqTheme.colors.grey2
-                    )
+                    BisqText.smallLightGrey(text = "Trade ID: ${item.shortTradeId}",)
                 }
             }
             Column(
@@ -82,20 +75,11 @@ fun OpenTradeListItem(
                     )
                 }
                 Row(modifier = Modifier.padding(top = 1.dp)) {
-                    BisqText.smallRegular(
-                        text = "@ ",
-                        color = BisqTheme.colors.grey2
-                    )
-                    BisqText.smallRegular(
-                        text = item.formattedPrice,
-                        color = BisqTheme.colors.white
-                    )
+                    BisqText.smallRegularGrey(text = "@ ")
+                    BisqText.smallRegular(text = item.formattedPrice)
                 }
                 Row {
-                    BisqText.smallRegular(
-                        text = "${item.formattedBaseAmount} BTC",
-                        color = BisqTheme.colors.white
-                    )
+                    BisqText.smallRegular(text = "${item.formattedBaseAmount} BTC")
                 }
                 Row(modifier = Modifier.padding(top = 5.dp)) {
                     PaymentMethods(

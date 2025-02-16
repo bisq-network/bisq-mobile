@@ -26,10 +26,7 @@ fun ChatAuthorNameTimestamp(msg: ChatMessage) {
                     .paddingFrom(LastBaseline, after = 8.dp)
             )
         }
-        BisqText.baseMedium(
-            text = msg.timestamp,
-            color = BisqTheme.colors.grey2
-        )
+        BisqText.baseMediumGrey(text = msg.timestamp)
     }
 }
 

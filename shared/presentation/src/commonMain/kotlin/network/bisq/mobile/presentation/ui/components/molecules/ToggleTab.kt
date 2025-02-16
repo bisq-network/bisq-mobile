@@ -61,7 +61,6 @@ fun <T> ToggleTab(
             ) {
                 BisqText.baseRegular(
                     text = getDisplayString(selectedOption),
-                    color = BisqTheme.colors.white,
                     modifier = Modifier
                         .padding(horizontal = 32.dp, vertical = 12.dp)
                         .width(textWidth)
@@ -86,7 +85,6 @@ fun <T> ToggleTab(
                     ) {
                         BisqText.baseRegular(
                             text = getDisplayString(option),
-                            color = BisqTheme.colors.white,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.width(textWidth)
                         )

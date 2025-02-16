@@ -33,9 +33,8 @@ fun MediationRequestDialog(
                 textAlign = TextAlign.Center
             )
             BisqGap.V1()
-            BisqText.smallRegular(
+            BisqText.smallRegularGrey(
                 text = "Please do not request mediation for general questions. In the support section there are chat rooms where you can get general advice and help.",
-                color = BisqTheme.colors.grey2,
                 textAlign = TextAlign.Center
             )
         }

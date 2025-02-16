@@ -29,11 +29,7 @@ fun BisqSegmentButton(
 
     Column(modifier = modifier) {
         if (label.isNotEmpty()) {
-            BisqText.baseRegular(
-                text = label,
-                color = BisqTheme.colors.white,
-            )
-
+            BisqText.baseRegular(text = label)
             BisqGap.VQuarter()
         }
         SingleChoiceSegmentedButtonRow(

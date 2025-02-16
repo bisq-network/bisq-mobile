@@ -57,20 +57,13 @@ fun RangeAmountSelector(
     Column {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Column(horizontalAlignment = Alignment.Start) {
-                BisqText.smallRegular(
-                    text = "Min",
-                    color = BisqTheme.colors.grey2
-                )
+                BisqText.smallRegularGrey(text = "Min")
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.Bottom
                 ) {
-                    BisqText.h2Regular(
-                        text = quoteSideMinRangeAmount
-                    )
-                    BisqText.h6Light(
-                        text = quoteCurrencyCode
-                    )
+                    BisqText.h2Regular(text = quoteSideMinRangeAmount)
+                    BisqText.h6Light(text = quoteCurrencyCode)
                 }
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -81,10 +74,7 @@ fun RangeAmountSelector(
                          modifier = Modifier.size(16.dp)
                      )*/
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        BisqText.largeLight(
-                            text = baseSideMinRangeAmountLeft,
-                            color = BisqTheme.colors.grey2
-                        )
+                        BisqText.largeLightGrey(text = baseSideMinRangeAmountLeft)
                         BisqText.largeLight(
                             text = "$baseSideMinRangeAmountRight BTC",
                         )
@@ -97,10 +87,7 @@ fun RangeAmountSelector(
                 }
             }
             Column(horizontalAlignment = Alignment.End) {
-                BisqText.smallRegular(
-                    text = "Max",
-                    color = BisqTheme.colors.grey2
-                )
+                BisqText.smallRegularGrey(text = "Max")
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.Bottom
@@ -121,10 +108,7 @@ fun RangeAmountSelector(
                          modifier = Modifier.size(16.dp)
                      )*/
                     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        BisqText.largeLight(
-                            text = baseSideMaxRangeAmountLeft,
-                            color = BisqTheme.colors.grey2
-                        )
+                        BisqText.largeLightGrey(text = baseSideMaxRangeAmountLeft)
                         BisqText.largeLight(
                             text = "$baseSideMaxRangeAmountRight BTC",
                         )
@@ -150,14 +134,8 @@ fun RangeAmountSelector(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
             ) {
 
-                BisqText.smallLight(
-                    text = formattedMinAmount,
-                    color = BisqTheme.colors.grey2
-                )
-                BisqText.smallLight(
-                    text = formattedMaxAmount,
-                    color = BisqTheme.colors.grey2
-                )
+                BisqText.smallLightGrey(text = formattedMinAmount)
+                BisqText.smallLightGrey(text = formattedMaxAmount)
             }
         }
     }

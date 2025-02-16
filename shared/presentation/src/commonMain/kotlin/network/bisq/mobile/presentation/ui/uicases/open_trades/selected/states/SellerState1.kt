@@ -27,9 +27,8 @@ fun SellerState1(
         BisqText.h5Light(text = "bisqEasy.tradeState.info.seller.phase1.headline".i18n()) // Send your payment account data to the buyer
 
         BisqGap.V1()
-        BisqText.baseLight(
+        BisqText.baseLightGrey(
             text = "bisqEasy.tradeState.info.seller.phase1.accountData.prompt".i18n(), // Fill in your payment account data. E.g. IBAN, BIC and account owner name
-            color = BisqTheme.colors.grey2
         )
 
         BisqGap.V1()

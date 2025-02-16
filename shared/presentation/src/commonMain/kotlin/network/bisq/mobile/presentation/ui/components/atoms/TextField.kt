@@ -217,10 +217,7 @@ fun BisqTextField(
 
                         Box(modifier = Modifier.weight(1f)) {
                             if (value.isEmpty()) {
-                                BisqText.largeLight(
-                                    text = placeholder,
-                                    color = BisqTheme.colors.grey2
-                                )
+                                BisqText.largeLightGrey(text = placeholder)
                             }
                             innerTextField()
                         }

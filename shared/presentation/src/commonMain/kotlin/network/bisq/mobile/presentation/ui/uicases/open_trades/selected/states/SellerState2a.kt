@@ -38,10 +38,9 @@ fun SellerState2a(
         }
         Column {
             BisqGap.V2()
-            BisqText.baseLight(
+            BisqText.baseLightGrey(
                 // Once the buyer has initiated the payment of {0}, you will get notified.
                 text = "bisqEasy.tradeState.info.seller.phase2a.waitForPayment.info".i18n(quoteAmountWithCode),
-                color = BisqTheme.colors.grey2
             )
         }
     }

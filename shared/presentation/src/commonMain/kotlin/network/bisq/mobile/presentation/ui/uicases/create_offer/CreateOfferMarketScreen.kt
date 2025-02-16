@@ -36,16 +36,10 @@ fun CreateOfferCurrencySelectorScreen() {
         horizontalAlignment = Alignment.Start
     ) {
 
-        BisqText.h3Regular(
-            text = presenter.headline,
-            color = BisqTheme.colors.white,
-        )
+        BisqText.h3Regular(text = presenter.headline)
         BisqGap.V1()
 
-        BisqText.largeLight(
-            text = strings.bisqEasy_tradeWizard_market_subTitle,
-            color = BisqTheme.colors.grey2,
-        )
+        BisqText.largeLightGrey(text = strings.bisqEasy_tradeWizard_market_subTitle)
 
         BisqGap.V2()
 

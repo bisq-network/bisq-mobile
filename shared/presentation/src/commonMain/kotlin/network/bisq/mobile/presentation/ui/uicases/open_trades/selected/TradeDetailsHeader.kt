@@ -105,7 +105,6 @@ fun TradeDetailsComposable() {
                 ) {
                     BisqText.baseRegular(
                         text = item.directionalTitle.uppercase(), // 'Buying from:' or 'Selling to:'
-                        color = BisqTheme.colors.white
                     )
 
                     BisqGap.H1()

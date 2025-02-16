@@ -58,7 +58,7 @@ fun InfoBox(
                 horizontalAlignment = if (rightAlign) Alignment.End else Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                BisqText.baseRegular(text = label, color = BisqTheme.colors.grey2)
+                BisqText.baseRegularGrey(text = label)
                 valueWidget()
             }
         }
@@ -69,7 +69,7 @@ fun InfoBox(
                 verticalArrangement = Arrangement.spacedBy(0.dp)
             ) {
                 valueWidget()
-                BisqText.smallRegular(text = label, color = BisqTheme.colors.grey2, modifier = Modifier.offset(y = (-4).dp))
+                BisqText.smallRegularGrey(text = label, modifier = Modifier.offset(y = (-4).dp))
             }
         }
     }

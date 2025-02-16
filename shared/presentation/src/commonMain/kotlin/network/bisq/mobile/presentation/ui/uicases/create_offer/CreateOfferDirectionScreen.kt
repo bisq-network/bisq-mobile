@@ -52,7 +52,7 @@ fun CreateOfferBuySellScreen() {
             textComponent = { BisqText.h3Medium(text = strings.bisqEasy_tradeWizard_directionAndMarket_buy) }
         )
         BisqGap.VHalf()
-        BisqText.largeLight(strings.bisqEasy_tradeWizard_buy_description, color = BisqTheme.colors.grey2)
+        BisqText.largeLightGrey(strings.bisqEasy_tradeWizard_buy_description)
 
         BisqGap.V2()
 
@@ -67,7 +67,7 @@ fun CreateOfferBuySellScreen() {
             textComponent = { BisqText.h3Medium(text = strings.bisqEasy_tradeWizard_directionAndMarket_sell) }
         )
         BisqGap.VHalf()
-        BisqText.largeLight(strings.bisqEasy_tradeWizard_sell_description, color = BisqTheme.colors.grey2)
+        BisqText.largeLightGrey(strings.bisqEasy_tradeWizard_sell_description)
 
         if (showSellerReputationWarning) {
                 SellerReputationWarningDialog(

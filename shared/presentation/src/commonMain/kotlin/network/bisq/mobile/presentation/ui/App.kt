@@ -51,7 +51,7 @@ fun App() {
         isNavControllerSet = true
     })
 
-    val lyricist = rememberStrings()
+    val lyricist = rememberStrings("en", "en")
     val languageCode = presenter.languageCode.collectAsState().value
     I18nSupport.initialize(languageCode)
 

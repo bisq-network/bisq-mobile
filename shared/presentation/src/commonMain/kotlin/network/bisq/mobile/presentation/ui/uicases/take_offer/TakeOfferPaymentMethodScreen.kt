@@ -53,10 +53,7 @@ fun TakeOfferPaymentMethodScreen() {
         nextOnClick = { presenter.onNext() }
     ) {
 
-        BisqText.h3Regular(
-            text = strings.bisqEasy_takeOffer_paymentMethods_headline_fiatAndBitcoin,
-            color = BisqTheme.colors.white
-        )
+        BisqText.h3Regular(text = strings.bisqEasy_takeOffer_paymentMethods_headline_fiatAndBitcoin)
 
         if (presenter.hasMultipleQuoteSidePaymentMethods) {
             BisqGap.V2()
@@ -65,10 +62,7 @@ fun TakeOfferPaymentMethodScreen() {
                 modifier = Modifier.padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                BisqText.largeLight(
-                    text = strings.bisqEasy_takeOffer_paymentMethods_subtitle_fiat_buyer("USD"),
-                    color = BisqTheme.colors.grey2
-                )
+                BisqText.largeLightGrey(text = strings.bisqEasy_takeOffer_paymentMethods_subtitle_fiat_buyer("USD"))
                 BisqGap.V2()
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 38.dp),
@@ -121,10 +115,7 @@ fun TakeOfferPaymentMethodScreen() {
                 modifier = Modifier.padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                BisqText.largeLight(
-                    text = strings.bisqEasy_takeOffer_paymentMethods_subtitle_bitcoin_seller,
-                    color = BisqTheme.colors.grey2
-                )
+                BisqText.largeLightGrey(text = strings.bisqEasy_takeOffer_paymentMethods_subtitle_bitcoin_seller)
                 BisqGap.V1()
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 38.dp),

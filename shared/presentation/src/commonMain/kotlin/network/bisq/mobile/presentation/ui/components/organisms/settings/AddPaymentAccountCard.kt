@@ -46,9 +46,8 @@ fun AppPaymentAccountCard(
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
-        BisqText.smallRegular(
+        BisqText.smallRegularGrey(
             text = strings.user_paymentAccounts_createAccount_subtitle,
-            color = BisqTheme.colors.grey2,
             textAlign = TextAlign.Center
         )
 
