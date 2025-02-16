@@ -76,7 +76,7 @@ fun InterruptedTradePane() {
                     text = "bisqEasy.openTrades.reportToMediator".i18n(),
                     onClick = { presenter.onReportToMediator() },
                     type = BisqButtonType.Outline,
-                    textColor = BisqTheme.colors.primary,
+                    color = BisqTheme.colors.primary,
                     borderColor = BisqTheme.colors.primary,
                 )
                 BisqGap.H1()

@@ -25,13 +25,13 @@ fun ConfirmationDialog(
     BisqDialog {
         BisqText.h6Regular(
             text = message,
-            color = BisqTheme.colors.light1,
+            color = BisqTheme.colors.white,
             modifier = Modifier.padding(vertical = 12.dp)
         )
         if (subMessage.isNotEmpty()) {
             BisqText.baseRegular(
                 text = subMessage,
-                color = BisqTheme.colors.light1,
+                color = BisqTheme.colors.white,
                 modifier = Modifier.padding(vertical = 12.dp)
             )
         }

@@ -38,7 +38,7 @@ fun CreateOfferCurrencySelectorScreen() {
 
         BisqText.h3Regular(
             text = presenter.headline,
-            color = BisqTheme.colors.light1,
+            color = BisqTheme.colors.white,
         )
         BisqGap.V1()
 

@@ -34,8 +34,7 @@ fun BisqButton(
     text: String? = "Button",
     textAlign: TextAlign = TextAlign.Center,
     onClick: (() -> Unit)? = null,
-    color: Color = BisqTheme.colors.light1,
-    textColor: Color = BisqTheme.colors.light1,
+    color: Color = BisqTheme.colors.white,
     backgroundColor: Color = BisqTheme.colors.primary,
     fullWidth: Boolean = false,
     padding: PaddingValues = PaddingValues(
@@ -70,7 +69,7 @@ fun BisqButton(
     }
 
     val finalContentColor = if (disabled)
-        BisqTheme.colors.grey1
+        BisqTheme.colors.grey2
     else
         color
 
@@ -102,7 +101,7 @@ fun BisqButton(
                 if (isLoading) {
                     CircularProgressIndicator(
                         modifier = Modifier.size(16.dp),
-                        color = BisqTheme.colors.light1,
+                        color = BisqTheme.colors.white,
                         strokeWidth = 2.dp
                     )
                     BisqGap.HHalf()

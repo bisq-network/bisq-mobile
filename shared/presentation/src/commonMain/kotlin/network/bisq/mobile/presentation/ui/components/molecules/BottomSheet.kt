@@ -28,7 +28,7 @@ fun BisqBottomSheet(
         sheetState = rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
         ),
-        containerColor = BisqTheme.colors.dark3,
+        containerColor = BisqTheme.colors.dark4,
         dragHandle = {
             Box(
                 modifier = Modifier.padding(top = 20.dp)

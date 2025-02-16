@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.style.TextAlign
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -47,8 +48,10 @@ fun BisqDropDown(
         if (label.isNotEmpty()) {
             BisqText.baseRegular(
                 text = label,
-                color = BisqTheme.colors.light2,
+                color = BisqTheme.colors.white,
             )
+
+            BisqGap.VQuarter()
         }
 
         BisqButton(
@@ -67,7 +70,8 @@ fun BisqDropDown(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            modifier = Modifier.wrapContentSize().background(color = BisqTheme.colors.secondary)
+            containerColor = BisqTheme.colors.dark4,
+            modifier = Modifier.wrapContentSize()
         ) {
             if (searchable) {
                 BisqTextField(
@@ -95,6 +99,7 @@ fun BisqDropDown(
         }
 
         if (chipMultiSelect) {
+            BisqGap.VQuarter()
             // TODO: Should do BisqChipRow
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),

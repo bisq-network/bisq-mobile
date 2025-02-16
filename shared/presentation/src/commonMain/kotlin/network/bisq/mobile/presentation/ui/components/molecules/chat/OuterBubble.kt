@@ -74,7 +74,7 @@ fun ChatOuterBubble(
     val bubbleBGColor = if (isUserMe) {
         BisqTheme.colors.primaryDisabled
     } else {
-        BisqTheme.colors.secondaryDisabled
+        BisqTheme.colors.dark4
     }
 
     var showMenu by remember { mutableStateOf(false) }

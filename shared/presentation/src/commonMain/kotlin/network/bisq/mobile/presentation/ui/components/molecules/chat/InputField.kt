@@ -107,7 +107,7 @@ fun QuotedMessage(
                         topEnd = BisqUIConstants.ScreenPaddingHalf,
                     )
                 )
-                .background(BisqTheme.colors.grey5)
+                .background(BisqTheme.colors.grey3)
                 .drawBehind {
                     drawLine(
                         color = sideBorderColor,

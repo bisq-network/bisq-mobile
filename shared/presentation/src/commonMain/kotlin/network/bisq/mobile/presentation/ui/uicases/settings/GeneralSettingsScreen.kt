@@ -80,12 +80,16 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
 
             BisqText.h4Regular("settings.language".i18n())
 
+            BisqGap.V1()
+
             BisqDropDown(
                 label = "settings.language.headline".i18n(),
                 items = i18nPairs,
                 value = selectedLauguage,
                 onValueChanged = { presenter.setLanguageCode(it.first) },
             )
+
+            BisqGap.V1()
 
             BisqDropDown(
                 label = "${"settings.language.supported.headline".i18n()} (${"settings.language.supported.subHeadLine".i18n()})",
@@ -105,25 +109,32 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
 
             BisqText.h4Regular("settings.notification.options".i18n())
 
+            BisqGap.V1()
+
             BisqSegmentButton(
                 label = "Chat Notification (TODO)", // TODO:i18n
                 items = listOf(
-                    "chat.notificationsSettingsMenu.all".i18n(),
-                    "chat.notificationsSettingsMenu.mention".i18n(),
-                    "chat.notificationsSettingsMenu.off".i18n(),
+                    Pair("all", "chat.notificationsSettingsMenu.all".i18n()),
+                    Pair("mention", "chat.notificationsSettingsMenu.mention".i18n()),
+                    Pair("off", "chat.notificationsSettingsMenu.off".i18n()),
                 ),
-                onValueChange = { presenter.setChatNotification(it) }
+                value = presenter.chatNotification.collectAsState().value,
+                onValueChange = { presenter.setChatNotification(it.first) }
             )
 
             BisqHDivider()
 
             BisqText.h4Regular("settings.trade.headline".i18n())
 
+            BisqGap.V1()
+
             BisqSwitch(
                 label = "settings.trade.closeMyOfferWhenTaken".i18n(),
                 checked = closeOfferWhenTradeTaken,
                 onSwitch = { presenter.setCloseOfferWhenTradeTaken(it) }
             )
+
+            BisqGap.V1()
 
             BisqTextField(
                 label = "settings.trade.maxTradePriceDeviation".i18n(),
@@ -149,6 +160,8 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
 
             BisqText.h4Regular("settings.display.headline".i18n())
 
+            BisqGap.V1()
+
             BisqSwitch(
                 label = "settings.display.useAnimations".i18n(),
                 checked = useAnimations,
@@ -159,6 +172,8 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                 BisqHDivider()
 
                 BisqText.h4Regular("settings.network.headline".i18n())
+
+                BisqGap.V1()
 
                 BisqTextField(
                     label = "settings.network.difficultyAdjustmentFactor.description.self".i18n(),
@@ -180,6 +195,9 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
                         return@BisqTextField null
                     }
                 )
+
+                BisqGap.V1()
+
                 BisqSwitch(
                     label = "settings.network.difficultyAdjustmentFactor.ignoreValueFromSecManager".i18n(),
                     checked = ignorePow,

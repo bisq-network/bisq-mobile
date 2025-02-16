@@ -26,11 +26,11 @@ fun BreadcrumbNavigation(
         path.forEachIndexed { index, menuItem ->
             Text(
                 text = menuItem.label,
-                style = MaterialTheme.typography.bodyLarge.copy(color = BisqTheme.colors.grey1),
+                style = MaterialTheme.typography.bodyLarge.copy(color = BisqTheme.colors.grey2),
                 modifier = Modifier.clickable { onBreadcrumbClick(index) }
             )
             if (index != path.lastIndex) {
-                Text(" > ", color = BisqTheme.colors.grey1) // Separator
+                Text(" > ", color = BisqTheme.colors.grey2) // Separator
             }
         }
     }

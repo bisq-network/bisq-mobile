@@ -65,7 +65,7 @@ fun OpenTradeScreen() {
                                 // todo Add warn icon
                                 BisqText.baseMedium(
                                     text = "bisqEasy.openTrades.inMediation.info".i18n(),
-                                    color = BisqTheme.colors.dark5 //todo maybe we can add a less dark grey as in bisq2
+                                    color = BisqTheme.colors.grey2 //todo maybe we can add a less dark grey as in bisq2
                                 )
                             }
                         }

@@ -17,9 +17,9 @@ fun BisqSnackbar(snackbarHostState: SnackbarHostState) {
             Snackbar(
                 snackbarData = data,
                 // containerColor = BisqTheme.colors.primary,
-                containerColor = BisqTheme.colors.light1.copy(alpha = 0.95f),
-                contentColor = BisqTheme.colors.grey5,
-                dismissActionContentColor = BisqTheme.colors.grey5,
+                containerColor = BisqTheme.colors.white.copy(alpha = 0.95f),
+                contentColor = BisqTheme.colors.grey2,
+                dismissActionContentColor = BisqTheme.colors.grey2,
                 modifier = Modifier.padding(bottom = BisqUIConstants.ScreenPadding2X),
             )
         }

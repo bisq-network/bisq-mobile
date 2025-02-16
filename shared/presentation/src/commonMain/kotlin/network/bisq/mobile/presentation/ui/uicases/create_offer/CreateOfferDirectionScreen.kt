@@ -51,6 +51,7 @@ fun CreateOfferBuySellScreen() {
             padding = PaddingValues(vertical = BisqUIConstants.ScreenPadding4X),
             textComponent = { BisqText.h3Medium(text = strings.bisqEasy_tradeWizard_directionAndMarket_buy) }
         )
+        BisqGap.VHalf()
         BisqText.largeLight(strings.bisqEasy_tradeWizard_buy_description, color = BisqTheme.colors.grey2)
 
         BisqGap.V2()
@@ -65,6 +66,7 @@ fun CreateOfferBuySellScreen() {
             padding = PaddingValues(vertical = BisqUIConstants.ScreenPadding4X),
             textComponent = { BisqText.h3Medium(text = strings.bisqEasy_tradeWizard_directionAndMarket_sell) }
         )
+        BisqGap.VHalf()
         BisqText.largeLight(strings.bisqEasy_tradeWizard_sell_description, color = BisqTheme.colors.grey2)
 
         if (showSellerReputationWarning) {

@@ -1,40 +1,30 @@
 package network.bisq.mobile.presentation.ui.uicases
 
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
+import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 interface IGettingStarted : ViewPresenter {
@@ -57,8 +47,8 @@ fun GettingStartedScreen() {
     RememberPresenterLifecycle(presenter)
 
     BisqScrollLayout(
-        padding = PaddingValues(all = 0.dp),
-        verticalArrangement = Arrangement.spacedBy(24.dp),
+        padding = PaddingValues(all = BisqUIConstants.Zero),
+        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         isInteractive = presenter.isInteractive.collectAsState().value
     ) {
 
@@ -67,7 +57,7 @@ fun GettingStartedScreen() {
                 price = presenter.formattedMarketPrice.collectAsState().value,
                 priceText = "Market price"
             )
-            Spacer(modifier = Modifier.height(16.dp))
+            BisqGap.V1()
             Row(modifier = Modifier.fillMaxWidth()) {
                 Box(modifier = Modifier.weight(1f)) {
                     PriceProfileCard(
@@ -75,7 +65,7 @@ fun GettingStartedScreen() {
                         priceText = "Offers online"
                     )
                 }
-                Spacer(modifier = Modifier.width(16.dp))
+                BisqGap.H1()
                 Box(modifier = Modifier.weight(1f)) {
                     PriceProfileCard(
                         price = publishedProfiles.toString(),
@@ -84,7 +74,7 @@ fun GettingStartedScreen() {
                 }
             }
         }
-        BisqButton("Chat", onClick = { presenter.navigateToChat() })
+        /* BisqButton("Chat", onClick = { presenter.navigateToChat() }) */
         WelcomeCard(
             presenter = presenter,
             title = presenter.title,
@@ -103,101 +93,61 @@ fun WelcomeCard(
     primaryButtonText: String,
     footerLink: String
 ) {
-    NeumorphicCard {
-        Column(
-            modifier = Modifier
-                .clip(RoundedCornerShape(8.dp))
-                .background(BisqTheme.colors.dark2)
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Title
-            BisqText.h4Regular(
-                text = title,
-                color = BisqTheme.colors.light1
-            )
+    BisqCard(
+        padding = BisqUIConstants.ScreenPadding2X,
+        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
+    ) {
+        // Title
+        BisqText.h4Regular(text = title)
 
-            // Bullet Points
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                bulletPoints.forEach { point ->
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Canvas(modifier = Modifier.size(6.dp)) {
-                            drawCircle(color = Color.White)
-                        }
-                        Spacer(modifier = Modifier.width(8.dp))
-                        BisqText.baseMedium(
-                            text = point,
-                            color = BisqTheme.colors.light2
-                        )
+        // Bullet Points
+        Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalfQuarter)) {
+            bulletPoints.forEach { point ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    val whiteColor = BisqTheme.colors.white
+                    Canvas(modifier = Modifier.size(BisqUIConstants.ScreenPaddingHalf)) {
+                        drawCircle(color = whiteColor)
                     }
+                    BisqGap.H1()
+                    BisqText.baseMedium(text = point)
                 }
             }
-
-            // Primary Button
-            Button(
-                onClick={ presenter.onStartTrading() },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = BisqTheme.colors.primary),
-                shape = RoundedCornerShape(8.dp)
-            ) {
-                BisqText.baseBold(
-                    text = primaryButtonText,
-                    color = Color.White,
-                )
-            }
-
-//            BisqButton("Create offer", onClick={ presenter.navigateToCreateOffer() })
-
-            // Footer Link
-            Text(
-                text = footerLink,
-//                style = BisqTheme.type.caption,
-                color = BisqTheme.colors.primary,
-                modifier = Modifier
-                    .align(Alignment.Start)
-                    .clickable { presenter.navigateLearnMore() }
-            )
         }
+
+        // Primary Button
+        BisqButton(
+            primaryButtonText,
+            fullWidth = true,
+            onClick = { presenter.onStartTrading() },
+        )
+
+        // Footer Link
+        BisqButton(
+            footerLink,
+            color = BisqTheme.colors.primary,
+            type = BisqButtonType.Clear,
+            padding = PaddingValues(all = BisqUIConstants.Zero),
+            onClick = { presenter.navigateLearnMore() }
+        )
     }
 }
 
 @Composable
 fun PriceProfileCard(price: String, priceText: String) {
-    Column(
-        modifier = Modifier
-            .clip(shape = RoundedCornerShape(4.dp))
-            .background(color = BisqTheme.colors.dark3)
-            .padding(vertical = 12.dp).fillMaxWidth(),
+    BisqCard(
+        borderRadius = BisqUIConstants.ScreenPaddingQuarter,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         BisqText.largeRegular(
             text = price,
-            color = BisqTheme.colors.light1,
             textAlign = TextAlign.Center,
         )
 
-        Spacer(modifier = Modifier.height(12.dp))
+        BisqGap.V1()
 
-        BisqText.smallRegular(
+        BisqText.smallRegularGrey(
             text = priceText,
-            color = BisqTheme.colors.grey1,
             textAlign = TextAlign.Center,
         )
     }
-}
-
-@Composable
-fun NeumorphicCard(
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit
-) {
-
-    Box(
-        modifier = modifier
-            .shadow(elevation = 8.dp, shape = RoundedCornerShape(5.dp), spotColor = BisqTheme.colors.primary)
-            .padding(2.dp)
-    ) {
-        content()
-    }
-
 }

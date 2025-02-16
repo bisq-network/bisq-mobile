@@ -4,6 +4,7 @@ import androidx.compose.ui.unit.dp
 
 // FinalTODO: Refactor and remove the prefix 'ScreenPadding'
 object BisqUIConstants {
+    val Zero = 0.dp
     val ScreenPaddingQuarter = 3.dp
     val ScreenPaddingHalf = 6.dp
     val ScreenPaddingHalfQuarter = 9.dp

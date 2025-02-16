@@ -34,7 +34,7 @@ fun CreateOfferPaymentMethodSelectorScreen() {
     ) {
         BisqText.h3Regular(
             text = stringsBisqEasy.bisqEasy_takeOffer_paymentMethods_headline_fiatAndBitcoin,
-            color = BisqTheme.colors.light1
+            color = BisqTheme.colors.white
         )
 
         BisqGap.V1()

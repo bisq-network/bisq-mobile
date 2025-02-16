@@ -92,7 +92,7 @@ fun PagerSingleItem(
             ) {
                 BisqText.h4Regular(
                     text = title,
-                    color = BisqTheme.colors.light1,
+                    color = BisqTheme.colors.white,
                 )
                 Spacer(modifier = Modifier.height(24.dp))
                 BisqText.largeRegular(

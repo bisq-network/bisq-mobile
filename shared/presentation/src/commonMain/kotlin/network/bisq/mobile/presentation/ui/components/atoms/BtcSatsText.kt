@@ -36,7 +36,7 @@ fun BtcSatsText(formattedBtcAmountValue: String) {
         Text(
             text = formattedValue,
             fontSize = 20.sp,
-            color = BisqTheme.colors.light1,
+            color = BisqTheme.colors.white,
         )
     }
 }

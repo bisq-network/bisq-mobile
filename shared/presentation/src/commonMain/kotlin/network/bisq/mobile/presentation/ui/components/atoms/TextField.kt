@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.button.PasteIconButton
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 /**
@@ -80,35 +81,38 @@ fun BisqTextField(
     finalValue = if (valueSuffix != null) value + valueSuffix else value
 
     val dangerColor = BisqTheme.colors.danger
-    val finalIndicatorColor by remember(validationError) {
+    val grey2Color = BisqTheme.colors.grey2
+    val finalIndicatorColor by remember(validationError, isFocused) {
         mutableStateOf(
             if (validationError == null || validationError?.isEmpty() == true)
-                indicatorColor
+                if (isFocused) indicatorColor else grey2Color
             else
                 dangerColor
         )
     }
 
     val secondaryColor = BisqTheme.colors.secondary
+    val secondaryHoverColor = BisqTheme.colors.secondaryHover
     val secondaryDisabledColor = BisqTheme.colors.secondaryDisabled
-    val finalBackgroundColor by remember(disabled) {
+    val finalBackgroundColor by remember(disabled, isFocused) {
         mutableStateOf(
             if (disabled) {
                 secondaryDisabledColor
+            } else if (isFocused) {
+                secondaryHoverColor
             } else {
                 secondaryColor
             }
         )
     }
 
-    val light2Color = BisqTheme.colors.light2
-    val light5Color = BisqTheme.colors.grey1
+    val whiteColor = BisqTheme.colors.white
     val finalLabelColor by remember(disabled) {
         mutableStateOf(
             if (disabled) {
-                light5Color
+                grey2Color
             } else {
-                light2Color
+                whiteColor
             }
         )
     }
@@ -138,6 +142,8 @@ fun BisqTextField(
                     labelRightSuffix()
                 }
             }
+
+            BisqGap.VQuarter()
         }
         Box(
             modifier = Modifier
@@ -145,7 +151,7 @@ fun BisqTextField(
                 .clip(shape = RoundedCornerShape(6.dp))
                 .background(color = finalBackgroundColor)
                 .drawBehind {
-                    if (!isSearch && isFocused) {
+                    if (!isSearch) {
                         drawLine(
                             color = finalIndicatorColor,
                             start = Offset(0f, size.height),
@@ -242,16 +248,17 @@ fun BisqTextField(
         }
         // Error text has priority over help field
         if (validationError?.isNotEmpty() == true) {
+            BisqGap.VQuarter()
             BisqText.smallRegular(
                 text = validationError!!,
                 modifier = Modifier.padding(start = 4.dp, top = 1.dp, bottom = 4.dp),
                 color = BisqTheme.colors.danger
             )
         } else if (helperText.isNotEmpty()) {
-            BisqText.smallRegular(
+            BisqGap.VQuarter()
+            BisqText.smallRegularGrey(
                 text = helperText,
                 modifier = Modifier.padding(start = 4.dp, top = 1.dp, bottom = 4.dp),
-                color = BisqTheme.colors.grey1
             )
         }
     }

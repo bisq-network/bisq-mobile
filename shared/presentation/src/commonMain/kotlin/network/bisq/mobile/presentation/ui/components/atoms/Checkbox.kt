@@ -32,7 +32,7 @@ fun BisqCheckbox(
                 uncheckedCheckmarkColor = BisqTheme.colors.secondary,
 
                 checkedBoxColor = BisqTheme.colors.secondary,
-                checkedBorderColor = BisqTheme.colors.backgroundColor,
+                checkedBorderColor = BisqTheme.colors.primaryDim,
                 checkedCheckmarkColor = BisqTheme.colors.primary,
 
                 disabledBorderColor = BisqTheme.colors.backgroundColor,

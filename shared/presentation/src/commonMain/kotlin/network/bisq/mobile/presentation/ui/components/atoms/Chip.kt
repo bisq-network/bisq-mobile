@@ -36,7 +36,7 @@ fun BisqChip(
         },
         modifier = modifier,
         colors = SelectableChipColors( // TODO:
-            containerColor = BisqTheme.colors.primary2,
+            containerColor = BisqTheme.colors.primaryDim,
             labelColor = BisqTheme.colors.light1,
             leadingIconColor =BisqTheme.colors.light1,
             trailingIconColor = BisqTheme.colors.light1,

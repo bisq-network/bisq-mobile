@@ -59,7 +59,7 @@ fun RangeAmountSelector(
             Column(horizontalAlignment = Alignment.Start) {
                 BisqText.smallRegular(
                     text = "Min",
-                    color = BisqTheme.colors.grey1
+                    color = BisqTheme.colors.grey2
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -99,7 +99,7 @@ fun RangeAmountSelector(
             Column(horizontalAlignment = Alignment.End) {
                 BisqText.smallRegular(
                     text = "Max",
-                    color = BisqTheme.colors.grey1
+                    color = BisqTheme.colors.grey2
                 )
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),

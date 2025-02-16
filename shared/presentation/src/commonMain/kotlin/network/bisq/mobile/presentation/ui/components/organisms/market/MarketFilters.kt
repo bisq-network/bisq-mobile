@@ -1,11 +1,13 @@
 package network.bisq.mobile.presentation.ui.components.organisms.market
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.presentation.ui.components.atoms.BisqDropDown
+import network.bisq.mobile.presentation.ui.components.atoms.BisqSegmentButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookMarketPresenter
@@ -33,52 +35,34 @@ fun MarketFilters(
 
     Column(modifier = Modifier.padding(all = BisqUIConstants.ScreenPadding2X)) {
 
-        BisqDropDown(
+        BisqSegmentButton(
             label = "Sort by",
-            value = presenter.sortBy.collectAsState().value.displayName,
+            value = presenter.sortBy.collectAsState().value.name,
             items = MarketSortBy.entries.map { it.name to it.displayName },
-            onValueChanged = {
+            onValueChange = {
                 val newValue = when (it.second) {
                     MarketSortBy.MostOffers.displayName -> MarketSortBy.MostOffers
                     MarketSortBy.NameAZ.displayName -> MarketSortBy.NameAZ
                     else -> MarketSortBy.NameZA
                 }
                 presenter.setSortBy(newValue)
-            }
+            },
         )
 
         BisqGap.V2()
 
-        BisqDropDown(
+        BisqSegmentButton(
             label = "Show markets",
+            items = MarketFilter.entries.map { it.name to it.displayName },
             value = presenter.filter.collectAsState().value.displayName,
-            items = MarketFilter.entries.map { it.name to  it.displayName },
-            onValueChanged = {
+            onValueChange = {
                 val newValue = when (it.second) {
                     MarketFilter.All.displayName -> MarketFilter.All
                     else -> MarketFilter.WithOffers
                 }
-                presenter.setFilter(newValue)            }
+                presenter.setFilter(newValue)
+            },
         )
-
-//        BisqGap.V1()
-//
-//        Row(
-//            modifier = Modifier.fillMaxWidth(),
-//            horizontalArrangement = Arrangement.SpaceBetween
-//        ) {
-//            BisqButton(
-//                text = "Cancel",
-//                onClick = onCancel,
-//                backgroundColor = BisqTheme.colors.dark5,
-//                padding = PaddingValues(horizontal = 48.dp, vertical = 4.dp),
-//            )
-//            BisqButton(
-//                text = "Apply",
-//                onClick = onConfirm,
-//                padding = PaddingValues(horizontal = 48.dp, vertical = 4.dp),
-//            )
-//        }
 
     }
 

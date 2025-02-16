@@ -29,7 +29,7 @@ fun TradeFlowItem(
     contentStartOffset: Dp = 32.dp,
     content: @Composable BoxScope.(modifier: Modifier) -> Unit
 ) {
-    val textColor = if (isActive) BisqTheme.colors.light1 else BisqTheme.colors.grey2
+    val textColor = if (isActive) BisqTheme.colors.white else BisqTheme.colors.grey2
     val lineColor = BisqTheme.colors.dark5
     val greyCircleColor = BisqTheme.colors.dark5
     val spacerBetweenNodes: Dp = if (isLastIndex) 5.dp else 20.dp

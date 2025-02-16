@@ -51,7 +51,7 @@ fun OnBoardingScreen() {
         Spacer(modifier = Modifier.height(24.dp))
         BisqText.h1Light(
             text = strings.onboarding_bisq2_headline,
-            color = BisqTheme.colors.grey1,
+            color = BisqTheme.colors.grey2,
         )
         Spacer(modifier = Modifier.height(56.dp))
         BisqPagerView(pagerState, finalPages)

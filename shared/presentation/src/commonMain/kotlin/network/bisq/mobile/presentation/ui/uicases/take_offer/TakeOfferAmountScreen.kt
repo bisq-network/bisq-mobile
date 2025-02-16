@@ -29,7 +29,7 @@ fun TakeOfferTradeAmountScreen() {
     ) {
         BisqText.h3Regular(
             text = strings.bisqEasy_takeOffer_amount_headline_buyer,
-            color = BisqTheme.colors.light1
+            color = BisqTheme.colors.white
         )
         BisqGap.V1()
         BisqText.largeLight(

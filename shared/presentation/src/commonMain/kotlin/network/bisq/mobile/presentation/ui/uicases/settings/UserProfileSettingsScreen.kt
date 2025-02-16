@@ -24,6 +24,7 @@ import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -71,39 +72,39 @@ fun UserProfileSettingsScreen(showBackNavigation: Boolean = false) {
     RememberPresenterLifecycle(presenter)
 
     // Bot Icon
-    Spacer(modifier = Modifier.height(16.dp))
+    BisqGap.V1()
 
     Column(modifier = Modifier.fillMaxSize(),
            horizontalAlignment = Alignment.CenterHorizontally) {
 
         UserProfileScreenHeader(presenter, showBackNavigation)
 
-        Spacer(modifier = Modifier.height(16.dp))
+        BisqGap.V1()
         BisqScrollLayout(onModifier = { modifier -> modifier.weight(1f) }) {
             SettingsTextField(label = "Bot ID", value = botId, editable = false)
 
-            Spacer(modifier = Modifier.height(8.dp))
+            BisqGap.V1()
 
             SettingsTextField(label = "Nickname", value = nickname, editable = false)
 
-            Spacer(modifier = Modifier.height(8.dp))
+            BisqGap.V1()
 
             SettingsTextField(label = "Profile ID", value = profileId, editable = false)
 
-            Spacer(modifier = Modifier.height(8.dp))
+            BisqGap.V1()
 
             SettingsTextField(label = "Profile age", value = profileAge, editable = false)
 
-            Spacer(modifier = Modifier.height(8.dp))
+            BisqGap.V1()
 
             SettingsTextField(label = "Last user activity", value = lastUserActivity, editable = false)
 
-            Spacer(modifier = Modifier.height(8.dp))
+            BisqGap.V1()
 
             // Reputation
             SettingsTextField(label = "Reputation", value = reputation, editable = false)
 
-            Spacer(modifier = Modifier.height(16.dp))
+            BisqGap.V1()
 
             // Statement
             SettingsTextField(
@@ -113,7 +114,7 @@ fun UserProfileSettingsScreen(showBackNavigation: Boolean = false) {
                 onValueChange = { presenter.updateStatement(it) }
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            BisqGap.V1()
 
             // Trade Terms
             SettingsTextField(
@@ -123,7 +124,7 @@ fun UserProfileSettingsScreen(showBackNavigation: Boolean = false) {
                 onValueChange = { presenter.updateTradeTerms(it) }
             )
         }
-        Spacer(modifier = Modifier.height(16.dp))
+        BisqGap.V1()
         UserProfileScreenFooter(presenter, showLoading)
     }
 }
@@ -135,7 +136,7 @@ private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter, sh
         modifier = Modifier
             .fillMaxWidth()
             .padding(8.dp)
-            .background(BisqTheme.colors.dark1),
+            .background(BisqTheme.colors.backgroundColor),
         contentAlignment = Alignment.Center
     ) {
         // Back Button if showBackNavigation is true
@@ -159,7 +160,7 @@ private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter, sh
                 .size(80.dp)
                 .padding(12.dp)
                 .fillMaxWidth()
-                .background(BisqTheme.colors.dark1),
+                .background(BisqTheme.colors.backgroundColor),
             contentAlignment = Alignment.Center
         ) {
             UserIcon(

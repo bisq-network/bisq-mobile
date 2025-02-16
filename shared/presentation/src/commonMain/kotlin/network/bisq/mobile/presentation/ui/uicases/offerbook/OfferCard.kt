@@ -135,7 +135,7 @@ fun OfferCard(
                 )
                 BisqText.smallRegular(
                     text = item.bisqEasyOffer.supportedLanguageCodes.joinToString(", ").uppercase(),
-                    color = BisqTheme.colors.light1
+                    color = BisqTheme.colors.white
                 )
             }
         }
@@ -168,7 +168,7 @@ fun OfferCard(
                 )
                 BisqText.smallRegular(
                     text = item.formattedPriceSpec,
-                    color = BisqTheme.colors.light1
+                    color = BisqTheme.colors.white
                 )
             }
 

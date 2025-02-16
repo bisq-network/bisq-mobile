@@ -20,20 +20,20 @@ fun SettingsButton(label: String, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .background(BisqTheme.colors.grey5)
+            .background(BisqTheme.colors.dark4)
             .clickable(onClick = onClick)
             .padding(vertical = 12.dp, horizontal = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodyLarge.copy(color = BisqTheme.colors.light1 , fontSize = 16.sp),
+            style = MaterialTheme.typography.bodyLarge.copy(color = BisqTheme.colors.white , fontSize = 16.sp),
             modifier = Modifier.weight(1f)
         )
         Text(
             text = ">",
             textAlign = TextAlign.End,
-            style = MaterialTheme.typography.bodyLarge.copy(color = BisqTheme.colors.light1, fontSize = 16.sp),
+            style = MaterialTheme.typography.bodyLarge.copy(color = BisqTheme.colors.white, fontSize = 16.sp),
             modifier = Modifier.weight(1f)
         )
     }

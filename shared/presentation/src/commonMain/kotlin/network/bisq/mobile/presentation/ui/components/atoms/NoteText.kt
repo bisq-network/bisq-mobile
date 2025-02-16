@@ -46,8 +46,8 @@ fun NoteText(
     }
     Text(
         text = annotatedString,
-        color = BisqTheme.colors.grey3,
-        fontSize = 12.sp,
+        color = BisqTheme.colors.grey2,
+        fontSize = 14.sp,
         textAlign = textAlign,
     )
 }

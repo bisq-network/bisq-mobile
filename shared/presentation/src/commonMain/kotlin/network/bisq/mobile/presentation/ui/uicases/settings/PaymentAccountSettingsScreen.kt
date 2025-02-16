@@ -11,6 +11,7 @@ import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqEditableDropDown
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.BisqBottomSheet
 import network.bisq.mobile.presentation.ui.components.molecules.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.organisms.settings.AppPaymentAccountCard
@@ -92,6 +93,8 @@ fun PaymentAccountSettingsScreen() {
             modifier = Modifier.align(Alignment.End)
         )
 
+        BisqGap.V1()
+
         BisqEditableDropDown(
             value = accountName,
             onValueChanged = { name ->
@@ -118,6 +121,8 @@ fun PaymentAccountSettingsScreen() {
             label = strings.user_userProfile_payment_account
         )
 
+        BisqGap.V1()
+
         BisqTextField(
             value = accountDescription,
             onValueChange = { value, isValid -> accountDescription = value },
@@ -136,6 +141,8 @@ fun PaymentAccountSettingsScreen() {
                 return@BisqTextField null
             }
         )
+
+        BisqGap.V1()
 
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,

@@ -20,13 +20,12 @@ sealed class MenuItem(val label: String) {
 fun SettingsMenu(menuItem: MenuItem, onNavigate: (MenuItem) -> Unit) {
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
+        color = BisqTheme.colors.backgroundColor
     ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .background(BisqTheme.colors.backgroundColor)
-                .padding(16.dp),
+                .background(BisqTheme.colors.backgroundColor),
             verticalArrangement = Arrangement.Top,
             horizontalAlignment = Alignment.Start
         ) {

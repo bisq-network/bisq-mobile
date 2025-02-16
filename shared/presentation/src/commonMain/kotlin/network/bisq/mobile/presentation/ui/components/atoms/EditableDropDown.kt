@@ -47,9 +47,7 @@ fun BisqEditableDropDown(
 
     if (showDialog) {
         BisqDialog(onDismissRequest = { showDialog = false }) {
-            LazyColumn(
-                modifier = Modifier.padding(16.dp),
-            ) {
+            LazyColumn(modifier = Modifier.padding(16.dp)) {
                 items(items) { item ->
                     Row(
                         modifier = Modifier.fillMaxWidth()

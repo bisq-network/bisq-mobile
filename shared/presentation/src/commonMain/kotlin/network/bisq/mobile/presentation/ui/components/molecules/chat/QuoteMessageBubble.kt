@@ -37,7 +37,7 @@ fun QuoteMessageBubble(
         // TODO: On click, scroll up to the quoted message
         Column(
             modifier = Modifier
-                .background(BisqTheme.colors.grey5)
+                .background(BisqTheme.colors.grey3)
                 .clickable(
                     onClick = onClick,
                     interactionSource = remember { MutableInteractionSource() },

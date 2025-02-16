@@ -59,9 +59,9 @@ fun <T> ToggleTab(
                     .offset(x = slideOffset)
                     .background(BisqTheme.colors.primary, RoundedCornerShape(4.dp))
             ) {
-                BisqText.baseMedium(
+                BisqText.baseRegular(
                     text = getDisplayString(selectedOption),
-                    color = BisqTheme.colors.light1,
+                    color = BisqTheme.colors.white,
                     modifier = Modifier
                         .padding(horizontal = 32.dp, vertical = 12.dp)
                         .width(textWidth)
@@ -84,9 +84,9 @@ fun <T> ToggleTab(
                                 }
                             )
                     ) {
-                        BisqText.baseMedium(
+                        BisqText.baseRegular(
                             text = getDisplayString(option),
-                            color = BisqTheme.colors.light1,
+                            color = BisqTheme.colors.white,
                             textAlign = TextAlign.Center,
                             modifier = Modifier.width(textWidth)
                         )

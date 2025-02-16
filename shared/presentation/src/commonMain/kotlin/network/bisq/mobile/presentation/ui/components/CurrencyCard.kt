@@ -84,7 +84,7 @@ fun CurrencyCard(
             Column {
                 BisqText.baseRegular(
                     text = item.market.quoteCurrencyName,
-                    color = BisqTheme.colors.light1,
+                    color = BisqTheme.colors.white,
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(0.dp))

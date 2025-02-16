@@ -66,7 +66,7 @@ fun BuyerState1a(
                     vertical = 6.dp
                 ),
                 type = BisqButtonType.Outline,
-                textColor = BisqTheme.colors.primary,
+                color = BisqTheme.colors.primary,
                 borderColor = BisqTheme.colors.primary,
             )
         }

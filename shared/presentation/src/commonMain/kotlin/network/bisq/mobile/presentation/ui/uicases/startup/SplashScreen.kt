@@ -38,7 +38,7 @@ fun SplashScreen(
 
             BisqText.baseRegular(
                 text = presenter.state.collectAsState().value,
-                color = BisqTheme.colors.secondaryHover,
+                color = BisqTheme.colors.grey2,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )

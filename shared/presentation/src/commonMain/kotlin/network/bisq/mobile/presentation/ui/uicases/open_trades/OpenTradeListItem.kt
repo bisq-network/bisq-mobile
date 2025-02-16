@@ -88,13 +88,13 @@ fun OpenTradeListItem(
                     )
                     BisqText.smallRegular(
                         text = item.formattedPrice,
-                        color = BisqTheme.colors.light1
+                        color = BisqTheme.colors.white
                     )
                 }
                 Row {
                     BisqText.smallRegular(
                         text = "${item.formattedBaseAmount} BTC",
-                        color = BisqTheme.colors.light1
+                        color = BisqTheme.colors.white
                     )
                 }
                 Row(modifier = Modifier.padding(top = 5.dp)) {

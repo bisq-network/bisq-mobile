@@ -29,7 +29,7 @@ fun SettingsTextField(
     ) {
         Text(
             text = label,
-            color = BisqTheme.colors.grey1,
+            color = BisqTheme.colors.grey2,
             fontSize = 12.sp,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(bottom = 4.dp)
@@ -39,22 +39,22 @@ fun SettingsTextField(
             enabled = editable,
             onValueChange = onValueChange,
             colors = TextFieldDefaults.colors(
-                disabledContainerColor = BisqTheme.colors.secondaryDisabled,
-                disabledTextColor = BisqTheme.colors.light5,
-                focusedTextColor = BisqTheme.colors.light3,
-                unfocusedTextColor = BisqTheme.colors.secondaryHover,
+                disabledContainerColor = BisqTheme.colors.dark5,
+                disabledTextColor = BisqTheme.colors.grey2,
+                focusedTextColor = BisqTheme.colors.light5,
+                unfocusedTextColor = BisqTheme.colors.light3,
                 unfocusedIndicatorColor = BisqTheme.colors.secondary,
                 focusedIndicatorColor = Color.Transparent,
-                focusedContainerColor = BisqTheme.colors.secondary,
+                focusedContainerColor = BisqTheme.colors.dark4,
                 cursorColor = Color.Blue,
-                unfocusedContainerColor = BisqTheme.colors.secondary
+                unfocusedContainerColor = BisqTheme.colors.dark4
             ),
 //            fontSize = 14.sp,
 //            textAlign = TextAlign.Start,
             modifier = Modifier
                 .fillMaxWidth()
                 .background(BisqTheme.colors.dark1, RoundedCornerShape(8.dp))
-                .padding(8.dp)
+//                .padding(8.dp)
         )
     }
 }

@@ -55,7 +55,7 @@ fun TakeOfferPaymentMethodScreen() {
 
         BisqText.h3Regular(
             text = strings.bisqEasy_takeOffer_paymentMethods_headline_fiatAndBitcoin,
-            color = BisqTheme.colors.light1
+            color = BisqTheme.colors.white
         )
 
         if (presenter.hasMultipleQuoteSidePaymentMethods) {

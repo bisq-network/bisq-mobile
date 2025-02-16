@@ -53,7 +53,7 @@ fun BottomNavigation(
                 label = {
                     BisqText.baseRegular(
                         text = navigationItem.title,
-                        color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else BisqTheme.colors.light1,
+                        color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else BisqTheme.colors.white,
                     )
                 }
             )

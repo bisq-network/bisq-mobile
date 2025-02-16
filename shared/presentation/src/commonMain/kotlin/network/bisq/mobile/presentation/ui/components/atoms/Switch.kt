@@ -2,14 +2,16 @@ package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.text.style.TextOverflow
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
@@ -28,6 +30,7 @@ fun BisqSwitch(
         BisqText.baseRegular(
             label,
             modifier = Modifier
+                .weight(1f)
                 .clickable(
                     enabled = !disabled,
                     onClick = {
@@ -45,22 +48,22 @@ fun BisqSwitch(
             onCheckedChange = onSwitch,
             enabled = !disabled,
             colors = SwitchColors(
-                checkedThumbColor = BisqTheme.colors.primary,
-                checkedTrackColor = BisqTheme.colors.primaryDisabled,
+                checkedThumbColor = BisqTheme.colors.primaryDim,
+                checkedTrackColor = BisqTheme.colors.primary65,
                 checkedBorderColor = BisqTheme.colors.backgroundColor,
                 checkedIconColor =  BisqTheme.colors.backgroundColor,
 
-                uncheckedThumbColor = BisqTheme.colors.grey1,
-                uncheckedTrackColor = BisqTheme.colors.secondary,
+                uncheckedThumbColor = BisqTheme.colors.white,
+                uncheckedTrackColor = BisqTheme.colors.white.copy(alpha = 0.45.toFloat()),
                 uncheckedBorderColor = BisqTheme.colors.backgroundColor,
                 uncheckedIconColor = BisqTheme.colors.backgroundColor,
 
-                disabledCheckedThumbColor = BisqTheme.colors.grey4,
+                disabledCheckedThumbColor = BisqTheme.colors.grey3,
                 disabledCheckedTrackColor = BisqTheme.colors.secondary,
                 disabledCheckedBorderColor = BisqTheme.colors.backgroundColor,
                 disabledCheckedIconColor = BisqTheme.colors.backgroundColor,
 
-                disabledUncheckedThumbColor =BisqTheme.colors.grey4,
+                disabledUncheckedThumbColor =BisqTheme.colors.grey3,
                 disabledUncheckedTrackColor = BisqTheme.colors.secondary,
                 disabledUncheckedBorderColor =BisqTheme.colors.backgroundColor ,
                 disabledUncheckedIconColor =BisqTheme.colors.backgroundColor,

@@ -105,7 +105,7 @@ fun TradeDetailsComposable() {
                 ) {
                     BisqText.baseRegular(
                         text = item.directionalTitle.uppercase(), // 'Buying from:' or 'Selling to:'
-                        color = BisqTheme.colors.light1
+                        color = BisqTheme.colors.white
                     )
 
                     BisqGap.H1()
@@ -166,7 +166,7 @@ fun TradeDetailsComposable() {
                     text = interruptTradeButtonText,
                     onClick = { presenter.onInterruptTrade() },
                     type = BisqButtonType.Outline,
-                    textColor = BisqTheme.colors.primary,
+                    color = BisqTheme.colors.primary,
                     borderColor = BisqTheme.colors.primary,
                     // padding = PaddingValues(horizontal = 70.dp, vertical = 6.dp)
                 )

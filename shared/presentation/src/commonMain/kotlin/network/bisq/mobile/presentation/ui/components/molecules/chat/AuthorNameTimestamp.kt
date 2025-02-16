@@ -28,7 +28,7 @@ fun ChatAuthorNameTimestamp(msg: ChatMessage) {
         }
         BisqText.baseMedium(
             text = msg.timestamp,
-            color = BisqTheme.colors.grey1
+            color = BisqTheme.colors.grey2
         )
     }
 }

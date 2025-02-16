@@ -53,7 +53,7 @@ fun FiatInputField(
             .fillMaxWidth()
             .padding(paddingValues)
             .clip(shape = RoundedCornerShape(6.dp))
-            .background(color = BisqTheme.colors.secondary)
+            .background(color = BisqTheme.colors.dark4)
             .drawBehind {
                 if (isFocused) {
                     drawLine(
@@ -92,7 +92,7 @@ fun FiatInputField(
                     if (label.isNotEmpty()) {
                         BisqText.h5Regular(
                             text = label,
-                            color = BisqTheme.colors.grey1,
+                            color = BisqTheme.colors.grey2,
                             modifier = Modifier.align(Alignment.CenterVertically)
                         )
                     }

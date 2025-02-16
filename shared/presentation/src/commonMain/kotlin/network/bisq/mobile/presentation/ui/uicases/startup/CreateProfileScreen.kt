@@ -41,12 +41,12 @@ fun CreateProfileScreen(
         Spacer(modifier = Modifier.height(24.dp))
         BisqText.h1Light(
             text = strings.onboarding_createProfile_headline,
-            color = BisqTheme.colors.grey1,
+            color = BisqTheme.colors.grey2,
         )
         Spacer(modifier = Modifier.height(12.dp))
         BisqText.baseRegular(
             text = strings.onboarding_createProfile_subTitle,
-            color = BisqTheme.colors.grey3,
+            color = BisqTheme.colors.grey2,
             modifier = Modifier.padding(horizontal = 24.dp),
             textAlign = TextAlign.Center,
         )
@@ -78,7 +78,7 @@ fun CreateProfileScreen(
         Spacer(modifier = Modifier.height(32.dp))
         BisqText.baseRegular(
             text = presenter.nym.collectAsState().value,
-            color = BisqTheme.colors.light1,
+            color = BisqTheme.colors.white,
         )
         Spacer(modifier = Modifier.height(12.dp))
         BisqText.baseRegular(

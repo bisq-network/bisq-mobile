@@ -77,12 +77,12 @@ fun OpenTradeListScreen() {
                 ) {
                     BisqText.h5Light(
                         text = "My open trades",
-                        color = BisqTheme.colors.light1,
+                        color = BisqTheme.colors.white,
                     )
                     HorizontalDivider(
                         modifier = Modifier,
                         thickness = 0.5.dp,
-                        color = BisqTheme.colors.grey5
+                        color = BisqTheme.colors.grey3
                     )
                 }
             }
@@ -114,7 +114,7 @@ fun WelcomeToFirstTradePane(presenter: OpenTradeListPresenter) {
     ) {
         BisqText.h1Light(
             text = "Welcome to your first Bisq Easy trade!", //bisqEasy.openTrades.welcome.headline
-            color = BisqTheme.colors.light1,
+            color = BisqTheme.colors.white,
             textAlign = TextAlign.Center
         )
         BisqGap.VHalf()
@@ -159,7 +159,7 @@ fun IconWithTextLine(image: DrawableResource, title: String) {
         Spacer(modifier = Modifier.width(15.dp))
         BisqText.baseRegular(
             text = title,
-            color = BisqTheme.colors.light1,
+            color = BisqTheme.colors.white,
         )
     }
 }
@@ -206,7 +206,7 @@ fun TradeGuide(presenter: OpenTradeListPresenter) {
             ) {
                 BisqText.h3Light(
                     text = "Trade guide",
-                    color = BisqTheme.colors.light1,
+                    color = BisqTheme.colors.white,
                 )
                 BisqText.baseRegular(
                     text = "Trade guide content... TODO",
@@ -219,7 +219,7 @@ fun TradeGuide(presenter: OpenTradeListPresenter) {
                 BisqButton(
                     text = "Close",
                     onClick = { presenter.onCloseTradeGuide() },
-                    backgroundColor = BisqTheme.colors.grey5,
+                    backgroundColor = BisqTheme.colors.grey3,
                 )
             }
         }

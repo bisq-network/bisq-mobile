@@ -41,7 +41,7 @@ fun CreateOfferReviewOfferScreen() {
     ) {
         BisqText.h3Regular(
             text = strings.bisqEasy_tradeWizard_review_headline_maker,
-            color = BisqTheme.colors.light1,
+            color = BisqTheme.colors.white,
             textAlign = TextAlign.Start,
             modifier = Modifier.fillMaxWidth()
         )
@@ -79,7 +79,7 @@ fun CreateOfferReviewOfferScreen() {
                         }
                         BisqText.smallRegular(
                             text = presenter.priceDetails,
-                            color = BisqTheme.colors.grey4
+                            color = BisqTheme.colors.grey3
                         )
                     }
                 }
@@ -101,7 +101,7 @@ fun CreateOfferReviewOfferScreen() {
                         BisqText.h6Regular(text = presenter.fee)
                         BisqText.smallRegular(
                             text = presenter.feeDetails,
-                            color = BisqTheme.colors.grey4,
+                            color = BisqTheme.colors.grey3,
                         )
                     }
                 }
