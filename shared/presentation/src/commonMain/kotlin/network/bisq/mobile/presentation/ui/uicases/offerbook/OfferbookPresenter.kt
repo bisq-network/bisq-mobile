@@ -9,13 +9,15 @@ import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
 
 
 class OfferbookPresenter(
     mainPresenter: MainPresenter,
     private val offersServiceFacade: OffersServiceFacade,
-    private val takeOfferPresenter: TakeOfferPresenter
+    private val takeOfferPresenter: TakeOfferPresenter,
+    private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter) {
     val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = offersServiceFacade.offerbookListItems
 
@@ -78,5 +80,10 @@ class OfferbookPresenter(
 
     fun onSelectDirection(direction: DirectionEnum) {
         _selectedDirection.value = direction
+    }
+
+    fun createOffer() {
+        createOfferPresenter.onStartCreateOffer()
+        navigateTo(Routes.CreateOfferDirection)
     }
 }

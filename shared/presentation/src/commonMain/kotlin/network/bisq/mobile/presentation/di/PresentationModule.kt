@@ -117,7 +117,7 @@ val presentationModule = module {
 
     // Offerbook
     single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get()) }
-    single<OfferbookPresenter> { OfferbookPresenter(get(), get(), get()) }
+    single<OfferbookPresenter> { OfferbookPresenter(get(), get(), get(), get()) }
 
     // Take offer
     single { TakeOfferPresenter(get(), get(), get()) }
