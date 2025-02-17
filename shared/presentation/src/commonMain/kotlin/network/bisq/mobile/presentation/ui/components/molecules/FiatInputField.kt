@@ -39,6 +39,7 @@ fun FiatInputField(
     text: String,
     onValueChanged: (String) -> Unit = {},
     label: String = "",
+    enabled: Boolean = true,
     currency: String,
     paddingValues: PaddingValues = PaddingValues(all = 0.dp),
     indicatorColor: Color = BisqTheme.colors.primary,
@@ -67,6 +68,7 @@ fun FiatInputField(
         BasicTextField(
             value = text,
             onValueChange = onValueChanged,
+            enabled = enabled,
             modifier = Modifier
                 .padding(12.dp)
                 .fillMaxWidth()

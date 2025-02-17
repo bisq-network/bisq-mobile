@@ -61,6 +61,7 @@ fun BisqAmountSelector(
         FiatInputField(
             text = formattedFiatAmountValue,
             onValueChanged = { onTextValueChange.invoke(it) },
+            enabled = false,
             currency = fiatCurrencyCode
         )
 
