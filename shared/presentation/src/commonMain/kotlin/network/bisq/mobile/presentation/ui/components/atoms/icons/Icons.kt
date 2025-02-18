@@ -57,6 +57,11 @@ fun CloseIcon(modifier: Modifier = Modifier.size(24.dp)) {
 }
 
 @Composable
+fun ExclamationRedIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_exclamation_red), "Exclamation red icon", modifier = modifier)
+}
+
+@Composable
 fun ClosedEyeIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_closed_eye), "Closed eye icon", modifier = modifier)
 }

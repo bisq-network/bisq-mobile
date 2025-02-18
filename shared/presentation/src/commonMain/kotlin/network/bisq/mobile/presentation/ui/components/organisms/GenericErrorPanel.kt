@@ -1,8 +1,6 @@
 package network.bisq.mobile.presentation.ui.components.organisms
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -11,6 +9,7 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.icons.ExclamationRedIcon
 import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
@@ -22,20 +21,19 @@ fun GenericErrorPanel(
 ) {
     BisqDialog {
         Column(
-            modifier = Modifier.padding(12.dp),
+            modifier = Modifier.padding(12.dp).fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            BisqText.h4Regular(
-                text = "popup.headline.error".i18n(),
-                color = BisqTheme.colors.light1,
-                textAlign = TextAlign.Center
-            )
+                BisqText.h4Regular(
+                    text = "popup.headline.error".i18n(),
+                    color = BisqTheme.colors.light1,
+                    textAlign = TextAlign.Center
+                )
 
-            BisqText.baseRegular(
+            BisqText.baseRegularGrey(
                 text = errorMessage,
-                color = BisqTheme.colors.grey1,
                 textAlign = TextAlign.Center
             )
 

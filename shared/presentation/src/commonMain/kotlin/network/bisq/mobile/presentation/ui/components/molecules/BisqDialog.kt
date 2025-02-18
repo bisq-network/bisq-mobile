@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -23,6 +24,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun BisqDialog(
     onDismissRequest: () -> Unit = {},
+    padding: Dp = BisqUIConstants.ScreenPadding2X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
@@ -48,7 +50,7 @@ fun BisqDialog(
                 shape = RoundedCornerShape(16.dp),
             ) {
                 Column(
-                    modifier = Modifier.padding(BisqUIConstants.ScreenPadding2X),
+                    modifier = Modifier.padding(padding),
                     verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
                     horizontalAlignment = horizontalAlignment,
                 ) {
