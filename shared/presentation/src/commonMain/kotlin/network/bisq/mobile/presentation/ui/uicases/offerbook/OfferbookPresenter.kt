@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
+import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -83,7 +84,9 @@ class OfferbookPresenter(
     }
 
     fun createOffer() {
+        val market =offersServiceFacade.selectedOfferbookMarket.value.market
         createOfferPresenter.onStartCreateOffer()
+        createOfferPresenter.commitMarket(market)
         navigateTo(Routes.CreateOfferDirection)
     }
 }

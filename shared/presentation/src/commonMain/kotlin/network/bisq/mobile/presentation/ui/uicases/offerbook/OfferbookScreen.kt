@@ -58,8 +58,8 @@ fun OfferbookScreen() {
         DirectionToggle(
             offerDirections,
             selectedDirection,
-            130.dp
-        ) { direction -> presenter.onSelectDirection(direction) }
+            onStateChange = { direction -> presenter.onSelectDirection(direction) }
+        )
 
         BisqGap.V1()
 

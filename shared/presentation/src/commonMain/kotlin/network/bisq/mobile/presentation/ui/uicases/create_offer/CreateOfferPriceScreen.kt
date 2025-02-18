@@ -62,7 +62,6 @@ fun CreateOfferTradePriceSelectorScreen() {
                 initialOption = priceType,
                 onStateChange = { priceType -> presenter.onSelectPriceType(priceType) },
                 getDisplayString = { presenter.getPriceTypeDisplayString(it) },
-                textWidth = StringHelper.calculateTotalWidthOfStrings(strings = presenter.priceTypes),
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
             Column(

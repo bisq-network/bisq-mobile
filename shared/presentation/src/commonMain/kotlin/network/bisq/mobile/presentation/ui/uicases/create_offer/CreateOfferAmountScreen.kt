@@ -72,12 +72,6 @@ fun CreateOfferAmountSelectorScreen() {
                     else
                         "Range amount" // strings.bisqEasy_tradeWizard_trade_amount
                 },
-                textWidth = StringHelper.calculateTotalWidthOfStrings(
-                    strings = listOf(
-                        strings.bisqEasy_tradeWizard_fixed_amount,
-                        strings.bisqEasy_tradeWizard_range_amount
-                    )
-                ),
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
 
