@@ -10,7 +10,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun BreadcrumbNavigation(
@@ -20,17 +22,16 @@ fun BreadcrumbNavigation(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp),
+            .padding(BisqUIConstants.ScreenPaddingHalfQuarter),
         verticalAlignment = Alignment.CenterVertically
     ) {
         path.forEachIndexed { index, menuItem ->
-            Text(
-                text = menuItem.label,
-                style = MaterialTheme.typography.bodyLarge.copy(color = BisqTheme.colors.grey2),
+            BisqText.baseRegularGrey(
+                menuItem.label,
                 modifier = Modifier.clickable { onBreadcrumbClick(index) }
             )
             if (index != path.lastIndex) {
-                Text(" > ", color = BisqTheme.colors.grey2) // Separator
+                BisqText.baseRegularGrey(" > ") // Separator
             }
         }
     }

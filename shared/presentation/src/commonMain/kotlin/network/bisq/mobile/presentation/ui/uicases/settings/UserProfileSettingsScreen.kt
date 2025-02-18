@@ -71,15 +71,12 @@ fun UserProfileSettingsScreen(showBackNavigation: Boolean = false) {
 
     RememberPresenterLifecycle(presenter)
 
-    // Bot Icon
-    BisqGap.V1()
-
     Column(modifier = Modifier.fillMaxSize(),
            horizontalAlignment = Alignment.CenterHorizontally) {
 
+        // Bot Icon
         UserProfileScreenHeader(presenter, showBackNavigation)
 
-        BisqGap.V1()
         BisqScrollLayout(onModifier = { modifier -> modifier.weight(1f) }) {
             SettingsTextField(label = "Bot ID", value = botId, editable = false)
 
@@ -110,8 +107,8 @@ fun UserProfileSettingsScreen(showBackNavigation: Boolean = false) {
             SettingsTextField(
                 label = "Statement",
                 value = statement,
-                editable = true,
-                onValueChange = { presenter.updateStatement(it) }
+                isTextArea = true,
+                onValueChange = { newValue, isValid -> presenter.updateStatement(newValue) }
             )
 
             BisqGap.V1()
@@ -120,8 +117,8 @@ fun UserProfileSettingsScreen(showBackNavigation: Boolean = false) {
             SettingsTextField(
                 label = "Trade terms",
                 value = tradeTerms,
-                editable = true,
-                onValueChange = { presenter.updateTradeTerms(it) }
+                isTextArea = true,
+                onValueChange = { newValue, isValid -> presenter.updateTradeTerms(newValue) }
             )
         }
         BisqGap.V1()

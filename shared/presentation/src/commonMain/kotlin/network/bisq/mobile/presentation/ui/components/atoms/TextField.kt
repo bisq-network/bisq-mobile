@@ -193,6 +193,7 @@ fun BisqTextField(
                     },
                 singleLine = !isTextArea,
                 maxLines = if (isTextArea) 4 else 1,
+                minLines = if (isTextArea) 2 else 1,
                 textStyle = TextStyle(
                     color = color,
                     fontSize = 18.sp,

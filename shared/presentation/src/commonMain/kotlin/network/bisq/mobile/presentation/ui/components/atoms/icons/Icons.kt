@@ -77,6 +77,11 @@ fun ArrowDownIcon(modifier: Modifier = Modifier.size(12.dp)) {
 }
 
 @Composable
+fun ArrowRightIcon(modifier: Modifier = Modifier.size(12.dp)) {
+    Image(painterResource(Res.drawable.icon_arrow_right), "Right arrow icon", modifier = modifier)
+}
+
+@Composable
 fun BellIcon(modifier: Modifier = Modifier.size(30.dp)) {
     Image(painterResource(Res.drawable.icon_bell), "Bell icon", modifier = modifier)
 }
