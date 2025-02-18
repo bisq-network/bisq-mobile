@@ -55,13 +55,13 @@ class UserProfileSettingsPresenter(
         backgroundScope.launch {
             userProfileServiceFacade.getSelectedUserProfile()?.let { it ->
 //                _reputation.value = it.reputation // TODO reputation?
-                setProfileAge(it)
                 setProfileId(it)
                 setBotId(it)
                 setNickname(it)
             }
             userRepository.fetch()?.let {
                 // The following should be local to the app
+                setProfileAge(it)
                 setLastActivity(it)
                 setTradeTerms(it)
                 setStatement(it)
@@ -94,8 +94,8 @@ class UserProfileSettingsPresenter(
         _profileId.value = userProfile.id ?: DEFAULT_UNKNOWN_VALUE
     }
 
-    private fun setProfileAge(userProfile: UserProfileVO) {
-        userProfile.publishDate?.let { pd ->
+    private fun setProfileAge(user: User) {
+        user.publicationTimestamp?.let { pd ->
             _profileAge.value = DateUtils.periodFrom(pd).let {
                 listOfNotNull(
                     if (it.first > 0) "${it.first} years" else null,

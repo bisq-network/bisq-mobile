@@ -131,6 +131,7 @@ open class CreateProfilePresenter(
                         userRepository.update(User().apply {
                             uniqueAvatar = profileIcon
                             lastActivity = Clock.System.now().toEpochMilliseconds()
+                            publicationTimestamp = lastActivity
                         })
                     }
                 }
