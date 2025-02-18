@@ -68,7 +68,12 @@ fun ClosedEyeIcon(modifier: Modifier = Modifier.size(24.dp)) {
 
 @Composable
 fun AddIcon(modifier: Modifier = Modifier.size(16.dp)) {
-    Image(painterResource(Res.drawable.icon_add_filled_green), "Add icon", modifier = modifier)
+    Image(painterResource(Res.drawable.icon_add), "Add icon", modifier = modifier)
+}
+
+@Composable
+fun AddCircleIcon(modifier: Modifier = Modifier.size(16.dp)) {
+    Image(painterResource(Res.drawable.field_add_white), "Add circle icon", modifier = modifier)
 }
 
 @Composable
