@@ -27,41 +27,53 @@ fun SellerReputationWarningDialog(
     val strings = LocalStrings.current.bisqEasyTradeWizard
     val stringsCommon = LocalStrings.current.common
 
-    BisqDialog(horizontalAlignment = Alignment.Start) {
+    BisqDialog(
+        horizontalAlignment = Alignment.Start,
+        marginTop = BisqUIConstants.ScreenPadding,
+        padding = BisqUIConstants.ScreenPadding,
+    ) {
 
         BisqText.h6Medium(
             text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_headline,
             color = BisqTheme.colors.warning
         )
 
+        BisqGap.V1()
+
         BisqText.baseRegular(text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_subTitle1)
+
+        BisqGap.VHalf()
 
         BisqButton(
             text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_gainReputation,
+            type = BisqButtonType.Outline,
             onClick = onLearnReputation,
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
             color = BisqTheme.colors.primary,
-            type = BisqButtonType.Outline
+            fullWidth = true
         )
+
+        BisqGap.VHalf()
 
         BisqText.baseRegular(text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_subTitle2)
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            BisqButton(
-                text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_backToBuy,
-                type = BisqButtonType.Grey,
-                onClick = onDismiss,
-                padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
-            )
-            BisqGap.H1()
-            BisqButton(
-                text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_tradeWithoutReputation,
-                onClick = onConfirm,
-                padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp)
-            )
-        }
+        BisqGap.V1()
+
+        BisqButton(
+            text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_backToBuy,
+            type = BisqButtonType.Grey,
+            onClick = onDismiss,
+            padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
+            fullWidth = true
+        )
+
+        BisqGap.VHalf()
+
+        BisqButton(
+            text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_tradeWithoutReputation,
+            onClick = onConfirm,
+            padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
+            fullWidth = true
+        )
     }
 }

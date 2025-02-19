@@ -36,7 +36,7 @@ fun ReportBugPanel(
             BisqText.baseRegular(text = "popup.reportBug".i18n())
         }
 
-        BisqGap.VHalf()
+        BisqGap.V1()
 
         BisqText.baseRegularGrey("popup.reportError".i18n())
 
@@ -48,7 +48,7 @@ fun ReportBugPanel(
             isTextArea = true,
         )
 
-        BisqGap.VHalf()
+        BisqGap.V1()
 
         Row {
             BisqButton(
@@ -59,7 +59,7 @@ fun ReportBugPanel(
                     else
                         onClose.invoke()
                 },
-                type = BisqButtonType.Outline,
+                type = BisqButtonType.Grey,
                 modifier = Modifier.weight(1.0f),
                 padding = PaddingValues(BisqUIConstants.ScreenPaddingHalf)
             )
@@ -67,7 +67,7 @@ fun ReportBugPanel(
             BisqButton(
                 text = "support.reports.title".i18n(),
                 onClick = {
-                    // TODO: In systemCrash case, doing `exitApp()` here, stop navigation from happening!
+                    // TODO: In systemCrash case, doing `exitApp()` here, stops navigation from happening!
                     clipboardManager.setText(buildAnnotatedString { append(errorMessage) })
                     presenter.navigateToReportError()
                     if(systemCrashed == false)

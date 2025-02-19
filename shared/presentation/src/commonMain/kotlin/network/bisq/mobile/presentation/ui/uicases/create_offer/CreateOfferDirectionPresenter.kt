@@ -60,11 +60,9 @@ class CreateOfferDirectionPresenter(
     }
 
     fun showLearnReputation() {
-        log.i { "show learn reputation page in browser" }
-        // TODO: Uncomment after #143 merge
-//        enableInteractive(false)
-//        navigateToUrl("https://bisq.wiki/Reputation")
-//        enableInteractive(true)
+        enableInteractive(false)
+        navigateToUrl("https://bisq.wiki/Reputation#How_to_build_reputation")
+        enableInteractive(true)
     }
 
     private fun navigateNext() {

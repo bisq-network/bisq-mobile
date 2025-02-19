@@ -25,6 +25,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 fun BisqDialog(
     onDismissRequest: () -> Unit = {},
     padding: Dp = BisqUIConstants.ScreenPadding2X,
+    marginTop: Dp = BisqUIConstants.ScreenPadding5X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     content: @Composable ColumnScope.() -> Unit = {}
 ) {
@@ -35,7 +36,7 @@ fun BisqDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = BisqUIConstants.ScreenPadding5X)
+                .padding(top = marginTop)
         ) {
             Card(
                 modifier = Modifier
@@ -51,7 +52,6 @@ fun BisqDialog(
             ) {
                 Column(
                     modifier = Modifier.padding(padding),
-                    verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
                     horizontalAlignment = horizontalAlignment,
                 ) {
                     content()

@@ -28,6 +28,7 @@ fun MediationRequestDialog(
                 color = BisqTheme.colors.primary
             )
         }
+        BisqGap.V1()
         Column {
             BisqText.baseRegular(
                 text = "If you have problems which you cannot resolve with your trade partner your can request assistance from a mediator.",
@@ -39,6 +40,7 @@ fun MediationRequestDialog(
                 textAlign = TextAlign.Center
             )
         }
+        BisqGap.V1()
         Row {
             BisqButton(
                 text = "Cancel",

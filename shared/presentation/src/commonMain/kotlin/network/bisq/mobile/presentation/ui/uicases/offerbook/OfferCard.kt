@@ -110,7 +110,7 @@ fun OfferCard(
                         color = directionalLabelColor
                     )
                 } else {
-                    BisqText.baseMedium(
+                    BisqText.baseRegular(
                         text = directionalLabel,
                         color = directionalLabelColor
                     )
@@ -130,7 +130,7 @@ fun OfferCard(
 
             BisqGap.VHalf()
 
-            BisqText.baseLight(text = "@ " + item.formattedPriceSpec)
+            BisqText.smallRegular(text = "@ " + item.formattedPriceSpec)
 
             BisqGap.V1()
 
