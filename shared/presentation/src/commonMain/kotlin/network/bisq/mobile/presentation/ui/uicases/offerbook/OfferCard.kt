@@ -66,7 +66,7 @@ fun OfferCard(
 
     val myOfferBackgroundColor = BisqTheme.colors.primary.copy(alpha = 0.15f)
     val removeMyOfferBackgroundColor = BisqTheme.colors.dark1.copy(alpha = 0.6f)
-    val backgroundColor = if (isMyOffer) myOfferBackgroundColor else BisqTheme.colors.dark5
+    val backgroundColor = if (isMyOffer) myOfferBackgroundColor else BisqTheme.colors.dark4
     val height = 120.dp
 
     //todo mirror layout of my offers as in Bisq 2

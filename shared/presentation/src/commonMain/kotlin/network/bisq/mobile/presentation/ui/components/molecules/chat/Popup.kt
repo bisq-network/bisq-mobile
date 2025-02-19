@@ -37,7 +37,7 @@ fun ChatPopup(
         DropdownMenu(
             expanded = showMenu,
             onDismissRequest = { onSetShowMenu(false) },
-            containerColor = BisqTheme.colors.dark5
+            containerColor = BisqTheme.colors.dark4
         ) {
             ChatReactionInput(
                 onReact = { reaction ->

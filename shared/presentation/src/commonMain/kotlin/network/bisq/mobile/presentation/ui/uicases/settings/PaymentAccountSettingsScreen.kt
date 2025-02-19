@@ -9,6 +9,7 @@ import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqEditableDropDown
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -150,7 +151,7 @@ fun PaymentAccountSettingsScreen() {
         ) {
             BisqButton(
                 text = stringsCommon.delete_account,
-                backgroundColor = BisqTheme.colors.dark5,
+                type = BisqButtonType.Grey,
                 onClick = { showConfirmationDialog = true }
             )
             BisqButton(

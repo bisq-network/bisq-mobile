@@ -57,7 +57,7 @@ fun <T> ToggleTab(
     ) {
         Box(
             modifier = Modifier
-                .background(BisqTheme.colors.dark5)
+                .background(BisqTheme.colors.dark4)
                 .padding(6.dp)
         ) {
             Box(

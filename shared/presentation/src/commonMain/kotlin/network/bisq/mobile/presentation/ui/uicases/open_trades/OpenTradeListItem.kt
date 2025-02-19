@@ -30,7 +30,7 @@ fun OpenTradeListItem(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape = RoundedCornerShape(8.dp))
-            .background(color = BisqTheme.colors.dark5)
+            .background(color = BisqTheme.colors.dark4)
     ) {
         Row(
             modifier = Modifier

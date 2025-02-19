@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
@@ -115,6 +116,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             ) {
                 BisqButton(
                     text = "Paste",
+                    type = BisqButtonType.Grey,
                     onClick = {
                         val annotatedString = clipboardManager.getText()
                         if (annotatedString != null) {
@@ -122,7 +124,6 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         }
                     },
                     disabled = isLoading,
-                    backgroundColor = BisqTheme.colors.dark5,
                     color = BisqTheme.colors.light1,
                     leftIcon = { CopyIcon() }
                 )

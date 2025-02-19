@@ -40,7 +40,7 @@ fun InterruptedTradePane() {
             .fillMaxSize()
             .fillMaxWidth()
             .clip(shape = RoundedCornerShape(12.dp))
-            .background(color = BisqTheme.colors.dark5)
+            .background(color = BisqTheme.colors.dark4)
     ) {
 
         Row(

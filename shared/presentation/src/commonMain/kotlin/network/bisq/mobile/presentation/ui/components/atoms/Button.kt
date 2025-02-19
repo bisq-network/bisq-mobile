@@ -19,6 +19,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 enum class BisqButtonType {
     Default,
+    Grey,
     Outline,
     Clear
 }
@@ -56,14 +57,17 @@ fun BisqButton(
 
     val enabled = !disabled && !isLoading
 
+
     val finalBackgroundColor = when (type) {
         BisqButtonType.Default -> if(disabled) backgroundColor.copy(alpha = 0.75F) else backgroundColor
+        BisqButtonType.Grey -> if(disabled) BisqTheme.colors.dark5.copy(alpha = 0.75F) else BisqTheme.colors.dark5
         BisqButtonType.Outline -> Color.Transparent
         BisqButtonType.Clear -> Color.Transparent
     }
 
     val finalBorder = when (type) {
         BisqButtonType.Default -> border
+        BisqButtonType.Grey -> border
         BisqButtonType.Outline -> BorderStroke(1.dp, borderColor)
         BisqButtonType.Clear -> null
     }

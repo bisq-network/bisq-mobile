@@ -15,6 +15,7 @@ import androidx.navigation.NavHostController
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.getPlatformPainter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
@@ -78,7 +79,7 @@ fun CreateProfileScreen(
         Spacer(modifier = Modifier.height(38.dp))
         BisqButton(
             text = strings.onboarding_createProfile_regenerate,
-            backgroundColor = BisqTheme.colors.dark5,
+            type = BisqButtonType.Grey,
             padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp),
             onClick = { presenter.onGenerateKeyPair() }
         )

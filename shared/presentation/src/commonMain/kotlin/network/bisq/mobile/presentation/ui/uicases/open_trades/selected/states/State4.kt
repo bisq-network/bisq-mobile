@@ -13,10 +13,7 @@ import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.trade_completed
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
-import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
+import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.organisms.GenericErrorPanel
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -68,13 +65,13 @@ fun State4(
             ) {
                 BisqButton(
                     text = "bisqEasy.tradeState.info.phase4.exportTrade".i18n(), // Export trade data
+                    type = BisqButtonType.Grey,
                     onClick = { presenter.onExportTradeDate() },
                     padding = PaddingValues(
                         horizontal = 18.dp,
                         vertical = 6.dp
                     ),
                     color = BisqTheme.colors.light1,
-                    backgroundColor = BisqTheme.colors.dark5, //todo add BisqButtonType
                 )
                 BisqButton(
                     text = "bisqEasy.tradeState.info.phase4.leaveChannel".i18n(), // Close trade

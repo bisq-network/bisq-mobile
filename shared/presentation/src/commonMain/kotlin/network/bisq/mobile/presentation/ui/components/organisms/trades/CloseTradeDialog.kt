@@ -12,6 +12,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
@@ -42,7 +43,7 @@ fun CloseTradeDialog(
         Row {
             BisqButton(
                 text = stringsCommon.buttons_cancel,
-                backgroundColor = BisqTheme.colors.dark5,
+                type = BisqButtonType.Grey,
                 onClick = onDismissRequest,
                 padding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
             )

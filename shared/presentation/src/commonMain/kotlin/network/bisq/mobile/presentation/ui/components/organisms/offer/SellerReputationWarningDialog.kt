@@ -52,9 +52,9 @@ fun SellerReputationWarningDialog(
         ) {
             BisqButton(
                 text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_backToBuy,
+                type = BisqButtonType.Grey,
                 onClick = onDismiss,
                 padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
-                backgroundColor = BisqTheme.colors.dark5
             )
             BisqGap.H1()
             BisqButton(

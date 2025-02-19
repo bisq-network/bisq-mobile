@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -102,7 +103,7 @@ fun AppPaymentAccountCard(
         ) {
             BisqButton(
                 text = stringsCommon.buttons_cancel,
-                backgroundColor = BisqTheme.colors.dark5,
+                type = BisqButtonType.Grey,
                 onClick = onCancel,
                 padding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
             )

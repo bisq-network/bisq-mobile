@@ -80,7 +80,7 @@ fun MultiScreenWizardScaffold(
                 ) {
                     BisqButton(
                         text = prevButtonText,
-                        backgroundColor = BisqTheme.colors.dark5,
+                        type = BisqButtonType.Grey,
                         onClick = {
                             if (prevOnClick != null) {
                                 prevOnClick()

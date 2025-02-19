@@ -89,7 +89,7 @@ fun TradeDetailsComposable() {
     Row(modifier = Modifier.clip(shape = RoundedCornerShape(12.dp))) {
         Column(
             modifier = Modifier.fillMaxWidth()
-                .background(color = BisqTheme.colors.dark5)
+                .background(color = BisqTheme.colors.dark4)
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {

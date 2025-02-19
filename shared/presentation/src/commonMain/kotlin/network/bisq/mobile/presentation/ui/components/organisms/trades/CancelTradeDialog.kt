@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 // import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -66,9 +67,9 @@ fun CancelTradeDialog(
         ) {
             BisqButton(
                 text = stringsCommon.common_no,
+                type = BisqButtonType.Grey,
                 onClick = onCancelConfirm,
                 padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
-                backgroundColor = BisqTheme.colors.dark5
             )
             BisqGap.H1()
             BisqButton(
