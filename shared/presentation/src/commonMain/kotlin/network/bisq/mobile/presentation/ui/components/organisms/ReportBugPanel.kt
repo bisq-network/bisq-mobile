@@ -7,6 +7,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.exitApp
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -21,6 +22,7 @@ import org.koin.compose.koinInject
 @Composable
 fun ReportBugPanel(
     errorMessage: String,
+    systemCrashed: Boolean,
     onClose: () -> Unit,
 ) {
     val presenter: MainPresenter = koinInject()
@@ -51,7 +53,12 @@ fun ReportBugPanel(
         Row {
             BisqButton(
                 text = "action.close".i18n(),
-                onClick = onClose,
+                onClick = {
+                    if (systemCrashed)
+                        exitApp()
+                    else
+                        onClose.invoke()
+                },
                 type = BisqButtonType.Outline,
                 modifier = Modifier.weight(1.0f),
                 padding = PaddingValues(BisqUIConstants.ScreenPaddingHalf)
@@ -60,10 +67,11 @@ fun ReportBugPanel(
             BisqButton(
                 text = "support.reports.title".i18n(),
                 onClick = {
-                    // TODO: Enable interactive: true
+                    // TODO: In systemCrash case, doing `exitApp()` here, stop navigation from happening!
                     clipboardManager.setText(buildAnnotatedString { append(errorMessage) })
-                    presenter.navigateToUrl("https://github.com/bisq-network/bisq-mobile/issues")
-                    // TODO: Enable interactive: false
+                    presenter.navigateToReportError()
+                    if(systemCrashed == false)
+                        onClose.invoke()
                 },
                 modifier = Modifier.weight(1.0f),
                 padding = PaddingValues(BisqUIConstants.ScreenPaddingHalf)

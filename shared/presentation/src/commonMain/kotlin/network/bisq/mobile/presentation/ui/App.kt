@@ -10,6 +10,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -44,6 +45,7 @@ fun App() {
     var isNavControllerSet by remember { mutableStateOf(false) }
     val presenter: AppPresenter = koinInject()
     val errorMessage = presenter.genericErrorMessage.collectAsState().value
+    val systemCrashed = MainPresenter._systemCrashed.collectAsState().value
 
     RememberPresenterLifecycle(presenter, {
         presenter.navController = rootNavController
@@ -64,9 +66,12 @@ fun App() {
                 }
             }
         }
-        ErrorOverlay(errorMessage = errorMessage, onClose = {
-            presenter.onCloseGenericErrorPanel()
-        });
+        ErrorOverlay(
+            errorMessage = errorMessage,
+            systemCrashed = systemCrashed,
+            onClose = {
+                presenter.onCloseGenericErrorPanel()
+            });
     }
 
 }

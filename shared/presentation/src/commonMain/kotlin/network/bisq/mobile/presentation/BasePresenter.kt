@@ -34,6 +34,8 @@ interface ViewPresenter {
 
     fun onCloseGenericErrorPanel()
 
+    fun navigateToReportError()
+
     fun isIOS(): Boolean
 
     /**
@@ -402,5 +404,11 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
 
     override fun onCloseGenericErrorPanel() {
         _genericErrorMessage.value = null
+    }
+
+    override fun navigateToReportError() {
+        enableInteractive(false)
+        navigateToUrl("https://github.com/bisq-network/bisq-mobile/issues")
+        enableInteractive(true)
     }
 }

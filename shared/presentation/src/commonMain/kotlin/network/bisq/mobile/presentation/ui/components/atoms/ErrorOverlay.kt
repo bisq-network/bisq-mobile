@@ -8,7 +8,7 @@ import network.bisq.mobile.presentation.ui.components.organisms.GenericErrorPane
 import network.bisq.mobile.presentation.ui.components.organisms.ReportBugPanel
 
 @Composable
-fun ErrorOverlay(errorMessage: String?, onClose: () -> Unit) {
+fun ErrorOverlay(errorMessage: String?, systemCrashed: Boolean, onClose: () -> Unit) {
 
     if (errorMessage != null) {
         Box(
@@ -18,6 +18,7 @@ fun ErrorOverlay(errorMessage: String?, onClose: () -> Unit) {
         ) {
             ReportBugPanel(
                 errorMessage = errorMessage,
+                systemCrashed = systemCrashed,
                 onClose = { onClose() }
             )
         }
