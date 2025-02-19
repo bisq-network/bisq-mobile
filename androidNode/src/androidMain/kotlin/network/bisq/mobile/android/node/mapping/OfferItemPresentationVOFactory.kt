@@ -84,7 +84,7 @@ object OfferItemPresentationVOFactory {
         val formattedPrice = PriceUtil.findQuote(marketPriceService, bisqEasyOffer)
             .map { PriceFormatter.format(it) }
             .orElse("")
-        val formattedPriceSpec = PriceSpecFormatter.getFormattedPriceSpec(priceSpec, true)
+        val formattedPriceSpec = PriceSpecFormatter.getFormattedPriceSpec(priceSpec, false)
         val quoteSidePaymentMethods: List<String> = PaymentMethodSpecUtil.getPaymentMethods(bisqEasyOffer.quoteSidePaymentMethodSpecs)
             .stream()
             .map { obj: FiatPaymentMethod -> obj.name }

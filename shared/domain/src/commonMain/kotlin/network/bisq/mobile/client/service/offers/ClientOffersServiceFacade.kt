@@ -22,6 +22,7 @@ import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferIt
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.i18n
 
 class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -182,6 +183,8 @@ class ClientOffersServiceFacade(
                         webSocketEvent.modificationType == ModificationType.ADDED
                     ) {
                         payload.forEach { item ->
+                            // TODO:
+                            // to apply bisq.offer.price.spec.PriceSpecFormatter.getFormattedPriceSpec to item here.
                             val model = OfferItemPresentationModel(item)
                             offerbookListItemsByMarket.getOrPut(item.bisqEasyOffer.market.quoteCurrencyCode) { mutableMapOf() }
                                 .put(model.offerId, model)
