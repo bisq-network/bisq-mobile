@@ -93,18 +93,23 @@ class TakeOfferAmountPresenter(
     }
 
     private fun applySliderValue(sliderPosition: Float) {
-        this.sliderPosition = sliderPosition
-        val range = maxAmount - minAmount
-        val value: Float = minAmount + (sliderPosition * range)
-        val roundedFiatValue: Long = (value / 10000.0f).roundToLong() * 10000
+        try {
+            this.sliderPosition = sliderPosition
+            val range = maxAmount - minAmount
+            val value: Float = minAmount + (sliderPosition * range)
+            val roundedFiatValue: Long = (value / 10000.0f).roundToLong() * 10000
 
-        // We do not apply the data to the model yet to avoid unnecessary model clones
-        quoteAmount = FiatVOFactory.from(roundedFiatValue, quoteCurrencyCode)
-        _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount)
+            // We do not apply the data to the model yet to avoid unnecessary model clones
+            quoteAmount = FiatVOFactory.from(roundedFiatValue, quoteCurrencyCode)
+            _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount)
 
-        priceQuote = takeOfferPresenter.getMostRecentPriceQuote()
-        baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
-        _formattedBaseAmount.value = AmountFormatter.formatAmount(baseAmount, false)
+            priceQuote = takeOfferPresenter.getMostRecentPriceQuote()
+            baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
+            _formattedBaseAmount.value = AmountFormatter.formatAmount(baseAmount, false)
+        } catch (e: Exception) {
+            // cater for random quoteAmount = 0 issue
+            log.e(e) { "Failed to apply slider value on take offer" }
+        }
     }
 
     private fun commitToModel() {
