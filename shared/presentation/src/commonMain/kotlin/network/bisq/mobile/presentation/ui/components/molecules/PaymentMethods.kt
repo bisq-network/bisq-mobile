@@ -29,13 +29,13 @@ fun PaymentMethods(
                             .replace("-", "_")
                     }.png",
                     fallbackPath = "drawable/payment/fiat/custom_payment_${customMethodCounter++}.png",
-                    modifier = Modifier.size(16.dp),
+                    modifier = Modifier.size(20.dp),
                 )
             }
         }
         DynamicImage(
             "drawable/payment/interchangeable_grey.png",
-            modifier = Modifier.size(14.dp)
+            modifier = Modifier.size(16.dp)
         )
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             baseSidePaymentMethods.forEach { paymentMethod ->
@@ -45,7 +45,7 @@ fun PaymentMethods(
                             .lowercase()
                             .replace("-", "_")
                     }.png",
-                    modifier = Modifier.size(16.dp)
+                    modifier = Modifier.size(20.dp)
                 )
             }
         }

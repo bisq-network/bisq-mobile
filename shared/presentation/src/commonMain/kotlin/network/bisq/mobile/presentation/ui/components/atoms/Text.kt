@@ -15,6 +15,7 @@ import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_bold
 import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_light
 import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_medium
 import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_regular
+import network.bisq.mobile.presentation.ui.theme.BisqModifier
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.Font
 
@@ -301,6 +302,26 @@ object BisqText {
             textAlign = textAlign,
             singleLine = singleLine,
             modifier = modifier,
+        )
+    }
+
+
+    @Composable
+    fun baseRegularHighlight(
+        text: String,
+        textAlign: TextAlign = TextAlign.Start,
+        singleLine: Boolean = false,
+        color: Color,
+        modifier: Modifier = Modifier,
+    ) {
+        val dark1 = BisqTheme.colors.dark1.copy(alpha = 0.4f)
+        val grey1 = BisqTheme.colors.grey1
+        baseRegular(
+            text = text,
+            color = color,
+            textAlign = textAlign,
+            singleLine = singleLine,
+            modifier = BisqModifier.textHighlight(dark1, grey1),
         )
     }
 

@@ -28,14 +28,18 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.utils.StringUtils.truncate
+import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.LanguageIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.RemoveOfferIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqVDivider
 import network.bisq.mobile.presentation.ui.components.molecules.PaymentMethods
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfile
+import network.bisq.mobile.presentation.ui.components.molecules.UserProfile2
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun OfferCard(
@@ -67,33 +71,39 @@ fun OfferCard(
     val myOfferBackgroundColor = BisqTheme.colors.primary.copy(alpha = 0.15f)
     val removeMyOfferBackgroundColor = BisqTheme.colors.dark1.copy(alpha = 0.6f)
     val backgroundColor = if (isMyOffer) myOfferBackgroundColor else BisqTheme.colors.dark4
-    val height = 120.dp
+    val height = 140.dp
 
-    //todo mirror layout of my offers as in Bisq 2
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clip(shape = RoundedCornerShape(8.dp))
             .background(color = backgroundColor)
             .height(height)
+            .padding(BisqUIConstants.ScreenPadding)
             .clickable(
                 interactionSource = remember { MutableInteractionSource() },
                 indication = null,
                 onClick = onSelectOffer
             ),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
+        verticalAlignment = Alignment.Top,
+        horizontalArrangement = Arrangement.Start
     ) {
+        UserProfile2(
+            item.makersUserProfile,
+            item.makersReputationScore,
+            item.bisqEasyOffer.supportedLanguageCodes,
+            false,
+            Modifier.weight(1.0F)
+        )
+
+        BisqGap.H1()
+        BisqVDivider(thickness = BisqUIConstants.ScreenPaddingQuarter, color = BisqTheme.colors.primary)
+        BisqGap.H1()
+
         Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalAlignment = Alignment.Start,
-            //verticalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.padding(12.dp).weight(2f)
+            modifier = Modifier.weight(3.0F)
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
+            Row {
                 if (isMyOffer) {
                     BisqText.baseRegular(
                         text = directionalLabel,
@@ -105,86 +115,27 @@ fun OfferCard(
                         color = directionalLabelColor
                     )
 
-                    BisqText.baseRegular(
+                    BisqGap.HHalf()
+
+                    BisqText.baseRegularHighlight(
                         text = userName.truncate(15),
                         color = directionalLabelColor,
-                        modifier = Modifier
-                            .background(
-                                color = BisqTheme.colors.dark1.copy(alpha = 0.4f),
-                                shape = RoundedCornerShape(CornerSize(4.dp))
-                            )
-                            .border(
-                                border = BorderStroke(
-                                    width = 0.25.dp,
-                                    color = BisqTheme.colors.grey1
-                                ),
-                                shape = RoundedCornerShape(CornerSize(4.dp))
-                            )
-                            .padding(top = 1.dp, bottom = 2.dp, start = 10.dp, end = 10.dp)
                     )
                 }
             }
 
-            UserProfile(item.makersUserProfile, false)
+            BisqGap.VHalf()
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                LanguageIcon()
-                BisqText.smallRegularGrey(text = " : ")
-                BisqText.smallRegular(text = item.bisqEasyOffer.supportedLanguageCodes.joinToString(", ").uppercase())
-            }
-        }
+            BisqText.baseRegular(text = item.formattedQuoteAmount)
 
-        Column(
-            horizontalAlignment = Alignment.End,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.padding(12.dp).weight(1f)
-        ) {
-            // Len: 13 - "300 - 600 USD"
-            // Len: 17 - "3,000 - 6,000 XYZ"
-            // Len: 23 - "150,640 - 1,200,312 CRC"
-            //if (offerListItem.formattedQuoteAmount.length < 18) {
-            BisqGap.HHalf()
-            BisqText.baseRegular(
-                text = item.formattedQuoteAmount,
-                color = BisqTheme.colors.primary
-            )
-            /* } else {
-                 BisqText.smallRegular(
-                     text = offerListItem.formattedQuoteAmount,
-                     color = BisqTheme.colors.primary
-                 )
-             }*/
+            BisqGap.VHalf()
 
-            Row {
-                BisqText.smallRegularGrey(text = "@ ")
-                BisqText.smallRegular(text = item.formattedPriceSpec)
-            }
+            BisqText.baseRegular(text = "@ " + item.formattedPriceSpec)
+
+            BisqGap.V1()
 
             PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
-
-            BisqGap.HHalf()
         }
 
-        if (isMyOffer) {
-            Row(
-                modifier = Modifier
-                    .clip(shape = RoundedCornerShape(topEnd = 8.dp, bottomEnd = 8.dp))
-                    .background(color = removeMyOfferBackgroundColor)
-                    .height(height),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Start
-            ) {
-                BisqVDivider(
-                    thickness = 1.dp,
-                    modifier = Modifier.height(height)
-                )
-                Column(
-                    modifier = Modifier.width(45.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    RemoveOfferIcon(modifier = Modifier.size(18.dp).width(45.dp))
-                }
-            }
-        }
     }
 }
