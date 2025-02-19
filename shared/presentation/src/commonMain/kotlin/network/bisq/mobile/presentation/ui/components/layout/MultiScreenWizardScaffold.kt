@@ -86,7 +86,7 @@ fun MultiScreenWizardScaffold(
                                 prevOnClick()
                             }
                         },
-                        padding = PaddingValues(horizontal = 48.dp, vertical = 4.dp),
+                        padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding3X, vertical = BisqUIConstants.ScreenPaddingHalf),
                         disabled = prevOnClick == null || prevDisabled
                     )
                     BisqButton(
@@ -96,7 +96,7 @@ fun MultiScreenWizardScaffold(
                                 nextOnClick()
                             }
                         },
-                        padding = PaddingValues(horizontal = 48.dp, vertical = 4.dp),
+                        padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding3X, vertical = BisqUIConstants.ScreenPaddingHalf),
                         disabled = nextOnClick == null || nextDisabled
                     )
                 }

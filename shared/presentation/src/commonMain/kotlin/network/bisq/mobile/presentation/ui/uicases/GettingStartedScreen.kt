@@ -109,7 +109,7 @@ fun WelcomeCard(
                         drawCircle(color = whiteColor)
                     }
                     BisqGap.H1()
-                    BisqText.baseMedium(text = point)
+                    BisqText.smallMedium(text = point)
                 }
             }
         }

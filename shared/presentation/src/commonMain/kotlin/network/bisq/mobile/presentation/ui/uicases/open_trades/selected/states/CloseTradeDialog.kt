@@ -1,10 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,6 +11,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun CloseTradeDialog(
@@ -23,8 +20,7 @@ fun CloseTradeDialog(
 ) {
     BisqDialog {
         Column(
-            modifier = Modifier.padding(12.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
@@ -34,18 +30,17 @@ fun CloseTradeDialog(
                 textAlign = TextAlign.Center
             )
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 BisqButton(
                     text = "action.cancel".i18n(),
                     backgroundColor = BisqTheme.colors.dark5,
                     onClick = onDismissCloseTrade,
-                    padding = PaddingValues(horizontal = 20.dp, vertical = 8.dp)
+                    padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingHalf)
                 )
                 BisqButton(
                     text = "bisqEasy.openTrades.confirmCloseTrade".i18n(),
                     onClick = onConfirmCloseTrade,
-                    padding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                    // modifier = Modifier.fillMaxWidth()
+                    padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingHalf)
                 )
             }
         }
