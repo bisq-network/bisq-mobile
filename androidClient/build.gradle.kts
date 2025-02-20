@@ -116,6 +116,8 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+    // needed for aab files renaming
+    setProperty("archivesBaseName", getArtifactName(defaultConfig))
 }
 
 dependencies {
@@ -126,3 +128,7 @@ dependencies {
     debugImplementation(compose.uiTooling)
 }
 
+fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {
+//    val date = SimpleDateFormat("yyyyMMdd").format(Date())
+    return "BisqConnect-${defaultConfig.versionName}_${defaultConfig.versionCode}"
+}
