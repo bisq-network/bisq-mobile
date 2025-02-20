@@ -1,5 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.*
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
@@ -19,7 +22,31 @@ class CreateOfferMarketPresenter(
     lateinit var headline: String
     var market: MarketVO? = null
 
-    var marketListItemWithNumOffers: List<MarketListItem> = offersServiceFacade.getSortedOfferbookMarketItems()
+    private var _searchText = MutableStateFlow("")
+    val searchText: StateFlow<String> = _searchText
+    fun setSearchText(newValue: String) {
+        _searchText.value = newValue
+    }
+
+    private val _marketList = MutableStateFlow(offersServiceFacade.getSortedOfferbookMarketItems())
+
+    val marketListItemWithNumOffers: StateFlow<List<MarketListItem>> = combine(
+        _searchText,
+        _marketList
+    ) { searchText, marketList ->
+        if (searchText.isBlank()) {
+            marketList
+        } else {
+            marketList.filter {
+                it.market.quoteCurrencyCode.contains(searchText, ignoreCase = true) ||
+                it.market.quoteCurrencyName.contains(searchText, ignoreCase = true)
+            }
+        }
+    }.stateIn(
+        CoroutineScope(Dispatchers.Main),
+        SharingStarted.Lazily,
+        emptyList()
+    )
 
     override fun onViewAttached() {
         val createOfferModel = createOfferPresenter.createOfferModel

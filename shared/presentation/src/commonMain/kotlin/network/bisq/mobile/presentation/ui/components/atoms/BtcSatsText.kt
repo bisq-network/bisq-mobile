@@ -35,7 +35,7 @@ fun BtcSatsText(formattedBtcAmountValue: String) {
         // BtcLogo()
         Text(
             text = formattedValue,
-            fontSize = 20.sp,
+            fontSize = FontSize.BASE.size,
             color = BisqTheme.colors.white,
         )
     }
@@ -48,13 +48,13 @@ private fun formatSatsToDisplay(formattedBtcAmountValue: String): AnnotatedStrin
     return buildAnnotatedString {
         val parts = formattedBtcAmountValue.split(".")
         val integerPart = parts[0]
-        val fractionalPart = parts[1]
+        val fractionalPart = parts[1] ?: ""
 
-        val formattedFractional = fractionalPart.chunked(3).joinToString(" ")
+        val formattedFractional = fractionalPart.reversed().chunked(3).joinToString(" ").reversed()
         val leadingZeros = formattedFractional.takeWhile { it == '0' || it == ' ' }
         val significantDigits = formattedFractional.dropWhile { it == '0' || it == ' ' }
 
-        val prefixColor = if(integerPart.toInt() > 0) BisqTheme.colors.light1 else BisqTheme.colors.grey2
+        val prefixColor = if(integerPart.toInt() > 0) BisqTheme.colors.white else BisqTheme.colors.grey2
 
         withStyle(style = SpanStyle(color = prefixColor)) {
             append(integerPart)
@@ -65,7 +65,7 @@ private fun formatSatsToDisplay(formattedBtcAmountValue: String): AnnotatedStrin
             append(leadingZeros)
         }
 
-        withStyle(style = SpanStyle(color = BisqTheme.colors.light1)) {
+        withStyle(style = SpanStyle(color = BisqTheme.colors.white)) {
             append(significantDigits)
             append(" BTC")
         }

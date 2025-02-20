@@ -1,8 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -11,9 +9,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -28,15 +23,10 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.utils.StringUtils.truncate
-import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.icons.LanguageIcon
-import network.bisq.mobile.presentation.ui.components.atoms.icons.RemoveOfferIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqVDivider
 import network.bisq.mobile.presentation.ui.components.molecules.PaymentMethods
-import network.bisq.mobile.presentation.ui.components.molecules.UserProfile
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfile2
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants

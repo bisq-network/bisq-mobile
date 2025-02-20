@@ -54,12 +54,23 @@ fun CreateOfferReviewOfferScreen() {
                 label = stringsBisqEasy.bisqEasy_takeOffer_review_method_fiat,
                 value = presenter.quoteSidePaymentMethodDisplayString,
             )
-            InfoRow(
-                label1 = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
-                value1 = presenter.amountToPay,
-                label2 = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
-                value2 = presenter.amountToReceive
-            )
+            if (presenter.isRangeOffer) {
+                InfoBox(
+                    label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                    value = presenter.amountToPay,
+                )
+                InfoBox(
+                    label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                    value = presenter.amountToReceive
+                )
+            } else {
+                InfoRow(
+                    label1 = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                    value1 = presenter.amountToPay,
+                    label2 = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                    value2 = presenter.amountToReceive
+                )
+            }
 
             BisqHDivider()
             InfoBox(

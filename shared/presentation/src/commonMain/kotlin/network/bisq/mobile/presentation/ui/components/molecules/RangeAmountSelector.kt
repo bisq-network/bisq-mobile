@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 
 @OptIn(ExperimentalMaterial3Api::class)
 // TODO: This has more work to do
@@ -32,27 +32,14 @@ fun RangeAmountSelector(
     onMaxAmountTextValueChange: (String) -> Unit // todo not applied yet
 ) {
     val quoteSideMinRangeAmount = formattedQuoteSideMinRangeAmount.collectAsState().value
+    val quoteSideMinRangeAmountWithoutDecimal = quoteSideMinRangeAmount.split(".").first()
     val baseSideMinRangeAmount = formattedBaseSideMinRangeAmount.collectAsState().value
+
     val quoteSideMaxRangeAmount = formattedQuoteSideMaxRangeAmount.collectAsState().value
+    val quoteSideMaxRangeAmountWithoutDecimal = quoteSideMaxRangeAmount.split(".").first()
     val baseSideMaxRangeAmount = formattedBaseSideMaxRangeAmount.collectAsState().value
 
-    val baseSideMinRangeAmountLeft = baseSideMinRangeAmount
-        .takeWhile { it == '0' || it == '.' }
-    val baseSideMinRangeAmountRight = baseSideMinRangeAmount
-        .dropWhile { it == '0' || it == '.' }
-        .reversed()
-        .chunked(3)
-        .joinToString(" ")
-        .reversed()
-
-    val baseSideMaxRangeAmountLeft = baseSideMaxRangeAmount
-        .takeWhile { it == '0' || it == '.' }
-    val baseSideMaxRangeAmountRight = baseSideMaxRangeAmount
-        .dropWhile { it == '0' || it == '.' }
-        .reversed()
-        .chunked(3)
-        .joinToString(" ")
-        .reversed()
+    val smallFont = maxOf(quoteSideMaxRangeAmount.length, quoteSideMinRangeAmount.length) > 6
 
     Column {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -62,29 +49,15 @@ fun RangeAmountSelector(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.Bottom
                 ) {
-                    BisqText.h2Regular(text = quoteSideMinRangeAmount)
-                    BisqText.h6Light(text = quoteCurrencyCode)
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    /* DynamicImage(
-                         "drawable/bitcoin.png",
-                         modifier = Modifier.size(16.dp)
-                     )*/
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        BisqText.largeLightGrey(text = baseSideMinRangeAmountLeft)
-                        BisqText.largeLight(
-                            text = "$baseSideMinRangeAmountRight BTC",
-                        )
+                    if (smallFont) {
+                        BisqText.h3Regular(text = quoteSideMinRangeAmountWithoutDecimal)
+                        BisqText.baseLight(text = quoteCurrencyCode)
+                    } else {
+                        BisqText.h2Regular(text = quoteSideMinRangeAmountWithoutDecimal)
+                        BisqText.h6Light(text = quoteCurrencyCode)
                     }
-                    /* SvgImage(
-                         image = SvgImageNames.INFO,
-                         modifier = Modifier.size(16.dp),
-                         colorFilter = ColorFilter.tint(BisqTheme.colors.grey2)
-                     )*/
                 }
+                BtcSatsText(baseSideMinRangeAmount)
             }
             Column(horizontalAlignment = Alignment.End) {
                 BisqText.smallRegularGrey(text = "Max")
@@ -92,34 +65,15 @@ fun RangeAmountSelector(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.Bottom
                 ) {
-                    BisqText.h2Regular(
-                        text = quoteSideMaxRangeAmount
-                    )
-                    BisqText.h6Light(
-                        text = quoteCurrencyCode
-                    )
-                }
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    /* DynamicImage(
-                         "drawable/bitcoin.png",
-                         modifier = Modifier.size(16.dp)
-                     )*/
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        BisqText.largeLightGrey(text = baseSideMaxRangeAmountLeft)
-                        BisqText.largeLight(
-                            text = "$baseSideMaxRangeAmountRight BTC",
-                        )
+                    if (smallFont) {
+                        BisqText.h3Regular(text = quoteSideMaxRangeAmountWithoutDecimal)
+                        BisqText.baseLight(text = quoteCurrencyCode)
+                    } else {
+                        BisqText.h2Regular(text = quoteSideMaxRangeAmountWithoutDecimal)
+                        BisqText.h6Light(text = quoteCurrencyCode)
                     }
-                    /*  SvgImage(
-                          image = SvgImageNames.INFO,
-                          modifier = Modifier.size(16.dp),
-                          colorFilter = ColorFilter.tint(BisqTheme.colors.grey2)
-                      )*/
                 }
-
+                BtcSatsText(baseSideMaxRangeAmount)
             }
 
         }
@@ -133,7 +87,6 @@ fun RangeAmountSelector(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
             ) {
-
                 BisqText.smallLightGrey(text = formattedMinAmount)
                 BisqText.smallLightGrey(text = formattedMaxAmount)
             }

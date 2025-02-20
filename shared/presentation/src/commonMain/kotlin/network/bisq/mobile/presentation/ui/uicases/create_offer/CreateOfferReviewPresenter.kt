@@ -27,6 +27,7 @@ class CreateOfferReviewPresenter(
     lateinit var formattedPrice: String
     lateinit var marketCodes: String
     lateinit var priceDetails: String
+    var isRangeOffer: Boolean = false
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
     lateinit var appStrings: AppStrings
@@ -74,6 +75,7 @@ class CreateOfferReviewPresenter(
 
         marketCodes = createOfferModel.market!!.marketCodes
         formattedPrice = PriceQuoteFormatter.format(createOfferModel.priceQuote, true, false)
+        isRangeOffer = createOfferModel.amountType == CreateOfferPresenter.AmountType.RANGE_AMOUNT
 
         applyPriceDetails()
     }
