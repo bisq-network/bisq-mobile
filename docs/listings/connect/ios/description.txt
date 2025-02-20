@@ -1,0 +1,22 @@
+PROMOTIONAL TEXT
+
+Securely connect to a trusted Bisq Node using WebSocket.
+
+DESCRIPTION
+
+Bisq Connect is a utility app designed to help users establish a secure connection to a trusted Bisq Node via WebSocket (WS). Simply enter the IP address and port (default: 8090) of your chosen node to create a direct, private communication channel.
+
+Key Features:
+
+ - Secure Node Access – Connect to a self-hosted Bisq Node over WebSocket for remote interaction.
+ - User-Controlled Configuration – Input your own IP and port, maintaining full control over your connection.
+ - Privacy-First Design – No data tracking, storage, or third-party interference—your connection stays private.
+ - Optimized for iOS – Lightweight and efficient, built for smooth performance on iPhone and iPad.
+ - Utility Tool – This app is for connectivity purposes only; it does not include wallets, financial transactions, or trading features.
+
+Bisq Connect empowers users with a simple and private way to access their trusted Bisq Node remotely.
+
+
+KEYWORDS
+
+bisq bitcoin decentralised  exchange connect trusted node
