@@ -1,0 +1,23 @@
+APP NAME
+
+Bisq Connect
+
+
+SHORT DESCRIPTION
+
+A utility tool to securely connect to a trusted Bisq Node via WebSocket
+
+
+LONG DESCRIPTION
+
+Bisq Connect is a lightweight utility app that allows users to securely connect to a trusted Bisq Node using WebSocket (WS). By providing an IP address and port (default: 8090), users can establish a direct and private communication channel with their chosen node.
+
+Key Features:
+
+ - Trusted Node Connection: Easily connect to a Bisq Node via WebSocket for remote access and interaction.
+ - User-Controlled Access: Manually input the IP and port of your chosen node, ensuring complete control over your connections.
+ - Privacy-Preserving: The app does not store, track, or share any user data—your connection remains private and secure.
+ - Lightweight & Efficient: Designed for minimal resource usage while providing a seamless connection experience.
+ - Cross-Platform Support: Available on both Android and iOS for consistent connectivity across devices.
+
+Bisq Connect is a utility tool meant to facilitate node interaction and enhance accessibility within the Bisq ecosystem. It does not include wallets, financial services, or trading functionalities.
