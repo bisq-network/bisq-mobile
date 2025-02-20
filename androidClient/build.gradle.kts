@@ -10,6 +10,7 @@ plugins {
 }
 
 version = project.findProperty("client.android.version") as String
+val versionCodeValue = (project.findProperty("client.android.version.code") as String).toInt()
 val sharedVersion = project.findProperty("shared.version") as String
 
 kotlin {
@@ -69,7 +70,7 @@ android {
         applicationId = "network.bisq.mobile.client"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
-        versionCode = 1
+        versionCode = versionCodeValue
         versionName = version.toString()
         buildConfigField("String", "APP_VERSION", "\"${version}\"")
         buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")

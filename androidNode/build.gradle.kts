@@ -15,6 +15,7 @@ plugins {
 }
 
 version = project.findProperty("node.android.version") as String
+val versionCodeValue = (project.findProperty("node.android.version.code") as String).toInt()
 val sharedVersion = project.findProperty("shared.version") as String
 
 kotlin {
@@ -110,7 +111,7 @@ android {
         minSdk = libs.versions.android.node.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         multiDexEnabled = true
-        versionCode = 1
+        versionCode = versionCodeValue
         versionName = project.version.toString()
         buildConfigField("String", "APP_VERSION", "\"${version}\"")
         buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")
