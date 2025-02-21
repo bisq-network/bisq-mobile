@@ -1,8 +1,6 @@
 package network.bisq.mobile.presentation.ui.components.molecules.info
 
-import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 
 @Composable
 fun InfoRow(
@@ -13,10 +11,7 @@ fun InfoRow(
     valueType: InfoBoxValueType = InfoBoxValueType.BoldValue,
     style: InfoBoxStyle = InfoBoxStyle.Style1,
 ) {
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween
-    ) {
+    InfoRowContainer {
         InfoBox(
             label = label1,
             value = value1,

@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
@@ -27,6 +28,7 @@ class CreateOfferReviewPresenter(
     lateinit var formattedPrice: String
     lateinit var marketCodes: String
     lateinit var priceDetails: String
+    lateinit var direction: DirectionEnum
     var isRangeOffer: Boolean = false
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
@@ -34,6 +36,7 @@ class CreateOfferReviewPresenter(
 
     override fun onViewAttached() {
         createOfferModel = createOfferPresenter.createOfferModel
+        direction = createOfferModel.direction
 
         quoteSidePaymentMethodDisplayString =
             createOfferModel.selectedQuoteSidePaymentMethods.joinToString(", ") { appStrings.paymentMethod.toDisplayString(it) }
@@ -44,7 +47,7 @@ class CreateOfferReviewPresenter(
         val formattedBaseAmount: String
         if (createOfferModel.amountType == CreateOfferPresenter.AmountType.FIXED_AMOUNT) {
             formattedQuoteAmount = AmountFormatter.formatAmount(createOfferModel.quoteSideFixedAmount!!, true, true)
-            formattedBaseAmount = AmountFormatter.formatAmount(createOfferModel.baseSideFixedAmount!!, false, true)
+            formattedBaseAmount = AmountFormatter.formatAmount(createOfferModel.baseSideFixedAmount!!, false, false)
         } else {
             formattedQuoteAmount = AmountFormatter.formatRangeAmount(
                 createOfferModel.quoteSideMinRangeAmount!!,
@@ -57,7 +60,6 @@ class CreateOfferReviewPresenter(
                 false
             )
         }
-        val direction = createOfferModel.direction
         headLine = "${direction.name.uppercase()} Bitcoin"
 
         val i18n = appStrings.bisqEasyTradeWizard

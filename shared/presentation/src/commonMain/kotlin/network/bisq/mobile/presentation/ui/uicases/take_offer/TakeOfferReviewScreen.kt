@@ -8,12 +8,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.ui.components.organisms.offer.TakeOfferProgressDialog
 import network.bisq.mobile.presentation.ui.components.organisms.offer.TakeOfferSuccessDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -51,12 +55,31 @@ fun TakeOfferReviewTradeScreen() {
                 label2 = strings.bisqEasy_tradeWizard_review_paymentMethodDescription_fiat.uppercase(),
                 value2 = presenter.quoteSidePaymentMethodDisplayString,
             )
-            InfoRow(
-                label1 = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
-                value1 = presenter.amountToPay,
-                label2 = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
-                value2 = presenter.amountToReceive
-            )
+            if (presenter.takersDirection.isBuy) {
+                InfoRowContainer {
+                    InfoBox(
+                        label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                        value = presenter.amountToPay,
+                    )
+                    InfoBoxSats(
+                        label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                        value = presenter.amountToReceive,
+                        rightAlign = true
+                    )
+                }
+            } else {
+                InfoRowContainer {
+                    InfoBoxSats(
+                        label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                        value = presenter.amountToPay,
+                    )
+                    InfoBox(
+                        label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                        value = presenter.amountToReceive,
+                        rightAlign = true
+                    )
+                }
+            }
         }
 
         BisqHDivider()

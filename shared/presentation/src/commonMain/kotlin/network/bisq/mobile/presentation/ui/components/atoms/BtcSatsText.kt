@@ -9,24 +9,17 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
-fun BtcSatsText(formattedBtcAmountValue: String) {
-
-    // val btcValue = sats.toDouble() / 100_000_000
+fun BtcSatsText(
+    formattedBtcAmountValue: String,
+    fontSize: FontSize = FontSize.BASE,
+) {
     val formattedValue = formatSatsToDisplay(formattedBtcAmountValue)
-
-    /*  val btcAmountValueHighLightedZeros = formattedBtcAmountValue
-          .takeWhile { it == '0' || it == '.' }
-      val btcAmountValue = formattedBtcAmountValue
-          .dropWhile { it == '0' || it == '.' }
-          .reversed()
-          .chunked(3)
-          .joinToString(" ")
-          .reversed()*/
 
     Row(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -35,7 +28,9 @@ fun BtcSatsText(formattedBtcAmountValue: String) {
         // BtcLogo()
         Text(
             text = formattedValue,
-            fontSize = FontSize.BASE.size,
+            fontSize = fontSize.size,
+            fontFamily = BisqText.fontFamilyRegular(),
+            lineHeight = TextUnit(fontSize.size.times(1.15).value, TextUnitType.Sp),
             color = BisqTheme.colors.white,
         )
     }
@@ -43,7 +38,6 @@ fun BtcSatsText(formattedBtcAmountValue: String) {
 
 @Composable
 private fun formatSatsToDisplay(formattedBtcAmountValue: String): AnnotatedString {
-    // val formattedBtcAmountValue = numberFormatter.satsFormat(btcValue)
 
     return buildAnnotatedString {
         val parts = formattedBtcAmountValue.split(".")

@@ -40,6 +40,27 @@ enum class FontSize(val size: TextUnit) {
 }
 
 object BisqText {
+
+    @Composable
+    fun fontFamilyLight(): FontFamily {
+        return FontFamily(Font(Res.font.ibm_plex_sans_light))
+    }
+
+    @Composable
+    fun fontFamilyRegular(): FontFamily {
+        return FontFamily(Font(Res.font.ibm_plex_sans_regular))
+    }
+
+    @Composable
+    fun fontFamilyMedium(): FontFamily {
+        return FontFamily(Font(Res.font.ibm_plex_sans_medium))
+    }
+
+    @Composable
+    fun fontFamilyBold(): FontFamily {
+        return FontFamily(Font(Res.font.ibm_plex_sans_bold))
+    }
+
     @Composable
     fun styledText(
         text: String,
@@ -54,10 +75,10 @@ object BisqText {
     ) {
 
         val fontFamily = when (fontWeight) {
-            FontWeight.LIGHT -> FontFamily(Font(Res.font.ibm_plex_sans_light))
-            FontWeight.REGULAR -> FontFamily(Font(Res.font.ibm_plex_sans_regular))
-            FontWeight.MEDIUM -> FontFamily(Font(Res.font.ibm_plex_sans_medium))
-            FontWeight.BOLD -> FontFamily(Font(Res.font.ibm_plex_sans_bold))
+            FontWeight.LIGHT -> fontFamilyLight()
+            FontWeight.REGULAR -> fontFamilyRegular()
+            FontWeight.MEDIUM -> fontFamilyMedium()
+            FontWeight.BOLD -> fontFamilyBold()
         }
 
         return Text(
@@ -102,6 +123,20 @@ object BisqText {
             fontSize = FontSize.XSMALL,
             fontWeight = FontWeight.REGULAR,
             color = color,
+            textAlign = textAlign,
+            modifier = modifier,
+        )
+    }
+
+    @Composable
+    fun xsmallRegularGrey(
+        text: String,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
+        xsmallRegular(
+            text = text,
+            color = BisqTheme.colors.grey2,
             textAlign = textAlign,
             modifier = modifier,
         )

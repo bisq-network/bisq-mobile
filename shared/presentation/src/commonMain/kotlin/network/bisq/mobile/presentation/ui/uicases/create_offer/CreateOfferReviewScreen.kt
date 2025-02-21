@@ -10,14 +10,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
+import network.bisq.mobile.presentation.ui.components.atoms.FontSize
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
-import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
@@ -37,13 +40,8 @@ fun CreateOfferReviewOfferScreen() {
         prevOnClick = { presenter.onBack() },
         nextButtonText = strings.bisqEasy_tradeWizard_review_nextButton_createOffer,
         nextOnClick = { presenter.onCreateOffer() },
-        horizontalAlignment = Alignment.Start
     ) {
-        BisqText.h3Regular(
-            text = strings.bisqEasy_tradeWizard_review_headline_maker,
-            textAlign = TextAlign.Start,
-            modifier = Modifier.fillMaxWidth()
-        )
+        BisqText.h3Regular(text = strings.bisqEasy_tradeWizard_review_headline_maker)
         BisqGap.V2()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoBox(
@@ -57,39 +55,52 @@ fun CreateOfferReviewOfferScreen() {
             if (presenter.isRangeOffer) {
                 InfoBox(
                     label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
-                    value = presenter.amountToPay,
+                    value = presenter.amountToPay
                 )
                 InfoBox(
                     label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
                     value = presenter.amountToReceive
                 )
             } else {
-                InfoRow(
-                    label1 = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
-                    value1 = presenter.amountToPay,
-                    label2 = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
-                    value2 = presenter.amountToReceive
-                )
-            }
-
-            BisqHDivider()
-            InfoBox(
-                label = strings.bisqEasy_tradeWizard_review_priceDescription_taker,
-                valueComposable = {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Row(
-                            verticalAlignment = Alignment.Bottom,
-                            horizontalArrangement = Arrangement.spacedBy(2.dp)
-                        ) {
-                            BisqText.h6Regular(text = presenter.formattedPrice)
-                            BisqText.baseRegularGrey(text = presenter.marketCodes)
-                        }
-                        BisqText.smallRegular(
-                            text = presenter.priceDetails,
-                            color = BisqTheme.colors.grey3
+                if (presenter.direction == DirectionEnum.BUY) {
+                    InfoRowContainer {
+                        InfoBox(
+                            label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                            value = presenter.amountToPay,
+                        )
+                        InfoBoxSats(
+                            label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                            value = presenter.amountToReceive,
+                        )
+                    }
+                } else {
+                    InfoRowContainer {
+                        InfoBoxSats(
+                            label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                            value = presenter.amountToPay
+                        )
+                        InfoBox(
+                            label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                            value = presenter.amountToPay,
                         )
                     }
                 }
+            }
+
+            BisqHDivider()
+
+            InfoBox(
+                label = strings.bisqEasy_tradeWizard_review_priceDescription_taker,
+                valueComposable = {
+                    Row(
+                        verticalAlignment = Alignment.Bottom,
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
+                    ) {
+                        BisqText.h6Regular(text = presenter.formattedPrice)
+                        BisqText.baseRegularGrey(text = presenter.marketCodes)
+                    }
+                },
+                subvalue = presenter.priceDetails
             )
 
             InfoBox(
@@ -103,15 +114,8 @@ fun CreateOfferReviewOfferScreen() {
 
             InfoBox(
                 label = strings.bisqEasy_tradeWizard_review_feeDescription,
-                valueComposable = {
-                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        BisqText.h6Regular(text = presenter.fee)
-                        BisqText.smallRegular(
-                            text = presenter.feeDetails,
-                            color = BisqTheme.colors.grey3,
-                        )
-                    }
-                }
+                value = presenter.fee,
+                subvalue = presenter.feeDetails,
             )
         }
     }

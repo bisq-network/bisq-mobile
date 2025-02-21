@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
@@ -40,6 +41,7 @@ class TakeOfferReviewPresenter(
     lateinit var price: String
     lateinit var marketCodes: String
     lateinit var priceDetails: String
+    lateinit var takersDirection: DirectionEnum
 
     private lateinit var takeOfferModel: TakeOfferPresenter.TakeOfferModel
     lateinit var appStrings: AppStrings
@@ -75,15 +77,15 @@ class TakeOfferReviewPresenter(
         }
 
         takeOfferModel = takeOfferPresenter.takeOfferModel
+        val offerListItem = takeOfferModel.offerItemPresentationVO
+        takersDirection = offerListItem.bisqEasyOffer.direction.mirror
 
         quoteSidePaymentMethodDisplayString = appStrings.paymentMethod.toDisplayString(takeOfferModel.quoteSidePaymentMethod)
         baseSidePaymentMethodDisplayString = appStrings.paymentMethod.toDisplayString(takeOfferModel.baseSidePaymentMethod)
 
         val formattedQuoteAmount = AmountFormatter.formatAmount(takeOfferModel.quoteAmount, true, true)
-        val formattedBaseAmount = AmountFormatter.formatAmount(takeOfferModel.baseAmount, false, true)
+        val formattedBaseAmount = AmountFormatter.formatAmount(takeOfferModel.baseAmount, false, false)
 
-        val offerListItem = takeOfferModel.offerItemPresentationVO
-        val takersDirection = offerListItem.bisqEasyOffer.direction.mirror
         headLine = "${takersDirection.name.uppercase()} Bitcoin"
 
         val i18n = appStrings.bisqEasyTradeWizard
