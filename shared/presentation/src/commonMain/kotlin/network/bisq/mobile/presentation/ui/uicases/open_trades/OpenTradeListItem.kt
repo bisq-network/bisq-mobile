@@ -60,7 +60,7 @@ fun OpenTradeListItem(
                 modifier = Modifier.weight(1f)
             ) {
                 BisqText.largeRegular(
-                    text = item.formattedQuoteAmount,
+                    text = item.quoteAmountWithCode,
                     color = BisqTheme.colors.primary
                 )
                 BisqGap.VHalf()

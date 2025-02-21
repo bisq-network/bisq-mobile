@@ -53,14 +53,37 @@ fun CreateOfferReviewOfferScreen() {
                 value = presenter.quoteSidePaymentMethodDisplayString,
             )
             if (presenter.isRangeOffer) {
-                InfoBox(
-                    label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
-                    value = presenter.amountToPay
-                )
-                InfoBox(
-                    label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
-                    value = presenter.amountToReceive
-                )
+                if (presenter.direction == DirectionEnum.BUY) {
+                    InfoBox(
+                        label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                        value = presenter.amountToPay
+                    )
+                    InfoBox(
+                        label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                        valueComposable = {
+                            Row {
+                                BtcSatsText(presenter.formattedBaseRangeMinAmount, noCode = true, fontSize = FontSize.H6)
+                                BisqText.baseRegular(" - ")
+                                BtcSatsText(presenter.formattedBaseRangeMaxAmount, fontSize = FontSize.H6)
+                            }
+                        }
+                    )
+                } else {
+                    InfoBox(
+                        label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                        value = presenter.amountToReceive
+                    )
+                    InfoBox(
+                        label = strings.bisqEasy_tradeWizard_review_toSend.uppercase(),
+                        valueComposable = {
+                            Row {
+                                BtcSatsText(presenter.formattedBaseRangeMinAmount, noCode = true, fontSize = FontSize.H6)
+                                BisqText.baseRegular(" - ")
+                                BtcSatsText(presenter.formattedBaseRangeMaxAmount, fontSize = FontSize.H6)
+                            }
+                        }
+                    )
+                }
             } else {
                 if (presenter.direction == DirectionEnum.BUY) {
                     InfoRowContainer {

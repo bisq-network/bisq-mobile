@@ -69,5 +69,20 @@ object BisqGap {
         Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPadding))
     }
 
+    @Composable()
+    fun H2() {
+        Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPadding2X))
+    }
+
+    @Composable()
+    fun H3() {
+        Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPadding3X))
+    }
+
+    @Composable()
+    fun H4() {
+        Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPadding4X))
+    }
+
 }
 

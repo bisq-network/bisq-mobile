@@ -15,6 +15,7 @@ class TakeOfferPaymentMethodPresenter(
     lateinit var baseSidePaymentMethods: List<String>
     var quoteSidePaymentMethod: String? = null
     var baseSidePaymentMethod: String? = null
+    lateinit var quoteCurrencyCode: String
 
     private lateinit var takeOfferModel: TakeOfferPresenter.TakeOfferModel
 
@@ -32,6 +33,7 @@ class TakeOfferPaymentMethodPresenter(
         if (offerListItem.baseSidePaymentMethods.size == 1) {
             baseSidePaymentMethod = offerListItem.baseSidePaymentMethods[0]
         }
+        quoteCurrencyCode = offerListItem.bisqEasyOffer.market.quoteCurrencyCode
     }
 
     fun onQuoteSidePaymentMethodSelected(paymentMethod: String) {

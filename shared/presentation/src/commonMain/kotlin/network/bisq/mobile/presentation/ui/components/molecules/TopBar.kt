@@ -112,10 +112,9 @@ fun TopBar(
                     Column {
                         BisqText.smallRegularGrey(
                             text = "Step $stepText",
-                            // modifier = Modifier.padding(top= 8.dp)
-                            modifier = Modifier.offset(y = (8).dp)
+                            modifier = Modifier.offset(y = (2).dp)
                         )
-                        BisqGap.V1()
+                        BisqGap.VHalf()
                         BisqText.h5Medium(text = title)
                     }
                 } else {

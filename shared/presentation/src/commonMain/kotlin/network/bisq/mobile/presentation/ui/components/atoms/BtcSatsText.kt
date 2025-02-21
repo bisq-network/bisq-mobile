@@ -32,11 +32,12 @@ fun BtcSatsText(
     label: String? = null,
     fontSize: FontSize = FontSize.BASE,
     style: BtcSatsStyle = BtcSatsStyle.Default,
+    noCode: Boolean = false
 ) {
     if (formattedBtcAmountValue.isEmpty())
         return;
 
-    val formattedValue = formatSatsToDisplay(formattedBtcAmountValue)
+    val formattedValue = formatSatsToDisplay(formattedBtcAmountValue, noCode)
     val finalFontSize = fontSize
 
     if (style == BtcSatsStyle.Default) {
@@ -92,7 +93,7 @@ fun BtcSatsText(
 }
 
 @Composable
-private fun formatSatsToDisplay(formattedBtcAmountValue: String): AnnotatedString {
+private fun formatSatsToDisplay(formattedBtcAmountValue: String, noCode: Boolean): AnnotatedString {
 
     return buildAnnotatedString {
         val parts = formattedBtcAmountValue.split(".")
@@ -116,7 +117,8 @@ private fun formatSatsToDisplay(formattedBtcAmountValue: String): AnnotatedStrin
 
         withStyle(style = SpanStyle(color = BisqTheme.colors.white)) {
             append(significantDigits)
-            append(" BTC")
+            if (noCode == false)
+                append(" BTC")
         }
     }
 }

@@ -62,7 +62,9 @@ fun TakeOfferPaymentMethodScreen() {
                 modifier = Modifier.padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                BisqText.largeLightGrey(text = strings.bisqEasy_takeOffer_paymentMethods_subtitle_fiat_buyer("USD"))
+                BisqText.largeLightGrey(
+                    text = strings.bisqEasy_takeOffer_paymentMethods_subtitle_fiat_buyer(presenter.quoteCurrencyCode)
+                )
                 BisqGap.V2()
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 38.dp),

@@ -46,6 +46,7 @@ class CreateOfferDirectionPresenter(
     }
 
     fun onSellWithoutReputation() {
+        setShowSellerReputationWarning(false) 
         direction = DirectionEnum.SELL
         navigateNext()
     }

@@ -29,6 +29,8 @@ class CreateOfferReviewPresenter(
     lateinit var marketCodes: String
     lateinit var priceDetails: String
     lateinit var direction: DirectionEnum
+    var formattedBaseRangeMinAmount: String = ""
+    var formattedBaseRangeMaxAmount: String = ""
     var isRangeOffer: Boolean = false
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
@@ -59,6 +61,8 @@ class CreateOfferReviewPresenter(
                 createOfferModel.baseSideMaxRangeAmount!!,
                 false
             )
+            formattedBaseRangeMinAmount = AmountFormatter.formatAmount(createOfferModel.baseSideMinRangeAmount!!, false, false)
+            formattedBaseRangeMaxAmount = AmountFormatter.formatAmount(createOfferModel.baseSideMaxRangeAmount!!, false, false)
         }
         headLine = "${direction.name.uppercase()} Bitcoin"
 
