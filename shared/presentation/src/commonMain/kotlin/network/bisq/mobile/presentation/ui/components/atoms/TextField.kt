@@ -33,6 +33,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButto
 import network.bisq.mobile.presentation.ui.components.atoms.button.PasteIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 /**
  * TODO:
@@ -54,7 +55,7 @@ fun BisqTextField(
     indicatorColor: Color = BisqTheme.colors.primary,
     isTextArea: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Unspecified,
-    paddingValues: PaddingValues = PaddingValues(all = 12.dp),
+    paddingValues: PaddingValues = PaddingValues(all = BisqUIConstants.ScreenPadding),
     disabled: Boolean = false,
     color: Color = BisqTheme.colors.light2,
     showCopy: Boolean = false,

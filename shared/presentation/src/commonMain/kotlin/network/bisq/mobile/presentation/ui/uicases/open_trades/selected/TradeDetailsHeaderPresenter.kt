@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -26,6 +27,7 @@ class TradeDetailsHeaderPresenter(
     val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
 
     var direction: String = ""
+    var directionEnum: DirectionEnum = DirectionEnum.BUY
     var leftAmountDescription: String = ""
     var leftAmount: String = ""
     var leftCode: String = ""
@@ -46,6 +48,7 @@ class TradeDetailsHeaderPresenter(
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
 
         if (openTradeItemModel.bisqEasyTradeModel.isSeller) {
+            directionEnum = DirectionEnum.SELL
             direction = "SELL" //"offer.sell"
             leftAmountDescription = "Amount to send" //"bisqEasy.tradeState.header.send"
             leftAmount = openTradeItemModel.formattedBaseAmount
@@ -54,6 +57,7 @@ class TradeDetailsHeaderPresenter(
             rightAmount = openTradeItemModel.formattedQuoteAmount
             rightCode = openTradeItemModel.quoteCurrencyCode
         } else {
+            directionEnum = DirectionEnum.BUY
             direction = "BUY" //"offer.sell"
             leftAmountDescription = "Amount to pay" //"bisqEasy.tradeState.header.pay"
             leftAmount = openTradeItemModel.formattedQuoteAmount

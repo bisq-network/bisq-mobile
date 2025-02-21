@@ -16,26 +16,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.PaymentMethods
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfile
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun OpenTradeListItem(
     item: TradeItemPresentationModel,
     onSelect: () -> Unit,
 ) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(shape = RoundedCornerShape(8.dp))
-            .background(color = BisqTheme.colors.dark4)
-    ) {
+    BisqCard {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(12.dp)
                 .clickable(
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null,
@@ -48,45 +46,40 @@ fun OpenTradeListItem(
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier.weight(1f)
             ) {
-                Row {
-                    BisqText.baseLightGrey(
-                        text = item.directionalTitle.uppercase().replace(":", ""), // 'Buying from:' or 'Selling to:'
-                    )
-                }
+                BisqText.baseLightGrey(
+                    text = item.directionalTitle.uppercase().replace(":", ""), // 'Buying from:' or 'Selling to:'
+                )
                 Row(modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)) {
                     UserProfile(item.peersUserProfile)
                 }
-                Row {
-                    BisqText.smallLightGrey(text = "${item.formattedDate} ${item.formattedTime}")
-                }
-                Row {
-                    BisqText.smallLightGrey(text = "Trade ID: ${item.shortTradeId}",)
-                }
+                BisqText.smallLightGrey(text = "${item.formattedDate} ${item.formattedTime}")
+                BisqText.smallLightGrey(text = "Trade ID: ${item.shortTradeId}")
             }
             Column(
                 horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(2.dp),
                 modifier = Modifier.weight(1f)
             ) {
-                Row {
-                    BisqText.largeRegular(
-                        text = item.formattedQuoteAmount,
-                        color = BisqTheme.colors.primary
-                    )
-                }
+                BisqText.largeRegular(
+                    text = item.formattedQuoteAmount,
+                    color = BisqTheme.colors.primary
+                )
+                BisqGap.VHalf()
                 Row(modifier = Modifier.padding(top = 1.dp)) {
-                    BisqText.smallRegularGrey(text = "@ ")
-                    BisqText.smallRegular(text = item.formattedPrice)
+                    if (item.formattedPrice.length > 18) {
+                        BisqText.xsmallRegularGrey(text = "@ ")
+                        BisqText.xsmallRegular(text = item.formattedPrice)
+                    } else {
+                        BisqText.smallRegularGrey(text = "@ ")
+                        BisqText.smallRegular(text = item.formattedPrice)
+                    }
                 }
-                Row {
-                    BisqText.smallRegular(text = "${item.formattedBaseAmount} BTC")
-                }
-                Row(modifier = Modifier.padding(top = 5.dp)) {
-                    PaymentMethods(
-                        listOf(item.bitcoinSettlementMethod),
-                        listOf(item.fiatPaymentMethod)
-                    )
-                }
+                BisqGap.VQuarter()
+                BtcSatsText(item.formattedBaseAmount)
+                BisqGap.VHalf()
+                PaymentMethods(
+                    listOf(item.bitcoinSettlementMethod),
+                    listOf(item.fiatPaymentMethod)
+                )
             }
         }
     }

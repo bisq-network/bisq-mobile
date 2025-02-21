@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isSell
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
@@ -38,8 +39,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UpIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfile
-import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxStyle
-import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
+import network.bisq.mobile.presentation.ui.components.molecules.info.*
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
@@ -115,13 +115,27 @@ fun TradeDetailsComposable() {
 
             BisqGap.VHalf()
 
-            InfoRow(
-                style = InfoBoxStyle.Style2,
-                label1 = presenter.leftAmountDescription,
-                value1 = "${presenter.leftAmount} ${presenter.leftCode}",
-                label2 = presenter.rightAmountDescription,
-                value2 = "${presenter.rightAmount} ${presenter.rightCode}",
-            )
+            InfoRowContainer {
+                if (presenter.directionEnum.isSell) {
+                    InfoBoxSats(
+                        label = presenter.leftAmountDescription,
+                        value = presenter.leftAmount,
+                    )
+                    InfoBox(
+                        label = presenter.rightAmountDescription,
+                        value = "${presenter.rightAmount} ${presenter.rightCode}",
+                    )
+                } else {
+                    InfoBox(
+                        label = presenter.leftAmountDescription,
+                        value = "${presenter.leftAmount} ${presenter.leftCode}",
+                    )
+                    InfoBoxSats(
+                        label = presenter.rightAmountDescription,
+                        value = presenter.rightAmount,
+                    )
+                }
+            }
 
             AnimatedVisibility(
                 visible = showDetails,

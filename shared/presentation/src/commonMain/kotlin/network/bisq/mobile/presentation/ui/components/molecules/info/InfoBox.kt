@@ -39,8 +39,10 @@ fun InfoBox(
         //    ... them (Amount to Pay, Amount to Receive) take 2 rows in CreateOfferReviewScreen
         {
             when (valueType) {
-                InfoBoxValueType.BoldValue -> if (style == InfoBoxStyle.Style1) BisqText.h6Regular(text = value)
-                else (BisqText.baseRegular(text = value))
+                InfoBoxValueType.BoldValue -> if (style == InfoBoxStyle.Style1)
+                    BisqText.h6Regular(text = value)
+                else
+                    BisqText.baseRegular(text = value)
                 InfoBoxValueType.SmallValue -> BisqText.baseRegular(text = value)
                 InfoBoxValueType.TitleSmall -> BisqText.h4Regular(text = value)
             }

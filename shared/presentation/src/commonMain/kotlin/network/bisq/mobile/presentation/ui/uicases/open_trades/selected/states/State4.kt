@@ -27,7 +27,7 @@ fun State4(
 
     val tradeItemModel = presenter.selectedTrade.value
     val quoteAmount = tradeItemModel?.quoteAmountWithCode ?: ""
-    val baseAmount = tradeItemModel?.baseAmountWithCode ?: ""
+    val baseAmount = tradeItemModel?.formattedBaseAmount ?: ""
     val showCloseTradeDialog = presenter.showCloseTradeDialog.collectAsState().value
 
     Column {
@@ -46,17 +46,32 @@ fun State4(
 
         Column {
             BisqGap.V2()
-            BisqTextField(
-                label = "bisqEasy.tradeCompleted.header.myDirection.seller".i18n(), // I sold
-                value = baseAmount,
-                disabled = true
-            )
-            BisqGap.VHalf()
-            BisqTextField(
-                label = "bisqEasy.tradeCompleted.header.myOutcome.seller".i18n(), // I paid
-                value = quoteAmount,
-                disabled = true
-            )
+
+            if (tradeItemModel?.bisqEasyTradeModel?.isSeller == true) {
+                BtcSatsText(
+                    baseAmount,
+                    label = "bisqEasy.tradeCompleted.header.myDirection.seller".i18n(), // I sold
+                    style = BtcSatsStyle.TextField
+                )
+                BisqGap.VHalf()
+                BisqTextField(
+                    label = "bisqEasy.tradeCompleted.header.myOutcome.seller".i18n(), // I paid
+                    value = quoteAmount,
+                    disabled = true
+                )
+            } else {
+                BisqTextField(
+                    label = "bisqEasy.tradeCompleted.header.myOutcome.buyer".i18n(), // I paid
+                    value = quoteAmount,
+                    disabled = true
+                )
+                BisqGap.VHalf()
+                BtcSatsText(
+                    baseAmount,
+                    label = "bisqEasy.tradeCompleted.header.myDirection.buyer".i18n(), // I bought
+                    style = BtcSatsStyle.TextField
+                )
+            }
 
             BisqGap.V2()
             Row(

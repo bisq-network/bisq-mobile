@@ -8,13 +8,14 @@ import network.bisq.mobile.presentation.ui.components.atoms.FontSize
 fun InfoBoxSats(
     label: String,
     value: String,
+    fontSize: FontSize = FontSize.H6,
     rightAlign: Boolean = false,
 ) {
     InfoBox(
         label = label,
         rightAlign = rightAlign,
         valueComposable = {
-            BtcSatsText(value, FontSize.H6)
+            BtcSatsText(value, fontSize = fontSize)
         }
     )
 }
