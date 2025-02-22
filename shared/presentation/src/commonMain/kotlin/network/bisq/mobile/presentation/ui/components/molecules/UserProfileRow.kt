@@ -23,39 +23,30 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun UserProfile2(
+fun UserProfileRow(
     user: UserProfileVO,
-    reputation: StateFlow<ReputationScoreVO>,
-    supportedLanguageCodes: List<String>,
+    reputation: ReputationScoreVO,
     showUserName: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    val fiveSystemScore: Double = reputation.collectAsState().value.fiveSystemScore
+    val fiveSystemScore = reputation.fiveSystemScore
 
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+        verticalAlignment = Alignment.CenterVertically
     ) {
         Image(
             painterResource(Res.drawable.img_bot_image), "",
-            modifier = Modifier.size(BisqUIConstants.ScreenPadding3X)
+            modifier = Modifier.size(36.dp)
         )
-        BisqGap.V1()
-        Column() {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             if (showUserName) {
                 BisqText.baseRegular(
                     text = user.userName,
                     singleLine = true,
                 )
-                BisqGap.VQuarter()
             }
             StarRating(fiveSystemScore)
-        }
-        BisqGap.V2()
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            LanguageIcon()
-            BisqText.smallRegularGrey(text = " : ")
-            BisqText.smallRegular(text = supportedLanguageCodes.joinToString(", ").uppercase())
         }
     }
 }

@@ -39,6 +39,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UpIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfile
+import network.bisq.mobile.presentation.ui.components.molecules.UserProfileRow
 import network.bisq.mobile.presentation.ui.components.molecules.info.*
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -109,7 +110,11 @@ fun TradeDetailsComposable() {
 
                     BisqGap.H1()
 
-                    UserProfile(item.peersUserProfile)
+                    UserProfileRow(
+                        item.peersUserProfile,
+                        item.peersReputationScore,
+                        true
+                    )
                 }
             }
 

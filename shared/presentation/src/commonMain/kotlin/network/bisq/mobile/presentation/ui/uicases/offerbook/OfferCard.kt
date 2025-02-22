@@ -28,7 +28,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqVDivider
 import network.bisq.mobile.presentation.ui.components.molecules.PaymentMethods
-import network.bisq.mobile.presentation.ui.components.molecules.UserProfile2
+import network.bisq.mobile.presentation.ui.components.molecules.UserProfile
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -79,7 +79,7 @@ fun OfferCard(
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.Start
     ) {
-        UserProfile2(
+        UserProfile(
             item.makersUserProfile,
             item.makersReputationScore,
             item.bisqEasyOffer.supportedLanguageCodes,

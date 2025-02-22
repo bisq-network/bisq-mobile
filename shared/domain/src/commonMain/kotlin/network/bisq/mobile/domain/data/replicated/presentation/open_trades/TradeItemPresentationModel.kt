@@ -37,6 +37,7 @@ class TradeItemPresentationModel(tradeItemPresentationDto: TradeItemPresentation
     val myUserProfile = if (bisqEasyTradeModel.isMaker) makerUserProfile else takerUserProfile
     val myUserName = myUserProfile.userName
     val peersUserProfile = if (bisqEasyTradeModel.isMaker) takerUserProfile else makerUserProfile
+    val peersReputationScore = tradeItemPresentationDto.peersReputationScore
     val peersUserName = peersUserProfile.userName
     val mediator = bisqEasyTradeModel.contract.mediator
     val mediatorUserName = mediator?.userName

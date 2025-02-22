@@ -22,6 +22,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.PaymentMethods
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfile
+import network.bisq.mobile.presentation.ui.components.molecules.UserProfileRow
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -50,7 +51,11 @@ fun OpenTradeListItem(
                     text = item.directionalTitle.uppercase().replace(":", ""), // 'Buying from:' or 'Selling to:'
                 )
                 Row(modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)) {
-                    UserProfile(item.peersUserProfile)
+                    UserProfileRow(
+                        item.peersUserProfile,
+                        item.peersReputationScore,
+                        true
+                    )
                 }
                 BisqText.smallLightGrey(text = "${item.formattedDate} ${item.formattedTime}")
                 BisqText.smallLightGrey(text = "Trade ID: ${item.shortTradeId}")
