@@ -28,6 +28,7 @@ open class MainPresenter(
     companion object {
         // TODO based on this flag show user a modal explaining internal crash, devs reporte,d with a button to quit the app
         val _systemCrashed = MutableStateFlow(false)
+        val _genericErrorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
 
         @JvmStatic
         fun init() {

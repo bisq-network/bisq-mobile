@@ -106,6 +106,11 @@ open class CreateProfilePresenter(
                 }.onFailure { e ->
                     // TODO give user feedback (we could have a general error screen covering usual
                     //  issues like connection issues and potential solutions)
+                    // Depending on error type,
+                    //  * show either Snackbar (for excepected issues) or
+                    //  * ReportBugPanel for unknown critical issues
+                    // define Exception handling framework, to take care of this.
+                    MainPresenter._genericErrorMessage.value = "onCreateAndPublishNewUserProfile failed" + e
                     log.e("onCreateAndPublishNewUserProfile failed", e)
                 }
             }
@@ -139,6 +144,7 @@ open class CreateProfilePresenter(
             }.onFailure { e ->
                 // TODO give user feedback (we could have a general error screen covering usual
                 //  issues like connection issues and potential solutions)
+                MainPresenter._genericErrorMessage.value = "generateKeyPair failed: " + e
                 log.e("generateKeyPair failed", e)
             }
         }

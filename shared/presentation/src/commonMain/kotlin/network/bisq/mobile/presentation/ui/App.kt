@@ -44,7 +44,7 @@ fun App() {
     val tabNavController = rememberNavController()
     var isNavControllerSet by remember { mutableStateOf(false) }
     val presenter: AppPresenter = koinInject()
-    val errorMessage = presenter.genericErrorMessage.collectAsState().value
+    val errorMessage = MainPresenter._genericErrorMessage.collectAsState().value
     val systemCrashed = MainPresenter._systemCrashed.collectAsState().value
 
     RememberPresenterLifecycle(presenter, {

@@ -410,7 +410,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     override fun onCloseGenericErrorPanel() {
-        _genericErrorMessage.value = null
+        MainPresenter._genericErrorMessage.value = null
     }
 
     override fun navigateToReportError() {
