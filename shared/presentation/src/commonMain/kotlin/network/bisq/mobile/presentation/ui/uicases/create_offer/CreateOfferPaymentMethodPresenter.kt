@@ -24,6 +24,9 @@ class CreateOfferPaymentMethodPresenter(
     lateinit var appStrings: AppStrings
 
     override fun onViewAttached() {
+        selectedBaseSidePaymentMethods.value = emptySet()
+        selectedQuoteSidePaymentMethods.value = emptySet()
+
         createOfferModel = createOfferPresenter.createOfferModel
 
         val quoteCurrencyCode = createOfferModel.market!!.quoteCurrencyCode
@@ -42,6 +45,11 @@ class CreateOfferPaymentMethodPresenter(
         // availableQuoteSidePaymentMethods = createOfferModel.availableQuoteSidePaymentMethods.subList(0, 3)  // for dev testing to avoid scroll
         availableQuoteSidePaymentMethods = createOfferModel.availableQuoteSidePaymentMethods
         availableBaseSidePaymentMethods = createOfferModel.availableBaseSidePaymentMethods
+    }
+
+    override fun onViewUnattaching() {
+        dismissSnackbar()
+        super.onViewUnattaching()
     }
 
     fun getQuoteSidePaymentMethodsImagePaths(): List<String> {
@@ -77,6 +85,14 @@ class CreateOfferPaymentMethodPresenter(
         if (isValid()) {
             commitToModel()
             navigateTo(Routes.CreateOfferReviewOffer)
+        } else {
+            if (selectedQuoteSidePaymentMethods.value.isEmpty() && selectedBaseSidePaymentMethods.value.isEmpty()) {
+                showSnackbar("Please select both payment and settlement methods")
+            } else if (selectedQuoteSidePaymentMethods.value.isEmpty()) {
+                showSnackbar("Please select a payment method")
+            } else if (selectedBaseSidePaymentMethods.value.isEmpty()) {
+                showSnackbar("Please select a settlement method")
+            }
         }
     }
 

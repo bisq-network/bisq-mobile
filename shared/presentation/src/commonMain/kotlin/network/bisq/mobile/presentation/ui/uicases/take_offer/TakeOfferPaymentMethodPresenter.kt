@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -20,6 +21,8 @@ class TakeOfferPaymentMethodPresenter(
     private lateinit var takeOfferModel: TakeOfferPresenter.TakeOfferModel
 
     override fun onViewAttached() {
+        quoteSidePaymentMethod = null
+        baseSidePaymentMethod = null
         takeOfferModel = takeOfferPresenter.takeOfferModel
         hasMultipleQuoteSidePaymentMethods = takeOfferModel.hasMultipleQuoteSidePaymentMethods
         hasMultipleBaseSidePaymentMethods = takeOfferModel.hasMultipleBaseSidePaymentMethods
@@ -34,6 +37,11 @@ class TakeOfferPaymentMethodPresenter(
             baseSidePaymentMethod = offerListItem.baseSidePaymentMethods[0]
         }
         quoteCurrencyCode = offerListItem.bisqEasyOffer.market.quoteCurrencyCode
+    }
+
+    override fun onViewUnattaching() {
+        dismissSnackbar()
+        super.onViewUnattaching()
     }
 
     fun onQuoteSidePaymentMethodSelected(paymentMethod: String) {
@@ -54,7 +62,13 @@ class TakeOfferPaymentMethodPresenter(
             commitToModel()
             navigateTo(Routes.TakeOfferReviewTrade)
         } else {
-            //TODO show user feedback if one or both are not selected.
+            if (quoteSidePaymentMethod == null && baseSidePaymentMethod == null) {
+                showSnackbar("Please select both payment and settlement methods")
+            } else if (quoteSidePaymentMethod == null) {
+                showSnackbar("Please select a payment method")
+            } else if (baseSidePaymentMethod == null) {
+                showSnackbar("Please select a settlement method")
+            }
             // Note the data is set at the service layer, so if there is only one payment method we
             // have it set at the service. We do not need to check here if we have the multiple options.
         }

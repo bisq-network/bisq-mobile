@@ -50,7 +50,8 @@ fun TakeOfferPaymentMethodScreen() {
         stepIndex = 2,
         stepsLength = 3,
         prevOnClick = { presenter.onBack() },
-        nextOnClick = { presenter.onNext() }
+        nextOnClick = { presenter.onNext() },
+        snackbarHostState = presenter.getSnackState()
     ) {
 
         BisqText.h3Regular(text = strings.bisqEasy_takeOffer_paymentMethods_headline_fiatAndBitcoin)

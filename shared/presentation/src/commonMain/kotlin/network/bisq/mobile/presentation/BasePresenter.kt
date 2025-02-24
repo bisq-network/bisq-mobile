@@ -50,6 +50,7 @@ interface ViewPresenter {
     fun getSnackState(): SnackbarHostState
 
     fun showSnackbar(message: String, isError: Boolean = true)
+    fun dismissSnackbar()
 
     /**
      * @return true if user is in home tab, false otherwise
@@ -118,6 +119,12 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     override fun showSnackbar(message: String, isError: Boolean) {
         uiScope.launch(Dispatchers.Main) {
             snackbarHostState.showSnackbar(message, withDismissAction = true)
+        }
+    }
+
+    override fun dismissSnackbar() {
+        uiScope.launch(Dispatchers.Main) {
+            snackbarHostState.currentSnackbarData?.dismiss()
         }
     }
 
