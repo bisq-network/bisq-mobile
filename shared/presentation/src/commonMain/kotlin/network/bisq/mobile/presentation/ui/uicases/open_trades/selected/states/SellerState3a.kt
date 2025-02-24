@@ -54,7 +54,7 @@ fun SellerState3a(
             )
             BisqText.baseRegularGrey(
                 // I confirmed to have received {0}
-                text = "bisqEasy.tradeState.info.seller.phase3a.fiatPaymentReceivedCheckBox".i18n(quoteAmount),
+                "bisqEasy.tradeState.info.seller.phase3a.fiatPaymentReceivedCheckBox".i18n(quoteAmount),
             )
         }
 
@@ -69,7 +69,6 @@ fun SellerState3a(
         BisqText.h5Light("to the buyer") // TODO:i18n
 
         BisqGap.VHalf()
-        // todo add copy icon
         BisqTextField(
             // Amount to send
             label = "bisqEasy.tradeState.info.seller.phase3a.baseAmount".i18n(),
@@ -79,7 +78,6 @@ fun SellerState3a(
         )
 
         BisqGap.VHalf()
-        // todo add copy icon
         BisqTextField(
             // Bitcoin address / Lightning invoice
             label = bitcoinPaymentDescription,
@@ -91,7 +89,7 @@ fun SellerState3a(
         BisqGap.V1()
         BisqText.baseRegularGrey(
             // Fill in the Bitcoin transaction ID / Fill in the preimage if available
-            text = paymentProofPrompt,
+            paymentProofPrompt,
         )
 
         BisqGap.VHalf()
@@ -109,10 +107,6 @@ fun SellerState3a(
             text = "bisqEasy.tradeState.info.seller.phase3a.btcSentButton".i18n(baseAmount),
             onClick = { presenter.onConfirmedBtcSent() },
             disabled = buttonEnabled.not(),
-            padding = PaddingValues(
-                horizontal = 18.dp,
-                vertical = 6.dp
-            )
         )
     }
 }

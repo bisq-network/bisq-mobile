@@ -36,13 +36,13 @@ fun BuyerState2b(
                 isLoading = true
             )
             // Wait for the seller to confirm receipt of payment
-            BisqText.h5Light(text = "bisqEasy.tradeState.info.buyer.phase2b.headline".i18n(quoteCurrencyCode))
+            BisqText.h5Light("bisqEasy.tradeState.info.buyer.phase2b.headline".i18n(quoteCurrencyCode))
         }
         Column {
             BisqGap.V2()
             BisqText.baseLightGrey(
                 // Once the seller has received your payment of {0}, they will start the Bitcoin transfer to your provided {1}.
-                text = "bisqEasy.tradeState.info.buyer.phase2b.info".i18n(quoteAmountWithCode, bitcoinPaymentData),
+                "bisqEasy.tradeState.info.buyer.phase2b.info".i18n(quoteAmountWithCode, bitcoinPaymentData),
             )
         }
     }

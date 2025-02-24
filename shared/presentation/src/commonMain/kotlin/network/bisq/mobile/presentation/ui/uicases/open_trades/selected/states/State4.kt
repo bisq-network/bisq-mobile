@@ -41,7 +41,7 @@ fun State4(
                 isLoading = true
             )
             // Trade was successfully completed
-            BisqText.h5Light(text = "bisqEasy.tradeCompleted.title".i18n())
+            BisqText.h5Light("bisqEasy.tradeCompleted.title".i18n())
         }
 
         Column {
@@ -82,19 +82,10 @@ fun State4(
                     text = "bisqEasy.tradeState.info.phase4.exportTrade".i18n(), // Export trade data
                     type = BisqButtonType.Grey,
                     onClick = { presenter.onExportTradeDate() },
-                    padding = PaddingValues(
-                        horizontal = 18.dp,
-                        vertical = 6.dp
-                    ),
-                    color = BisqTheme.colors.light1,
                 )
                 BisqButton(
                     text = "bisqEasy.tradeState.info.phase4.leaveChannel".i18n(), // Close trade
                     onClick = { presenter.onCloseTrade() },
-                    padding = PaddingValues(
-                        horizontal = 18.dp,
-                        vertical = 6.dp
-                    )
                 )
             }
 

@@ -15,10 +15,7 @@ import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.trade_bitcoin_confirmation
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
-import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
+import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -41,8 +38,10 @@ fun SellerStateMainChain3b(
     val blockExplorer by presenter.blockExplorer.collectAsState()
     val tradeItemModel = presenter.selectedTrade.value!!
     val txId = tradeItemModel.bisqEasyTradeModel.paymentProof.value ?: "data.na".i18n()
-    val waitingText = "bisqEasy.tradeState.info.seller.phase3b.balance.prompt".i18n(txId)  // Waiting for blockchain data...
+    val waitingText =
+        "bisqEasy.tradeState.info.seller.phase3b.balance.prompt".i18n(txId)  // Waiting for blockchain data...
     val balanceLabel = "bisqEasy.tradeState.info.seller.phase3b.balance".i18n() // Bitcoin payment
+    val skip by presenter.skip.collectAsState()
     Column {
         BisqGap.V1()
         Row(
@@ -54,19 +53,17 @@ fun SellerStateMainChain3b(
                 isLoading = true
             )
             // Waiting for blockchain confirmation
-            BisqText.h5Light(text = "bisqEasy.tradeState.info.seller.phase3b.headline.MAIN_CHAIN".i18n())
+            BisqText.h5Light("bisqEasy.tradeState.info.seller.phase3b.headline.MAIN_CHAIN".i18n())
         }
 
         Column {
             BisqGap.V1()
             BisqText.baseLightGrey(
                 // The Bitcoin payment require at least 1 blockchain confirmation to be considered complete.
-                text = "bisqEasy.tradeState.info.seller.phase3b.info.MAIN_CHAIN".i18n(),
+                "bisqEasy.tradeState.info.seller.phase3b.info.MAIN_CHAIN".i18n(),
             )
 
             BisqGap.V1()
-            // todo add copy icon.
-            // buddha: Copy icon added
             BisqTextField(
                 // Transaction ID
                 label = "bisqEasy.tradeState.info.phase3b.txId".i18n(),
@@ -130,14 +127,10 @@ fun SellerStateMainChain3b(
             }
 
             BisqGap.V1()
-            //todo if skip is set we use grey button style
             BisqButton(
                 text = buttonText,
+                type = if (skip) BisqButtonType.Grey else BisqButtonType.Default,
                 onClick = { presenter.onCompleteTrade() },
-                padding = PaddingValues(
-                    horizontal = 18.dp,
-                    vertical = 6.dp
-                )
             )
         }
     }

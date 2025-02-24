@@ -23,12 +23,12 @@ fun SellerState2b(
         BisqGap.V1()
         BisqGap.VHalf()
         // Check if you have received {0}
-        BisqText.h5Light(text = "bisqEasy.tradeState.info.seller.phase2b.headline".i18n(quoteAmountWithCode))
+        BisqText.h5Light("bisqEasy.tradeState.info.seller.phase2b.headline".i18n(quoteAmountWithCode))
 
         BisqGap.V1()
         BisqText.baseLightGrey(
             // Visit your bank account or payment provider app to confirm receipt of the buyer's payment.
-            text = "bisqEasy.tradeState.info.seller.phase2b.info".i18n(quoteAmountWithCode),
+            "bisqEasy.tradeState.info.seller.phase2b.info".i18n(quoteAmountWithCode),
         )
 
         BisqGap.V1()
@@ -36,10 +36,6 @@ fun SellerState2b(
             // Confirm receipt of {0}
             text = "bisqEasy.tradeState.info.seller.phase2b.fiatReceivedButton".i18n(quoteAmountWithCode),
             onClick = { presenter.onConfirmFiatReceipt() },
-            padding = PaddingValues(
-                horizontal = 18.dp,
-                vertical = 6.dp
-            )
         )
     }
 }

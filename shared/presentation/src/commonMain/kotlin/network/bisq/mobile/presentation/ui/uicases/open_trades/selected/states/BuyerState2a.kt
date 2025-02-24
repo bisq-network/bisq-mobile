@@ -25,10 +25,9 @@ fun BuyerState2a(
     Column(horizontalAlignment = Alignment.Start) {
         BisqGap.V1()
         // Send {0} to the seller''s payment account
-        BisqText.h5Light(text = "bisqEasy.tradeState.info.buyer.phase2a.headline".i18n(quoteAmount))
+        BisqText.h5Light("bisqEasy.tradeState.info.buyer.phase2a.headline".i18n(quoteAmount))
 
         BisqGap.VHalf()
-        // todo add copy icon
         BisqTextField(
             // Amount to transfer
             label = "bisqEasy.tradeState.info.buyer.phase2a.quoteAmount".i18n(),
@@ -38,7 +37,6 @@ fun BuyerState2a(
         )
 
         BisqGap.VHalf()
-        // todo add copy icon
         BisqTextField(
             // Payment account of seller
             label = "bisqEasy.tradeState.info.buyer.phase2a.sellersAccount".i18n(),
@@ -54,10 +52,6 @@ fun BuyerState2a(
             // Confirm payment of {0}
             text = "bisqEasy.tradeState.info.buyer.phase2a.confirmFiatSent".i18n(quoteAmount),
             onClick = { presenter.onConfirmFiatSent() },
-            padding = PaddingValues(
-                horizontal = 18.dp,
-                vertical = 6.dp
-            )
         )
     }
 }

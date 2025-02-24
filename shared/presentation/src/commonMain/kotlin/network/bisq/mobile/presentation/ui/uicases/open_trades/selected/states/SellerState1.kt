@@ -24,11 +24,11 @@ fun SellerState1(
 
     Column {
         BisqGap.V1()
-        BisqText.h5Light(text = "bisqEasy.tradeState.info.seller.phase1.headline".i18n()) // Send your payment account data to the buyer
+        BisqText.h5Light("bisqEasy.tradeState.info.seller.phase1.headline".i18n()) // Send your payment account data to the buyer
 
         BisqGap.V1()
         BisqText.baseLightGrey(
-            text = "bisqEasy.tradeState.info.seller.phase1.accountData.prompt".i18n(), // Fill in your payment account data. E.g. IBAN, BIC and account owner name
+            "bisqEasy.tradeState.info.seller.phase1.accountData.prompt".i18n(), // Fill in your payment account data. E.g. IBAN, BIC and account owner name
         )
 
         BisqGap.V1()
@@ -58,10 +58,6 @@ fun SellerState1(
             text = "bisqEasy.tradeState.info.seller.phase1.buttonText".i18n(), // Send account data
             onClick = { presenter.onSendPaymentData() },
             disabled = !presenter.paymentAccountDataValid.collectAsState().value,
-            padding = PaddingValues(
-                horizontal = 18.dp,
-                vertical = 6.dp
-            )
         )
     }
 }

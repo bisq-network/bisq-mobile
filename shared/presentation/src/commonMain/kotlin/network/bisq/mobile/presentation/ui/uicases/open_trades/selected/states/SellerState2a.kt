@@ -34,13 +34,13 @@ fun SellerState2a(
                 image = Res.drawable.trade_fiat_payment,
                 isLoading = true
             )
-            BisqText.h5Light(text = "bisqEasy.tradeState.info.seller.phase2a.waitForPayment.headline".i18n(quoteCurrencyCode))
+            BisqText.h5Light("bisqEasy.tradeState.info.seller.phase2a.waitForPayment.headline".i18n(quoteCurrencyCode))
         }
         Column {
             BisqGap.V2()
             BisqText.baseLightGrey(
                 // Once the buyer has initiated the payment of {0}, you will get notified.
-                text = "bisqEasy.tradeState.info.seller.phase2a.waitForPayment.info".i18n(quoteAmountWithCode),
+                "bisqEasy.tradeState.info.seller.phase2a.waitForPayment.info".i18n(quoteAmountWithCode),
             )
         }
     }

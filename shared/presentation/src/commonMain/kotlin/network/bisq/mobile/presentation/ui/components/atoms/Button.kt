@@ -40,7 +40,7 @@ fun BisqButton(
     backgroundColor: Color = BisqTheme.colors.primary,
     fullWidth: Boolean = false,
     padding: PaddingValues = PaddingValues(
-        horizontal = BisqUIConstants.ScreenPadding4X,
+        horizontal = BisqUIConstants.ScreenPadding2X,
         vertical = BisqUIConstants.ScreenPaddingHalf
     ),
     iconOnly: (@Composable () -> Unit)? = null,
@@ -57,12 +57,12 @@ fun BisqButton(
 ) {
 
     val enabled = !disabled && !isLoading
-
+    val grey2 = BisqTheme.colors.grey2
 
     val finalBackgroundColor = when (type) {
-        BisqButtonType.Default -> if(disabled) backgroundColor.copy(alpha = 0.75F) else backgroundColor
-        BisqButtonType.Grey -> if(disabled) BisqTheme.colors.dark5.copy(alpha = 0.75F) else BisqTheme.colors.dark5
-        BisqButtonType.Danger -> if(disabled) BisqTheme.colors.danger.copy(alpha = 0.75F) else BisqTheme.colors.danger
+        BisqButtonType.Default -> if (disabled) backgroundColor.copy(alpha = 0.75F) else backgroundColor
+        BisqButtonType.Grey -> if (disabled) BisqTheme.colors.dark5.copy(alpha = 0.75F) else BisqTheme.colors.dark5
+        BisqButtonType.Danger -> if (disabled) BisqTheme.colors.danger.copy(alpha = 0.75F) else BisqTheme.colors.danger
         BisqButtonType.Outline -> Color.Transparent
         BisqButtonType.Clear -> Color.Transparent
     }
@@ -75,10 +75,13 @@ fun BisqButton(
         BisqButtonType.Clear -> null
     }
 
-    val finalContentColor = if (disabled)
-        BisqTheme.colors.grey2
-    else
-        color
+    val finalContentColor = when (type) {
+        BisqButtonType.Default -> if (disabled) grey2 else color
+        BisqButtonType.Grey -> if (disabled) grey2 else color
+        BisqButtonType.Danger -> if (disabled) grey2 else color
+        BisqButtonType.Outline -> if (disabled) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
+        BisqButtonType.Clear -> if (disabled) grey2 else color
+    }
 
     Button(
         onClick = { onClick?.invoke() },

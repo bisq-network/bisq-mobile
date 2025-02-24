@@ -28,13 +28,13 @@ fun BuyerState1b(
                 isLoading = true
             )
             // Wait for the seller's payment account data
-            BisqText.h5Light(text = "bisqEasy.tradeState.info.buyer.phase1b.headline".i18n())
+            BisqText.h5Light("bisqEasy.tradeState.info.buyer.phase1b.headline".i18n())
         }
         Column {
             BisqGap.V2()
             BisqText.baseLightGrey(
                 // You can use the chat below for getting in touch with the seller.
-                text = "bisqEasy.tradeState.info.buyer.phase1b.info".i18n(),
+                "bisqEasy.tradeState.info.buyer.phase1b.info".i18n(),
             )
         }
     }

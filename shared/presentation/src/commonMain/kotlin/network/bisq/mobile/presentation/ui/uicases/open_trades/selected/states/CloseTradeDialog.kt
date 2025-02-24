@@ -31,18 +31,10 @@ fun CloseTradeDialog(
                 text = "action.cancel".i18n(),
                 type = BisqButtonType.Grey,
                 onClick = onDismissCloseTrade,
-                padding = PaddingValues(
-                    horizontal = BisqUIConstants.ScreenPadding,
-                    vertical = BisqUIConstants.ScreenPaddingHalf
-                )
             )
             BisqButton(
                 text = "bisqEasy.openTrades.confirmCloseTrade".i18n(),
                 onClick = onConfirmCloseTrade,
-                padding = PaddingValues(
-                    horizontal = BisqUIConstants.ScreenPadding,
-                    vertical = BisqUIConstants.ScreenPaddingHalf
-                )
             )
         }
     }

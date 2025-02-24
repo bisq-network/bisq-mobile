@@ -44,13 +44,17 @@ class BuyerStateMainChain3bPresenter(
     private val _errorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
     val errorMessage: StateFlow<String?> = _errorMessage
 
+    private val _skip: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val skip: StateFlow<Boolean> = _skip
+
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     override fun onViewAttached() {
-        _buttonText.value = if (txConfirmationState.value == CONFIRMED) {
-            "bisqEasy.tradeState.info.phase3b.button.next".i18n()
+       if (txConfirmationState.value == CONFIRMED) {
+             _buttonText.value = "bisqEasy.tradeState.info.phase3b.button.next".i18n()
         } else {
-            "bisqEasy.tradeState.info.phase3b.button.skip".i18n()
+             _buttonText.value = "bisqEasy.tradeState.info.phase3b.button.skip".i18n()
+            _skip.value = true
         }
 
         if (txConfirmationState.value == IDLE) {

@@ -36,6 +36,7 @@ fun TakeOfferSuccessDialog(
             "bisqEasy.takeOffer.review.takeOfferSuccessButton".i18n(),
             padding = PaddingValues(all = BisqUIConstants.ScreenPadding),
             onClick = onShowTrades,
+            fullWidth = true,
         )
     }
 }

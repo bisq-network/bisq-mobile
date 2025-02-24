@@ -34,14 +34,14 @@ fun SellerStateLightning3b(
                 isLoading = true
             )
             // Wait for buyer confirming Bitcoin receipt
-            BisqText.h5Light(text = "bisqEasy.tradeState.info.seller.phase3b.headline.ln".i18n())
+            BisqText.h5Light("bisqEasy.tradeState.info.seller.phase3b.headline.ln".i18n())
         }
 
         Column {
             BisqGap.V1()
             BisqText.baseLightGrey(
                 // Transfers via the Lightning Network are usually near-instant and reliable....
-                text = "bisqEasy.tradeState.info.seller.phase3b.info.ln".i18n(),
+                "bisqEasy.tradeState.info.seller.phase3b.info.ln".i18n(),
             )
 
             BisqGap.V1()
@@ -49,10 +49,6 @@ fun SellerStateLightning3b(
                 // Complete trade
                 text = "bisqEasy.tradeState.info.seller.phase3b.confirmButton.ln".i18n(),
                 onClick = { presenter.onCompleteTrade() },
-                padding = PaddingValues(
-                    horizontal = 18.dp,
-                    vertical = 6.dp
-                )
             )
         }
     }

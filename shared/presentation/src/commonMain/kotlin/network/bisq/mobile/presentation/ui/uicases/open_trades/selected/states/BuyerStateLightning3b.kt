@@ -38,24 +38,22 @@ fun BuyerStateLightning3b(
                 isLoading = true
             )
             // The seller has sent the Bitcoin via Lightning network
-            BisqText.h5Light(text = "bisqEasy.tradeState.info.buyer.phase3b.headline.ln".i18n())
+            BisqText.h5Light("bisqEasy.tradeState.info.buyer.phase3b.headline.ln".i18n())
         }
         Column {
             BisqGap.V1()
             BisqText.baseLightGrey(
                 // Transfers via the Lightning Network are typically near-instant....
-                text = "bisqEasy.tradeState.info.buyer.phase3b.info.ln".i18n(),
+                "bisqEasy.tradeState.info.buyer.phase3b.info.ln".i18n(),
             )
 
             BisqGap.V1()
             if (preImage != null) {
-                // todo add copy icon
                 BisqTextField(
                     // Preimage
                     label = "bisqEasy.tradeState.info.phase3b.lightning.preimage".i18n(),
                     value = preImage,
                     disabled = true,
-                    showCopy = true
                 )
             }
 
@@ -64,10 +62,6 @@ fun BuyerStateLightning3b(
                 // Confirm receipt
                 text = "bisqEasy.tradeState.info.buyer.phase3b.confirmButton.ln".i18n(),
                 onClick = { presenter.onCompleteTrade() },
-                padding = PaddingValues(
-                    horizontal = 18.dp,
-                    vertical = 6.dp
-                )
             )
         }
     }
