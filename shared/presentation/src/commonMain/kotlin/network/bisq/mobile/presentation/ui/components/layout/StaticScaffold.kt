@@ -28,6 +28,7 @@ fun BisqStaticScaffold(
     fab: @Composable (() -> Unit)? = null,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    isInteractive: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
 
@@ -45,7 +46,8 @@ fun BisqStaticScaffold(
             BisqStaticLayout(
                 padding = if (topBar != null) it else padding,
                 horizontalAlignment = horizontalAlignment,
-                verticalArrangement = verticalArrangement
+                verticalArrangement = verticalArrangement,
+                isInteractive = isInteractive
             ) {
                 // Padding logic:
                 // when topBar is set, Scaffold.content.it provides the padding

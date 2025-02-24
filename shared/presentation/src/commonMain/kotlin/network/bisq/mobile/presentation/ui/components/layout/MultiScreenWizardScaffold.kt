@@ -29,6 +29,7 @@ fun MultiScreenWizardScaffold(
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     useStaticScaffold: Boolean = false,
     snackbarHostState: SnackbarHostState? = null,
+    isInteractive: Boolean = true,
     content: @Composable ColumnScope.() -> Unit
 ) {
 
@@ -49,6 +50,7 @@ fun MultiScreenWizardScaffold(
                 horizontalAlignment = hAlignment,
                 verticalArrangement = verticalArrangement,
                 snackbarHostState = snackState,
+                isInteractive = isInteractive,
                 content = innerContent
             )
         } else { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState, innerContent ->
@@ -59,6 +61,7 @@ fun MultiScreenWizardScaffold(
                 horizontalAlignment = hAlignment,
                 verticalArrangement = verticalArrangement,
                 snackbarHostState = snackState,
+                isInteractive = isInteractive,
                 content = innerContent
             )
         }

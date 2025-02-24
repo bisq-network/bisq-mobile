@@ -88,6 +88,7 @@ open class CreateProfilePresenter(
             // We would never call generateKeyPair while generateKeyPair is not
             // completed, thus we can assign to same job reference
             job = coroutineScope.launch {
+                enableInteractive(false)
                 log.i { "Show busy animation for createAndPublishInProgress" }
                 setCreateAndPublishInProgress(true)
                 runCatching {
@@ -103,6 +104,7 @@ open class CreateProfilePresenter(
                     navigateTo(Routes.TabContainer) {
                         it.popUpTo(Routes.Onboarding.name) { inclusive = true }
                     }
+                    enableInteractive()
                 }.onFailure { e ->
                     // TODO give user feedback (we could have a general error screen covering usual
                     //  issues like connection issues and potential solutions)
@@ -112,6 +114,7 @@ open class CreateProfilePresenter(
                     // define Exception handling framework, to take care of this.
                     MainPresenter._genericErrorMessage.value = "onCreateAndPublishNewUserProfile failed" + e
                     log.e("onCreateAndPublishNewUserProfile failed", e)
+                    enableInteractive()
                 }
             }
         }

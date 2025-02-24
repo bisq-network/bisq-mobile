@@ -2,35 +2,35 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bitcoin_payment_waiting
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
+import network.bisq.mobile.presentation.ui.components.molecules.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
-interface IUserProfileSettingsPresenter: ViewPresenter {
+interface IUserProfileSettingsPresenter : ViewPresenter {
 
     val reputation: StateFlow<String>
     val lastUserActivity: StateFlow<String>
@@ -51,12 +51,14 @@ interface IUserProfileSettingsPresenter: ViewPresenter {
     fun onSave()
     fun updateTradeTerms(it: String)
     fun updateStatement(it: String)
+
+    val showDeleteProfileConfirmation: StateFlow<Boolean>
+    fun setShowDeleteProfileConfirmation(value: Boolean)
 }
 
 @Composable
 fun UserProfileSettingsScreen(showBackNavigation: Boolean = false) {
     val presenter: IUserProfileSettingsPresenter = koinInject()
-
 
     val botId = presenter.botId.collectAsState().value
     val nickname = presenter.nickname.collectAsState().value
@@ -69,15 +71,22 @@ fun UserProfileSettingsScreen(showBackNavigation: Boolean = false) {
 
     val showLoading = presenter.showLoading.collectAsState().value
 
+    val showDeleteConfirmation = presenter.showDeleteProfileConfirmation.collectAsState().value
+
     RememberPresenterLifecycle(presenter)
 
-    Column(modifier = Modifier.fillMaxSize(),
-           horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
 
         // Bot Icon
         UserProfileScreenHeader(presenter, showBackNavigation)
 
-        BisqScrollLayout(onModifier = { modifier -> modifier.weight(1f) }) {
+        BisqScrollLayout(
+            onModifier = { modifier -> modifier.weight(1f) },
+            isInteractive = presenter.isInteractive.collectAsState().value,
+        ) {
             SettingsTextField(label = "Bot ID", value = botId, editable = false)
 
             BisqGap.V1()
@@ -120,9 +129,17 @@ fun UserProfileSettingsScreen(showBackNavigation: Boolean = false) {
                 isTextArea = true,
                 onValueChange = { newValue, isValid -> presenter.updateTradeTerms(newValue) }
             )
+            BisqGap.V1()
+            UserProfileScreenFooter(presenter, showLoading)
         }
-        BisqGap.V1()
-        UserProfileScreenFooter(presenter, showLoading)
+    }
+
+    if (showDeleteConfirmation) {
+        ConfirmationDialog(
+            message = "Are you sure want to delete your profile",
+            onConfirm = presenter::onDelete,
+            onDismiss = { presenter.setShowDeleteProfileConfirmation(false) }
+        )
     }
 }
 
@@ -171,48 +188,34 @@ private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter, sh
 
 @Composable
 private fun UserProfileScreenFooter(presenter: IUserProfileSettingsPresenter, showLoading: Boolean) {
+    val presenter: UserProfileSettingsPresenter = koinInject()
+    val isLoading = presenter.showLoading.collectAsState().value
+
     Row(
         modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        if (showLoading) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier.weight(1f)) {
-                CircularLoadingImage(
-                    // TODO specific image?
-                    image = Res.drawable.img_bitcoin_payment_waiting,
-                    isLoading = !showLoading
-                )
-            }
-        } else {
-            //        TODO uncomment when delete profile gets implemented
-            //        Button(
-            //            onClick = presenter::onDelete,
-            //            colors = ButtonDefaults.buttonColors(
-            //                containerColor = BisqTheme.colors.danger,
-            //                contentColor = BisqTheme.colors.light1
-            //            ),
-            //            modifier = Modifier.weight(1f).wrapContentWidth().padding(horizontal = 8.dp)
-            //        ) {
-            //            Text("Delete profile", fontSize = 14.sp)
-            //        }
-            //
-            //        Spacer(modifier = Modifier.width(16.dp))
-
-            Button(
-                onClick = presenter::onSave,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = BisqTheme.colors.primary,
-                    contentColor = BisqTheme.colors.light1
-                ),
-                // TODO fixed height to match both cases?
-                modifier = Modifier.weight(1f)
-                    .wrapContentWidth()
-                    .padding(horizontal = 8.dp)
-            ) {
-                Text("Save", fontSize = 14.sp)
-            }
-        }
+        // TODO uncomment when delete profile gets implemented
+//        BisqButton(
+//            "Delete profile",
+//            onClick = { presenter.setShowDeleteProfileConfirmation(true) },
+//            disabled = isLoading,
+//            type = BisqButtonType.Danger,
+//            modifier = Modifier.weight(1.0F),
+//            padding = PaddingValues(
+//                horizontal = BisqUIConstants.ScreenPadding,
+//                vertical = BisqUIConstants.ScreenPaddingHalf
+//            )
+//        )
+//        BisqGap.H1()
+        BisqButton(
+            "Save",
+            onClick = presenter::onSave,
+            isLoading = isLoading,
+            modifier = Modifier.weight(1.0F),
+            padding = PaddingValues(
+                horizontal = BisqUIConstants.ScreenPadding,
+                vertical = BisqUIConstants.ScreenPaddingHalf
+            )
+        )
     }
 }

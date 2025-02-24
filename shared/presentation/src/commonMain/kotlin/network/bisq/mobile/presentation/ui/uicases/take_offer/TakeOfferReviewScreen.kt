@@ -45,7 +45,8 @@ fun TakeOfferReviewTradeScreen() {
         prevOnClick = { presenter.onBack() },
         nextButtonText = stringsBisqEasy.bisqEasy_takeOffer_review_takeOffer,
         nextOnClick = { presenter.onTakeOffer() },
-        snackbarHostState = presenter.getSnackState()
+        snackbarHostState = presenter.getSnackState(),
+        isInteractive = presenter.isInteractive.collectAsState().value,
     ) {
         BisqText.h3Regular(text = stringsBisqEasy.bisqEasy_takeOffer_progress_review)
         BisqGap.V2()

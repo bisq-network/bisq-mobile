@@ -48,6 +48,12 @@ class UserProfileSettingsPresenter(
     private val _showLoading = MutableStateFlow(false)
     override val showLoading: StateFlow<Boolean> = _showLoading
 
+    private val _showDeleteOfferConfirmation = MutableStateFlow(false)
+    override val showDeleteProfileConfirmation: StateFlow<Boolean> get() = _showDeleteOfferConfirmation
+    override fun setShowDeleteProfileConfirmation(value: Boolean) {
+        _showDeleteOfferConfirmation.value = value
+    }
+
     override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> = connectivityService.status
 
     override fun onViewAttached() {
@@ -112,6 +118,7 @@ class UserProfileSettingsPresenter(
 
     override fun onSave() {
         backgroundScope.launch {
+            enableInteractive(false)
             setShowLoading(true)
             try {
                 userRepository.fetch()!!.let {
@@ -125,6 +132,7 @@ class UserProfileSettingsPresenter(
                 log.e(e) { "Failed to save user profile settings" }
             } finally {
                 setShowLoading(false)
+                enableInteractive(true)
             }
         }
     }
