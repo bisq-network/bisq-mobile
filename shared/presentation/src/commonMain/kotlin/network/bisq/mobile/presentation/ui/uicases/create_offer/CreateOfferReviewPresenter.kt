@@ -113,10 +113,12 @@ class CreateOfferReviewPresenter(
 
     fun onCreateOffer() {
         backgroundScope.launch {
+            enableInteractive(false)
             // TODO deactivate buttons, show waiting state
             createOfferPresenter.createOffer()
             // TODO hide waiting state, show successfully published state, show button to open offer book, clear navigation backstack
             onGoToOfferList()
+            enableInteractive()
         }
     }
 

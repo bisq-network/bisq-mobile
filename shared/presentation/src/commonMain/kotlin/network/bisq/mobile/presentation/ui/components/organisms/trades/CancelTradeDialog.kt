@@ -30,7 +30,8 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun CancelTradeDialog(
     onCancelConfirm: () -> Unit,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    isRejection: Boolean,
 ) {
     val strings = LocalStrings.current.bisqEasy
     val stringsApplication = LocalStrings.current.application
@@ -38,15 +39,24 @@ fun CancelTradeDialog(
 
     val isBuyer: Boolean = true
 
-    // TODO: Use this if trade steps is not started yet: bisqEasy_openTrades_rejectTrade_warning
-    val warningText1 = if (isBuyer)
-        strings.bisqEasy_openTrades_cancelTrade_warning_buyer
+    val warningText1 = if (isRejection) {
+        strings.bisqEasy_openTrades_rejectTrade_warning
+    } else {
+        if (isBuyer)
+            strings.bisqEasy_openTrades_cancelTrade_warning_buyer
+        else
+            strings.bisqEasy_openTrades_cancelTrade_warning_seller
+    }
+
+    val warningText2 = if (isRejection)
+        ""
     else
-        strings.bisqEasy_openTrades_cancelTrade_warning_seller
+        strings.bisqEasy_openTrades_cancelTrade_warning_part2
 
-    val warningText2 = strings.bisqEasy_openTrades_cancelTrade_warning_part2
-
-    BisqDialog(horizontalAlignment = Alignment.Start) {
+    BisqDialog(
+        horizontalAlignment = Alignment.Start,
+        marginTop = BisqUIConstants.ScreenPaddingHalf
+    ) {
         Row(
             modifier = Modifier.padding(bottom = BisqUIConstants.ScreenPadding),
             verticalAlignment = Alignment.CenterVertically
@@ -68,14 +78,12 @@ fun CancelTradeDialog(
             BisqButton(
                 text = stringsCommon.common_no,
                 type = BisqButtonType.Grey,
-                onClick = onCancelConfirm,
-                padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
+                onClick = onDismiss,
             )
             BisqGap.H1()
             BisqButton(
                 text = stringsCommon.common_yes,
-                onClick = onDismiss,
-                padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp)
+                onClick = onCancelConfirm,
             )
         }
     }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -40,6 +41,7 @@ fun CreateOfferReviewOfferScreen() {
         prevOnClick = { presenter.onBack() },
         nextButtonText = strings.bisqEasy_tradeWizard_review_nextButton_createOffer,
         nextOnClick = { presenter.onCreateOffer() },
+        isInteractive = presenter.isInteractive.collectAsState().value,
     ) {
         BisqText.h3Regular(text = strings.bisqEasy_tradeWizard_review_headline_maker)
         BisqGap.V2()

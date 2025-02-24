@@ -41,6 +41,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfile
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfileRow
 import network.bisq.mobile.presentation.ui.components.molecules.info.*
+import network.bisq.mobile.presentation.ui.components.organisms.trades.CancelTradeDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
@@ -55,6 +56,8 @@ fun TradeDetailsComposable() {
     val stringsBisqEasy = LocalStrings.current.bisqEasy
     val interruptTradeButtonVisible by presenter.interruptTradeButtonVisible.collectAsState()
     val interruptTradeButtonText by presenter.interruptTradeButtonText.collectAsState()
+    val tradeCloseType by presenter.tradeCloseType.collectAsState()
+    val showInterruptionConfirmationDialog by presenter.showInterruptionConfirmationDialog.collectAsState()
 
     val enterTransition = remember {
         expandVertically(
@@ -182,11 +185,8 @@ fun TradeDetailsComposable() {
                 BisqButton(
                     modifier = Modifier.alpha(buttonAlpha),
                     text = interruptTradeButtonText,
-                    onClick = { presenter.onInterruptTrade() },
+                    onClick = { presenter.setShowInterruptionConfirmationDialog(true) },
                     type = BisqButtonType.Outline,
-                    color = BisqTheme.colors.primary,
-                    borderColor = BisqTheme.colors.primary,
-                    // padding = PaddingValues(horizontal = 70.dp, vertical = 6.dp)
                 )
                 IconButton(onClick = { showDetails = !showDetails }) {
                     //TODO icon is not high resolution
@@ -200,5 +200,13 @@ fun TradeDetailsComposable() {
                 }
             }
         }
+    }
+
+    if (showInterruptionConfirmationDialog) {
+        CancelTradeDialog(
+            onCancelConfirm = { presenter.onInterruptTrade() },
+            onDismiss = { presenter.setShowInterruptionConfirmationDialog(false) },
+            isRejection = tradeCloseType == TradeDetailsHeaderPresenter.TradeCloseType.REJECT
+        )
     }
 }

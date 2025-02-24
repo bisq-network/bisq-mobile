@@ -35,13 +35,20 @@ class TradeDetailsHeaderPresenter(
     var rightAmount: String = ""
     var rightCode: String = ""
 
-    private var tradeCloseType: TradeCloseType? = null
+    private var _tradeCloseType: MutableStateFlow<TradeCloseType?> = MutableStateFlow(null)
+    val tradeCloseType: StateFlow<TradeCloseType?> = _tradeCloseType
 
     private var _interruptTradeButtonText: MutableStateFlow<String> = MutableStateFlow("")
     val interruptTradeButtonText: StateFlow<String> = _interruptTradeButtonText
 
     private var _interruptTradeButtonVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val interruptTradeButtonVisible: StateFlow<Boolean> = _interruptTradeButtonVisible
+
+    private val _showInterruptionConfirmationDialog = MutableStateFlow(false)
+    val showInterruptionConfirmationDialog: StateFlow<Boolean> get() = _showInterruptionConfirmationDialog
+    fun setShowInterruptionConfirmationDialog(value: Boolean) {
+        _showInterruptionConfirmationDialog.value = value
+    }
 
     override fun onViewAttached() {
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -79,7 +86,7 @@ class TradeDetailsHeaderPresenter(
     }
 
     private fun tradeStateChanged(state: BisqEasyTradeStateEnum?) {
-        tradeCloseType = null
+        _tradeCloseType.value = null
         _interruptTradeButtonText.value = ""
         _interruptTradeButtonVisible.value = false
 
@@ -99,7 +106,7 @@ class TradeDetailsHeaderPresenter(
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
             BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA -> {
                 _interruptTradeButtonVisible.value = true
-                tradeCloseType = TradeCloseType.REJECT
+                _tradeCloseType.value = TradeCloseType.REJECT
                 _interruptTradeButtonText.value = "Reject trade" // bisqEasy.openTrades.rejectTrade
             }
 
@@ -127,13 +134,13 @@ class TradeDetailsHeaderPresenter(
             BisqEasyTradeStateEnum.BUYER_RECEIVED_SELLERS_FIAT_RECEIPT_CONFIRMATION,
             BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION -> {
                 _interruptTradeButtonVisible.value = true
-                tradeCloseType = TradeCloseType.CANCEL
+                _tradeCloseType.value = TradeCloseType.CANCEL
                 _interruptTradeButtonText.value = "bisqEasy.openTrades.cancelTrade".i18n()
             }
 
             BisqEasyTradeStateEnum.BTC_CONFIRMED -> {
                 _interruptTradeButtonVisible.value = false
-                tradeCloseType = TradeCloseType.COMPLETED
+                _tradeCloseType.value = TradeCloseType.COMPLETED
                 _interruptTradeButtonText.value = ""
             }
 
@@ -160,9 +167,9 @@ class TradeDetailsHeaderPresenter(
             require(selectedTrade.value != null)
 
             var result: Result<Unit>? = null
-            if (tradeCloseType == TradeCloseType.REJECT) {
+            if (tradeCloseType.value == TradeCloseType.REJECT) {
                 result = tradesServiceFacade.rejectTrade()
-            } else if (tradeCloseType == TradeCloseType.CANCEL) {
+            } else if (tradeCloseType.value == TradeCloseType.CANCEL) {
                 result = tradesServiceFacade.cancelTrade()
             }
             if (result != null) {
@@ -189,7 +196,7 @@ class TradeDetailsHeaderPresenter(
         rightAmount = ""
         rightCode = ""
 
-        tradeCloseType = null
+        _tradeCloseType.value = null
         _interruptTradeButtonText.value = ""
         _interruptTradeButtonVisible.value = false
     }
