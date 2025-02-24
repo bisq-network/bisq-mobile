@@ -10,6 +10,8 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.DEFAULT_MIN_USD_TRADE_AMOUNT
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.MAX_USD_TRADE_AMOUNT
 import network.bisq.mobile.presentation.BasePresenter
@@ -19,6 +21,7 @@ import kotlin.math.roundToLong
 
 class TakeOfferAmountPresenter(
     mainPresenter: MainPresenter,
+    private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val takeOfferPresenter: TakeOfferPresenter
 ) : BasePresenter(mainPresenter) {
 
@@ -33,8 +36,9 @@ class TakeOfferAmountPresenter(
     val formattedBaseAmount: StateFlow<String> = _formattedBaseAmount
 
     private lateinit var takeOfferModel: TakeOfferPresenter.TakeOfferModel
-    private var minAmount: Long = getMinAmountValue()
-    private var maxAmount: Long = getMaxAmountValue()
+    private var minAmount: Long = 0L
+    private var maxAmount: Long = 0L
+
     private lateinit var priceQuote: PriceQuoteVO
     private lateinit var quoteAmount: FiatVO
     private lateinit var baseAmount: CoinVO
@@ -47,8 +51,12 @@ class TakeOfferAmountPresenter(
 
             val rangeAmountSpec: RangeAmountSpecVO =
                 offerListItem.bisqEasyOffer.amountSpec as RangeAmountSpecVO
-            minAmount = maxOf(getMinAmountValue(), rangeAmountSpec.minAmount)
-            maxAmount = minOf(getMaxAmountValue(), rangeAmountSpec.maxAmount)
+
+            minAmount = BisqEasyTradeAmountLimits.getMinAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
+            maxAmount = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
+
+            minAmount = maxOf(minAmount, rangeAmountSpec.minAmount)
+            maxAmount = minOf(maxAmount, rangeAmountSpec.maxAmount)
 
             formattedMinAmount = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode))
             formattedMinAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode), true, true)
@@ -63,11 +71,6 @@ class TakeOfferAmountPresenter(
             log.e(e) { "Failed to present view" }
         }
     }
-
-    //todo convert to selected currency from USD value
-    private fun getMaxAmountValue() = MAX_USD_TRADE_AMOUNT.value
-
-    private fun getMinAmountValue() = DEFAULT_MIN_USD_TRADE_AMOUNT.value
 
     fun onSliderValueChanged(sliderPosition: Float) {
         applySliderValue(sliderPosition)
