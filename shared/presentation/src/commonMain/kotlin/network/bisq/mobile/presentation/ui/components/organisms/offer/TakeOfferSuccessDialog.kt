@@ -17,7 +17,7 @@ fun TakeOfferSuccessDialog(
     onShowTrades: () -> Unit
 ) {
 
-    BisqDialog {
+    BisqDialog(dismissOnClickOutside = false) {
         BisqText.h4Regular(
             text = "bisqEasy.takeOffer.review.takeOfferSuccess.headline".i18n(),
             textAlign = TextAlign.Center

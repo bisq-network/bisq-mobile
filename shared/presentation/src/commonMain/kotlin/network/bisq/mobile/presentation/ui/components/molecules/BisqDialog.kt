@@ -24,6 +24,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun BisqDialog(
     onDismissRequest: () -> Unit = {},
+    dismissOnClickOutside: Boolean = true,
     padding: Dp = BisqUIConstants.ScreenPadding2X,
     marginTop: Dp = BisqUIConstants.ScreenPadding5X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
@@ -31,7 +32,7 @@ fun BisqDialog(
 ) {
     Dialog(
         onDismissRequest = onDismissRequest,
-        properties = DialogProperties(dismissOnClickOutside = true)
+        properties = DialogProperties(dismissOnClickOutside = dismissOnClickOutside)
     ) {
         Box(
             modifier = Modifier

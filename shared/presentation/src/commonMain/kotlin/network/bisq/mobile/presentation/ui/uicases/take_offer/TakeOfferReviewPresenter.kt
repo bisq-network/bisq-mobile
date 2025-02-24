@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
@@ -71,7 +72,10 @@ class TakeOfferReviewPresenter(
             }
         }
         presenterScope.launch {
-            takeOfferErrorMessage.collect { message ->
+            takeOfferErrorMessage
+                .drop(1) // To ignore the first init message
+                .collect { message ->
+                log.e { "takeOfferErrorMessage: $message" }
                 showSnackbar(message ?: "Unexpected error occurred, please try again", true)
             }
         }
@@ -111,26 +115,22 @@ class TakeOfferReviewPresenter(
     }
 
     fun onTakeOffer() {
+        log.e("onTakeOffer")
         backgroundScope.launch {
             setShowTakeOfferProgressDialog(true)
-            // TODO deactivate buttons, show waiting state
             try {
                 enableInteractive(false)
                 takeOfferPresenter.takeOffer(takeOfferStatus, takeOfferErrorMessage)
-            } catch (e: Exception) {
-                log.e("Take offer failed", e)
-                // TODO this is not working (probably the snackbar is being rendered underneath?)
-                takeOfferErrorMessage.value = e.message ?: "Offer cannot be taken at this time"
-            } finally {
                 delay(3000L)
                 setShowTakeOfferProgressDialog(false)
                 setShowTakeOfferSuccessDialog(true)
+            } catch (e: Exception) {
+                log.e("Take offer failed", e)
+                takeOfferErrorMessage.value = e.message ?: "Offer cannot be taken at this time"
+                setShowTakeOfferProgressDialog(false)
+            } finally {
                 enableInteractive()
             }
-            // TODO hide waiting state, show successfully published state, show button to open offer book, clear navigation backstack
-            // onGoToOpenTrades()
-
-
         }
     }
 
@@ -142,9 +142,9 @@ class TakeOfferReviewPresenter(
     }
 
     private fun closeWorkflow() {
-        // TODO review better alternative than double call?
-        navigateBackTo(Routes.OffersByMarket)
-        navigateBack()
+        // Navigate back to TabContainer, which is part of RootNavigator's nav stack.
+        // Rather than navigating back to a specific Tab, which is part of TabNavController
+        navigateBackTo(Routes.TabContainer)
    }
 
     private fun applyPriceDetails() {

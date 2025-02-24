@@ -26,7 +26,7 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun TakeOfferProgressDialog() {
 
-    BisqDialog {
+    BisqDialog(dismissOnClickOutside = false) {
         Box {
             RotatingImage(
                 painterResource(Res.drawable.bisq_easy_circle),
