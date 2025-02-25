@@ -1,11 +1,10 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
+import androidx.compose.runtime.Composable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -15,9 +14,8 @@ import bisqapps.shared.presentation.generated.resources.trade_completed
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.organisms.GenericErrorPanel
+import network.bisq.mobile.presentation.ui.components.organisms.trades.CloseTradeDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun State4(
@@ -91,12 +89,8 @@ fun State4(
 
             if (showCloseTradeDialog) {
                 CloseTradeDialog(
-                    onDismissCloseTrade = {
-                        presenter.onDismissCloseTrade()
-                    },
-                    onConfirmCloseTrade = {
-                        presenter.onConfirmCloseTrade()
-                    }
+                    onDismiss = presenter::onDismissCloseTrade,
+                    onConfirm = presenter::onConfirmCloseTrade,
                 )
             }
         }

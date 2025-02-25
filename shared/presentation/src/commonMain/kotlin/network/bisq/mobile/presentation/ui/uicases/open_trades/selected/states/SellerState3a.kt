@@ -18,6 +18,11 @@ import bisqapps.shared.presentation.generated.resources.trade_check_circle
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressField
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofField
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
+import network.bisq.mobile.presentation.ui.components.organisms.trades.InvalidAddressConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.organisms.trades.InvalidPaymentProofConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.painterResource
@@ -41,6 +46,9 @@ fun SellerState3a(
     val paymentProofPrompt = "bisqEasy.tradeState.info.seller.phase3a.paymentProof.prompt.$paymentMethod".i18n()
 
     val bitcoinPaymentData = openTradeItemModel.bisqEasyTradeModel.bitcoinPaymentData.value ?: "data.na".i18n()
+    val isLightning by presenter.isLightning.collectAsState()
+    val showInvalidAddressDialog by presenter.showInvalidAddressDialog.collectAsState()
+    val addressFieldType by presenter.bitcoinLnAddressFieldType.collectAsState()
 
     Column(horizontalAlignment = Alignment.Start) {
         BisqGap.V1()
@@ -78,12 +86,12 @@ fun SellerState3a(
         )
 
         BisqGap.VHalf()
-        BisqTextField(
+        BitcoinLnAddressField(
             // Bitcoin address / Lightning invoice
             label = bitcoinPaymentDescription,
             value = bitcoinPaymentData,
+            type = addressFieldType,
             disabled = true,
-            showCopy = true
         )
 
         BisqGap.V1()
@@ -93,12 +101,12 @@ fun SellerState3a(
         )
 
         BisqGap.VHalf()
-        BisqTextField(
+        PaymentProofField(
             // Transaction ID / Preimage (optional)
             label = paymentProofDescription,
             value = paymentProof ?: "",
-            onValueChange = { it, isValid -> presenter.onPaymentProofInput(it) },
-            showPaste = true
+            type = if (isLightning) PaymentProofType.LightningPreImage else PaymentProofType.BitcoinTx,
+            onValueChange = { it, isValid -> presenter.onPaymentProofInput(it, isValid) },
         )
 
         BisqGap.V1()
@@ -107,6 +115,14 @@ fun SellerState3a(
             text = "bisqEasy.tradeState.info.seller.phase3a.btcSentButton".i18n(baseAmount),
             onClick = { presenter.onConfirmedBtcSent() },
             disabled = buttonEnabled.not(),
+        )
+    }
+
+    if (showInvalidAddressDialog) {
+        InvalidPaymentProofConfirmationDialog(
+            paymentProofType = if (isLightning) PaymentProofType.LightningPreImage else PaymentProofType.BitcoinTx,
+            onDismiss = { presenter.setShowInvalidAddressDialog(false) },
+            onConfirm = presenter::confirmSend,
         )
     }
 }

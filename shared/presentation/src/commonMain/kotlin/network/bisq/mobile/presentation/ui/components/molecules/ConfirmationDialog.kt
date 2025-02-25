@@ -6,13 +6,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -35,16 +32,18 @@ fun ConfirmationDialog(
         horizontalAlignment = horizontalAlignment,
         marginTop = marginTop,
     ) {
-        if (messageLeftIcon == null) {
-            BisqText.h6Regular(message, color = messageColor)
-        } else {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                messageLeftIcon()
-                BisqGap.H1()
+        if (message.isNotEmpty()) {
+            if (messageLeftIcon == null) {
                 BisqText.h6Regular(message, color = messageColor)
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    messageLeftIcon()
+                    BisqGap.H1()
+                    BisqText.h6Regular(message, color = messageColor)
+                }
             }
+            BisqGap.V1()
         }
-        BisqGap.V1()
         if (subMessage.isNotEmpty()) {
             BisqText.baseRegular(subMessage)
             BisqGap.V1()

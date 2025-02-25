@@ -15,6 +15,8 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofField
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
@@ -49,10 +51,11 @@ fun BuyerStateLightning3b(
 
             BisqGap.V1()
             if (preImage != null) {
-                BisqTextField(
+                PaymentProofField(
                     // Preimage
                     label = "bisqEasy.tradeState.info.phase3b.lightning.preimage".i18n(),
                     value = preImage,
+                    type = PaymentProofType.LightningPreImage,
                     disabled = true,
                 )
             }

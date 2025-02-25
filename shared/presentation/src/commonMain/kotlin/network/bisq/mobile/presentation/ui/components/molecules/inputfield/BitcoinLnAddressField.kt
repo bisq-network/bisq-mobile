@@ -16,7 +16,7 @@ enum class BitcoinLnAddressFieldType {
 fun BitcoinLnAddressField(
     label: String = "",
     value: String,
-    onValueChange: (String, Boolean) -> Unit,
+    onValueChange: ((String, Boolean) -> Unit)? = null,
     disabled: Boolean = false,
     type: BitcoinLnAddressFieldType = BitcoinLnAddressFieldType.Bitcoin,
     modifier: Modifier = Modifier

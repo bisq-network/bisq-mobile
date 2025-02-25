@@ -16,6 +16,8 @@ import bisqapps.shared.presentation.generated.resources.trade_bitcoin_confirmati
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofField
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.TxConfirmationState.CONFIRMED
@@ -65,22 +67,16 @@ fun BuyerStateMainChain3b(
             )
 
             BisqGap.V1()
-            BisqTextField(
+
+            PaymentProofField(
                 // Transaction ID
                 label = "bisqEasy.tradeState.info.phase3b.txId".i18n(),
                 value = txId,
+                type = PaymentProofType.BitcoinTx,
                 disabled = true,
-                showCopy = true,
-                validation = {
-                    if (explorerRequestError?.isNotEmpty() == true) {
-                        return@BisqTextField explorerRequestError
-                    }
-                    return@BisqTextField null
-                }
             )
 
             BisqGap.VQuarter()
-
 
             when (confirmationState) {
                 IDLE,

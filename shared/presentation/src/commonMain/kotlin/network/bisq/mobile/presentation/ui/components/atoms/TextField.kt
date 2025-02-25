@@ -44,7 +44,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 fun BisqTextField(
     label: String = "",
     value: String = "",
-    onValueChange: (String, Boolean) -> Unit = { it, isValid -> }, // Param1: newValue, Param2: validatity of newValue, based on validation()
+    onValueChange: ((String, Boolean) -> Unit)? = null,
     placeholder: String = "",
     labelRightSuffix: (@Composable () -> Unit)? = null,
     leftSuffix: (@Composable () -> Unit)? = null,
@@ -119,6 +119,14 @@ fun BisqTextField(
         )
     }
 
+    // Trigger validation for read only fields, on first render
+    LaunchedEffect(disabled) {
+        if (disabled == true && value.isNotEmpty()) {
+            hasInteracted = true
+            validationError = validation?.invoke(value)
+        }
+    }
+    
     // To do validation, when value is pasted.
     // So value is programatically changed, without user interaction
     // This code listens for change in value and triggers validation
@@ -183,11 +191,14 @@ fun BisqTextField(
                         val decimalPattern = Regex("^\\d*\\.?\\d{0,2}$")
                         if (decimalPattern.matches(cleanValue)) {
                             validationError = validation?.invoke(cleanValue)
-                            onValueChange(cleanValue, validationError == null || validationError?.isEmpty() == true)
+                            onValueChange?.invoke(
+                                cleanValue,
+                                validationError == null || validationError?.isEmpty() == true
+                            )
                         }
                     } else {
                         validationError = validation?.invoke(cleanValue)
-                        onValueChange(cleanValue, validationError == null || validationError?.isEmpty() == true)
+                        onValueChange?.invoke(cleanValue, validationError == null || validationError?.isEmpty() == true)
                     }
                 },
                 modifier = Modifier
@@ -240,7 +251,7 @@ fun BisqTextField(
                         if (showPaste) {
                             PasteIconButton(onPaste = {
                                 validationError = validation?.invoke(it)
-                                onValueChange(it, validationError == null)
+                                onValueChange?.invoke(it, validationError == null)
                                 hasInteracted = true
                             })
                         }

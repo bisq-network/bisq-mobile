@@ -20,3 +20,21 @@ object BitcoinAddressValidation {
         return BASE_58_PATTERN.matches(address) || BECH32_PATTERN.matches(address)
     }
 }
+
+// Ref: bisq2:common/src/main/java/bisq/common/validation/LightningPreImageValidation.java
+object LightningPreImageValidation {
+    private val HEX64_PATTERN = Regex("^[a-fA-F0-9]{64}$")
+
+    fun validatePreImage(preimage: String): Boolean {
+        return HEX64_PATTERN.matches(preimage)
+    }
+}
+
+// Ref: bisq2:common/src/main/java/bisq/common/validation/BitcoinTransactionValidation.java
+object BitcoinTransactionValidation {
+    private val TXID_PATTERN = Regex("^[a-fA-F0-9]{64}$")
+
+    fun validateTxId(txId: String): Boolean {
+        return TXID_PATTERN.matches(txId)
+    }
+}

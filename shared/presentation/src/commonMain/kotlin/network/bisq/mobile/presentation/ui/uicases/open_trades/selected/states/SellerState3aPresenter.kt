@@ -8,6 +8,7 @@ import network.bisq.mobile.domain.data.replicated.presentation.open_trades.Trade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
 
 
 class SellerState3aPresenter(
@@ -20,17 +21,35 @@ class SellerState3aPresenter(
     private var _paymentProof: MutableStateFlow<String?> = MutableStateFlow(null)
     val paymentProof: StateFlow<String?> get() = _paymentProof
 
+    private var _paymentProofValid: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val paymentProofValid: StateFlow<Boolean> get() = _paymentProofValid
+
+    private val _showInvalidAddressDialog = MutableStateFlow(false)
+    val showInvalidAddressDialog: StateFlow<Boolean> get() = _showInvalidAddressDialog
+    fun setShowInvalidAddressDialog(value: Boolean) {
+        _showInvalidAddressDialog.value = value
+    }
+
     private var _buttonEnabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val buttonEnabled: StateFlow<Boolean> get() = _buttonEnabled
 
-    private var isLightning: Boolean = false
+    private var _bitcoinAddressFieldType = MutableStateFlow(BitcoinLnAddressFieldType.Bitcoin)
+    val bitcoinLnAddressFieldType: StateFlow<BitcoinLnAddressFieldType> get() = _bitcoinAddressFieldType
+
+    private var _isLightning: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isLightning: StateFlow<Boolean> get() = _isLightning
+
     private var job: Job? = null
 
     override fun onViewAttached() {
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
         val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
-        isLightning = paymentMethod == "LN"
+        _isLightning.value = paymentMethod == "LN"
+        _bitcoinAddressFieldType.value = if (openTradeItemModel.bitcoinSettlementMethod == "LN")
+            BitcoinLnAddressFieldType.Lightning
+        else
+            BitcoinLnAddressFieldType.Bitcoin
         updateButtonEnableState()
     }
 
@@ -40,13 +59,22 @@ class SellerState3aPresenter(
         _paymentProof.value = null
     }
 
-    fun onPaymentProofInput(value: String) {
+    fun onPaymentProofInput(value: String, isValid: Boolean) {
         _paymentProof.value = value.trim().ifEmpty { null }
+        _paymentProofValid.value = isValid
         updateButtonEnableState()
     }
 
     fun onConfirmedBtcSent() {
-        if (!isLightning) {
+        if (paymentProofValid.value == false) {
+            _showInvalidAddressDialog.value = true
+        } else {
+            confirmSend()
+        }
+    }
+
+    fun confirmSend() {
+        if (!isLightning.value) {
             require(paymentProof.value != null)
         }
         job = backgroundScope.launch {
@@ -55,6 +83,6 @@ class SellerState3aPresenter(
     }
 
     private fun updateButtonEnableState() {
-        _buttonEnabled.value = isLightning || paymentProof.value != null
+        _buttonEnabled.value = isLightning.value || paymentProof.value != null
     }
 }
