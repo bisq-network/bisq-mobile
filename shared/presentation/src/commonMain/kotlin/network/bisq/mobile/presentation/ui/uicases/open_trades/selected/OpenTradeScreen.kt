@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,6 +19,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -30,6 +33,7 @@ import org.koin.compose.koinInject
 @Composable
 fun OpenTradeScreen() {
     val presenter: OpenTradePresenter = koinInject()
+    val focusManager = LocalFocusManager.current
     RememberPresenterLifecycle(presenter)
 
     val tradeAbortedBoxVisible by presenter.tradeAbortedBoxVisible.collectAsState()
@@ -40,7 +44,17 @@ fun OpenTradeScreen() {
     BisqStaticScaffold(
         topBar = { TopBar("Trade ID: ${presenter.selectedTrade.value?.shortTradeId}") }
     ) {
-        Box(modifier = Modifier.fillMaxSize().blur(if (showCloseTradeDialog) 12.dp else 0.dp)) {
+        Box(
+            modifier = Modifier
+            .fillMaxSize()
+            .blur(if (showCloseTradeDialog) 12.dp else 0.dp)
+            .clickable(
+                interactionSource = MutableInteractionSource(),
+                indication = null
+            ) {
+                focusManager.clearFocus()
+            }
+        ) {
             Column(
                 modifier = Modifier
                     .verticalScroll(rememberScrollState())

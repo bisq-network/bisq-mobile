@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
 
 // todo: btc address/ ln invoice validation missing
 class BuyerState1aPresenter(
@@ -26,8 +27,17 @@ class BuyerState1aPresenter(
     private var _bitcoinPaymentData = MutableStateFlow("")
     val bitcoinPaymentData: StateFlow<String> get() = _bitcoinPaymentData
 
-    private var _bitcoinSettlementMethod = MutableStateFlow("")
-    val bitcoinSettlementMethod: StateFlow<String> get() = _bitcoinSettlementMethod
+    private var _bitcoinPaymentDataValid = MutableStateFlow(false)
+    val bitcoinPaymentDataValid: StateFlow<Boolean> get() = _bitcoinPaymentDataValid
+
+    private var _bitcoinAddressFieldType = MutableStateFlow(BitcoinLnAddressFieldType.Bitcoin)
+    val bitcoinLnAddressFieldType: StateFlow<BitcoinLnAddressFieldType> get() = _bitcoinAddressFieldType
+
+    private val _showInvalidAddressDialog = MutableStateFlow(false)
+    val showInvalidAddressDialog: StateFlow<Boolean> get() = _showInvalidAddressDialog
+    fun setShowInvalidAddressDialog(value: Boolean) {
+        _showInvalidAddressDialog.value = value
+    }
 
     private var job: Job? = null
 
@@ -37,21 +47,35 @@ class BuyerState1aPresenter(
         val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
         _headline.value = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.headline.$paymentMethod".i18n()
         _description.value = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.description.$paymentMethod".i18n()
-        _bitcoinSettlementMethod.value = openTradeItemModel.bitcoinSettlementMethod
+        _bitcoinAddressFieldType.value = if (openTradeItemModel.bitcoinSettlementMethod == "LN")
+            BitcoinLnAddressFieldType.Lightning
+        else
+            BitcoinLnAddressFieldType.Bitcoin
     }
 
     override fun onViewUnattaching() {
         job?.cancel()
         job = null
         _bitcoinPaymentData.value = ""
+        _bitcoinPaymentDataValid.value = false
     }
 
-    fun onBitcoinPaymentDataInput(value: String) {
+    fun onBitcoinPaymentDataInput(value: String, isValid: Boolean) {
         _bitcoinPaymentData.value = value.trim()
+        _bitcoinPaymentDataValid.value = isValid
+    }
+
+    fun onSendClick() {
+        if (bitcoinPaymentDataValid.value == false) {
+            _showInvalidAddressDialog.value = true
+        } else {
+            onSend()
+        }
     }
 
     fun onSend() {
         require(bitcoinPaymentData.value.isNotEmpty())
+
         job = CoroutineScope(BackgroundDispatcher).launch {
             tradesServiceFacade.buyerSendBitcoinPaymentData(bitcoinPaymentData.value)
         }

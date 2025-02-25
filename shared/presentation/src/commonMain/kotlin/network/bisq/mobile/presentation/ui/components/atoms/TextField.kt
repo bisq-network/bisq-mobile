@@ -84,9 +84,9 @@ fun BisqTextField(
 
     val dangerColor = BisqTheme.colors.danger
     val grey2Color = BisqTheme.colors.grey2
-    val finalIndicatorColor by remember(validationError, isFocused) {
+    val finalIndicatorColor by remember(validationError, isFocused, hasInteracted) {
         mutableStateOf(
-            if (validationError == null || validationError?.isEmpty() == true)
+            if (validationError == null || validationError?.isEmpty() == true || !hasInteracted)
                 if (isFocused) indicatorColor else grey2Color
             else
                 dangerColor
@@ -255,7 +255,7 @@ fun BisqTextField(
             )
         }
         // Error text has priority over help field
-        if (validationError?.isNotEmpty() == true) { // && hasInteracted == true) {
+        if (validationError?.isNotEmpty() == true && hasInteracted == true) {
             BisqGap.VQuarter()
             BisqText.smallRegular(
                 text = validationError!!,

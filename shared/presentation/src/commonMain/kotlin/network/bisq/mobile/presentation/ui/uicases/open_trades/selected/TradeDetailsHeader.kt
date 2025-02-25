@@ -31,6 +31,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isSell
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -240,6 +241,7 @@ fun TradeDetailsComposable() {
         CancelTradeDialog(
             onCancelConfirm = { presenter.onInterruptTrade() },
             onDismiss = { presenter.setShowInterruptionConfirmationDialog(false) },
+            isBuyer = presenter.directionEnum.isBuy,
             isRejection = tradeCloseType == TradeDetailsHeaderPresenter.TradeCloseType.REJECT
         )
     }

@@ -10,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -56,6 +57,7 @@ fun BisqButton(
     borderColor: Color = BisqTheme.colors.primary,
 ) {
 
+    val focusManager = LocalFocusManager.current
     val enabled = !disabled && !isLoading
     val grey2 = BisqTheme.colors.grey2
 
@@ -84,7 +86,10 @@ fun BisqButton(
     }
 
     Button(
-        onClick = { onClick?.invoke() },
+        onClick = {
+            focusManager.clearFocus()
+            onClick?.invoke()
+        },
         contentPadding = if (iconOnly != null) PaddingValues(horizontal = 0.dp, vertical = 0.dp) else padding,
         colors = ButtonColors(
             containerColor = finalBackgroundColor,

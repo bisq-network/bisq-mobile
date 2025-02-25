@@ -197,7 +197,7 @@ fun UpIcon(modifier: Modifier = Modifier.size(30.dp)) {
     Image(painterResource(Res.drawable.up_arrow), "Up icon", modifier = modifier)
 }
 
-//@Composable
-//fun WarningIcon(modifier: Modifier = Modifier.size(36.dp)) {
-//    Image(painterResource(Res.drawable.icon_warning), "Warning icon", modifier = modifier)
-//}
+@Composable
+fun WarningIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_warning), "Warning icon", modifier = modifier)
+}

@@ -14,10 +14,9 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressField
-import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
+import network.bisq.mobile.presentation.ui.components.organisms.trades.InvalidAddressConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -31,7 +30,8 @@ fun BuyerState1a(
     val headline by presenter.headline.collectAsState()
     val description by presenter.description.collectAsState()
     val bitcoinPaymentData by presenter.bitcoinPaymentData.collectAsState()
-    val settlementMethod by presenter.bitcoinSettlementMethod.collectAsState()
+    val addressFieldType by presenter.bitcoinLnAddressFieldType.collectAsState()
+    val showInvalidAddresDialog by presenter.showInvalidAddressDialog.collectAsState()
 
     Column {
         BisqGap.V1()
@@ -43,12 +43,9 @@ fun BuyerState1a(
             label = description,  // Bitcoin address / Lightning invoice
             value = bitcoinPaymentData,
             onValueChange = { it, isValid ->
-                presenter.onBitcoinPaymentDataInput(it)
+                presenter.onBitcoinPaymentDataInput(it, isValid)
             },
-            type = if (settlementMethod == "LN")
-                BitcoinLnAddressFieldType.Lightning
-            else
-                BitcoinLnAddressFieldType.Bitcoin,
+            type = addressFieldType,
         )
 
         BisqGap.V1()
@@ -59,7 +56,7 @@ fun BuyerState1a(
         ) {
             BisqButton(
                 text = "bisqEasy.tradeState.info.buyer.phase1a.send".i18n(), // Send to seller
-                onClick = { presenter.onSend() },
+                onClick = { presenter.onSendClick() },
                 disabled = bitcoinPaymentData.isEmpty(),
             )
             BisqButton(
@@ -72,5 +69,14 @@ fun BuyerState1a(
                 )
             )
         }
+    }
+
+    if (showInvalidAddresDialog) {
+        InvalidAddressConfirmationDialog(
+            addressType = addressFieldType,
+            onConfirm = presenter::onSend,
+            onDismiss = { presenter.setShowInvalidAddressDialog(false) },
+        )
+
     }
 }

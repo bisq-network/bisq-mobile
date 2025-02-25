@@ -1,90 +1,44 @@
 package network.bisq.mobile.presentation.ui.components.organisms.trades
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.text.style.LineHeightStyle
-import androidx.compose.ui.unit.dp
 import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-// import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIcon
-import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.components.molecules.WarningConfirmationDialog
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun CancelTradeDialog(
     onCancelConfirm: () -> Unit,
     onDismiss: () -> Unit,
+    isBuyer: Boolean = true,
     isRejection: Boolean,
 ) {
     val strings = LocalStrings.current.bisqEasy
-    val stringsApplication = LocalStrings.current.application
-    val stringsCommon = LocalStrings.current.common
-
-    val isBuyer: Boolean = true
 
     val warningText1 = if (isRejection) {
-        strings.bisqEasy_openTrades_rejectTrade_warning
+        "bisqEasy.openTrades.rejectTrade.warning".i18n()
     } else {
         if (isBuyer)
-            strings.bisqEasy_openTrades_cancelTrade_warning_buyer
+            "bisqEasy.openTrades.cancelTrade.warning.buyer".i18n()
         else
-            strings.bisqEasy_openTrades_cancelTrade_warning_seller
+            "bisqEasy.openTrades.cancelTrade.warning.seller".i18n()
     }
 
     val warningText2 = if (isRejection)
         ""
     else
-        strings.bisqEasy_openTrades_cancelTrade_warning_part2
+        "bisqEasy.openTrades.cancelTrade.warning.part2".i18n()
 
-    BisqDialog(
+    WarningConfirmationDialog(
+        subMessage = warningText1 + warningText2,
         horizontalAlignment = Alignment.Start,
-        marginTop = BisqUIConstants.ScreenPaddingHalf
-    ) {
-        Row(
-            modifier = Modifier.padding(bottom = BisqUIConstants.ScreenPadding),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            // WarningIcon()
-            BisqGap.H1()
-            BisqText.h6Medium(
-                text = stringsApplication.popup_headline_warning,
-                color = BisqTheme.colors.warning
-            )
-        }
+        marginTop = if (isRejection)
+            BisqUIConstants.ScreenPadding5X
+        else
+            BisqUIConstants.ScreenPaddingHalf,
+        onDismiss = onDismiss,
+        onConfirm = onCancelConfirm
+    )
 
-        BisqText.baseRegular(text = warningText1 + warningText2)
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.End
-        ) {
-            BisqButton(
-                text = stringsCommon.common_no,
-                type = BisqButtonType.Grey,
-                onClick = onDismiss,
-            )
-            BisqGap.H1()
-            BisqButton(
-                text = stringsCommon.common_yes,
-                onClick = onCancelConfirm,
-            )
-        }
-    }
 }
