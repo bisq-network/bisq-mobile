@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ui.components.atoms.BisqSlider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.FiatInputField
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 

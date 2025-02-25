@@ -66,6 +66,7 @@ fun BisqTextField(
     numberWithTwoDecimals: Boolean = false,
     modifier: Modifier = Modifier,
 ) {
+    var hasInteracted by remember { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
     var validationError by remember { mutableStateOf<String?>(null) }
 
@@ -118,16 +119,22 @@ fun BisqTextField(
         )
     }
 
-    var hasInitialized by remember { mutableStateOf(false) }
-    LaunchedEffect(value) {
-        if (hasInitialized) {
-            validationError = validation?.invoke(value)
-            onValueChange(value, validationError == null)
-        }
-        hasInitialized = true
-    }
+    // To do validation, when value is pasted.
+    // So value is programatically changed, without user interaction
+    // This code listens for change in value and triggers validation
+//    var hasInitialized by remember { mutableStateOf(false) }
+//    LaunchedEffect(value) {
+//        if (hasInitialized && value.length > 0) {
+//            validationError = validation?.invoke(value)
+//            onValueChange(value, validationError == null)
+//            hasInteracted = true
+//        }
+//        hasInitialized = true
+//    }
 
-    Column(modifier = modifier) {
+    Column(
+        modifier = modifier
+    ) {
         if (label.isNotEmpty()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -189,6 +196,8 @@ fun BisqTextField(
                     .onFocusChanged { focusState ->
                         isFocused = focusState.isFocused
                         if (!focusState.isFocused) {
+                            if (value.length > 0)
+                                hasInteracted = true
                             validationError = validation?.invoke(value)
                         }
                     },
@@ -224,7 +233,6 @@ fun BisqTextField(
                             innerTextField()
                         }
 
-
                         if (showCopy) {
                             CopyIconButton(value)
                         }
@@ -233,6 +241,7 @@ fun BisqTextField(
                             PasteIconButton(onPaste = {
                                 validationError = validation?.invoke(it)
                                 onValueChange(it, validationError == null)
+                                hasInteracted = true
                             })
                         }
 
@@ -246,7 +255,7 @@ fun BisqTextField(
             )
         }
         // Error text has priority over help field
-        if (validationError?.isNotEmpty() == true) {
+        if (validationError?.isNotEmpty() == true) { // && hasInteracted == true) {
             BisqGap.VQuarter()
             BisqText.smallRegular(
                 text = validationError!!,

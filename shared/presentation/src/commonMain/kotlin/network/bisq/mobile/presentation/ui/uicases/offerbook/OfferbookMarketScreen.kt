@@ -15,7 +15,7 @@ import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
-import network.bisq.mobile.presentation.ui.components.atoms.BisqSearchField
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BisqSearchField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SortIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout

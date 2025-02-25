@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.components.molecules
+package network.bisq.mobile.presentation.ui.components.molecules.inputfield
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement

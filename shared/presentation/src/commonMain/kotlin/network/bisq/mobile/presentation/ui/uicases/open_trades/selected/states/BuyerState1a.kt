@@ -16,6 +16,8 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressField
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -29,6 +31,7 @@ fun BuyerState1a(
     val headline by presenter.headline.collectAsState()
     val description by presenter.description.collectAsState()
     val bitcoinPaymentData by presenter.bitcoinPaymentData.collectAsState()
+    val settlementMethod by presenter.bitcoinSettlementMethod.collectAsState()
 
     Column {
         BisqGap.V1()
@@ -36,12 +39,16 @@ fun BuyerState1a(
         BisqText.h5Light(headline)
 
         BisqGap.V1()
-        BisqTextField(
+        BitcoinLnAddressField(
             label = description,  // Bitcoin address / Lightning invoice
             value = bitcoinPaymentData,
-            helperText = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.walletHelp".i18n(), // If you have not set up a wallet yet, you can find help at the wallet guide
-            onValueChange = { it, isValid -> presenter.onBitcoinPaymentDataInput(it) },
-            showPaste = true,
+            onValueChange = { it, isValid ->
+                presenter.onBitcoinPaymentDataInput(it)
+            },
+            type = if (settlementMethod == "LN")
+                BitcoinLnAddressFieldType.Lightning
+            else
+                BitcoinLnAddressFieldType.Bitcoin,
         )
 
         BisqGap.V1()

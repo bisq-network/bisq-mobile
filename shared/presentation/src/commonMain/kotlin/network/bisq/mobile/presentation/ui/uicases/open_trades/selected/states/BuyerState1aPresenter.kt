@@ -26,6 +26,9 @@ class BuyerState1aPresenter(
     private var _bitcoinPaymentData = MutableStateFlow("")
     val bitcoinPaymentData: StateFlow<String> get() = _bitcoinPaymentData
 
+    private var _bitcoinSettlementMethod = MutableStateFlow("")
+    val bitcoinSettlementMethod: StateFlow<String> get() = _bitcoinSettlementMethod
+
     private var job: Job? = null
 
     override fun onViewAttached() {
@@ -34,6 +37,7 @@ class BuyerState1aPresenter(
         val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
         _headline.value = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.headline.$paymentMethod".i18n()
         _description.value = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.description.$paymentMethod".i18n()
+        _bitcoinSettlementMethod.value = openTradeItemModel.bitcoinSettlementMethod
     }
 
     override fun onViewUnattaching() {
