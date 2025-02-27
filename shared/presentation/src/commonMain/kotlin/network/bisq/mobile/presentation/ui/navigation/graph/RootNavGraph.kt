@@ -11,16 +11,16 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import network.bisq.mobile.presentation.ui.components.molecules.chat.ChatSystemMessage
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.ChatScreen
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountSelectorScreen
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferBuySellScreen
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferCurrencySelectorScreen
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPaymentMethodSelectorScreen
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferReviewOfferScreen
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferTradePriceSelectorScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.*
+import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideOverview
+import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideProcess
+import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideSecurity
+import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideTradeRules
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookScreen
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.OpenTradeScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsScreen
@@ -44,87 +44,56 @@ fun RootNavGraph(rootNavController: NavHostController) {
             SplashScreen()
         }
 
-        composable(route = Routes.Agreement.name) {
-            AgreementScreen()
-        }
-
-        addScreen(Routes.Onboarding.name) {
-            OnBoardingScreen()
-        }
-
-        addScreen(Routes.CreateProfile.name) {
-            CreateProfileScreen()
-        }
-
-        addScreen(Routes.TrustedNodeSetup.name) {
-            TrustedNodeSetupScreen()
-        }
-
-        addScreen(route = Routes.TabContainer.name) {
-            TabContainerScreen()
-        }
-
-        addScreen(Routes.OffersByMarket.name) {
-            OfferbookScreen()
-        }
-
-        addScreen(Routes.TakeOfferTradeAmount.name) {
-            TakeOfferTradeAmountScreen()
-        }
-
-        addScreen(Routes.TakeOfferPaymentMethod.name, wizardTransition = true) {
-            TakeOfferPaymentMethodScreen()
-        }
-
-        addScreen(Routes.TakeOfferReviewTrade.name, wizardTransition = true) {
-            TakeOfferReviewTradeScreen()
-        }
-
-        addScreen(Routes.OpenTrade.name) {
-            OpenTradeScreen()
-        }
-
-        addScreen(Routes.CreateOfferDirection.name) {
-            CreateOfferBuySellScreen()
-        }
-
-        addScreen(Routes.CreateOfferMarket.name, wizardTransition = true) {
-            CreateOfferCurrencySelectorScreen()
-        }
-
-        addScreen(Routes.CreateOfferAmount.name, wizardTransition = true) {
-            CreateOfferAmountSelectorScreen()
-        }
-
-        addScreen(Routes.CreateOfferPrice.name, wizardTransition = true) {
-            CreateOfferTradePriceSelectorScreen()
-        }
-
-        addScreen(Routes.CreateOfferPaymentMethod.name, wizardTransition = true) {
-            CreateOfferPaymentMethodSelectorScreen()
-        }
-
-        addScreen(Routes.CreateOfferReviewOffer.name, wizardTransition = true) {
-            CreateOfferReviewOfferScreen()
-        }
-
-        composable(Routes.UserProfileSettings.name) {
-            UserProfileSettingsScreen(showBackNavigation = true)
-        }
-
-        addScreen(Routes.ChatScreen.name, wizardTransition = true) {
-            ChatScreen()
-        }
-
-        val tradeScreens: List<Pair<String, @Composable () -> Unit>> = listOf(
-            Routes.TradeGuideOverview.name to { TradeGuideOverview() },
-            Routes.TradeGuideSecurity.name to { TradeGuideSecurity() },
-            Routes.TradeGuideProcess.name to { TradeGuideProcess() },
-            Routes.TradeGuideTradeRules.name to { TradeGuideTradeRules() },
+        val startupScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
+            Routes.Agreement to { AgreementScreen() },
+            Routes.Onboarding to { OnBoardingScreen() },
+            Routes.CreateProfile to { CreateProfileScreen() },
+            Routes.TrustedNodeSetup to { TrustedNodeSetupScreen() },
+            Routes.TabContainer to { TabContainerScreen() },
         )
+        startupScreens.forEach{ (route, screen): Pair<Routes, @Composable () -> Unit> ->
+            addScreen(route.name, content = screen)
+        }
 
-        tradeScreens.forEachIndexed { i: Int, (route, screen): Pair<String, @Composable () -> Unit> ->
-            addScreen(route, content = screen, wizardTransition = i != 0)
+        val otherScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
+            Routes.OffersByMarket to { OfferbookScreen() },
+            Routes.OpenTrade to { OpenTradeScreen() },
+            Routes.ChatScreen to { ChatScreen() },
+            Routes.UserProfileSettings to { UserProfileSettingsScreen(showBackNavigation = true) },
+        )
+        otherScreens.forEach{ (route, screen): Pair<Routes, @Composable () -> Unit> ->
+            addScreen(route.name, content = screen)
+        }
+
+        val takeOfferScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
+            Routes.TakeOfferTradeAmount to { TakeOfferTradeAmountScreen() },
+            Routes.TakeOfferPaymentMethod to { TakeOfferPaymentMethodScreen() },
+            Routes.TakeOfferReviewTrade to { TakeOfferReviewTradeScreen() },
+        )
+        takeOfferScreens.forEachIndexed { i: Int, (route, screen): Pair<Routes, @Composable () -> Unit> ->
+            addScreen(route.name, content = screen, wizardTransition = i != 0)
+        }
+
+        val createOfferScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
+            Routes.CreateOfferDirection to { CreateOfferBuySellScreen() },
+            Routes.CreateOfferMarket to { CreateOfferCurrencySelectorScreen() },
+            Routes.CreateOfferAmount to { CreateOfferAmountSelectorScreen() },
+            Routes.CreateOfferPrice to { CreateOfferTradePriceSelectorScreen() },
+            Routes.CreateOfferPaymentMethod to { CreateOfferPaymentMethodSelectorScreen() },
+            Routes.CreateOfferReviewOffer to { CreateOfferReviewOfferScreen() },
+        )
+        createOfferScreens.forEachIndexed { i: Int, (route, screen): Pair<Routes, @Composable () -> Unit> ->
+            addScreen(route.name, content = screen, wizardTransition = i != 0)
+        }
+
+        val tradeGuideScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
+            Routes.TradeGuideOverview to { TradeGuideOverview() },
+            Routes.TradeGuideSecurity to { TradeGuideSecurity() },
+            Routes.TradeGuideProcess to { TradeGuideProcess() },
+            Routes.TradeGuideTradeRules to { TradeGuideTradeRules() },
+        )
+        tradeGuideScreens.forEachIndexed { i: Int, (route, screen): Pair<Routes, @Composable () -> Unit> ->
+            addScreen(route.name, content = screen, wizardTransition = i != 0)
         }
 
     }
