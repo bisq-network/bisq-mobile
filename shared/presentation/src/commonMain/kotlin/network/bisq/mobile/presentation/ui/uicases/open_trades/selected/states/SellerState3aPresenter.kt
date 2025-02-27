@@ -46,7 +46,7 @@ class SellerState3aPresenter(
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
         val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
         _isLightning.value = paymentMethod == "LN"
-        _bitcoinAddressFieldType.value = if (openTradeItemModel.bitcoinSettlementMethod == "LN")
+        _bitcoinAddressFieldType.value = if (paymentMethod == "LN")
             BitcoinLnAddressFieldType.Lightning
         else
             BitcoinLnAddressFieldType.Bitcoin

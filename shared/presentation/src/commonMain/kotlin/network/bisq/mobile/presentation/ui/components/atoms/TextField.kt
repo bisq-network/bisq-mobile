@@ -127,6 +127,13 @@ fun BisqTextField(
         }
     }
     
+    // Re-validate, whenever validation function itself changes
+    // Applicable in cases, where the validation() changes based on
+    // change in other parameters like BitcoinLnAddressField::type
+    LaunchedEffect(validation) {
+        validationError = validation?.invoke(value)
+    }
+
     // To do validation, when value is pasted.
     // So value is programatically changed, without user interaction
     // This code listens for change in value and triggers validation
