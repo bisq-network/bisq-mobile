@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.guide
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -25,6 +26,7 @@ fun TradeGuideSecurity() {
         prevOnClick = presenter::prevClick,
         nextOnClick = presenter::securityNextClick,
         horizontalAlignment = Alignment.Start,
+        isInteractive = presenter.isInteractive.collectAsState().value,
     ) {
         BisqText.h3Regular("bisqEasy.tradeGuide.security.headline".i18n())
 
@@ -36,6 +38,7 @@ fun TradeGuideSecurity() {
 
         LinkButton(
             "action.learnMore".i18n(),
+            link = "https://bisq.wiki/Bisq_Easy",
             onClick = { presenter.navigateSecurityLearnMore() }
         )
     }

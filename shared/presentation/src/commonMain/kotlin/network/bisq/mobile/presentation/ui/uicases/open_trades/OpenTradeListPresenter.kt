@@ -29,7 +29,8 @@ class OpenTradeListPresenter(
     }
 
     fun onOpenTradeGuide() {
-        _tradeGuideVisible.value = true
+        // _tradeGuideVisible.value = true
+        navigateTo(Routes.TradeGuideOverview)
     }
 
     fun onCloseTradeGuide() {

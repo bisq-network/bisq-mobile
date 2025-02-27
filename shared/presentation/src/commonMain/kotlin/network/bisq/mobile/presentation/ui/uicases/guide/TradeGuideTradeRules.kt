@@ -31,6 +31,7 @@ fun TradeGuideTradeRules() {
         nextOnClick = presenter::tradeRulesNextClick,
         nextDisabled = !_userAgreed,
         horizontalAlignment = Alignment.Start,
+        isInteractive = presenter.isInteractive.collectAsState().value,
     ) {
         BisqText.h3Regular("bisqEasy.tradeGuide.rules.headline".i18n())
 
@@ -42,6 +43,7 @@ fun TradeGuideTradeRules() {
 
         LinkButton(
             "action.learnMore".i18n(),
+            link = "https://bisq.wiki/Bisq_Easy",
             onClick = { presenter.navigateSecurityLearnMore() }
         )
 

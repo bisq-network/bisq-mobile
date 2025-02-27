@@ -11,6 +11,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
+import network.bisq.mobile.presentation.ui.navigation.Routes
 
 // todo: btc address/ ln invoice validation missing
 class BuyerState1aPresenter(
@@ -82,6 +83,6 @@ class BuyerState1aPresenter(
     }
 
     fun onOpenWalletGuide() {
-        //todo
+        navigateTo(Routes.WalletGuideIntro)
     }
 }

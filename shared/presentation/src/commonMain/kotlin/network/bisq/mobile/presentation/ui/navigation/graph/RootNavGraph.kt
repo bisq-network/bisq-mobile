@@ -17,10 +17,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.ChatScreen
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.*
-import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideOverview
-import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideProcess
-import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideSecurity
-import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideTradeRules
+import network.bisq.mobile.presentation.ui.uicases.guide.*
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookScreen
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.OpenTradeScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsScreen
@@ -96,6 +93,15 @@ fun RootNavGraph(rootNavController: NavHostController) {
             addScreen(route.name, content = screen, wizardTransition = i != 0)
         }
 
+        val walletGuideScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
+            Routes.WalletGuideIntro to { WalletGuideIntro() },
+            Routes.WalletGuideDownload to { WalletGuideDownload() },
+            Routes.WalletGuideNewWallet to { WalletGuideNewWallet() },
+            Routes.WalletGuideReceiving to { WalletGuideReceiving() },
+        )
+        walletGuideScreens.forEachIndexed { i: Int, (route, screen): Pair<Routes, @Composable () -> Unit> ->
+            addScreen(route.name, content = screen, wizardTransition = i != 0)
+        }
     }
 }
 

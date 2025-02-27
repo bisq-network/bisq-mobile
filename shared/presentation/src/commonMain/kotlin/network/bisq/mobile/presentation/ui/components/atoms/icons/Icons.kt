@@ -127,6 +127,11 @@ fun InfoIcon(modifier: Modifier = Modifier.size(16.dp)) {
 }
 
 @Composable
+fun InfoGreenIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_info_green), "Green info icon", modifier = modifier)
+}
+
+@Composable
 fun GalleryIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_gallery), "Gallery icon", modifier = modifier)
 }

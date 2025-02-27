@@ -15,6 +15,7 @@ class TradeGuidePresenter(
 ) : BasePresenter(mainPresenter) {
 
     val tradeRulesConfirmed: StateFlow<Boolean> = settingsServiceFacade.tradeRulesConfirmed
+    val dontShowLinkPopup: StateFlow<Boolean> = settingsServiceFacade.tradeRulesConfirmed
 
     fun prevClick() {
         navigateBack()

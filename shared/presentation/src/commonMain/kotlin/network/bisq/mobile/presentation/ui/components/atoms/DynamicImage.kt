@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import bisqapps.shared.presentation.generated.resources.Res
 import coil3.compose.AsyncImage
 import network.bisq.mobile.domain.utils.getLogger
@@ -14,6 +15,7 @@ fun DynamicImage(
     fallbackPath: String? = null,
     contentDescription: String = "",
     modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Fit,
     onImageLoadError: (String) -> Unit = {}
 ) {
     // If image is not found we get an exception. If used inside AsyncImage we cannot use try/catch
@@ -38,6 +40,7 @@ fun DynamicImage(
         modifier = modifier,
         onError = {
             onImageLoadError.invoke(path)
-        }
+        },
+        contentScale = contentScale
     )
 }
