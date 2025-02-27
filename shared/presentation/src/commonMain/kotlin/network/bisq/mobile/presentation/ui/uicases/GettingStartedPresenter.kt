@@ -55,6 +55,10 @@ open class GettingStartedPresenter(
         navigateTo(Routes.ChatScreen)
     }
 
+    fun navigateToGuide() {
+        navigateTo(Routes.TradeGuideOverview)
+    }
+
     private fun refresh() {
         job = backgroundScope.launch {
             try {

@@ -36,7 +36,17 @@ enum class Routes(val title: String) {
 
     UserProfileSettings(title = "user_profile_settings"),
 
-    TabSettings(title = "tab_settings");
+    TabSettings(title = "tab_settings"),
+
+    TradeGuideOverview(title = "trade_guide_overview"),
+    TradeGuideSecurity(title = "trade_guide_security"),
+    TradeGuideProcess(title = "trade_guide_process"),
+    TradeGuideTradeRules(title = "trade_guide_trade_rules"),
+
+    WalletGuideIntro(title = "wallet_guide_intro"),
+    WalletGuideDownload(title = "wallet_guide_download"),
+    WalletGuideNewWallet(title = "wallet_guide_newwallet"),
+    WalletGuideReceiving(title = "wallet_guide_receiving");
 
     companion object {
         fun fromString(route: String): Routes? {

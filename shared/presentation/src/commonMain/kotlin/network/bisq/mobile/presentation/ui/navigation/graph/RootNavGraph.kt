@@ -115,6 +115,18 @@ fun RootNavGraph(rootNavController: NavHostController) {
         addScreen(Routes.ChatScreen.name, wizardTransition = true) {
             ChatScreen()
         }
+
+        val tradeScreens: List<Pair<String, @Composable () -> Unit>> = listOf(
+            Routes.TradeGuideOverview.name to { TradeGuideOverview() },
+            Routes.TradeGuideSecurity.name to { TradeGuideSecurity() },
+            Routes.TradeGuideProcess.name to { TradeGuideProcess() },
+            Routes.TradeGuideTradeRules.name to { TradeGuideTradeRules() },
+        )
+
+        tradeScreens.forEachIndexed { i: Int, (route, screen): Pair<String, @Composable () -> Unit> ->
+            addScreen(route, content = screen, wizardTransition = i != 0)
+        }
+
     }
 }
 
@@ -129,7 +141,7 @@ fun NavGraphBuilder.addScreen(
             if (wizardTransition) {
                 // When user presses 'Next', fadeIn the next step screen
                 fadeIn(animationSpec = tween(150))
-            } else  {
+            } else {
                 // When a screen is pushed in, slide in from right edge of the screen to left
                 slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Left,

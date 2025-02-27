@@ -74,7 +74,7 @@ fun GettingStartedScreen() {
                 }
             }
         }
-        /* BisqButton("Chat", onClick = { presenter.navigateToChat() }) */
+        BisqButton("Trade guide", onClick = { presenter.navigateToGuide() })
         WelcomeCard(
             presenter = presenter,
             title = presenter.title,

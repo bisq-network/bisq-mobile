@@ -43,8 +43,6 @@ fun OfferbookScreen() {
     val filteredList = offerListItems.filter { it.bisqEasyOffer.direction.mirror == selectedDirection }
     val sortedList = filteredList.sortedByDescending { it.bisqEasyOffer.date }
 
-    RememberPresenterLifecycle(presenter)
-
     BisqStaticScaffold(
         topBar = {
             TopBar(title = commonStrings.common_offers)
