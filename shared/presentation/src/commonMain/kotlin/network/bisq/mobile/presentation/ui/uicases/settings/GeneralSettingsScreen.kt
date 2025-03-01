@@ -40,7 +40,8 @@ interface IGeneralSettingsPresenter : ViewPresenter {
     val useAnimations: StateFlow<Boolean>
     fun setUseAnimations(value: Boolean)
 
-    val numDaysAfterRedactingTradeData: StateFlow<Int>
+    val numDaysAfterRedactingTradeData: StateFlow<String>
+    fun setNumDaysAfterRedactingTradeData(value: String, isValid: Boolean)
 
     val powFactor: StateFlow<String>
     fun setPowFactor(value: String, isValid: Boolean)
@@ -62,6 +63,7 @@ fun GeneralSettingsScreen() {
     val supportedLanguageCodes = presenter.supportedLanguageCodes.collectAsState().value
     val closeOfferWhenTradeTaken = presenter.closeOfferWhenTradeTaken.collectAsState().value
     val tradePriceTolerance = presenter.tradePriceTolerance.collectAsState().value
+    val numDaysAfterRedactingTradeData = presenter.numDaysAfterRedactingTradeData.collectAsState().value
     val useAnimations = presenter.useAnimations.collectAsState().value
     val powFactor = presenter.powFactor.collectAsState().value
     val ignorePow = presenter.ignorePow.collectAsState().value
@@ -200,6 +202,30 @@ fun GeneralSettingsScreen() {
                     return@BisqTextField null
                 }
             )
+
+            BisqGap.V1()
+
+            BisqTextField(
+                label = "settings.trade.numDaysAfterRedactingTradeData".i18n(),
+                value = numDaysAfterRedactingTradeData ,
+                keyboardType = KeyboardType.Number,
+                onValueChange = { it, isValid -> presenter.setNumDaysAfterRedactingTradeData(it, isValid) },
+                helperText = "settings.trade.numDaysAfterRedactingTradeData.help".i18n(),
+                validation = {
+                    val parsedValue = it.toDoubleOrNull()
+                    if (parsedValue == null) {
+                        return@BisqTextField "Value cannot be empty"
+                    }
+                    if (parsedValue < 30 || parsedValue > 365) {
+                        return@BisqTextField "settings.trade.numDaysAfterRedactingTradeData.invalid".i18n(30, 365)
+                    }
+                    return@BisqTextField null
+                }
+            )
+
+            BisqHDivider()
+
+            BisqText.h4Regular("settings.display.headline".i18n())
 
             BisqGap.V1()
 

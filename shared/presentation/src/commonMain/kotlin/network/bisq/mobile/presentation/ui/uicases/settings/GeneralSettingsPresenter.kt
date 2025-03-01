@@ -25,9 +25,6 @@ open class GeneralSettingsPresenter(
 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
     override val languageCode: MutableStateFlow<String> = _languageCode
-
-    private val _numDaysAfterRedactingTradeData = MutableStateFlow(90)
-    override val numDaysAfterRedactingTradeData: StateFlow<Int> = _numDaysAfterRedactingTradeData
     override fun setLanguageCode(langCode: String) {
         backgroundScope.launch {
             settingsServiceFacade.setLanguageCode(langCode)
@@ -86,6 +83,20 @@ open class GeneralSettingsPresenter(
         }
     }
 
+    private val _numDaysAfterRedactingTradeData = MutableStateFlow("90")
+    override val numDaysAfterRedactingTradeData: StateFlow<String> = _numDaysAfterRedactingTradeData
+    override fun setNumDaysAfterRedactingTradeData(value: String, isValid: Boolean) {
+        backgroundScope.launch {
+            _numDaysAfterRedactingTradeData.value = value
+            if (isValid) {
+                val _value = value.toIntOrNull()
+                if (_value != null) {
+                    settingsServiceFacade.setNumDaysAfterRedactingTradeData(_value)
+                }
+            }
+        }
+    }
+
     private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
     override val useAnimations: StateFlow<Boolean> = _useAnimations
     override fun setUseAnimations(value: Boolean) {
@@ -133,7 +144,7 @@ open class GeneralSettingsPresenter(
             _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
             _tradePriceTolerance.value = (settings.maxTradePriceDeviation * 100).toString()
             _useAnimations.value = settings.useAnimations
-            _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData
+            _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData.toString()
             _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value.toString()
             _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
         })

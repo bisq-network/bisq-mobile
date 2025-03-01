@@ -37,8 +37,9 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 /**
  * TODO:
- * Should have a BisqNumberField with customizations like numberWithTwoDecimals
+ * 1. Should have a BisqNumberField with customizations like numberWithTwoDecimals
  * and whose value is Double and onValueChange emits Double
+ * 2. Add onFocusOut event, to reset data incase of invalid inputs
  */
 @Composable
 fun BisqTextField(
