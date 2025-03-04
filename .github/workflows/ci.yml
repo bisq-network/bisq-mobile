@@ -36,7 +36,7 @@ jobs:
 
       # Cache Gradle dependencies
       - name: Cache Gradle dependencies
-        uses: actions/cache@v3.2.0
+        uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
