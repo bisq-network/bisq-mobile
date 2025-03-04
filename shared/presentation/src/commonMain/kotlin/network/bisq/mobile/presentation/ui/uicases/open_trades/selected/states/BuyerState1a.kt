@@ -18,6 +18,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun BuyerState1a(
@@ -58,6 +59,10 @@ fun BuyerState1a(
                 text = "bisqEasy.tradeState.info.buyer.phase1a.walletHelpButton".i18n(), // Open wallet guide
                 onClick = { presenter.onOpenWalletGuide() },
                 type = BisqButtonType.Outline,
+                padding = PaddingValues(
+                    horizontal = BisqUIConstants.ScreenPadding,
+                    vertical = BisqUIConstants.ScreenPaddingHalf
+                )
             )
         }
     }

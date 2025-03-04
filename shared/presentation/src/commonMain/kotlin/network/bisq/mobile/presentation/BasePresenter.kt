@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation
 
 import androidx.annotation.CallSuper
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.collectAsState
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
@@ -31,6 +32,8 @@ interface ViewPresenter {
      */
     val isInteractive: StateFlow<Boolean>
     val genericErrorMessage: StateFlow<String?>
+
+    fun isSmallScreen(): Boolean
 
     fun onCloseGenericErrorPanel()
 
@@ -126,6 +129,10 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
         uiScope.launch(Dispatchers.Main) {
             snackbarHostState.currentSnackbarData?.dismiss()
         }
+    }
+
+    override fun isSmallScreen(): Boolean {
+        return rootPresenter?.isSmallScreen?.value ?: false
     }
 
     /**

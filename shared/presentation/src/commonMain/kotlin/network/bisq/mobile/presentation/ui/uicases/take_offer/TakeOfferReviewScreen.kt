@@ -58,7 +58,7 @@ fun TakeOfferReviewTradeScreen() {
                 value2 = presenter.quoteSidePaymentMethodDisplayString,
             )
             if (presenter.takersDirection.isBuy) {
-                InfoRowContainer {
+                if (presenter.isSmallScreen()) {
                     InfoBox(
                         label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
                         value = presenter.amountToPay,
@@ -68,9 +68,21 @@ fun TakeOfferReviewTradeScreen() {
                         value = presenter.amountToReceive,
                         rightAlign = true
                     )
+                } else {
+                    InfoRowContainer {
+                        InfoBox(
+                            label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                            value = presenter.amountToPay,
+                        )
+                        InfoBoxSats(
+                            label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                            value = presenter.amountToReceive,
+                            rightAlign = true
+                        )
+                    }
                 }
             } else {
-                InfoRowContainer {
+                if (presenter.isSmallScreen()) {
                     InfoBoxSats(
                         label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
                         value = presenter.amountToPay,
@@ -80,6 +92,18 @@ fun TakeOfferReviewTradeScreen() {
                         value = presenter.amountToReceive,
                         rightAlign = true
                     )
+                } else {
+                    InfoRowContainer {
+                        InfoBoxSats(
+                            label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                            value = presenter.amountToPay,
+                        )
+                        InfoBox(
+                            label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                            value = presenter.amountToReceive,
+                            rightAlign = true
+                        )
+                    }
                 }
             }
         }

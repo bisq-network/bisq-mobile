@@ -44,6 +44,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.info.*
 import network.bisq.mobile.presentation.ui.components.organisms.trades.CancelTradeDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 @Composable
@@ -90,6 +91,8 @@ fun TradeDetailsComposable() {
         if (showDetails) 0f else 180f
     }
 
+    val isSell = presenter.directionEnum.isSell
+
     Row(modifier = Modifier.clip(shape = RoundedCornerShape(12.dp))) {
         Column(
             modifier = Modifier.fillMaxWidth()
@@ -123,25 +126,42 @@ fun TradeDetailsComposable() {
 
             BisqGap.VHalf()
 
-            InfoRowContainer {
-                if (presenter.directionEnum.isSell) {
-                    InfoBoxSats(
-                        label = presenter.leftAmountDescription,
-                        value = presenter.leftAmount,
-                    )
-                    InfoBox(
-                        label = presenter.rightAmountDescription,
-                        value = "${presenter.rightAmount} ${presenter.rightCode}",
-                    )
+
+            if (presenter.isSmallScreen()) {
+                if (isSell) {
+                    InfoBoxSats(label = presenter.leftAmountDescription, value = presenter.leftAmount)
                 } else {
                     InfoBox(
                         label = presenter.leftAmountDescription,
-                        value = "${presenter.leftAmount} ${presenter.leftCode}",
+                        value = "${presenter.leftAmount} ${presenter.leftCode}"
                     )
-                    InfoBoxSats(
+                }
+                if (isSell) {
+                    InfoBox(
                         label = presenter.rightAmountDescription,
-                        value = presenter.rightAmount,
+                        value = "${presenter.rightAmount} ${presenter.rightCode}"
                     )
+                } else {
+                    InfoBoxSats(label = presenter.rightAmountDescription, value = presenter.rightAmount)
+                }
+            } else {
+                InfoRowContainer {
+                    if (isSell) {
+                        InfoBoxSats(label = presenter.leftAmountDescription, value = presenter.leftAmount)
+                    } else {
+                        InfoBox(
+                            label = presenter.leftAmountDescription,
+                            value = "${presenter.leftAmount} ${presenter.leftCode}"
+                        )
+                    }
+                    if (isSell) {
+                        InfoBox(
+                            label = presenter.rightAmountDescription,
+                            value = "${presenter.rightAmount} ${presenter.rightCode}"
+                        )
+                    } else {
+                        InfoBoxSats(label = presenter.rightAmountDescription, value = presenter.rightAmount)
+                    }
                 }
             }
 
@@ -151,17 +171,31 @@ fun TradeDetailsComposable() {
                 exit = exitTransition
             ) {
                 Column(
-                    horizontalAlignment = Alignment.End,
+                    horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.SpaceBetween,
                     modifier = Modifier.weight(2f)
                 ) {
-                    InfoRow(
-                        style = InfoBoxStyle.Style2,
-                        label1 = stringsBisqEasy.bisqEasy_openTrades_table_price,
-                        value1 = item.formattedPrice,
-                        label2 = "Trade date", // -> bisqEasy.openTrades.tradeDetails.tradeDate  //strings.bisqEasy_tradeCompleted_body_date,
-                        value2 = "${item.formattedDate} ${item.formattedTime}",
-                    )
+                    if (presenter.isSmallScreen()) {
+                        InfoBox(
+                            label = stringsBisqEasy.bisqEasy_openTrades_table_price,
+                            value = item.formattedPrice,
+                            style = InfoBoxStyle.Style2,
+                        )
+                        BisqGap.V1()
+                        InfoBox(
+                            label = "Trade date", // -> bisqEasy.openTrades.tradeDetails.tradeDate  //strings.bisqEasy_tradeCompleted_body_date,
+                            value = "${item.formattedDate} ${item.formattedTime}",
+                            style = InfoBoxStyle.Style2,
+                        )
+                    } else {
+                        InfoRow(
+                            style = InfoBoxStyle.Style2,
+                            label1 = stringsBisqEasy.bisqEasy_openTrades_table_price,
+                            value1 = item.formattedPrice,
+                            label2 = "Trade date", // -> bisqEasy.openTrades.tradeDetails.tradeDate  //strings.bisqEasy_tradeCompleted_body_date,
+                            value2 = "${item.formattedDate} ${item.formattedTime}",
+                        )
+                    }
 
                     BisqGap.V1()
 

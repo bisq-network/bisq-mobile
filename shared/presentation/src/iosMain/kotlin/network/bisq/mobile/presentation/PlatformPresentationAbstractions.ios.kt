@@ -2,6 +2,8 @@
 
 package network.bisq.mobile.presentation
 
+import platform.UIKit.UIScreen
+import platform.CoreGraphics.CGRectGetWidth
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
@@ -67,3 +69,8 @@ actual fun exitApp() {
 }
 
 actual fun getPlatformCurrentTimeProvider(): TimeProvider = IOSCurrentTimeProvider()
+
+@OptIn(ExperimentalForeignApi::class)
+actual fun getScreenWidthDp(): Int {
+    return CGRectGetWidth(UIScreen.mainScreen.bounds).toInt()
+}

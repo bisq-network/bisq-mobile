@@ -29,6 +29,8 @@ interface AppPresenter : ViewPresenter {
 
     val languageCode: StateFlow<String>
 
+    val isSmallScreen: StateFlow<Boolean>
+
     // Actions
     fun toggleContentVisibility()
 }
@@ -46,6 +48,7 @@ fun App() {
     val presenter: AppPresenter = koinInject()
     val errorMessage = MainPresenter._genericErrorMessage.collectAsState().value
     val systemCrashed = MainPresenter._systemCrashed.collectAsState().value
+
 
     RememberPresenterLifecycle(presenter, {
         presenter.navController = rootNavController

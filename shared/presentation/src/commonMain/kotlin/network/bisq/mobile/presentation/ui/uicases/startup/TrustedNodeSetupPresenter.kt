@@ -51,7 +51,7 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun updateBisqApiUrl(newUrl: String, isValid: Boolean) {
-        log.w { "$newUrl: $isValid" }
+        // log.w { "$newUrl: $isValid" }
         _isBisqApiUrlValid.value = isValid
         _bisqApiUrl.value = newUrl
         _isConnected.value = false
