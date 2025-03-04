@@ -80,9 +80,6 @@ fun <T> ToggleTab(
                 options.forEach { option ->
                     Box(
                         modifier = Modifier
-                            .padding(horizontal = hPadding, vertical = vPadding)
-                            .height(textHeight)
-                            .width(textWidth)
                             .clickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
@@ -90,7 +87,10 @@ fun <T> ToggleTab(
                                     selectedOption = option
                                     onStateChange(selectedOption)
                                 }
-                            ),
+                            )
+                            .padding(horizontal = hPadding, vertical = vPadding)
+                            .height(textHeight)
+                            .width(textWidth),
                         contentAlignment = Alignment.Center
                     ) {
                         BisqText.baseRegular(
