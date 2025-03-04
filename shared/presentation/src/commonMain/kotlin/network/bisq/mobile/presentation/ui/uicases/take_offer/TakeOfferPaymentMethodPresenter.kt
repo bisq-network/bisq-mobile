@@ -1,6 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
-import androidx.compose.material3.rememberSwipeToDismissBoxState
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -62,12 +62,10 @@ class TakeOfferPaymentMethodPresenter(
             commitToModel()
             navigateTo(Routes.TakeOfferReviewTrade)
         } else {
-            if (quoteSidePaymentMethod == null && baseSidePaymentMethod == null) {
-                showSnackbar("Please select both payment and settlement methods")
-            } else if (quoteSidePaymentMethod == null) {
-                showSnackbar("Please select a payment method")
+            if (quoteSidePaymentMethod == null) {
+                showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noFiatPaymentMethodSelected".i18n())
             } else if (baseSidePaymentMethod == null) {
-                showSnackbar("Please select a settlement method")
+                showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noBtcSettlementMethodSelected".i18n())
             }
             // Note the data is set at the service layer, so if there is only one payment method we
             // have it set at the service. We do not need to check here if we have the multiple options.

@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.AppStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -86,12 +87,10 @@ class CreateOfferPaymentMethodPresenter(
             commitToModel()
             navigateTo(Routes.CreateOfferReviewOffer)
         } else {
-            if (selectedQuoteSidePaymentMethods.value.isEmpty() && selectedBaseSidePaymentMethods.value.isEmpty()) {
-                showSnackbar("Please select both payment and settlement methods")
-            } else if (selectedQuoteSidePaymentMethods.value.isEmpty()) {
-                showSnackbar("Please select a payment method")
+            if (selectedQuoteSidePaymentMethods.value.isEmpty()) {
+                showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noFiatPaymentMethodSelected".i18n())
             } else if (selectedBaseSidePaymentMethods.value.isEmpty()) {
-                showSnackbar("Please select a settlement method")
+                showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noBtcSettlementMethodSelected".i18n())
             }
         }
     }
