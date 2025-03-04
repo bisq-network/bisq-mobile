@@ -19,9 +19,9 @@ import network.bisq.mobile.presentation.MainPresenter
  * Node main presenter has a very different setup than the rest of the apps (bisq2 core dependencies)
  */
 class NodeMainPresenter(
-    connectivityService: NodeConnectivityService,
     urlLauncher: UrlLauncher,
     openTradesNotificationService: OpenTradesNotificationService,
+    private val connectivityService: NodeConnectivityService,
     private val tradesServiceFacade: TradesServiceFacade,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
@@ -70,6 +70,7 @@ class NodeMainPresenter(
                         }
                     }
                 applicationServiceCreated = true
+                connectivityService.startMonitoring()
             } else {
                 settingsServiceFacade.activate()
                 offersServiceFacade.activate()

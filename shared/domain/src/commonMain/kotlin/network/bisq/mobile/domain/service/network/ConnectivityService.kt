@@ -55,6 +55,7 @@ abstract class ConnectivityService: Logging {
      * Starts monitoring connectivity every given period (ms). Default is 10 seconds.
      */
     fun startMonitoring(period: Long = PERIOD) {
+        onStart()
         job?.cancel()
         job = coroutineScope.launch(BackgroundDispatcher) {
             while (true) {
@@ -88,8 +89,12 @@ abstract class ConnectivityService: Logging {
         onStop()
     }
 
+    protected open fun onStart() {
+        // default nth
+    }
+
     protected open fun onStop() {
-        // do nth
+        // default nth
     }
 
     protected abstract fun isConnected(): Boolean

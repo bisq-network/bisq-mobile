@@ -190,7 +190,7 @@ class NodeOffersServiceFacade(
             Optional.empty(),
             Date().time,
             false
-        )
+        ) 
 
         // blocking call
         bisqEasyOfferbookChannelService.publishChatMessage(myOfferMessage, userIdentity).join()
