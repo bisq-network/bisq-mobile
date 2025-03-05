@@ -16,6 +16,12 @@
  */
 package network.bisq.mobile.android.node.mapping
 
+import bisq.account.accounts.Account
+import bisq.account.accounts.AccountPayload
+import bisq.account.accounts.UserDefinedFiatAccount
+import bisq.account.accounts.UserDefinedFiatAccountPayload
+import bisq.account.payment_method.FiatPaymentMethod
+import bisq.account.payment_method.PaymentMethod
 import bisq.account.protocol_type.TradeProtocolType
 import bisq.chat.ChatChannelDomain
 import bisq.chat.ChatMessageType
@@ -75,6 +81,8 @@ import bisq.trade.bisq_easy.protocol.BisqEasyTradeState
 import bisq.user.identity.UserIdentity
 import bisq.user.profile.UserProfile
 import bisq.user.reputation.ReputationScore
+import network.bisq.mobile.domain.data.replicated.account.AccountPayloadVO
+import network.bisq.mobile.domain.data.replicated.account.AccountVO
 import network.bisq.mobile.domain.data.replicated.account.protocol_type.TradeProtocolTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
@@ -123,6 +131,7 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecV
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.domain.data.replicated.payment.PaymentMethodVO
 import network.bisq.mobile.domain.data.replicated.security.keys.KeyBundleVO
 import network.bisq.mobile.domain.data.replicated.security.keys.KeyPairVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PrivateKeyVO
@@ -418,7 +427,12 @@ class Mappings {
 
     object MarketMapping {
         fun toBisq2Model(value: MarketVO): Market {
-            return Market(value.baseCurrencyCode, value.quoteCurrencyCode, value.baseCurrencyName, value.quoteCurrencyName)
+            return Market(
+                value.baseCurrencyCode,
+                value.quoteCurrencyCode,
+                value.baseCurrencyName,
+                value.quoteCurrencyName
+            )
         }
 
         fun fromBisq2Model(value: Market): MarketVO {
@@ -652,11 +666,19 @@ class Mappings {
 
     object IdentityMapping {
         fun toBisq2Model(value: IdentityVO): Identity {
-            return Identity(value.tag, NetworkIdMapping.toBisq2Model(value.networkId), KeyBundleMapping.toBisq2Model(value.keyBundle))
+            return Identity(
+                value.tag,
+                NetworkIdMapping.toBisq2Model(value.networkId),
+                KeyBundleMapping.toBisq2Model(value.keyBundle)
+            )
         }
 
         fun fromBisq2Model(value: Identity): IdentityVO {
-            return IdentityVO(value.tag, NetworkIdMapping.fromBisq2Model(value.networkId), KeyBundleMapping.fromBisq2Model(value.keyBundle))
+            return IdentityVO(
+                value.tag,
+                NetworkIdMapping.fromBisq2Model(value.networkId),
+                KeyBundleMapping.fromBisq2Model(value.keyBundle)
+            )
         }
     }
 
@@ -1062,7 +1084,11 @@ class Mappings {
 
     object KeyBundleMapping {
         fun toBisq2Model(value: KeyBundleVO): KeyBundle {
-            return KeyBundle(value.keyId, KeyPairMapping.toBisq2Model(value.keyPair), TorKeyPairMapping.toBisq2Model(value.torKeyPair))
+            return KeyBundle(
+                value.keyId,
+                KeyPairMapping.toBisq2Model(value.keyPair),
+                TorKeyPairMapping.toBisq2Model(value.torKeyPair)
+            )
         }
 
         fun fromBisq2Model(value: KeyBundle): KeyBundleVO {
@@ -1138,6 +1164,66 @@ class Mappings {
         }
     }
 
+    // payment accounts
+
+    object AccountMapping {
+        fun toBisq2Model(value: AccountVO): Account<*, *> {
+            return when (value.paymentMethod.name) {
+                "UserDefinedFiatAccount" -> UserDefinedFiatAccount(
+                    value.accountName,
+                    value.accountPayload.id
+                )
+
+                else -> throw IllegalArgumentException("Unsupported Account type: ${value.paymentMethod.name}")
+            }
+        }
+
+        fun fromBisq2Model(value: Account<*, *>): AccountVO {
+            return AccountVO(
+                accountName = value.accountName,
+                paymentMethod = PaymentMethodMapping.fromBisq2Model(value.paymentMethod),
+                accountPayload = AccountPayloadMapping.fromBisq2Model(value.accountPayload)
+            )
+        }
+    }
+
+    object AccountPayloadMapping {
+        fun toBisq2Model(value: AccountPayloadVO): AccountPayload {
+            return UserDefinedFiatAccountPayload(
+                value.id,
+                value.paymentMethodName,
+                value.accountData
+            )
+        }
+
+        fun fromBisq2Model(value: AccountPayload): AccountPayloadVO {
+            if (value is UserDefinedFiatAccountPayload) {
+                return AccountPayloadVO(
+                    id = value.id,
+                    paymentMethodName = value.paymentMethodName,
+                    accountData = value.accountData
+                )
+            } else {
+                throw IllegalArgumentException("Unsupported Account payload type")
+            }
+        }
+    }
+
+    object PaymentMethodMapping {
+        fun toBisq2Model(value: PaymentMethodVO): PaymentMethod<*> {
+            return FiatPaymentMethod.fromCustomName(value.name)
+        }
+
+        fun fromBisq2Model(value: PaymentMethod<*>): PaymentMethodVO {
+            return PaymentMethodVO(
+                name = value.name,
+                paymentRail = value.paymentRail.name(),
+                displayString = value.displayString,
+                shortDisplayString = value.shortDisplayString
+            )
+        }
+    }
+
 
     // trade
 
@@ -1171,7 +1257,8 @@ class Mappings {
                 // We set initial values if mutable data
                 // We update the data with observers
                 tradeState.value = BisqEasyTradeStateMapping.fromBisq2Model(value.tradeState)
-                interruptTradeInitiator.value = value.interruptTradeInitiator.get()?.let { RoleMapping.fromBisq2Model(it) }
+                interruptTradeInitiator.value =
+                    value.interruptTradeInitiator.get()?.let { RoleMapping.fromBisq2Model(it) }
                 paymentAccountData.value = value.paymentAccountData.get()
                 bitcoinPaymentData.value = value.bitcoinPaymentData.get()
                 paymentProof.value = value.paymentProof.get()
@@ -1308,11 +1395,17 @@ class Mappings {
 
     object UserIdentityMapping {
         fun toBisq2Model(value: UserIdentityVO): UserIdentity {
-            return UserIdentity(IdentityMapping.toBisq2Model(value.identity), UserProfileMapping.toBisq2Model(value.userProfile))
+            return UserIdentity(
+                IdentityMapping.toBisq2Model(value.identity),
+                UserProfileMapping.toBisq2Model(value.userProfile)
+            )
         }
 
         fun fromBisq2Model(value: UserIdentity): UserIdentityVO {
-            return UserIdentityVO(IdentityMapping.fromBisq2Model(value.identity), UserProfileMapping.fromBisq2Model(value.userProfile))
+            return UserIdentityVO(
+                IdentityMapping.fromBisq2Model(value.identity),
+                UserProfileMapping.fromBisq2Model(value.userProfile)
+            )
         }
     }
 
