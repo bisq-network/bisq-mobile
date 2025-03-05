@@ -34,8 +34,11 @@ class NodeConnectivityService(private val applicationService: AndroidApplication
 
     override fun onStart() {
         try {
-            val serviceNode = applicationService.networkService.get().findServiceNode(TransportType.CLEAR).get()
-            serviceNode.nodesById.addNodeListener(nodeListener)
+            val networkService = applicationService.networkService.get()
+            networkService.supportedTransportTypes.forEach { transportType ->
+                val serviceNode = networkService.findServiceNode(transportType).get()
+                serviceNode.nodesById.addNodeListener(nodeListener)
+            }
         } catch (e: Exception) {
             log.w(e) { "failed to start node monitoring for connectivity service" }
         }
@@ -43,8 +46,11 @@ class NodeConnectivityService(private val applicationService: AndroidApplication
 
     override fun onStop() {
         try {
-            val serviceNode = applicationService.networkService.get().findServiceNode(TransportType.CLEAR).get()
-            serviceNode.nodesById.removeNodeListener(nodeListener)
+            val networkService = applicationService.networkService.get()
+            networkService.supportedTransportTypes.forEach { transportType ->
+                val serviceNode = networkService.findServiceNode(transportType).get()
+                serviceNode.nodesById.removeNodeListener(nodeListener)
+            }
         } catch (e: Exception) {
             log.w(e) { "failed to start node monitoring for connectivity service" }
         }
