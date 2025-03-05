@@ -1,6 +1,5 @@
 package network.bisq.mobile.android.node.service.network
 
-import bisq.common.network.TransportType
 import bisq.network.identity.NetworkId
 import bisq.network.p2p.message.EnvelopePayloadMessage
 import bisq.network.p2p.node.CloseReason
@@ -10,7 +9,10 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.service.network.ConnectivityService
 
 class NodeConnectivityService(private val applicationService: AndroidApplicationService.Provider): ConnectivityService() {
-    // TODO ConnectivityService#newRequestRoundTripTime() call needs to be applied when a P2P roundtrip call is done for the parent isSlow impl to work
+
+    companion object {
+        const val SLOW_PEER_QUANTITY_THRESHOLD = 2
+    }
 
     private var connections = 0
     private val nodeListener : Node.Listener = object: Node.Listener {
@@ -59,5 +61,11 @@ class NodeConnectivityService(private val applicationService: AndroidApplication
     override fun isConnected(): Boolean {
         log.d { "Connected peers = $connections"}
         return connections > 0
+    }
+
+    override suspend fun isSlow(): Boolean {
+        // TODO improve impl using ConnectivityService#newRequestRoundTripTime() call needs to be applied when a P2P roundtrip call is done for the
+        // parent isSlow impl to work
+        return connections < SLOW_PEER_QUANTITY_THRESHOLD
     }
 }
