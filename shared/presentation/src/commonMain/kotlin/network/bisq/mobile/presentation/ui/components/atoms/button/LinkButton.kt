@@ -17,6 +17,8 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 fun LinkButton(
     text: String,
     link: String,
+    type: BisqButtonType = BisqButtonType.Clear,
+    padding: PaddingValues = PaddingValues(all = BisqUIConstants.Zero),
     onClick: (() -> Unit)? = null,
     fullWidth: Boolean = false,
     openConfirmation: Boolean = true,
@@ -29,8 +31,8 @@ fun LinkButton(
     BisqButton(
         text,
         color = BisqTheme.colors.primary,
-        type = BisqButtonType.Clear,
-        padding = PaddingValues(all = BisqUIConstants.Zero),
+        type = type,
+        padding = padding,
         fullWidth = fullWidth,
         onClick = {
             if (openConfirmation) {

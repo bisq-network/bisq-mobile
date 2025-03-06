@@ -134,19 +134,6 @@ fun BisqTextField(
         validationError = validation?.invoke(value)
     }
 
-    // To do validation, when value is pasted.
-    // So value is programatically changed, without user interaction
-    // This code listens for change in value and triggers validation
-//    var hasInitialized by remember { mutableStateOf(false) }
-//    LaunchedEffect(value) {
-//        if (hasInitialized && value.length > 0) {
-//            validationError = validation?.invoke(value)
-//            onValueChange(value, validationError == null)
-//            hasInteracted = true
-//        }
-//        hasInitialized = true
-//    }
-
     Column(
         modifier = modifier
     ) {

@@ -12,6 +12,7 @@ import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -44,12 +45,12 @@ fun SellerReputationWarningDialog(
 
         BisqGap.VHalf()
 
-        BisqButton(
-            text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_gainReputation,
+        LinkButton(
+            text =strings.bisqEasy_tradeWizard_directionAndMarket_feedback_gainReputation,
+            link = "https://bisq.wiki/Reputation#How_to_build_reputation",
             type = BisqButtonType.Outline,
             onClick = onLearnReputation,
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
-            color = BisqTheme.colors.primary,
             fullWidth = true
         )
 
