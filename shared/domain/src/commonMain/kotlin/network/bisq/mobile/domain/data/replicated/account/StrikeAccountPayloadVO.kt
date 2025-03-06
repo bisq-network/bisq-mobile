@@ -1,6 +1,6 @@
 package network.bisq.mobile.domain.data.replicated.account
 
-data class StrikeAccountPayload(
+data class StrikeAccountPayloadVO(
     override val id: String,
     override val paymentMethodName: String,
     val countryCode: String,

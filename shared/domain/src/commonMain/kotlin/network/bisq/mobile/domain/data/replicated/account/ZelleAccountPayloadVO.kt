@@ -1,7 +1,7 @@
 package network.bisq.mobile.domain.data.replicated.account
 
 
-data class ZelleAccountPayload(
+data class ZelleAccountPayloadVO(
     override val id: String,
     override val paymentMethodName: String,
     val emailOrMobileNr: String,

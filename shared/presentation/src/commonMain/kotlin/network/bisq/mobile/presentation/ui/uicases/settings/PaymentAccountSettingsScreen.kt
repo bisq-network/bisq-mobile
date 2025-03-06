@@ -2,11 +2,15 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.domain.data.replicated.account.AccountVO
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
@@ -25,12 +29,13 @@ import network.bisq.mobile.presentation.ui.composeModels.PaymentAccount
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
+import kotlin.reflect.KProperty
 
 interface IPaymentAccountSettingsPresenter : ViewPresenter {
-    val accounts: StateFlow<List<PaymentAccount>>
-    val selectedAccount: StateFlow<PaymentAccount>
+    val accounts: StateFlow<List<AccountVO<*, *>>>
+    val selectedAccount: StateFlow<AccountVO<*, *>?>
 
-    fun selectAccount(account: PaymentAccount)
+    fun selectAccount(account: AccountVO<*, *>)
 
     fun addAccount(newName: String, newDescription: String)
     fun saveAccount(newName: String, newDescription: String)
@@ -195,4 +200,3 @@ fun PaymentAccountSettingsScreen() {
     }
 
 }
-

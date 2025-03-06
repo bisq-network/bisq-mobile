@@ -1,6 +1,6 @@
 package network.bisq.mobile.domain.data.replicated.account
 
-data class UserDefinedFiatAccountPayload(
+data class UserDefinedFiatAccountPayloadVO(
     override val id: String,
     override val paymentMethodName: String,
     val accountData: String

@@ -115,7 +115,7 @@ val presentationModule = module {
 
     single { GeneralSettingsPresenter(get(), get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
-    single { PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
+    single { PaymentAccountPresenter(get(), get(), get()) } bind IPaymentAccountSettingsPresenter::class
 
     // Offerbook
     single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get()) }

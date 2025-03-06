@@ -1,10 +1,10 @@
 package network.bisq.mobile.domain.data.replicated.payment
 
-enum class FiatPaymentRail(
+enum class FiatPaymentRailVO(
     val countries: List<String>,
     val tradeCurrencies: List<String>,
     val currencyCodes: List<String>
-): PaymentRail {
+): PaymentRailVO {
     CUSTOM(emptyList(), emptyList(), emptyList()),
 
     /*

@@ -1166,64 +1166,6 @@ class Mappings {
 
     // payment accounts
 
-    object AccountMapping {
-        fun toBisq2Model(value: AccountVO): Account<*, *> {
-            return when (value.paymentMethod.name) {
-                "UserDefinedFiatAccount" -> UserDefinedFiatAccount(
-                    value.accountName,
-                    value.accountPayload.id
-                )
-
-                else -> throw IllegalArgumentException("Unsupported Account type: ${value.paymentMethod.name}")
-            }
-        }
-
-        fun fromBisq2Model(value: Account<*, *>): AccountVO {
-            return AccountVO(
-                accountName = value.accountName,
-                paymentMethod = PaymentMethodMapping.fromBisq2Model(value.paymentMethod),
-                accountPayload = AccountPayloadMapping.fromBisq2Model(value.accountPayload)
-            )
-        }
-    }
-
-    object AccountPayloadMapping {
-        fun toBisq2Model(value: AccountPayloadVO): AccountPayload {
-            return UserDefinedFiatAccountPayload(
-                value.id,
-                value.paymentMethodName,
-                value.accountData
-            )
-        }
-
-        fun fromBisq2Model(value: AccountPayload): AccountPayloadVO {
-            if (value is UserDefinedFiatAccountPayload) {
-                return AccountPayloadVO(
-                    id = value.id,
-                    paymentMethodName = value.paymentMethodName,
-                    accountData = value.accountData
-                )
-            } else {
-                throw IllegalArgumentException("Unsupported Account payload type")
-            }
-        }
-    }
-
-    object PaymentMethodMapping {
-        fun toBisq2Model(value: PaymentMethodVO): PaymentMethod<*> {
-            return FiatPaymentMethod.fromCustomName(value.name)
-        }
-
-        fun fromBisq2Model(value: PaymentMethod<*>): PaymentMethodVO {
-            return PaymentMethodVO(
-                name = value.name,
-                paymentRail = value.paymentRail.name(),
-                displayString = value.displayString,
-                shortDisplayString = value.shortDisplayString
-            )
-        }
-    }
-
 
     // trade
 

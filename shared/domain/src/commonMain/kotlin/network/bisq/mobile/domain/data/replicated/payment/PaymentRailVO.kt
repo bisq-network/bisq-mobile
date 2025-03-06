@@ -1,5 +1,5 @@
 package network.bisq.mobile.domain.data.replicated.payment
 
-interface PaymentRail {
+interface PaymentRailVO {
     val name: String
 }
