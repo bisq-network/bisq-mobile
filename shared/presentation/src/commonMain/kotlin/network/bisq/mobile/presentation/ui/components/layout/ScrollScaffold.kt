@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.components.layout
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
@@ -24,10 +25,12 @@ fun BisqScrollScaffold(
     topBar: @Composable (() -> Unit)? = null,
     bottomBar: @Composable (() -> Unit)? = null,
     snackbarHostState: SnackbarHostState? = null,
+    scrollState: ScrollState? = null,
     fab: @Composable (() -> Unit)? = null,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     isInteractive: Boolean = true,
+    showJumpToBottom: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
 
@@ -45,7 +48,8 @@ fun BisqScrollScaffold(
             BisqScrollLayout(
                 padding = if (topBar != null) it else padding,
                 verticalArrangement = verticalArrangement,
-                isInteractive = isInteractive
+                isInteractive = isInteractive,
+                showJumpToBottom = showJumpToBottom,
             ) {
                 // Padding logic:
                 // when topBar is set, Scaffold.content.it provides the padding

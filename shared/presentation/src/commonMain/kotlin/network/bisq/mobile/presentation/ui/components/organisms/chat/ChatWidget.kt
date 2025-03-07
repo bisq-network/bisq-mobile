@@ -27,6 +27,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.molecules.JumpToBottomFAB
 import network.bisq.mobile.presentation.ui.components.molecules.chat.ChatOuterBubble
 import network.bisq.mobile.presentation.ui.composeModels.ChatMessage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -79,57 +80,14 @@ fun ChatWidget(
             }
         }
 
-        JumpToBottom(
-            // Only show if the scroller is not at the bottom
+        JumpToBottomFAB(
             enabled = jumpToBottomButtonEnabled,
             onClicked = { scope.launch { scrollState.animateScrollToItem(0) } },
+            jumpOffset = 48,
             modifier = Modifier.align(Alignment.BottomCenter)
         )
     }
 }
-
-private enum class Visibility {
-    VISIBLE,
-    GONE
-}
-
-@Composable
-fun JumpToBottom(
-    enabled: Boolean,
-    onClicked: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val transition = updateTransition(
-        if (enabled) Visibility.VISIBLE else Visibility.GONE,
-        label = "JumpToBottom visibility animation"
-    )
-    val bottomOffset by transition.animateDp(label = "JumpToBottom offset animation") {
-        if (it == Visibility.GONE) {
-            (-32).dp
-        } else {
-            32.dp
-        }
-    }
-    if (bottomOffset > 0.dp) {
-        ExtendedFloatingActionButton(
-            icon = {
-                Icon(
-                    imageVector = Icons.Default.ArrowDropDown,
-                    modifier = Modifier.height(18.dp),
-                    contentDescription = null
-                )
-            },
-            text = { BisqText.baseRegular("Jump to bottom", color = BisqTheme.colors.dark1) },
-            onClick = onClicked,
-            containerColor = MaterialTheme.colorScheme.surface,
-            contentColor = MaterialTheme.colorScheme.primary,
-            modifier = modifier
-                .offset(x = 0.dp, y = -bottomOffset)
-                .height(36.dp)
-        )
-    }
-}
-
 private val JumpToBottomThreshold = 56.dp
 
 

@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.components.layout
 
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.SnackbarHostState
@@ -30,6 +31,7 @@ fun MultiScreenWizardScaffold(
     useStaticScaffold: Boolean = false,
     snackbarHostState: SnackbarHostState? = null,
     isInteractive: Boolean = true,
+    showJumpToBottom: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
 
@@ -40,9 +42,10 @@ fun MultiScreenWizardScaffold(
         hAlignment: Alignment.Horizontal,
         vArrangement: Arrangement.Vertical,
         snackbarHostState: SnackbarHostState?,
+        jumpToBottom: Boolean,
         content: @Composable ColumnScope.() -> Unit
     ) -> Unit =
-        if (useStaticScaffold) { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState, innerContent ->
+        if (useStaticScaffold) { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState,_showJumpToBottom, innerContent ->
             BisqStaticScaffold(
                 padding = padding,
                 topBar = topBar,
@@ -53,7 +56,7 @@ fun MultiScreenWizardScaffold(
                 isInteractive = isInteractive,
                 content = innerContent
             )
-        } else { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState, innerContent ->
+        } else { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, innerContent ->
             BisqScrollScaffold(
                 padding = padding,
                 topBar = topBar,
@@ -62,6 +65,7 @@ fun MultiScreenWizardScaffold(
                 verticalArrangement = verticalArrangement,
                 snackbarHostState = snackState,
                 isInteractive = isInteractive,
+                showJumpToBottom = _showJumpToBottom,
                 content = innerContent
             )
         }
@@ -125,6 +129,7 @@ fun MultiScreenWizardScaffold(
         horizontalAlignment,
         Arrangement.Top,
         snackbarHostState,
+        showJumpToBottom,
     ) {
 
         // TODO: Should pass these values to the column deep inside BisqScrollLayout

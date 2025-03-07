@@ -1,18 +1,17 @@
 package network.bisq.mobile.presentation.ui.components.layout
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.runtime.*
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import network.bisq.mobile.presentation.ui.components.molecules.JumpToBottomFAB
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -23,8 +22,21 @@ fun BisqScrollLayout(
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     onModifier: ((Modifier) -> Modifier)? = null, // allows to customize modifier settings
     isInteractive: Boolean = true,
+    showJumpToBottom: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+    val scrollState = rememberScrollState()
+    val jumpThreshold = with(LocalDensity.current) {
+        JumpToBottomThreshold.toPx()
+    }
+
+    val jumpToBottomButtonEnabled by remember {
+        derivedStateOf {
+            scrollState.maxValue - scrollState.value > 50
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -37,7 +49,7 @@ fun BisqScrollLayout(
                 .fillMaxSize()
                 // .background(color = BisqTheme.colors.backgroundColor)
                 .padding(padding)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(scrollState)
                 .run { onModifier?.invoke(this) ?: this }
         ) {
             content()
@@ -60,5 +72,15 @@ fun BisqScrollLayout(
                     .clearAndSetSemantics { } // Disables accessibility interactions
             )
         }
+
+        if (showJumpToBottom) {
+            JumpToBottomFAB(
+                enabled = jumpToBottomButtonEnabled,
+                onClicked = { scope.launch { scrollState.animateScrollTo(scrollState.maxValue) } },
+                modifier = Modifier.align(Alignment.BottomCenter)
+            )
+        }
     }
 }
+
+private val JumpToBottomThreshold = 16.dp

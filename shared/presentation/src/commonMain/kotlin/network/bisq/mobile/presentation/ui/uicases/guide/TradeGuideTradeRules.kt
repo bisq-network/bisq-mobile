@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.guide
 
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
 import androidx.compose.runtime.remember
@@ -32,6 +33,7 @@ fun TradeGuideTradeRules() {
         nextDisabled = !_userAgreed,
         horizontalAlignment = Alignment.Start,
         isInteractive = presenter.isInteractive.collectAsState().value,
+        showJumpToBottom = true
     ) {
         BisqText.h3Regular("bisqEasy.tradeGuide.rules.headline".i18n())
 
@@ -57,5 +59,7 @@ fun TradeGuideTradeRules() {
                     _userAgreed = it
                 }
             )
+
     }
 }
+
