@@ -4,6 +4,7 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.presentation.*
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
+import network.bisq.mobile.android.node.service.accounts.NodeAccountsServiceFacade
 import network.bisq.mobile.android.node.service.bootstrap.NodeApplicationBootstrapFacade
 import network.bisq.mobile.android.node.service.explorer.NodeExplorerServiceFacade
 import network.bisq.mobile.android.node.service.common.NodeLanguageServiceFacade
@@ -16,6 +17,7 @@ import network.bisq.mobile.android.node.service.trades.NodeTradesServiceFacade
 import network.bisq.mobile.android.node.service.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
+import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
@@ -66,6 +68,8 @@ val androidNodeModule = module {
     single<MediationServiceFacade> { NodeMediationServiceFacade(get()) }
 
     single<SettingsServiceFacade> { NodeSettingsServiceFacade(get()) }
+
+    single<AccountsServiceFacade> { NodeAccountsServiceFacade(get()) }
 
     single<LanguageServiceFacade> { NodeLanguageServiceFacade(get()) }
 

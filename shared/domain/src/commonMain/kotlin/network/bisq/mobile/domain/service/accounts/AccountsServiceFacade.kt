@@ -2,14 +2,15 @@ package network.bisq.mobile.domain.service.accounts
 
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.LifeCycleAware
-import network.bisq.mobile.domain.data.replicated.account.AccountVO
+import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 
 interface AccountsServiceFacade : LifeCycleAware {
-    val accounts: StateFlow<List<AccountVO<*, *>>>
-    val selectedAccount: StateFlow<AccountVO<*, *>?>
+    val accounts: StateFlow<List<UserDefinedFiatAccountVO>>
+    val selectedAccount: StateFlow<UserDefinedFiatAccountVO?>
 
-    suspend fun getAccounts(): List<AccountVO<*, *>>
-    suspend fun addAccount(account: AccountVO<*, *>)
-    suspend fun removeAccount(account: AccountVO<*, *>)
-    suspend fun setSelectedAccount(account: AccountVO<*, *>?)
+    suspend fun getAccounts(): List<UserDefinedFiatAccountVO>
+    suspend fun addAccount(account: UserDefinedFiatAccountVO)
+    suspend fun saveAccount(account: UserDefinedFiatAccountVO)
+    suspend fun removeAccount(account: UserDefinedFiatAccountVO)
+    suspend fun setSelectedAccount(account: UserDefinedFiatAccountVO)
 }

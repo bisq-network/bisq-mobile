@@ -81,8 +81,6 @@ import bisq.trade.bisq_easy.protocol.BisqEasyTradeState
 import bisq.user.identity.UserIdentity
 import bisq.user.profile.UserProfile
 import bisq.user.reputation.ReputationScore
-import network.bisq.mobile.domain.data.replicated.account.AccountPayloadVO
-import network.bisq.mobile.domain.data.replicated.account.AccountVO
 import network.bisq.mobile.domain.data.replicated.account.protocol_type.TradeProtocolTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
@@ -131,7 +129,6 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecV
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
-import network.bisq.mobile.domain.data.replicated.payment.PaymentMethodVO
 import network.bisq.mobile.domain.data.replicated.security.keys.KeyBundleVO
 import network.bisq.mobile.domain.data.replicated.security.keys.KeyPairVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PrivateKeyVO
