@@ -42,18 +42,20 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
     }
 
     override suspend fun saveAccount(account: UserDefinedFiatAccountVO) {
-        removeAccount(selectedAccount.value!!)
+        removeAccount(selectedAccount.value!!, false)
         accountService.addPaymentAccount(UserDefinedFiatAccountMapping.toBisq2Model(account))
         getAccounts()
         setSelectedAccount(account)
     }
 
-    override suspend fun removeAccount(account: UserDefinedFiatAccountVO) {
+    override suspend fun removeAccount(account: UserDefinedFiatAccountVO, updateSelectedAccount: Boolean) {
         accountService.removePaymentAccount(UserDefinedFiatAccountMapping.toBisq2Model(account))
         getAccounts()
-        val nextAccount = accounts.value.firstOrNull()
-        if (nextAccount != null) {
-            setSelectedAccount(nextAccount)
+        if (updateSelectedAccount) {
+            val nextAccount = accounts.value.firstOrNull()
+            if (nextAccount != null) {
+                setSelectedAccount(nextAccount)
+            }
         }
     }
 

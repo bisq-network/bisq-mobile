@@ -1,5 +1,7 @@
 package network.bisq.mobile.client.service.market
 
+import network.bisq.mobile.client.service.offers.AddAccountRequest
+import network.bisq.mobile.client.service.offers.AddAccountResponse
 import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
@@ -18,4 +20,18 @@ class AccountsApiGateway(
         return webSocketApiClient.get<List<UserDefinedFiatAccountVO>>(basePath)
     }
 
+    suspend fun addAccount(
+        accountName: String,
+        accountData: String,
+    ): Result<AddAccountResponse> {
+        val addAccountRequest = AddAccountRequest(
+            accountName = accountName,
+            accountData = accountData,
+        )
+        return webSocketApiClient.post(basePath, addAccountRequest)
+    }
+
+    suspend fun deleteAccount(accountName: String): Result<Unit> {
+        return webSocketApiClient.delete("$basePath/$accountName")
+    }
 }

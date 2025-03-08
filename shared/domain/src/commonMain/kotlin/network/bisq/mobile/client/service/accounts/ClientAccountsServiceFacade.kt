@@ -1,23 +1,11 @@
-package network.bisq.mobile.client.service.market
+package network.bisq.mobile.client.service.accounts
 
-import io.ktor.util.collections.ConcurrentMap
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
-import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
+import network.bisq.mobile.client.service.market.AccountsApiGateway
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.formatters.MarketPriceFormatter
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
 class ClientAccountsServiceFacade(
@@ -31,32 +19,42 @@ class ClientAccountsServiceFacade(
     private val _selectedAccount = MutableStateFlow<UserDefinedFiatAccountVO?>(null)
     override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = _selectedAccount
 
-    private val backgroundScope = CoroutineScope(BackgroundDispatcher)
-
     override suspend fun getAccounts(): List<UserDefinedFiatAccountVO> {
         val result = apiGateway.getPaymentAccounts()
         if (result.isSuccess) {
             result.getOrThrow().let {
-                _accounts.value = it
+                _accounts.value = it.sortedBy { it.accountName }
             }
         }
         return _accounts.value
     }
 
     override suspend fun addAccount(account: UserDefinedFiatAccountVO) {
-        TODO("Not yet implemented")
+        apiGateway.addAccount(account.accountName, account.accountPayload.accountData)
+        getAccounts()
+        setSelectedAccount(account)
     }
 
     override suspend fun saveAccount(account: UserDefinedFiatAccountVO) {
-        TODO("Not yet implemented")
+        removeAccount(selectedAccount.value!!, false)
+        apiGateway.addAccount(account.accountName, account.accountPayload.accountData)
+        getAccounts()
+        setSelectedAccount(account)
     }
 
-    override suspend fun removeAccount(account: UserDefinedFiatAccountVO) {
-        TODO("Not yet implemented")
+    override suspend fun removeAccount(account: UserDefinedFiatAccountVO, updateSelectedAccount: Boolean) {
+        apiGateway.deleteAccount(account.accountName)
+        getAccounts()
+        if (updateSelectedAccount) {
+            val nextAccount = accounts.value.firstOrNull()
+            if (nextAccount != null) {
+                setSelectedAccount(nextAccount)
+            }
+        }
     }
 
     override suspend fun setSelectedAccount(account: UserDefinedFiatAccountVO) {
-        TODO("Not yet implemented")
+        _selectedAccount.value = account
     }
 
 }
