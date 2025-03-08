@@ -14,6 +14,8 @@ import network.bisq.mobile.client.service.explorer.ClientExplorerServiceFacade
 import network.bisq.mobile.client.service.explorer.ExplorerApiGateway
 import network.bisq.mobile.client.service.common.ClientLanguageServiceFacade
 import network.bisq.mobile.client.service.common.LanguageApiGateway
+import network.bisq.mobile.client.service.market.AccountsApiGateway
+import network.bisq.mobile.client.service.market.ClientAccountsServiceFacade
 import network.bisq.mobile.client.service.market.ClientMarketPriceServiceFacade
 import network.bisq.mobile.client.service.market.MarketPriceApiGateway
 import network.bisq.mobile.client.service.mediation.ClientMediationServiceFacade
@@ -55,6 +57,7 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpe
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.service.TrustedNodeService
+import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
@@ -195,6 +198,10 @@ val clientModule = module {
 
     single { SettingsApiGateway(get()) }
     single<SettingsServiceFacade> { ClientSettingsServiceFacade(get()) }
+
+    single { AccountsApiGateway(get(), get()) }
+    single<AccountsServiceFacade> { ClientAccountsServiceFacade(get(), get()) }
+
     single<LanguageServiceFacade> { ClientLanguageServiceFacade(get(), get()) }
 
 }

@@ -1,5 +1,8 @@
 package network.bisq.mobile.domain.data.replicated.account
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class UserDefinedFiatAccountVO(
     val accountName: String,
     val accountPayload: UserDefinedFiatAccountPayloadVO
