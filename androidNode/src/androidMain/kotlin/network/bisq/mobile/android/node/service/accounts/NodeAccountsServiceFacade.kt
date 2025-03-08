@@ -64,11 +64,14 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
        _selectedAccount.value = account
     }
 
+    override suspend fun getSelectedAccount() {
+        val bisq2Account = accountService.selectedAccount.get() as UserDefinedFiatAccount
+        val account: UserDefinedFiatAccountVO  = UserDefinedFiatAccountMapping.fromBisq2Model(bisq2Account)
+        _selectedAccount.value = account
+    }
+
     override fun activate() {
         log.i("Activating NodeAccountsServiceFacade")
-        backgroundScope.launch {
-            getAccounts()
-        }
     }
 
     override fun deactivate() {

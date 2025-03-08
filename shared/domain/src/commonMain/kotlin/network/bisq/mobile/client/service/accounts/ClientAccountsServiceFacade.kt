@@ -53,7 +53,17 @@ class ClientAccountsServiceFacade(
         }
     }
 
+    override suspend fun getSelectedAccount() {
+        val result = apiGateway.getSelectedAccount()
+        if (result.isSuccess) {
+            result.getOrThrow().let {
+                _selectedAccount.value = it
+            }
+        }
+    }
+
     override suspend fun setSelectedAccount(account: UserDefinedFiatAccountVO) {
+        apiGateway.setSelectedAccount(account)
         _selectedAccount.value = account
     }
 

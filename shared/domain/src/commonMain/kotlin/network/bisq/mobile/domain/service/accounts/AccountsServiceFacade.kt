@@ -12,5 +12,6 @@ interface AccountsServiceFacade : LifeCycleAware {
     suspend fun addAccount(account: UserDefinedFiatAccountVO)
     suspend fun saveAccount(account: UserDefinedFiatAccountVO)
     suspend fun removeAccount(account: UserDefinedFiatAccountVO, updateSelectedAccount: Boolean = true)
+    suspend fun getSelectedAccount()
     suspend fun setSelectedAccount(account: UserDefinedFiatAccountVO)
 }

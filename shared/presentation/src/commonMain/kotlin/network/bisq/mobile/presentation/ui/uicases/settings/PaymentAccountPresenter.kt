@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountPayloadVO
@@ -68,11 +67,7 @@ open class PaymentAccountPresenter(
         super.onViewAttached()
         backgroundScope.launch {
             accountsServiceFacade.getAccounts()
-            val firstAccount = accounts.value.firstOrNull()
-            if (firstAccount != null) {
-                accountsServiceFacade.setSelectedAccount(firstAccount)
-            }
-
+            accountsServiceFacade.getSelectedAccount()
         }
     }
 }

@@ -2,6 +2,7 @@ package network.bisq.mobile.client.service.market
 
 import network.bisq.mobile.client.service.offers.AddAccountRequest
 import network.bisq.mobile.client.service.offers.AddAccountResponse
+import network.bisq.mobile.client.service.settings.PaymentAccountChangeRequest
 import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
@@ -34,4 +35,14 @@ class AccountsApiGateway(
     suspend fun deleteAccount(accountName: String): Result<Unit> {
         return webSocketApiClient.delete("$basePath/$accountName")
     }
+
+    suspend fun setSelectedAccount(account: UserDefinedFiatAccountVO): Result<Unit> {
+        return webSocketApiClient.patch("$basePath/selected", PaymentAccountChangeRequest(account))
+    }
+
+    suspend fun getSelectedAccount(): Result<UserDefinedFiatAccountVO> {
+        return webSocketApiClient.get("$basePath/selected")
+    }
+
+
 }
