@@ -183,7 +183,6 @@ private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter, sh
 
 @Composable
 private fun UserProfileScreenFooter(presenter: IUserProfileSettingsPresenter, showLoading: Boolean) {
-    val presenter: UserProfileSettingsPresenter = koinInject()
     val isLoading = presenter.showLoading.collectAsState().value
 
     Row(

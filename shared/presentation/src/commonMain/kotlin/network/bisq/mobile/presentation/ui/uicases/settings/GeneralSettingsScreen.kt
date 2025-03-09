@@ -177,7 +177,7 @@ fun GeneralSettingsScreen(showBackNavigation: Boolean = false) {
 
                 BisqTextField(
                     label = "settings.network.difficultyAdjustmentFactor.description.self".i18n(),
-                    value = powFactor.toString(),
+                    value = powFactor,
                     keyboardType = KeyboardType.Decimal,
                     disabled = !ignorePow,
                     numberWithTwoDecimals = true,

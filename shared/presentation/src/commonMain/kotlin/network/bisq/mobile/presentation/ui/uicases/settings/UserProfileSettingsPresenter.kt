@@ -59,7 +59,7 @@ class UserProfileSettingsPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         backgroundScope.launch {
-            userProfileServiceFacade.getSelectedUserProfile()?.let { it ->
+            userProfileServiceFacade.getSelectedUserProfile()?.let {
 //                _reputation.value = it.reputation // TODO reputation?
                 setProfileAge(it)
                 setProfileId(it)
@@ -101,7 +101,7 @@ class UserProfileSettingsPresenter(
     }
 
     private fun setProfileAge(userProfile: UserProfileVO) {
-        userProfile.publishDate?.let { pd ->
+        userProfile.publishDate.let { pd ->
             _profileAge.value = DateUtils.periodFrom(pd).let {
                 listOfNotNull(
                     if (it.first > 0) "${it.first} years" else null,

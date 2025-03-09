@@ -10,7 +10,6 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
 
-
 class SellerState3aPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
@@ -66,7 +65,7 @@ class SellerState3aPresenter(
     }
 
     fun onConfirmedBtcSent() {
-        if (paymentProofValid.value == false) {
+        if (!paymentProofValid.value) {
             _showInvalidAddressDialog.value = true
         } else {
             confirmSend()

@@ -18,8 +18,6 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.organisms.BisqPagerView
 import network.bisq.mobile.presentation.ui.composeModels.PagerViewItem
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.koin.compose.koinInject
 
 interface IOnboardingPresenter : ViewPresenter {
@@ -30,7 +28,6 @@ interface IOnboardingPresenter : ViewPresenter {
     fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState)
 }
 
-@OptIn(ExperimentalResourceApi::class)
 @Composable
 fun OnBoardingScreen() {
     val presenter: IOnboardingPresenter = koinInject()
@@ -47,7 +44,7 @@ fun OnBoardingScreen() {
     BisqScrollScaffold {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
-        BisqText.h1LightGrey(text = "onboarding.bisq2.headline".i18n(),)
+        BisqText.h1LightGrey(text = "onboarding.bisq2.headline".i18n())
         Spacer(modifier = Modifier.height(56.dp))
         BisqPagerView(pagerState, finalPages)
         Spacer(modifier = Modifier.height(56.dp))

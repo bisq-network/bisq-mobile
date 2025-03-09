@@ -24,7 +24,6 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqVDivider
 import network.bisq.mobile.presentation.ui.components.molecules.PaymentMethods
@@ -60,7 +59,6 @@ fun OfferCard(
     }
 
     val myOfferBackgroundColor = BisqTheme.colors.primary.copy(alpha = 0.15f)
-    val removeMyOfferBackgroundColor = BisqTheme.colors.dark1.copy(alpha = 0.6f)
     val backgroundColor = if (isMyOffer) myOfferBackgroundColor else BisqTheme.colors.dark4
     val height = 140.dp
 

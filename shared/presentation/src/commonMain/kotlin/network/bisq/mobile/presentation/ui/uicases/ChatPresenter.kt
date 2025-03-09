@@ -1,9 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases
 
-import androidx.compose.runtime.toMutableStateList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.composeModels.ChatMessage
@@ -71,7 +69,7 @@ private val initialMessages = listOf(
 class ChatPresenter(
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter), IChatPresenter {
-    private val _messages = MutableStateFlow<List<ChatMessage>>(initialMessages)
+    private val _messages = MutableStateFlow(initialMessages)
     override val messages = _messages
 
     override fun addMessage(msg: ChatMessage) {

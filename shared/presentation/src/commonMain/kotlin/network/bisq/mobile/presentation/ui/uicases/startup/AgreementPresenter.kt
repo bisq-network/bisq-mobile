@@ -5,13 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.data.model.Settings
-import network.bisq.mobile.domain.data.model.User
-import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -68,7 +62,7 @@ open class AgreementPresenter(
                 "rendered inaccurate or losses sustained by you or third parties or a failure of the software to operate with any " +
                 "other software), even if such developer, copyright holder and/or other party has been advised of the possibility of such damages.\n\n" +
 
-                "6. The user confirms that they have read and agreed to the rules regarding the dispute process:";
+                "6. The user confirms that they have read and agreed to the rules regarding the dispute process:"
 
     override val rules =
         "  - Leave the \"reason for payment\" field empty. NEVER put the trade ID or any other text like 'bitcoin', 'BTC', or 'Bisq'.\n" +
@@ -78,6 +72,6 @@ open class AgreementPresenter(
                 "  - In case of clear evidence for a scam or severe violation of the trade rules the mediator can ban the misbehaving trader and in " +
                 "case that the trader was the Bitcoin seller and used 'account age' or 'signed account age witness' as reputation source, they will also " +
                 "get banned on Bisq 1. If the seller has used 'bonded BSQ' as reputation source the mediator will report the incident to the DAO and " +
-                "make a proposal for confiscating their bonded BSQ.";
+                "make a proposal for confiscating their bonded BSQ."
 
 }

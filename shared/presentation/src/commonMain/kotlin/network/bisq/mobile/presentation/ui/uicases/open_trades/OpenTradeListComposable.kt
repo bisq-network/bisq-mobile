@@ -39,7 +39,6 @@ import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
-
 @Composable
 fun OpenTradeListScreen() {
     val presenter: OpenTradeListPresenter = koinInject()
@@ -195,8 +194,8 @@ fun TradeGuide(presenter: OpenTradeListPresenter) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(12.dp)
             ) {
-                BisqText.h3Light(text = "Trade guide",)
-                BisqText.baseRegularGrey(text = "Trade guide content... TODO",)
+                BisqText.h3Light(text = "Trade guide")
+                BisqText.baseRegularGrey(text = "Trade guide content... TODO")
                 BisqButton(
                     text = "Confirm trade rules",
                     onClick = { presenter.onConfirmTradeRules(true) },

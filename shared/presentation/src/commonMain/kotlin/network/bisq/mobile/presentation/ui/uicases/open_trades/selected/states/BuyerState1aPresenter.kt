@@ -67,7 +67,7 @@ class BuyerState1aPresenter(
     }
 
     fun onSendClick() {
-        if (bitcoinPaymentDataValid.value == false) {
+        if (!bitcoinPaymentDataValid.value) {
             _showInvalidAddressDialog.value = true
         } else {
             onSend()

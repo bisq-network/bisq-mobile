@@ -156,13 +156,13 @@ class TakeOfferReviewPresenter(
             val priceWithCode = PriceQuoteFormatter.format(takeOfferModel.priceQuote, true, true)
             val percentagePrice = PercentageFormatter.format(percent, true)
             val aboveOrBelow: String = if (percent > 0) "above" else "below" //todo
-            if (priceSpec is FloatPriceSpecVO) {
-                priceDetails = "bisqEasy.tradeWizard.review.priceDetails.float".i18n(percentagePrice, aboveOrBelow, priceWithCode)
+            priceDetails = if (priceSpec is FloatPriceSpecVO) {
+                "bisqEasy.tradeWizard.review.priceDetails.float".i18n(percentagePrice, aboveOrBelow, priceWithCode)
             } else {
                 if (percent == 0.0) {
-                    priceDetails = "bisqEasy.tradeWizard.review.priceDetails.fix.atMarket".i18n(priceWithCode)
+                    "bisqEasy.tradeWizard.review.priceDetails.fix.atMarket".i18n(priceWithCode)
                 } else {
-                    priceDetails = "bisqEasy.tradeWizard.review.priceDetails.fix".i18n(percentagePrice, aboveOrBelow, priceWithCode)
+                    "bisqEasy.tradeWizard.review.priceDetails.fix".i18n(percentagePrice, aboveOrBelow, priceWithCode)
                 }
             }
         }

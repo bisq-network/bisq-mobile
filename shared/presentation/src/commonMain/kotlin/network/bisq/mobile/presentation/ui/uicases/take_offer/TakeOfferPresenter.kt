@@ -57,8 +57,8 @@ class TakeOfferPresenter(
         val priceQuote: PriceQuoteVO = getMostRecentPriceQuote()
         takeOfferModel.priceQuote = priceQuote
 
-        val quoteCurrencyCode = bisqEasyOffer.market.quoteCurrencyCode;
-        val baseCurrencyCode = bisqEasyOffer.market.baseCurrencyCode;
+        val quoteCurrencyCode = bisqEasyOffer.market.quoteCurrencyCode
+        val baseCurrencyCode = bisqEasyOffer.market.baseCurrencyCode
         var quoteAmount = FiatVOFactory.from(0, quoteCurrencyCode)
         var baseAmount = CoinVOFactory.from(0, baseCurrencyCode)
         if (!takeOfferModel.hasAmountRange) {

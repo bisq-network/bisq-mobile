@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
-import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
