@@ -11,7 +11,7 @@ import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.parser.PercentageParser
 import network.bisq.mobile.domain.parser.PriceParser
 import network.bisq.mobile.domain.utils.PriceUtil
-import network.bisq.mobile.i18n.AppStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -41,7 +41,6 @@ class CreateOfferPricePresenter(
     val priceType: StateFlow<PriceType> = _priceType
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
-    lateinit var appStrings: AppStrings
 
     override fun onViewAttached() {
         createOfferModel = createOfferPresenter.createOfferModel
@@ -51,22 +50,21 @@ class CreateOfferPricePresenter(
         percentagePriceValue = createOfferModel.percentagePriceValue
         _formattedPercentagePrice.value = PercentageFormatter.format(percentagePriceValue, false)
         _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
-        val bisqEasyTradeWizardStrings = appStrings.bisqEasyTradeWizard
         priceTypeTitle = if (priceType.value == PriceType.PERCENTAGE)
-            bisqEasyTradeWizardStrings.bisqEasy_tradeWizard_trade_price_percentage
+            "Percentage" //TODO:i18n
         else
-            bisqEasyTradeWizardStrings.bisqEasy_tradeWizard_trade_price_fixed
+            "Fixed" //TODO:i18n
 
-        fixPriceDescription = bisqEasyTradeWizardStrings.bisqEasy_price_tradePrice_inputBoxText(createOfferModel.market!!.marketCodes)
+        fixPriceDescription = "bisqEasy.price.tradePrice.inputBoxText".i18n(createOfferModel.market!!.marketCodes)
 
         //onPercentagePriceChanged("10")
     }
 
     fun getPriceTypeDisplayString(priceType: PriceType): String {
-        if (priceType == PriceType.PERCENTAGE)
-            return appStrings.bisqEasyTradeWizard.bisqEasy_tradeWizard_trade_price_percentage
+        return if (priceType == PriceType.PERCENTAGE)
+            "Percentage" //TODO:i18n
         else
-            return appStrings.bisqEasyTradeWizard.bisqEasy_tradeWizard_trade_price_fixed
+            "Fixed" //TODO:i18n
     }
 
     fun onSelectPriceType(value: PriceType) {
@@ -80,7 +78,7 @@ class CreateOfferPricePresenter(
             val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
             priceQuote = PriceUtil.fromMarketPriceMarkup(marketPriceQuote, this.percentagePriceValue)
             _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
-        } catch(e: Exception) {
+        } catch(_: Exception) {
 
         }
 

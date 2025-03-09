@@ -10,7 +10,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.i18n.i18n
@@ -26,7 +25,6 @@ import org.koin.compose.koinInject
 
 @Composable
 fun OfferbookScreen() {
-    val commonStrings = LocalStrings.current.common
     val presenter: OfferbookPresenter = koinInject()
 
     RememberPresenterLifecycle(presenter)
@@ -45,7 +43,7 @@ fun OfferbookScreen() {
 
     BisqStaticScaffold(
         topBar = {
-            TopBar(title = commonStrings.common_offers)
+            TopBar(title = "Offers") //TODO:i18n
         },
         fab = {
             BisqFABAddButton(

@@ -14,13 +14,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
@@ -28,9 +27,6 @@ fun AppPaymentAccountCard(
     onConfirm: (String, String) -> Unit,
     onCancel: () -> Unit,
 ) {
-    val strings = LocalStrings.current.user
-    val stringsCommon = LocalStrings.current.common
-
     var accountName by remember { mutableStateOf("") }
     var accountNameValid by remember { mutableStateOf(false) }
     var accountDescription by remember { mutableStateOf("") }
@@ -43,12 +39,12 @@ fun AppPaymentAccountCard(
     ) {
         BisqGap.VQuarter()
         BisqText.h5Regular(
-            text = strings.user_paymentAccounts_createAccount_headline,
+            text = "user.paymentAccounts.createAccount.headline".i18n(),
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
         BisqText.smallRegularGrey(
-            text = strings.user_paymentAccounts_createAccount_subtitle,
+            text = "user.paymentAccounts.createAccount.subtitle".i18n(),
             textAlign = TextAlign.Center
         )
 
@@ -60,8 +56,8 @@ fun AppPaymentAccountCard(
                 accountName = it
                 accountNameValid = isValid
             },
-            placeholder = strings.user_paymentAccounts_createAccount_accountName_prompt,
-            label = strings.user_userProfile_payment_account,
+            placeholder = "user.paymentAccounts.createAccount.accountName.prompt".i18n(),
+            label = "Payment account", //TODO:i18n
             validation = {
                 if (it.isEmpty()) {
                     return@BisqTextField "Name is mandatory"
@@ -81,8 +77,8 @@ fun AppPaymentAccountCard(
                 accountDescription = it
                 accountDescriptionValid = isValid
             },
-            placeholder = strings.user_paymentAccounts_createAccount_accountData_prompt,
-            label = strings.user_paymentAccounts_accountData,
+            placeholder = "user.paymentAccounts.createAccount.accountData.prompt".i18n(),
+            label = "user.paymentAccounts.accountData".i18n(),
             isTextArea = true,
             validation = {
                 if (it.isEmpty()) {
@@ -102,13 +98,13 @@ fun AppPaymentAccountCard(
             modifier = Modifier.fillMaxWidth()
         ) {
             BisqButton(
-                text = stringsCommon.buttons_cancel,
+                text = "action.cancel".i18n(),
                 type = BisqButtonType.Grey,
                 onClick = onCancel,
                 padding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
             )
             BisqButton(
-                text = stringsCommon.buttons_save,
+                text = "action.save".i18n(),
                 onClick = { onConfirm(accountName, accountDescription) },
                 padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp),
                 disabled = !accountNameValid || !accountDescriptionValid

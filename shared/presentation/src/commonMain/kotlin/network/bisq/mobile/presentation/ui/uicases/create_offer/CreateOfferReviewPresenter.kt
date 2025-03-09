@@ -7,8 +7,8 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
-import network.bisq.mobile.i18n.AppStrings
-import network.bisq.mobile.i18n.toDisplayString
+import network.bisq.mobile.i18n.PaymentMethodDisplayString
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -34,16 +34,16 @@ class CreateOfferReviewPresenter(
     var isRangeOffer: Boolean = false
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
-    lateinit var appStrings: AppStrings
+
 
     override fun onViewAttached() {
         createOfferModel = createOfferPresenter.createOfferModel
         direction = createOfferModel.direction
 
         quoteSidePaymentMethodDisplayString =
-            createOfferModel.selectedQuoteSidePaymentMethods.joinToString(", ") { appStrings.paymentMethod.toDisplayString(it) }
+            createOfferModel.selectedQuoteSidePaymentMethods.joinToString(", ") { PaymentMethodDisplayString(it) }
         baseSidePaymentMethodDisplayString =
-            createOfferModel.selectedBaseSidePaymentMethods.joinToString(", ") { appStrings.paymentMethod.toDisplayString(it) }
+            createOfferModel.selectedBaseSidePaymentMethods.joinToString(", ") { PaymentMethodDisplayString(it) }
 
         val formattedQuoteAmount: String
         val formattedBaseAmount: String
@@ -66,17 +66,16 @@ class CreateOfferReviewPresenter(
         }
         headLine = "${direction.name.uppercase()} Bitcoin"
 
-        val i18n = appStrings.bisqEasyTradeWizard
         if (direction.isBuy) {
             amountToPay = formattedQuoteAmount
             amountToReceive = formattedBaseAmount
-            fee = i18n.bisqEasy_tradeWizard_review_noTradeFees
-            feeDetails = i18n.bisqEasy_tradeWizard_review_sellerPaysMinerFeeLong
+            fee = "bisqEasy.tradeWizard.review.noTradeFees".i18n()
+            feeDetails = "bisqEasy.tradeWizard.review.sellerPaysMinerFeeLong".i18n()
         } else {
             amountToPay = formattedBaseAmount
             amountToReceive = formattedQuoteAmount
-            fee = i18n.bisqEasy_tradeWizard_review_sellerPaysMinerFee
-            feeDetails = i18n.bisqEasy_tradeWizard_review_noTradeFeesLong
+            fee = "bisqEasy.tradeWizard.review.sellerPaysMinerFee".i18n()
+            feeDetails = "bisqEasy.tradeWizard.review.noTradeFeesLong".i18n()
         }
 
         marketCodes = createOfferModel.market!!.marketCodes
@@ -87,21 +86,20 @@ class CreateOfferReviewPresenter(
     }
 
     private fun applyPriceDetails() {
-        val i18n = appStrings.bisqEasyTradeWizard
         val percentagePriceValue = createOfferModel.percentagePriceValue
         if (percentagePriceValue == 0.0) {
-            priceDetails = i18n.bisqEasy_tradeWizard_review_priceDetails
+            priceDetails = "bisqEasy.tradeWizard.review.priceDetails".i18n()
         } else {
             val priceWithCode = PriceQuoteFormatter.format(createOfferModel.priceQuote, true, true)
             val percentagePrice = PercentageFormatter.format(percentagePriceValue, true)
             val aboveOrBelow: String = if (percentagePriceValue > 0) "above" else "below" //todo
-            if (createOfferModel.priceType == CreateOfferPresenter.PriceType.PERCENTAGE) {
-                priceDetails = i18n.bisqEasy_tradeWizard_review_priceDetails_float(percentagePrice, aboveOrBelow, priceWithCode)
+            priceDetails = if (createOfferModel.priceType == CreateOfferPresenter.PriceType.PERCENTAGE) {
+                "bisqEasy.tradeWizard.review.priceDetails.float".i18n(percentagePrice, aboveOrBelow, priceWithCode)
             } else {
                 if (percentagePriceValue == 0.0) {
-                    priceDetails = i18n.bisqEasy_tradeWizard_review_priceDetails_fix_atMarket(priceWithCode)
+                    "bisqEasy.tradeWizard.review.priceDetails.fix.atMarket".i18n(priceWithCode)
                 } else {
-                    priceDetails = i18n.bisqEasy_tradeWizard_review_priceDetails_fix(percentagePrice, aboveOrBelow, priceWithCode)
+                    "bisqEasy.tradeWizard.review.priceDetails.fix".i18n(percentagePrice, aboveOrBelow, priceWithCode)
                 }
             }
         }

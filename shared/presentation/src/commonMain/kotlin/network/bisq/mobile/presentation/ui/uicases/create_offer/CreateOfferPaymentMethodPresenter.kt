@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
-import network.bisq.mobile.i18n.AppStrings
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -22,7 +21,6 @@ class CreateOfferPaymentMethodPresenter(
     val selectedBaseSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
-    lateinit var appStrings: AppStrings
 
     override fun onViewAttached() {
         selectedBaseSidePaymentMethods.value = emptySet()
@@ -32,16 +30,15 @@ class CreateOfferPaymentMethodPresenter(
 
         val quoteCurrencyCode = createOfferModel.market!!.quoteCurrencyCode
         val isBuy = createOfferModel.direction.isBuy
-        val bisqEasyStrings = appStrings.bisqEasy
         quoteSideHeadline = if (isBuy)
-            bisqEasyStrings.bisqEasy_takeOffer_paymentMethods_subtitle_fiat_buyer(quoteCurrencyCode)
+            "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.buyer".i18n(quoteCurrencyCode)
         else
-            bisqEasyStrings.bisqEasy_takeOffer_paymentMethods_subtitle_fiat_seller(quoteCurrencyCode)
+            "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.seller".i18n(quoteCurrencyCode)
 
         baseSideHeadline = if (isBuy)
-            bisqEasyStrings.bisqEasy_takeOffer_paymentMethods_subtitle_bitcoin_buyer
+            "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.buyer".i18n()
         else
-            bisqEasyStrings.bisqEasy_takeOffer_paymentMethods_subtitle_bitcoin_seller
+            "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.seller".i18n()
 
         // availableQuoteSidePaymentMethods = createOfferModel.availableQuoteSidePaymentMethods.subList(0, 3)  // for dev testing to avoid scroll
         availableQuoteSidePaymentMethods = createOfferModel.availableQuoteSidePaymentMethods

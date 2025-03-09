@@ -18,8 +18,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import cafe.adriel.lyricist.LocalStrings
-import network.bisq.mobile.i18n.toDisplayString
+import network.bisq.mobile.i18n.PaymentMethodDisplayString
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -31,8 +31,6 @@ import org.koin.compose.koinInject
 
 @Composable
 fun TakeOfferPaymentMethodScreen() {
-    val strings = LocalStrings.current.bisqEasy
-    val paymentMethodStrings = LocalStrings.current.paymentMethod
     val presenter: TakeOfferPaymentMethodPresenter = koinInject()
 
     val baseSidePaymentMethod = remember { mutableStateOf(presenter.baseSidePaymentMethod) }
@@ -46,7 +44,7 @@ fun TakeOfferPaymentMethodScreen() {
     var customMethodCounter = 1
 
     MultiScreenWizardScaffold(
-        strings.bisqEasy_takeOffer_progress_method,
+        "bisqEasy.takeOffer.progress.method".i18n(),
         stepIndex = 2,
         stepsLength = 3,
         prevOnClick = { presenter.onBack() },
@@ -54,7 +52,7 @@ fun TakeOfferPaymentMethodScreen() {
         snackbarHostState = presenter.getSnackState()
     ) {
 
-        BisqText.h3Regular(text = strings.bisqEasy_takeOffer_paymentMethods_headline_fiatAndBitcoin)
+        BisqText.h3Regular(text = "bisqEasy.takeOffer.paymentMethods.headline.fiatAndBitcoin".i18n())
 
         if (presenter.hasMultipleQuoteSidePaymentMethods) {
             BisqGap.V2()
@@ -64,7 +62,7 @@ fun TakeOfferPaymentMethodScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 BisqText.largeLightGrey(
-                    text = strings.bisqEasy_takeOffer_paymentMethods_subtitle_fiat_buyer(presenter.quoteCurrencyCode)
+                    text = "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.buyer".i18n(presenter.quoteCurrencyCode)
                 )
                 BisqGap.V2()
                 Column(
@@ -104,7 +102,7 @@ fun TakeOfferPaymentMethodScreen() {
                                 fallbackPath = "drawable/payment/fiat/custom_payment_${customMethodCounter++}.png",
                                 modifier = Modifier.size(15.dp),
                             )
-                            BisqText.baseRegular(text = paymentMethodStrings.toDisplayString(paymentMethod))
+                            BisqText.baseRegular(text = PaymentMethodDisplayString(paymentMethod))
                         }
                     }
                 }
@@ -118,7 +116,7 @@ fun TakeOfferPaymentMethodScreen() {
                 modifier = Modifier.padding(horizontal = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                BisqText.largeLightGrey(text = strings.bisqEasy_takeOffer_paymentMethods_subtitle_bitcoin_seller)
+                BisqText.largeLightGrey("bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.seller".i18n())
                 BisqGap.V1()
                 Column(
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 38.dp),
@@ -154,7 +152,7 @@ fun TakeOfferPaymentMethodScreen() {
                                 modifier = Modifier.size(15.dp)
                             )
 
-                            BisqText.baseRegular(text = paymentMethodStrings.toDisplayString(paymentMethod))
+                            BisqText.baseRegular(text = PaymentMethodDisplayString(paymentMethod))
                         }
                     }
                 }

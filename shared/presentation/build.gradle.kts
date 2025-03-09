@@ -63,7 +63,6 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.navigation.compose)
-            implementation(libs.lyricist)
             implementation(libs.bignum)
             implementation(libs.coil.compose)
         }
@@ -98,16 +97,6 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
-    }
-}
-
-dependencies {
-    add("kspCommonMainMetadata", "cafe.adriel.lyricist:lyricist-processor:1.7.0")
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>>().all {
-    if (name != "kspCommonMainKotlinMetadata") {
-        dependsOn("kspCommonMainKotlinMetadata")
     }
 }
 

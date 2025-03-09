@@ -1,8 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
-
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,8 +17,8 @@ import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.utils.PriceUtil
-import network.bisq.mobile.i18n.AppStrings
-import network.bisq.mobile.i18n.toDisplayString
+import network.bisq.mobile.i18n.PaymentMethodDisplayString
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -45,7 +42,6 @@ class TakeOfferReviewPresenter(
     lateinit var takersDirection: DirectionEnum
 
     private lateinit var takeOfferModel: TakeOfferPresenter.TakeOfferModel
-    lateinit var appStrings: AppStrings
 
     // We pass that to the domain, which updates the state while take offer is in progress, so that we can show the status
     // or error to the user
@@ -84,25 +80,24 @@ class TakeOfferReviewPresenter(
         val offerListItem = takeOfferModel.offerItemPresentationVO
         takersDirection = offerListItem.bisqEasyOffer.direction.mirror
 
-        quoteSidePaymentMethodDisplayString = appStrings.paymentMethod.toDisplayString(takeOfferModel.quoteSidePaymentMethod)
-        baseSidePaymentMethodDisplayString = appStrings.paymentMethod.toDisplayString(takeOfferModel.baseSidePaymentMethod)
+        quoteSidePaymentMethodDisplayString = PaymentMethodDisplayString(takeOfferModel.quoteSidePaymentMethod)
+        baseSidePaymentMethodDisplayString = PaymentMethodDisplayString(takeOfferModel.baseSidePaymentMethod)
 
         val formattedQuoteAmount = AmountFormatter.formatAmount(takeOfferModel.quoteAmount, true, true)
         val formattedBaseAmount = AmountFormatter.formatAmount(takeOfferModel.baseAmount, false, false)
 
         headLine = "${takersDirection.name.uppercase()} Bitcoin"
 
-        val i18n = appStrings.bisqEasyTradeWizard
         if (takersDirection.isBuy) {
             amountToPay = formattedQuoteAmount
             amountToReceive = formattedBaseAmount
-            fee = i18n.bisqEasy_tradeWizard_review_noTradeFees
-            feeDetails = i18n.bisqEasy_tradeWizard_review_sellerPaysMinerFeeLong
+            fee = "bisqEasy.tradeWizard.review.noTradeFees".i18n()
+            feeDetails = "bisqEasy.tradeWizard.review.sellerPaysMinerFeeLong".i18n()
         } else {
             amountToPay = formattedBaseAmount
             amountToReceive = formattedQuoteAmount
-            fee = i18n.bisqEasy_tradeWizard_review_sellerPaysMinerFee
-            feeDetails = i18n.bisqEasy_tradeWizard_review_noTradeFeesLong
+            fee = "bisqEasy.tradeWizard.review.sellerPaysMinerFee".i18n()
+            feeDetails ="bisqEasy.tradeWizard.review.noTradeFeesLong".i18n()
         }
 
         marketCodes = offerListItem.bisqEasyOffer.market.marketCodes
@@ -148,7 +143,6 @@ class TakeOfferReviewPresenter(
    }
 
     private fun applyPriceDetails() {
-        val i18n = appStrings.bisqEasyTradeWizard
         val priceSpec = takeOfferModel.offerItemPresentationVO.bisqEasyOffer.priceSpec
         val percent =
             PriceUtil.findPercentFromMarketPrice(
@@ -157,18 +151,18 @@ class TakeOfferReviewPresenter(
                 takeOfferModel.offerItemPresentationVO.bisqEasyOffer.market
             )
         if ((priceSpec is FloatPriceSpecVO || priceSpec is MarketPriceSpecVO) && percent == 0.0) {
-            priceDetails = i18n.bisqEasy_tradeWizard_review_priceDetails
+            priceDetails = "bisqEasy.tradeWizard.review.priceDetails".i18n()
         } else {
             val priceWithCode = PriceQuoteFormatter.format(takeOfferModel.priceQuote, true, true)
             val percentagePrice = PercentageFormatter.format(percent, true)
             val aboveOrBelow: String = if (percent > 0) "above" else "below" //todo
             if (priceSpec is FloatPriceSpecVO) {
-                priceDetails = i18n.bisqEasy_tradeWizard_review_priceDetails_float(percentagePrice, aboveOrBelow, priceWithCode)
+                priceDetails = "bisqEasy.tradeWizard.review.priceDetails.float".i18n(percentagePrice, aboveOrBelow, priceWithCode)
             } else {
                 if (percent == 0.0) {
-                    priceDetails = i18n.bisqEasy_tradeWizard_review_priceDetails_fix_atMarket(priceWithCode)
+                    priceDetails = "bisqEasy.tradeWizard.review.priceDetails.fix.atMarket".i18n(priceWithCode)
                 } else {
-                    priceDetails = i18n.bisqEasy_tradeWizard_review_priceDetails_fix(percentagePrice, aboveOrBelow, priceWithCode)
+                    priceDetails = "bisqEasy.tradeWizard.review.priceDetails.fix".i18n(percentagePrice, aboveOrBelow, priceWithCode)
                 }
             }
         }

@@ -7,9 +7,8 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.LineHeightStyle
 import androidx.compose.ui.unit.dp
-import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -21,8 +20,8 @@ fun MultiScreenWizardScaffold(
     title: String,
     stepIndex: Int,
     stepsLength: Int,
-    prevButtonText: String = LocalStrings.current.common.buttons_back,
-    nextButtonText: String = LocalStrings.current.common.buttons_next,
+    prevButtonText: String = "action.back".i18n(),
+    nextButtonText: String = "action.next".i18n(),
     prevOnClick: (() -> Unit)? = null,
     nextOnClick: (() -> Unit)? = null,
     prevDisabled: Boolean = false,

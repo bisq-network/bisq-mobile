@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
@@ -16,22 +16,21 @@ import org.koin.compose.koinInject
 
 @Composable
 fun TakeOfferTradeAmountScreen() {
-    val strings = LocalStrings.current.bisqEasy
     val presenter: TakeOfferAmountPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
-        strings.bisqEasy_takeOffer_progress_amount,
+        "bisqEasy.takeOffer.progress.amount".i18n(),
         stepIndex = 1,
         stepsLength = 3,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() }
     ) {
-        BisqText.h3Regular(text = strings.bisqEasy_takeOffer_amount_headline_buyer)
+        BisqText.h3Regular(text = "bisqEasy.takeOffer.amount.headline.buyer".i18n())
         BisqGap.V1()
         BisqText.largeLightGrey(
             // We get currency code appended but for formattedMinAmount we want to omit it in the string
-            text = strings.bisqEasy_takeOffer_amount_description(
+            text = "bisqEasy.takeOffer.amount.description".i18n(
                 presenter.formattedMinAmount,
                 presenter.formattedMaxAmountWithCode
             ),

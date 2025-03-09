@@ -14,7 +14,7 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.DEFAULT_MIN_USD_TRADE_AMOUNT
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.MAX_USD_TRADE_AMOUNT
-import network.bisq.mobile.i18n.AppStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -66,7 +66,6 @@ class CreateOfferAmountPresenter(
     private lateinit var quoteSideMaxRangeAmount: FiatVO
     private lateinit var baseSideMaxRangeAmount: CoinVO
 
-    lateinit var appStrings: AppStrings
 
     override fun onViewAttached() {
         createOfferModel = createOfferPresenter.createOfferModel
@@ -74,9 +73,9 @@ class CreateOfferAmountPresenter(
         _amountType.value = createOfferModel.amountType
 
         headline = if (createOfferModel.direction.isBuy)
-            appStrings.bisqEasyTradeWizard.bisqEasy_tradeWizard_amount_headline_buyer
+            "bisqEasy.tradeWizard.amount.headline.buyer".i18n()
         else
-            appStrings.bisqEasyTradeWizard.bisqEasy_tradeWizard_amount_headline_seller
+            "bisqEasy.tradeWizard.amount.headline.seller".i18n()
 
         minAmount = BisqEasyTradeAmountLimits.getMinAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
         maxAmount = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode)

@@ -4,8 +4,6 @@ import ErrorOverlay
 import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import cafe.adriel.lyricist.ProvideStrings
-import cafe.adriel.lyricist.rememberStrings
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import kotlinx.coroutines.flow.StateFlow
@@ -56,17 +54,13 @@ fun App() {
         isNavControllerSet = true
     })
 
-    val lyricist = rememberStrings("en", "en")
     val languageCode = presenter.languageCode.collectAsState().value
     I18nSupport.initialize(languageCode)
 
     BisqTheme(darkTheme = true) {
-//        TODO we need to get rid of lyricist and all its dependencies
-        ProvideStrings(lyricist) {
-            if (isNavControllerSet) {
-                SwipeBackIOSNavigationHandler(rootNavController) {
-                    RootNavGraph(rootNavController)
-                }
+        if (isNavControllerSet) {
+            SwipeBackIOSNavigationHandler(rootNavController) {
+                RootNavGraph(rootNavController)
             }
         }
         ErrorOverlay(

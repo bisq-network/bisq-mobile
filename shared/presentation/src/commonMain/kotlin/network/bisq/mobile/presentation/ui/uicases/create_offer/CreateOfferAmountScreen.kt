@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
@@ -18,27 +18,21 @@ import network.bisq.mobile.presentation.ui.components.molecules.BisqAmountSelect
 import network.bisq.mobile.presentation.ui.components.molecules.RangeAmountSelector
 import network.bisq.mobile.presentation.ui.components.molecules.ToggleTab
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.helpers.StringHelper
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.AmountType
 import org.koin.compose.koinInject
 
 @Composable
 fun CreateOfferAmountSelectorScreen() {
-    val strings = LocalStrings.current.bisqEasyTradeWizard
-    val stringsEasy = LocalStrings.current.bisqEasy
-    val stringsCommon = LocalStrings.current.common
     val presenter: CreateOfferAmountPresenter = koinInject()
-    presenter.appStrings = LocalStrings.current // TODO find a more elegant solution
     RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
-        stringsEasy.bisqEasy_openTrades_table_quoteAmount,
+        "bisqEasy.openTrades.table.quoteAmount".i18n(),
         stepIndex = 3,
         stepsLength = 6,
         prevOnClick = { presenter.onBack() },
-        nextButtonText = stringsCommon.buttons_next,
+        nextButtonText = "action.next".i18n(),
         nextOnClick = { presenter.onNext() }
     ) {
 
@@ -51,7 +45,7 @@ fun CreateOfferAmountSelectorScreen() {
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
 
         BisqText.largeLightGrey(
-            text = strings.bisqEasy_tradeWizard_amount_description_fixAmount,
+            text = "bisqEasy.tradeWizard.amount.description.fixAmount".i18n(),
             textAlign = TextAlign.Center,
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
@@ -68,9 +62,9 @@ fun CreateOfferAmountSelectorScreen() {
                 },
                 getDisplayString = { direction ->
                     if (direction == AmountType.FIXED_AMOUNT)
-                        strings.bisqEasy_tradeWizard_fixed_amount
+                        "Fixed amount" // TODO:i18n
                     else
-                        "Range amount" // strings.bisqEasy_tradeWizard_trade_amount
+                        "Range amount" // TODO:i18n
                 },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )
@@ -103,17 +97,15 @@ fun CreateOfferAmountSelectorScreen() {
             }
 
             val matchingSellerCount = 2
-            val countString = if (matchingSellerCount == 0) {
-                strings.bisqEasy_tradeWizard_amount_numOffers_0
-            } else if (matchingSellerCount == 1) {
-                strings.bisqEasy_tradeWizard_amount_numOffers_1
-            } else {
-                strings.bisqEasy_tradeWizard_amount_numOffers_many(matchingSellerCount.toString())
+            val countString = when (matchingSellerCount) {
+                0 -> { "bisqEasy.tradeWizard.amount.numOffers.0".i18n() }
+                1 -> { "bisqEasy.tradeWizard.amount.numOffers.1".i18n() }
+                else -> { "bisqEasy.tradeWizard.amount.numOffers.*".i18n(matchingSellerCount) }
             }
 
             NoteText(
-                notes = strings.bisqEasy_tradeWizard_amount_buyer_limitInfo(countString, presenter.formattedQuoteSideFixedAmount.value),
-                linkText = stringsEasy.bisqEasy_takeOffer_amount_buyer_limitInfo_learnMore
+                notes = "bisqEasy.tradeWizard.amount.buyer.limitInfo".i18n(countString, presenter.formattedQuoteSideFixedAmount.value),
+                linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n()
             )
 
         }

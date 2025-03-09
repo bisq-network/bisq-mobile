@@ -46,7 +46,7 @@ fun BisqDropDown(
 
     Column {
         if (label.isNotEmpty()) {
-            BisqText.baseRegular(text = label)
+            BisqText.baseRegular(label)
             BisqGap.VQuarter()
         }
 

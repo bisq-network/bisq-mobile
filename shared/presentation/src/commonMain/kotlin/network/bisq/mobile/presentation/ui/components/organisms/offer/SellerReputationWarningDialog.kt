@@ -12,7 +12,6 @@ import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -25,8 +24,6 @@ fun SellerReputationWarningDialog(
     onDismiss: () -> Unit,
     onLearnReputation: () -> Unit,
 ) {
-    val strings = LocalStrings.current.bisqEasyTradeWizard
-    val stringsCommon = LocalStrings.current.common
 
     BisqDialog(
         horizontalAlignment = Alignment.Start,
@@ -35,33 +32,33 @@ fun SellerReputationWarningDialog(
     ) {
 
         BisqText.h6Medium(
-            text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_headline,
+            text = "bisqEasy.tradeWizard.directionAndMarket.feedback.headline".i18n(),
             color = BisqTheme.colors.warning
         )
 
         BisqGap.V1()
 
-        BisqText.baseRegular(text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_subTitle1)
+        BisqText.baseRegular("bisqEasy.tradeWizard.directionAndMarket.feedback.subTitle1".i18n())
 
         BisqGap.VHalf()
 
         LinkButton(
-            text =strings.bisqEasy_tradeWizard_directionAndMarket_feedback_gainReputation,
+            text = "bisqEasy.tradeWizard.directionAndMarket.feedback.gainReputation".i18n(),
             link = "https://bisq.wiki/Reputation#How_to_build_reputation",
             type = BisqButtonType.Outline,
             onClick = onLearnReputation,
-            padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
+            padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),,
             fullWidth = true
         )
 
         BisqGap.VHalf()
 
-        BisqText.baseRegular(text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_subTitle2)
+        BisqText.baseRegular("bisqEasy.tradeWizard.directionAndMarket.feedback.subTitle2".i18n())
 
         BisqGap.V1()
 
         BisqButton(
-            text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_backToBuy,
+            text = "action.back".i18n(),
             type = BisqButtonType.Grey,
             onClick = onDismiss,
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
@@ -71,7 +68,7 @@ fun SellerReputationWarningDialog(
         BisqGap.VHalf()
 
         BisqButton(
-            text = strings.bisqEasy_tradeWizard_directionAndMarket_feedback_tradeWithoutReputation,
+            text = "bisqEasy.tradeWizard.directionAndMarket.feedback.tradeWithoutReputation".i18n(),
             onClick = onConfirm,
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
             fullWidth = true

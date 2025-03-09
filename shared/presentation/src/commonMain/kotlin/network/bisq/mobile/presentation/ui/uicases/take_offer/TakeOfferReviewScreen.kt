@@ -7,9 +7,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
-import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
@@ -27,55 +27,50 @@ import org.koin.compose.koinInject
 
 @Composable
 fun TakeOfferReviewTradeScreen() {
-    val strings = LocalStrings.current.bisqEasyTradeWizard
-    val stringsBisqEasy = LocalStrings.current.bisqEasy
-    val stringsTradeState = LocalStrings.current.bisqEasyTradeState
-    val commonStrings = LocalStrings.current.common
     val presenter: TakeOfferReviewPresenter = koinInject()
     val showProgressDialog = presenter.showTakeOfferProgressDialog.collectAsState().value
     val showSuccessDialog = presenter.showTakeOfferSuccessDialog.collectAsState().value
 
     RememberPresenterLifecycle(presenter)
-    presenter.appStrings = LocalStrings.current // TODO find a more elegant solution
 
     MultiScreenWizardScaffold(
-        stringsBisqEasy.bisqEasy_takeOffer_progress_review,
+        "bisqEasy.takeOffer.progress.review".i18n(),
         stepIndex = 3,
         stepsLength = 3,
         prevOnClick = { presenter.onBack() },
-        nextButtonText = stringsBisqEasy.bisqEasy_takeOffer_review_takeOffer,
+        nextButtonText = "bisqEasy.takeOffer.review.takeOffer".i18n(),
         nextOnClick = { presenter.onTakeOffer() },
         snackbarHostState = presenter.getSnackState(),
         isInteractive = presenter.isInteractive.collectAsState().value,
     ) {
-        BisqText.h3Regular(text = stringsBisqEasy.bisqEasy_takeOffer_progress_review)
+        BisqText.h3Regular(text = "bisqEasy.takeOffer.progress.review".i18n())
         BisqGap.V2()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoRow(
-                label1 = stringsTradeState.bisqEasy_tradeState_header_direction.uppercase(),
+                label1 = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
                 value1 = presenter.headLine,
-                label2 = strings.bisqEasy_tradeWizard_review_paymentMethodDescription_fiat.uppercase(),
+                label2 = "bisqEasy.tradeState.phase2".i18n().uppercase(),
                 value2 = presenter.quoteSidePaymentMethodDisplayString,
             )
             if (presenter.takersDirection.isBuy) {
                 if (presenter.isSmallScreen()) {
                     InfoBox(
-                        label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                        label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                         value = presenter.amountToPay,
                     )
                     InfoBoxSats(
-                        label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                        label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                         value = presenter.amountToReceive,
                         rightAlign = true
                     )
                 } else {
                     InfoRowContainer {
                         InfoBox(
-                            label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                            label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                             value = presenter.amountToPay,
                         )
                         InfoBoxSats(
-                            label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                            label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                             value = presenter.amountToReceive,
                             rightAlign = true
                         )
@@ -84,22 +79,22 @@ fun TakeOfferReviewTradeScreen() {
             } else {
                 if (presenter.isSmallScreen()) {
                     InfoBoxSats(
-                        label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                        label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                         value = presenter.amountToPay,
                     )
                     InfoBox(
-                        label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                        label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                         value = presenter.amountToReceive,
                         rightAlign = true
                     )
                 } else {
                     InfoRowContainer {
                         InfoBoxSats(
-                            label = strings.bisqEasy_tradeWizard_review_toPay.uppercase(),
+                            label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                             value = presenter.amountToPay,
                         )
                         InfoBox(
-                            label = strings.bisqEasy_tradeWizard_review_toReceive.uppercase(),
+                            label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                             value = presenter.amountToReceive,
                             rightAlign = true
                         )
@@ -111,7 +106,7 @@ fun TakeOfferReviewTradeScreen() {
         BisqHDivider()
         Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
             InfoBox(
-                label = strings.bisqEasy_tradeWizard_review_priceDescription_taker,
+                label = "bisqEasy.tradeWizard.review.priceDescription.taker".i18n(),
                 valueComposable = {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Row(
@@ -127,14 +122,14 @@ fun TakeOfferReviewTradeScreen() {
             )
 
             InfoRow(
-                label1 = strings.bisqEasy_tradeWizard_review_paymentMethodDescription_fiat,
+                label1 = "bisqEasy.tradeState.phase2".i18n(),
                 value1 = presenter.quoteSidePaymentMethodDisplayString,
-                label2 = strings.bisqEasy_tradeWizard_review_paymentMethodDescription_btc,
+                label2 = "Bitcoin settlement", //TODO:i18n
                 value2 = presenter.baseSidePaymentMethodDisplayString,
             )
 
             InfoBox(
-                label = strings.bisqEasy_tradeWizard_review_feeDescription,
+                label = "bisqEasy.tradeWizard.review.feeDescription".i18n(),
                 valueComposable = {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Row(

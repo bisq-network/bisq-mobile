@@ -3,7 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
-import network.bisq.mobile.i18n.AppStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -16,7 +16,6 @@ class CreateOfferDirectionPresenter(
     lateinit var direction: DirectionEnum
     lateinit var headline: String
 
-    lateinit var appStrings: AppStrings
 
     private val _showSellerReputationWarning = MutableStateFlow(false)
     val showSellerReputationWarning: StateFlow<Boolean> get() = _showSellerReputationWarning
@@ -26,7 +25,7 @@ class CreateOfferDirectionPresenter(
 
     override fun onViewAttached() {
         direction = createOfferPresenter.createOfferModel.direction
-        headline = appStrings.bisqEasyTradeWizard.bisqEasy_tradeWizard_directionAndMarket_headline
+        headline =  "bisqEasy.tradeWizard.directionAndMarket.headline".i18n() //TODO:i18n check
     }
 
     fun onBuySelected() {

@@ -68,8 +68,6 @@ i2p-lib = { strictly = '1.8.0' }
 i2p-v2 = { strictly = '2.4.0' }
 jackson-lib = { strictly = '2.17.2' }
 
-lyricist = "1.7.0"
-
 koin = "4.0.0"
 lombok-lib = { strictly = '1.18.34' }
 typesafe-config-lib = { strictly = '1.4.3' }
@@ -130,7 +128,6 @@ typesafe-config = { module = 'com.typesafe:config', version.ref = 'typesafe-conf
 bouncycastle = { module = 'org.bouncycastle:bcprov-jdk18on', version.ref = 'bouncycastle-lib' }
 bouncycastle-pg = { module = 'org.bouncycastle:bcpg-jdk18on', version.ref = 'bouncycastle-lib' }
 
-lyricist = { module = "cafe.adriel.lyricist:lyricist", version.ref = "lyricist" }
 navigation-compose = { module = "org.jetbrains.androidx.navigation:navigation-compose", version.ref = "navigationCompose" }
 protobuf-gradle-plugin = { module = 'com.google.protobuf:protobuf-gradle-plugin', version.ref = 'protobuf' }
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protob" }

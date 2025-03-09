@@ -12,7 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.getPlatformPainter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
@@ -30,8 +30,6 @@ import org.koin.core.qualifier.named
 @Composable
 fun CreateProfileScreen(
 ) {
-    val strings = LocalStrings.current.application
-    val commonStrings = LocalStrings.current.common
     val presenter: CreateProfilePresenter = koinInject()
     val navController: NavHostController = presenter.getRootNavController()
 
@@ -40,19 +38,19 @@ fun CreateProfileScreen(
     BisqScrollScaffold {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
-        BisqText.h1LightGrey(text = strings.onboarding_createProfile_headline)
+        BisqText.h1LightGrey(text = "onboarding.createProfile.headline".i18n())
         Spacer(modifier = Modifier.height(12.dp))
         BisqText.baseRegularGrey(
-            text = strings.onboarding_createProfile_subTitle,
+            text = "onboarding.createProfile.subTitle".i18n(),
             modifier = Modifier.padding(horizontal = 24.dp),
             textAlign = TextAlign.Center,
         )
         Spacer(modifier = Modifier.height(36.dp))
         BisqTextField(
-            label = strings.onboarding_createProfile_nickName,
+            label = "onboarding.createProfile.nickName".i18n(),
             value = presenter.nickName.collectAsState().value,
             onValueChange = { name, isValid -> presenter.setNickname(name) },
-            placeholder = strings.onboarding_createProfile_nickName_prompt,
+            placeholder = "onboarding.createProfile.nickName.prompt".i18n(),
             validation = {
 
                 if (it.length < 3) {
@@ -78,14 +76,14 @@ fun CreateProfileScreen(
         BisqText.baseRegularGrey(text = presenter.id.collectAsState().value)
         Spacer(modifier = Modifier.height(38.dp))
         BisqButton(
-            text = strings.onboarding_createProfile_regenerate,
+            text = "onboarding.createProfile.regenerate".i18n(),
             type = BisqButtonType.Grey,
             padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp),
             onClick = { presenter.onGenerateKeyPair() }
         )
         Spacer(modifier = Modifier.height(40.dp))
         BisqButton(
-            commonStrings.buttons_next,
+            "action.next".i18n(),
             onClick = { presenter.onCreateAndPublishNewUserProfile() },
             backgroundColor = if (presenter.nickName.value.isEmpty()) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
         )

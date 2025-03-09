@@ -7,7 +7,7 @@ import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
-import network.bisq.mobile.i18n.AppStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -18,7 +18,6 @@ class CreateOfferMarketPresenter(
     private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter) {
 
-    lateinit var appStrings: AppStrings
     lateinit var headline: String
     var market: MarketVO? = null
 
@@ -53,9 +52,9 @@ class CreateOfferMarketPresenter(
         market = createOfferModel.market
 
         headline = if (createOfferModel.direction.isBuy)
-            appStrings.bisqEasyTradeWizard.bisqEasy_tradeWizard_market_headline_buyer
+            "bisqEasy.tradeWizard.market.headline.buyer".i18n()
         else
-            appStrings.bisqEasyTradeWizard.bisqEasy_tradeWizard_market_headline_seller
+            "bisqEasy.tradeWizard.market.headline.seller".i18n()
 
         //todo for dev testing
         /* if (market == null) {

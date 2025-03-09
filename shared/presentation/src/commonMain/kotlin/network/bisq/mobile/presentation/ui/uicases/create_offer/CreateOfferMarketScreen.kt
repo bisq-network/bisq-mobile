@@ -9,29 +9,25 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
 @Composable
 fun CreateOfferCurrencySelectorScreen() {
-    val strings = LocalStrings.current.bisqEasyTradeWizard
-    val commonStrings = LocalStrings.current.common
     val presenter: CreateOfferMarketPresenter = koinInject()
-    presenter.appStrings = LocalStrings.current // TODO find a more elegant solution
     RememberPresenterLifecycle(presenter)
 
     val searchText = presenter.searchText.collectAsState().value
     val filteredMarketList = presenter.marketListItemWithNumOffers.collectAsState().value
 
     MultiScreenWizardScaffold(
-        commonStrings.currency,
+        "Currency", //TODO:i18n
         stepIndex = 2,
         stepsLength = 6,
         prevOnClick = { presenter.onBack() },
@@ -43,12 +39,12 @@ fun CreateOfferCurrencySelectorScreen() {
         BisqText.h3Regular(text = presenter.headline)
         BisqGap.V1()
 
-        BisqText.largeLightGrey(text = strings.bisqEasy_tradeWizard_market_subTitle)
+        BisqText.largeLightGrey(text = "bisqEasy.tradeWizard.market.subTitle".i18n())
 
         BisqGap.V2()
 
         BisqTextField(
-            placeholder = commonStrings.common_search,
+            placeholder = "action.search".i18n(),
             onValueChange = { it, isValid -> presenter.setSearchText(it) },
             value = searchText,
             label = "",

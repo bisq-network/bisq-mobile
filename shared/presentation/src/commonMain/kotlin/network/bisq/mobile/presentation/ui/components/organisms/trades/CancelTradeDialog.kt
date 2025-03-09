@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation.ui.components.organisms.trades
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.molecules.WarningConfirmationDialog
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -14,7 +13,6 @@ fun CancelTradeDialog(
     isBuyer: Boolean = true,
     isRejection: Boolean,
 ) {
-    val strings = LocalStrings.current.bisqEasy
 
     val warningText1 = if (isRejection) {
         "bisqEasy.openTrades.rejectTrade.warning".i18n()

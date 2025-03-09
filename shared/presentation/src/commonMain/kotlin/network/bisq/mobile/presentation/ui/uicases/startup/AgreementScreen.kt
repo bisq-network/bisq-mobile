@@ -8,7 +8,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
@@ -44,8 +43,6 @@ interface IAgreementPresenter : ViewPresenter {
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun AgreementScreen() {
-    val strings = LocalStrings.current.application
-    val commonStrings = LocalStrings.current.common
     val presenter: IAgreementPresenter = koinInject()
     val isAccepted = presenter.isAccepted.collectAsState().value
 

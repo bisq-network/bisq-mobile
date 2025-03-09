@@ -87,7 +87,7 @@ fun CurrencyCard(
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(0.dp))
-                BisqText.baseRegularGrey(text = item.market.quoteCurrencyCode)
+                BisqText.baseRegularGrey(item.market.quoteCurrencyCode)
             }
         }
         BisqText.baseRegular(

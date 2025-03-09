@@ -11,7 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
-import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
@@ -26,7 +26,6 @@ import org.koin.compose.koinInject
 
 @Composable
 fun OfferbookMarketScreen() {
-    val strings = LocalStrings.current.common
     val presenter: OfferbookMarketPresenter = koinInject()
     var showFilterDialog by remember { mutableStateOf(false) }
 
@@ -39,7 +38,7 @@ fun OfferbookMarketScreen() {
         BisqSearchField(
             value = presenter.searchText.collectAsState().value,
             onValueChanged = { it, isValid -> presenter.setSearchText(it) },
-            placeholder = strings.common_search,
+            placeholder = "action.search".i18n(),
             rightSuffix = {
                 // TODO: Height to be reduced with Icon only buttons
                 BisqButton(

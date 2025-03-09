@@ -8,8 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cafe.adriel.lyricist.LocalStrings
 import kotlinx.coroutines.CoroutineScope
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -33,8 +33,6 @@ interface IOnboardingPresenter : ViewPresenter {
 @OptIn(ExperimentalResourceApi::class)
 @Composable
 fun OnBoardingScreen() {
-    val strings = LocalStrings.current.application
-    val commonStrings = LocalStrings.current.common
     val presenter: IOnboardingPresenter = koinInject()
 
     val coroutineScope = rememberCoroutineScope()
@@ -49,13 +47,16 @@ fun OnBoardingScreen() {
     BisqScrollScaffold {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
-        BisqText.h1LightGrey(text = strings.onboarding_bisq2_headline,)
+        BisqText.h1LightGrey(text = "onboarding.bisq2.headline".i18n(),)
         Spacer(modifier = Modifier.height(56.dp))
         BisqPagerView(pagerState, finalPages)
         Spacer(modifier = Modifier.height(56.dp))
 
         BisqButton(
-            text = if (pagerState.currentPage == presenter.indexesToShow.lastIndex) strings.onboarding_button_create_profile else commonStrings.buttons_next,
+            text = if (pagerState.currentPage == presenter.indexesToShow.lastIndex)
+                "Create profile" //TODO:i18n
+            else
+                "action.next".i18n(),
             onClick = { presenter.onNextButtonClick(coroutineScope, pagerState) }
         )
     }

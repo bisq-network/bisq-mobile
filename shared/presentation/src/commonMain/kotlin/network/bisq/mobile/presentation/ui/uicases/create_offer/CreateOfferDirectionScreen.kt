@@ -8,8 +8,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import cafe.adriel.lyricist.LocalStrings
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -22,15 +22,13 @@ import org.koin.compose.koinInject
 
 @Composable
 fun CreateOfferBuySellScreen() {
-    val strings = LocalStrings.current.bisqEasyTradeWizard
     val presenter: CreateOfferDirectionPresenter = koinInject()
-    presenter.appStrings = LocalStrings.current // TODO find a more elegant solution
     RememberPresenterLifecycle(presenter)
 
     val showSellerReputationWarning = presenter.showSellerReputationWarning.collectAsState().value
 
     MultiScreenWizardScaffold(
-        strings.bisqEasy_tradeWizard_review_nextButton_createOffer,
+        "bisqEasy.tradeWizard.review.nextButton.createOffer".i18n(),
         stepIndex = 1,
         stepsLength = 6,
         horizontalAlignment = Alignment.Start,
@@ -49,10 +47,10 @@ fun CreateOfferBuySellScreen() {
             backgroundColor = buyBackgroundColor,
             modifier = Modifier.fillMaxWidth(),
             padding = PaddingValues(vertical = BisqUIConstants.ScreenPadding4X),
-            textComponent = { BisqText.h3Medium(text = strings.bisqEasy_tradeWizard_directionAndMarket_buy) }
+            textComponent = { BisqText.h3Medium(text = "bisqEasy.tradeWizard.directionAndMarket.buy".i18n()) }
         )
         BisqGap.VHalf()
-        BisqText.largeLightGrey(strings.bisqEasy_tradeWizard_buy_description)
+        BisqText.largeLightGrey("The easiest way to get your first Bitcoin") //TODO:i18n
 
         BisqGap.V2()
 
@@ -64,10 +62,10 @@ fun CreateOfferBuySellScreen() {
             backgroundColor = sellBackgroundColor, //BisqTheme.colors.secondary,
             modifier = Modifier.fillMaxWidth(),
             padding = PaddingValues(vertical = BisqUIConstants.ScreenPadding4X),
-            textComponent = { BisqText.h3Medium(text = strings.bisqEasy_tradeWizard_directionAndMarket_sell) }
+            textComponent = { BisqText.h3Medium(text = "bisqEasy.tradeWizard.directionAndMarket.sell".i18n()) }
         )
         BisqGap.VHalf()
-        BisqText.largeLightGrey(strings.bisqEasy_tradeWizard_sell_description)
+        BisqText.largeLightGrey("Experienced Bisq users with reputation can act as seller") //TODO:i18n
 
         if (showSellerReputationWarning) {
                 SellerReputationWarningDialog(
