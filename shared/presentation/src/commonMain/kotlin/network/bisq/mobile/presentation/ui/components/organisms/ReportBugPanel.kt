@@ -33,7 +33,7 @@ fun ReportBugPanel(
         Row {
             ExclamationRedIcon()
             BisqGap.HQuarter()
-            BisqText.baseRegular(text = "popup.reportBug".i18n())
+            BisqText.baseRegular("popup.reportBug".i18n())
         }
 
         BisqGap.V1()

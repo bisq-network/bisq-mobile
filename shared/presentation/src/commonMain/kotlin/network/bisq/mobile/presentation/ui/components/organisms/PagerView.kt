@@ -90,7 +90,7 @@ fun PagerSingleItem(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                BisqText.h4Regular(text = title)
+                BisqText.h4Regular(title)
                 Spacer(modifier = Modifier.height(24.dp))
                 BisqText.largeRegularGrey(
                     text = desc,

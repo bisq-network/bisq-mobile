@@ -62,7 +62,7 @@ fun BisqEditableDropDown(
                                     showDialog = false
                                 }
                         ) {
-                            BisqText.baseBold(text = item)
+                            BisqText.baseBold(item)
                         }
                     }
                 }

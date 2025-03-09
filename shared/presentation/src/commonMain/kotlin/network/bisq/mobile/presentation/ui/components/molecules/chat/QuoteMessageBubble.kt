@@ -58,8 +58,8 @@ fun QuoteMessageBubble(
                 ),
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter)
         ) {
-            BisqText.baseMedium(text = message.chatMessageReplyOf?.author ?: "")
-            BisqText.baseMedium(text = message.chatMessageReplyOf?.content ?: "") // TODO: Trim this to max 2 lines
+            BisqText.baseMedium(message.chatMessageReplyOf?.author ?: "")
+            BisqText.baseMedium(message.chatMessageReplyOf?.content ?: "") // TODO: Trim this to max 2 lines
         }
 
         content()

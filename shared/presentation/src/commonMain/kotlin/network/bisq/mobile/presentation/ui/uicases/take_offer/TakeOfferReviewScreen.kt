@@ -41,7 +41,7 @@ fun TakeOfferReviewTradeScreen() {
         snackbarHostState = presenter.getSnackState(),
         isInteractive = presenter.isInteractive.collectAsState().value,
     ) {
-        BisqText.h3Regular(text = "bisqEasy.takeOffer.progress.review".i18n())
+        BisqText.h3Regular("bisqEasy.takeOffer.progress.review".i18n())
         BisqGap.V2()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoRow(
@@ -111,10 +111,10 @@ fun TakeOfferReviewTradeScreen() {
                             verticalAlignment = Alignment.Bottom,
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-                            BisqText.h6Regular(text = presenter.price)
-                            BisqText.baseRegularGrey(text = presenter.marketCodes)
+                            BisqText.h6Regular(presenter.price)
+                            BisqText.baseRegularGrey(presenter.marketCodes)
                         }
-                        BisqText.smallRegularGrey(text = presenter.priceDetails)
+                        BisqText.smallRegularGrey(presenter.priceDetails)
                     }
                 }
             )
@@ -134,9 +134,9 @@ fun TakeOfferReviewTradeScreen() {
                             verticalAlignment = Alignment.Bottom,
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
-                            BisqText.h6Regular(text = presenter.fee)
+                            BisqText.h6Regular(presenter.fee)
                         }
-                        BisqText.smallRegularGrey(text = presenter.feeDetails)
+                        BisqText.smallRegularGrey(presenter.feeDetails)
                     }
                 }
             )

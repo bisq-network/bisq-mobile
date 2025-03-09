@@ -115,10 +115,10 @@ fun TopBar(
                             modifier = Modifier.offset(y = (2).dp)
                         )
                         BisqGap.VHalf()
-                        BisqText.h5Medium(text = title)
+                        BisqText.h5Medium(title)
                     }
                 } else {
-                    BisqText.h4Medium(text = title)
+                    BisqText.h4Medium(title)
                 }
             }
         },

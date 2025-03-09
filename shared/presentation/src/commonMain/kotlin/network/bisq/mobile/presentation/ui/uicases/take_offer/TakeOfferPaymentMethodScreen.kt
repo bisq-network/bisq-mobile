@@ -52,7 +52,7 @@ fun TakeOfferPaymentMethodScreen() {
         snackbarHostState = presenter.getSnackState()
     ) {
 
-        BisqText.h3Regular(text = "bisqEasy.takeOffer.paymentMethods.headline.fiatAndBitcoin".i18n())
+        BisqText.h3Regular("bisqEasy.takeOffer.paymentMethods.headline.fiatAndBitcoin".i18n())
 
         if (presenter.hasMultipleQuoteSidePaymentMethods) {
             BisqGap.V2()
@@ -62,7 +62,7 @@ fun TakeOfferPaymentMethodScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 BisqText.largeLightGrey(
-                    text = "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.buyer".i18n(presenter.quoteCurrencyCode)
+                    "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.buyer".i18n(presenter.quoteCurrencyCode)
                 )
                 BisqGap.V2()
                 Column(
@@ -102,7 +102,7 @@ fun TakeOfferPaymentMethodScreen() {
                                 fallbackPath = "drawable/payment/fiat/custom_payment_${customMethodCounter++}.png",
                                 modifier = Modifier.size(15.dp),
                             )
-                            BisqText.baseRegular(text = PaymentMethodDisplayString(paymentMethod))
+                            BisqText.baseRegular(PaymentMethodDisplayString(paymentMethod))
                         }
                     }
                 }
@@ -152,7 +152,7 @@ fun TakeOfferPaymentMethodScreen() {
                                 modifier = Modifier.size(15.dp)
                             )
 
-                            BisqText.baseRegular(text = PaymentMethodDisplayString(paymentMethod))
+                            BisqText.baseRegular(PaymentMethodDisplayString(paymentMethod))
                         }
                     }
                 }

@@ -127,10 +127,10 @@ fun QuotedMessage(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    BisqText.baseMedium(text = quotedMessage.author)
+                    BisqText.baseMedium(quotedMessage.author)
                     CloseIconButton(onClick = onCloseReply)
                 }
-                BisqText.baseMedium(text = quotedMessage.content)
+                BisqText.baseMedium(quotedMessage.content)
             }
         }
     }

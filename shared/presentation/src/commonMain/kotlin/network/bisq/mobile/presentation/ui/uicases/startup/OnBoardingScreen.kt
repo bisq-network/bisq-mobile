@@ -44,7 +44,7 @@ fun OnBoardingScreen() {
     BisqScrollScaffold {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
-        BisqText.h1LightGrey(text = "onboarding.bisq2.headline".i18n())
+        BisqText.h1LightGrey("onboarding.bisq2.headline".i18n())
         Spacer(modifier = Modifier.height(56.dp))
         BisqPagerView(pagerState, finalPages)
         Spacer(modifier = Modifier.height(56.dp))

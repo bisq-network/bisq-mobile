@@ -115,11 +115,11 @@ fun OfferCard(
 
             BisqGap.VHalf()
 
-            BisqText.baseRegular(text = item.formattedQuoteAmount)
+            BisqText.baseRegular(item.formattedQuoteAmount)
 
             BisqGap.VHalf()
 
-            BisqText.smallRegular(text = "@ " + item.formattedPriceSpec)
+            BisqText.smallRegular("@ " + item.formattedPriceSpec)
 
             BisqGap.V1()
 

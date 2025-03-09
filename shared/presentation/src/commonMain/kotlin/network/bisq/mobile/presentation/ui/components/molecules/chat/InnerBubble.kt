@@ -29,6 +29,6 @@ fun ChatInnerBubble(
                 modifier = Modifier.size(24.dp)
             )
         }
-        BisqText.baseRegular(text = message.content)
+        BisqText.baseRegular(message.content)
     }
 }

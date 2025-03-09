@@ -40,11 +40,11 @@ fun InfoBox(
         {
             when (valueType) {
                 InfoBoxValueType.BoldValue -> if (style == InfoBoxStyle.Style1)
-                    BisqText.h6Regular(text = value)
+                    BisqText.h6Regular(value)
                 else
-                    BisqText.baseRegular(text = value)
-                InfoBoxValueType.SmallValue -> BisqText.baseRegular(text = value)
-                InfoBoxValueType.TitleSmall -> BisqText.h4Regular(text = value)
+                    BisqText.baseRegular(value)
+                InfoBoxValueType.SmallValue -> BisqText.baseRegular(value)
+                InfoBoxValueType.TitleSmall -> BisqText.h4Regular(value)
             }
         }
     } else if (valueComposable != null) {
@@ -63,7 +63,7 @@ fun InfoBox(
                 horizontalAlignment = if (rightAlign) Alignment.End else Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(2.dp)
             ) {
-                BisqText.baseRegularGrey(text = label)
+                BisqText.baseRegularGrey(label)
                 valueWidget()
                 if (subvalue != null) {
                     BisqText.smallRegular(text = subvalue, color = BisqTheme.colors.grey3)

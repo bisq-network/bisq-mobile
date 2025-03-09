@@ -54,8 +54,8 @@ fun UserProfile(
         BisqGap.V2()
         Row(verticalAlignment = Alignment.CenterVertically) {
             LanguageIcon()
-            BisqText.smallRegularGrey(text = " : ")
-            BisqText.smallRegular(text = supportedLanguageCodes.joinToString(", ").uppercase())
+            BisqText.smallRegularGrey(" : ")
+            BisqText.smallRegular(supportedLanguageCodes.joinToString(", ").uppercase())
         }
     }
 }

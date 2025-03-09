@@ -36,7 +36,7 @@ fun CreateOfferReviewOfferScreen() {
         nextOnClick = { presenter.onCreateOffer() },
         isInteractive = presenter.isInteractive.collectAsState().value,
     ) {
-        BisqText.h3Regular(text = "bisqEasy.tradeWizard.review.headline.maker".i18n())
+        BisqText.h3Regular("bisqEasy.tradeWizard.review.headline.maker".i18n())
         BisqGap.V2()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoBox(
@@ -114,8 +114,8 @@ fun CreateOfferReviewOfferScreen() {
                         verticalAlignment = Alignment.Bottom,
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        BisqText.h6Regular(text = presenter.formattedPrice)
-                        BisqText.baseRegularGrey(text = presenter.marketCodes)
+                        BisqText.h6Regular(presenter.formattedPrice)
+                        BisqText.baseRegularGrey(presenter.marketCodes)
                     }
                 },
                 subvalue = presenter.priceDetails

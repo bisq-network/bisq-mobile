@@ -1,18 +1,13 @@
 package network.bisq.mobile.presentation.ui.components.molecules.chat
 
-// import androidx.compose.foundation.layout.ColumnScopeInstance.align
-// import androidx.compose.foundation.layout.FlowColumnScopeInstance.align
-// import androidx.compose.foundation.layout.BoxScopeInstance.align
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Surface
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ClosedEyeIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
@@ -47,7 +42,7 @@ fun ChatPopup(
             )
 
             DropdownMenuItem(
-                text = { BisqText.smallRegular(text = "Reply") },
+                text = { BisqText.smallRegular("chat.message.reply".i18n()) },
                 leadingIcon = { ReplyIcon() },
                 onClick = {
                     onQuoteMessage(message)
@@ -55,19 +50,19 @@ fun ChatPopup(
                 }
             )
             DropdownMenuItem(
-                text = { BisqText.smallRegular(text = "Copy") },
+                text = { BisqText.smallRegular("Copy") }, // TODO:i18n
                 leadingIcon = { CopyIcon() },
                 onClick = {
                     clipboardManager.setText(buildAnnotatedString { append(message.content) })
                 }
             )
             DropdownMenuItem(
-                text = { BisqText.smallRegular(text = "Ignore user") },
+                text = { BisqText.smallRegular("chat.message.contextMenu.ignoreUser".i18n()) },
                 leadingIcon = { ClosedEyeIcon() },
                 onClick = {} // TODO:
             )
             DropdownMenuItem(
-                text = { BisqText.smallRegular(text = "Report user to moderator") },
+                text = { BisqText.smallRegular("chat.message.contextMenu.reportUser".i18n()) },
                 leadingIcon = { FlagIcon() },
                 onClick = {} // TODO:
             )

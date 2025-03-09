@@ -133,11 +133,11 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 //                )
             }
             Spacer(modifier = Modifier.height(36.dp))
-            BisqText.baseRegularGrey(text = "STATUS")
+            BisqText.baseRegularGrey("STATUS")
             Spacer(modifier = Modifier.height(12.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
                 BisqText.largeRegular(
-                    text = if (isConnected) "Connected" else "Not Connected",
+                    if (isConnected) "Connected" else "Not Connected",
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 BisqText.baseRegular(

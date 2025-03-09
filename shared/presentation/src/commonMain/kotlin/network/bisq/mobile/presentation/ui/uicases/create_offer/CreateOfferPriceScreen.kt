@@ -47,7 +47,7 @@ fun CreateOfferTradePriceSelectorScreen() {
             modifier = Modifier.align(Alignment.Start)
         )
         BisqGap.V1()
-        BisqText.largeLightGrey(text = "bisqEasy.tradeWizard.price.subtitle".i18n())
+        BisqText.largeLightGrey("bisqEasy.tradeWizard.price.subtitle".i18n())
         Column(
             modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding2X),
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)

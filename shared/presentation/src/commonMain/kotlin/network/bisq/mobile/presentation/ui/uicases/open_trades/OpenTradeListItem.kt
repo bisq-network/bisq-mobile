@@ -52,8 +52,8 @@ fun OpenTradeListItem(
                         true
                     )
                 }
-                BisqText.smallLightGrey(text = "${item.formattedDate} ${item.formattedTime}")
-                BisqText.smallLightGrey(text = "Trade ID: ${item.shortTradeId}")
+                BisqText.smallLightGrey("${item.formattedDate} ${item.formattedTime}")
+                BisqText.smallLightGrey("Trade ID: ${item.shortTradeId}")
             }
             Column(
                 horizontalAlignment = Alignment.End,
@@ -66,11 +66,11 @@ fun OpenTradeListItem(
                 BisqGap.VHalf()
                 Row(modifier = Modifier.padding(top = 1.dp)) {
                     if (item.formattedPrice.length > 18) {
-                        BisqText.xsmallRegularGrey(text = "@ ")
-                        BisqText.xsmallRegular(text = item.formattedPrice)
+                        BisqText.xsmallRegularGrey("@ ")
+                        BisqText.xsmallRegular(item.formattedPrice)
                     } else {
-                        BisqText.smallRegularGrey(text = "@ ")
-                        BisqText.smallRegular(text = item.formattedPrice)
+                        BisqText.smallRegularGrey("@ ")
+                        BisqText.smallRegular(item.formattedPrice)
                     }
                 }
                 BisqGap.VQuarter()

@@ -99,7 +99,7 @@ fun FiatInputField(
                         innerTextField()
                     }
 
-                    BisqText.h5Regular(text = currency)
+                    BisqText.h5Regular(currency)
                 }
             }
         )

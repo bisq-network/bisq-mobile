@@ -35,7 +35,7 @@ fun CreateProfileScreen(
     BisqScrollScaffold {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
-        BisqText.h1LightGrey(text = "onboarding.createProfile.headline".i18n())
+        BisqText.h1LightGrey("onboarding.createProfile.headline".i18n())
         Spacer(modifier = Modifier.height(12.dp))
         BisqText.baseRegularGrey(
             text = "onboarding.createProfile.subTitle".i18n(),
@@ -68,9 +68,9 @@ fun CreateProfileScreen(
         }
 
         Spacer(modifier = Modifier.height(32.dp))
-        BisqText.baseRegular(text = presenter.nym.collectAsState().value)
+        BisqText.baseRegular(presenter.nym.collectAsState().value)
         Spacer(modifier = Modifier.height(12.dp))
-        BisqText.baseRegularGrey(text = presenter.id.collectAsState().value)
+        BisqText.baseRegularGrey(presenter.id.collectAsState().value)
         Spacer(modifier = Modifier.height(38.dp))
         BisqButton(
             text = "onboarding.createProfile.regenerate".i18n(),

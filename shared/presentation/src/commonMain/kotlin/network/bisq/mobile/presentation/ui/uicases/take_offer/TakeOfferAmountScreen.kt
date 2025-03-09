@@ -25,7 +25,7 @@ fun TakeOfferTradeAmountScreen() {
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() }
     ) {
-        BisqText.h3Regular(text = "bisqEasy.takeOffer.amount.headline.buyer".i18n())
+        BisqText.h3Regular("bisqEasy.takeOffer.amount.headline.buyer".i18n())
         BisqGap.V1()
         BisqText.largeLightGrey(
             // We get currency code appended but for formattedMinAmount we want to omit it in the string

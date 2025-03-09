@@ -233,7 +233,7 @@ fun BisqTextField(
 
                         Box(modifier = Modifier.weight(1f)) {
                             if (value.isEmpty()) {
-                                BisqText.largeLightGrey(text = placeholder)
+                                BisqText.largeLightGrey(placeholder)
                             }
                             innerTextField()
                         }

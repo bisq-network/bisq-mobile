@@ -29,7 +29,7 @@ fun CreateOfferPaymentMethodSelectorScreen() {
         nextOnClick = { presenter.onNext() },
         snackbarHostState = presenter.getSnackState()
     ) {
-        BisqText.h3Regular(text =  "bisqEasy.takeOffer.paymentMethods.headline.fiatAndBitcoin".i18n())
+        BisqText.h3Regular("bisqEasy.takeOffer.paymentMethods.headline.fiatAndBitcoin".i18n())
 
         BisqGap.V1()
 

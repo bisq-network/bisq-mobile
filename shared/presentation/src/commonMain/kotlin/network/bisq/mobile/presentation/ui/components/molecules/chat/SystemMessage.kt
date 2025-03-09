@@ -26,8 +26,8 @@ fun ChatSystemMessage(message: ChatMessage) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
         ) {
-            BisqText.baseRegular(text = message.content)
-            BisqText.smallRegular(text = message.timestamp)
+            BisqText.baseRegular(message.content)
+            BisqText.smallRegular(message.timestamp)
         }
     }
 }

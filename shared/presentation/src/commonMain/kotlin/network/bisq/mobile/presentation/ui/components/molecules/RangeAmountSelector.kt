@@ -44,33 +44,33 @@ fun RangeAmountSelector(
     Column {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Column(horizontalAlignment = Alignment.Start) {
-                BisqText.smallRegularGrey(text = "Min")
+                BisqText.smallRegularGrey("Min")
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.Bottom
                 ) {
                     if (smallFont) {
-                        BisqText.h3Regular(text = quoteSideMinRangeAmountWithoutDecimal)
-                        BisqText.baseLight(text = quoteCurrencyCode)
+                        BisqText.h3Regular(quoteSideMinRangeAmountWithoutDecimal)
+                        BisqText.baseLight(quoteCurrencyCode)
                     } else {
-                        BisqText.h2Regular(text = quoteSideMinRangeAmountWithoutDecimal)
-                        BisqText.h6Light(text = quoteCurrencyCode)
+                        BisqText.h2Regular(quoteSideMinRangeAmountWithoutDecimal)
+                        BisqText.h6Light(quoteCurrencyCode)
                     }
                 }
                 BtcSatsText(baseSideMinRangeAmount)
             }
             Column(horizontalAlignment = Alignment.End) {
-                BisqText.smallRegularGrey(text = "Max")
+                BisqText.smallRegularGrey("Max")
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.Bottom
                 ) {
                     if (smallFont) {
-                        BisqText.h3Regular(text = quoteSideMaxRangeAmountWithoutDecimal)
-                        BisqText.baseLight(text = quoteCurrencyCode)
+                        BisqText.h3Regular(quoteSideMaxRangeAmountWithoutDecimal)
+                        BisqText.baseLight(quoteCurrencyCode)
                     } else {
-                        BisqText.h2Regular(text = quoteSideMaxRangeAmountWithoutDecimal)
-                        BisqText.h6Light(text = quoteCurrencyCode)
+                        BisqText.h2Regular(quoteSideMaxRangeAmountWithoutDecimal)
+                        BisqText.h6Light(quoteCurrencyCode)
                     }
                 }
                 BtcSatsText(baseSideMaxRangeAmount)
@@ -87,8 +87,8 @@ fun RangeAmountSelector(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
             ) {
-                BisqText.smallLightGrey(text = formattedMinAmount)
-                BisqText.smallLightGrey(text = formattedMaxAmount)
+                BisqText.smallLightGrey(formattedMinAmount)
+                BisqText.smallLightGrey(formattedMaxAmount)
             }
         }
     }

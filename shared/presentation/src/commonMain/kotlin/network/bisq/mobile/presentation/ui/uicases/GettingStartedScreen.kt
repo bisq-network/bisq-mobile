@@ -99,7 +99,7 @@ fun WelcomeCard(
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
     ) {
         // Title
-        BisqText.h4Regular(text = title)
+        BisqText.h4Regular(title)
 
         // Bullet Points
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalfQuarter)) {
@@ -110,7 +110,7 @@ fun WelcomeCard(
                         drawCircle(color = whiteColor)
                     }
                     BisqGap.H1()
-                    BisqText.smallMedium(text = point)
+                    BisqText.smallMedium(point)
                 }
             }
         }

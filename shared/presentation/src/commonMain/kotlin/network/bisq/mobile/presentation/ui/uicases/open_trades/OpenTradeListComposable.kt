@@ -74,7 +74,7 @@ fun OpenTradeListScreen() {
                         .padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    BisqText.h5Light(text = "My open trades")
+                    BisqText.h5Light("My open trades")
                     HorizontalDivider(
                         modifier = Modifier,
                         thickness = 0.5.dp,
@@ -151,7 +151,7 @@ fun IconWithTextLine(image: DrawableResource, title: String) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Image(painterResource(image), null, Modifier.size(30.dp))
         Spacer(modifier = Modifier.width(15.dp))
-        BisqText.baseRegular(text = title)
+        BisqText.baseRegular(title)
     }
 }
 
@@ -194,7 +194,7 @@ fun TradeGuide(presenter: OpenTradeListPresenter) {
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.padding(12.dp)
             ) {
-                BisqText.h3Light(text = "Trade guide")
+                BisqText.h3Light("Trade guide")
                 BisqText.baseRegularGrey(text = "Trade guide content... TODO")
                 BisqButton(
                     text = "Confirm trade rules",

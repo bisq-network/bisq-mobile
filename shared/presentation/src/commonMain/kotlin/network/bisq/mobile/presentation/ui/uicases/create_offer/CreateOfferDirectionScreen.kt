@@ -47,7 +47,7 @@ fun CreateOfferBuySellScreen() {
             backgroundColor = buyBackgroundColor,
             modifier = Modifier.fillMaxWidth(),
             padding = PaddingValues(vertical = BisqUIConstants.ScreenPadding4X),
-            textComponent = { BisqText.h3Medium(text = "bisqEasy.tradeWizard.directionAndMarket.buy".i18n()) }
+            textComponent = { BisqText.h3Medium("bisqEasy.tradeWizard.directionAndMarket.buy".i18n()) }
         )
         BisqGap.VHalf()
         BisqText.largeLightGrey("The easiest way to get your first Bitcoin") //TODO:i18n
@@ -62,7 +62,7 @@ fun CreateOfferBuySellScreen() {
             backgroundColor = sellBackgroundColor, //BisqTheme.colors.secondary,
             modifier = Modifier.fillMaxWidth(),
             padding = PaddingValues(vertical = BisqUIConstants.ScreenPadding4X),
-            textComponent = { BisqText.h3Medium(text = "bisqEasy.tradeWizard.directionAndMarket.sell".i18n()) }
+            textComponent = { BisqText.h3Medium("bisqEasy.tradeWizard.directionAndMarket.sell".i18n()) }
         )
         BisqGap.VHalf()
         BisqText.largeLightGrey("Experienced Bisq users with reputation can act as seller") //TODO:i18n
