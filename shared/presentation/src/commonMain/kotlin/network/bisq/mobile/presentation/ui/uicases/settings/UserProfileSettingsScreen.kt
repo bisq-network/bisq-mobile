@@ -10,16 +10,11 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.img_bitcoin_payment_waiting
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
-import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap

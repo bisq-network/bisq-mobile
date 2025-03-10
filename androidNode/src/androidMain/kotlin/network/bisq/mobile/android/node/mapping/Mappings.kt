@@ -214,6 +214,7 @@ class Mappings {
                 ChatMessageTypeEnum.LEAVE -> ChatMessageType.LEAVE
                 ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> ChatMessageType.TAKE_BISQ_EASY_OFFER
                 ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE -> ChatMessageType.PROTOCOL_LOG_MESSAGE
+                ChatMessageTypeEnum.CHAT_RULES_WARNING -> ChatMessageType.CHAT_RULES_WARNING
             }
         }
 
@@ -223,13 +224,15 @@ class Mappings {
                 ChatMessageType.LEAVE -> ChatMessageTypeEnum.LEAVE
                 ChatMessageType.TAKE_BISQ_EASY_OFFER -> ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER
                 ChatMessageType.PROTOCOL_LOG_MESSAGE -> ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE
+                ChatMessageType.CHAT_RULES_WARNING -> ChatMessageTypeEnum.CHAT_RULES_WARNING
             }
         }
     }
 
     object CitationMapping {
         fun toBisq2Model(value: CitationVO): Citation {
-            return Citation(value.authorUserProfileId, value.text)
+            // TODO Optional empty passed temporarily to fix compilation issues cause by bisq2 api changes
+            return Citation(value.authorUserProfileId, value.text, Optional.empty())
         }
 
         fun fromBisq2Model(value: Citation): CitationVO {

@@ -340,7 +340,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
             check(!bannedUserService.isNetworkIdBanned(bisqEasyOffer.makerNetworkId)) { "You cannot take the offer because the maker is banned" }
             val takerIdentity = userIdentityService.selectedUserIdentity
             check(!bannedUserService.isUserProfileBanned(takerIdentity.userProfile)) // if taker is banned we don't give him hints.
-            val mediator = mediationRequestService.selectMediator(bisqEasyOffer.makersUserProfileId, takerIdentity.id)
+            val mediator = mediationRequestService.selectMediator(bisqEasyOffer.makersUserProfileId, takerIdentity.id, bisqEasyOffer.id)
             val priceSpec = bisqEasyOffer.priceSpec
             val marketPrice: Long = marketPriceService.findMarketPrice(bisqEasyOffer.market).map { it.priceQuote.value }.orElse(0)
             val bisqEasyProtocol: BisqEasyProtocol = bisqEasyTradeService.createBisqEasyProtocol(
