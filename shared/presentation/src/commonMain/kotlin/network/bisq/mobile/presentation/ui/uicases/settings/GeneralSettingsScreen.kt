@@ -1,8 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +12,8 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
+import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
@@ -53,6 +54,7 @@ interface IGeneralSettingsPresenter : ViewPresenter {
 @Composable
 fun GeneralSettingsScreen() {
     val presenter: IGeneralSettingsPresenter = koinInject()
+    val settingsPresenter: ISettingsPresenter = koinInject()
 
     val i18nPairs = presenter.i18nPairs.collectAsState().value
     val allLanguagePairs = presenter.allLanguagePairs.collectAsState().value
@@ -65,13 +67,21 @@ fun GeneralSettingsScreen() {
     val ignorePow = presenter.ignorePow.collectAsState().value
     val shouldShowPoWAdjustmentFactor = presenter.shouldShowPoWAdjustmentFactor.collectAsState().value
 
-    RememberPresenterLifecycle(presenter)
+    val menuTree: MenuItem = settingsPresenter.menuTree()
+    val menuPath = remember { mutableStateListOf(menuTree) }
+
+    RememberPresenterLifecycle(presenter, {
+        menuPath.add((menuTree as MenuItem.Parent).children[0])
+    })
 
     BisqScrollScaffold(
         topBar = { TopBar("General Settings") }, // TODO:i18n
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
     ) {
+        BreadcrumbNavigation(path = menuPath) { index ->
+            if (index == 0) settingsPresenter.settingsNavigateBack()
+        }
 
         BisqText.h4Regular("settings.language".i18n())
 

@@ -7,6 +7,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -23,6 +25,8 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
+import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -57,6 +61,7 @@ interface IUserProfileSettingsPresenter : ViewPresenter {
 @Composable
 fun UserProfileSettingsScreen() {
     val presenter: IUserProfileSettingsPresenter = koinInject()
+    val settingsPresenter: ISettingsPresenter = koinInject()
 
     val botId = presenter.botId.collectAsState().value
     val nickname = presenter.nickname.collectAsState().value
@@ -68,10 +73,14 @@ fun UserProfileSettingsScreen() {
     val tradeTerms = presenter.tradeTerms.collectAsState().value
 
     val showLoading = presenter.showLoading.collectAsState().value
-
     val showDeleteConfirmation = presenter.showDeleteProfileConfirmation.collectAsState().value
 
-    RememberPresenterLifecycle(presenter)
+    val menuTree: MenuItem = settingsPresenter.menuTree()
+    val menuPath = remember { mutableStateListOf(menuTree) }
+
+    RememberPresenterLifecycle(presenter, {
+        menuPath.add((menuTree as MenuItem.Parent).children[1])
+    })
 
     BisqScrollScaffold(
         topBar = { TopBar("user.userProfile".i18n()) },
@@ -79,6 +88,9 @@ fun UserProfileSettingsScreen() {
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         isInteractive = presenter.isInteractive.collectAsState().value,
         ) {
+        BreadcrumbNavigation(path = menuPath) { index ->
+            if (index == 0) settingsPresenter.settingsNavigateBack()
+        }
         // Bot Icon
         UserProfileScreenHeader(presenter)
 

@@ -18,8 +18,11 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.BisqBottomSheet
 import network.bisq.mobile.presentation.ui.components.molecules.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
+import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.components.organisms.settings.AppPaymentAccountCard
 import network.bisq.mobile.presentation.ui.composeModels.PaymentAccount
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
@@ -38,8 +41,9 @@ interface IPaymentAccountSettingsPresenter : ViewPresenter {
 @Composable
 fun PaymentAccountSettingsScreen() {
 
-
     val presenter: IPaymentAccountSettingsPresenter = koinInject()
+    val settingsPresenter: ISettingsPresenter = koinInject()
+
     val accounts by presenter.accounts.collectAsState()
     val selectedAccount by presenter.selectedAccount.collectAsState()
 
@@ -48,6 +52,13 @@ fun PaymentAccountSettingsScreen() {
 
     var showConfirmationDialog by remember { mutableStateOf(false) }
     var showBottomSheet by remember { mutableStateOf(false) }
+
+    val menuTree: MenuItem = settingsPresenter.menuTree()
+    val menuPath = remember { mutableStateListOf(menuTree) }
+
+    RememberPresenterLifecycle(presenter, {
+        menuPath.add((menuTree as MenuItem.Parent).children[2])
+    })
 
     LaunchedEffect(selectedAccount) {
         accountName = selectedAccount.name
@@ -59,6 +70,11 @@ fun PaymentAccountSettingsScreen() {
         verticalArrangement = if (accounts.isEmpty()) Arrangement.Center else Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         snackbarHostState = presenter.getSnackState(),
     ) {
+        if (accounts.isNotEmpty()) {
+            BreadcrumbNavigation(path = menuPath) { index ->
+                if (index == 0) settingsPresenter.settingsNavigateBack()
+            }
+        }
         if (showBottomSheet) {
             BisqBottomSheet(
                 onDismissRequest = { showBottomSheet = !showBottomSheet }

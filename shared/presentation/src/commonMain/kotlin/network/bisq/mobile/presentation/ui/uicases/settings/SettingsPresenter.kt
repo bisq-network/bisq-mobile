@@ -44,4 +44,8 @@ open class SettingsPresenter(
     override fun navigate(route: Routes) {
         navigateTo(route)
     }
+
+    override fun settingsNavigateBack() {
+        navigateBack()
+    }
 }

@@ -5,10 +5,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.presentation.ViewPresenter
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.unit.dp
-import androidx.compose.material3.Text
-import androidx.compose.ui.graphics.Color
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
 import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
@@ -24,18 +21,19 @@ interface ISettingsPresenter : ViewPresenter {
     fun versioning(): Triple<String, String, String>
 
     fun navigate(route: Routes)
+    fun settingsNavigateBack()
 }
 
 @Composable
 fun SettingsScreen(isTabSelected: Boolean) {
 
-    val settingsPresenter: ISettingsPresenter = koinInject()
-    val menuTree: MenuItem = settingsPresenter.menuTree()
+    val presenter: ISettingsPresenter = koinInject()
+    val menuTree: MenuItem = presenter.menuTree()
     val currentMenu = remember { mutableStateOf(menuTree) }
     val menuPath = remember { mutableStateListOf(menuTree) }
     val selectedLeaf = remember { mutableStateOf<MenuItem.Leaf?>(null) }
 
-    RememberPresenterLifecycle(settingsPresenter)
+    RememberPresenterLifecycle(presenter)
     // Reset to root menu when the tab is selected
     LaunchedEffect(isTabSelected) {
         if (isTabSelected) {
@@ -50,24 +48,24 @@ fun SettingsScreen(isTabSelected: Boolean) {
     ) {
         Column{
             BreadcrumbNavigation(path = menuPath) { index ->
-                if (index == menuPath.size - 1) {
+                // if (index == menuPath.size - 1) {
                 //                TODO Default: Do nth, otherwise we can choose the below
                 //                currentMenu.value = menuPath[index - 1]
                 //                menuPath.removeRange(index, menuPath.size)
-                } else {
-                    currentMenu.value = menuPath[index]
-                    menuPath.removeRange(index + 1, menuPath.size)
-                    selectedLeaf.value = null
-                }
+                // } else {
+                //     currentMenu.value = menuPath[index]
+                //     menuPath.removeRange(index + 1, menuPath.size)
+                //     selectedLeaf.value = null
+                // }
             }
 
             SettingsMenu(menuItem = currentMenu.value) { selectedItem ->
                 if (selectedItem is MenuItem.Leaf) {
-                    settingsPresenter.navigate(selectedItem.route)
+                    presenter.navigate(selectedItem.route)
                 }
             }
         }
-        SettingsFooter(settingsPresenter.appName, settingsPresenter.versioning())
+        SettingsFooter(presenter.appName, presenter.versioning())
     }
 }
 
@@ -81,11 +79,6 @@ fun SettingsFooter(appName: String, versioning: Triple<String, String, String>) 
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
-        Text(
-            text = "$appName v$versionNumber ($networkName: v$networkVersion)",
-            fontSize = 12.sp,
-            color = Color.White,
-            modifier = Modifier.padding(vertical = 1.dp)
-        )
+        BisqText.baseRegular("$appName v$versionNumber ($networkName: v$networkVersion)")
     }
 }
