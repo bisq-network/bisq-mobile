@@ -1,4 +1,3 @@
-
 package network.bisq.mobile.presentation.ui.uicases.settings
 
 import androidx.compose.foundation.layout.*
@@ -10,16 +9,21 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.Text
 import androidx.compose.ui.graphics.Color
+import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
 import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.components.molecules.settings.SettingsMenu
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
-interface ISettingsPresenter: ViewPresenter {
+interface ISettingsPresenter : ViewPresenter {
     val appName: String
     fun menuTree(): MenuItem
     fun versioning(): Triple<String, String, String>
+
+    fun navigate(route: Routes)
 }
 
 @Composable
@@ -40,15 +44,11 @@ fun SettingsScreen(isTabSelected: Boolean) {
         }
     }
 
-    // Column is used leaving the possibility to the leaf views to set the scrolling as they please
-    Column(
-        modifier = Modifier.fillMaxSize()
+    BisqStaticLayout(
+        padding = PaddingValues(all = BisqUIConstants.Zero),
+        verticalArrangement = Arrangement.SpaceBetween,
     ) {
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Top,
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+        Column{
             BreadcrumbNavigation(path = menuPath) { index ->
                 if (index == menuPath.size - 1) {
                 //                TODO Default: Do nth, otherwise we can choose the below
@@ -61,18 +61,10 @@ fun SettingsScreen(isTabSelected: Boolean) {
                 }
             }
 
-            if (selectedLeaf.value == null) {
-                SettingsMenu(menuItem = currentMenu.value) { selectedItem ->
-                    menuPath.add(selectedItem)
-                    if (selectedItem is MenuItem.Parent) {
-                        selectedLeaf.value = null
-                        currentMenu.value = selectedItem
-                    } else {
-                        selectedLeaf.value = selectedItem as MenuItem.Leaf
-                    }
+            SettingsMenu(menuItem = currentMenu.value) { selectedItem ->
+                if (selectedItem is MenuItem.Leaf) {
+                    settingsPresenter.navigate(selectedItem.route)
                 }
-            } else {
-                selectedLeaf.value!!.content.invoke()
             }
         }
         SettingsFooter(settingsPresenter.appName, settingsPresenter.versioning())

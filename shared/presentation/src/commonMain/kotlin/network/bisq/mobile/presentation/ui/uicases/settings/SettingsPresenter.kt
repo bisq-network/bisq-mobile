@@ -5,7 +5,7 @@ import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
-import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScreen
+import network.bisq.mobile.presentation.ui.navigation.Routes
 
 /**
  * SettingsPresenter with default implementation
@@ -19,14 +19,9 @@ open class SettingsPresenter(
 
     final override fun menuTree(): MenuItem {
         val defaultList: MutableList<MenuItem> = mutableListOf(
-            MenuItem.Parent(
-                label = "Account",
-                children = listOf(
-                    MenuItem.Leaf(label = "User Profile", content = { UserProfileSettingsScreen() }),
-                    MenuItem.Leaf(label = "Payment Accounts", content = { PaymentAccountSettingsScreen() }),
-                )
-            ),
-            MenuItem.Leaf(label = "General", content = { GeneralSettingsScreen() })
+            MenuItem.Leaf(label = "General", route = Routes.GeneralSettings),
+            MenuItem.Leaf(label = "User Profile", route = Routes.UserProfileSettings),
+            MenuItem.Leaf(label = "Payment Accounts", route = Routes.PaymentAcountSettings),
         )
         return MenuItem.Parent(
             label = "Bisq",
@@ -42,7 +37,11 @@ open class SettingsPresenter(
     }
 
     protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
-        menuItems.add(MenuItem.Leaf("Trusted Node", content = { TrustedNodeSetupScreen(false) }))
+        menuItems.add(MenuItem.Leaf("Trusted Node", Routes.TrustedNodeSetup))
         return menuItems.toList()
+    }
+
+    override fun navigate(route: Routes) {
+        navigateTo(route)
     }
 }

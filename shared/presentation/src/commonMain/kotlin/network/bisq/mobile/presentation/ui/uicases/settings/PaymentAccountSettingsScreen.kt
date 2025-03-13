@@ -13,8 +13,11 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqEditableDropDown
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.BisqBottomSheet
 import network.bisq.mobile.presentation.ui.components.molecules.ConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.organisms.settings.AppPaymentAccountCard
 import network.bisq.mobile.presentation.ui.composeModels.PaymentAccount
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -51,39 +54,39 @@ fun PaymentAccountSettingsScreen() {
         accountDescription = selectedAccount.description
     }
 
-    if (showBottomSheet) {
-        BisqBottomSheet(
-            onDismissRequest = { showBottomSheet = !showBottomSheet }
-        ) {
-            AppPaymentAccountCard(
-                onCancel = { showBottomSheet = false },
-                onConfirm = { name, description ->
-                    presenter.addAccount(name, description)
-                    showBottomSheet = false
-                },
-            )
-        }
-    }
-
-    if (accounts.isEmpty()) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            BisqButton(
-                text = "user.paymentAccounts.createAccount".i18n(),
-                onClick = { showBottomSheet = !showBottomSheet },
-                modifier = Modifier.padding(all = 8.dp)
-            )
-        }
-        return
-    }
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
+    BisqScrollScaffold(
+        topBar = { TopBar("user.paymentAccounts".i18n()) },
+        verticalArrangement = if (accounts.isEmpty()) Arrangement.Center else Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
     ) {
+        if (showBottomSheet) {
+            BisqBottomSheet(
+                onDismissRequest = { showBottomSheet = !showBottomSheet }
+            ) {
+                AppPaymentAccountCard(
+                    onCancel = { showBottomSheet = false },
+                    onConfirm = { name, description ->
+                        presenter.addAccount(name, description)
+                        showBottomSheet = false
+                    },
+                )
+            }
+        }
+
+        if (accounts.isEmpty()) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                BisqButton(
+                    text = "user.paymentAccounts.createAccount".i18n(),
+                    onClick = { showBottomSheet = !showBottomSheet },
+                    modifier = Modifier.padding(all = 8.dp)
+                )
+            }
+            return@BisqScrollScaffold
+        }
+
         BisqButton(
             text = "user.paymentAccounts.createAccount".i18n(),
             onClick = { showBottomSheet = !showBottomSheet },
