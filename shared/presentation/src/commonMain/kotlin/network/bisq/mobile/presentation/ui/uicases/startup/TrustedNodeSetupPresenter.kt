@@ -57,6 +57,18 @@ class TrustedNodeSetupPresenter(
         _isConnected.value = false
     }
 
+    override fun validateWsUrl(url: String): String? {
+        val wsUrlPattern =
+            """^(ws|wss):\/\/(([a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|localhost)|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))(:\d{1,5})$""".toRegex()
+        if (url.isEmpty()) {
+            return "URL cannot be empty" //TODO:i18n
+        }
+        if (!wsUrlPattern.matches(url)) {
+            return "Invalid WebSocket URL. Must be ws:// or wss:// followed by a domain/IP and port" //TODO:i18n
+        }
+        return null
+    }
+
     override fun testConnection() {
         backgroundScope.launch {
             _isLoading.value = true
