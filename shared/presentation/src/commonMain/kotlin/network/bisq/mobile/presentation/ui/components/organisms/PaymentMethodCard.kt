@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
-import network.bisq.mobile.i18n.PaymentMethodDisplayString
+import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.molecules.PaymentTypeCard
 
@@ -39,7 +39,7 @@ fun PaymentMethodCard(
                 val isSelected = selectedPaymentMethods.collectAsState().value.contains(paymentMethod)
                 PaymentTypeCard(
                     image = imagePaths[index],
-                    title = PaymentMethodDisplayString(paymentMethod),
+                    title = i18NPaymentMethod(paymentMethod),
                     onClick = { onToggle(paymentMethod) },
                     isSelected = isSelected
                 )

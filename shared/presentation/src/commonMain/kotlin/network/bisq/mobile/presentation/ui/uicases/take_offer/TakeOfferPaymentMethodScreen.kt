@@ -18,7 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.i18n.PaymentMethodDisplayString
+import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
@@ -102,7 +102,7 @@ fun TakeOfferPaymentMethodScreen() {
                                 fallbackPath = "drawable/payment/fiat/custom_payment_${customMethodCounter++}.png",
                                 modifier = Modifier.size(15.dp),
                             )
-                            BisqText.baseRegular(PaymentMethodDisplayString(paymentMethod))
+                            BisqText.baseRegular(i18NPaymentMethod(paymentMethod))
                         }
                     }
                 }
@@ -152,7 +152,7 @@ fun TakeOfferPaymentMethodScreen() {
                                 modifier = Modifier.size(15.dp)
                             )
 
-                            BisqText.baseRegular(PaymentMethodDisplayString(paymentMethod))
+                            BisqText.baseRegular(i18NPaymentMethod(paymentMethod))
                         }
                     }
                 }

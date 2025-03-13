@@ -17,7 +17,7 @@ import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.utils.PriceUtil
-import network.bisq.mobile.i18n.PaymentMethodDisplayString
+import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -80,8 +80,8 @@ class TakeOfferReviewPresenter(
         val offerListItem = takeOfferModel.offerItemPresentationVO
         takersDirection = offerListItem.bisqEasyOffer.direction.mirror
 
-        quoteSidePaymentMethodDisplayString = PaymentMethodDisplayString(takeOfferModel.quoteSidePaymentMethod)
-        baseSidePaymentMethodDisplayString = PaymentMethodDisplayString(takeOfferModel.baseSidePaymentMethod)
+        quoteSidePaymentMethodDisplayString = i18NPaymentMethod(takeOfferModel.quoteSidePaymentMethod)
+        baseSidePaymentMethodDisplayString = i18NPaymentMethod(takeOfferModel.baseSidePaymentMethod)
 
         val formattedQuoteAmount = AmountFormatter.formatAmount(takeOfferModel.quoteAmount, true, true)
         val formattedBaseAmount = AmountFormatter.formatAmount(takeOfferModel.baseAmount, false, false)

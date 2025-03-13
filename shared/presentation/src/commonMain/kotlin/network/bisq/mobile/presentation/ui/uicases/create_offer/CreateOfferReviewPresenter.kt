@@ -7,7 +7,7 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
-import network.bisq.mobile.i18n.PaymentMethodDisplayString
+import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -41,9 +41,9 @@ class CreateOfferReviewPresenter(
         direction = createOfferModel.direction
 
         quoteSidePaymentMethodDisplayString =
-            createOfferModel.selectedQuoteSidePaymentMethods.joinToString(", ") { PaymentMethodDisplayString(it) }
+            createOfferModel.selectedQuoteSidePaymentMethods.joinToString(", ") { i18NPaymentMethod(it) }
         baseSidePaymentMethodDisplayString =
-            createOfferModel.selectedBaseSidePaymentMethods.joinToString(", ") { PaymentMethodDisplayString(it) }
+            createOfferModel.selectedBaseSidePaymentMethods.joinToString(", ") { i18NPaymentMethod(it) }
 
         val formattedQuoteAmount: String
         val formattedBaseAmount: String
