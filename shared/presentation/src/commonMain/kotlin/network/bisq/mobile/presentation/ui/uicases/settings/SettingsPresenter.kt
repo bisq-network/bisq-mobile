@@ -37,7 +37,7 @@ open class SettingsPresenter(
     }
 
     protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
-        menuItems.add(MenuItem.Leaf("Trusted Node", Routes.TrustedNodeSetup))
+        menuItems.add(MenuItem.Leaf("Trusted Node", Routes.TrustedNodeSettings))
         return menuItems.toList()
     }
 

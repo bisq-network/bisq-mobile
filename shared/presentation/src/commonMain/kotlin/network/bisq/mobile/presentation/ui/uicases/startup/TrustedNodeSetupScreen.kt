@@ -35,6 +35,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.QuestionIcon
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
+import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
@@ -52,7 +53,7 @@ interface ITrustedNodeSetupPresenter : ViewPresenter {
      */
     fun validateWsUrl(url: String): String?
 
-    fun testConnection()
+    fun testConnection(isWorkflow: Boolean = true)
 
     fun navigateToNextScreen()
 
@@ -71,10 +72,13 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     RememberPresenterLifecycle(presenter)
 
     BisqScrollScaffold(
+        topBar = { TopBar("Trusted node") }, // TODO:i18n
         snackbarHostState = presenter.getSnackState()
     ) {
-        BisqLogo()
-        Spacer(modifier = Modifier.height(24.dp))
+        if (isWorkflow) {
+            BisqLogo()
+            Spacer(modifier = Modifier.height(24.dp))
+        }
         BisqText.largeRegular(
             text = "To use Bisq through your trusted node, please enter the URL to connect to. E.g. ws://10.0.2.2:8090",
         )
@@ -173,16 +177,14 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )
                 }
-                //Spacer(modifier = Modifier.width(20.dp))
                 AnimatedVisibility(
                     visible = isConnected,
                     enter = fadeIn(animationSpec = tween(300)),
-
-                    ) {
+                ) {
                     BisqButton(
                         text = if (isWorkflow) "Next" else "Save",
                         color = BisqTheme.colors.light1,
-                        onClick = { if (isWorkflow) presenter.navigateToNextScreen() else presenter.testConnection() },
+                        onClick = { if (isWorkflow) presenter.navigateToNextScreen() else presenter.testConnection(false) },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )
                 }

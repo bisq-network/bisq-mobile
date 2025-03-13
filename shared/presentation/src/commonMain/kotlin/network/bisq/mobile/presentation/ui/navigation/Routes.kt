@@ -11,6 +11,7 @@ enum class Routes(val title: String) {
     Onboarding(title = "onboarding"),
     CreateProfile(title = "create_profile"),
     TrustedNodeSetup(title = "trusted_node_setup"),
+    TrustedNodeSettings(title = "trusted_node_settings"),
 
     TabContainer(title = "tab_container"),
 

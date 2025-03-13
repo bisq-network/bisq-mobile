@@ -57,6 +57,7 @@ fun PaymentAccountSettingsScreen() {
     BisqScrollScaffold(
         topBar = { TopBar("user.paymentAccounts".i18n()) },
         verticalArrangement = if (accounts.isEmpty()) Arrangement.Center else Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+        snackbarHostState = presenter.getSnackState(),
     ) {
         if (showBottomSheet) {
             BisqBottomSheet(

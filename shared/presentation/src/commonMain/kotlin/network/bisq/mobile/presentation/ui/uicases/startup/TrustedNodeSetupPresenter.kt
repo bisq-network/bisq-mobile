@@ -69,7 +69,7 @@ class TrustedNodeSetupPresenter(
         return null
     }
 
-    override fun testConnection() {
+    override fun testConnection(isWorkflow: Boolean) {
         backgroundScope.launch {
             _isLoading.value = true
             log.w { "Test: " + _bisqApiUrl.value }
@@ -78,7 +78,9 @@ class TrustedNodeSetupPresenter(
                     updateTrustedNodeSettings()
                     _isConnected.value = true
                     showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
-                    // showSnackbar("Connected successfully and long text message with long list of english words")
+                    if (!isWorkflow) {
+                        navigateBack();
+                    }
                 } else {
                     showSnackbar("Could not connect to given url ${_bisqApiUrl.value}, please try again with another setup")
                     _isConnected.value = false

@@ -43,6 +43,8 @@ fun RootNavGraph(rootNavController: NavHostController) {
             SplashScreen()
         }
 
+        addScreen(Routes.TrustedNodeSettings.name, content = { TrustedNodeSetupScreen(false) })
+
         val startupScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
             Routes.Agreement to { AgreementScreen() },
             Routes.Onboarding to { OnBoardingScreen() },

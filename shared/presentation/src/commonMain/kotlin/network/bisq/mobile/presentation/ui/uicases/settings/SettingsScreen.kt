@@ -77,9 +77,7 @@ fun SettingsFooter(appName: String, versioning: Triple<String, String, String>) 
     val networkName = versioning.second
     val networkVersion = versioning.third
     Row(
-        modifier = Modifier
-//            .background(color = Color.White.copy(alpha = 0.5f))
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
