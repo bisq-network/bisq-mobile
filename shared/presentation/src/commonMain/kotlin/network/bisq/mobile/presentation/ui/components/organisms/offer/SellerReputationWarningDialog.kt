@@ -8,10 +8,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import cafe.adriel.lyricist.LocalStrings
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -47,7 +48,7 @@ fun SellerReputationWarningDialog(
             link = "https://bisq.wiki/Reputation#How_to_build_reputation",
             type = BisqButtonType.Outline,
             onClick = onLearnReputation,
-            padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),,
+            padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
             fullWidth = true
         )
 
