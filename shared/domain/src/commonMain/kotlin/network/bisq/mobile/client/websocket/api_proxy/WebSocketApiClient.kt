@@ -133,6 +133,7 @@ class WebSocketApiClient(
                 }
             }
         } catch (e: Exception) {
+            log.e(e) { "Failed to get WS request result" }
             return Result.failure(e)
         }
     }

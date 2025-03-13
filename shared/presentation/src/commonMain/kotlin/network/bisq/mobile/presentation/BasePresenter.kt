@@ -99,6 +99,10 @@ interface ViewPresenter {
  * if root present is passed, this present attach itself to the root to get updates (consequently its dependants will be always empty
  */
 abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPresenter, Logging {
+    companion object {
+        var isDemo = false
+    }
+
     protected var view: Any? = null
     // Coroutine scope for the presenter
     protected val presenterScope = CoroutineScope(Dispatchers.Main + Job())

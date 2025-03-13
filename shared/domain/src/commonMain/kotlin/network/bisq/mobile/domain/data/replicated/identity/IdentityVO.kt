@@ -6,3 +6,5 @@ import network.bisq.mobile.domain.data.replicated.security.keys.KeyBundleVO
 
 @Serializable
 data class IdentityVO(val tag: String, val networkId: NetworkIdVO, val keyBundle: KeyBundleVO)
+
+val identitiesDemoObj = listOf("id1", "id2")

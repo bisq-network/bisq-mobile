@@ -3,14 +3,10 @@ package network.bisq.mobile.client.websocket
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withTimeout
-import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.utils.Logging
 import kotlin.concurrent.Volatile
-import kotlin.uuid.ExperimentalUuidApi
-import kotlin.uuid.Uuid
 
 /**
  * Provider to handle dynamic host/port changes
@@ -64,12 +60,14 @@ class WebSocketClientProvider(
         }
     }
 
-    @OptIn(ExperimentalUuidApi::class)
     suspend fun testClient(host: String, port: Int): Boolean {
         val client = createClient(host, port)
         val url = "ws://$host:$port"
         return try {
             // if connection is refused, catch will execute returning false
+            if (client.isDemo()) {
+                return true
+            }
             client.connect(true)
             return client.isConnected()
         } catch (e: Exception) {

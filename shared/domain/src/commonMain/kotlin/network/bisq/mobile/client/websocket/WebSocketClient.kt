@@ -25,10 +25,17 @@ import network.bisq.mobile.client.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.websocket.messages.WebSocketMessage
 import network.bisq.mobile.client.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketResponse
+import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
+import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.data.replicated.common.currency.marketListDemoObj
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.domain.data.replicated.identity.identitiesDemoObj
+import network.bisq.mobile.domain.data.replicated.settings.settingsVODemoObj
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.createUuid
 
@@ -40,6 +47,7 @@ class WebSocketClient(
 ) : Logging {
 
     companion object {
+        const val DEMO_URL = "ws://demo.bisq:21"
         const val DELAY_TO_RECONNECT = 3000L
     }
 
@@ -61,7 +69,9 @@ class WebSocketClient(
     val _connected = MutableStateFlow(WebSockectClientStatus.DISCONNECTED)
     val connected: StateFlow<WebSockectClientStatus> = _connected
 
-    fun isConnected(): Boolean = connected.value == WebSockectClientStatus.CONNECTED
+    fun isConnected(): Boolean = connected.value == WebSockectClientStatus.CONNECTED || isDemo()
+
+    fun isDemo(): Boolean = webSocketUrl.startsWith(DEMO_URL)
 
     suspend fun connect(isTest: Boolean = false) {
         log.i("Connecting to websocket at: $webSocketUrl")
@@ -114,6 +124,9 @@ class WebSocketClient(
 
     // Blocking request until we get the associated response
     suspend fun sendRequestAndAwaitResponse(webSocketRequest: WebSocketRequest): WebSocketResponse? {
+        if (isDemo()) {
+            return fakeResponse(webSocketRequest)
+        }
         connectionReady.await()
 
         val requestId = webSocketRequest.requestId
@@ -131,10 +144,27 @@ class WebSocketClient(
         }
     }
 
+    private fun fakeResponse(webSocketRequest: WebSocketRequest): WebSocketResponse {
+        webSocketRequest as WebSocketRestApiRequest
+        log.d { "responding fake response to path ${webSocketRequest.path}" }
+        return WebSocketRestApiResponse(webSocketRequest.requestId, 200,
+            body = when {
+                webSocketRequest.path.endsWith("settings") -> json.encodeToString(settingsVODemoObj)
+                webSocketRequest.path.endsWith("user-identities/ids") -> json.encodeToString(identitiesDemoObj)
+                webSocketRequest.path.endsWith("offerbook/markets") -> json.encodeToString(marketListDemoObj)
+                else -> "{}"
+            })
+    }
 
     suspend fun subscribe(topic: Topic, parameter: String? = null): WebSocketEventObserver {
         val subscriberId = createUuid()
         log.i { "Subscribe for topic $topic and subscriberId $subscriberId" }
+
+        if (isDemo()) {
+            log.i { "Demo mode active. Returning fake data for topic $topic." }
+            return getFakeSubscription(topic, subscriberId)
+        }
+
         val subscriptionRequest = SubscriptionRequest(
             subscriberId,
             topic,
@@ -221,6 +251,37 @@ class WebSocketClient(
         } else {
             log.w { "We received a WebSocketEvent but no webSocketEventObserver was found for subscriberId ${event.subscriberId}" }
         }
+    }
+
+    // Function to return fake data when in demo mode
+    private fun getFakeSubscription(topic: Topic, subscriberId: String): WebSocketEventObserver {
+        val fakePayload = getFakePayloadForTopic(topic) // Function that returns fake data
+        val webSocketEventObserver = WebSocketEventObserver()
+
+        val webSocketEvent = WebSocketEvent(topic, subscriberId, fakePayload, ModificationType.REPLACE, 0)
+        webSocketEventObserver.setEvent(webSocketEvent)
+
+        return webSocketEventObserver
+    }
+
+    // Define fake data for each topic
+    private fun getFakePayloadForTopic(topic: Topic): String? {
+        return when (topic) {
+            Topic.MARKET_PRICE -> Json.encodeToString(FakeSubscriptionData.marketPrice)
+//            Topic.TRADES -> Json.encodeToString(FakeData.trades)
+//            Topic.TRADE_PROPERTIES -> Json.encodeToString(FakeData.tradeProps)
+            else -> null // Default empty response
+        }
+    }
+
+    // Example fake data
+    object FakeSubscriptionData {
+        val marketPrice = mapOf("id" to PriceQuoteVO(1000, MarketVO("sdf", "SFS")))
+        val trades = mapOf("BTC" to "0.5", "USD" to "10000")
+        val tradeProps = listOf(
+            mapOf("id" to "order1", "amount" to "0.1 BTC", "price" to "5000 USD"),
+            mapOf("id" to "order2", "amount" to "0.05 BTC", "price" to "5100 USD")
+        )
     }
 
     /* object ServerEventSerializer :

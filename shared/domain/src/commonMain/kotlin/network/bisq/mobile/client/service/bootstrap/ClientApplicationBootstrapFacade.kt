@@ -36,7 +36,9 @@ class ClientApplicationBootstrapFacade(
             setState("Connecting to Trusted Node..")
             if (!trustedNodeService.isConnected) {
                 try {
-                    trustedNodeService.connect()
+                    if (!trustedNodeService.isDemo()) {
+                        trustedNodeService.connect()
+                    }
                     setState("bootstrap.connectedToTrustedNode".i18n())
                     setProgress(1.0f)
                 } catch (e: Exception) {

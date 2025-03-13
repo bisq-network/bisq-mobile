@@ -25,8 +25,12 @@ class TrustedNodeService(private val webSocketClientProvider: WebSocketClientPro
         }
         runCatching {
             // first test connect and proceed to establish it if test passes
-            webSocketClientProvider.get().connect(true)
-            webSocketClientProvider.get().connect()
+            webSocketClientProvider.get().let {
+                if (!it.isDemo()) {
+                    it.connect(true)
+                    it.connect()
+                }
+            }
         }.onSuccess {
             log.d { "Connected to trusted node" }
         }.onFailure {
@@ -48,4 +52,6 @@ class TrustedNodeService(private val webSocketClientProvider: WebSocketClientPro
         }
         observingConnectivity = true
     }
+
+    fun isDemo() = webSocketClientProvider.get().isDemo()
 }
