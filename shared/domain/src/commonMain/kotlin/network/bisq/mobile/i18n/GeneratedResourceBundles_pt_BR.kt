@@ -1270,6 +1270,9 @@ object GeneratedResourceBundles_pt_BR {
             "settings.display.headline" to "Configurações de Exibição",
             "settings.network.difficultyAdjustmentFactor.invalid" to "Deve ser um número entre 0 e {0}",
             "settings.trade.maxTradePriceDeviation.help" to "A diferença máxima de preço de negociação que um ofertante tolera quando sua oferta é aceita.",
+            "settings.trade.numDaysAfterRedactingTradeData" to "Dias apÃ³s os quais os dados sensÃ­veis da negociaÃ§Ã£o sÃ£o redigidos",
+            "settings.trade.numDaysAfterRedactingTradeData.help" to "Remove os dados da conta de pagamento e as mensagens de chat da negociaÃ§Ã£o apÃ³s os dias especificados.",
+            "settings.trade.numDaysAfterRedactingTradeData.invalid" to "Deve ser entre {0} e {1} dias",
         ),
         "payment_method" to mapOf(
             "F2F_SHORT" to "F2F",

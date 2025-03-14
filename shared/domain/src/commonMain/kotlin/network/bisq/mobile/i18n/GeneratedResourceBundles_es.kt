@@ -1270,6 +1270,9 @@ object GeneratedResourceBundles_es {
             "settings.display.headline" to "Configuraciones de pantalla",
             "settings.network.difficultyAdjustmentFactor.invalid" to "Debe ser un número entre 0 y {0}",
             "settings.trade.maxTradePriceDeviation.help" to "Diferencia máxima de precio de operación que un ofertante tolera cuando su oferta es aceptada.",
+            "settings.trade.numDaysAfterRedactingTradeData" to "DÃ­as despuÃ©s de los cuales se oculta la informaciÃ³n sensible del comercio",
+            "settings.trade.numDaysAfterRedactingTradeData.help" to "Elimina los datos de la cuenta de pago y los mensajes del chat de comercio despuÃ©s de los dÃ­as especificados.",
+            "settings.trade.numDaysAfterRedactingTradeData.invalid" to "Debe estar entre {0} y {1} dÃ­as",
         ),
         "payment_method" to mapOf(
             "F2F_SHORT" to "En persona",

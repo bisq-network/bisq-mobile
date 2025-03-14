@@ -1270,6 +1270,9 @@ object GeneratedResourceBundles_cs {
             "settings.display.headline" to "Nastavení zobrazení",
             "settings.network.difficultyAdjustmentFactor.invalid" to "Hodnota musí být číslo mezi 0 a {0}",
             "settings.trade.maxTradePriceDeviation.help" to "Maximální rozdíl ceny obchodu, který maker toleruje, když je jejich nabídka přijata.",
+            "settings.trade.numDaysAfterRedactingTradeData" to "Dny, po kterÃ½ch jsou citlivÃ¡ obchodnÃ­ data zneviditelnÄna",
+            "settings.trade.numDaysAfterRedactingTradeData.help" to "OdstranÃ­ data platebnÃ­ho ÃºÄtu a zprÃ¡vy v obchodnÃ­m chatu po uplynutÃ­ uvedenÃ©ho poÄtu dnÃ­.",
+            "settings.trade.numDaysAfterRedactingTradeData.invalid" to "MusÃ­ bÃ½t mezi {0} a {1} dny",
         ),
         "payment_method" to mapOf(
             "F2F_SHORT" to "F2F",

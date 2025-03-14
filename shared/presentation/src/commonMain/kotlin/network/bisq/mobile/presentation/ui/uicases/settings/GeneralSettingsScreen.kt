@@ -175,6 +175,23 @@ fun GeneralSettingsScreen() {
             onSwitch = { presenter.setUseAnimations(it) }
         )
 
+        BisqGap.V1()
+
+        BisqTextField(
+            label = "settings.trade.numDaysAfterRedactingTradeData".i18n(),
+            value = numDaysAfterRedactingTradeData ,
+            keyboardType = KeyboardType.Number,
+            onValueChange = { it, isValid -> presenter.setNumDaysAfterRedactingTradeData(it, isValid) },
+            helperText = "settings.trade.numDaysAfterRedactingTradeData.help".i18n(),
+            validation = {
+                val parsedValue = it.toDoubleOrNull() ?: return@BisqTextField "Value cannot be empty"
+                if (parsedValue < 30 || parsedValue > 365) {
+                    return@BisqTextField "settings.trade.numDaysAfterRedactingTradeData.invalid".i18n(30, 365)
+                }
+                return@BisqTextField null
+            }
+        )
+
         if (shouldShowPoWAdjustmentFactor) {
             BisqHDivider()
 
@@ -190,34 +207,11 @@ fun GeneralSettingsScreen() {
                 numberWithTwoDecimals = true,
                 onValueChange = { it, isValid -> presenter.setPowFactor(it, isValid) },
                 validation = {
-                    val parsedValue = it.toDoubleOrNull()
-                    if (parsedValue == null) {
-                        return@BisqTextField "Value cannot be empty"
-                    }
+                    val parsedValue = it.toDoubleOrNull() ?: return@BisqTextField "Value cannot be empty"
                     if (parsedValue < 0 || parsedValue > 160_000) {
                         return@BisqTextField "authorizedRole.securityManager.difficultyAdjustment.invalid".i18n(
                             160000
                         )
-                    }
-                    return@BisqTextField null
-                }
-            )
-
-            BisqGap.V1()
-
-            BisqTextField(
-                label = "settings.trade.numDaysAfterRedactingTradeData".i18n(),
-                value = numDaysAfterRedactingTradeData ,
-                keyboardType = KeyboardType.Number,
-                onValueChange = { it, isValid -> presenter.setNumDaysAfterRedactingTradeData(it, isValid) },
-                helperText = "settings.trade.numDaysAfterRedactingTradeData.help".i18n(),
-                validation = {
-                    val parsedValue = it.toDoubleOrNull()
-                    if (parsedValue == null) {
-                        return@BisqTextField "Value cannot be empty"
-                    }
-                    if (parsedValue < 30 || parsedValue > 365) {
-                        return@BisqTextField "settings.trade.numDaysAfterRedactingTradeData.invalid".i18n(30, 365)
                     }
                     return@BisqTextField null
                 }

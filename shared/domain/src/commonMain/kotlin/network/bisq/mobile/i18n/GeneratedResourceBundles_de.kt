@@ -1228,6 +1228,9 @@ object GeneratedResourceBundles_de {
             "network.transport.systemLoad.headline" to "Systemauslastung",
             "network.connections.header.rtt" to "RTT",
             "network.connections.header.address" to "Adresse",
+            "settings.trade.numDaysAfterRedactingTradeData" to "Tage, nach denen sensible Handelsdaten anonymisiert werden",
+            "settings.trade.numDaysAfterRedactingTradeData.help" to "Entfernt Zahlungskontodaten und Handelschatnachrichten nach den angegebenen Tagen.",
+            "settings.trade.numDaysAfterRedactingTradeData.invalid" to "Muss zwischen {0} und {1} Tagen liegen",
         ),
         "settings" to mapOf(
             "settings.language.supported.select" to "Sprache auswählen",
