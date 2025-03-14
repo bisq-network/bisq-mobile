@@ -97,4 +97,5 @@ open class MainPresenter(
         urlLauncher.openUrl(url)
     }
 
+    override fun isDemo(): Boolean = false
 }

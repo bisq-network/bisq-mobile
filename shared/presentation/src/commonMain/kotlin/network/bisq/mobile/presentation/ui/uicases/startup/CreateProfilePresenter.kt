@@ -78,6 +78,14 @@ open class CreateProfilePresenter(
         }
     }
 
+    fun validateNickname(nickname: String): String? {
+        return when {
+            nickname.length < 3 -> "Min length: 3 characters"
+            nickname.length > 256 -> "Max length: 256 characters"
+            else -> null
+        }
+    }
+
     // UI handlers
     fun onGenerateKeyPair() {
         generateKeyPair()

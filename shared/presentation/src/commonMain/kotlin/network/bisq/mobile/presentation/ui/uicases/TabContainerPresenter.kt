@@ -11,8 +11,15 @@ class TabContainerPresenter(
 ) : BasePresenter(mainPresenter), ITabContainerPresenter {
 
     override fun createOffer() {
-        createOfferPresenter.onStartCreateOffer()
-        navigateTo(Routes.CreateOfferDirection)
+        try {
+            createOfferPresenter.onStartCreateOffer()
+            navigateTo(Routes.CreateOfferDirection)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to create offer" }
+            showSnackbar(
+                if (isDemo()) "Create offer is disabled in demo mode" else "Cannot create offer at this time, please try again later"
+            )
+        }
     }
 
 }

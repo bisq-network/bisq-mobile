@@ -429,4 +429,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
         navigateToUrl("https://github.com/bisq-network/bisq-mobile/issues")
         enableInteractive(true)
     }
+
+    open fun isDemo(): Boolean = rootPresenter?.isDemo() ?: false
 }

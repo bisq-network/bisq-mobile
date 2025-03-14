@@ -32,6 +32,9 @@ class ClientApplicationBootstrapFacade(
 //                setState("Trusted node not configured")
 //                setProgress(0f)
 //            } else {
+            if (trustedNodeService.isDemo()) {
+                isDemo = true
+            }
             setProgress(0.5f)
             setState("Connecting to Trusted Node..")
             if (!trustedNodeService.isConnected) {

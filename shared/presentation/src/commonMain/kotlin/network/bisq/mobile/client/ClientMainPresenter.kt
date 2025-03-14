@@ -84,4 +84,6 @@ open class ClientMainPresenter(
         languageServiceFacade.deactivate()
         super.onViewUnattaching()
     }
+
+    override fun isDemo(): Boolean = applicationBootstrapFacade.isDemo
 }

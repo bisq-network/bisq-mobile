@@ -16,4 +16,7 @@
  */
 package network.bisq.mobile.domain.data.replicated.offer.amount.spec
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 sealed interface AmountSpecVO

@@ -49,15 +49,7 @@ fun CreateProfileScreen(
             onValueChange = { name, isValid -> presenter.setNickname(name) },
             placeholder = "onboarding.createProfile.nickName.prompt".i18n(),
             validation = {
-
-                if (it.length < 3) {
-                    return@BisqTextField "Min length: 3 characters"
-                }
-                if (it.length > 256) {
-                    return@BisqTextField "Max length: 256 characters"
-                }
-
-                return@BisqTextField null
+                return@BisqTextField presenter.validateNickname(it)
             }
         )
         Spacer(modifier = Modifier.height(36.dp))
