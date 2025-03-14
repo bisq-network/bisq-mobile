@@ -64,10 +64,10 @@ class WebSocketClientProvider(
         val client = createClient(host, port)
         val url = "ws://$host:$port"
         return try {
-            // if connection is refused, catch will execute returning false
             if (client.isDemo()) {
                 return true
             }
+            // if connection is refused, catch will execute returning false
             client.connect(true)
             return client.isConnected()
         } catch (e: Exception) {

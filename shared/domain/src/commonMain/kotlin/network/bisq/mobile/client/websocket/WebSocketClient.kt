@@ -42,6 +42,8 @@ import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.BaseSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.domain.data.replicated.offer.payment_method.BitcoinPaymentMethodSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.payment_method.FiatPaymentMethodSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
@@ -309,11 +311,11 @@ class WebSocketClient(
                         ),
                         pubKey = PubKeyVO(
                             publicKey = PublicKeyVO(
-                                encoded = ""
+                                encoded = "makerpub"
                             ),
-                            keyId = "",
-                            hash = "",
-                            id = ""
+                            keyId = "makerkey",
+                            hash = "makerhash",
+                            id = "maker"
                         )
                     ),
                     direction = DirectionEnum.SELL,
@@ -321,9 +323,6 @@ class WebSocketClient(
                     amountSpec = QuoteSideFixedAmountSpecVO(
                         amount = 100
                     ),
-//                    BaseSideFixedAmountSpecVO(
-//                        amount = 100
-//                    ),
                     priceSpec = FixPriceSpecVO(
                         priceQuote = PriceQuoteVO(
                             value = 100L,
@@ -334,10 +333,16 @@ class WebSocketClient(
                         )
                     ),
                     protocolTypes = listOf(),
-                    baseSidePaymentMethodSpecs = listOf(),
-                    quoteSidePaymentMethodSpecs = listOf(),
+                    baseSidePaymentMethodSpecs = listOf(BitcoinPaymentMethodSpecVO(
+                        paymentMethod = "onchain",
+                        saltedMakerAccountId = "onchain"
+                    )),
+                    quoteSidePaymentMethodSpecs = listOf(FiatPaymentMethodSpecVO(
+                        paymentMethod = "payid",
+                        saltedMakerAccountId = "payid"
+                    )),
                     offerOptions = listOf(),
-                    supportedLanguageCodes = listOf()
+                    supportedLanguageCodes = listOf("EN")
                 ),
                 isMyOffer = false,
                 userProfile = UserProfileVO(
@@ -355,7 +360,7 @@ class WebSocketClient(
                         addressByTransportTypeMap = AddressByTransportTypeMapVO(map = mapOf()),
                         pubKey = PubKeyVO(
                             publicKey = PublicKeyVO("encoded"),
-                            keyId = "keid",
+                            keyId = "keyid",
                             hash = "hash",
                             id = "id"
                         )
@@ -372,8 +377,92 @@ class WebSocketClient(
                 formattedBaseAmount = "",
                 formattedPrice = "",
                 formattedPriceSpec = "",
-                quoteSidePaymentMethods = listOf(),
-                baseSidePaymentMethods = listOf(),
+                quoteSidePaymentMethods = listOf("onchain"),
+                baseSidePaymentMethods = listOf("payid"),
+                reputationScore = ReputationScoreVO(
+                    totalScore = 12,
+                    fiveSystemScore = 22.0,
+                    ranking = 4
+                ),
+            ),
+            OfferItemPresentationDto(
+                bisqEasyOffer = BisqEasyOfferVO(
+                    id = "2",
+                    date = 1741922747L,
+                    makerNetworkId = NetworkIdVO(
+                        addressByTransportTypeMap = AddressByTransportTypeMapVO(
+                            map = mapOf()
+                        ),
+                        pubKey = PubKeyVO(
+                            publicKey = PublicKeyVO(
+                                encoded = "makerpub"
+                            ),
+                            keyId = "makerkey",
+                            hash = "makerhash",
+                            id = "maker"
+                        )
+                    ),
+                    direction = DirectionEnum.BUY,
+                    market = MarketVO("Bitcoin", "USD"),
+                    amountSpec = QuoteSideFixedAmountSpecVO(
+                        amount = 102
+                    ),
+                    priceSpec = FixPriceSpecVO(
+                        priceQuote = PriceQuoteVO(
+                            value = 102L,
+                            market = MarketVO(
+                                baseCurrencyCode = "Bitcoin",
+                                quoteCurrencyCode = "USD",
+                            )
+                        )
+                    ),
+                    protocolTypes = listOf(),
+                    baseSidePaymentMethodSpecs = listOf(BitcoinPaymentMethodSpecVO(
+                        paymentMethod = "onchain",
+                        saltedMakerAccountId = "onchain"
+                    )),
+                    quoteSidePaymentMethodSpecs = listOf(FiatPaymentMethodSpecVO(
+                        paymentMethod = "payid",
+                        saltedMakerAccountId = "payid"
+                    )),
+                    offerOptions = listOf(),
+                    supportedLanguageCodes = listOf("EN")
+                ),
+                isMyOffer = true,
+                userProfile = UserProfileVO(
+                    1, "pepe",
+                    ProofOfWorkVO(
+                        payloadEncoded = "payme",
+                        counter = 1L,
+                        challengeEncoded = "challenge",
+                        difficulty = 2.0,
+                        solutionEncoded = "solution",
+                        duration = 2000L
+                    ),
+                    avatarVersion = 1,
+                    networkId = NetworkIdVO(
+                        addressByTransportTypeMap = AddressByTransportTypeMapVO(map = mapOf()),
+                        pubKey = PubKeyVO(
+                            publicKey = PublicKeyVO("encoded"),
+                            keyId = "keyid",
+                            hash = "hash",
+                            id = "id"
+                        )
+                    ),
+                    terms = "",
+                    statement = "",
+                    applicationVersion = "",
+                    nym = "mynym",
+                    userName = "myoffer",
+                    publishDate = 1741212747L,
+                ),
+                formattedDate = "",
+                formattedQuoteAmount = "",
+                formattedBaseAmount = "",
+                formattedPrice = "",
+                formattedPriceSpec = "",
+                quoteSidePaymentMethods = listOf("onchain"),
+                baseSidePaymentMethods = listOf("payid"),
                 reputationScore = ReputationScoreVO(
                     totalScore = 12,
                     fiveSystemScore = 22.0,
