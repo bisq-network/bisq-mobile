@@ -21,7 +21,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class SplashPresenter(
     mainPresenter: MainPresenter,
-    applicationBootstrapFacade: ApplicationBootstrapFacade,
+    private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val userProfileService: UserProfileServiceFacade,
     private val userRepository: UserRepository,
     private val settingsRepository: SettingsRepository,
@@ -72,6 +72,7 @@ open class SplashPresenter(
 
     private fun navigateToNextScreen() {
         uiScope.launch {
+            ApplicationBootstrapFacade.isDemo = webSocketClientProvider?.get()?.isDemo() ?: false
             if (!hasConnectivity()) {
                 navigateToTrustedNodeSetup()
             }

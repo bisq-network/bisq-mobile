@@ -35,9 +35,10 @@ open class SettingsPresenter(
     }
 
     override fun versioning(): Triple<String, String, String> {
-        val version = if (isIOS()) BuildConfig.IOS_APP_VERSION else BuildConfig.ANDROID_APP_VERSION
+        val demo = if (isDemo()) "-demo-" else ""
+        val version = demo + if (isIOS()) BuildConfig.IOS_APP_VERSION else BuildConfig.ANDROID_APP_VERSION
         val wsApiVersion = BuildConfig.BISQ_API_VERSION
-        return Triple(version, "node", wsApiVersion)
+        return Triple(version, "node-api", wsApiVersion)
     }
 
     protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {

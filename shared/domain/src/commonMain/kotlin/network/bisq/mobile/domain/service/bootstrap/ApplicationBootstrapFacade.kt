@@ -6,7 +6,10 @@ import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.utils.Logging
 
 abstract class ApplicationBootstrapFacade : LifeCycleAware, Logging {
-    var isDemo = false
+    companion object {
+        var isDemo = false
+    }
+
     private val _state = MutableStateFlow("")
     val state: StateFlow<String> = _state
     fun setState(value: String) {

@@ -85,5 +85,5 @@ open class ClientMainPresenter(
         super.onViewUnattaching()
     }
 
-    override fun isDemo(): Boolean = applicationBootstrapFacade.isDemo
+    override fun isDemo(): Boolean = ApplicationBootstrapFacade.isDemo
 }
