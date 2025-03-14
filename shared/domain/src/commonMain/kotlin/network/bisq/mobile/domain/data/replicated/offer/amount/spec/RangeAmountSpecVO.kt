@@ -16,7 +16,10 @@
  */
 package network.bisq.mobile.domain.data.replicated.offer.amount.spec
 
-interface RangeAmountSpecVO : AmountSpecVO {
+import kotlinx.serialization.Serializable
+
+@Serializable
+sealed interface RangeAmountSpecVO : AmountSpecVO {
     val minAmount: Long
     val maxAmount: Long
 }
