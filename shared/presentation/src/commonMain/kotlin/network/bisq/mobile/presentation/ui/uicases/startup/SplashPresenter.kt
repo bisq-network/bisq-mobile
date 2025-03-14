@@ -72,9 +72,12 @@ open class SplashPresenter(
 
     private fun navigateToNextScreen() {
         uiScope.launch {
-            ApplicationBootstrapFacade.isDemo = webSocketClientProvider?.get()?.isDemo() ?: false
             if (!hasConnectivity()) {
                 navigateToTrustedNodeSetup()
+            }
+
+            if (webSocketClientProvider?.get()?.isDemo() == true) {
+                ApplicationBootstrapFacade.isDemo = true
             }
 
             runCatching {

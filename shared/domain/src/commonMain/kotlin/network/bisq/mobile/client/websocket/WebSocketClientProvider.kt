@@ -5,6 +5,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
 import kotlin.concurrent.Volatile
 
@@ -65,6 +66,7 @@ class WebSocketClientProvider(
         val url = "ws://$host:$port"
         return try {
             if (client.isDemo()) {
+                ApplicationBootstrapFacade.isDemo = true
                 return true
             }
             // if connection is refused, catch will execute returning false
