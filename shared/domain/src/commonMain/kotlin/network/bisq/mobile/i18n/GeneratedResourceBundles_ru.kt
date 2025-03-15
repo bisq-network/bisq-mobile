@@ -1270,6 +1270,9 @@ object GeneratedResourceBundles_ru {
             "settings.display.headline" to "Настройки дисплея",
             "settings.network.difficultyAdjustmentFactor.invalid" to "Должно быть числом от 0 до {0}.",
             "settings.trade.maxTradePriceDeviation.help" to "Максимальная торговая разница в цене, которую допускает производитель, когда его предложение принимается.",
+            "settings.trade.numDaysAfterRedactingTradeData" to "Дни, после которых конфиденциальные данные о сделках становятся недоступными",
+            "settings.trade.numDaysAfterRedactingTradeData.help" to "Удаляет данные платежного аккаунта и сообщения чата о сделках после указанного количества дней.",
+            "settings.trade.numDaysAfterRedactingTradeData.invalid" to "Должно быть от {0} до {1} дней",
         ),
         "payment_method" to mapOf(
             "F2F_SHORT" to "F2F",

@@ -1270,6 +1270,9 @@ object GeneratedResourceBundles_af_ZA {
             "settings.display.headline" to "Vertoon instellings",
             "settings.network.difficultyAdjustmentFactor.invalid" to "Moet 'n nommer wees tussen 0 en {0}",
             "settings.trade.maxTradePriceDeviation.help" to "Die max. handelsprys verskil wat 'n maker verdra wanneer hul aanbod aanvaar word.",
+            "settings.trade.numDaysAfterRedactingTradeData" to "Dae waarna sensitiewe handelsdata verwyder word",
+            "settings.trade.numDaysAfterRedactingTradeData.help" to "Verwyder betalingrekeningdata en handel geselskapieboodskappe na die gespesifiseerde dae.",
+            "settings.trade.numDaysAfterRedactingTradeData.invalid" to "Moet wees tussen {0} en {1} dae",
         ),
         "payment_method" to mapOf(
             "F2F_SHORT" to "F2F (cara a cara)",

@@ -1316,6 +1316,9 @@ object GeneratedResourceBundles_en {
             "settings.display.headline" to "Display settings",
             "settings.network.difficultyAdjustmentFactor.invalid" to "Must be a number between 0 and {0}",
             "settings.trade.maxTradePriceDeviation.help" to "The max. trade price difference a maker tolerates when their offer gets taken.",
+            "settings.trade.numDaysAfterRedactingTradeData" to "Days after which sensitive trade data gets redacted",
+            "settings.trade.numDaysAfterRedactingTradeData.help" to "Removes payment account data and trade chat messages after the specified days.",
+            "settings.trade.numDaysAfterRedactingTradeData.invalid" to "Must be between {0} and {1} days",
         ),
         "payment_method" to mapOf(
             "F2F_SHORT" to "F2F",

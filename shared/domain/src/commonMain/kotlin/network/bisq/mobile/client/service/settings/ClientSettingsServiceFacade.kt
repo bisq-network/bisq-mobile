@@ -90,7 +90,10 @@ class ClientSettingsServiceFacade(val apiGateway: SettingsApiGateway) : Settings
     private val _numDaysAfterRedactingTradeData: MutableStateFlow<Int> = MutableStateFlow(90)
     override val numDaysAfterRedactingTradeData: StateFlow<Int> get() = _numDaysAfterRedactingTradeData
     override suspend fun setNumDaysAfterRedactingTradeData(days: Int) {
-        // Not applicable for xClients
+        val result = apiGateway.setNumDaysAfterRedactingTradeData(days)
+        if (result.isSuccess) {
+            _numDaysAfterRedactingTradeData.value = days
+        }
     }
 
     private val _ignoreDiffAdjustmentFromSecManager: MutableStateFlow<Boolean> = MutableStateFlow(false)

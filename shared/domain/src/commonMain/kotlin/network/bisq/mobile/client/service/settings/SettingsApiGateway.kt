@@ -2,7 +2,6 @@ package network.bisq.mobile.client.service.settings
 
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.utils.Logging
 
@@ -63,6 +62,13 @@ class SettingsApiGateway(
         return webSocketApiClient.patch(
             basePath,
             SettingsChangeRequest(maxTradePriceDeviation = value)
+        )
+    }
+
+    suspend fun setNumDaysAfterRedactingTradeData(value: Int): Result<Unit> {
+        return webSocketApiClient.patch(
+            basePath,
+            SettingsChangeRequest(numDaysAfterRedactingTradeData = value)
         )
     }
 

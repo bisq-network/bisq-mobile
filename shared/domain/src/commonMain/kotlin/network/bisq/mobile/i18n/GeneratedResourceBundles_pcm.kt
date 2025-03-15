@@ -1270,6 +1270,9 @@ object GeneratedResourceBundles_pcm {
             "settings.display.headline" to "Display Settings",
             "settings.network.difficultyAdjustmentFactor.invalid" to "Mus be number wey dey between 0 and {0}",
             "settings.trade.maxTradePriceDeviation.help" to "The maximum price difference that a maker can tolerate when their offer is taken.",
+            "settings.trade.numDaysAfterRedactingTradeData" to "Days wey sensitive Trayd data go dey redacted",
+            "settings.trade.numDaysAfterRedactingTradeData.help" to "Remove Akaunt for Payment data and Trayd chat mesaj after di specified days.",
+            "settings.trade.numDaysAfterRedactingTradeData.invalid" to "Mus dey between {0} and {1} days",
         ),
         "payment_method" to mapOf(
             "F2F_SHORT" to "F2F",
