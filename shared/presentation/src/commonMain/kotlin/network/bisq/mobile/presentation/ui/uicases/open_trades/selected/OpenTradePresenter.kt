@@ -1,8 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
+import androidx.compose.foundation.ScrollState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.BTC_CONFIRMED
@@ -33,6 +36,8 @@ class OpenTradePresenter(
     private var _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> = _isInMediation
 
+    private var _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
+    private var _coroutineScope: CoroutineScope? = null
 
     override fun onViewAttached() {
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -69,6 +74,14 @@ class OpenTradePresenter(
 
         if (state == null) {
             return
+        }
+
+        _coroutineScope?.launch {
+            val scrollState = _tradePaneScrollState.value
+            if (scrollState != null) {
+                delay(500)
+                scrollState.animateScrollTo(scrollState.maxValue)
+            }
         }
 
         when (state) {
@@ -128,5 +141,12 @@ class OpenTradePresenter(
 
             else -> {}
         }
+    }
+
+    fun setTradePaneScrollState(scrollState: ScrollState) {
+        _tradePaneScrollState.value = scrollState
+    }
+    fun setUIScope(scope: CoroutineScope) {
+        _coroutineScope = scope
     }
 }

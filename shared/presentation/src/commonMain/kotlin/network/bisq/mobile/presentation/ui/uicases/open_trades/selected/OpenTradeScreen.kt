@@ -16,6 +16,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
@@ -34,12 +35,18 @@ import org.koin.compose.koinInject
 fun OpenTradeScreen() {
     val presenter: OpenTradePresenter = koinInject()
     val focusManager = LocalFocusManager.current
-    RememberPresenterLifecycle(presenter)
 
     val tradeAbortedBoxVisible by presenter.tradeAbortedBoxVisible.collectAsState()
     val tradeProcessBoxVisible by presenter.tradeProcessBoxVisible.collectAsState()
     val isInMediation by presenter.isInMediation.collectAsState()
     val showCloseTradeDialog = false //presenter.showCloseTradeDialog.collectAsState().value
+    val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
+
+    RememberPresenterLifecycle(presenter, {
+        presenter.setTradePaneScrollState(scrollState)
+        presenter.setUIScope(scope)
+    })
 
     BisqStaticScaffold(
         topBar = { TopBar("Trade ID: ${presenter.selectedTrade.value?.shortTradeId}") }
@@ -57,7 +64,7 @@ fun OpenTradeScreen() {
         ) {
             Column(
                 modifier = Modifier
-                    .verticalScroll(rememberScrollState())
+                    .verticalScroll(scrollState)
                     .fillMaxSize()
             ) {
                 if (presenter.selectedTrade.value != null) {
