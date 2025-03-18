@@ -6,24 +6,30 @@ import androidx.compose.ui.text.*
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.sp
+import network.bisq.mobile.presentation.ui.components.atoms.FontSize
 
 object StringHelper {
     @Composable
     fun <T> calculateTotalWidthOfStrings(strings: List<T>): Dp {
         val textMeasurer: TextMeasurer = rememberTextMeasurer()
-        val textStyle =
-            TextStyle(fontSize = 14.sp)
-        val maxWidthOfText: List<Int> = strings.map {
-            textMeasurer.measure(it.toString(), style = textStyle).size.width
-        }
+        val textStyle = TextStyle(fontSize = FontSize.SMALL.size)
+        val maxWidthOfText = strings.map {
+            textMeasurer.measure(
+                it.toString(),
+                style = textStyle,
+                maxLines = 1,
+                constraints = Constraints(maxWidth = Int.MAX_VALUE)
+            ).size.width
+        }.maxOrNull() ?: 0
 
-        return with(LocalDensity.current) { maxWidthOfText.max().toDp() }
+        // TODO: Magic number!!! Nothing else really fixes this issue!
+        return with(LocalDensity.current) { (maxWidthOfText * 1.5f).toDp() }
     }
 
     @Composable
     fun <T> calculateMaxHeightOfStrings(strings: List<T>, maxWidth: Dp): Dp {
         val textMeasurer: TextMeasurer = rememberTextMeasurer()
-        val textStyle = TextStyle(fontSize = 14.sp)
+        val textStyle = TextStyle(fontSize = FontSize.SMALL.size)
 
         val maxWidthPx = with(LocalDensity.current) { maxWidth.toPx() }
 
@@ -31,6 +37,7 @@ object StringHelper {
             textMeasurer.measure(
                 it.toString(),
                 style = textStyle,
+                maxLines = 1,
                 constraints = Constraints(maxWidth = maxWidthPx.toInt())
             ).size.height
         }.maxOrNull() ?: 0

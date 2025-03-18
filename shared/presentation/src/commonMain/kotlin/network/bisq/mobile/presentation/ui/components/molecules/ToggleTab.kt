@@ -29,10 +29,11 @@ fun <T> ToggleTab(
     initialOption: T,
     onStateChange: (T) -> Unit,
     getDisplayString: (T) -> String,// Custom function to display the label for each option
+    singleLine: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     var selectedOption by remember { mutableStateOf(initialOption) }
-    val hPadding = BisqUIConstants.ScreenPadding2X
+    val hPadding = BisqUIConstants.ScreenPadding
     val vPadding = BisqUIConstants.ScreenPadding
 
     val textWidth = StringHelper.calculateTotalWidthOfStrings(
@@ -64,6 +65,7 @@ fun <T> ToggleTab(
                 modifier = Modifier
                     .offset(x = slideOffset)
                     .background(BisqTheme.colors.primary, RoundedCornerShape(4.dp))
+                    .wrapContentSize()
             ) {
                 BisqText.baseRegular(
                     text = getDisplayString(selectedOption),
@@ -72,6 +74,7 @@ fun <T> ToggleTab(
                         .width(textWidth)
                         .height(textHeight)
                         .alpha(0f),
+                    singleLine = singleLine
                 )
             }
             Row(
@@ -95,7 +98,8 @@ fun <T> ToggleTab(
                     ) {
                         BisqText.baseRegular(
                             text = getDisplayString(option),
-                            textAlign = TextAlign.Center
+                            textAlign = TextAlign.Center,
+                            singleLine = singleLine
                         )
                     }
                 }
