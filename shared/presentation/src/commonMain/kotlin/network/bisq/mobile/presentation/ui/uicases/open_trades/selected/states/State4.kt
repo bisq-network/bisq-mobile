@@ -73,14 +73,15 @@ fun State4(
 
             BisqGap.V2()
             Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.End,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                BisqButton(
-                    text = "bisqEasy.tradeState.info.phase4.exportTrade".i18n(), // Export trade data
-                    type = BisqButtonType.Grey,
-                    onClick = { presenter.onExportTradeDate() },
-                )
+//                TODO: Enable it later with actual functionality
+//                BisqButton(
+//                    text = "bisqEasy.tradeState.info.phase4.exportTrade".i18n(), // Export trade data
+//                    type = BisqButtonType.Grey,
+//                    onClick = { presenter.onExportTradeDate() },
+//                )
                 BisqButton(
                     text = "bisqEasy.tradeState.info.phase4.leaveChannel".i18n(), // Close trade
                     onClick = { presenter.onCloseTrade() },
