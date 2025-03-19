@@ -7,8 +7,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
-import network.bisq.mobile.presentation.ui.components.molecules.ConfirmationDialog
-import network.bisq.mobile.presentation.ui.components.molecules.WebLinkConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.WebLinkConfirmationDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 

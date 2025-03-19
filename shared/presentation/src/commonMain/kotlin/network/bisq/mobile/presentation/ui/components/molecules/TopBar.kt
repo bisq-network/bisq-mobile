@@ -31,6 +31,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.animations.ShineOver
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject

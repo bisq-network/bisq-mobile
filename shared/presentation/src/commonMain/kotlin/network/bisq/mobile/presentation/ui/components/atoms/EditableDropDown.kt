@@ -14,7 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
-import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable

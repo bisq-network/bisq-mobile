@@ -3,7 +3,7 @@ package network.bisq.mobile.presentation.ui.components.organisms.trades
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.molecules.WarningConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable

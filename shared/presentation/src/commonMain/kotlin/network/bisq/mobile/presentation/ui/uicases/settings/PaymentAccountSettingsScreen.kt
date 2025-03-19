@@ -16,7 +16,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.BisqBottomSheet
-import network.bisq.mobile.presentation.ui.components.molecules.ConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
 import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem

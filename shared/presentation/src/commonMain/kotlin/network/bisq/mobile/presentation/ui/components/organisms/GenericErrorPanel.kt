@@ -10,7 +10,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ExclamationRedIcon
-import network.bisq.mobile.presentation.ui.components.molecules.BisqDialog
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 // TODO should be like Bisq 2 generic error popup

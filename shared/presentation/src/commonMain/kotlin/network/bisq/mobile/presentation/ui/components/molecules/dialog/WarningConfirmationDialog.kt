@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.components.molecules
+package network.bisq.mobile.presentation.ui.components.molecules.dialog
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
