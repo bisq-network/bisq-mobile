@@ -116,10 +116,14 @@ fun CreateOfferTradePriceSelectorScreen() {
                     )
                 }
             }
+
+            // TODO:
+            val tempStatus = "bisqEasy.price.feedback.sentence.some".i18n()
             NoteText(
-                notes = "bisqEasy.price.feedback.sentence".i18n(),
+                notes = "bisqEasy.price.feedback.sentence".i18n(tempStatus),
                 linkText = "bisqEasy.price.feedback.learnWhySection.openButton".i18n(),
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                onLinkClick = { presenter.onNext() }
             )
         }
     }

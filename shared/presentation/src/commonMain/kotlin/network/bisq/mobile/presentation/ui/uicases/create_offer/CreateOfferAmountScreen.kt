@@ -96,6 +96,7 @@ fun CreateOfferAmountSelectorScreen() {
                 )
             }
 
+            // TODO:
             val matchingSellerCount = 2
             val countString = when (matchingSellerCount) {
                 0 -> { "bisqEasy.tradeWizard.amount.numOffers.0".i18n() }
@@ -105,7 +106,10 @@ fun CreateOfferAmountSelectorScreen() {
 
             NoteText(
                 notes = "bisqEasy.tradeWizard.amount.buyer.limitInfo".i18n(countString, presenter.formattedQuoteSideFixedAmount.value),
-                linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n()
+                linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
+                onLinkClick = {
+                    
+                }
             )
 
         }
