@@ -184,7 +184,7 @@ fun PaymentAccountSettingsScreen() {
                 disabled = selectedAccount == null
             )
             BisqButton(
-                text = "action.save",
+                text = "action.save".i18n(),
                 onClick = {
                     presenter.saveAccount(accountName, accountDescription)
                 },

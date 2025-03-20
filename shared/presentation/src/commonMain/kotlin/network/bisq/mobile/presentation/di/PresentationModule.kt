@@ -137,7 +137,7 @@ val presentationModule = module {
     single { CreateOfferReviewPresenter(get(), get()) }
 
     // Trade Seller
-    factory { SellerState1Presenter(get(), get()) }
+    factory { SellerState1Presenter(get(), get(), get()) }
     factory { SellerState2aPresenter(get(), get()) }
     factory { SellerState2bPresenter(get(), get()) }
     factory { SellerState3aPresenter(get(), get()) }

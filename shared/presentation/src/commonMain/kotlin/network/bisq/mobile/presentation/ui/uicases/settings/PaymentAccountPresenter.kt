@@ -28,6 +28,11 @@ open class PaymentAccountPresenter(
 
     override fun addAccount(newName: String, newDescription: String) {
 
+        if (accounts.value.find{ it.accountName == newName} != null) {
+            showSnackbar("Account name exists") // TODO:i18n
+            return
+        }
+
         backgroundScope.launch {
             val newAccount = UserDefinedFiatAccountVO(
                 accountName = newName,
@@ -37,10 +42,17 @@ open class PaymentAccountPresenter(
             )
 
             accountsServiceFacade.addAccount(newAccount)
+            showSnackbar("Account created") // TODO:i18n
         }
     }
 
     override fun saveAccount(newName: String, newDescription: String) {
+
+        if (selectedAccount.value?.accountName != newName && accounts.value.find{ it.accountName == newName} != null) {
+            showSnackbar("Account name exists") // TODO:i18n
+            return
+        }
+
         if (selectedAccount.value != null) {
             backgroundScope.launch {
                 val newAccount = UserDefinedFiatAccountVO(
@@ -50,6 +62,7 @@ open class PaymentAccountPresenter(
                     )
                 )
                 accountsServiceFacade.saveAccount(newAccount)
+                showSnackbar("Account updated") // TODO:i18n
             }
         }
     }
@@ -58,7 +71,7 @@ open class PaymentAccountPresenter(
         if (selectedAccount.value != null) {
             backgroundScope.launch {
                 accountsServiceFacade.removeAccount(selectedAccount.value!!)
-                showSnackbar("Account deleted")
+                showSnackbar("Account deleted") // TODO:i18n
             }
         }
     }
