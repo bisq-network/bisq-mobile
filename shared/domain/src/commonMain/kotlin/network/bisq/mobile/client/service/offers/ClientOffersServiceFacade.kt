@@ -78,15 +78,14 @@ class ClientOffersServiceFacade(
 
     // API
     override fun selectOfferbookMarket(marketListItem: MarketListItem) {
+        marketPriceServiceFacade.selectMarket(marketListItem)
+        _selectedOfferbookMarket.value = OfferbookMarket(marketListItem.market)
+
         if (subscribeOffersJob == null) {
             subscribeOffers()
         } else {
             applyOffersToSelectedMarket()
         }
-
-        marketPriceServiceFacade.selectMarket(marketListItem)
-
-        _selectedOfferbookMarket.value = OfferbookMarket(marketListItem.market)
 
         cancelObserveMarketPriceJob()
         observeMarketPriceJob = observeMarketPrice()
