@@ -117,7 +117,6 @@ fun CreateOfferTradePriceSelectorScreen() {
                 }
             }
 
-            // TODO:
             val tempStatus = "bisqEasy.price.feedback.sentence.some".i18n()
             NoteText(
                 notes = "bisqEasy.price.feedback.sentence".i18n(tempStatus),

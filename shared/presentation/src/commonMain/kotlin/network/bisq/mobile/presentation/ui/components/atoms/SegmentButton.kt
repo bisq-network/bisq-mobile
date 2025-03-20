@@ -25,7 +25,9 @@ fun BisqSegmentButton(
     onValueChange: ((Pair<String, String>) -> Unit)? = null,
     modifier: Modifier = Modifier.fillMaxWidth(),
 ) {
-    var selectedIndex by remember { mutableIntStateOf(0) }
+    var selectedIndex by remember { mutableIntStateOf(
+        items.indexOfFirst{ it.first == value }
+    ) }
 
     Column(modifier = modifier) {
         if (label.isNotEmpty()) {

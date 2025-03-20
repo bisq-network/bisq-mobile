@@ -26,10 +26,7 @@ enum class MarketFilter(val displayName: String) {
 
 
 @Composable
-fun MarketFilters(
-    onConfirm: () -> Unit,
-    onCancel: () -> Unit,
-) {
+fun MarketFilters() {
 
     val presenter: OfferbookMarketPresenter = koinInject()
 
@@ -54,7 +51,7 @@ fun MarketFilters(
         BisqSegmentButton(
             label = "Show markets",
             items = MarketFilter.entries.map { it.name to it.displayName },
-            value = presenter.filter.collectAsState().value.displayName,
+            value = presenter.filter.collectAsState().value.name,
             onValueChange = {
                 val newValue = when (it.second) {
                     MarketFilter.All.displayName -> MarketFilter.All

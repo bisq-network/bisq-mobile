@@ -15,11 +15,13 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
+import network.bisq.mobile.presentation.ui.components.atoms.icons.GreenSortIcon
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BisqSearchField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SortIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
-import network.bisq.mobile.presentation.ui.components.molecules.BisqBottomSheet
+import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.BisqBottomSheet
+import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFilter
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFilters
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
@@ -29,7 +31,8 @@ fun OfferbookMarketScreen() {
     val presenter: OfferbookMarketPresenter = koinInject()
     var showFilterDialog by remember { mutableStateOf(false) }
 
-    val marketItems = presenter.marketListItemWithNumOffers.collectAsState().value
+    val marketItems by presenter.marketListItemWithNumOffers.collectAsState()
+    val filter by presenter.filter.collectAsState()
 
     RememberPresenterLifecycle(presenter)
 
@@ -42,7 +45,13 @@ fun OfferbookMarketScreen() {
             rightSuffix = {
                 // TODO: Height to be reduced with Icon only buttons
                 BisqButton(
-                    iconOnly = { SortIcon() },
+                    iconOnly = {
+                        if (filter == MarketFilter.WithOffers) {
+                            GreenSortIcon()
+                        } else {
+                            SortIcon()
+                        }
+                    },
                     onClick = { showFilterDialog = true },
                     type = BisqButtonType.Clear
                 )
@@ -62,10 +71,7 @@ fun OfferbookMarketScreen() {
 
         if (showFilterDialog) {
             BisqBottomSheet(onDismissRequest = { showFilterDialog = false }) {
-                MarketFilters(
-                    onConfirm = {},
-                    onCancel = {}
-                )
+                MarketFilters()
             }
         }
     }

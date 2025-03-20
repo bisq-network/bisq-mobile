@@ -76,7 +76,6 @@ fun State4(
                 horizontalArrangement = Arrangement.End,
                 modifier = Modifier.fillMaxWidth()
             ) {
-//                TODO: Enable it later with actual functionality
 //                BisqButton(
 //                    text = "bisqEasy.tradeState.info.phase4.exportTrade".i18n(), // Export trade data
 //                    type = BisqButtonType.Grey,

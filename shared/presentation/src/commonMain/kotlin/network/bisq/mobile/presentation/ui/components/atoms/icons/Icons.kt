@@ -182,6 +182,11 @@ fun SortIcon(modifier: Modifier = Modifier) {
 }
 
 @Composable
+fun GreenSortIcon(modifier: Modifier = Modifier) {
+    Image(painterResource(Res.drawable.icon_sort_green), "Sort icon", modifier = modifier)
+}
+
+@Composable
 fun StarEmptyIcon(modifier: Modifier = Modifier.size(16.dp)) {
     // TODO: Import right resource for this
     Image(painterResource(Res.drawable.icon_star_grey_hollow), "Empty star icon", modifier = modifier)
