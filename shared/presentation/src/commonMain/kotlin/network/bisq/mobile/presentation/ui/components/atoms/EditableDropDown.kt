@@ -20,15 +20,16 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @Composable
 fun BisqEditableDropDown(
     value: String,
-    onValueChanged: (String) -> Unit,
+    onValueChanged: (String, Boolean) -> Unit,
     items: List<String>,
-    label: String
+    label: String,
+    validation: ((String) -> String?)? = null,
 ) {
     var showDialog by remember { mutableStateOf(false) }
 
     BisqTextField(
         value = value,
-        onValueChange = { it, _ -> onValueChanged(it) },
+        onValueChange = { it, valid -> onValueChanged(it, valid) },
         label = label,
         rightSuffix = {
             Box(
@@ -43,6 +44,7 @@ fun BisqEditableDropDown(
                 ArrowDownIcon()
             }
         },
+        validation = validation,
     )
 
     if (showDialog) {
@@ -58,7 +60,7 @@ fun BisqEditableDropDown(
                             modifier = Modifier.fillMaxWidth()
                                 .padding(vertical = 8.dp)
                                 .clickable {
-                                    onValueChanged(item)
+                                    onValueChanged(item, true)
                                     showDialog = false
                                 }
                         ) {

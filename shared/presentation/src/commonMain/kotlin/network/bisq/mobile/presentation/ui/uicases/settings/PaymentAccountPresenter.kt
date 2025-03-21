@@ -1,57 +1,86 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountPayloadVO
+import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.composeModels.PaymentAccount
 
 open class PaymentAccountPresenter(
     private val settingsRepository: SettingsRepository,
+    private val accountsServiceFacade: AccountsServiceFacade,
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IPaymentAccountSettingsPresenter {
 
-    private val _accounts = MutableStateFlow(listOf<PaymentAccount>())
-    override val accounts: StateFlow<List<PaymentAccount>> = _accounts
+    override val accounts: StateFlow<List<UserDefinedFiatAccountVO>> = accountsServiceFacade.accounts
 
-    private val _selectedAccount = MutableStateFlow(_accounts.value.firstOrNull() ?: PaymentAccount(id= "0", name= "", description = ""))
-    override val selectedAccount: StateFlow<PaymentAccount> = _selectedAccount
+    override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> = accountsServiceFacade.selectedAccount
 
-    override fun selectAccount(account: PaymentAccount) {
-        _selectedAccount.value = _accounts.value.firstOrNull { it.id == account.id }
-                ?: account
+
+    override fun selectAccount(account: UserDefinedFiatAccountVO) {
+        backgroundScope.launch {
+            accountsServiceFacade.setSelectedAccount(account)
+        }
     }
 
     override fun addAccount(newName: String, newDescription: String) {
-        val newAccount = PaymentAccount(
-            id = _accounts.value.count().toString(),
-            name = newName,
-            description = newDescription
-        )
 
-        val updatedAccounts = _accounts.value.toMutableList().apply {
-            add(newAccount)
+        if (accounts.value.find{ it.accountName == newName} != null) {
+            showSnackbar("Account name exists") // TODO:i18n
+            return
         }
-        _accounts.value = updatedAccounts
-        _selectedAccount.value = newAccount
+
+        backgroundScope.launch {
+            val newAccount = UserDefinedFiatAccountVO(
+                accountName = newName,
+                UserDefinedFiatAccountPayloadVO(
+                    accountData = newDescription
+                )
+            )
+
+            accountsServiceFacade.addAccount(newAccount)
+            showSnackbar("Account created") // TODO:i18n
+        }
     }
 
     override fun saveAccount(newName: String, newDescription: String) {
-        val updatedAccounts = _accounts.value.map {
-            if (it.id == _selectedAccount.value.id) {
-                it.copy(name = newName, description = newDescription)
-            } else it
+
+        if (selectedAccount.value?.accountName != newName && accounts.value.find{ it.accountName == newName} != null) {
+            showSnackbar("Account name exists") // TODO:i18n
+            return
         }
-        _accounts.value = updatedAccounts
-        _selectedAccount.value = updatedAccounts.first { it.id == _selectedAccount.value.id }
+
+        if (selectedAccount.value != null) {
+            backgroundScope.launch {
+                val newAccount = UserDefinedFiatAccountVO(
+                    accountName = newName,
+                    UserDefinedFiatAccountPayloadVO(
+                        accountData = newDescription
+                    )
+                )
+                accountsServiceFacade.saveAccount(newAccount)
+                showSnackbar("Account updated") // TODO:i18n
+            }
+        }
     }
 
     override fun deleteCurrentAccount() {
-        val updatedAccounts = _accounts.value.toMutableList()
-        updatedAccounts.remove(_selectedAccount.value)
-        _accounts.value = updatedAccounts
-        _selectedAccount.value = updatedAccounts.firstOrNull() ?: PaymentAccount("0", "", "")
+        if (selectedAccount.value != null) {
+            backgroundScope.launch {
+                accountsServiceFacade.removeAccount(selectedAccount.value!!)
+                showSnackbar("Account deleted") // TODO:i18n
+            }
+        }
     }
 
+    override fun onViewAttached() {
+        super.onViewAttached()
+        backgroundScope.launch {
+            accountsServiceFacade.getAccounts()
+            accountsServiceFacade.getSelectedAccount()
+        }
+    }
 }

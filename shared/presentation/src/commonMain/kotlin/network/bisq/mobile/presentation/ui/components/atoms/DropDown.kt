@@ -29,6 +29,7 @@ fun BisqDropDown(
     modifier: Modifier = Modifier,
     placeholder: String = "Select an item",
     searchable: Boolean = false,
+    showKey: Boolean = false,
     chipMultiSelect: Boolean = false,
     chipShowOnlyKey: Boolean = false,
 ) {
@@ -46,7 +47,7 @@ fun BisqDropDown(
 
     Column {
         if (label.isNotEmpty()) {
-            BisqText.baseRegular(label)
+            BisqText.baseLight(label)
             BisqGap.VQuarter()
         }
 
@@ -58,7 +59,11 @@ fun BisqDropDown(
                 vertical = BisqUIConstants.ScreenPaddingHalf
             ),
             backgroundColor = BisqTheme.colors.secondary,
-            text = items.find { it.first == value }?.second,
+            text = if (showKey) {
+                items.find { it.first == value }?.first
+            } else {
+                items.find { it.first == value }?.second
+            },
             textAlign = TextAlign.Start,
             rightIcon = { ArrowDownIcon() }
         )
@@ -79,8 +84,13 @@ fun BisqDropDown(
             }
 
             filteredItems.forEachIndexed { index, item ->
+                val textToShow = if (showKey) {
+                    item.first
+                } else {
+                    item.second
+                }
                 DropdownMenuItem(
-                    text = { BisqText.baseRegular(item.second) },
+                    text = { BisqText.baseRegular(textToShow) },
                     onClick = {
                         onValueChanged?.invoke(item)
                         expanded = false

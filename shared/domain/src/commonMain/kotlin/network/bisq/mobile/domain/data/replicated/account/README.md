@@ -1,0 +1,1 @@
+UserDefinedFiatAccountPayloadVO with AccountPayloadVO is only used. Account, AccountPaylaod base classes are not used as in bisq2
