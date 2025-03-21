@@ -9,15 +9,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.BisqBottomSheet
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
@@ -123,7 +120,6 @@ fun PaymentAccountSettingsScreen() {
             items = accounts.map { it.accountName },
             label = "Payment account", //TODO:i18n
             onValueChanged = { name, isValid ->
-                println("name: $name")
                 var account = accounts.firstOrNull { it.accountName == name }
                 if (account == null) {
                     account = accounts.firstOrNull { it.accountPayload.accountData == accountDescription }

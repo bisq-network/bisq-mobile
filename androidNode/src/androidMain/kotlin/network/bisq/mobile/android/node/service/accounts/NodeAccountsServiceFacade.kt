@@ -12,6 +12,7 @@ import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.utils.Logging
+import org.koin.core.component.getScopeName
 
 class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Provider) : AccountsServiceFacade, Logging {
     private val accountService: AccountService by lazy { applicationService.accountService.get() }
@@ -65,9 +66,11 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
     }
 
     override suspend fun getSelectedAccount() {
-        val bisq2Account = accountService.selectedAccount.get() as UserDefinedFiatAccount
-        val account: UserDefinedFiatAccountVO  = UserDefinedFiatAccountMapping.fromBisq2Model(bisq2Account)
-        _selectedAccount.value = account
+        if (accountService.selectedAccount.isPresent) {
+            val bisq2Account = accountService.selectedAccount.get() as UserDefinedFiatAccount
+            val account: UserDefinedFiatAccountVO  = UserDefinedFiatAccountMapping.fromBisq2Model(bisq2Account)
+            _selectedAccount.value = account
+        }
     }
 
     override fun activate() {
