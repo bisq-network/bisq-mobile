@@ -70,8 +70,13 @@ open class PaymentAccountPresenter(
     override fun deleteCurrentAccount() {
         if (selectedAccount.value != null) {
             backgroundScope.launch {
-                accountsServiceFacade.removeAccount(selectedAccount.value!!)
-                showSnackbar("Account deleted") // TODO:i18n
+                runCatching {
+                    accountsServiceFacade.removeAccount(selectedAccount.value!!)
+                    showSnackbar("Account deleted") // TODO:i18n
+                }.onFailure {
+                    log.e(it) { "Couldn't remove account ${selectedAccount.value?.accountName}" }
+                    showSnackbar("Unable to delete account: ${selectedAccount.value?.accountName} - Please try again")
+                }
             }
         }
     }

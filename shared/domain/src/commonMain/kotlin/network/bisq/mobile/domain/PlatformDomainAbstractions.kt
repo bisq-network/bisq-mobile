@@ -23,6 +23,8 @@ interface UrlLauncher {
     fun openUrl(url: String)
 }
 
+expect fun encodeURIParam(param: String): String
+
 expect fun setupUncaughtExceptionHandler(onCrash: () -> Unit)
 
 expect fun getDeviceLanguageCode(): String

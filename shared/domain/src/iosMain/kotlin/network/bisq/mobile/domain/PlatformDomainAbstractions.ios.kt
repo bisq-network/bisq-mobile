@@ -20,6 +20,18 @@ import platform.Foundation.NSSetUncaughtExceptionHandler
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 import kotlin.experimental.ExperimentalNativeApi
+import platform.Foundation.NSCharacterSet
+import platform.Foundation.NSString
+import platform.Foundation.create
+import platform.Foundation.stringByAddingPercentEncodingWithAllowedCharacters
+
+
+@OptIn(BetaInteropApi::class)
+actual fun encodeURIParam(param: String): String {
+    return NSString.create(string = param)
+        .stringByAddingPercentEncodingWithAllowedCharacters(NSCharacterSet.URLPathAllowedCharacterSet)
+        ?: param
+}
 
 @OptIn(ExperimentalSettingsImplementation::class)
 actual fun getPlatformSettings(): Settings {

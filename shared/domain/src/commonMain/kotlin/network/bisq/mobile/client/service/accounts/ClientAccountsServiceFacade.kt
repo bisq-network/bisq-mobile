@@ -3,7 +3,6 @@ package network.bisq.mobile.client.service.accounts
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.service.market.AccountsApiGateway
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.utils.Logging

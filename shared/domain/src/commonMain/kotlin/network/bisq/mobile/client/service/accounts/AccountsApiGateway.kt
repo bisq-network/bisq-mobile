@@ -1,14 +1,12 @@
-package network.bisq.mobile.client.service.market
+package network.bisq.mobile.client.service.accounts
 
 import network.bisq.mobile.client.service.offers.AddAccountRequest
 import network.bisq.mobile.client.service.offers.AddAccountResponse
 import network.bisq.mobile.client.service.settings.PaymentAccountChangeRequest
-import network.bisq.mobile.client.websocket.WebSocketClient
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
-import network.bisq.mobile.client.websocket.subscription.Topic
-import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
+import network.bisq.mobile.domain.encodeURIParam
 import network.bisq.mobile.domain.utils.Logging
 
 class AccountsApiGateway(
@@ -33,7 +31,8 @@ class AccountsApiGateway(
     }
 
     suspend fun deleteAccount(accountName: String): Result<Unit> {
-        return webSocketApiClient.delete("$basePath/$accountName")
+        val parsedAccountName = encodeURIParam(accountName)
+        return webSocketApiClient.delete("$basePath/$parsedAccountName")
     }
 
     suspend fun setSelectedAccount(account: UserDefinedFiatAccountVO): Result<Unit> {

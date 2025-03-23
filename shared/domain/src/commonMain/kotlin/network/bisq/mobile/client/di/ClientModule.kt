@@ -14,7 +14,7 @@ import network.bisq.mobile.client.service.explorer.ClientExplorerServiceFacade
 import network.bisq.mobile.client.service.explorer.ExplorerApiGateway
 import network.bisq.mobile.client.service.common.ClientLanguageServiceFacade
 import network.bisq.mobile.client.service.common.LanguageApiGateway
-import network.bisq.mobile.client.service.market.AccountsApiGateway
+import network.bisq.mobile.client.service.accounts.AccountsApiGateway
 import network.bisq.mobile.client.service.accounts.ClientAccountsServiceFacade
 import network.bisq.mobile.client.service.market.ClientMarketPriceServiceFacade
 import network.bisq.mobile.client.service.market.MarketPriceApiGateway
