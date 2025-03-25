@@ -65,4 +65,8 @@ abstract class State4Presenter(
             tradesServiceFacade.exportTradeDate()
         })
     }
+
+    abstract fun getMyDirectionString(): String
+
+    abstract fun getMyOutcomeString(): String
 }
