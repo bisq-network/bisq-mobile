@@ -51,10 +51,6 @@ open class GettingStartedPresenter(
         enableInteractive(true)
     }
 
-    fun navigateToChat() {
-        navigateTo(Routes.ChatScreen)
-    }
-
     fun navigateToGuide() {
         navigateTo(Routes.TradeGuideOverview)
     }
