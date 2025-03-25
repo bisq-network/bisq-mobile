@@ -9,7 +9,6 @@ import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class TopBarPresenter(
     private val userRepository: UserRepository,

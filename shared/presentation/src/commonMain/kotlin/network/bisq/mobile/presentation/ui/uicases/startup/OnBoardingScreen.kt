@@ -45,9 +45,9 @@ fun OnBoardingScreen() {
         BisqLogo()
         Spacer(modifier = Modifier.height(24.dp))
         BisqText.h1LightGrey("onboarding.bisq2.headline".i18n())
-        Spacer(modifier = Modifier.height(56.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         BisqPagerView(pagerState, finalPages)
-        Spacer(modifier = Modifier.height(56.dp))
+        Spacer(modifier = Modifier.height(24.dp))
 
         BisqButton(
             text = if (pagerState.currentPage == presenter.indexesToShow.lastIndex)

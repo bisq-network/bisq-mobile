@@ -18,7 +18,7 @@ import network.bisq.mobile.presentation.MainPresenter
 class UserProfileSettingsPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val userRepository: UserRepository,
-    private val connectivityService: ConnectivityService,
+    connectivityService: ConnectivityService,
     mainPresenter: MainPresenter): BasePresenter(mainPresenter), IUserProfileSettingsPresenter {
 
     companion object {
