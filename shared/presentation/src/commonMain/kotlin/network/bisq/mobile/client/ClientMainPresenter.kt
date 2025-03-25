@@ -2,7 +2,6 @@ package network.bisq.mobile.client
 
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
-import network.bisq.mobile.client.service.common.ClientLanguageServiceFacade
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
@@ -18,7 +17,7 @@ import network.bisq.mobile.presentation.MainPresenter
  * Contains all the share code for each client. Each specific app might extend this class if needed.
  */
 open class ClientMainPresenter(
-    connectivityService: ClientConnectivityService,
+    private val connectivityService: ClientConnectivityService,
     openTradesNotificationService: OpenTradesNotificationService,
     private val tradesServiceFacade: TradesServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider,
@@ -46,6 +45,7 @@ open class ClientMainPresenter(
 
     private fun listenForConnectivity() {
         backgroundScope.launch {
+            connectivityService.startMonitoring()
             webSocketClientProvider.get().connected.collect {
                 if (webSocketClientProvider.get().isConnected()) {
                     log.d { "connectivity status changed to $it - reconnecting services" }

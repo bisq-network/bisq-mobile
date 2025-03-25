@@ -10,8 +10,8 @@ import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
-import network.bisq.mobile.domain.setupUncaughtExceptionHandler
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.setupUncaughtExceptionHandler
 import network.bisq.mobile.presentation.ui.AppPresenter
 import kotlin.jvm.JvmStatic
 
@@ -70,7 +70,6 @@ open class MainPresenter(
 
     override fun onResume() {
         super.onResume()
-        connectivityService.startMonitoring()
         openTradesNotificationService.stopNotificationService()
     }
 
