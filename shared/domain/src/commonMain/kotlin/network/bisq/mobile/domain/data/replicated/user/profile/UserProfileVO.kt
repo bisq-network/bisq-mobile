@@ -45,7 +45,7 @@ val userProfileDemoObj = UserProfileVO(
     ),
     terms = "my terms",
     statement = "my statement",
-    applicationVersion = "2.1.6",
+    applicationVersion = "2.1.7",
     nym = "mynym",
     userName = "demo",
     publishDate = 10342435345324L
