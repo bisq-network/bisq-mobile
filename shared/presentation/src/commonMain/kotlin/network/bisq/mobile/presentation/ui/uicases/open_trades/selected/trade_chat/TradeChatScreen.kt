@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation.ui.uicases
+package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat
 
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable

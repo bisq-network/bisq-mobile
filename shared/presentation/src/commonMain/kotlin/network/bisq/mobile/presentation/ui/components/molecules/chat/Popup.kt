@@ -15,7 +15,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.FlagIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ReplyIcon
 import network.bisq.mobile.presentation.ui.composeModels.ChatMessage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.uicases.TradeChatPresenter
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatPresenter
 import org.koin.compose.koinInject
 
 @Composable

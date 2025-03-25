@@ -10,7 +10,6 @@ import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
 import network.bisq.mobile.presentation.ui.uicases.ITabContainerPresenter
 import network.bisq.mobile.presentation.ui.uicases.TabContainerPresenter
-import network.bisq.mobile.presentation.ui.uicases.TradeChatPresenter
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountPresenter
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferDirectionPresenter
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferMarketPresenter
@@ -42,6 +41,7 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.S
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.SellerStateLightning3bPresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.SellerStateMainChain3bPresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.TradeStatesProvider
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter

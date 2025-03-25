@@ -14,7 +14,6 @@ import androidx.navigation.compose.composable
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
-import network.bisq.mobile.presentation.ui.uicases.TradeChatScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountSelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferBuySellScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferCurrencySelectorScreen
@@ -31,6 +30,7 @@ import network.bisq.mobile.presentation.ui.uicases.guide.WalletGuideNewWallet
 import network.bisq.mobile.presentation.ui.uicases.guide.WalletGuideReceiving
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookScreen
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.OpenTradeScreen
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.PaymentAccountSettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsScreen
