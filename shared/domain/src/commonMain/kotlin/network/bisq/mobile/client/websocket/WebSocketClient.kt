@@ -38,8 +38,6 @@ import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransp
 import network.bisq.mobile.domain.data.replicated.identity.identitiesDemoObj
 import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.BaseSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.offer.payment_method.BitcoinPaymentMethodSpecVO
@@ -49,6 +47,7 @@ import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferIt
 import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
 import network.bisq.mobile.domain.data.replicated.security.pow.ProofOfWorkVO
+import network.bisq.mobile.domain.data.replicated.settings.apiVersionSettingsVO
 import network.bisq.mobile.domain.data.replicated.settings.settingsVODemoObj
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.userProfileDemoObj
@@ -167,6 +166,7 @@ class WebSocketClient(
         return WebSocketRestApiResponse(webSocketRequest.requestId, 200,
             body = when {
                 webSocketRequest.path.endsWith("settings") -> json.encodeToString(settingsVODemoObj)
+                webSocketRequest.path.endsWith("settings/version") -> json.encodeToString(apiVersionSettingsVO)
                 webSocketRequest.path.endsWith("user-identities/ids") -> json.encodeToString(identitiesDemoObj)
                 webSocketRequest.path.endsWith("offerbook/markets") -> json.encodeToString(marketListDemoObj)
                 webSocketRequest.path.endsWith("selected/user-profile") -> json.encodeToString(userProfileDemoObj)

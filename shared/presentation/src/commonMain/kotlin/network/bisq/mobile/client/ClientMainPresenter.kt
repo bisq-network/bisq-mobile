@@ -1,6 +1,7 @@
 package network.bisq.mobile.client
 
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -31,6 +32,7 @@ open class ClientMainPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
+        validateVersion()
         activateServices()
         listenForConnectivity()
     }
@@ -51,6 +53,15 @@ open class ClientMainPresenter(
                     log.d { "connectivity status changed to $it - reconnecting services" }
                     reactiveServices()
                 }
+            }
+        }
+    }
+
+    private fun validateVersion() {
+        runBlocking {
+            if (!settingsServiceFacade.isApiCompatible()) {
+                // TODO flow so that UI can react
+//                throw IllegalStateException("API version is not compatible")
             }
         }
     }

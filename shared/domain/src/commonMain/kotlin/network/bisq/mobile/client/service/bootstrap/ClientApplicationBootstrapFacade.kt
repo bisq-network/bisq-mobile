@@ -15,6 +15,10 @@ class ClientApplicationBootstrapFacade(
 
     private val backgroundScope = CoroutineScope(BackgroundDispatcher)
     override fun activate() {
+        if (isActive) {
+            return
+        }
+        log.d { "Running bootstrap." }
         // TODO all texts here shoul use the translation module
         setState("Bootstrapping..")
         setProgress(0f)
@@ -55,8 +59,12 @@ class ClientApplicationBootstrapFacade(
             }
 //            }
         }
+
+        isActive = true
+        log.d { "Running bootstrap finished." }
     }
 
     override fun deactivate() {
+        isActive = false
     }
 }

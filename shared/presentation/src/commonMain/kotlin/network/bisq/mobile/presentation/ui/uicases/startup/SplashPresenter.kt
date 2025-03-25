@@ -36,6 +36,7 @@ open class SplashPresenter(
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     override fun onViewAttached() {
+        log.d { "SplashPresenter running" }
         jobs.add(backgroundScope.launch {
             val settingsMobile: Settings = settingsRepository.fetch() ?: Settings()
             if (settingsMobile.firstLaunch) {
@@ -63,6 +64,7 @@ open class SplashPresenter(
         // and it must not be cancelled at onViewUnattaching in case the presenter is just quickly activated
         // best its not called from a presenter but a service which checks if the url to backend is set...
         backgroundScope.launch { settingsServiceFacade.getSettings() }
+        log.d { "SplashPresenter running finished.." }
     }
 
     override fun onViewUnattaching() {

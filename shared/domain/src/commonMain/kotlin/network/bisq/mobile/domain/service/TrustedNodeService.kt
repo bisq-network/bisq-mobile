@@ -14,7 +14,7 @@ class TrustedNodeService(private val webSocketClientProvider: WebSocketClientPro
     private val backgroundScope = CoroutineScope(BackgroundDispatcher)
 
     var isConnected: Boolean = false
-    var observingConnectivity = false
+    private var observingConnectivity = false
 
     /**
      * Connects to the trusted node, throws an exception if connection fails

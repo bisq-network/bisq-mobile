@@ -2,6 +2,7 @@ package network.bisq.mobile.client.service.settings
 
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
+import network.bisq.mobile.domain.data.replicated.settings.ApiVersionSettingsVO
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.utils.Logging
 
@@ -12,6 +13,10 @@ class SettingsApiGateway(
 
     suspend fun getSettings(): Result<SettingsVO> {
         return webSocketApiClient.get(basePath)
+    }
+
+    suspend fun getApiVersion(): Result<ApiVersionSettingsVO> {
+        return webSocketApiClient.get("$basePath/version")
     }
 
     suspend fun confirmTacAccepted(value: Boolean): Result<Unit> {

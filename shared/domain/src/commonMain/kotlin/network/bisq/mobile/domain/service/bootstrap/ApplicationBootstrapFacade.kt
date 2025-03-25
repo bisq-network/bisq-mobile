@@ -21,4 +21,6 @@ abstract class ApplicationBootstrapFacade : LifeCycleAware, Logging {
     fun setProgress(value: Float) {
         _progress.value = value
     }
+
+    protected var isActive = false
 }
