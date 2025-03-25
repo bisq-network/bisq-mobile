@@ -41,6 +41,9 @@ interface ITopBarPresenter : ViewPresenter {
     val uniqueAvatar: StateFlow<PlatformImage?>
     val showAnimation: StateFlow<Boolean>
     val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus>
+
+    fun avatarEnabled(currentTab: String?): Boolean
+    fun navigateToUserProfile()
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -128,11 +131,10 @@ fun TopBar(
 
                 val userIconModifier = Modifier
                     .size(30.dp)
-                    .alpha(if (currentTab == Routes.TabSettings.name) 0.5f else 1.0f)
+                    .alpha(if (presenter.avatarEnabled(currentTab)) 1.0f else 0.5f)
                     .clickable {
-                        if (currentTab != Routes.TabSettings.name) {
-                            // TODO this should be presenter code, with the proper main thread coroutine used (causes random crashes as is)
-                            navController.navigate(Routes.UserProfileSettings.name)
+                        if (presenter.avatarEnabled(currentTab)) {
+                            presenter.navigateToUserProfile()
                         }
                     }
 
