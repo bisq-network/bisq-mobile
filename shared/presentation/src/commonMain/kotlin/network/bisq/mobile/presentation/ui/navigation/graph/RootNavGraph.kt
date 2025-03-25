@@ -13,8 +13,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.uicases.ChatScreen
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
+import network.bisq.mobile.presentation.ui.uicases.TradeChatScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountSelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferBuySellScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferCurrencySelectorScreen
@@ -70,7 +70,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
         val otherScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
             Routes.OffersByMarket to { OfferbookScreen() },
             Routes.OpenTrade to { OpenTradeScreen() },
-            Routes.ChatScreen to { ChatScreen() },
+            Routes.TradeChat to { TradeChatScreen() },
             Routes.GeneralSettings to { GeneralSettingsScreen() },
             Routes.UserProfileSettings to { UserProfileSettingsScreen() },
             Routes.PaymentAcountSettings to { PaymentAccountSettingsScreen() },

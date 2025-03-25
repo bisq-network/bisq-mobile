@@ -70,7 +70,7 @@ class OpenTradePresenter(
     }
 
     fun onOpenChat() {
-        navigateTo(Routes.ChatScreen)
+        navigateTo(Routes.TradeChat)
     }
 
 

@@ -66,7 +66,7 @@ private val initialMessages = listOf(
     )
 )
 
-class ChatPresenter(
+class TradeChatPresenter(
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter), IChatPresenter {
     private val _messages = MutableStateFlow(initialMessages)

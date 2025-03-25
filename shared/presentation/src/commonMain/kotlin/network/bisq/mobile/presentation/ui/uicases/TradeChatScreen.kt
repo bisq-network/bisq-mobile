@@ -21,11 +21,11 @@ import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import org.koin.compose.koinInject
 
 @Composable
-fun ChatScreen() {
+fun TradeChatScreen() {
     var chatText by remember { mutableStateOf("") }
     val scrollState = rememberLazyListState()
     val scope = rememberCoroutineScope() // TODO: How scopes are to be used?
-    val presenter: ChatPresenter = koinInject()
+    val presenter: TradeChatPresenter = koinInject()
     val messages by presenter.messages.collectAsState()
     val currentTimeProvider: TimeProvider = koinInject()
     var quotedMessage by remember {

@@ -1,10 +1,10 @@
 package network.bisq.mobile.presentation.ui.components.molecules.chat
 
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
 import network.bisq.mobile.i18n.i18n
@@ -15,7 +15,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.FlagIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ReplyIcon
 import network.bisq.mobile.presentation.ui.composeModels.ChatMessage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.uicases.ChatPresenter
+import network.bisq.mobile.presentation.ui.uicases.TradeChatPresenter
 import org.koin.compose.koinInject
 
 @Composable
@@ -26,7 +26,7 @@ fun ChatPopup(
     onSetShowMenu: (Boolean) -> Unit,
     onQuoteMessage: (ChatMessage) -> Unit = {}
 ) {
-    val presenter: ChatPresenter = koinInject()
+    val presenter: TradeChatPresenter = koinInject()
     val clipboardManager = LocalClipboardManager.current
     Surface(/*modifier = Modifier.align(menuPosition)*/) {
         DropdownMenu(
