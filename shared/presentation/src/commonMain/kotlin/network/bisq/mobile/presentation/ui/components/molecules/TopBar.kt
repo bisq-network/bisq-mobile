@@ -32,14 +32,13 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
 interface ITopBarPresenter : ViewPresenter {
     val uniqueAvatar: StateFlow<PlatformImage?>
-    fun onAvatarClicked()
-
     val showAnimation: StateFlow<Boolean>
     val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus>
 }
@@ -59,7 +58,6 @@ fun TopBar(
     val navController: NavHostController = presenter.getRootNavController()
     val tabNavController: NavHostController = presenter.getRootTabNavController()
 
-    val interactionEnabled = presenter.isInteractive.collectAsState().value
     val showAnimation = presenter.showAnimation.collectAsState().value
     var showBackConfirmationDialog by remember { mutableStateOf(false) }
 
@@ -68,9 +66,6 @@ fun TopBar(
     val showBackButton = (customBackButton == null &&
                           navController.previousBackStackEntry != null &&
                           !presenter.isAtHome())
-
-    val topBarState = rememberTopAppBarState()
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior(topBarState, canScroll = { false })
 
     val connectivityStatus = presenter.connectivityStatus.collectAsState().value
 
@@ -93,6 +88,8 @@ fun TopBar(
             )
         }
     }
+
+    RememberPresenterLifecycle(presenter)
 
     TopAppBar(
         navigationIcon = {
