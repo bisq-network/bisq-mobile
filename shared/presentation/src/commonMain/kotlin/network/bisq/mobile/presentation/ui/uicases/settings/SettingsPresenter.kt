@@ -21,7 +21,7 @@ open class SettingsPresenter(
         val defaultList: MutableList<MenuItem> = mutableListOf(
             MenuItem.Leaf(label = "General", route = Routes.GeneralSettings),
             MenuItem.Leaf(label = "User Profile", route = Routes.UserProfileSettings),
-            MenuItem.Leaf(label = "Payment Accounts", route = Routes.PaymentAcountSettings),
+            MenuItem.Leaf(label = "Payment Accounts", route = Routes.PaymentAccountSettings),
         )
         return MenuItem.Parent(
             label = "Bisq",

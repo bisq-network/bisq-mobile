@@ -37,7 +37,7 @@ enum class Routes(val title: String) {
 
     GeneralSettings(title = "general_settings"),
     UserProfileSettings(title = "user_profile_settings"),
-    PaymentAcountSettings(title = "payment_account_settings"),
+    PaymentAccountSettings(title = "payment_account_settings"),
 
     TabSettings(title = "tab_settings"),
 

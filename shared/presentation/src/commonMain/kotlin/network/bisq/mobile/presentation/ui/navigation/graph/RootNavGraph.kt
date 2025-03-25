@@ -73,7 +73,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
             Routes.TradeChat to { TradeChatScreen() },
             Routes.GeneralSettings to { GeneralSettingsScreen() },
             Routes.UserProfileSettings to { UserProfileSettingsScreen() },
-            Routes.PaymentAcountSettings to { PaymentAccountSettingsScreen() },
+            Routes.PaymentAccountSettings to { PaymentAccountSettingsScreen() },
         )
         otherScreens.forEach{ (route, screen): Pair<Routes, @Composable () -> Unit> ->
             addScreen(route.name, content = screen)

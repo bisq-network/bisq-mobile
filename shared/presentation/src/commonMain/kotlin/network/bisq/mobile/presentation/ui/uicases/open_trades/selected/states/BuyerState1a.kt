@@ -29,7 +29,7 @@ fun BuyerState1a(
     val description by presenter.description.collectAsState()
     val bitcoinPaymentData by presenter.bitcoinPaymentData.collectAsState()
     val addressFieldType by presenter.bitcoinLnAddressFieldType.collectAsState()
-    val showInvalidAddresDialog by presenter.showInvalidAddressDialog.collectAsState()
+    val showInvalidAddressDialog by presenter.showInvalidAddressDialog.collectAsState()
 
     Column {
         BisqGap.V1()
@@ -69,7 +69,7 @@ fun BuyerState1a(
         }
     }
 
-    if (showInvalidAddresDialog) {
+    if (showInvalidAddressDialog) {
         InvalidAddressConfirmationDialog(
             addressType = addressFieldType,
             onConfirm = presenter::onSend,
