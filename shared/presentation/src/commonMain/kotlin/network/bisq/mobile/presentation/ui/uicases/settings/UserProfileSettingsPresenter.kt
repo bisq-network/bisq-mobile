@@ -85,7 +85,7 @@ class UserProfileSettingsPresenter(
     }
 
     private fun setLastActivity(user: User) {
-        _lastUserActivity.value = user.lastActivity?.let { DateUtils.toDateString(it) } ?: DEFAULT_UNKNOWN_VALUE
+        _lastUserActivity.value = user.lastActivity?.let { DateUtils.lastSeen(it) } ?: DEFAULT_UNKNOWN_VALUE
     }
 
     private fun setBotId(userProfile: UserProfileVO) {

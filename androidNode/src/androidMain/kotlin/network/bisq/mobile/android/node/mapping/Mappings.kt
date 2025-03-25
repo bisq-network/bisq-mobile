@@ -16,12 +16,6 @@
  */
 package network.bisq.mobile.android.node.mapping
 
-import bisq.account.accounts.Account
-import bisq.account.accounts.AccountPayload
-import bisq.account.accounts.UserDefinedFiatAccount
-import bisq.account.accounts.UserDefinedFiatAccountPayload
-import bisq.account.payment_method.FiatPaymentMethod
-import bisq.account.payment_method.PaymentMethod
 import bisq.account.protocol_type.TradeProtocolType
 import bisq.chat.ChatChannelDomain
 import bisq.chat.ChatMessageType
@@ -32,6 +26,7 @@ import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
 import bisq.chat.notifications.ChatChannelNotificationType
 import bisq.chat.reactions.BisqEasyOfferbookMessageReaction
 import bisq.chat.reactions.BisqEasyOpenTradeMessageReaction
+import bisq.chat.reactions.Reaction
 import bisq.common.currency.Market
 import bisq.common.encoding.Hex
 import bisq.common.monetary.Coin
@@ -92,6 +87,7 @@ import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.Bis
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOfferbookMessageReactionVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
+import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
@@ -144,6 +140,7 @@ import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeP
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.data.replicated.user.profile.userProfileDemoObj
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import java.security.KeyPair
 import java.security.PrivateKey
@@ -237,12 +234,11 @@ class Mappings {
 
     object CitationMapping {
         fun toBisq2Model(value: CitationVO): Citation {
-            // TODO Optional empty passed temporarily to fix compilation issues cause by bisq2 api changes
-            return Citation(value.authorUserProfileId, value.text, Optional.empty())
+            return Citation(value.authorUserProfileId, value.text, Optional.ofNullable(value.chatMessageId))
         }
 
         fun fromBisq2Model(value: Citation): CitationVO {
-            return CitationVO(value.authorUserProfileId, value.text)
+            return CitationVO(value.authorUserProfileId, value.text, value.chatMessageId.getOrNull())
         }
     }
 
@@ -309,8 +305,27 @@ class Mappings {
     }
 
     object BisqEasyOpenTradeMessageModelMapping {
-        fun fromBisq2Model(value: BisqEasyOpenTradeMessage): BisqEasyOpenTradeMessageModel {
-            return BisqEasyOpenTradeMessageModel(BisqEasyOpenTradeMessageVOMapping.fromBisq2Model(value))
+        fun fromBisq2Model(
+            message: BisqEasyOpenTradeMessage,
+            citationAuthorUserProfile: UserProfile?,
+            myUserProfile: UserProfile
+        ): BisqEasyOpenTradeMessageModel {
+            userProfileDemoObj
+            val bisqEasyOpenTradeMessage = BisqEasyOpenTradeMessageVOMapping.fromBisq2Model(message)
+            val citationAuthorUserProfileVO = citationAuthorUserProfile?.let { UserProfileMapping.fromBisq2Model(it) }
+            val myUserProfileVO = UserProfileMapping.fromBisq2Model(myUserProfile)
+            val chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO> =
+                message.chatMessageReactions
+                    .filter { !it.isRemoved }
+                    .map { reaction ->
+                        BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(reaction)
+                    }
+            return BisqEasyOpenTradeMessageModel(
+                bisqEasyOpenTradeMessage,
+                citationAuthorUserProfileVO,
+                myUserProfileVO,
+                chatMessageReactions
+            )
         }
     }
 
@@ -416,6 +431,30 @@ class Mappings {
                 value.reactionId,
                 value.date
             )
+        }
+    }
+
+    object ReactionMapping {
+        fun toBisq2Model(value: ReactionEnum): Reaction {
+            return when (value) {
+                ReactionEnum.THUMBS_UP -> Reaction.THUMBS_UP
+                ReactionEnum.THUMBS_DOWN -> Reaction.THUMBS_DOWN
+                ReactionEnum.HAPPY -> Reaction.HAPPY
+                ReactionEnum.LAUGH -> Reaction.LAUGH
+                ReactionEnum.HEART -> Reaction.HEART
+                ReactionEnum.PARTY -> Reaction.PARTY
+            }
+        }
+
+        fun fromBisq2Model(value: Reaction): ReactionEnum {
+            return when (value) {
+                Reaction.THUMBS_UP -> ReactionEnum.THUMBS_UP
+                Reaction.THUMBS_DOWN -> ReactionEnum.THUMBS_DOWN
+                Reaction.HAPPY -> ReactionEnum.HAPPY
+                Reaction.LAUGH -> ReactionEnum.LAUGH
+                Reaction.HEART -> ReactionEnum.HEART
+                Reaction.PARTY -> ReactionEnum.PARTY
+            }
         }
     }
 

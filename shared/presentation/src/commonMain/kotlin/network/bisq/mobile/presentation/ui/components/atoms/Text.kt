@@ -112,6 +112,22 @@ object BisqText {
     }
 
     @Composable
+    fun xsmallLightGrey(
+        text: String,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
+        styledText(
+            text = text,
+            fontSize = FontSize.XSMALL,
+            fontWeight = FontWeight.LIGHT,
+            color = BisqTheme.colors.grey2,
+            textAlign = textAlign,
+            modifier = modifier,
+        )
+    }
+
+    @Composable
     fun xsmallRegular(
         text: String,
         color: Color = BisqTheme.colors.white,

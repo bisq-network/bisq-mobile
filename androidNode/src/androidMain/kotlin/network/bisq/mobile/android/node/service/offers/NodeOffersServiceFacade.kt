@@ -190,7 +190,7 @@ class NodeOffersServiceFacade(
             Optional.empty(),
             Date().time,
             false
-        ) 
+        )
 
         // blocking call
         bisqEasyOfferbookChannelService.publishChatMessage(myOfferMessage, userIdentity).join()
@@ -286,10 +286,10 @@ class NodeOffersServiceFacade(
     }
 
     private fun observeMarketPrice() {
-        marketPricePin = marketPriceService.marketPriceByCurrencyMap.addObserver {
+        marketPricePin = marketPriceService.marketPriceByCurrencyMap.addObserver(Runnable {
             marketPriceService.findMarketPriceQuote(marketPriceService.selectedMarket.get())
             updateMarketPrice()
-        }
+        })
     }
 
     private fun updateMarketPrice() {

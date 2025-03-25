@@ -1,14 +1,16 @@
 package network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades
 
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.domain.utils.Logging
 
 //todo will get completed with work on chat
-class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTradeChannelDto) {
+class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTradeChannelDto) : Logging {
     // Delegates of bisqEasyOpenTradeChannelVO
     val id: String = bisqEasyOpenTradeChannelDto.id
     val tradeId: String = bisqEasyOpenTradeChannelDto.tradeId
@@ -19,7 +21,8 @@ class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTra
 
     // Mutable properties
     val isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val chatMessages: MutableSet<BisqEasyOpenTradeMessageModel> = mutableSetOf()
+    val _chatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(listOf())
+    val chatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> = _chatMessages
     val chatChannelNotificationType: MutableStateFlow<ChatChannelNotificationTypeEnum> =
         MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
     val userProfileIdsOfActiveParticipants: MutableSet<String> = mutableSetOf()
@@ -55,5 +58,12 @@ class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTra
     fun getPeer(): UserProfileVO {
         require(traders.size == 1) { "traders is expected to has size 1 at getPeer()" }
         return traders.iterator().next()
+    }
+
+    fun addChatMessages(message: BisqEasyOpenTradeMessageModel) {
+        // apply new list to trigger update
+        val list = _chatMessages.value.toList() + message
+
+        _chatMessages.value = list
     }
 }

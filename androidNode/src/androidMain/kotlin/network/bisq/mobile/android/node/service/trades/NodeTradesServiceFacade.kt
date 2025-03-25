@@ -9,6 +9,7 @@ import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannel
 import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannelService
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelService
+import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
 import bisq.chat.priv.LeavePrivateChatManager
 import bisq.common.monetary.Monetary
 import bisq.common.observable.Pin
@@ -33,16 +34,24 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
+import network.bisq.mobile.android.node.mapping.Mappings.BisqEasyOpenTradeMessageReactionMapping
 import network.bisq.mobile.android.node.mapping.TradeItemPresentationDtoFactory
+import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
+import network.bisq.mobile.domain.data.replicated.chat.CitationVO
+import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
+import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
+import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration.Companion.seconds
+
 
 class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Provider) : TradesServiceFacade, Logging {
 
@@ -52,12 +61,8 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         applicationService.chatService.get().bisqEasyOfferbookChannelService
     }
     private val bannedUserService: BannedUserService by lazy { applicationService.userService.get().bannedUserService }
-    private val bisqEasyOpenTradeChannelService: BisqEasyOpenTradeChannelService by lazy { applicationService.chatService.get().bisqEasyOpenTradeChannelService }
     private val chatService: ChatService by lazy { applicationService.chatService.get() }
-
-
-    // Dependencies
-    private val channelService: BisqEasyOpenTradeChannelService by lazy { applicationService.chatService.get().bisqEasyOpenTradeChannelService }
+    private val bisqEasyOpenTradeChannelService: BisqEasyOpenTradeChannelService by lazy { applicationService.chatService.get().bisqEasyOpenTradeChannelService }
     private val leavePrivateChatManager: LeavePrivateChatManager by lazy { applicationService.chatService.get().leavePrivateChatManager }
     private val bisqEasyTradeService: BisqEasyTradeService by lazy { applicationService.tradeService.get().bisqEasyTradeService }
     private val mediationRequestService: MediationRequestService by lazy { applicationService.supportService.get().mediationRequestService }
@@ -104,7 +109,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
             }
         })
 
-        channelsPin = channelService.channels.addObserver(object : CollectionObserver<BisqEasyOpenTradeChannel?> {
+        channelsPin = bisqEasyOpenTradeChannelService.channels.addObserver(object : CollectionObserver<BisqEasyOpenTradeChannel?> {
             override fun add(channel: BisqEasyOpenTradeChannel?) {
                 if (channel != null) {
                     handleChannelAdded(channel)
@@ -172,7 +177,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         try {
             val (channel, trade, userName) = getTradeChannelUserNameTriple()
             val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.rejected", userName)
-            channelService.sendTradeLogMessage(encoded, channel).join()
+            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).join()
             bisqEasyTradeService.rejectTrade(trade)
             return Result.success(Unit)
         } catch (e: Exception) {
@@ -184,7 +189,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         try {
             val (channel, trade, userName) = getTradeChannelUserNameTriple()
             val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", userName)
-            channelService.sendTradeLogMessage(encoded, channel).join()
+            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).join()
             bisqEasyTradeService.cancelTrade(trade)
             return Result.success(Unit)
         } catch (e: Exception) {
@@ -213,7 +218,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
                 channel.myUserIdentity.userName,
                 paymentAccountData
             )
-            chatService.bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             bisqEasyTradeService.sellerSendsPaymentAccount(trade, paymentAccountData)
             return Result.success(Unit)
         } catch (e: Exception) {
@@ -231,7 +236,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
                 userName,
                 bitcoinPaymentData
             )
-            chatService.bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             bisqEasyTradeService.buyerSendBitcoinPaymentData(trade, bitcoinPaymentData)
             return Result.success(Unit)
         } catch (e: Exception) {
@@ -248,7 +253,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
                 userName,
                 selectedTrade.value!!.formattedQuoteAmount
             )
-            chatService.bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             bisqEasyTradeService.sellerConfirmFiatReceipt(trade)
             return Result.success(Unit)
         } catch (e: Exception) {
@@ -264,7 +269,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
                 userName,
                 selectedTrade.value!!.quoteCurrencyCode
             )
-            chatService.bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             bisqEasyTradeService.buyerConfirmFiatSent(trade)
             return Result.success(Unit)
         } catch (e: Exception) {
@@ -293,7 +298,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
                 )
             }
 
-            chatService.bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+            bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             bisqEasyTradeService.sellerConfirmBtcSent(trade, Optional.ofNullable(paymentProof))
             return Result.success(Unit)
         } catch (e: Exception) {
@@ -310,7 +315,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
                     "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln",
                     userName
                 )
-                chatService.bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             }
             bisqEasyTradeService.btcConfirmed(trade)
             return Result.success(Unit)
@@ -321,6 +326,43 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
 
     override suspend fun exportTradeDate(): Result<Unit> {
         //todo
+        return Result.success(Unit)
+    }
+
+    override suspend fun sendChatMessage(text: String, citationVO: CitationVO?): Result<Unit> {
+        selectedTrade.value?.bisqEasyOpenTradeChannelModel?.id.let { id ->
+            val citation = Optional.ofNullable(citationVO?.let { Mappings.CitationMapping.toBisq2Model(it) })
+            val channel = bisqEasyOpenTradeChannelService.findChannel(id).get()
+            bisqEasyOpenTradeChannelService.sendTextMessage(text, citation, channel)
+        }
+        return Result.success(Unit)
+    }
+
+    override suspend fun addChatMessageReaction(messageId: String, reactionEnum: ReactionEnum): Result<Unit> {
+        return addOrRemoveChatMessageReaction(messageId, reactionEnum, false)
+    }
+
+    override suspend fun removeChatMessageReaction(messageId: String, reactionVO: BisqEasyOpenTradeMessageReactionVO): Result<Unit> {
+        if (userIdentityService.findUserIdentity(reactionVO.senderUserProfile.id).isPresent) {
+            val reaction = ReactionEnum.entries[reactionVO.reactionId]
+            return addOrRemoveChatMessageReaction(messageId, reaction, true)
+        } else {
+            // Not our reaction, so we cannot remove it
+            return Result.success(Unit)
+        }
+    }
+
+    private fun addOrRemoveChatMessageReaction(
+        messageId: String, reactionEnum: ReactionEnum, isRemoved: Boolean
+    ): Result<Unit> {
+        selectedTrade.value?.bisqEasyOpenTradeChannelModel?.id.let { id ->
+            bisqEasyOpenTradeChannelService.findChannel(id).getOrNull()?.let { channel ->
+                channel.chatMessages.find { it.id == messageId }?.let { message ->
+                    val reaction = Mappings.ReactionMapping.toBisq2Model(reactionEnum)
+                    bisqEasyOpenTradeChannelService.sendTextMessageReaction(message, channel, reaction, isRemoved)
+                }
+            }
+        }
         return Result.success(Unit)
     }
 
@@ -384,20 +426,20 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
 
             // We have 120 seconds socket timeout, so we should never get triggered here, as the message will be sent as mailbox message
             withTimeout(150.seconds) {
-                bisqEasyOpenTradeChannelService.sendTakeOfferMessage(tradeId, bisqEasyOffer, contract.mediator)
+                this@NodeTradesServiceFacade.bisqEasyOpenTradeChannelService.sendTakeOfferMessage(tradeId, bisqEasyOffer, contract.mediator)
                     .thenAccept { result ->
                         // In case the user has switched to another market we want to select that market in the offer book
                         val chatChannelSelectionService: ChatChannelSelectionService =
-                            chatService. getChatChannelSelectionService(ChatChannelDomain.BISQ_EASY_OFFERBOOK)
+                            chatService.getChatChannelSelectionService(ChatChannelDomain.BISQ_EASY_OFFERBOOK)
                         bisqEasyOfferbookChannelService.findChannel(contract.offer.market)
                             .ifPresent { chatChannel: BisqEasyOfferbookChannel? -> chatChannelSelectionService.selectChannel(chatChannel) }
                         takeOfferStatus.value = TakeOfferStatus.SUCCESS
-                        bisqEasyOpenTradeChannelService.findChannelByTradeId(tradeId)
+                        this@NodeTradesServiceFacade.bisqEasyOpenTradeChannelService.findChannelByTradeId(tradeId)
                             .ifPresent { channel ->
                                 val taker = userIdentityService.selectedUserIdentity.userProfile.userName
                                 val maker: String = channel.peer.userName
                                 val encoded = Res.encode("bisqEasy.takeOffer.tradeLogMessage", taker, maker)
-                                chatService.bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
+                                this@NodeTradesServiceFacade.bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
                             }
                     }
                     .get()
@@ -415,7 +457,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
     // Trade
     private fun handleTradeAdded(trade: BisqEasyTrade) {
         val tradeId = trade.id
-        val findChannelByTradeId: Optional<BisqEasyOpenTradeChannel> = channelService.findChannelByTradeId(tradeId)
+        val findChannelByTradeId: Optional<BisqEasyOpenTradeChannel> = bisqEasyOpenTradeChannelService.findChannelByTradeId(tradeId)
         if (findChannelByTradeId.isPresent) {
             handleTradeAndChannelAdded(trade, findChannelByTradeId.get())
         } else {
@@ -425,7 +467,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
 
     private fun handleTradeRemoved(trade: BisqEasyTrade) {
         val tradeId = trade.id
-        val findChannelByTradeId = channelService.findChannelByTradeId(tradeId)
+        val findChannelByTradeId = bisqEasyOpenTradeChannelService.findChannelByTradeId(tradeId)
         if (findChannelByTradeId.isPresent) {
             handleTradeAndChannelRemoved(trade)
         } else {
@@ -555,6 +597,44 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
                 updateIsAnyTradeInMediation()
             }
         }
+
+        pins += channel.chatMessages.addObserver(object : CollectionObserver<BisqEasyOpenTradeMessage> {
+            override fun add(message: BisqEasyOpenTradeMessage) {
+                val citationAuthorUserProfile: UserProfile? =
+                    message.citation.flatMap { citation -> userProfileService.findUserProfile(citation.authorUserProfileId) }
+                        .orElse(null)
+
+                message.getChatMessageReactions().addObserver(Runnable {
+                    openTradeItem.bisqEasyOpenTradeChannelModel.chatMessages.value.find { message.id == it.id }?.let { model ->
+                        val chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO> =
+                            message.chatMessageReactions
+                                .filter { !it.isRemoved }
+                                .map { reaction ->
+                                BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(reaction)
+                            }
+                        model.setReactions(chatMessageReactions)
+                    }
+                })
+
+                val myUserProfile = userIdentityService.selectedUserIdentity.userProfile
+                val model: BisqEasyOpenTradeMessageModel = Mappings.BisqEasyOpenTradeMessageModelMapping.fromBisq2Model(
+                    message,
+                    citationAuthorUserProfile,
+                    myUserProfile
+                )
+                if (model.chatMessageType == ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER) {
+                    return
+                }
+                openTradeItem.bisqEasyOpenTradeChannelModel.addChatMessages(model)
+            }
+
+            override fun remove(element: Any) {
+                // Private messages cannot be removed
+            }
+
+            override fun clear() {
+            }
+        })
     }
 
     private fun handleTradeAndChannelRemoved(trade: BisqEasyTrade) {
@@ -580,7 +660,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
 
     // Misc
     private fun updateIsAnyTradeInMediation() {
-        _isAnyTradeInMediation.value = channelService.channels.stream().anyMatch { it.isInMediation }
+        _isAnyTradeInMediation.value = bisqEasyOpenTradeChannelService.channels.stream().anyMatch { it.isInMediation }
     }
 
     private fun findListItem(trade: BisqEasyTrade): Optional<TradeItemPresentationModel> {
@@ -607,7 +687,8 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
 
     private fun getTradeChannelUserNameTriple(): Triple<BisqEasyOpenTradeChannel, BisqEasyTrade, String> {
         val tradeId = requireNotNull(selectedTrade.value) { "Selected trade must not be null" }.tradeId
-        val channel = requireNotNull(channelService.findChannelByTradeId(tradeId).getOrNull()) { "Channel must not be null" }
+        val channel =
+            requireNotNull(bisqEasyOpenTradeChannelService.findChannelByTradeId(tradeId).getOrNull()) { "Channel must not be null" }
         val trade = requireNotNull(bisqEasyTradeService.findTrade(tradeId).getOrNull()) { "Trade must not be null" }
         val userName = channel.myUserIdentity.userName
         return Triple(channel, trade, userName)

@@ -11,32 +11,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
+import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun ChatReactionInput(
-    onReact: (ReactionType) -> Unit
+    onAddReaction: (ReactionEnum) -> Unit,
+    onRemoveReaction: (BisqEasyOpenTradeMessageReactionVO) -> Unit
 ) {
-    val reactionTypes = listOf(
-        ReactionType.THUMBS_UP,
-        ReactionType.THUMBS_DOWN,
-        ReactionType.HEART,
-        ReactionType.LAUGH,
-        ReactionType.HAPPY,
-        ReactionType.PARTY
-    )
-
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         modifier = Modifier.padding(horizontal = BisqUIConstants.ScreenPadding)
     ) {
-        reactionTypes.forEach { reactionType ->
+        ReactionEnum.entries.forEach { reaction ->
+            // todo make a toggle button with calling onRemoveReaction if it was selected
             DynamicImage(
-                path = reactionType.fileName,
+                path = reaction.imagePath(),
                 modifier = Modifier.size(16.dp).clickable(
-                    onClick = { onReact(reactionType) },
+                    onClick = { onAddReaction(reaction) },
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null
                 )
@@ -44,3 +39,34 @@ fun ChatReactionInput(
         }
     }
 }
+
+fun ReactionEnum.imagePath(): String {
+    return when (this) {
+        ReactionEnum.THUMBS_UP -> "drawable/icon_reaction_thumbs_up.png"
+        ReactionEnum.THUMBS_DOWN -> "drawable/icon_reaction_thumbs_down.png"
+        ReactionEnum.HAPPY -> "drawable/icon_reaction_happy.png"
+        ReactionEnum.LAUGH -> "drawable/icon_reaction_laugh.png"
+        ReactionEnum.HEART -> "drawable/icon_reaction_heart.png"
+        ReactionEnum.PARTY -> "drawable/icon_reaction_party.png"
+    }
+}
+
+fun BisqEasyOpenTradeMessageReactionVO.imagePath(): String {
+    return when (ReactionEnum.entries[this.reactionId]) {
+        ReactionEnum.THUMBS_UP -> "drawable/icon_reaction_thumbs_up.png"
+        ReactionEnum.THUMBS_DOWN -> "drawable/icon_reaction_thumbs_down.png"
+        ReactionEnum.HAPPY -> "drawable/icon_reaction_happy.png"
+        ReactionEnum.LAUGH -> "drawable/icon_reaction_laugh.png"
+        ReactionEnum.HEART -> "drawable/icon_reaction_heart.png"
+        ReactionEnum.PARTY -> "drawable/icon_reaction_party.png"
+    }
+}
+
+private fun mapReactions(chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO>) =
+    chatMessageReactions
+        .filter { !it.isRemoved }
+        .map { ReactionEnum.entries[it.reactionId] }
+
+
+
+

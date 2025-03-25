@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
@@ -17,10 +16,10 @@ import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.utils.PriceUtil
-import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class TakeOfferReviewPresenter(
@@ -110,13 +109,12 @@ class TakeOfferReviewPresenter(
     }
 
     fun onTakeOffer() {
-        log.e("onTakeOffer")
         backgroundScope.launch {
             setShowTakeOfferProgressDialog(true)
             try {
                 enableInteractive(false)
                 takeOfferPresenter.takeOffer(takeOfferStatus, takeOfferErrorMessage)
-                delay(3000L)
+                //delay(3000L)
                 setShowTakeOfferProgressDialog(false)
                 setShowTakeOfferSuccessDialog(true)
             } catch (e: Exception) {

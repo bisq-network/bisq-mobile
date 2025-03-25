@@ -3,7 +3,9 @@ package network.bisq.mobile.presentation.ui.components.molecules.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -12,18 +14,21 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.composeModels.ChatMessage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun QuoteMessageBubble(
-    message: ChatMessage,
+    message: BisqEasyOpenTradeMessageModel,
     onClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
     val sideBorderColor = BisqTheme.colors.grey2
+    val isMyMessage = message.isMyMessage
+    val bgColor = if (isMyMessage) BisqTheme.colors.dark5 else BisqTheme.colors.dark2
+
     Column(
         modifier = Modifier
             .padding(
@@ -32,12 +37,10 @@ fun QuoteMessageBubble(
                 end = BisqUIConstants.ScreenPaddingHalf
             )
             .clip(shape = RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf))
-            .fillMaxWidth()
     ) {
-        // TODO: On click, scroll up to the quoted message
         Column(
             modifier = Modifier
-                .background(BisqTheme.colors.grey3)
+                .background(bgColor)
                 .clickable(
                     onClick = onClick,
                     interactionSource = remember { MutableInteractionSource() },
@@ -49,7 +52,7 @@ fun QuoteMessageBubble(
                         color = sideBorderColor,
                         start = Offset(0f, 0f),
                         end = Offset(0f, size.height),
-                        strokeWidth = 10.dp.toPx()
+                        strokeWidth = 4.dp.toPx()
                     )
                 }
                 .padding(
@@ -58,8 +61,8 @@ fun QuoteMessageBubble(
                 ),
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter)
         ) {
-            BisqText.baseMedium(message.chatMessageReplyOf?.author ?: "")
-            BisqText.baseMedium(message.chatMessageReplyOf?.content ?: "") // TODO: Trim this to max 2 lines
+            BisqText.baseMedium(message.citationAuthorUserName ?: "", color = BisqTheme.colors.grey2)
+            BisqText.baseRegular(message.citationString, color = BisqTheme.colors.grey1) // TODO: Trim this to max 2 lines
         }
 
         content()

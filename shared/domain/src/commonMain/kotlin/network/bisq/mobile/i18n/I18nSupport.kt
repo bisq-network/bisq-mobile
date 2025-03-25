@@ -2,6 +2,11 @@ package network.bisq.mobile.i18n
 
 class I18nSupport {
     companion object {
+        // We use non-printing characters as separator. See: https://en.wikipedia.org/wiki/Delimiter#ASCII_delimited_text
+        const val ARGS_SEPARATOR: Char = '\u001F' // ASCII 31
+        const val PARAM_SEPARATOR: Char = '\u001E' // ASCII 30
+
+
         fun initialize(languageCode: String = "en") {
             // bundles = BUNDLE_NAMES.map { ResourceBundle.getBundle(it, languageCode) }
             val bundleMapsByName: Map<String, Map<String, String>> = when (languageCode) {
@@ -18,6 +23,19 @@ class I18nSupport {
             }
             val maps: Collection<Map<String, String>> = bundleMapsByName.values
             bundles = maps.map { ResourceBundle(it) }
+        }
+
+        fun encode(key: String, vararg arguments: Any): String {
+            if (arguments.isEmpty()) return key
+            val args = arguments.joinToString(ARGS_SEPARATOR.toString())
+            return "$key$PARAM_SEPARATOR$args"
+        }
+
+        fun decode(encoded: String): String {
+            val parts = encoded.split(PARAM_SEPARATOR)
+            val key = parts[0]
+            val args = parts.getOrNull(1)?.split(ARGS_SEPARATOR)?.toTypedArray() ?: emptyArray()
+            return key.i18n(*args)
         }
     }
 }

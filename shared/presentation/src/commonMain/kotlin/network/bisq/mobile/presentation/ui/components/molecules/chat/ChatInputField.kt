@@ -8,11 +8,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -21,45 +18,39 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
-import network.bisq.mobile.presentation.ui.components.atoms.icons.SendIcon
-import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
+import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.button.CloseIconButton
-import network.bisq.mobile.presentation.ui.composeModels.ChatMessage
+import network.bisq.mobile.presentation.ui.components.atoms.icons.SendIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
-fun BisqChatInputField(
-    value: String,
-    onValueChanged: (String) -> Unit = {},
+fun ChatInputField(
+    quotedMessage: BisqEasyOpenTradeMessageModel? = null,
     placeholder: String = "",
-    onMessageSent: (String, ChatMessage?) -> Unit = { _: String, _: ChatMessage? -> },
+    onMessageSent: (String) -> Unit,
     resetScroll: () -> Unit = {},
-    quotedMessage: ChatMessage? = null,
     onCloseReply: () -> Unit = {},
 ) {
     val focusRequester = remember { FocusRequester() }
-    var textState by remember { mutableStateOf(value) }
-    var textValid by remember { mutableStateOf(true) }
+    var text by remember { mutableStateOf("") }
+    var isTextValid by remember { mutableStateOf(true) }
 
     Column {
         if (quotedMessage != null) {
             QuotedMessage(quotedMessage, onCloseReply)
         }
         BisqTextField(
-            value = textState,
+            value = text,
             onValueChange = { it, isValid ->
-                textState = it
-                textValid = isValid
-                onValueChanged(textState)
+                text = it
+                isTextValid = isValid
             },
             indicatorColor = Color.Unspecified,
             isTextArea = true,
@@ -68,13 +59,13 @@ fun BisqChatInputField(
             rightSuffix = {
                 BisqIconButton(
                     onClick = {
-                        if (textState.isNotEmpty() && textValid) {
-                            onMessageSent(textState, quotedMessage)
+                        if (text.isNotEmpty() && isTextValid) {
+                            onMessageSent(text)
                             resetScroll()
-                            textState = ""
+                            text = ""
                         }
                     },
-                    disabled = textState.isEmpty() || !textValid
+                    disabled = text.isEmpty() || !isTextValid
                 ) {
                     SendIcon()
                 }
@@ -93,11 +84,10 @@ fun BisqChatInputField(
 
 @Composable
 fun QuotedMessage(
-    quotedMessage: ChatMessage,
+    quotedMessage: BisqEasyOpenTradeMessageModel,
     onCloseReply: () -> Unit = {},
 ) {
-    val sideBorderColor = BisqTheme.colors.grey2
-    AnimatedVisibility(visible = quotedMessage.content.isNotEmpty()) {
+    AnimatedVisibility(visible = quotedMessage.text != null) {
         Box(
             modifier = Modifier
                 .padding(top = BisqUIConstants.ScreenPaddingHalf)
@@ -107,15 +97,7 @@ fun QuotedMessage(
                         topEnd = BisqUIConstants.ScreenPaddingHalf,
                     )
                 )
-                .background(BisqTheme.colors.grey3)
-                .drawBehind {
-                    drawLine(
-                        color = sideBorderColor,
-                        start = Offset(0f, 0f),
-                        end = Offset(0f, size.height),
-                        strokeWidth = 10.dp.toPx()
-                    )
-                }
+                .background(BisqTheme.colors.dark1)
                 .fillMaxWidth()
         ) {
             Column(
@@ -127,10 +109,11 @@ fun QuotedMessage(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    BisqText.baseMedium(quotedMessage.author)
+                    //todo add profile icon
+                    BisqText.baseRegular(quotedMessage.senderUserName, color = BisqTheme.colors.light1)
                     CloseIconButton(onClick = onCloseReply)
                 }
-                BisqText.baseMedium(quotedMessage.content)
+                BisqText.baseLight(quotedMessage.textString, color = BisqTheme.colors.light3)
             }
         }
     }

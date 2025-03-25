@@ -1,6 +1,12 @@
 package network.bisq.mobile.domain.utils
 
-import kotlinx.datetime.*
+import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeUnit
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.until
+import network.bisq.mobile.i18n.i18n
 
 object DateUtils {
 
@@ -25,11 +31,36 @@ object DateUtils {
         return Triple(years, months, days)
     }
 
-    fun toDateString(epochMillis: Long, timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
+    //todo used for last user activity which should be in format: "3 min, 22 sec ago"
+    fun lastSeen(epochMillis: Long, timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
         val instant = Instant.fromEpochMilliseconds(epochMillis)
         val localDateTime = instant.toLocalDateTime(timeZone)
         return localDateTime.toString()
             .split(".")[0] // remove ms
-                .replace("T", " ") // separate date time
+            .replace("T", " ") // separate date time
     }
+
+    fun toDateTime(epochMillis: Long, timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
+        val instant = Instant.fromEpochMilliseconds(epochMillis)
+        val localDateTime = instant.toLocalDateTime(timeZone)
+
+        val month = localDateTime.month.name.lowercase().replaceFirstChar { it.uppercaseChar() }.take(3)
+        val day = localDateTime.dayOfMonth
+        val year = localDateTime.year
+
+        val hour24 = localDateTime.hour
+        val minute = localDateTime.minute
+        // TODO support non US formats as well
+        val (hour12, ampm) = when {
+            hour24 == 0 -> 12 to "AM"
+            hour24 < 12 -> hour24 to "AM"
+            hour24 == 12 -> 12 to "PM"
+            else -> (hour24 - 12) to "PM"
+        }
+
+        val paddedMinute = minute.toString().padStart(2, '0')
+        val atString = "temporal.at".i18n();
+        return "$month $day, $year $atString $hour12:$paddedMinute $ampm"
+    }
+
 }

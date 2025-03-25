@@ -9,69 +9,61 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.buildAnnotatedString
 import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
-import network.bisq.mobile.presentation.ui.components.molecules.chat.BisqChatInputField
-import network.bisq.mobile.presentation.ui.components.organisms.chat.ChatWidget
-import network.bisq.mobile.presentation.ui.composeModels.ChatMessage
-import network.bisq.mobile.presentation.ui.composeModels.ChatMessageReplyOf
-import network.bisq.mobile.presentation.ui.helpers.TimeProvider
+import network.bisq.mobile.presentation.ui.components.molecules.chat.ChatInputField
+import network.bisq.mobile.presentation.ui.components.organisms.chat.ChatMessageList
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
 fun TradeChatScreen() {
+    val presenter: TradeChatPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
     var chatText by remember { mutableStateOf("") }
     val scrollState = rememberLazyListState()
     val scope = rememberCoroutineScope() // TODO: How scopes are to be used?
-    val presenter: TradeChatPresenter = koinInject()
-    val messages by presenter.messages.collectAsState()
-    val currentTimeProvider: TimeProvider = koinInject()
-    var quotedMessage by remember {
-        mutableStateOf<ChatMessage?>(null)
-    }
+    val selectedTrade by presenter.selectedTrade.collectAsState()
+    val chatMessages by presenter.chatMessages.collectAsState()
+    val quotedMessage by presenter.quotedMessage.collectAsState()
+    val sortedChatMessages = chatMessages.sortedBy { it.date }
+
+    /*   var quotedMessage by remember {
+           mutableStateOf<BisqEasyOpenTradeMessageModel?>(null)
+       }*/
+
+    val clipboard = LocalClipboardManager.current
 
     BisqStaticScaffold(
-        topBar = { TopBar(title = "Chat - 07b9bab1") },
+        topBar = { TopBar(title = "Chat - " + selectedTrade?.shortTradeId) },
     ) {
-        ChatWidget(
-            messages = messages,
+        ChatMessageList(
+            messages = sortedChatMessages,
             modifier = Modifier.weight(1f),
             scrollState = scrollState,
-            onQuoteMessage = { quotedMessage = it }
+            onAddReaction = { message, reaction -> presenter.onAddReaction(message, reaction) },
+            onRemoveReaction = { message, reaction -> presenter.onRemoveReaction(message, reaction) },
+            onReply = { message -> presenter.onReply(message) },
+            onCopy = { message -> clipboard.setText(buildAnnotatedString { append(message.textString) }) },
+            onIgnoreUser = { message -> presenter.onIgnoreUser(message) },
+            onReportUser = { message -> presenter.onReportUser(message) },
         )
-        BisqChatInputField(
-            value = chatText,
-            placeholder = "chat.message.input.prompt".i18n(),
-            onValueChanged = { chatText = it },
-            onMessageSent = { inputText, message ->
-                chatText = ""
-                presenter.addMessage(
-                    ChatMessage(
-                        messageID = (messages.size * 10).toString(),
-                        "me",
-                        inputText,
-                        timestamp = currentTimeProvider.getCurrentTime(),
-                        reaction = "",
-                        chatMessageReplyOf = if (quotedMessage == null) null else ChatMessageReplyOf(
-                            messageID = quotedMessage!!.messageID,
-                            author = quotedMessage!!.author,
-                            content = if (quotedMessage!!.content.length > 80) {
-                                quotedMessage!!.content.take(80) + "..."
-                            } else {
-                                quotedMessage!!.content
-                            }
-                        )
-                    )
-                )
-                scope.launch {
-                    scrollState.animateScrollToItem(0)
-                    quotedMessage = null
-                }
-            },
+        ChatInputField(
+            //value = chatText,
             quotedMessage = quotedMessage,
-            onCloseReply = { quotedMessage = null },
+            placeholder = "chat.message.input.prompt".i18n(),
+            // onValueChanged = { chatText = it },
+            onMessageSent = { text ->
+                chatText = ""
+                presenter.sendChatMessage(text)
+                scope.launch { scrollState.animateScrollToItem(0) }
+            },
+            onCloseReply = { presenter.onReply(null) }
         )
     }
 }
