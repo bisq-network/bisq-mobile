@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -24,6 +25,8 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.button.BisqFABButton
+import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -34,6 +37,7 @@ import org.koin.compose.koinInject
 @Composable
 fun OpenTradeScreen() {
     val presenter: OpenTradePresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
     val focusManager = LocalFocusManager.current
 
     val tradeAbortedBoxVisible by presenter.tradeAbortedBoxVisible.collectAsState()
@@ -49,7 +53,14 @@ fun OpenTradeScreen() {
     })
 
     BisqStaticScaffold(
-        topBar = { TopBar("Trade ID: ${presenter.selectedTrade.value?.shortTradeId}") }
+        topBar = { TopBar("Trade ID: ${presenter.selectedTrade.value?.shortTradeId}") },
+        fab = {
+            BisqFABButton(
+                onClick = { presenter.onOpenChat() },
+            ) {
+                ChatIcon(modifier = Modifier.size(34.dp))
+            }
+        },
     ) {
         Box(
             modifier = Modifier

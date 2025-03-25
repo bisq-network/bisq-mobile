@@ -11,18 +11,30 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import network.bisq.mobile.presentation.ui.components.molecules.chat.ChatSystemMessage
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.ChatScreen
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
-import network.bisq.mobile.presentation.ui.uicases.create_offer.*
-import network.bisq.mobile.presentation.ui.uicases.guide.*
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountSelectorScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferBuySellScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferCurrencySelectorScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPaymentMethodSelectorScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferReviewOfferScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferTradePriceSelectorScreen
+import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideOverview
+import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideProcess
+import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideSecurity
+import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideTradeRules
+import network.bisq.mobile.presentation.ui.uicases.guide.WalletGuideDownload
+import network.bisq.mobile.presentation.ui.uicases.guide.WalletGuideIntro
+import network.bisq.mobile.presentation.ui.uicases.guide.WalletGuideNewWallet
+import network.bisq.mobile.presentation.ui.uicases.guide.WalletGuideReceiving
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookScreen
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.OpenTradeScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.PaymentAccountSettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsScreen
+import network.bisq.mobile.presentation.ui.uicases.startup.AgreementScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
@@ -30,7 +42,6 @@ import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScree
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPaymentMethodScreen
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferReviewTradeScreen
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferTradeAmountScreen
-import network.bisq.mobile.presentation.ui.uicases.startup.*
 
 @Composable
 fun RootNavGraph(rootNavController: NavHostController) {
