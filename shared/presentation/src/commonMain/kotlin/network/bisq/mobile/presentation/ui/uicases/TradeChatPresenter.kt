@@ -1,18 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases
 
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.composeModels.ChatMessage
-
-interface IChatPresenter {
-    val messages: StateFlow<List<ChatMessage>>
-
-    fun addMessage(msg: ChatMessage)
-
-    fun addReactions(reactionType: String, message: ChatMessage)
-}
 
 private val initialMessages = listOf(
     ChatMessage(
@@ -68,16 +59,16 @@ private val initialMessages = listOf(
 
 class TradeChatPresenter(
     mainPresenter: MainPresenter,
-) : BasePresenter(mainPresenter), IChatPresenter {
+) : BasePresenter(mainPresenter) {
     private val _messages = MutableStateFlow(initialMessages)
-    override val messages = _messages
+    val messages = _messages
 
-    override fun addMessage(msg: ChatMessage) {
+    fun addMessage(msg: ChatMessage) {
         val updatedMessages = listOf(msg) + _messages.value
         _messages.value = updatedMessages
     }
 
-    override fun addReactions(reactionType: String, message: ChatMessage) {
+    fun addReactions(reactionType: String, message: ChatMessage) {
         val updatedMessages = _messages.value.map {
             if (it.messageID == message.messageID) {
                 it.copy(reaction = reactionType)

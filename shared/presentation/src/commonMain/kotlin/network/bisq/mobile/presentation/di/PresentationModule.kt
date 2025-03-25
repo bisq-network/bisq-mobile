@@ -8,7 +8,6 @@ import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
-import network.bisq.mobile.presentation.ui.uicases.IChatPresenter
 import network.bisq.mobile.presentation.ui.uicases.ITabContainerPresenter
 import network.bisq.mobile.presentation.ui.uicases.TabContainerPresenter
 import network.bisq.mobile.presentation.ui.uicases.TradeChatPresenter
@@ -179,7 +178,7 @@ val presentationModule = module {
     factory { TradeFlowPresenter(get(), get(), get()) }
     factory { OpenTradePresenter(get(), get(), get()) }
 
-    single { TradeChatPresenter(get()) } bind IChatPresenter::class
+    single { TradeChatPresenter(get()) }
 
     single { TradeGuidePresenter(get(), get()) } bind TradeGuidePresenter::class
     single { WalletGuidePresenter(get()) } bind WalletGuidePresenter::class
