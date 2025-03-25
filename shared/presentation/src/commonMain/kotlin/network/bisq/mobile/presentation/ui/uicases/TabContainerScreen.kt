@@ -73,7 +73,7 @@ fun TabContainerScreen() {
                     Routes.fromString(currentNavigationItem.route)?.let { presenter.navigateToTab(it) }
                 })
         },
-        fab = {
+        floatingButton = {
             if (currentRoute == Routes.TabOfferbook.name) {
                 BisqFABAddButton(
                     onClick = { presenter.createOffer() },

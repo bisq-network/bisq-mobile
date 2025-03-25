@@ -11,7 +11,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
-fun BisqFABButton(
+fun FloatingButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier.size(BisqUIConstants.ScreenPadding4X),
     enabled: Boolean = true,
@@ -33,7 +33,7 @@ fun BisqFABAddButton(
     onClick: () -> Unit,
     enabled: Boolean = true
 ) {
-    BisqFABButton(
+    FloatingButton(
         onClick = onClick,
         enabled = enabled
     ) {

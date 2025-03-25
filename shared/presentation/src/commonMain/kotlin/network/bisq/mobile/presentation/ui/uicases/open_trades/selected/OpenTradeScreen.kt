@@ -25,7 +25,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.button.BisqFABButton
+import network.bisq.mobile.presentation.ui.components.atoms.button.FloatingButton
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
@@ -54,8 +54,8 @@ fun OpenTradeScreen() {
 
     BisqStaticScaffold(
         topBar = { TopBar("Trade ID: ${presenter.selectedTrade.value?.shortTradeId}") },
-        fab = {
-            BisqFABButton(
+        floatingButton = {
+            FloatingButton(
                 onClick = { presenter.onOpenChat() },
             ) {
                 ChatIcon(modifier = Modifier.size(34.dp))

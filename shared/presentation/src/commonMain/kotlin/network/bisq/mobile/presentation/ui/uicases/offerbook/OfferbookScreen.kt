@@ -13,8 +13,8 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.button.BisqFABAddButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
@@ -40,7 +40,7 @@ fun OfferbookScreen() {
         topBar = {
             TopBar(title = "Offers") //TODO:i18n
         },
-        fab = {
+        floatingButton = {
             BisqFABAddButton(
                 onClick = { presenter.createOffer() },
                 enabled = !presenter.isDemo()

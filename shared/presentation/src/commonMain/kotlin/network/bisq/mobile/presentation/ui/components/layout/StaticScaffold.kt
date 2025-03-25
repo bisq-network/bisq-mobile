@@ -1,12 +1,13 @@
 package network.bisq.mobile.presentation.ui.components.layout
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScaffoldDefaults
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.presentation.ui.components.organisms.BisqSnackbar
@@ -25,7 +26,7 @@ fun BisqStaticScaffold(
     topBar: @Composable (() -> Unit)? = null,
     bottomBar: @Composable (() -> Unit)? = null,
     snackbarHostState: SnackbarHostState? = null,
-    fab: @Composable (() -> Unit)? = null,
+    floatingButton: @Composable (() -> Unit)? = null,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     isInteractive: Boolean = true,
@@ -41,7 +42,7 @@ fun BisqStaticScaffold(
                 BisqSnackbar(snackbarHostState = snackbarHostState)
             }
         },
-        floatingActionButton = fab ?: {},
+        floatingActionButton = floatingButton ?: {},
         content = { it ->
             BisqStaticLayout(
                 padding = if (topBar != null) it else padding,
