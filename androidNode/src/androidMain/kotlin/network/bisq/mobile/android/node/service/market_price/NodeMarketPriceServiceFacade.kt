@@ -67,8 +67,7 @@ class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplic
 
     // Private
     private fun observeMarketPrice() {
-        marketPricePin =
-            marketPriceService.marketPriceByCurrencyMap.addObserver { updateMarketPriceItem() }
+        marketPricePin = marketPriceService.marketPriceByCurrencyMap.addObserver(Runnable { updateMarketPriceItem() })
     }
 
     private fun observeSelectedMarket() {
