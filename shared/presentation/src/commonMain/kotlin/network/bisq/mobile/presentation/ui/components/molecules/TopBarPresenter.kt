@@ -14,7 +14,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 open class TopBarPresenter(
     private val userRepository: UserRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
-    private val connectivityService: ConnectivityService,
+    connectivityService: ConnectivityService,
     mainPresenter: MainPresenter
 ): BasePresenter(mainPresenter), ITopBarPresenter {
 
@@ -36,12 +36,6 @@ open class TopBarPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         refresh()
-    }
-
-    override fun onAvatarClicked() {
-        enableInteractive(false)
-        navigateTo(Routes.UserProfileSettings)
-        enableInteractive(true)
     }
 
     private fun refresh() {
