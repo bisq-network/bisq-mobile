@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.theme
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import kotlin.math.pow
 
 @Immutable
 data class BisqColors(
@@ -73,66 +74,78 @@ val LocalBisqColors = staticCompositionLocalOf {
 }
 
 val lightColors = BisqColors(
-    white = Color(0xFFfafafa),
-    dark1 = Color(0xFFFFFFFF),
-    dark2 = Color(0xFFF8F8F8),
-    dark3 = Color(0xFFF4F4F4),
-    dark4 = Color(0xFFF0F0F0),
-    dark5 = Color(0xFFEFEFEF),
-    light1 = Color(0xFF1D1D1D),
-    light2 = Color(0xFF212121),
-    light3 = Color(0xFF262626),
-    light4 = Color(0xFF282828),
-    light5 = Color(0xFF333333),
-    grey1 = Color(0xFF999999),
-    grey2 = Color(0xFF747474),
-    grey3 = Color(0xFF6B6B6B),
-    primary = Color(0xFF25B135),
-    primaryHover = Color(0xFF56C262),
-    primaryDisabled = Color(0x6625B135),
-    primary2 = Color(0xFF0A2F0F),
-    primaryDim = Color(0xFF448B39),
-    primary65 = Color(0xFF25B135),
-    secondary = Color(0xFF2F2F2F),
-    secondaryHover = Color(0xFF525252),
-    secondaryDisabled = Color(0x662F2F2F),
-    danger = Color(0xFFDB0000),
-    dangerHover = Color(0xFFAC2B2B),
-    warning = Color(0xFFFF9823),
-    warningHover = Color(0xFFFFAC4E),
-    warningDisabled = Color(0xB3FF9823),
-    backgroundColor = Color(0xFF1C1C1C),
+    white = Color(0xFFfafafa).adjustGamma(),
+    dark1 = Color(0xFFFFFFFF).adjustGamma(),
+    dark2 = Color(0xFFF8F8F8).adjustGamma(),
+    dark3 = Color(0xFFF4F4F4).adjustGamma(),
+    dark4 = Color(0xFFF0F0F0).adjustGamma(),
+    dark5 = Color(0xFFEFEFEF).adjustGamma(),
+    light1 = Color(0xFF1D1D1D).adjustGamma(),
+    light2 = Color(0xFF212121).adjustGamma(),
+    light3 = Color(0xFF262626).adjustGamma(),
+    light4 = Color(0xFF282828).adjustGamma(),
+    light5 = Color(0xFF333333).adjustGamma(),
+    grey1 = Color(0xFF999999).adjustGamma(),
+    grey2 = Color(0xFF747474).adjustGamma(),
+    grey3 = Color(0xFF6B6B6B).adjustGamma(),
+    primary = Color(0xFF25B135).adjustGamma(),
+    primaryHover = Color(0xFF56C262).adjustGamma(),
+    primaryDisabled = Color(0x6625B135).adjustGamma(),
+    primary2 = Color(0xFF0A2F0F).adjustGamma(),
+    primaryDim = Color(0xFF448B39).adjustGamma(),
+    primary65 = Color(0xFF25B135).adjustGamma(),
+    secondary = Color(0xFF2F2F2F).adjustGamma(),
+    secondaryHover = Color(0xFF525252).adjustGamma(),
+    secondaryDisabled = Color(0x662F2F2F).adjustGamma(),
+    danger = Color(0xFFDB0000).adjustGamma(),
+    dangerHover = Color(0xFFAC2B2B).adjustGamma(),
+    warning = Color(0xFFFF9823).adjustGamma(),
+    warningHover = Color(0xFFFFAC4E).adjustGamma(),
+    warningDisabled = Color(0xB3FF9823).adjustGamma(),
+    backgroundColor = Color(0xFF1C1C1C).adjustGamma(),
 )
 
 // Ref: https://github.com/bisq-network/bisq2/blob/main/apps/desktop/desktop/src/main/resources/css/base.css
 val darkColors = BisqColors(
-    white = Color(0xFFfafafa), // -bisq-white
-    dark1 = Color(0xFF151515), // -bisq-dark-grey-10
-    dark2 = Color(0xFF1c1c1c), // -bisq-dark-grey-20
-    dark3 = Color(0xFF242424), // -bisq-dark-grey-30
-    dark4 = Color(0xFF2b2b2b), // -bisq-dark-grey-40
-    dark5 = Color(0xFF383838), // -bisq-dark-grey-50
-    light1 = Color(0xFFc7c7c7), // -bisq-light-grey-10
-    light2 = Color(0xFFd4d4d4), // -bisq-light-grey-20
-    light3 = Color(0xFFdbdbdb), // -bisq-light-grey-30
-    light4 = Color(0xFFe3e3e3), // -bisq-light-grey-40
-    light5 = Color(0xFFeaeaea), // -bisq-light-grey-50
-    grey1 = Color(0xFF4d4d4d), // -bisq-mid-grey-10
-    grey2 = Color(0xFF808080), // -bisq-mid-grey-20
-    grey3 = Color(0xFFb2b2b2), // -bisq-mid-grey-30
-    primary = Color(0xFF56AE48), // -bisq2-green
-    primaryHover = Color(0xFF56C262),
-    primaryDisabled = Color(0x6656AE48),
-    primary2 = Color(0xFF0A2F0F),
-    primaryDim = Color(0xFF448B39),
-    primary65 = Color(0xFF97C78E),
-    secondary = Color(0xFF2C2C2C), // .material-text-field-bg (0x0DFFFFFF)
-    secondaryHover = Color(0xFF333333), // .material-text-field-bg-hover (0x13FFFFFF)
-    secondaryDisabled = Color(0xFF232323), // (0x04FFFFFF)
-    danger = Color(0xFFD23246), // .bisq2-red
-    dangerHover = Color(0xFFD74759), // (-bisq2-red, 10%)
-    warning = Color(0xFFFF9823),
-    warningHover = Color(0xFFFFAC4E),
-    warningDisabled = Color(0xB3FF9823),
-    backgroundColor = Color(0xFF1C1C1C),
+    white = Color(0xFFfafafa).adjustGamma(), // -bisq-white
+    dark1 = Color(0xFF151515).adjustGamma(), // -bisq-dark-grey-10
+    dark2 = Color(0xFF1c1c1c).adjustGamma(), // -bisq-dark-grey-20
+    dark3 = Color(0xFF242424).adjustGamma(), // -bisq-dark-grey-30
+    dark4 = Color(0xFF2b2b2b).adjustGamma(), // -bisq-dark-grey-40
+    dark5 = Color(0xFF383838).adjustGamma(), // -bisq-dark-grey-50
+    light1 = Color(0xFFc7c7c7).adjustGamma(), // -bisq-light-grey-10
+    light2 = Color(0xFFd4d4d4).adjustGamma(), // -bisq-light-grey-20
+    light3 = Color(0xFFdbdbdb).adjustGamma(), // -bisq-light-grey-30
+    light4 = Color(0xFFe3e3e3).adjustGamma(), // -bisq-light-grey-40
+    light5 = Color(0xFFeaeaea).adjustGamma(), // -bisq-light-grey-50
+    grey1 = Color(0xFF4d4d4d).adjustGamma(), // -bisq-mid-grey-10
+    grey2 = Color(0xFF808080).adjustGamma(), // -bisq-mid-grey-20
+    grey3 = Color(0xFFb2b2b2).adjustGamma(), // -bisq-mid-grey-30
+    primary = Color(0xFF56AE48).adjustGamma(), // -bisq2-green
+    primaryHover = Color(0xFF56C262).adjustGamma(),
+    primaryDisabled = Color(0x6656AE48).adjustGamma(),
+    primary2 = Color(0xFF0A2F0F).adjustGamma(),
+    primaryDim = Color(0xFF448B39).adjustGamma(),
+    primary65 = Color(0xFF97C78E).adjustGamma(),
+    secondary = Color(0xFF2C2C2C).adjustGamma(), // .material-text-field-bg (0x0DFFFFFF)
+    secondaryHover = Color(0xFF333333).adjustGamma(), // .material-text-field-bg-hover (0x13FFFFFF)
+    secondaryDisabled = Color(0xFF232323).adjustGamma(), // (0x04FFFFFF)
+    danger = Color(0xFFD23246).adjustGamma(), // .bisq2-red
+    dangerHover = Color(0xFFD74759).adjustGamma(), // (-bisq2-red, 10%)
+    warning = Color(0xFFFF9823).adjustGamma(),
+    warningHover = Color(0xFFFFAC4E).adjustGamma(),
+    warningDisabled = Color(0xB3FF9823).adjustGamma(),
+    backgroundColor = Color(0xFF1C1C1C).adjustGamma(),
 )
+
+// With value 1.12 it looks more similar to the desktop app on mac OS
+// We need to check how it looks at different devices to see if the correction is needed and whats the best value
+fun Color.adjustGamma(gamma: Float = 1.12f): Color {
+    fun adjust(color: Float): Float = color.pow(gamma)
+    return Color(
+        red = adjust(this.red),
+        green = adjust(this.green),
+        blue = adjust(this.blue),
+        alpha = this.alpha
+    )
+}
