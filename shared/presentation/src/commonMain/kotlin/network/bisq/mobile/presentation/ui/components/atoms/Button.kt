@@ -1,7 +1,13 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
@@ -38,7 +44,7 @@ fun BisqButton(
     textAlign: TextAlign = TextAlign.Center,
     onClick: (() -> Unit)? = null,
     color: Color = BisqTheme.colors.white,
-    backgroundColor: Color = BisqTheme.colors.primary,
+    backgroundColor: Color = BisqTheme.colors.primaryDim,
     fullWidth: Boolean = false,
     padding: PaddingValues = PaddingValues(
         horizontal = BisqUIConstants.ScreenPadding2X,
@@ -54,7 +60,7 @@ fun BisqButton(
     isLoading: Boolean = false,
     border: BorderStroke? = null,
     type: BisqButtonType = BisqButtonType.Default,
-    borderColor: Color = BisqTheme.colors.primary,
+    borderColor: Color = BisqTheme.colors.primaryDim,
 ) {
 
     val focusManager = LocalFocusManager.current
