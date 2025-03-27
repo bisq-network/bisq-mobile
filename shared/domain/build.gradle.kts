@@ -193,7 +193,6 @@ abstract class GenerateResourceBundlesTask : DefaultTask() {
             "network",
             "settings",
             "payment_method",
-            "offer",
             "mobile" // custom for mobile client
         )
 
