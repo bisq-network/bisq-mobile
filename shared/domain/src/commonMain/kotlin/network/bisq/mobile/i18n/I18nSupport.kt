@@ -39,21 +39,3 @@ fun String.i18n(): String {
 }
 
 lateinit var bundles: List<ResourceBundle>
-private val BUNDLE_NAMES: List<String> = listOf(
-    "default",
-    "application",
-    "bisq_easy",
-    "reputation",
-    // "trade_apps", // Not used
-    // "academy", // Not used
-    "chat",
-    "support",
-    "user",
-    "network",
-    "settings",
-    // "wallet", // Not used
-    "authorized_role", // Not used; buddha: 1 key needed in settings page
-    "payment_method",
-    "offer",
-    "mobile" // custom for mobile client
-)
