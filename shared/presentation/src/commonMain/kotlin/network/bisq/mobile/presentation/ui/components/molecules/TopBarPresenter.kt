@@ -47,7 +47,7 @@ open class TopBarPresenter(
     }
 
     override fun avatarEnabled(currentTab: String?): Boolean {
-        return isAtHome() && currentTab != Routes.TabSettings.name
+        return isAtMainScreen() && currentTab != Routes.TabSettings.name
     }
 
     override fun navigateToUserProfile() {
