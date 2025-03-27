@@ -36,6 +36,13 @@ data class BisqColors(
     val warningHover: Color,
     val warningDisabled: Color,
     val backgroundColor: Color,
+
+    val yellow: Color,
+    val yellow10: Color,
+    val yellow20: Color,
+    val yellow30: Color,
+    val yellow40: Color,
+    val yellow50: Color,
 )
 
 
@@ -70,6 +77,12 @@ val LocalBisqColors = staticCompositionLocalOf {
         warningHover = Color.Unspecified,
         warningDisabled = Color.Unspecified,
         backgroundColor = Color.Unspecified,
+        yellow = Color.Unspecified,
+        yellow10 = Color.Unspecified,
+        yellow20 = Color.Unspecified,
+        yellow30 = Color.Unspecified,
+        yellow40 = Color.Unspecified,
+        yellow50 = Color.Unspecified,
     )
 }
 
@@ -103,6 +116,12 @@ val lightColors = BisqColors(
     warningHover = Color(0xFFFFAC4E).adjustGamma(),
     warningDisabled = Color(0xB3FF9823).adjustGamma(),
     backgroundColor = Color(0xFF1C1C1C).adjustGamma(),
+    yellow = Color(0xFFd0831f).adjustGamma(),
+    yellow10 = Color(0xFFbb751b).adjustGamma(),
+    yellow20 = Color(0xFFa66818).adjustGamma(),
+    yellow30 = Color(0xFF915b15).adjustGamma(),
+    yellow40 = Color(0xFF7c4e12).adjustGamma(),
+    yellow50 = Color(0xFF68410f).adjustGamma(),
 )
 
 // Ref: https://github.com/bisq-network/bisq2/blob/main/apps/desktop/desktop/src/main/resources/css/base.css
@@ -132,10 +151,18 @@ val darkColors = BisqColors(
     secondaryDisabled = Color(0xFF232323).adjustGamma(), // (0x04FFFFFF)
     danger = Color(0xFFD23246).adjustGamma(), // .bisq2-red
     dangerHover = Color(0xFFD74759).adjustGamma(), // (-bisq2-red, 10%)
+    //
     warning = Color(0xFFFF9823).adjustGamma(),
     warningHover = Color(0xFFFFAC4E).adjustGamma(),
     warningDisabled = Color(0xB3FF9823).adjustGamma(),
     backgroundColor = Color(0xFF1C1C1C).adjustGamma(),
+
+    yellow = Color(0xFFd0831f).adjustGamma(),
+    yellow10 = Color(0xFFbb751b).adjustGamma(),
+    yellow20 = Color(0xFFa66818).adjustGamma(),
+    yellow30 = Color(0xFF915b15).adjustGamma(),
+    yellow40 = Color(0xFF7c4e12).adjustGamma(),
+    yellow50 = Color(0xFF68410f).adjustGamma(),
 )
 
 // With value 1.12 it looks more similar to the desktop app on mac OS

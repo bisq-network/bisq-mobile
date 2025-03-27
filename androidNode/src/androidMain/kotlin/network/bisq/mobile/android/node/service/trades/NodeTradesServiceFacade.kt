@@ -85,6 +85,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
     private var tradesPin: Pin? = null
     private var channelsPin: Pin? = null
     private val pinsByTradeId: MutableMap<String, MutableSet<Pin>> = mutableMapOf()
+    private val reactionsPinByMessageId: MutableMap<String, Pin> = mutableMapOf()
 
     override fun activate() {
         if (active) {
@@ -138,6 +139,8 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         tradesPin?.unbind()
 
         unbindPinsByTradeId()
+        unbindReactionsPins()
+
         active = false
     }
 
@@ -598,23 +601,29 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
             }
         }
 
+        unbindReactionsPins()
+
         pins += channel.chatMessages.addObserver(object : CollectionObserver<BisqEasyOpenTradeMessage> {
             override fun add(message: BisqEasyOpenTradeMessage) {
                 val citationAuthorUserProfile: UserProfile? =
                     message.citation.flatMap { citation -> userProfileService.findUserProfile(citation.authorUserProfileId) }
                         .orElse(null)
 
-                message.getChatMessageReactions().addObserver(Runnable {
-                    openTradeItem.bisqEasyOpenTradeChannelModel.chatMessages.value.find { message.id == it.id }?.let { model ->
-                        val chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO> =
-                            message.chatMessageReactions
-                                .filter { !it.isRemoved }
-                                .map { reaction ->
-                                BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(reaction)
-                            }
-                        model.setReactions(chatMessageReactions)
+                val messageId = message.id
+                if (!reactionsPinByMessageId.containsKey(messageId)) {
+                    val pin = message.chatMessageReactions.addObserver {
+                        openTradeItem.bisqEasyOpenTradeChannelModel.chatMessages.value.find { messageId == it.id }?.let { model ->
+                            val chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO> =
+                                message.chatMessageReactions
+                                    .filter { !it.isRemoved }
+                                    .map { reaction ->
+                                        BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(reaction)
+                                    }
+                            model.setReactions(chatMessageReactions)
+                        }
                     }
-                })
+                    reactionsPinByMessageId[messageId] to pin
+                }
 
                 val myUserProfile = userIdentityService.selectedUserIdentity.userProfile
                 val model: BisqEasyOpenTradeMessageModel = Mappings.BisqEasyOpenTradeMessageModelMapping.fromBisq2Model(
@@ -681,9 +690,15 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
     }
 
     private fun unbindPinsByTradeId() {
-        pinsByTradeId.values.forEach { it.forEach { it.unbind() } }
+        pinsByTradeId.values.forEach { pins -> pins.forEach { it.unbind() } }
         pinsByTradeId.clear()
     }
+
+    private fun unbindReactionsPins() {
+        reactionsPinByMessageId.values.forEach { it.unbind() }
+        reactionsPinByMessageId.clear()
+    }
+
 
     private fun getTradeChannelUserNameTriple(): Triple<BisqEasyOpenTradeChannel, BisqEasyTrade, String> {
         val tradeId = requireNotNull(selectedTrade.value) { "Selected trade must not be null" }.tradeId

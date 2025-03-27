@@ -9,29 +9,45 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatPresenter
 
-//todo this is a statically added msg in a similar style as protocol log messages
+// todo we could use also a banner style instead of the style similar to ProtocolLogMessageBox
 @Composable
-fun ChatRulesWarningMessageBox(message: BisqEasyOpenTradeMessageModel) {
+fun ChatRulesWarningMessageBox(presenter: TradeChatPresenter) {
     Row(
         modifier = Modifier
-            .padding(horizontal = BisqUIConstants.ScreenPadding3X)
-            .background(BisqTheme.colors.secondaryDisabled)
+            .background(BisqTheme.colors.dark3)
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
 
     ) {
         Column(
-            modifier = Modifier.padding(all = BisqUIConstants.ScreenPadding2X),
+            modifier = Modifier.padding(all = BisqUIConstants.ScreenPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
         ) {
-            BisqText.baseRegular(message.textString)
-            BisqText.smallRegular(message.dateString)
+            Row(horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
+                // WarningIcon() // TODO Use a grey warning here as its less severe, or just drop the icon
+                BisqText.h6Regular(
+                    "chat.private.chatRulesWarningMessage.headline".i18n(),
+                    color = BisqTheme.colors.grey2
+                )
+            }
+            BisqText.baseLightGrey("chat.private.chatRulesWarningMessage.text".i18n())
+
+            BisqButton(
+                type = BisqButtonType.Grey,
+                text = "action.dontShowAgain".i18n(),
+                onClick = { presenter.onDontShowAgainChatRulesWarningBox() }
+            )
+
+            // We dont need  the learn more button for mobile IMO
         }
     }
 }

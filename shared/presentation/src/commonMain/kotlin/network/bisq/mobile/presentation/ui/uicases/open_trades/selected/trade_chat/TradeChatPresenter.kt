@@ -28,6 +28,9 @@ class TradeChatPresenter(
     private val _quotedMessage: MutableStateFlow<BisqEasyOpenTradeMessageModel?> = MutableStateFlow(null)
     val quotedMessage: StateFlow<BisqEasyOpenTradeMessageModel?> = _quotedMessage
 
+    private val _showChatRulesWarnBox: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    val showChatRulesWarnBox: StateFlow<Boolean> = _showChatRulesWarnBox
+
     override fun onViewAttached() {
         require(tradesServiceFacade.selectedTrade.value != null)
         val selectedTrade = tradesServiceFacade.selectedTrade.value!!
@@ -80,6 +83,11 @@ class TradeChatPresenter(
     }
 
     fun onReportUser(message: BisqEasyOpenTradeMessageModel) {
+    }
+
+    fun onDontShowAgainChatRulesWarningBox() {
+        // todo save in settings
+        _showChatRulesWarnBox.value = false
     }
 }
 

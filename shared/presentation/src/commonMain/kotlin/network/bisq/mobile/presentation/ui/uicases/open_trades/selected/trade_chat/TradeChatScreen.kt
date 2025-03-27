@@ -44,6 +44,7 @@ fun TradeChatScreen() {
     ) {
         ChatMessageList(
             messages = sortedChatMessages,
+            presenter = presenter,
             modifier = Modifier.weight(1f),
             scrollState = scrollState,
             onAddReaction = { message, reaction -> presenter.onAddReaction(message, reaction) },

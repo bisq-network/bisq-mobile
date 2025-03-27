@@ -2,11 +2,13 @@ package network.bisq.mobile.presentation.ui.components.organisms.chat
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -25,10 +27,12 @@ import network.bisq.mobile.presentation.ui.components.molecules.chat.TextMessage
 import network.bisq.mobile.presentation.ui.components.molecules.chat.private_messages.ChatRulesWarningMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.ProtocolLogMessageBox
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatPresenter
 
 @Composable
 fun ChatMessageList(
     messages: List<BisqEasyOpenTradeMessageModel>,
+    presenter: TradeChatPresenter,
     scrollState: LazyListState,
     modifier: Modifier = Modifier,
     onAddReaction: (BisqEasyOpenTradeMessageModel, ReactionEnum) -> Unit = { message: BisqEasyOpenTradeMessageModel, reaction: ReactionEnum -> },
@@ -41,36 +45,41 @@ fun ChatMessageList(
     val scope = rememberCoroutineScope()
 
     Box(modifier = modifier) {
-        LazyColumn(
-            reverseLayout = false,
-            state = scrollState,
-            modifier = Modifier.fillMaxSize(),
+        Column(
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
         ) {
+            if (presenter.showChatRulesWarnBox.collectAsState().value) {
+                ChatRulesWarningMessageBox(presenter)
+            }
 
-            items(messages) { message ->
-                if (message.chatMessageType == ChatMessageTypeEnum.CHAT_RULES_WARNING) {
-                    ChatRulesWarningMessageBox(message)
-                } else if (message.chatMessageType == ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE) {
-                    ProtocolLogMessageBox(message)
-                } else {
-                    TextMessageBox(
-                        message = message,
-                        onScrollToMessage = { id ->
-                            val index = messages.indexOfFirst { it.id == id }
-                            if (index >= 0) {
-                                scope.launch {
-                                    scrollState.animateScrollToItem(index, -50)
+            LazyColumn(
+                reverseLayout = false,
+                state = scrollState,
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
+            ) {
+                items(messages) { message ->
+                    if (message.chatMessageType == ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE) {
+                        ProtocolLogMessageBox(message)
+                    } else {
+                        TextMessageBox(
+                            message = message,
+                            onScrollToMessage = { id ->
+                                val index = messages.indexOfFirst { it.id == id }
+                                if (index >= 0) {
+                                    scope.launch {
+                                        scrollState.animateScrollToItem(index, -50)
+                                    }
                                 }
-                            }
-                        },
-                        onAddReaction = { reaction -> onAddReaction(message, reaction) },
-                        onRemoveReaction = { reaction -> onRemoveReaction(message, reaction) },
-                        onReply = { onReply(message) },
-                        onCopy = { onCopy(message) },
-                        onIgnoreUser = { onIgnoreUser(message) },
-                        onReportUser = { onReportUser(message) },
-                    )
+                            },
+                            onAddReaction = { reaction -> onAddReaction(message, reaction) },
+                            onRemoveReaction = { reaction -> onRemoveReaction(message, reaction) },
+                            onReply = { onReply(message) },
+                            onCopy = { onCopy(message) },
+                            onIgnoreUser = { onIgnoreUser(message) },
+                            onReportUser = { onReportUser(message) },
+                        )
+                    }
                 }
             }
         }

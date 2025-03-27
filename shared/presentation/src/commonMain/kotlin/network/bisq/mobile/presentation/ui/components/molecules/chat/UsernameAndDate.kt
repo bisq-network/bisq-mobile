@@ -14,7 +14,6 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun UsernameAndDate(message: BisqEasyOpenTradeMessageModel) {
-
     Row(
         modifier = Modifier.semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.Bottom,
