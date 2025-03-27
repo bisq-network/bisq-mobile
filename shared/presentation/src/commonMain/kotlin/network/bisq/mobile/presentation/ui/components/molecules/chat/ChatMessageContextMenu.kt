@@ -2,9 +2,11 @@ package network.bisq.mobile.presentation.ui.components.molecules.chat
 
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
@@ -45,6 +47,11 @@ fun ChatMessageContextMenu(
                     onRemoveReaction(reaction)
                     onSetShowMenu(false)
                 }
+            )
+
+            HorizontalDivider(
+                color = BisqTheme.colors.dark5,
+                thickness = 2.dp
             )
 
             if (isPeersMessage) {

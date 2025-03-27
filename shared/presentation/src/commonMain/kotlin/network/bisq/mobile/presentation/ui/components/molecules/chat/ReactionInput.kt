@@ -24,13 +24,19 @@ fun ChatReactionInput(
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-        modifier = Modifier.padding(horizontal = BisqUIConstants.ScreenPadding)
+        modifier = Modifier
+            .padding(
+                top = BisqUIConstants.ScreenPaddingHalfQuarter,
+                start = BisqUIConstants.ScreenPadding,
+                end = BisqUIConstants.ScreenPadding,
+                bottom = BisqUIConstants.ScreenPadding,
+            )
     ) {
         ReactionEnum.entries.forEach { reaction ->
             // todo make a toggle button with calling onRemoveReaction if it was selected
             DynamicImage(
                 path = reaction.imagePath(),
-                modifier = Modifier.size(16.dp).clickable(
+                modifier = Modifier.size(20.dp).clickable(
                     onClick = { onAddReaction(reaction) },
                     interactionSource = remember { MutableInteractionSource() },
                     indication = null

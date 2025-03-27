@@ -26,6 +26,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.JumpToBottomFloa
 import network.bisq.mobile.presentation.ui.components.molecules.chat.TextMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.private_messages.ChatRulesWarningMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.ProtocolLogMessageBox
+import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.TradePeerLeftMessageBox
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatPresenter
 
@@ -61,6 +62,8 @@ fun ChatMessageList(
                 items(messages) { message ->
                     if (message.chatMessageType == ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE) {
                         ProtocolLogMessageBox(message)
+                    } else if (message.chatMessageType == ChatMessageTypeEnum.LEAVE) {
+                        TradePeerLeftMessageBox(message)
                     } else {
                         TextMessageBox(
                             message = message,
@@ -84,6 +87,7 @@ fun ChatMessageList(
             }
         }
 
+        // Does not work as expected
         val jumpThreshold = with(LocalDensity.current) {
             JumpToBottomThreshold.toPx()
         }
