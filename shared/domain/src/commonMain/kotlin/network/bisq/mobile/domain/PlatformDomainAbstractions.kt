@@ -3,6 +3,7 @@
 package network.bisq.mobile.domain
 
 import com.russhwolf.settings.Settings
+import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.PrimitiveKind
@@ -22,6 +23,8 @@ interface PlatformInfo {
 interface UrlLauncher {
     fun openUrl(url: String)
 }
+
+expect fun formatDateTime(dateTime: LocalDateTime): String
 
 expect fun encodeURIParam(param: String): String
 

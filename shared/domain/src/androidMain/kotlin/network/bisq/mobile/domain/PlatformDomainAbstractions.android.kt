@@ -12,6 +12,9 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.russhwolf.settings.Settings
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
 import java.io.ByteArrayOutputStream
 import java.text.DecimalFormat
@@ -19,7 +22,16 @@ import java.util.Locale
 import java.util.Properties
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.text.SimpleDateFormat
+import java.util.Date
 
+actual fun formatDateTime(dateTime: LocalDateTime): String {
+    val timeZone = TimeZone.currentSystemDefault()
+    val instant = dateTime.toInstant(TimeZone.of(timeZone.id)) // Convert to Instant
+    val date = Date(instant.toEpochMilliseconds()) // Convert to Java Date
+    val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+    return formatter.format(date)
+}
 
 actual fun encodeURIParam(param: String): String {
     return URLEncoder.encode(param, StandardCharsets.UTF_8.toString())

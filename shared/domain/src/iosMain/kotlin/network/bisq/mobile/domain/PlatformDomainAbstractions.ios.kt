@@ -6,6 +6,9 @@ import com.russhwolf.settings.ExperimentalSettingsImplementation
 import com.russhwolf.settings.KeychainSettings
 import com.russhwolf.settings.Settings
 import kotlinx.cinterop.*
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
 import platform.Foundation.*
 import platform.UIKit.UIApplication
@@ -25,6 +28,18 @@ import platform.Foundation.NSString
 import platform.Foundation.create
 import platform.Foundation.stringByAddingPercentEncodingWithAllowedCharacters
 
+actual fun formatDateTime(dateTime: LocalDateTime): String {
+    val formatter = NSDateFormatter().apply {
+        dateStyle = NSDateFormatterMediumStyle
+        timeStyle = NSDateFormatterShortStyle
+        locale = NSLocale.currentLocale
+    }
+
+    val instant = dateTime.toInstant(TimeZone.currentSystemDefault())
+    val nsDate = NSDate(instant.toEpochMilliseconds() / 1000.0)
+
+    return formatter.stringFromDate(nsDate)
+}
 
 @OptIn(BetaInteropApi::class)
 actual fun encodeURIParam(param: String): String {
