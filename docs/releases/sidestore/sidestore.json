@@ -1,17 +1,40 @@
 {
   "name": "Bisq",
   "identifier": "network.bisq",
+  "sourceURL": "https://github.com/bisq-network/bisq-mobile/releases/download/v1.0/bisq_connect_manifest.json",
+  "iconURL": "https://example.com/icon.png",
+  "version": "1.0",
+  "apiVersion": "1.01",
+  "userinfo": {},
   "apps": [
     {
+
       "name": "Bisq Connect",
       "bundleIdentifier": "network.bisq",
       "developerName": "Bisq",
       "version": "0.0.5",
-      "versionDate": "2025-03-29",
-      "versionDescription": "Bisq Connect 0.0.5",
+      "versionDate": "2025-03-29T12:00:00Z",
+      "versionDescription": "# v0.0.5\n\nBisq Connect helps connect users to trusted Bisq nodes.",
       "downloadURL": "https://bisq-network.github.io/bisq-mobile/releases/sidestore/bisq-connect.ipa",
       "iconURL": "https://bisq-network.github.io/bisq-mobile/releases/sidestore/icon.png",
-      "tintColor": "ff9500"
+      "tintColor": "ff9500",
+      "localizedDescription": "Bisq Connect allows users to easily connect to trusted Bisq nodes for secure decentralized exchanges.",
+      "size": 22000000,
+      "screenshotURLs": [
+      ],
+      "subtitle": "Connect to trusted Bisq nodes.",
+      "absoluteVersion": "0.0.5",
+      "appID": "networl.bisq.connect",
+      "versions": [
+        {
+          "version": "0.0.5",
+          "date": "2025-03-29T12:00:00Z",
+          "downloadURL": "https://bisq-network.github.io/bisq-mobile/releases/sidestore/bisq-connect.ipa",
+          "localizedDescription": "# v1.0\n\nInitial release of Bisq Connect.",
+          "size": 22000000,
+          "absoluteVersion": "0.0.5"
+        }
+      ]
     }
   ]
 }
