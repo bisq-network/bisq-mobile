@@ -678,7 +678,6 @@ object GeneratedResourceBundles_pcm {
             "bisqEasy.tradeGuide.welcome.content" to "Dis guide dey provide overview of essential aspects for buying or selling Bitcoin with Bisq Easy.\nFor dis guide, you go learn about the security model used for Bisq Easy, get insight into the trade process, and familiarize yourself with the trade rules.\n\nFor any additional questions, feel free to visit the chat rooms wey dey under the 'Support' menu.",
             "bisqEasy.offerDetails.quoteSideAmount" to "{0} amaunt",
             "bisqEasy.tradeState.info.seller.phase2a.waitForPayment.headline" to "Wait for the buyer {0} payment",
-            "bisqEasy.tradeState.info.buyer.phase2a.reasonForPaymentInfo" to "Abeg leave the 'Reason for payment' field empty, if you dey make bank transfer",
             "bisqEasy.tradeState.info.seller.phase3a.paymentProof.warning.proceed" to "Ignoer warning",
             "bisqEasy.offerbook.offerList.table.filters.paymentMethods.title" to "Peyments ({0})",
             "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.noSellers" to "A seller wey wan take your offer of {0}, must get Reputashin Skor of at least {1}.\n\nCurrently, no seller dey for di network wey get dat amount of Reputashin.\n\nYou fit reduce di maximum trad amount to make your offer available to more sellers wey get enough Reputashin, or you fit continue with your offer and wait make seller increase dem Reputashin to take di offer.",
@@ -1409,6 +1408,7 @@ object GeneratedResourceBundles_pcm {
         "mobile" to mapOf(
             "bootstrap.connectedToTrustedNode" to "Connected to trusted node",
             "error.exception" to "Exception",
+            "bisqEasy.tradeState.info.buyer.phase2a.reasonForPaymentInfo" to "Use the trade ID {0} for the 'Reason for payment' field",
         ),
     )
 }
