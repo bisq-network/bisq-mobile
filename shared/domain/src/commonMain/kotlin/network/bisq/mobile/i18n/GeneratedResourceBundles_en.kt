@@ -1439,6 +1439,7 @@ object GeneratedResourceBundles_en {
         "mobile" to mapOf(
             "bootstrap.connectedToTrustedNode" to "Connected to trusted node",
             "error.exception" to "Exception",
+            "bisqEasy.tradeState.info.buyer.phase2a.reasonForPaymentInfo" to "Use the trade ID {0} for the 'Reason for payment' field",
         ),
     )
 }

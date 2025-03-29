@@ -19,6 +19,7 @@ fun BuyerState2a(
     val openTradeItemModel = presenter.selectedTrade.value!!
     val quoteAmount = openTradeItemModel.quoteAmountWithCode
     val paymentAccountData = openTradeItemModel.bisqEasyTradeModel.paymentAccountData.value ?: "data.na".i18n()
+    val tradeId = openTradeItemModel.bisqEasyTradeModel.shortId
 
     Column(horizontalAlignment = Alignment.Start) {
         BisqGap.V1()
@@ -38,8 +39,10 @@ fun BuyerState2a(
         BisqTextField(
             // Payment account of seller
             label = "bisqEasy.tradeState.info.buyer.phase2a.sellersAccount".i18n(),
-            // Please leave the 'Reason for payment' field empty, in case you make a bank transfer
-            helperText = "bisqEasy.tradeState.info.buyer.phase2a.reasonForPaymentInfo".i18n(),
+            // In Bisq 2 we show the Reason for payment with the trade ID as extra field, but on mobile we don't want to
+            // use up too much space for that and show it as helper text instead.
+            // Use the trade ID {0} for the 'Reason for payment' field
+            helperText = "bisqEasy.tradeState.info.buyer.phase2a.reasonForPaymentInfo".i18n(tradeId),
             value = paymentAccountData,
             disabled = true,
             showCopy = true,
