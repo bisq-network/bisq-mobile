@@ -10,7 +10,7 @@ fun CloseTradeDialog(
     onConfirm: () -> Unit
 ) {
     ConfirmationDialog(
-        message = "",
+        message = "TODO",
         subMessage = "bisqEasy.openTrades.closeTrade.warning.completed".i18n(),
         cancelButtonText = "action.cancel".i18n(),
         confirmButtonText = "bisqEasy.openTrades.confirmCloseTrade".i18n(),

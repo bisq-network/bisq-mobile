@@ -25,6 +25,10 @@ class I18nSupport {
             bundles = maps.map { ResourceBundle(it) }
         }
 
+        fun has(key: String): Boolean {
+            return bundles.any { it.containsKey(key) }
+        }
+
         fun encode(key: String, vararg arguments: Any): String {
             if (arguments.isEmpty()) return key
             val args = arguments.joinToString(ARGS_SEPARATOR.toString())
@@ -32,11 +36,31 @@ class I18nSupport {
         }
 
         fun decode(encoded: String): String {
-            val parts = encoded.split(PARAM_SEPARATOR)
-            val key = parts[0]
-            val args = parts.getOrNull(1)?.split(ARGS_SEPARATOR)?.toTypedArray() ?: emptyArray()
-            return key.i18n(*args)
+            if (encoded.isEmpty()) {
+                return ""
+            }
+
+            val separator = PARAM_SEPARATOR
+            if (!encoded.contains(separator)) {
+                return if (has(encoded)) {
+                    encoded.i18n()
+                } else {
+                    // If we don't find a key for the value we treat it as display string
+                    encoded
+                }
+            }
+
+            val tokens = encoded.split(separator)
+            val key = tokens[0]
+            if (tokens.size == 1) {
+                return key.i18n()
+            }
+
+            val argumentList = tokens[1]
+            val arguments = argumentList.split(ARGS_SEPARATOR.toString()).toTypedArray()
+            return key.i18n(*arguments)
         }
+
     }
 }
 

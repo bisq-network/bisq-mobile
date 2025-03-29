@@ -30,7 +30,11 @@ class InterruptedTradePresenter(
     private var _errorMessageVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val errorMessageVisible: StateFlow<Boolean> = _errorMessageVisible
 
-    var reportToMediatorButtonVisible: Boolean = false
+    private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isInMediation: StateFlow<Boolean> = _isInMediation
+
+    private val _reportToMediatorButtonVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val reportToMediatorButtonVisible: StateFlow<Boolean> = _reportToMediatorButtonVisible
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -39,6 +43,11 @@ class InterruptedTradePresenter(
         presenterScope.launch {
             openTradeItemModel.bisqEasyTradeModel.tradeState.collect { tradeState ->
                 tradeStateChanged(tradeState)
+            }
+        }
+        presenterScope.launch {
+            openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect { isInMediation ->
+                _isInMediation.value = isInMediation
             }
         }
     }
@@ -113,7 +122,7 @@ class InterruptedTradePresenter(
                 if (wasTradeCancelled) {
                     _interruptedTradeInfo.value =
                         if (selfInitiated) "bisqEasy.openTrades.cancelled.self".i18n() else "bisqEasy.openTrades.cancelled.peer".i18n()
-                    reportToMediatorButtonVisible = !selfInitiated
+                    _reportToMediatorButtonVisible.value = !selfInitiated
                 } else {
                     _interruptedTradeInfo.value =
                         if (selfInitiated) "bisqEasy.openTrades.rejected.self".i18n() else "bisqEasy.openTrades.rejected.peer".i18n()
@@ -121,14 +130,14 @@ class InterruptedTradePresenter(
             }
 
             BisqEasyTradeStateEnum.FAILED -> {
-                reportToMediatorButtonVisible = false
+                _reportToMediatorButtonVisible.value = false
                 errorMessage =
                     "The trade failed with error message: ${selectedTrade.value?.bisqEasyTradeModel?.errorMessage?.value}" // bisqEasy.openTrades.failed
                 _errorMessageVisible.value = true
             }
 
             BisqEasyTradeStateEnum.FAILED_AT_PEER -> {
-                reportToMediatorButtonVisible = false
+                _reportToMediatorButtonVisible.value = false
                 errorMessage =
                     "The peer's trade failed with an error caused by: ${selectedTrade.value?.bisqEasyTradeModel?.peersErrorMessage?.value}" // bisqEasy.openTrades.failedAtPeer
                 _errorMessageVisible.value = true
@@ -156,7 +165,7 @@ class InterruptedTradePresenter(
         _interruptionInfoVisible.value = false
         errorMessage = ""
         _errorMessageVisible.value = false
-        reportToMediatorButtonVisible = false
+        _reportToMediatorButtonVisible.value = false
     }
 }
 

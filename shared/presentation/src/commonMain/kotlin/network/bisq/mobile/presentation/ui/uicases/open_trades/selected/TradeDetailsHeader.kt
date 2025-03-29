@@ -26,7 +26,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
@@ -40,22 +39,29 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UpIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfileRow
-import network.bisq.mobile.presentation.ui.components.molecules.info.*
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxStyle
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.ui.components.organisms.trades.CancelTradeDialog
+import network.bisq.mobile.presentation.ui.components.organisms.trades.OpenMediationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
 @Composable
-fun TradeDetailsComposable() {
+fun TradeDetailsHeader() {
     val presenter: TradeDetailsHeaderPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val item: TradeItemPresentationModel = presenter.selectedTrade.value!!
-    val interruptTradeButtonVisible by presenter.interruptTradeButtonVisible.collectAsState()
     val interruptTradeButtonText by presenter.interruptTradeButtonText.collectAsState()
+    val openMediationButtonText by presenter.openMediationButtonText.collectAsState()
+    val isInMediation by presenter.isInMediation.collectAsState()
     val tradeCloseType by presenter.tradeCloseType.collectAsState()
     val showInterruptionConfirmationDialog by presenter.showInterruptionConfirmationDialog.collectAsState()
+    val showMediationConfirmationDialog by presenter.showMediationConfirmationDialog.collectAsState()
 
     val enterTransition = remember {
         expandVertically(
@@ -123,7 +129,6 @@ fun TradeDetailsComposable() {
 
             BisqGap.VHalf()
 
-
             if (presenter.isSmallScreen()) {
                 if (isSell) {
                     InfoBoxSats(label = presenter.leftAmountDescription, value = presenter.leftAmount)
@@ -167,6 +172,7 @@ fun TradeDetailsComposable() {
                 enter = enterTransition,
                 exit = exitTransition
             ) {
+
                 Column(
                     horizontalAlignment = Alignment.Start,
                     verticalArrangement = Arrangement.SpaceBetween,
@@ -189,7 +195,7 @@ fun TradeDetailsComposable() {
                             style = InfoBoxStyle.Style2,
                             label1 = "bisqEasy.openTrades.table.price".i18n(),
                             value1 = item.formattedPrice,
-                            label2 = "bisqEasy.openTrades.tradeDetails.tradeDate",
+                            label2 = "bisqEasy.openTrades.tradeDetails.tradeDate".i18n(),
                             value2 = "${item.formattedDate} ${item.formattedTime}",
                         )
                     }
@@ -204,27 +210,47 @@ fun TradeDetailsComposable() {
                         value2 = item.shortTradeId,
                     )
 
+                    val showInterruptTradeButton = interruptTradeButtonText.isNotEmpty()
+                    val showMediationButton = !isInMediation && openMediationButtonText.isNotEmpty()
+                    if (showInterruptTradeButton || showMediationButton) {
+                        BisqGap.V2()
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            if (showInterruptTradeButton) {
+                                BisqButton(
+                                    text = interruptTradeButtonText,
+                                    onClick = { presenter.onOpenInterruptionConfirmationDialog() },
+                                    type = BisqButtonType.Outline,
+                                )
+                            }
+                            if (showMediationButton) {
+                                BisqButton(
+                                    text = openMediationButtonText,
+                                    onClick = { presenter.onOpenMediationConfirmationDialog() },
+                                    type = BisqButtonType.GreyOutline,
+                                )
+                            }
+                        }
+
+                        BisqGap.VHalf()
+                    }
                 }
             }
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val buttonAlpha: Float = if (interruptTradeButtonVisible) 1f else 0f
-                BisqButton(
-                    modifier = Modifier.alpha(buttonAlpha),
-                    text = interruptTradeButtonText,
-                    onClick = { presenter.setShowInterruptionConfirmationDialog(true) },
-                    type = BisqButtonType.Outline,
-                )
                 IconButton(onClick = { showDetails = !showDetails }) {
-                    //TODO icon is not high resolution
                     UpIcon(
                         modifier = Modifier
-                            .size(24.dp)
-                            .clip(shape = RoundedCornerShape(12.dp))
+                            .size(32.dp)
+                            .clip(shape = RoundedCornerShape(16.dp))
                             .rotate(arrowRotationDegree)
                             .background(color = BisqTheme.colors.primary)
                     )
@@ -236,9 +262,16 @@ fun TradeDetailsComposable() {
     if (showInterruptionConfirmationDialog) {
         CancelTradeDialog(
             onCancelConfirm = { presenter.onInterruptTrade() },
-            onDismiss = { presenter.setShowInterruptionConfirmationDialog(false) },
+            onDismiss = { presenter.onCloseInterruptionConfirmationDialog() },
             isBuyer = presenter.directionEnum.isBuy,
             isRejection = tradeCloseType == TradeDetailsHeaderPresenter.TradeCloseType.REJECT
+        )
+    }
+
+    if (showMediationConfirmationDialog) {
+        OpenMediationDialog(
+            onCancelConfirm = { presenter.onOpenMediation() },
+            onDismiss = { presenter.onCloseMediationConfirmationDialog() },
         )
     }
 }

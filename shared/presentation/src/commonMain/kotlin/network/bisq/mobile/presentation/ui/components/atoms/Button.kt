@@ -29,6 +29,7 @@ enum class BisqButtonType {
     Grey,
     Danger,
     Outline,
+    GreyOutline,
     Clear
 }
 
@@ -72,6 +73,7 @@ fun BisqButton(
         BisqButtonType.Grey -> if (disabled) BisqTheme.colors.dark5.copy(alpha = 0.75F) else BisqTheme.colors.dark5
         BisqButtonType.Danger -> if (disabled) BisqTheme.colors.danger.copy(alpha = 0.75F) else BisqTheme.colors.danger
         BisqButtonType.Outline -> Color.Transparent
+        BisqButtonType.GreyOutline -> Color.Transparent
         BisqButtonType.Clear -> Color.Transparent
     }
 
@@ -80,6 +82,7 @@ fun BisqButton(
         BisqButtonType.Grey -> border
         BisqButtonType.Danger -> null
         BisqButtonType.Outline -> BorderStroke(1.dp, borderColor)
+        BisqButtonType.GreyOutline -> BorderStroke(1.dp, grey2)
         BisqButtonType.Clear -> null
     }
 
@@ -88,6 +91,7 @@ fun BisqButton(
         BisqButtonType.Grey -> if (disabled) grey2 else color
         BisqButtonType.Danger -> if (disabled) grey2 else color
         BisqButtonType.Outline -> if (disabled) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
+        BisqButtonType.GreyOutline -> if (disabled) BisqTheme.colors.grey1 else grey2
         BisqButtonType.Clear -> if (disabled) grey2 else color
     }
 

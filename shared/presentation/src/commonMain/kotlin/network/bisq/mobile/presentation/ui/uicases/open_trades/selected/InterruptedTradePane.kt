@@ -34,6 +34,8 @@ fun InterruptedTradePane() {
     val interruptedTradeInfo by presenter.interruptedTradeInfo.collectAsState()
     val errorMessageVisible by presenter.errorMessageVisible.collectAsState()
     val errorMessage by remember { mutableStateOf(presenter.errorMessage) }
+    val isInMediation by presenter.isInMediation.collectAsState()
+    val reportToMediatorButtonVisible by presenter.reportToMediatorButtonVisible.collectAsState()
 
     Column(
         modifier = Modifier
@@ -71,7 +73,7 @@ fun InterruptedTradePane() {
                 .padding(12.dp),
             horizontalArrangement = Arrangement.End,
         ) {
-            if (presenter.reportToMediatorButtonVisible) {
+            if (!isInMediation && reportToMediatorButtonVisible) {
                 BisqButton(
                     text = "bisqEasy.openTrades.reportToMediator".i18n(),
                     onClick = { presenter.onReportToMediator() },
