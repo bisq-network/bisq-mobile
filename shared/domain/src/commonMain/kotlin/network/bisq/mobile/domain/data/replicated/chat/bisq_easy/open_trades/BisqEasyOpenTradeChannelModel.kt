@@ -8,6 +8,7 @@ import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.i18n
 
 //todo will get completed with work on chat
 class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTradeChannelDto) : Logging {
@@ -20,7 +21,8 @@ class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTra
     val mediator: UserProfileVO? = bisqEasyOpenTradeChannelDto.mediator
 
     // Mutable properties
-    val isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isInMediation: StateFlow<Boolean> = _isInMediation
     val _chatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(listOf())
     val chatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> = _chatMessages
     val chatChannelNotificationType: MutableStateFlow<ChatChannelNotificationTypeEnum> =
@@ -40,13 +42,16 @@ class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTra
             val peer: String = getPeer().userName
             val optionalMediatorPostfix: String
             if (mediator != null && isInMediation.value) {
-                // optionalMediatorPostfix= ", " + mediator.userName + " (" + Res.get("bisqEasy.mediator")+ ")"
-                optionalMediatorPostfix = ", " + mediator.userName + " (Mediator)"
+                optionalMediatorPostfix = ", " + mediator.userName + " (" + "bisqEasy.mediator".i18n() + ")"
             } else {
                 optionalMediatorPostfix = ""
             }
             return "$shortOfferId: $peer$optionalMediatorPostfix"
         }
+    }
+
+    fun setIsMediator(value: Boolean) {
+        _isInMediation.value = value
     }
 
     fun isMediator(): Boolean {

@@ -286,7 +286,8 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
             val (channel, trade, userName) = getTradeChannelUserNameTriple()
             val encoded: String
             val paymentMethod = trade.contract.baseSidePaymentMethodSpec.paymentMethod
-            val proofType = Res.get("bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.paymentProof.$paymentMethod")
+            val paymentRailName = paymentMethod.paymentRail.name
+            val proofType = Res.get("bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.paymentProof.$paymentRailName")
             if (paymentProof == null) {
                 encoded = Res.encode(
                     "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.noProofProvided",
@@ -598,6 +599,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         pins += channel.isInMediationObservable().addObserver { isInMediation ->
             if (isInMediation != null) {
                 updateIsAnyTradeInMediation()
+                openTradeItem.bisqEasyOpenTradeChannelModel.setIsMediator(isInMediation)
             }
         }
 

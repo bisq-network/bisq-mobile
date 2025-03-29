@@ -6,7 +6,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.BTC_CONFIRMED
@@ -29,19 +28,14 @@ class OpenTradePresenter(
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
 
-    private var _tradeAbortedBoxVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _tradeAbortedBoxVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val tradeAbortedBoxVisible: StateFlow<Boolean> = _tradeAbortedBoxVisible
 
-    private var _tradeProcessBoxVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _tradeProcessBoxVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val tradeProcessBoxVisible: StateFlow<Boolean> = _tradeProcessBoxVisible
 
-    private var _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> = _isInMediation
-
-
-    private var _chatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(listOf())
-    val chatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> = _chatMessages
-
 
     private var _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
     private var _coroutineScope: CoroutineScope? = null
@@ -61,12 +55,6 @@ class OpenTradePresenter(
                 _isInMediation.value = isInMediation
             }
         }
-
-        presenterScope.launch {
-            openTradeItemModel.bisqEasyOpenTradeChannelModel.chatMessages.collect { chatMessages ->
-                _chatMessages.value = chatMessages
-            }
-        }
     }
 
     override fun onViewUnattaching() {
@@ -78,7 +66,6 @@ class OpenTradePresenter(
     fun onOpenChat() {
         navigateTo(Routes.TradeChat)
     }
-
 
     private fun tradeStateChanged(state: BisqEasyTradeStateEnum?) {
         _tradeAbortedBoxVisible.value = false
@@ -158,6 +145,7 @@ class OpenTradePresenter(
     fun setTradePaneScrollState(scrollState: ScrollState) {
         _tradePaneScrollState.value = scrollState
     }
+
     fun setUIScope(scope: CoroutineScope) {
         _coroutineScope = scope
     }

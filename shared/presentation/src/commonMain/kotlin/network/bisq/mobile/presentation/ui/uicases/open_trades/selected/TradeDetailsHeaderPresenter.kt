@@ -6,6 +6,7 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
+import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
@@ -14,6 +15,7 @@ import network.bisq.mobile.presentation.MainPresenter
 class TradeDetailsHeaderPresenter(
     mainPresenter: MainPresenter,
     var tradesServiceFacade: TradesServiceFacade,
+    var mediationServiceFacade: MediationServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
     enum class TradeCloseType {
@@ -39,14 +41,17 @@ class TradeDetailsHeaderPresenter(
     private var _interruptTradeButtonText: MutableStateFlow<String> = MutableStateFlow("")
     val interruptTradeButtonText: StateFlow<String> = _interruptTradeButtonText
 
-    private var _interruptTradeButtonVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val interruptTradeButtonVisible: StateFlow<Boolean> = _interruptTradeButtonVisible
+    private var _openMediationButtonText: MutableStateFlow<String> = MutableStateFlow("")
+    val openMediationButtonText: StateFlow<String> = _openMediationButtonText
 
     private val _showInterruptionConfirmationDialog = MutableStateFlow(false)
     val showInterruptionConfirmationDialog: StateFlow<Boolean> get() = _showInterruptionConfirmationDialog
-    fun setShowInterruptionConfirmationDialog(value: Boolean) {
-        _showInterruptionConfirmationDialog.value = value
-    }
+
+    private val _showMediationConfirmationDialog = MutableStateFlow(false)
+    val showMediationConfirmationDialog: StateFlow<Boolean> get() = _showMediationConfirmationDialog
+
+    private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isInMediation: StateFlow<Boolean> = this._isInMediation
 
     override fun onViewAttached() {
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -77,6 +82,12 @@ class TradeDetailsHeaderPresenter(
                 tradeStateChanged(tradeState)
             }
         }
+
+        presenterScope.launch {
+            openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect { isInMediation ->
+                this@TradeDetailsHeaderPresenter._isInMediation.value = isInMediation
+            }
+        }
     }
 
     override fun onViewUnattaching() {
@@ -86,10 +97,64 @@ class TradeDetailsHeaderPresenter(
     private fun tradeStateChanged(state: BisqEasyTradeStateEnum?) {
         _tradeCloseType.value = null
         _interruptTradeButtonText.value = ""
-        _interruptTradeButtonVisible.value = false
+        _openMediationButtonText.value = ""
 
         if (state == null) {
             return
+        }
+
+        when (state) {
+            BisqEasyTradeStateEnum.INIT,
+            BisqEasyTradeStateEnum.TAKER_SENT_TAKE_OFFER_REQUEST,
+            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
+            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
+            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA -> {
+                // Before account data are exchange we use `Report to mediator`, after that `Request mediation`
+                _openMediationButtonText.value = "bisqEasy.tradeState.reportToMediator".i18n() // Report to mediator
+            }
+
+            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
+            BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
+            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA_,
+            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
+
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
+            BisqEasyTradeStateEnum.MAKER_DID_NOT_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS_,
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
+
+            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
+            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
+            BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
+            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS_,
+            BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
+
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
+            BisqEasyTradeStateEnum.MAKER_DID_NOT_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA_,
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
+
+            BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION,
+            BisqEasyTradeStateEnum.SELLER_RECEIVED_FIAT_SENT_CONFIRMATION,
+            BisqEasyTradeStateEnum.SELLER_CONFIRMED_FIAT_RECEIPT,
+            BisqEasyTradeStateEnum.BUYER_RECEIVED_SELLERS_FIAT_RECEIPT_CONFIRMATION,
+            BisqEasyTradeStateEnum.SELLER_SENT_BTC_SENT_CONFIRMATION,
+            BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION -> {
+                _openMediationButtonText.value = "bisqEasy.tradeState.requestMediation".i18n() //Request mediator
+            }
+
+            BisqEasyTradeStateEnum.BTC_CONFIRMED,
+            BisqEasyTradeStateEnum.REJECTED,
+            BisqEasyTradeStateEnum.PEER_REJECTED,
+            BisqEasyTradeStateEnum.CANCELLED,
+            BisqEasyTradeStateEnum.PEER_CANCELLED,
+            BisqEasyTradeStateEnum.FAILED,
+            BisqEasyTradeStateEnum.FAILED_AT_PEER -> {
+            }
         }
 
         when (state) {
@@ -103,9 +168,8 @@ class TradeDetailsHeaderPresenter(
             BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA,
             BisqEasyTradeStateEnum.TAKER_DID_NOT_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA -> {
-                _interruptTradeButtonVisible.value = true
                 _tradeCloseType.value = TradeCloseType.REJECT
-                _interruptTradeButtonText.value = "Reject trade" // bisqEasy.openTrades.rejectTrade
+                _interruptTradeButtonText.value = "bisqEasy.openTrades.rejectTrade".i18n() // Reject trade
             }
 
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
@@ -131,36 +195,33 @@ class TradeDetailsHeaderPresenter(
             BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION,
             BisqEasyTradeStateEnum.BUYER_RECEIVED_SELLERS_FIAT_RECEIPT_CONFIRMATION,
             BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION -> {
-                _interruptTradeButtonVisible.value = true
                 _tradeCloseType.value = TradeCloseType.CANCEL
                 _interruptTradeButtonText.value = "bisqEasy.openTrades.cancelTrade".i18n()
             }
 
             BisqEasyTradeStateEnum.BTC_CONFIRMED -> {
-                _interruptTradeButtonVisible.value = false
                 _tradeCloseType.value = TradeCloseType.COMPLETED
-                _interruptTradeButtonText.value = ""
             }
 
             BisqEasyTradeStateEnum.REJECTED,
             BisqEasyTradeStateEnum.PEER_REJECTED,
             BisqEasyTradeStateEnum.CANCELLED,
-            BisqEasyTradeStateEnum.PEER_CANCELLED -> {
-                _interruptTradeButtonVisible.value = false
-            }
-
-            BisqEasyTradeStateEnum.FAILED -> {
-                _interruptTradeButtonVisible.value = false
-            }
-
+            BisqEasyTradeStateEnum.PEER_CANCELLED,
+            BisqEasyTradeStateEnum.FAILED,
             BisqEasyTradeStateEnum.FAILED_AT_PEER -> {
-                _interruptTradeButtonVisible.value = false
             }
         }
     }
 
+    fun onOpenInterruptionConfirmationDialog() {
+        _showInterruptionConfirmationDialog.value = true
+    }
+
+    fun onCloseInterruptionConfirmationDialog() {
+        _showInterruptionConfirmationDialog.value = false
+    }
+
     fun onInterruptTrade() {
-        //todo who warning to user if he really want to reject. See onInterruptTrade in Bisq 2 TradeStateController
         backgroundScope.launch {
             require(selectedTrade.value != null)
 
@@ -172,17 +233,26 @@ class TradeDetailsHeaderPresenter(
             }
             if (result != null) {
                 when {
-                    // TODO review
-                    result.isFailure -> closeWorkflow()
-                    result.isSuccess -> closeWorkflow()
+                    result.isFailure -> _showInterruptionConfirmationDialog.value = false
+                    result.isSuccess -> _showInterruptionConfirmationDialog.value = false
                 }
             }
         }
     }
 
-    private fun closeWorkflow() {
-//        Do not navigate, close button on the same screen does it
-        navigateBack()
+    fun onOpenMediationConfirmationDialog() {
+        _showMediationConfirmationDialog.value = true
+    }
+
+    fun onCloseMediationConfirmationDialog() {
+        _showMediationConfirmationDialog.value = false
+    }
+
+    fun onOpenMediation() {
+        _showMediationConfirmationDialog.value = false
+        backgroundScope.launch {
+            mediationServiceFacade.reportToMediator(selectedTrade.value!!)
+        }
     }
 
     private fun reset() {
@@ -195,7 +265,10 @@ class TradeDetailsHeaderPresenter(
         rightCode = ""
 
         _tradeCloseType.value = null
+        _isInMediation.value = false
         _interruptTradeButtonText.value = ""
-        _interruptTradeButtonVisible.value = false
+        _openMediationButtonText.value = ""
+        _showInterruptionConfirmationDialog.value = false
+        _showMediationConfirmationDialog.value = false
     }
 }

@@ -42,7 +42,7 @@ fun BuyerState2a(
             // In Bisq 2 we show the Reason for payment with the trade ID as extra field, but on mobile we don't want to
             // use up too much space for that and show it as helper text instead.
             // Use the trade ID {0} for the 'Reason for payment' field
-            helperText = "bisqEasy.tradeState.info.buyer.phase2a.reasonForPaymentInfo".i18n(tradeId),
+            helperText = "mobile.tradeState.info.buyer.phase2a.reasonForPaymentInfo".i18n(tradeId),
             value = paymentAccountData,
             disabled = true,
             showCopy = true,

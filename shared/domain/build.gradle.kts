@@ -185,6 +185,7 @@ abstract class GenerateResourceBundlesTask : DefaultTask() {
         val bundleNames: List<String> = listOf(
             "default",
             "application",
+            "authorized_role",
             "bisq_easy",
             "reputation",
             "chat",

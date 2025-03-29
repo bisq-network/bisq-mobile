@@ -1,28 +1,30 @@
 package network.bisq.mobile.presentation.ui.components.molecules.dialog
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun ConfirmationDialog(
-    title: String = "",
-    message: String = "Are you sure?",
+    title: String = "", // todo not used
+    message: String = "confirmation.areYouSure".i18n(), // Are you sure?
     messageColor: Color = BisqTheme.colors.white,
     messageLeftIcon: (@Composable () -> Unit)? = null,
     subMessage: String = "",
-    confirmButtonText: String = "Yes",
-    cancelButtonText: String = "No",
+    confirmButtonText: String = "confirmation.yes".i18n(),
+    cancelButtonText: String = "confirmation.no".i18n(),
     marginTop: Dp = BisqUIConstants.ScreenPadding5X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalButtonPlacement: Boolean = false,
