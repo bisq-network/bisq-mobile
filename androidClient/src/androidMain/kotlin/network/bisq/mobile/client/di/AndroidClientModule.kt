@@ -33,6 +33,6 @@ val androidClientModule = module {
     }
 
     single<MainPresenter> {
-        AndroidClientMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
+        AndroidClientMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
     } bind AppPresenter::class
 }

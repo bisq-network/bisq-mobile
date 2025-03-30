@@ -9,7 +9,6 @@ import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannel
 import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannelService
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannel
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelService
-import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
 import bisq.chat.priv.LeavePrivateChatManager
 import bisq.common.monetary.Monetary
 import bisq.common.observable.Pin
@@ -34,17 +33,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
-import network.bisq.mobile.android.node.mapping.Mappings.BisqEasyOpenTradeMessageReactionMapping
 import network.bisq.mobile.android.node.mapping.TradeItemPresentationDtoFactory
-import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
-import network.bisq.mobile.domain.data.replicated.chat.CitationVO
-import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
-import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
-import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -77,15 +69,11 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
     override val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade
 
-    private val _isAnyTradeInMediation = MutableStateFlow(false)
-    override val isAnyTradeInMediation: StateFlow<Boolean> get() = _isAnyTradeInMediation
-
     // Misc
     private var active = false
     private var tradesPin: Pin? = null
     private var channelsPin: Pin? = null
     private val pinsByTradeId: MutableMap<String, MutableSet<Pin>> = mutableMapOf()
-    private val reactionsPinByMessageId: MutableMap<String, Pin> = mutableMapOf()
 
     override fun activate() {
         if (active) {
@@ -138,8 +126,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         channelsPin?.unbind()
         tradesPin?.unbind()
 
-        unbindPinsByTradeId()
-        unbindReactionsPins()
+        unbindAllPinsByTradeId()
 
         active = false
     }
@@ -330,43 +317,6 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
 
     override suspend fun exportTradeDate(): Result<Unit> {
         //todo
-        return Result.success(Unit)
-    }
-
-    override suspend fun sendChatMessage(text: String, citationVO: CitationVO?): Result<Unit> {
-        selectedTrade.value?.bisqEasyOpenTradeChannelModel?.id.let { id ->
-            val citation = Optional.ofNullable(citationVO?.let { Mappings.CitationMapping.toBisq2Model(it) })
-            val channel = bisqEasyOpenTradeChannelService.findChannel(id).get()
-            bisqEasyOpenTradeChannelService.sendTextMessage(text, citation, channel)
-        }
-        return Result.success(Unit)
-    }
-
-    override suspend fun addChatMessageReaction(messageId: String, reactionEnum: ReactionEnum): Result<Unit> {
-        return addOrRemoveChatMessageReaction(messageId, reactionEnum, false)
-    }
-
-    override suspend fun removeChatMessageReaction(messageId: String, reactionVO: BisqEasyOpenTradeMessageReactionVO): Result<Unit> {
-        if (userIdentityService.findUserIdentity(reactionVO.senderUserProfile.id).isPresent) {
-            val reaction = ReactionEnum.entries[reactionVO.reactionId]
-            return addOrRemoveChatMessageReaction(messageId, reaction, true)
-        } else {
-            // Not our reaction, so we cannot remove it
-            return Result.success(Unit)
-        }
-    }
-
-    private fun addOrRemoveChatMessageReaction(
-        messageId: String, reactionEnum: ReactionEnum, isRemoved: Boolean
-    ): Result<Unit> {
-        selectedTrade.value?.bisqEasyOpenTradeChannelModel?.id.let { id ->
-            bisqEasyOpenTradeChannelService.findChannel(id).getOrNull()?.let { channel ->
-                channel.chatMessages.find { it.id == messageId }?.let { message ->
-                    val reaction = Mappings.ReactionMapping.toBisq2Model(reactionEnum)
-                    bisqEasyOpenTradeChannelService.sendTextMessageReaction(message, channel, reaction, isRemoved)
-                }
-            }
-        }
         return Result.success(Unit)
     }
 
@@ -598,54 +548,9 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
 
         pins += channel.isInMediationObservable().addObserver { isInMediation ->
             if (isInMediation != null) {
-                updateIsAnyTradeInMediation()
                 openTradeItem.bisqEasyOpenTradeChannelModel.setIsMediator(isInMediation)
             }
         }
-
-        unbindReactionsPins()
-
-        pins += channel.chatMessages.addObserver(object : CollectionObserver<BisqEasyOpenTradeMessage> {
-            override fun add(message: BisqEasyOpenTradeMessage) {
-                val citationAuthorUserProfile: UserProfile? =
-                    message.citation.flatMap { citation -> userProfileService.findUserProfile(citation.authorUserProfileId) }
-                        .orElse(null)
-
-                val messageId = message.id
-                if (!reactionsPinByMessageId.containsKey(messageId)) {
-                    val pin = message.chatMessageReactions.addObserver {
-                        openTradeItem.bisqEasyOpenTradeChannelModel.chatMessages.value.find { messageId == it.id }?.let { model ->
-                            val chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO> =
-                                message.chatMessageReactions
-                                    .filter { !it.isRemoved }
-                                    .map { reaction ->
-                                        BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(reaction)
-                                    }
-                            model.setReactions(chatMessageReactions)
-                        }
-                    }
-                    reactionsPinByMessageId[messageId] to pin
-                }
-
-                val myUserProfile = userIdentityService.selectedUserIdentity.userProfile
-                val model: BisqEasyOpenTradeMessageModel = Mappings.BisqEasyOpenTradeMessageModelMapping.fromBisq2Model(
-                    message,
-                    citationAuthorUserProfile,
-                    myUserProfile
-                )
-                if (model.chatMessageType == ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER) {
-                    return
-                }
-                openTradeItem.bisqEasyOpenTradeChannelModel.addChatMessages(model)
-            }
-
-            override fun remove(element: Any) {
-                // Private messages cannot be removed
-            }
-
-            override fun clear() {
-            }
-        })
     }
 
     private fun handleTradeAndChannelRemoved(trade: BisqEasyTrade) {
@@ -658,22 +563,16 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         val item = findListItem(trade).get()
         _openTradeItems.value -= item
 
-        unbindFromPinsByTradeId(tradeId)
-        updateIsAnyTradeInMediation()
+        unbindPinByTradeId(tradeId)
     }
 
     private fun handleClearTradesAndChannels() {
         _openTradeItems.value = emptyList()
         _selectedTrade.value = null
-        unbindPinsByTradeId()
-        updateIsAnyTradeInMediation()
+        unbindAllPinsByTradeId()
     }
 
     // Misc
-    private fun updateIsAnyTradeInMediation() {
-        _isAnyTradeInMediation.value = bisqEasyOpenTradeChannelService.channels.stream().anyMatch { it.isInMediation }
-    }
-
     private fun findListItem(trade: BisqEasyTrade): Optional<TradeItemPresentationModel> {
         return findListItem(trade.id)
     }
@@ -684,23 +583,17 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
             .findAny()
     }
 
-    private fun unbindFromPinsByTradeId(tradeId: String) {
+    private fun unbindPinByTradeId(tradeId: String) {
         if (pinsByTradeId.containsKey(tradeId)) {
             pinsByTradeId[tradeId]?.forEach { it.unbind() }
             pinsByTradeId.remove(tradeId)
         }
     }
 
-    private fun unbindPinsByTradeId() {
+    private fun unbindAllPinsByTradeId() {
         pinsByTradeId.values.forEach { pins -> pins.forEach { it.unbind() } }
         pinsByTradeId.clear()
     }
-
-    private fun unbindReactionsPins() {
-        reactionsPinByMessageId.values.forEach { it.unbind() }
-        reactionsPinByMessageId.clear()
-    }
-
 
     private fun getTradeChannelUserNameTriple(): Triple<BisqEasyOpenTradeChannel, BisqEasyTrade, String> {
         val tradeId = requireNotNull(selectedTrade.value) { "Selected trade must not be null" }.tradeId

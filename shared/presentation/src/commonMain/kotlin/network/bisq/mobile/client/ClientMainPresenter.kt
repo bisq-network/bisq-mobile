@@ -2,11 +2,11 @@ package network.bisq.mobile.client
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.chat.trade.TradeChatServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.network.ClientConnectivityService
@@ -23,6 +23,7 @@ open class ClientMainPresenter(
     private val connectivityService: ClientConnectivityService,
     openTradesNotificationService: OpenTradesNotificationService,
     private val tradesServiceFacade: TradesServiceFacade,
+    private val tradeChatServiceFacade: TradeChatServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val offersServiceFacade: OffersServiceFacade,
@@ -82,6 +83,7 @@ open class ClientMainPresenter(
             offersServiceFacade.activate()
             marketPriceServiceFacade.activate()
             tradesServiceFacade.activate()
+            tradeChatServiceFacade.activate()
             settingsServiceFacade.activate()
             languageServiceFacade.activate()
         }.onFailure { e ->
@@ -96,6 +98,7 @@ open class ClientMainPresenter(
         offersServiceFacade.deactivate()
         marketPriceServiceFacade.deactivate()
         tradesServiceFacade.deactivate()
+        tradeChatServiceFacade.deactivate()
         settingsServiceFacade.deactivate()
         languageServiceFacade.deactivate()
         super.onViewUnattaching()

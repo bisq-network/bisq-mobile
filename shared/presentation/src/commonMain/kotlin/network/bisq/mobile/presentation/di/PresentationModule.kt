@@ -67,7 +67,7 @@ import org.koin.dsl.module
 
 val presentationModule = module {
     single<MainPresenter> {
-        ClientMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
+        ClientMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
     } bind AppPresenter::class
 
     single<TopBarPresenter> { TopBarPresenter(get(), get(), get(), get()) } bind ITopBarPresenter::class
@@ -178,7 +178,7 @@ val presentationModule = module {
     factory { TradeFlowPresenter(get(), get(), get()) }
     factory { OpenTradePresenter(get(), get(), get()) }
 
-    single { TradeChatPresenter(get(), get()) }
+    single { TradeChatPresenter(get(), get(), get()) }
 
     single { TradeGuidePresenter(get(), get()) } bind TradeGuidePresenter::class
     single { WalletGuidePresenter(get()) } bind WalletGuidePresenter::class

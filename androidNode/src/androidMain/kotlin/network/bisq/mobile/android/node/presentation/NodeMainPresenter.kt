@@ -7,6 +7,7 @@ import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.chat.trade.TradeChatServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
@@ -23,6 +24,7 @@ class NodeMainPresenter(
     openTradesNotificationService: OpenTradesNotificationService,
     private val connectivityService: NodeConnectivityService,
     private val tradesServiceFacade: TradesServiceFacade,
+    private val tradeChatServiceFacade: TradeChatServiceFacade,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
@@ -64,6 +66,7 @@ class NodeMainPresenter(
                             offersServiceFacade.activate()
                             marketPriceServiceFacade.activate()
                             tradesServiceFacade.activate()
+                            tradeChatServiceFacade.activate()
                             languageServiceFacade.activate()
                         } else {
                             log.e("Initializing applicationService failed", throwable)
@@ -76,7 +79,7 @@ class NodeMainPresenter(
                 offersServiceFacade.activate()
                 marketPriceServiceFacade.activate()
                 tradesServiceFacade.activate()
-
+                tradeChatServiceFacade.activate()
                 languageServiceFacade.activate()
             }
         }.onFailure { e ->
@@ -107,6 +110,7 @@ class NodeMainPresenter(
 //        TODO for notifications to work even if the app gets killed this needs to be commented out
 //        but it can't be done yet because of lack of support in bisq2 jars
         tradesServiceFacade.deactivate()
+        tradeChatServiceFacade.deactivate()
         languageServiceFacade.deactivate()
     }
 }

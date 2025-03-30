@@ -1,13 +1,19 @@
 package network.bisq.mobile.android.node.di
 
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.presentation.*
+import network.bisq.mobile.android.node.presentation.NodeGeneralSettingsPresenter
+import network.bisq.mobile.android.node.presentation.NodeGettingStartedPresenter
+import network.bisq.mobile.android.node.presentation.NodeMainPresenter
+import network.bisq.mobile.android.node.presentation.NodeSettingsPresenter
+import network.bisq.mobile.android.node.presentation.NodeSplashPresenter
+import network.bisq.mobile.android.node.presentation.OnBoardingNodePresenter
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.android.node.service.accounts.NodeAccountsServiceFacade
 import network.bisq.mobile.android.node.service.bootstrap.NodeApplicationBootstrapFacade
-import network.bisq.mobile.android.node.service.explorer.NodeExplorerServiceFacade
+import network.bisq.mobile.android.node.service.chat.trade.NodeTradeChatServiceFacade
 import network.bisq.mobile.android.node.service.common.NodeLanguageServiceFacade
+import network.bisq.mobile.android.node.service.explorer.NodeExplorerServiceFacade
 import network.bisq.mobile.android.node.service.market_price.NodeMarketPriceServiceFacade
 import network.bisq.mobile.android.node.service.mediation.NodeMediationServiceFacade
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
@@ -19,8 +25,9 @@ import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
+import network.bisq.mobile.domain.service.chat.trade.TradeChatServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
+import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
@@ -65,6 +72,8 @@ val androidNodeModule = module {
 
     single<TradesServiceFacade> { NodeTradesServiceFacade(get()) }
 
+    single<TradeChatServiceFacade> { NodeTradeChatServiceFacade(get(), get()) }
+
     single<MediationServiceFacade> { NodeMediationServiceFacade(get()) }
 
     single<SettingsServiceFacade> { NodeSettingsServiceFacade(get()) }
@@ -80,7 +89,7 @@ val androidNodeModule = module {
     // this line showcases both, the possibility to change behaviour of the app by changing one definition
     // and binding the same obj to 2 different abstractions
     single<MainPresenter> {
-        NodeMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
+        NodeMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
     } bind AppPresenter::class
 
     single<SplashPresenter> {

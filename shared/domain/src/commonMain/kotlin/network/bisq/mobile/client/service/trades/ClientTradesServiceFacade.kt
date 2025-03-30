@@ -9,9 +9,6 @@ import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Subscription
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.data.replicated.chat.CitationVO
-import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
-import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationDto
@@ -33,9 +30,6 @@ class ClientTradesServiceFacade(
 
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
     override val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade
-
-    private val _isAnyTradeInMediation = MutableStateFlow(false)
-    override val isAnyTradeInMediation: StateFlow<Boolean> get() = _isAnyTradeInMediation
 
     // Misc
     private val tradeId get() = selectedTrade.value?.tradeId
@@ -135,21 +129,6 @@ class ClientTradesServiceFacade(
     }
 
     override suspend fun exportTradeDate(): Result<Unit> {
-        //todo
-        return Result.success(Unit)
-    }
-
-    override suspend fun sendChatMessage(text: String, citationVO: CitationVO?): Result<Unit> {
-        //todo
-        return Result.success(Unit)
-    }
-
-    override suspend fun addChatMessageReaction(messageId: String, reactionEnum: ReactionEnum): Result<Unit> {
-        //todo
-        return Result.success(Unit)
-    }
-
-    override suspend fun removeChatMessageReaction(messageId: String, reactionVO: BisqEasyOpenTradeMessageReactionVO): Result<Unit> {
         //todo
         return Result.success(Unit)
     }

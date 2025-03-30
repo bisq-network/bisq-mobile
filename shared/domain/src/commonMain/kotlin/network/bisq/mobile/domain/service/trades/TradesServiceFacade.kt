@@ -3,9 +3,6 @@ package network.bisq.mobile.domain.service.trades
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.LifeCycleAware
-import network.bisq.mobile.domain.data.replicated.chat.CitationVO
-import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
-import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -13,7 +10,6 @@ import network.bisq.mobile.domain.data.replicated.presentation.open_trades.Trade
 interface TradesServiceFacade : LifeCycleAware {
     val selectedTrade: StateFlow<TradeItemPresentationModel?>
     val openTradeItems: StateFlow<List<TradeItemPresentationModel>>
-    val isAnyTradeInMediation: StateFlow<Boolean>
 
     suspend fun takeOffer(
         bisqEasyOffer: BisqEasyOfferVO,
@@ -46,10 +42,4 @@ interface TradesServiceFacade : LifeCycleAware {
     suspend fun btcConfirmed(): Result<Unit>
 
     suspend fun exportTradeDate(): Result<Unit>
-
-    suspend fun sendChatMessage(text: String, citationVO: CitationVO?): Result<Unit>
-
-    suspend fun addChatMessageReaction(messageId: String, reactionEnum: ReactionEnum): Result<Unit>
-
-    suspend fun removeChatMessageReaction(messageId: String, reactionVO: BisqEasyOpenTradeMessageReactionVO): Result<Unit>
 }
