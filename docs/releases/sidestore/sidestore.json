@@ -10,7 +10,7 @@
     {
 
       "name": "Bisq Connect",
-      "bundleIdentifier": "network.bisq",
+      "bundleIdentifier": "bisq.mobile.client.BisqConnect",
       "developerName": "Bisq",
       "version": "0.0.6",
       "versionDate": "2025-03-31T12:00:00Z",
@@ -24,7 +24,7 @@
       ],
       "subtitle": "Connect to trusted Bisq nodes.",
       "absoluteVersion": "0.0.6",
-      "appID": "networl.bisq.connect",
+      "appID": "bisq.mobile.client.BisqConnect",
       "versions": [
         {
           "version": "0.0.6",
