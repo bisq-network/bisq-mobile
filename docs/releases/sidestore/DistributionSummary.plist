@@ -10,7 +10,7 @@
 				<string>arm64</string>
 			</array>
 			<key>buildNumber</key>
-			<string>5</string>
+			<string>6</string>
 			<key>certificate</key>
 			<dict>
 				<key>SHA1</key>
@@ -93,11 +93,11 @@
 			<key>profile</key>
 			<dict>
 				<key>UUID</key>
-				<string>b5614b90-c3c4-4c9f-bf96-59a677fa69aa</string>
+				<string>0f884b2d-6564-46f6-9493-dfd003e6a9b8</string>
 				<key>dateExpires</key>
-				<string>29/3/2026</string>
+				<string>31/3/2026</string>
 				<key>name</key>
-				<string>Bisq Connect Dev</string>
+				<string>Bisq Connect AdHociOS</string>
 			</dict>
 			<key>team</key>
 			<dict>
@@ -107,7 +107,7 @@
 				<string>Freesofware LLC</string>
 			</dict>
 			<key>versionNumber</key>
-			<string>0.0.5</string>
+			<string>0.0.6</string>
 		</dict>
 	</array>
 </dict>

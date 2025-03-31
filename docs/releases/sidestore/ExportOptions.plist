@@ -9,16 +9,16 @@
 		<key>appURL</key>
 		<string>https://bisq-network.github.io/bisq-mobile/releases/sidestore/bisq-connect.ipa</string>
 		<key>displayImageURL</key>
-		<string>https://bisq-network.github.io/bisq-mobile/releases/sidestore/icon.png</string>
-		<key>fullSizeImageURL</key>
 		<string>https://bisq-network.github.io/bisq-mobile/releases/sidestore/bisq.png</string>
+		<key>fullSizeImageURL</key>
+		<string>https://bisq-network.github.io/bisq-mobile/releases/sidestore/icon.png</string>
 	</dict>
 	<key>method</key>
 	<string>debugging</string>
 	<key>provisioningProfiles</key>
 	<dict>
 		<key>bisq.mobile.client.BisqConnect</key>
-		<string>Bisq Connect Dev</string>
+		<string>Bisq Connect AdHociOS</string>
 	</dict>
 	<key>signingCertificate</key>
 	<string>Apple Development</string>
