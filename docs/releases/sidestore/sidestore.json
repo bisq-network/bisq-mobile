@@ -1,6 +1,6 @@
 {
   "name": "Bisq",
-  "identifier": "network.bisq",
+  "identifier": "bisq.mobile.client.BisqConnect",
   "sourceURL": "https://github.com/bisq-network/bisq-mobile",
   "iconURL": "https://bisq-network.github.io/bisq-mobile/releases/sidestore/icon.png",
   "version": 1,
