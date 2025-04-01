@@ -13,7 +13,7 @@ class AccountsApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
     private val webSocketClientProvider: WebSocketClientProvider,
 ) : Logging {
-    private val basePath = "payment_accounts"
+    private val basePath = "payment-accounts"
 
     suspend fun getPaymentAccounts(): Result<List<UserDefinedFiatAccountVO>> {
         return webSocketApiClient.get<List<UserDefinedFiatAccountVO>>(basePath)
