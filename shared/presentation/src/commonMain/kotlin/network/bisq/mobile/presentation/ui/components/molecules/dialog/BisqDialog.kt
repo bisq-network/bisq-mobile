@@ -53,7 +53,7 @@ fun BisqDialog(
                     .align(Alignment.TopCenter)
                     .fillMaxWidth(),
                 colors = CardColors(
-                    containerColor = BisqTheme.colors.dark4,
+                    containerColor = BisqTheme.colors.dark_grey40,
                     contentColor = Color.Unspecified,
                     disabledContainerColor = Color.Unspecified,
                     disabledContentColor = Color.Unspecified,

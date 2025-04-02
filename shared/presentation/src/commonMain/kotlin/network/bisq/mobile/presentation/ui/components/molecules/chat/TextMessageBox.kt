@@ -40,7 +40,7 @@ fun TextMessageBox(
     val chatAlign = if (isMyMessage) Alignment.End else Alignment.Start
     val contentAlign = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
     val menuPosition = if (isMyMessage) Alignment.Start else Alignment.CenterHorizontally
-    val bubbleBGColor = if (isMyMessage) BisqTheme.colors.primaryDisabled else BisqTheme.colors.dark4
+    val bubbleBGColor = if (isMyMessage) BisqTheme.colors.primaryDisabled else BisqTheme.colors.dark_grey40
     val chatPadding =
         if (isMyMessage) PaddingValues(start = BisqUIConstants.ScreenPadding) else PaddingValues(end = BisqUIConstants.ScreenPadding)
 

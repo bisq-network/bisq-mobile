@@ -99,7 +99,7 @@ fun TradeDetailsHeader() {
     Row(modifier = Modifier.clip(shape = RoundedCornerShape(12.dp))) {
         Column(
             modifier = Modifier.fillMaxWidth()
-                .background(color = BisqTheme.colors.dark4)
+                .background(color = BisqTheme.colors.dark_grey40)
                 .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {

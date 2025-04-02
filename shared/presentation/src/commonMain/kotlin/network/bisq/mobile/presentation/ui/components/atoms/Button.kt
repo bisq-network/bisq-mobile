@@ -66,11 +66,11 @@ fun BisqButton(
 
     val focusManager = LocalFocusManager.current
     val enabled = !disabled && !isLoading
-    val grey2 = BisqTheme.colors.grey2
+    val grey2 = BisqTheme.colors.mid_grey20
 
     val finalBackgroundColor = when (type) {
         BisqButtonType.Default -> if (disabled) backgroundColor.copy(alpha = 0.75F) else backgroundColor
-        BisqButtonType.Grey -> if (disabled) BisqTheme.colors.dark5.copy(alpha = 0.75F) else BisqTheme.colors.dark5
+        BisqButtonType.Grey -> if (disabled) BisqTheme.colors.dark_grey50.copy(alpha = 0.75F) else BisqTheme.colors.dark_grey50
         BisqButtonType.Danger -> if (disabled) BisqTheme.colors.danger.copy(alpha = 0.75F) else BisqTheme.colors.danger
         BisqButtonType.Outline -> Color.Transparent
         BisqButtonType.GreyOutline -> Color.Transparent
@@ -91,7 +91,7 @@ fun BisqButton(
         BisqButtonType.Grey -> if (disabled) grey2 else color
         BisqButtonType.Danger -> if (disabled) grey2 else color
         BisqButtonType.Outline -> if (disabled) BisqTheme.colors.primaryDisabled else BisqTheme.colors.primary
-        BisqButtonType.GreyOutline -> if (disabled) BisqTheme.colors.grey1 else grey2
+        BisqButtonType.GreyOutline -> if (disabled) BisqTheme.colors.mid_grey10 else grey2
         BisqButtonType.Clear -> if (disabled) grey2 else color
     }
 

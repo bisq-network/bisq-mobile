@@ -21,7 +21,7 @@ fun StepperSection(
     spacerBetweenNodes: Dp = 32.dp,
     content: @Composable BoxScope.(modifier: Modifier) -> Unit
 ) {
-    val lineColor = BisqTheme.colors.dark5
+    val lineColor = BisqTheme.colors.dark_grey50
     Box(
         modifier = Modifier.wrapContentSize().drawBehind {
             drawLine(

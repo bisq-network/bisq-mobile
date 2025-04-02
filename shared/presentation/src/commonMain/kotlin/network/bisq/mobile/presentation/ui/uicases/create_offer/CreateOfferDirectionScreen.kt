@@ -40,7 +40,7 @@ fun CreateOfferBuySellScreen() {
         BisqGap.V2()
 
         val buyBackgroundColor by animateColorAsState(
-            targetValue = if (presenter.direction == DirectionEnum.BUY) BisqTheme.colors.primary else BisqTheme.colors.dark5
+            targetValue = if (presenter.direction == DirectionEnum.BUY) BisqTheme.colors.primary else BisqTheme.colors.dark_grey50
         )
         BisqButton(
             onClick = { presenter.onBuySelected() },
@@ -55,7 +55,7 @@ fun CreateOfferBuySellScreen() {
         BisqGap.V2()
 
         val sellBackgroundColor by animateColorAsState(
-            targetValue = if (presenter.direction == DirectionEnum.SELL) BisqTheme.colors.primary else BisqTheme.colors.dark5
+            targetValue = if (presenter.direction == DirectionEnum.SELL) BisqTheme.colors.primary else BisqTheme.colors.dark_grey50
         )
         BisqButton(
             onClick = { presenter.onSellSelected() },

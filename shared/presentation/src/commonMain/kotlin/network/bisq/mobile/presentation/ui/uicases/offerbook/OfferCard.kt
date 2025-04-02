@@ -39,7 +39,7 @@ fun OfferCard(
     val userName = item.userName.collectAsState().value
     val sellColor = BisqTheme.colors.danger.copy(alpha = 0.8f) //todo add sell color
     val buyColor = BisqTheme.colors.primary.copy(alpha = 0.8f)
-    val myOfferColor = BisqTheme.colors.grey2
+    val myOfferColor = BisqTheme.colors.mid_grey20
     val isMyOffer = item.isMyOffer
     val directionalLabel: String
     val directionalLabelColor: Color
@@ -59,7 +59,7 @@ fun OfferCard(
     }
 
     val myOfferBackgroundColor = BisqTheme.colors.primary.copy(alpha = 0.15f)
-    val backgroundColor = if (isMyOffer) myOfferBackgroundColor else BisqTheme.colors.dark4
+    val backgroundColor = if (isMyOffer) myOfferBackgroundColor else BisqTheme.colors.dark_grey40
     val height = 140.dp
 
     Row(

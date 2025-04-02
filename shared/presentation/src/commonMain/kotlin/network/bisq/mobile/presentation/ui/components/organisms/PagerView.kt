@@ -82,7 +82,7 @@ fun PagerSingleItem(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxWidth()
-                .background(color = BisqTheme.colors.dark3)
+                .background(color = BisqTheme.colors.dark_grey30)
                 .padding(vertical = 56.dp)
         ) {
             Image(painterResource(image), title, modifier = Modifier.size(120.dp),)
@@ -114,7 +114,7 @@ fun PagerLineIndicator(pagerState: PagerState) {
                 Box(
                     modifier = Modifier
                         .size(width = 76.dp, height = 2.dp)
-                        .background(color = BisqTheme.colors.grey2)
+                        .background(color = BisqTheme.colors.mid_grey20)
                 )
             }
         }

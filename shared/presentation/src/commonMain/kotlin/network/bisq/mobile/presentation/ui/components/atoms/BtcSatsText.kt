@@ -55,7 +55,7 @@ fun BtcSatsText(
             )
         }
     } else if (style == BtcSatsStyle.TextField) {
-        val grey2Color = BisqTheme.colors.grey2
+        val grey2Color = BisqTheme.colors.mid_grey20
 
         if (label?.isNotEmpty() == true) {
             BisqText.baseLight(
@@ -104,7 +104,7 @@ private fun formatSatsToDisplay(formattedBtcAmountValue: String, noCode: Boolean
         val leadingZeros = formattedFractional.takeWhile { it == '0' || it == ' ' }
         val significantDigits = formattedFractional.dropWhile { it == '0' || it == ' ' }
 
-        val prefixColor = if (integerPart.toInt() > 0) BisqTheme.colors.white else BisqTheme.colors.grey2
+        val prefixColor = if (integerPart.toInt() > 0) BisqTheme.colors.white else BisqTheme.colors.mid_grey20
 
         withStyle(style = SpanStyle(color = prefixColor)) {
             append(integerPart)

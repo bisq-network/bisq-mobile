@@ -7,19 +7,19 @@ import kotlin.math.pow
 @Immutable
 data class BisqColors(
     val white: Color, // Use for regular text
-    val dark1: Color,
-    val dark2: Color,
-    val dark3: Color,
-    val dark4: Color,
-    val dark5: Color,
-    val light1: Color,
-    val light2: Color,
-    val light3: Color,
-    val light4: Color,
-    val light5: Color,
-    val grey1: Color,
-    val grey2: Color, // Use for greyish text
-    val grey3: Color,
+    val dark_grey10: Color,
+    val dark_grey20: Color,
+    val dark_grey30: Color,
+    val dark_grey40: Color,
+    val dark_grey50: Color,
+    val light_grey10: Color,
+    val light_grey20: Color,
+    val light_grey30: Color,
+    val light_grey40: Color,
+    val light_grey50: Color,
+    val mid_grey10: Color,
+    val mid_grey20: Color, // Use for greyish text
+    val mid_grey30: Color,
     val primary: Color,
     val primaryHover: Color,
     val primaryDisabled: Color,
@@ -47,19 +47,19 @@ data class BisqColors(
 // Ref: https://github.com/bisq-network/bisq2/blob/main/apps/desktop/desktop/src/main/resources/css/base.css
 val darkColors = BisqColors(
     white = Color(0xFFfafafa).adjustGamma(), // -bisq-white
-    dark1 = Color(0xFF151515).adjustGamma(), // -bisq-dark-grey-10
-    dark2 = Color(0xFF1c1c1c).adjustGamma(), // -bisq-dark-grey-20
-    dark3 = Color(0xFF242424).adjustGamma(), // -bisq-dark-grey-30
-    dark4 = Color(0xFF2b2b2b).adjustGamma(), // -bisq-dark-grey-40
-    dark5 = Color(0xFF383838).adjustGamma(), // -bisq-dark-grey-50
-    grey1 = Color(0xFF4d4d4d).adjustGamma(), // -bisq-mid-grey-10
-    grey2 = Color(0xFF808080).adjustGamma(), // -bisq-mid-grey-20
-    grey3 = Color(0xFFb2b2b2).adjustGamma(), // -bisq-mid-grey-30
-    light1 = Color(0xFFc7c7c7).adjustGamma(), // -bisq-light-grey-10
-    light2 = Color(0xFFd4d4d4).adjustGamma(), // -bisq-light-grey-20
-    light3 = Color(0xFFdbdbdb).adjustGamma(), // -bisq-light-grey-30
-    light4 = Color(0xFFe3e3e3).adjustGamma(), // -bisq-light-grey-40
-    light5 = Color(0xFFeaeaea).adjustGamma(), // -bisq-light-grey-50
+    dark_grey10 = Color(0xFF151515).adjustGamma(), // -bisq-dark-grey-10
+    dark_grey20 = Color(0xFF1c1c1c).adjustGamma(), // -bisq-dark-grey-20
+    dark_grey30 = Color(0xFF242424).adjustGamma(), // -bisq-dark-grey-30
+    dark_grey40 = Color(0xFF2b2b2b).adjustGamma(), // -bisq-dark-grey-40
+    dark_grey50 = Color(0xFF383838).adjustGamma(), // -bisq-dark-grey-50
+    mid_grey10 = Color(0xFF4d4d4d).adjustGamma(), // -bisq-mid-grey-10
+    mid_grey20 = Color(0xFF808080).adjustGamma(), // -bisq-mid-grey-20
+    mid_grey30 = Color(0xFFb2b2b2).adjustGamma(), // -bisq-mid-grey-30
+    light_grey10 = Color(0xFFc7c7c7).adjustGamma(), // -bisq-light-grey-10
+    light_grey20 = Color(0xFFd4d4d4).adjustGamma(), // -bisq-light-grey-20
+    light_grey30 = Color(0xFFdbdbdb).adjustGamma(), // -bisq-light-grey-30
+    light_grey40 = Color(0xFFe3e3e3).adjustGamma(), // -bisq-light-grey-40
+    light_grey50 = Color(0xFFeaeaea).adjustGamma(), // -bisq-light-grey-50
     primary = Color(0xFF56AE48).adjustGamma(), // -bisq2-green
     primaryHover = Color(0xFF56C262).adjustGamma(),
     primaryDisabled = Color(0x6656AE48).adjustGamma(),

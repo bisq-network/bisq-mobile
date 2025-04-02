@@ -58,12 +58,12 @@ fun BisqSwitch(
                 uncheckedBorderColor = BisqTheme.colors.backgroundColor,
                 uncheckedIconColor = BisqTheme.colors.backgroundColor,
 
-                disabledCheckedThumbColor = BisqTheme.colors.grey3,
+                disabledCheckedThumbColor = BisqTheme.colors.mid_grey30,
                 disabledCheckedTrackColor = BisqTheme.colors.secondary,
                 disabledCheckedBorderColor = BisqTheme.colors.backgroundColor,
                 disabledCheckedIconColor = BisqTheme.colors.backgroundColor,
 
-                disabledUncheckedThumbColor =BisqTheme.colors.grey3,
+                disabledUncheckedThumbColor =BisqTheme.colors.mid_grey30,
                 disabledUncheckedTrackColor = BisqTheme.colors.secondary,
                 disabledUncheckedBorderColor =BisqTheme.colors.backgroundColor ,
                 disabledUncheckedIconColor =BisqTheme.colors.backgroundColor,

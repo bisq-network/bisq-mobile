@@ -18,7 +18,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 fun ProtocolLogMessageBox(message: BisqEasyOpenTradeMessageModel) {
     Row(
         modifier = Modifier
-            .background(BisqTheme.colors.dark3)
+            .background(BisqTheme.colors.dark_grey30)
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
 

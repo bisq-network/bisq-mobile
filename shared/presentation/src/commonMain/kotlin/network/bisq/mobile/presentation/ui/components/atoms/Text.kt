@@ -121,7 +121,7 @@ object BisqText {
             text = text,
             fontSize = FontSize.XSMALL,
             fontWeight = FontWeight.LIGHT,
-            color = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -152,7 +152,7 @@ object BisqText {
     ) {
         xsmallRegular(
             text = text,
-            color = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -218,7 +218,7 @@ object BisqText {
     ) {
         smallLight(
             text = text,
-            color = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -249,7 +249,7 @@ object BisqText {
     ) {
         smallRegular(
             text = text,
-            color = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -297,7 +297,7 @@ object BisqText {
     ) {
         baseLight(
             text = text,
-            color = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -349,7 +349,7 @@ object BisqText {
     ) {
         baseRegular(
             text = text,
-            color = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             singleLine = singleLine,
             modifier = modifier,
@@ -365,8 +365,8 @@ object BisqText {
         color: Color,
         modifier: Modifier = Modifier,
     ) {
-        val dark1 = BisqTheme.colors.dark1.copy(alpha = 0.4f)
-        val grey1 = BisqTheme.colors.grey1
+        val dark1 = BisqTheme.colors.dark_grey10.copy(alpha = 0.4f)
+        val grey1 = BisqTheme.colors.mid_grey10
         baseRegular(
             text = text,
             color = color,
@@ -401,7 +401,7 @@ object BisqText {
     ) {
         baseMedium(
             text = text,
-            color =  BisqTheme.colors.grey2,
+            color =  BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -450,7 +450,7 @@ object BisqText {
     ) {
         largeLight(
             text = text,
-            color = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -485,7 +485,7 @@ object BisqText {
     ) {
         largeRegular(
             text = text,
-            color = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             singleLine = singleLine,
             modifier = modifier,
@@ -638,7 +638,7 @@ object BisqText {
     ) {
         h5Regular(
             text = text,
-            color = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -704,7 +704,7 @@ object BisqText {
     ) {
         h4Light(
             text = text,
-            color = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -924,7 +924,7 @@ object BisqText {
     ) {
         h1Light(
             text = text,
-            color = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             modifier = modifier,
         )

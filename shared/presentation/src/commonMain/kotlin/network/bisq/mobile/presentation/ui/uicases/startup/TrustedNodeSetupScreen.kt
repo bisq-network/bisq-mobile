@@ -138,7 +138,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         }
                     },
                     disabled = isLoading,
-                    color = BisqTheme.colors.light1,
+                    color = BisqTheme.colors.light_grey10,
                     leftIcon = { CopyIcon() }
                 )
 //              TODO uncomment when feature gets implemented
@@ -189,7 +189,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 ) {
                     BisqButton(
                         text = "Test Connection",
-                        color = if (bisqApiUrl.isEmpty()) BisqTheme.colors.grey1 else BisqTheme.colors.light1,
+                        color = if (bisqApiUrl.isEmpty()) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
                         onClick = { presenter.testConnection() },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )
@@ -200,7 +200,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 ) {
                     BisqButton(
                         text = if (isWorkflow) "Next" else "Save",
-                        color = BisqTheme.colors.light1,
+                        color = BisqTheme.colors.light_grey10,
                         onClick = { if (isWorkflow) presenter.navigateToNextScreen() else presenter.testConnection(false) },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )

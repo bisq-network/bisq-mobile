@@ -36,7 +36,7 @@ fun ChatMessageContextMenu(
         DropdownMenu(
             expanded = showMenu,
             onDismissRequest = { onSetShowMenu(false) },
-            containerColor = BisqTheme.colors.dark4
+            containerColor = BisqTheme.colors.dark_grey40
         ) {
             ChatReactionInput(
                 onAddReaction = { reaction ->
@@ -50,7 +50,7 @@ fun ChatMessageContextMenu(
             )
 
             HorizontalDivider(
-                color = BisqTheme.colors.dark5,
+                color = BisqTheme.colors.dark_grey50,
                 thickness = 2.dp
             )
 

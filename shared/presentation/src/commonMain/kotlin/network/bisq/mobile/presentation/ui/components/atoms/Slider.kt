@@ -28,9 +28,9 @@ fun BisqSlider(
 
     val colors = SliderColors(
         thumbColor = BisqTheme.colors.primary,
-        activeTrackColor = BisqTheme.colors.grey2,
+        activeTrackColor = BisqTheme.colors.mid_grey20,
         activeTickColor = Color.Unspecified,
-        inactiveTrackColor = BisqTheme.colors.grey2,
+        inactiveTrackColor = BisqTheme.colors.mid_grey20,
         inactiveTickColor = Color.Unspecified,
         disabledThumbColor = Color.Unspecified,
         disabledActiveTrackColor = Color.Unspecified,

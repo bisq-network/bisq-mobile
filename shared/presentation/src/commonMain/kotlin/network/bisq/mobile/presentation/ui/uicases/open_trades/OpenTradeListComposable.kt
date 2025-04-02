@@ -61,7 +61,7 @@ fun OpenTradeListScreen() {
             item {
                 Column(
                     modifier = Modifier.clip(shape = RoundedCornerShape(12.dp))
-                        .background(color = BisqTheme.colors.dark3)
+                        .background(color = BisqTheme.colors.dark_grey30)
                         .padding(12.dp),
                 ) {
                     WelcomeToFirstTradePane(presenter)
@@ -78,7 +78,7 @@ fun OpenTradeListScreen() {
                     HorizontalDivider(
                         modifier = Modifier,
                         thickness = 0.5.dp,
-                        color = BisqTheme.colors.grey3
+                        color = BisqTheme.colors.mid_grey30
                     )
                 }
             }
@@ -203,7 +203,7 @@ fun TradeGuide(presenter: OpenTradeListPresenter) {
                 BisqButton(
                     text = "Close",
                     onClick = { presenter.onCloseTradeGuide() },
-                    backgroundColor = BisqTheme.colors.grey3,
+                    backgroundColor = BisqTheme.colors.mid_grey30,
                 )
             }
         }

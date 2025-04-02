@@ -28,7 +28,7 @@ fun GenericErrorPanel(
 
                 BisqText.h4Regular(
                     text = "popup.headline.error".i18n(),
-                    color = BisqTheme.colors.light1,
+                    color = BisqTheme.colors.light_grey10,
                     textAlign = TextAlign.Center
                 )
 

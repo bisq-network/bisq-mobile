@@ -37,7 +37,7 @@ fun MediationBanner() {
             WarningIconGrey(modifier = Modifier.size(20.dp).offset(y = 2.dp))
             BisqText.baseRegular(
                 text = "mobile.openTrades.inMediation.banner".i18n(),
-                color = BisqTheme.colors.dark5
+                color = BisqTheme.colors.dark_grey50
             )
         }
     }

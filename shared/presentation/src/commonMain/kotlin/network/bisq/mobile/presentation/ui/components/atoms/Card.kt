@@ -23,7 +23,7 @@ fun BisqCard(
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(borderRadius))
-            .background(BisqTheme.colors.dark4)
+            .background(BisqTheme.colors.dark_grey40)
             .padding(padding)
             .fillMaxWidth(),
         horizontalAlignment = horizontalAlignment,

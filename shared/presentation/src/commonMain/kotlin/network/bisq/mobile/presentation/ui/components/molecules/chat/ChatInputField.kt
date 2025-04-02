@@ -97,7 +97,7 @@ fun QuotedMessage(
                         topEnd = BisqUIConstants.ScreenPaddingHalf,
                     )
                 )
-                .background(BisqTheme.colors.dark1)
+                .background(BisqTheme.colors.dark_grey10)
                 .fillMaxWidth()
         ) {
             Column(
@@ -110,10 +110,10 @@ fun QuotedMessage(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     //todo add profile icon
-                    BisqText.baseRegular(quotedMessage.senderUserName, color = BisqTheme.colors.light1)
+                    BisqText.baseRegular(quotedMessage.senderUserName, color = BisqTheme.colors.light_grey10)
                     CloseIconButton(onClick = onCloseReply)
                 }
-                BisqText.baseLight(quotedMessage.textString, color = BisqTheme.colors.light3)
+                BisqText.baseLight(quotedMessage.textString, color = BisqTheme.colors.light_grey30)
             }
         }
     }

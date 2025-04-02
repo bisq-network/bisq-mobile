@@ -53,7 +53,7 @@ fun FiatInputField(
             .fillMaxWidth()
             .padding(paddingValues)
             .clip(shape = RoundedCornerShape(6.dp))
-            .background(color = BisqTheme.colors.dark4)
+            .background(color = BisqTheme.colors.dark_grey40)
             .drawBehind {
                 if (isFocused) {
                     drawLine(

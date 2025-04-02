@@ -71,7 +71,7 @@ fun BisqDropDown(
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            containerColor = BisqTheme.colors.dark4,
+            containerColor = BisqTheme.colors.dark_grey40,
             modifier = Modifier.wrapContentSize()
         ) {
             if (searchable) {

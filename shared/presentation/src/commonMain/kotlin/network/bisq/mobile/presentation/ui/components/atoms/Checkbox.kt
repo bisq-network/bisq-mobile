@@ -21,7 +21,7 @@ fun BisqCheckbox(
     onCheckedChange: ((Boolean) -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    val grey2Color = BisqTheme.colors.grey2
+    val grey2Color = BisqTheme.colors.mid_grey20
     val whiteColor = BisqTheme.colors.white
     val finalLabelColor by remember(disabled) {
         mutableStateOf(

@@ -44,10 +44,10 @@ fun JumpToBottomFloatingButton(
                 )
             },
             // TODO:i18n
-            text = { BisqText.baseRegular("Jump to bottom", color = BisqTheme.colors.dark1) },
+            text = { BisqText.baseRegular("Jump to bottom", color = BisqTheme.colors.dark_grey10) },
             onClick = onClicked,
-            containerColor = BisqTheme.colors.light1,
-            contentColor = BisqTheme.colors.dark1,
+            containerColor = BisqTheme.colors.light_grey10,
+            contentColor = BisqTheme.colors.dark_grey10,
             modifier = modifier
                 .offset(x = 0.dp, y = -bottomOffset)
                 .height(BisqUIConstants.ScreenPadding3X)

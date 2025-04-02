@@ -25,9 +25,9 @@ fun QuoteMessageBubble(
     onClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
-    val sideBorderColor = BisqTheme.colors.grey2
+    val sideBorderColor = BisqTheme.colors.mid_grey20
     val isMyMessage = message.isMyMessage
-    val bgColor = if (isMyMessage) BisqTheme.colors.dark5 else BisqTheme.colors.dark2
+    val bgColor = if (isMyMessage) BisqTheme.colors.dark_grey50 else BisqTheme.colors.dark_grey20
 
     Column(
         modifier = Modifier
@@ -61,8 +61,8 @@ fun QuoteMessageBubble(
                 ),
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter)
         ) {
-            BisqText.baseMedium(message.citationAuthorUserName ?: "", color = BisqTheme.colors.grey2)
-            BisqText.baseRegular(message.citationString, color = BisqTheme.colors.grey1) // TODO: Trim this to max 2 lines
+            BisqText.baseMedium(message.citationAuthorUserName ?: "", color = BisqTheme.colors.mid_grey20)
+            BisqText.baseRegular(message.citationString, color = BisqTheme.colors.mid_grey10) // TODO: Trim this to max 2 lines
         }
 
         content()

@@ -29,7 +29,7 @@ fun PaymentTypeCard(
     val backgroundColor = if (isSelected) {
         BisqTheme.colors.primaryDim
     } else {
-        BisqTheme.colors.dark5
+        BisqTheme.colors.dark_grey50
     }
 
     Row(

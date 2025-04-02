@@ -55,23 +55,23 @@ fun BisqSegmentButton(
                         BisqText.baseRegular(
                             label.second,
                             color = if(disabled)
-                                BisqTheme.colors.grey2
+                                BisqTheme.colors.mid_grey20
                             else
                                 BisqTheme.colors.white
                         )
                     },
                     colors = SegmentedButtonColors(
                         activeContainerColor = BisqTheme.colors.secondary,
-                        activeContentColor = BisqTheme.colors.light5,
+                        activeContentColor = BisqTheme.colors.light_grey50,
                         activeBorderColor = BisqTheme.colors.backgroundColor,
                         inactiveContainerColor = BisqTheme.colors.secondaryDisabled,
-                        inactiveContentColor = BisqTheme.colors.light5,
+                        inactiveContentColor = BisqTheme.colors.light_grey50,
                         inactiveBorderColor = BisqTheme.colors.backgroundColor,
                         disabledActiveContainerColor = BisqTheme.colors.secondaryDisabled,
-                        disabledActiveContentColor = BisqTheme.colors.grey3,
+                        disabledActiveContentColor = BisqTheme.colors.mid_grey30,
                         disabledActiveBorderColor = BisqTheme.colors.backgroundColor,
                         disabledInactiveContainerColor = BisqTheme.colors.secondaryDisabled,
-                        disabledInactiveContentColor = BisqTheme.colors.grey3,
+                        disabledInactiveContentColor = BisqTheme.colors.mid_grey30,
                         disabledInactiveBorderColor = BisqTheme.colors.backgroundColor,
                     )
                 )

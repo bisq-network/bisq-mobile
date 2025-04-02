@@ -58,7 +58,7 @@ fun BisqTextField(
     keyboardType: KeyboardType = KeyboardType.Unspecified,
     paddingValues: PaddingValues = PaddingValues(all = BisqUIConstants.ScreenPadding),
     disabled: Boolean = false,
-    color: Color = BisqTheme.colors.light2,
+    color: Color = BisqTheme.colors.light_grey20,
     showCopy: Boolean = false,
     showPaste: Boolean = false,
     valuePrefix: String? = null,
@@ -84,7 +84,7 @@ fun BisqTextField(
     finalValue = if (valueSuffix != null) value + valueSuffix else value
 
     val dangerColor = BisqTheme.colors.danger
-    val grey2Color = BisqTheme.colors.grey2
+    val grey2Color = BisqTheme.colors.mid_grey20
     val finalIndicatorColor by remember(validationError, isFocused, hasInteracted) {
         mutableStateOf(
             if (validationError == null || validationError?.isEmpty() == true || !hasInteracted)

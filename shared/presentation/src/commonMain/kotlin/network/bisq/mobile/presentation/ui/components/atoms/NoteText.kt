@@ -58,7 +58,7 @@ fun NoteText(
                 }
         },
         style = androidx.compose.ui.text.TextStyle(
-            color = BisqTheme.colors.grey2,
+            color = BisqTheme.colors.mid_grey20,
             fontSize = FontSize.SMALL.size,
             textAlign = textAlign
         )

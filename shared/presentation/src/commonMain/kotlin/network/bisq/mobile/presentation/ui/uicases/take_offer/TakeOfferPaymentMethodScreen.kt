@@ -76,7 +76,7 @@ fun TakeOfferPaymentMethodScreen() {
 
                         val isSelected = paymentMethod == quoteSidePaymentMethod.value
                         val backgroundColor by animateColorAsState(
-                            targetValue = if (isSelected) BisqTheme.colors.primary else BisqTheme.colors.dark5
+                            targetValue = if (isSelected) BisqTheme.colors.primary else BisqTheme.colors.dark_grey50
                         )
                         Row(
                             modifier = Modifier
@@ -127,7 +127,7 @@ fun TakeOfferPaymentMethodScreen() {
                         // TODO: Make this to Toggle buttons. Can get paymentMethod as some Enum?
                         val isSelected = paymentMethod == baseSidePaymentMethod.value
                         val backgroundColor by animateColorAsState(
-                            targetValue = if (isSelected) BisqTheme.colors.primary else BisqTheme.colors.dark5
+                            targetValue = if (isSelected) BisqTheme.colors.primary else BisqTheme.colors.dark_grey50
                         )
                         Row(
                             modifier = Modifier

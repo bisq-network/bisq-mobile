@@ -47,7 +47,7 @@ fun TradeFlowPane(presenter: TradeFlowPresenter) {
                     val isVisited = index < tradePhaseState.index
                     val isOpen = index > tradePhaseState.index
                     val isLastIndex = index == presenter.steps.size - 1
-                    val titleColor = if (isOpen) BisqTheme.colors.grey2 else BisqTheme.colors.white
+                    val titleColor = if (isOpen) BisqTheme.colors.mid_grey20 else BisqTheme.colors.white
                     val title = "bisqEasy.tradeState.phase${index + 1}".i18n().uppercase()
                     TradeFlowItem(
                         index = index,

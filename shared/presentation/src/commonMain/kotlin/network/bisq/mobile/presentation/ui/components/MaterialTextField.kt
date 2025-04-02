@@ -47,7 +47,7 @@ fun MaterialTextField(text: String, placeholder: String = "", onValueChanged: (S
             textStyle = TextStyle(fontSize = 22.sp),
             onValueChange = onValueChanged,
             colors = TextFieldDefaults.colors(
-                focusedTextColor = BisqTheme.colors.light3,
+                focusedTextColor = BisqTheme.colors.light_grey30,
                 unfocusedTextColor = BisqTheme.colors.secondaryHover,
                 unfocusedIndicatorColor = BisqTheme.colors.secondary,
                 focusedIndicatorColor = Color.Transparent,

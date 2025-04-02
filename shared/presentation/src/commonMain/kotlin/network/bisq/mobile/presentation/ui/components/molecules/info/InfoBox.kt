@@ -66,7 +66,7 @@ fun InfoBox(
                 BisqText.baseRegularGrey(label)
                 valueWidget()
                 if (subvalue != null) {
-                    BisqText.smallRegular(text = subvalue, color = BisqTheme.colors.grey3)
+                    BisqText.smallRegular(text = subvalue, color = BisqTheme.colors.mid_grey30)
                 }
             }
         }
@@ -78,7 +78,7 @@ fun InfoBox(
             ) {
                 valueWidget()
                 if (subvalue != null) {
-                    BisqText.xsmallRegular(text = subvalue, color = BisqTheme.colors.grey3)
+                    BisqText.xsmallRegular(text = subvalue, color = BisqTheme.colors.mid_grey30)
                 }
                 BisqText.smallRegularGrey(text = label, modifier = Modifier.offset(y = (-4).dp))
             }

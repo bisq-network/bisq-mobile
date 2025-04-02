@@ -14,7 +14,7 @@ fun SettingsButton(label: String, onClick: () -> Unit) {
         label,
         onClick = onClick,
         fullWidth = true,
-        backgroundColor = BisqTheme.colors.dark4,
+        backgroundColor = BisqTheme.colors.dark_grey40,
         cornerRadius = BisqUIConstants.Zero,
         rightIcon = { ArrowRightIcon() },
         textAlign = TextAlign.Start,

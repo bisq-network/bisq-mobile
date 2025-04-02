@@ -26,7 +26,7 @@ fun BisqIconButton(
             containerColor = Color.Transparent,
             disabledContainerColor = Color.Transparent,
             contentColor = BisqTheme.colors.white,
-            disabledContentColor = BisqTheme.colors.grey2,
+            disabledContentColor = BisqTheme.colors.mid_grey20,
         ),
         enabled = !disabled
     ) {

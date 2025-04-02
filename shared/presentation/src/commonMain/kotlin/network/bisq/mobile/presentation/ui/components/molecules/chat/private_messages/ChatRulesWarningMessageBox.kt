@@ -22,7 +22,7 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_ch
 fun ChatRulesWarningMessageBox(presenter: TradeChatPresenter) {
     Row(
         modifier = Modifier
-            .background(BisqTheme.colors.dark3)
+            .background(BisqTheme.colors.dark_grey30)
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
 
@@ -36,7 +36,7 @@ fun ChatRulesWarningMessageBox(presenter: TradeChatPresenter) {
                 // WarningIcon() // TODO Use a grey warning here as its less severe, or just drop the icon
                 BisqText.h6Regular(
                     "chat.private.chatRulesWarningMessage.headline".i18n(),
-                    color = BisqTheme.colors.grey2
+                    color = BisqTheme.colors.mid_grey20
                 )
             }
             BisqText.baseLightGrey("chat.private.chatRulesWarningMessage.text".i18n())

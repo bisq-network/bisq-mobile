@@ -12,7 +12,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 fun BisqVDivider(
     modifier: Modifier = Modifier,
     thickness: Dp = 2.dp,
-    color: Color = BisqTheme.colors.grey3,
+    color: Color = BisqTheme.colors.mid_grey30,
 ) {
     VerticalDivider(
         thickness = thickness,
