@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.ui.theme
 
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
 import kotlin.math.pow
 
@@ -43,85 +42,6 @@ data class BisqColors(
     val yellow30: Color,
     val yellow40: Color,
     val yellow50: Color,
-)
-
-
-val LocalBisqColors = staticCompositionLocalOf {
-    BisqColors(
-        white = Color.Unspecified,
-        dark1 = Color.Unspecified,
-        dark2 = Color.Unspecified,
-        dark3 = Color.Unspecified,
-        dark4 = Color.Unspecified,
-        dark5 = Color.Unspecified,
-        light1 = Color.Unspecified,
-        light2 = Color.Unspecified,
-        light3 = Color.Unspecified,
-        light4 = Color.Unspecified,
-        light5 = Color.Unspecified,
-        grey1 = Color.Unspecified,
-        grey2 = Color.Unspecified,
-        grey3 = Color.Unspecified,
-        primary = Color.Unspecified,
-        primaryHover = Color.Unspecified,
-        primaryDisabled = Color.Unspecified,
-        primary2 = Color.Unspecified,
-        primaryDim = Color.Unspecified,
-        primary65 = Color.Unspecified,
-        secondary = Color.Unspecified,
-        secondaryHover = Color.Unspecified,
-        secondaryDisabled = Color.Unspecified,
-        danger = Color.Unspecified,
-        dangerHover = Color.Unspecified,
-        warning = Color.Unspecified,
-        warningHover = Color.Unspecified,
-        warningDisabled = Color.Unspecified,
-        backgroundColor = Color.Unspecified,
-        yellow = Color.Unspecified,
-        yellow10 = Color.Unspecified,
-        yellow20 = Color.Unspecified,
-        yellow30 = Color.Unspecified,
-        yellow40 = Color.Unspecified,
-        yellow50 = Color.Unspecified,
-    )
-}
-
-val lightColors = BisqColors(
-    white = Color(0xFFfafafa).adjustGamma(),
-    dark1 = Color(0xFFFFFFFF).adjustGamma(),
-    dark2 = Color(0xFFF8F8F8).adjustGamma(),
-    dark3 = Color(0xFFF4F4F4).adjustGamma(),
-    dark4 = Color(0xFFF0F0F0).adjustGamma(),
-    dark5 = Color(0xFFEFEFEF).adjustGamma(),
-    light1 = Color(0xFF1D1D1D).adjustGamma(),
-    light2 = Color(0xFF212121).adjustGamma(),
-    light3 = Color(0xFF262626).adjustGamma(),
-    light4 = Color(0xFF282828).adjustGamma(),
-    light5 = Color(0xFF333333).adjustGamma(),
-    grey1 = Color(0xFF999999).adjustGamma(),
-    grey2 = Color(0xFF747474).adjustGamma(),
-    grey3 = Color(0xFF6B6B6B).adjustGamma(),
-    primary = Color(0xFF25B135).adjustGamma(),
-    primaryHover = Color(0xFF56C262).adjustGamma(),
-    primaryDisabled = Color(0x6625B135).adjustGamma(),
-    primary2 = Color(0xFF0A2F0F).adjustGamma(),
-    primaryDim = Color(0xFF448B39).adjustGamma(),
-    primary65 = Color(0xFF25B135).adjustGamma(),
-    secondary = Color(0xFF2F2F2F).adjustGamma(),
-    secondaryHover = Color(0xFF525252).adjustGamma(),
-    secondaryDisabled = Color(0x662F2F2F).adjustGamma(),
-    danger = Color(0xFFDB0000).adjustGamma(),
-    dangerHover = Color(0xFFAC2B2B).adjustGamma(),
-    warning = Color(0xFFFF9823).adjustGamma(),
-    warningHover = Color(0xFFFFAC4E).adjustGamma(),
-    warningDisabled = Color(0xB3FF9823).adjustGamma(),
-    backgroundColor = Color(0xFF1C1C1C).adjustGamma(),
-    yellow = Color(0xFFd0831f).adjustGamma(),
-    yellow10 = Color(0xFFbb751b).adjustGamma(),
-    yellow20 = Color(0xFFa66818).adjustGamma(),
-    yellow30 = Color(0xFF915b15).adjustGamma(),
-    yellow40 = Color(0xFF7c4e12).adjustGamma(),
-    yellow50 = Color(0xFF68410f).adjustGamma(),
 )
 
 // Ref: https://github.com/bisq-network/bisq2/blob/main/apps/desktop/desktop/src/main/resources/css/base.css

@@ -9,22 +9,10 @@ fun BisqTheme(
     darkTheme: Boolean = true,
     content: @Composable () -> Unit
 ) {
-
-    val extendedColors = if (darkTheme) {
-        darkColors
-    } else {
-        lightColors
-    }
-
-    CompositionLocalProvider(LocalBisqColors provides extendedColors) {
-        MaterialTheme(
-            content = content
-        )
-    }
+    MaterialTheme(content = content)
 }
 
 object BisqTheme {
     val colors: BisqColors
-        @Composable
-        get() = LocalBisqColors.current
+        get() = darkColors
 }
