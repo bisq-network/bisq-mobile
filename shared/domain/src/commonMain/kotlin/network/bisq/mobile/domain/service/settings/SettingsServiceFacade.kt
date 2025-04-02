@@ -43,4 +43,6 @@ interface SettingsServiceFacade : LifeCycleAware {
     suspend fun setNumDaysAfterRedactingTradeData(days: Int)
 
     suspend fun isApiCompatible() = true
+
+    suspend fun getTrustedNodeVersion() = ""
 }

@@ -9,13 +9,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -28,6 +26,8 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
@@ -36,6 +36,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.QuestionIcon
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
@@ -47,7 +48,9 @@ import org.koin.compose.koinInject
 
 interface ITrustedNodeSetupPresenter : ViewPresenter {
     val isBisqApiUrlValid: StateFlow<Boolean>
+    val isBisqApiVersionValid: StateFlow<Boolean>
     val bisqApiUrl: StateFlow<String>
+    val trustedNodeVersion: StateFlow<String>
     val isConnected: StateFlow<Boolean>
     val isLoading: StateFlow<Boolean>
 
@@ -63,6 +66,8 @@ interface ITrustedNodeSetupPresenter : ViewPresenter {
     fun navigateToNextScreen()
 
     fun goBackToSetupScreen()
+
+    suspend fun validateVersion(): Boolean
 }
 
 @Composable
@@ -72,7 +77,9 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
     val bisqApiUrl = presenter.bisqApiUrl.collectAsState().value
     val isConnected = presenter.isConnected.collectAsState().value
+    val isVersionValid = presenter.isBisqApiVersionValid.collectAsState().value
     val isLoading = presenter.isLoading.collectAsState().value
+    val trustedNodeVersion = presenter.trustedNodeVersion.collectAsState().value
     val clipboardManager = LocalClipboardManager.current
 
     val menuTree: MenuItem = settingsPresenter.menuTree()
@@ -90,22 +97,22 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     ) {
         if (isWorkflow) {
             BisqLogo()
-            Spacer(modifier = Modifier.height(24.dp))
+            BisqGap.V2()
         } else {
             BreadcrumbNavigation(path = menuPath) { index ->
                 if (index == 0) settingsPresenter.settingsNavigateBack()
             }
         }
         BisqText.largeRegular(
-            text = "To use Bisq through your trusted node, please enter the URL to connect to. E.g. ws://10.0.2.2:8090",
+            text = "To use Bisq through your trusted node, please enter the URL to connect to. E.g. ws://10.0.2.2:8090", // TODO:i18n
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        BisqGap.V2()
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxSize().padding(horizontal = 0.dp)
         ) {
             BisqTextField(
-                label = "Trusted Bisq Node URL",
+                label = "Trusted Bisq Node URL", // TODO:i18n
                 onValueChange = { url, isValid -> presenter.updateBisqApiUrl(url, isValid) },
                 value = bisqApiUrl,
                 placeholder = "ws://10.0.2.2:8090",
@@ -129,7 +136,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 BisqButton(
-                    text = "Paste",
+                    text = "Paste", // TODO:i18n
                     type = BisqButtonType.Grey,
                     onClick = {
                         val annotatedString = clipboardManager.getText()
@@ -148,29 +155,36 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 //                    leftIcon= { ScanIcon() }
 //                )
             }
-            Spacer(modifier = Modifier.height(36.dp))
-            BisqText.baseRegularGrey("STATUS")
-            Spacer(modifier = Modifier.height(12.dp))
+            BisqGap.V3()
+            BisqText.baseRegularGrey("STATUS") // TODO:i18n
+            BisqGap.V1()
             Row(verticalAlignment = Alignment.CenterVertically) {
-                BisqText.largeRegular(
-                    if (isConnected) "Connected" else "Not Connected",
-                )
-                Spacer(modifier = Modifier.width(12.dp))
+                val statusText = if (isConnected)
+                        if (isVersionValid) "Connected" else "Connected - Invalid version" // TODO:i18n
+                    else
+                        "Not Connected" // TODO:i18n
+                BisqText.largeRegular(statusText)
+                BisqGap.H1()
                 BisqText.baseRegular(
                     text = "",
-                    modifier = Modifier.clip(
-                        RoundedCornerShape(5.dp)
-                    ).background(color = if (isConnected) BisqTheme.colors.primary else BisqTheme.colors.danger)
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(5.dp))
+                        .background(color = if (isConnected && isVersionValid) BisqTheme.colors.primary else BisqTheme.colors.danger)
                         .size(10.dp),
                 )
             }
+            BisqGap.V3()
+            if (isConnected && isVersionValid == false) {
+                BisqText.baseRegular("Expected API version: ${BuildConfig.BISQ_API_VERSION}") // TODO:i18n
+                BisqText.baseRegular("Node API version: $trustedNodeVersion") // TODO:i18n
+            }
         }
 
-        Spacer(modifier = Modifier.height(56.dp))
+        BisqGap.V4()
 
-        if (!isConnected) {
+        if (!isConnected || (isConnected && !isVersionValid)) {
             BisqButton(
-                text = "Test Connection",
+                text = "Test Connection", // TODO:i18n
                 onClick = {
                     presenter.testConnection()
                 },
@@ -188,7 +202,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(700)),
                 ) {
                     BisqButton(
-                        text = "Test Connection",
+                        text = "Test Connection", // TODO:i18n
                         color = if (bisqApiUrl.isEmpty()) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
                         onClick = { presenter.testConnection() },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
@@ -199,7 +213,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     enter = fadeIn(animationSpec = tween(300)),
                 ) {
                     BisqButton(
-                        text = if (isWorkflow) "Next" else "Save",
+                        text = if (isWorkflow) "action.next".i18n() else "action.save".i18n(),
                         color = BisqTheme.colors.light_grey10,
                         onClick = { if (isWorkflow) presenter.navigateToNextScreen() else presenter.testConnection(false) },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),

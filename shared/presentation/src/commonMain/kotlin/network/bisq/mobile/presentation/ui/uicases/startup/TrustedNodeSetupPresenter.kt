@@ -6,6 +6,7 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -13,14 +14,21 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 class TrustedNodeSetupPresenter(
     mainPresenter: MainPresenter,
     private val settingsRepository: SettingsRepository,
+    private val settingsServiceFacade: SettingsServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider
 ) : BasePresenter(mainPresenter), ITrustedNodeSetupPresenter {
 
     private val _isBisqApiUrlValid = MutableStateFlow(false)
     override val isBisqApiUrlValid: StateFlow<Boolean> = _isBisqApiUrlValid
 
+    private val _isBisqApiVersionValid = MutableStateFlow(true)
+    override val isBisqApiVersionValid: StateFlow<Boolean> = _isBisqApiVersionValid
+
     private val _bisqApiUrl = MutableStateFlow("ws://10.0.2.2:8090")
     override val bisqApiUrl: StateFlow<String> = _bisqApiUrl
+
+    private val _trustedNodeVersion = MutableStateFlow("")
+    override val trustedNodeVersion: StateFlow<String> = _trustedNodeVersion
 
     private val _isConnected = MutableStateFlow(false)
     override val isConnected: StateFlow<Boolean> = _isConnected
@@ -34,7 +42,7 @@ class TrustedNodeSetupPresenter(
     }
 
     private fun initialize() {
-        log.i { "View attached to Trusted node presenter"}
+        log.i { "View attached to Trusted node presenter" }
         backgroundScope.launch {
             try {
                 settingsRepository.fetch()
@@ -42,6 +50,7 @@ class TrustedNodeSetupPresenter(
                     it?.let {
                         log.d { "Settings url:${it.bisqApiUrl}" }
                         updateBisqApiUrl(it.bisqApiUrl, true)
+                        validateVersion()
                     }
                 }
             } catch (e: Exception) {
@@ -77,9 +86,11 @@ class TrustedNodeSetupPresenter(
                 if (webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)) {
                     updateTrustedNodeSettings()
                     _isConnected.value = true
-                    showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
-                    if (!isWorkflow) {
-                        navigateBack();
+                    if (validateVersion()) {
+                        showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
+                        if (!isWorkflow) {
+                            navigateBack();
+                        }
                     }
                 } else {
                     showSnackbar("Could not connect to given url ${_bisqApiUrl.value}, please try again with another setup")
@@ -105,5 +116,17 @@ class TrustedNodeSetupPresenter(
 
     override fun goBackToSetupScreen() {
         navigateBack()
+    }
+
+    override suspend fun validateVersion(): Boolean {
+        _isBisqApiVersionValid.value = false
+        _trustedNodeVersion.value = settingsServiceFacade.getTrustedNodeVersion()
+        if (settingsServiceFacade.isApiCompatible()) {
+            _isBisqApiVersionValid.value = true
+            return true
+        } else {
+            _isBisqApiVersionValid.value = false
+            return false
+        }
     }
 }

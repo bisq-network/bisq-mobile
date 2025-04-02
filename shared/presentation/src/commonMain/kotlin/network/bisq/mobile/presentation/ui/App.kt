@@ -31,6 +31,8 @@ interface AppPresenter : ViewPresenter {
 
     // Actions
     fun toggleContentVisibility()
+
+    fun navigateToTrustedNode()
 }
 
 /**
@@ -46,7 +48,6 @@ fun App() {
     val presenter: AppPresenter = koinInject()
     val errorMessage = MainPresenter._genericErrorMessage.collectAsState().value
     val systemCrashed = MainPresenter._systemCrashed.collectAsState().value
-
 
     RememberPresenterLifecycle(presenter, {
         presenter.navController = rootNavController

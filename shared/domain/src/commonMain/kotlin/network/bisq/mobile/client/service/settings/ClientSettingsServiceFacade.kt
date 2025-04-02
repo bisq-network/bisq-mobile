@@ -125,7 +125,14 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
         val appApiRequiredVersion = BuildConfig.BISQ_API_VERSION
         val trustedNodeApiVersion = apiGateway.getApiVersion().getOrThrow().version
         log.d { "required trusted node api version is $appApiRequiredVersion and current is $trustedNodeApiVersion" }
+        // return false // (for debug)
         return trustedNodeApiVersion >= appApiRequiredVersion
+    }
+
+    override suspend fun getTrustedNodeVersion(): String {
+        val trustedNodeApiVersion = apiGateway.getApiVersion().getOrThrow().version
+        // return "0.1.1.1" // (for debug)
+        return trustedNodeApiVersion
     }
 
 }

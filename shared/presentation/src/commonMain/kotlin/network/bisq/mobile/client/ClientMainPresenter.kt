@@ -2,6 +2,7 @@ package network.bisq.mobile.client
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.BackgroundDispatcher
@@ -66,8 +67,8 @@ open class ClientMainPresenter(
                 log.d { "trusted node is compatible, continue" }
             } else {
                 log.w { "configured trusted node doesn't have a compatible api version" }
-                // TODO flow and make UI react blocking usage of the app
-//                throw IllegalStateException("API version is not compatible")
+                val trustedNodeVersion = settingsServiceFacade.getTrustedNodeVersion()
+                MainPresenter._genericErrorMessage.value = "This app requires API Version: ${BuildConfig.BISQ_API_VERSION}.\nTrusted node API version: $trustedNodeVersion"
             }
         }
     }

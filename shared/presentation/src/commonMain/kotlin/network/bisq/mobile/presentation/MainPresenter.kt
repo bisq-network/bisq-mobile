@@ -13,6 +13,7 @@ import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationSe
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.setupUncaughtExceptionHandler
 import network.bisq.mobile.presentation.ui.AppPresenter
+import network.bisq.mobile.presentation.ui.navigation.Routes
 import kotlin.jvm.JvmStatic
 
 
@@ -82,6 +83,11 @@ open class MainPresenter(
     // Toggle action
     override fun toggleContentVisibility() {
         _isContentVisible.value = !_isContentVisible.value
+    }
+
+    override fun navigateToTrustedNode() {
+        tabNavController.navigate(Routes.TabSettings.name)
+        navController.navigate(Routes.TrustedNodeSettings.name)
     }
 
     override fun getRootNavController(): NavHostController {
