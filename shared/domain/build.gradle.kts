@@ -116,17 +116,19 @@ kotlin {
             }
         }
 
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-            implementation(libs.multiplatform.settings.test)
-            implementation(libs.kotlinx.coroutines.test)
-            implementation(libs.koin.test)
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(libs.koin.test)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.multiplatform.settings.test.v120)
+            }
         }
         androidMain.dependencies {
             implementation(libs.androidx.core)
-
             implementation(libs.koin.core)
             implementation(libs.koin.android)
+            implementation(libs.ktor.client.okhttp)
         }
         androidUnitTest.dependencies {
             implementation(libs.mock.io)

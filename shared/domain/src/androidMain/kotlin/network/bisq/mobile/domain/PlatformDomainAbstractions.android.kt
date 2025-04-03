@@ -8,9 +8,6 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import com.russhwolf.settings.Settings
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -24,12 +21,31 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Date
+import io.ktor.client.*
+import io.ktor.client.engine.okhttp.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.websocket.*
+import io.ktor.serialization.kotlinx.json.*
+import kotlinx.datetime.LocalDateTime
+import kotlinx.datetime.toInstant
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import java.io.ByteArrayOutputStream
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.text.DecimalFormat
+import java.text.SimpleDateFormat
+import java.util.*
 
 actual fun formatDateTime(dateTime: LocalDateTime): String {
-    val timeZone = TimeZone.currentSystemDefault()
-    val instant = dateTime.toInstant(TimeZone.of(timeZone.id)) // Convert to Instant
+    val kotlinTimeZone = kotlinx.datetime.TimeZone.currentSystemDefault()
+    val instant = dateTime.toInstant(kotlinTimeZone) // Convert to Instant
     val date = Date(instant.toEpochMilliseconds()) // Convert to Java Date
     val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+
+    // Use the fully qualified name for Java's TimeZone
+    formatter.timeZone = java.util.TimeZone.getDefault()
+
     return formatter.format(date)
 }
 
@@ -38,7 +54,57 @@ actual fun encodeURIParam(param: String): String {
 }
 
 actual fun getPlatformSettings(): Settings {
-    return Settings()
+    // For testing purposes, we can use an in-memory implementation
+    return object : Settings {
+        private val map = mutableMapOf<String, Any>()
+
+        override val keys: Set<String>
+            get() = map.keys
+        override val size: Int
+            get() = map.size
+
+        override fun clear() = map.clear()
+
+        override fun remove(key: String) { map.remove(key) }
+
+        override fun hasKey(key: String): Boolean = map.containsKey(key)
+
+        override fun putInt(key: String, value: Int) { map[key] = value }
+        override fun getInt(key: String, defaultValue: Int): Int = map[key] as? Int ?: defaultValue
+        override fun getIntOrNull(key: String): Int? {
+            TODO("Not yet implemented")
+        }
+
+        override fun putLong(key: String, value: Long) { map[key] = value }
+        override fun getLong(key: String, defaultValue: Long): Long = map[key] as? Long ?: defaultValue
+        override fun getLongOrNull(key: String): Long? {
+            TODO("Not yet implemented")
+        }
+
+        override fun putString(key: String, value: String) { map[key] = value }
+        override fun getString(key: String, defaultValue: String): String = map[key] as? String ?: defaultValue
+        override fun getStringOrNull(key: String): String? {
+            TODO("Not yet implemented")
+        }
+
+        override fun putFloat(key: String, value: Float) { map[key] = value }
+        override fun getFloat(key: String, defaultValue: Float): Float = map[key] as? Float ?: defaultValue
+        override fun getFloatOrNull(key: String): Float? {
+            TODO("Not yet implemented")
+        }
+
+        override fun putDouble(key: String, value: Double) { map[key] = value }
+        override fun getDouble(key: String, defaultValue: Double): Double = map[key] as? Double ?: defaultValue
+        override fun getDoubleOrNull(key: String): Double? {
+            TODO("Not yet implemented")
+        }
+
+        override fun putBoolean(key: String, value: Boolean) { map[key] = value }
+        override fun getBoolean(key: String, defaultValue: Boolean): Boolean = map[key] as? Boolean ?: defaultValue
+        override fun getBooleanOrNull(key: String): Boolean? {
+            TODO("Not yet implemented")
+        }
+    }
 }
 
 actual fun getDeviceLanguageCode(): String {
@@ -83,19 +149,18 @@ actual fun loadProperties(fileName: String): Map<String, String> {
 }
 
 @Serializable(with = PlatformImageSerializer::class)
-actual class PlatformImage(val bitmap: ImageBitmap) {
-    actual companion object {
-        actual fun deserialize(data: ByteArray): PlatformImage {
-            val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
-            return PlatformImage(bitmap.asImageBitmap())
-        }
+actual class PlatformImage(val bitmap: Bitmap) {
+    actual fun serialize(): ByteArray {
+        val stream = ByteArrayOutputStream()
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        return stream.toByteArray()
     }
 
-    actual fun serialize(): ByteArray {
-        val androidBitmap = bitmap.asAndroidBitmap()
-        val stream = ByteArrayOutputStream()
-        androidBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
-        return stream.toByteArray()
+    companion actual object {
+        actual fun deserialize(data: ByteArray): PlatformImage {
+            val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
+            return PlatformImage(bitmap)
+        }
     }
 }
 
@@ -114,6 +179,15 @@ actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
             }
         } else {
             "0"
+        }
+    }
+}
+
+actual fun createHttpClient(json: Json): HttpClient {
+    return HttpClient(OkHttp) {
+        install(WebSockets)
+        install(ContentNegotiation) {
+            json(json)
         }
     }
 }
