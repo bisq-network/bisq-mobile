@@ -84,12 +84,11 @@ class WebSocketClientProvider(
         return clientFactory(host, port)
     }
 
-    fun get(): WebSocketClient {
+    suspend fun get(): WebSocketClient {
         if (currentClient == null) {
-            runBlocking {
-                settingsRepository.fetch()
-            }
+            // Instead of using runBlocking, make this function suspend
+            settingsRepository.fetch()
         }
-        return currentClient!!
+        return currentClient ?: throw IllegalStateException("WebSocketClient is not initialized")
     }
 }

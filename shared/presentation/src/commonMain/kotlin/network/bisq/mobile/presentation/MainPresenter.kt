@@ -31,22 +31,22 @@ open class MainPresenter(
     private val _isContentVisible = MutableStateFlow(false)
     override val isContentVisible: StateFlow<Boolean> = _isContentVisible
 
-    private val _isSmallScreen = MutableStateFlow(false)
-    override val isSmallScreen: StateFlow<Boolean> = _isSmallScreen
+    private val _isSmallScreenState = MutableStateFlow(false)
+    override val isSmallScreen: StateFlow<Boolean> = _isSmallScreenState
 
     override val languageCode: StateFlow<String> = settingsService.languageCode
 
     init {
         val localeCode = getDeviceLanguageCode()
         var screenWidth = getScreenWidthDp()
-        _isSmallScreen.value = screenWidth < 480
+        _isSmallScreenState.value = screenWidth < 480
         log.i { "Shared Version: ${BuildConfig.SHARED_LIBS_VERSION}" }
         log.i { "iOS Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Client Version: ${BuildConfig.ANDROID_APP_VERSION}" }
         log.i { "Android Node Version: ${BuildNodeConfig.APP_VERSION}" }
         log.i { "Device language code: $localeCode"}
         log.i { "Screen width: $screenWidth"}
-        log.i { "Small screen: ${_isSmallScreen.value}"}
+        log.i { "Small screen: ${_isSmallScreenState.value}"}
     }
 
     @CallSuper

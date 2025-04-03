@@ -30,6 +30,9 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
+    js(IR) {
+        browser()
+    }
 
     cocoapods {
         summary = "Shared Presentation Logic, navigation and connection between data and UI"
@@ -65,6 +68,7 @@ kotlin {
             implementation(libs.navigation.compose)
             implementation(libs.bignum)
             implementation(libs.coil.compose)
+            implementation(libs.okio)
         }
         androidUnitTest.dependencies {
             implementation(libs.mock.io)
@@ -82,6 +86,20 @@ kotlin {
 //                implementation(kotlin("test"))
                 @OptIn(org.jetbrains.compose.ExperimentalComposeLibrary::class)
                 implementation(compose.uiTest)
+            }
+        }
+        // Add JS main source set
+        val jsMain by getting {
+            dependencies {
+                implementation(project(":shared:domain"))
+                implementation(compose.runtime)
+                implementation(compose.web.core)
+                implementation(libs.kotlinx.coroutines)
+                implementation(libs.ktor.client.js)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.websockets)
+                implementation(libs.koin.core)
             }
         }
     }

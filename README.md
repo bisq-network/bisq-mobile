@@ -77,7 +77,7 @@ Alternatively, you could run `./gradlew clean build` (1) first from terminal and
 
 ### `Getting started for Android Node`
 
-Addicionally, for the `androidNode` module to build you need to have its dependent Bisq2 jars in your local maven2 repository ('~/.m2/repository`). Here are the steps to do that
+Addicionally, for the `androidNode` module to build you need to have its dependent Bisq2 jars in your local maven2 repository ('~/.m2/repository'). Here are the steps to do that
 
 1. download [Bisq2](https://github.com/bisq-network/bisq2) if you don't have it already
 2. follow Bisq2 root `README.md` steps to build the project
@@ -130,10 +130,11 @@ Please refer to [this README](shared/presentation/src/commonMain/kotlin/network/
 
 Though this can evolve, this is the initial structure of this KMP project:
  - **shared:domain**: Domain module has models (KOJOs) and components that provide them.
- - **shared:presentation**: Contains UI shared code using Kotlin MultiPlatform Compose Implementation forr all the apps, its Presenter's behaviour contracts (interfaces) and default presenter implementations that connects UI with domain.
+ - **shared:presentation**: Contains UI shared code using Kotlin MultiPlatform Compose Implementation for all the apps, its Presenter's behaviour contracts (interfaces) and default presenter implementations that connects UI with domain.
  - **iosClient**: Xcode project that generates the thin iOS client from sharedUI
  - **androidClient**: Kotlin Compose Android thin app. This app as well should have most if not all of the code shared with the iosClient.
  - **androidNode**: Bisq2 Implementation in Android, will contain the dependencies to Java 17 Bisq2 core jars.
+ - **webClient**: Kotlin Compose for Web implementation of the Connect client as a PWA.
 
 ## App Architecture Design Choice
 

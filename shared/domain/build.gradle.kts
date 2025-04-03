@@ -69,6 +69,9 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
+    js(IR) {
+        browser()
+    }
 
     cocoapods {
         summary = "Shared Domain business logic and KOJOs"
@@ -83,8 +86,11 @@ kotlin {
     }
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(libs.androidx.activity.compose)
+        val commonMain by getting {
+            dependencies {
+                // Add kotlinx-coroutines-core dependency
+                implementation(libs.kotlinx.coroutines)
+            }
         }
         commonMain.dependencies {
             //put your multiplatform dependencies here
@@ -100,7 +106,6 @@ kotlin {
             implementation(libs.ktor.client.serialization)
             implementation(libs.ktor.client.json)
             implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.ktor.client.cio)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.jetbrains.serialization.gradle.plugin)
             implementation(libs.kotlinx.serialization.json)
@@ -150,6 +155,18 @@ kotlin {
 
         iosMain.dependencies {
             implementation(libs.koin.core)
+            implementation(libs.ktor.client.darwin)
+        }
+
+        // PWA deps
+        val jsMain by getting {
+            dependencies {
+                implementation(libs.kotlinx.coroutines)
+                implementation(libs.ktor.client.js)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.websockets)
+            }
         }
     }
 }
@@ -166,6 +183,9 @@ android {
     }
 
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+}
+dependencies {
+    implementation(libs.androidx.ui.graphics.android)
 }
 
 tasks.withType<Copy> {

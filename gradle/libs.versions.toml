@@ -33,7 +33,7 @@ junit = "4.13.2"
 kotlinReflect = "2.0.21"
 kotlinxDatetime = "0.4.0"
 kotlinxSerialization = "1.7.3"
-ktorClient = "3.0.1"
+ktor = "3.0.1"
 mockio = "1.12.0"
 kotlin = "2.0.20"
 kotlinTestJunit = "2.0.20"
@@ -41,6 +41,7 @@ kotlinx = "1.9.0"
 kermit = "2.0.4"
 buildconfig = "5.5.0"
 navigationCompose = "2.7.0-alpha07"
+# okio = "3.5.0"
 okio = "3.9.1"
 serializationPlugin = "2.0.21"
 protobuf = "0.9.4"
@@ -74,6 +75,7 @@ lombok-lib = { strictly = '1.18.34' }
 typesafe-config-lib = { strictly = '1.4.3' }
 
 multiplatform-settings = "1.2.0"
+uiGraphicsAndroid = "1.7.8"
 
 [libraries]
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
@@ -203,6 +205,7 @@ koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
 # mp-settings
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatform-settings" }
 multiplatform-settings-test = { module = "com.russhwolf:multiplatform-settings-test", version.ref = "multiplatform-settings" }
+androidx-ui-graphics-android = { group = "androidx.compose.ui", name = "ui-graphics-android", version.ref = "uiGraphicsAndroid" }
 
 [bundles]
 #glassfish-jersey = ['glassfish-jersey-jdk-http', 'glassfish-jersey-json-jackson', 'glassfish-jersey-inject-hk2', 'glassfish-jaxb-runtime']

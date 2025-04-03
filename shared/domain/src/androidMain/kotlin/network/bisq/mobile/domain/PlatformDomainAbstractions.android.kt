@@ -26,19 +26,10 @@ import io.ktor.client.engine.okhttp.*
 import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.json.*
-import kotlinx.datetime.LocalDateTime
-import kotlinx.datetime.toInstant
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import java.io.ByteArrayOutputStream
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
-import java.text.DecimalFormat
-import java.text.SimpleDateFormat
-import java.util.*
 
 actual fun formatDateTime(dateTime: LocalDateTime): String {
-    val kotlinTimeZone = kotlinx.datetime.TimeZone.currentSystemDefault()
+    val kotlinTimeZone = TimeZone.currentSystemDefault()
     val instant = dateTime.toInstant(kotlinTimeZone) // Convert to Instant
     val date = Date(instant.toEpochMilliseconds()) // Convert to Java Date
     val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
@@ -156,7 +147,7 @@ actual class PlatformImage(val bitmap: Bitmap) {
         return stream.toByteArray()
     }
 
-    companion actual object {
+    actual companion object {
         actual fun deserialize(data: ByteArray): PlatformImage {
             val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
             return PlatformImage(bitmap)

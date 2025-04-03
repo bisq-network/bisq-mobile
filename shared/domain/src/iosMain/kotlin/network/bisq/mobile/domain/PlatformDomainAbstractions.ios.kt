@@ -28,6 +28,13 @@ import platform.Foundation.NSString
 import platform.Foundation.create
 import platform.Foundation.stringByAddingPercentEncodingWithAllowedCharacters
 
+import io.ktor.client.*
+import io.ktor.client.engine.darwin.*
+import io.ktor.client.plugins.contentnegotiation.*
+import io.ktor.client.plugins.websocket.*
+import io.ktor.serialization.kotlinx.json.*
+import kotlinx.serialization.json.Json
+
 actual fun formatDateTime(dateTime: LocalDateTime): String {
     val formatter = NSDateFormatter().apply {
         dateStyle = NSDateFormatterMediumStyle
@@ -143,7 +150,7 @@ actual class PlatformImage(val image: UIImage) {
         return nsData.toByteArray()
     }
 
-    companion actual object {
+    actual companion object {
         actual fun deserialize(data: ByteArray): PlatformImage {
             val nsData = data.toNSData()
             val image = UIImage(data = nsData)!!
@@ -171,5 +178,14 @@ actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
     override fun format(value: Double, precision: Int): String {
         val pattern = "%.${precision}f"
         return NSString.stringWithFormat(pattern, value)
+    }
+}
+
+actual fun createHttpClient(json: Json): HttpClient {
+    return HttpClient(Darwin) {
+        install(WebSockets)
+        install(ContentNegotiation) {
+            json(json)
+        }
     }
 }

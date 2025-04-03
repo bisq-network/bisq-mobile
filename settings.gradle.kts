@@ -1,4 +1,3 @@
-enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 pluginManagement {
     repositories {
         google {
@@ -18,17 +17,42 @@ pluginManagement {
 }
 
 dependencyResolutionManagement {
-    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
     repositories {
         google()
         mavenCentral()
-        // for androidNode till we get bisq-core libs published to a public repo
         mavenLocal()
         maven {
             url = uri("https://jitpack.io")
         }
-    }
-    repositories {
+        // Node.js repository
+        ivy {
+            name = "Node.js"
+            url = uri("https://nodejs.org/dist")
+            patternLayout {
+                artifact("v[revision]/[artifact](-v[revision]-[classifier]).[ext]")
+            }
+            metadataSources {
+                artifact()
+            }
+            content {
+                includeModule("org.nodejs", "node")
+            }
+        }
+        // Yarn repository
+        ivy {
+            name = "Yarn"
+            url = uri("https://github.com/yarnpkg/yarn/releases/download")
+            patternLayout {
+                artifact("v[revision]/[artifact]-v[revision].tar.gz")
+            }
+            metadataSources {
+                artifact()
+            }
+            content {
+                includeModule("com.yarnpkg", "yarn")
+            }
+        }
     }
 }
 
@@ -37,3 +61,4 @@ include(":shared:domain")
 include(":shared:presentation")
 include(":androidClient")
 include(":androidNode")
+include(":webClient")

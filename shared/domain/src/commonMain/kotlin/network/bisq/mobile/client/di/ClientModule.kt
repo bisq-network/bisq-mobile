@@ -1,10 +1,6 @@
 package network.bisq.mobile.client.di
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.serialization.kotlinx.json.json
+import io.ktor.client.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -74,84 +70,20 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
+import network.bisq.mobile.domain.createHttpClient
 import org.koin.dsl.module
 
-// networking and services dependencies
 val clientModule = module {
-    val json = Json {
-        prettyPrint = true
-        serializersModule = SerializersModule {
-            polymorphic(MonetaryVO::class) {
-                subclass(CoinVO::class, CoinVO.serializer())
-                subclass(FiatVO::class, FiatVO.serializer())
-            }
-            polymorphic(PriceSpecVO::class) {
-                subclass(FixPriceSpecVO::class, FixPriceSpecVO.serializer())
-                subclass(FloatPriceSpecVO::class, FloatPriceSpecVO.serializer())
-                subclass(MarketPriceSpecVO::class, MarketPriceSpecVO.serializer())
-            }
-            polymorphic(AmountSpecVO::class) {
-                subclass(QuoteSideFixedAmountSpecVO::class, QuoteSideFixedAmountSpecVO.serializer())
-                subclass(QuoteSideRangeAmountSpecVO::class, QuoteSideRangeAmountSpecVO.serializer())
-                subclass(BaseSideFixedAmountSpecVO::class, BaseSideFixedAmountSpecVO.serializer())
-                subclass(BaseSideRangeAmountSpecVO::class, BaseSideRangeAmountSpecVO.serializer())
-            }
-            polymorphic(OfferOptionVO::class) {
-                subclass(ReputationOptionVO::class, ReputationOptionVO.serializer())
-                subclass(
-                    TradeTermsOptionVO::class,
-                    TradeTermsOptionVO.serializer()
-                )
-            }
-            polymorphic(PaymentMethodSpecVO::class) {
-                subclass(
-                    BitcoinPaymentMethodSpecVO::class,
-                    BitcoinPaymentMethodSpecVO.serializer()
-                )
-                subclass(
-                    FiatPaymentMethodSpecVO::class,
-                    FiatPaymentMethodSpecVO.serializer()
-                )
-            }
-
-            polymorphic(WebSocketMessage::class) {
-                subclass(WebSocketRestApiRequest::class)
-                subclass(WebSocketRestApiResponse::class)
-                subclass(SubscriptionRequest::class)
-                subclass(SubscriptionResponse::class)
-                subclass(WebSocketEvent::class)
-            }
+    single {
+        Json {
+            ignoreUnknownKeys = true
+            isLenient = true
+            prettyPrint = false
         }
-        classDiscriminator = "type"
-        ignoreUnknownKeys = true
     }
-
-    single { json }
 
     single {
-        HttpClient(CIO) {
-            install(WebSockets)
-            install(ContentNegotiation) {
-                json(json)
-            }
-        }
-    }
-
-    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get()) }
-
-    single { EnvironmentController() }
-    single(named("ApiHost")) { get<EnvironmentController>().getApiHost() }
-    single(named("ApiPort")) { get<EnvironmentController>().getApiPort() }
-    single(named("WebsocketApiHost")) { get<EnvironmentController>().getWebSocketHost() }
-    single(named("WebsocketApiPort")) { get<EnvironmentController>().getWebSocketPort() }
-
-    factory { (host: String, port: Int) ->
-        WebSocketClient(
-            get(),
-            get(),
-            host,
-            port
-        )
+        createHttpClient(get())
     }
 
     single {
