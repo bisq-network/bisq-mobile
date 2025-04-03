@@ -27,7 +27,7 @@ fun TrustedNodeAPIIncompatiblePopup(
         Row(horizontalArrangement = Arrangement.Start) {
             ExclamationRedIcon()
             BisqGap.HQuarter()
-            BisqText.baseRegular("error.exception".i18n())
+            BisqText.baseRegular("error.warning".i18n())
         }
 
         BisqGap.V1()

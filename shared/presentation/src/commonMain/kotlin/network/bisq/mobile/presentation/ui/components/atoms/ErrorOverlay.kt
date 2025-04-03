@@ -28,7 +28,7 @@ fun ErrorOverlay(
         ) {
             // TODO: Should define exception types.
             // For this specific issue, have a type like TRUST_NODE_VERSION_INCOMPATIBLE
-            if (errorMessage.startsWith("This app requires API Version:")) {
+            if (errorMessage.startsWith("Your configured trusted ")) {
                 TrustedNodeAPIIncompatiblePopup(
                     errorMessage = errorMessage,
                     onFix = {

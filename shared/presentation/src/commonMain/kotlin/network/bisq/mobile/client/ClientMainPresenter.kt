@@ -68,7 +68,7 @@ open class ClientMainPresenter(
             } else {
                 log.w { "configured trusted node doesn't have a compatible api version" }
                 val trustedNodeVersion = settingsServiceFacade.getTrustedNodeVersion()
-                MainPresenter._genericErrorMessage.value = "This app requires API Version: ${BuildConfig.BISQ_API_VERSION}.\nTrusted node API version: $trustedNodeVersion"
+                MainPresenter._genericErrorMessage.value = "Your configured trusted node is running Bisq version $trustedNodeVersion.\nBisq Connect requires version ${BuildConfig.BISQ_API_VERSION} to run properly.\n"
             }
         }
     }

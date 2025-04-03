@@ -1540,6 +1540,7 @@ object GeneratedResourceBundles_pt_BR {
         "mobile" to mapOf(
             "bootstrap.connectedToTrustedNode" to "Connected to trusted node",
             "error.exception" to "Exception",
+            "error.warning" to "Warning",
             "confirmation.areYouSure" to "Are you sure?",
             "mobile.openTrades.inMediation.banner" to "A mediator has joined the trade chat.\nPlease use the trade chat to get assistance from the mediator.",
             "mobile.tradeState.info.buyer.phase2a.reasonForPaymentInfo" to "Use the trade ID {0} for the ''Reason for payment'' field",
