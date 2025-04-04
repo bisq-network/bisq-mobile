@@ -16,8 +16,10 @@
  */
 package network.bisq.mobile.domain.data.replicated.common.monetary
 
+import com.ionspin.kotlin.bignum.decimal.BigDecimal
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import network.bisq.mobile.domain.data.replicated.common.roundDouble
 
 @Serializable
 @SerialName("Fiat")
@@ -27,4 +29,11 @@ data class FiatVO(
     override val code: String,
     override val precision: Int,
     override val lowPrecision: Int,
-) : MonetaryVO
+) : MonetaryVO {
+
+    override fun round(roundPrecision: Int): MonetaryVO {
+        val rounded: Double = roundDouble(toDouble(), roundPrecision);
+        val shifted: Long = BigDecimal.fromDouble(rounded).moveDecimalPoint(precision).longValue();
+        return FiatVO(code, shifted, code, precision, precision);
+    }
+}
