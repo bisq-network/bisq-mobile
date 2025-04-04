@@ -30,8 +30,9 @@ fun CreateOfferAmountSelectorScreen() {
     val presenter: CreateOfferAmountPresenter = koinInject()
     val isBuy by presenter.isBuy.collectAsState()
     val reputation by presenter.reputation.collectAsState()
+    val hintText by presenter.hintText.collectAsState()
     val sellLimit by presenter.formattedReputationBasedMaxSellAmount.collectAsState()
-    val showSellerLimitPopup by presenter.showSellerLimitPopup.collectAsState()
+    val showLimitPopup by presenter.showLimitPopup.collectAsState()
     RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
@@ -119,33 +120,27 @@ fun CreateOfferAmountSelectorScreen() {
                 }
             }
 
-            if (isBuy) {
-                NoteText(
-                    notes = "bisqEasy.tradeWizard.amount.buyer.limitInfo".i18n(
-                        countString,
-                        presenter.formattedQuoteSideFixedAmount.value
-                    ),
-                    linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
-                )
-            } else {
-                NoteText(
-                    notes = "bisqEasy.tradeWizard.amount.seller.limitInfo".i18n(sellLimit),
-                    linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
-                    onLinkClick = {
-                        presenter.setShowSellerLimitPopup(true)
-                    }
-                )
-            }
+
+            NoteText(
+                notes = hintText,
+                linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
+                onLinkClick = {
+                    presenter.setShowLimitPopup(true)
+                }
+            )
 
         }
     }
 
-    if (showSellerLimitPopup) {
-        ReputationBasedLimitsPopup(
-            onDismiss = { presenter.setShowSellerLimitPopup(false) },
-            reputationScore = reputation!!.totalScore.toString(),
-            maxSellAmount = sellLimit,
-        )
+    if (showLimitPopup) {
+        if (isBuy) {
+            ReputationBasedLimitsPopup(
+                onDismiss = { presenter.setShowLimitPopup(false) },
+                reputationScore = reputation!!.totalScore.toString(),
+                maxSellAmount = sellLimit,
+            )
+        } else {
 
+        }
     }
 }

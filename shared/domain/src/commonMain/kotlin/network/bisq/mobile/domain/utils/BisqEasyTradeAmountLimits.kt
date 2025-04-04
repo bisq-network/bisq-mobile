@@ -34,6 +34,7 @@ object BisqEasyTradeAmountLimits {
         return (value.toDouble() / 10000).roundToLong() * 10000
     }
 
+    val TOLERANCE: Double = 0.05
     val DEFAULT_MIN_USD_TRADE_AMOUNT: FiatVO = FiatVOFactory.fromFaceValue(6.0, "USD")
     val MAX_USD_TRADE_AMOUNT: FiatVO = FiatVOFactory.fromFaceValue(600.0, "USD")
     val REQUIRED_REPUTATION_SCORE_PER_USD: Double = 200.0
@@ -118,6 +119,10 @@ object BisqEasyTradeAmountLimits {
     fun getUsdAmountFromReputationScore(reputationScore: Long): MonetaryVO {
         val usdAmount = reputationScore / REQUIRED_REPUTATION_SCORE_PER_USD
         return FiatVOFactory.fromFaceValue(usdAmount, "USD")
+    }
+
+    fun withTolerance(makersReputationScore: Long): Long {
+        return (makersReputationScore * (1 + TOLERANCE)).toLong();
     }
 
 }

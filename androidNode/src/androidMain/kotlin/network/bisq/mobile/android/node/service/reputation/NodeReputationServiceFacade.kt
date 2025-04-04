@@ -20,4 +20,8 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
         }
     }
 
+    override fun getScoreByUserProfileId(): Map<String, Long> {
+        return reputationService.scoreByUserProfileId
+    }
+
 }

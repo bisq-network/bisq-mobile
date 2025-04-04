@@ -4,4 +4,6 @@ import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScor
 
 interface ReputationServiceFacade {
     suspend fun getReputation(userProfileId: String): ReputationScoreVO
+
+    fun getScoreByUserProfileId(): Map<String, Long>
 }
