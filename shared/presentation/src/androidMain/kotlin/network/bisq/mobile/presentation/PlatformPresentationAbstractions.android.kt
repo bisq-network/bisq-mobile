@@ -9,7 +9,7 @@ import network.bisq.mobile.presentation.ui.helpers.AndroidCurrentTimeProvider
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 
 actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
-    return BitmapPainter(platformImage.bitmap.asImageBitmap())
+    return BitmapPainter(platformImage.bitmap)
 }
 
 actual fun getPlatformCurrentTimeProvider(): TimeProvider = AndroidCurrentTimeProvider()

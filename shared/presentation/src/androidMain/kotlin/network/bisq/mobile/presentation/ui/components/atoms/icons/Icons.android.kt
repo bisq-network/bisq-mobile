@@ -6,5 +6,5 @@ import androidx.compose.ui.graphics.painter.Painter
 import network.bisq.mobile.domain.PlatformImage
 
 actual fun rememberPlatformImagePainter(platformImage: PlatformImage): Painter {
-    return BitmapPainter(platformImage.bitmap.asImageBitmap())
+    return BitmapPainter(platformImage.bitmap)
 }

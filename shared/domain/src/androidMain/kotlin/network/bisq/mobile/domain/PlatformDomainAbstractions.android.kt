@@ -8,6 +8,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import com.russhwolf.settings.Settings
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
@@ -143,17 +146,17 @@ actual fun loadProperties(fileName: String): Map<String, String> {
 }
 
 @Serializable(with = PlatformImageSerializer::class)
-actual class PlatformImage(val bitmap: Bitmap) {
+actual class PlatformImage(val bitmap: ImageBitmap) {
     actual fun serialize(): ByteArray {
         val stream = ByteArrayOutputStream()
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        bitmap.asAndroidBitmap().compress(Bitmap.CompressFormat.PNG, 100, stream)
         return stream.toByteArray()
     }
 
     actual companion object {
         actual fun deserialize(data: ByteArray): PlatformImage {
             val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
-            return PlatformImage(bitmap)
+            return PlatformImage(bitmap.asImageBitmap())
         }
     }
 }
