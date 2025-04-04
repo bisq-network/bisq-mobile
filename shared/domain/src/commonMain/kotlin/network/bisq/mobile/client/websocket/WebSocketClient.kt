@@ -33,6 +33,8 @@ import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.marketListDemoObj
+import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
 import network.bisq.mobile.domain.data.replicated.identity.identitiesDemoObj
@@ -163,7 +165,8 @@ class WebSocketClient(
     private fun fakeResponse(webSocketRequest: WebSocketRequest): WebSocketResponse {
         webSocketRequest as WebSocketRestApiRequest
         log.d { "responding fake response to path ${webSocketRequest.path}" }
-        return WebSocketRestApiResponse(webSocketRequest.requestId, 200,
+        return WebSocketRestApiResponse(
+            webSocketRequest.requestId, 200,
             body = when {
                 webSocketRequest.path.endsWith("settings") -> json.encodeToString(settingsVODemoObj)
                 webSocketRequest.path.endsWith("settings/version") -> json.encodeToString(apiVersionSettingsVO)
@@ -171,7 +174,8 @@ class WebSocketClient(
                 webSocketRequest.path.endsWith("offerbook/markets") -> json.encodeToString(marketListDemoObj)
                 webSocketRequest.path.endsWith("selected/user-profile") -> json.encodeToString(userProfileDemoObj)
                 else -> "{}"
-            })
+            }
+        )
     }
 
     suspend fun subscribe(topic: Topic, parameter: String? = null): WebSocketEventObserver {
@@ -298,8 +302,22 @@ class WebSocketClient(
     // Example fake data
     object FakeSubscriptionData {
         val marketPrice = mapOf(
-            "USD" to PriceQuoteVO(80000, MarketVO("Bitcoin", "USD")),
-            "EUR" to PriceQuoteVO(75000, MarketVO("Bitcoin", "EUR")),
+            "USD" to PriceQuoteVO(
+                80000,
+                4,
+                2,
+                MarketVO("Bitcoin", "USD"),
+                CoinVO("BTC", 1, "BTC", 8, 4),
+                FiatVO("USD", 80000, "USD", 4, 2)
+            ),
+            "EUR" to PriceQuoteVO(
+                75000,
+                4,
+                2,
+                MarketVO("Bitcoin", "EUR"),
+                CoinVO("BTC", 1, "BTC", 8, 4),
+                FiatVO("EUR", 75000, "EUR", 4, 2)
+            ),
         )
         val trades = mapOf("BTC" to "0.5", "USD" to "10000")
         val offers = listOf(
@@ -328,21 +346,29 @@ class WebSocketClient(
                     priceSpec = FixPriceSpecVO(
                         priceQuote = PriceQuoteVO(
                             value = 100L,
+                            4,
+                            2,
                             market = MarketVO(
                                 baseCurrencyCode = "Bitcoin",
                                 quoteCurrencyCode = "USD",
-                            )
+                            ),
+                            CoinVO("BTC", 1, "BTC", 8, 4),
+                            FiatVO("USD", 100L, "USD", 4, 2),
                         )
                     ),
                     protocolTypes = listOf(),
-                    baseSidePaymentMethodSpecs = listOf(BitcoinPaymentMethodSpecVO(
-                        paymentMethod = "onchain",
-                        saltedMakerAccountId = "onchain"
-                    )),
-                    quoteSidePaymentMethodSpecs = listOf(FiatPaymentMethodSpecVO(
-                        paymentMethod = "payid",
-                        saltedMakerAccountId = "payid"
-                    )),
+                    baseSidePaymentMethodSpecs = listOf(
+                        BitcoinPaymentMethodSpecVO(
+                            paymentMethod = "onchain",
+                            saltedMakerAccountId = "onchain"
+                        )
+                    ),
+                    quoteSidePaymentMethodSpecs = listOf(
+                        FiatPaymentMethodSpecVO(
+                            paymentMethod = "payid",
+                            saltedMakerAccountId = "payid"
+                        )
+                    ),
                     offerOptions = listOf(),
                     supportedLanguageCodes = listOf("EN")
                 ),
@@ -412,21 +438,29 @@ class WebSocketClient(
                     priceSpec = FixPriceSpecVO(
                         priceQuote = PriceQuoteVO(
                             value = 102L,
+                            4,
+                            2,
                             market = MarketVO(
                                 baseCurrencyCode = "Bitcoin",
                                 quoteCurrencyCode = "USD",
-                            )
+                            ),
+                            CoinVO("BTC", 1, "BTC", 8, 4),
+                            FiatVO("USD", 102L, "USD", 4, 2),
                         )
                     ),
                     protocolTypes = listOf(),
-                    baseSidePaymentMethodSpecs = listOf(BitcoinPaymentMethodSpecVO(
-                        paymentMethod = "onchain",
-                        saltedMakerAccountId = "onchain"
-                    )),
-                    quoteSidePaymentMethodSpecs = listOf(FiatPaymentMethodSpecVO(
-                        paymentMethod = "payid",
-                        saltedMakerAccountId = "payid"
-                    )),
+                    baseSidePaymentMethodSpecs = listOf(
+                        BitcoinPaymentMethodSpecVO(
+                            paymentMethod = "onchain",
+                            saltedMakerAccountId = "onchain"
+                        )
+                    ),
+                    quoteSidePaymentMethodSpecs = listOf(
+                        FiatPaymentMethodSpecVO(
+                            paymentMethod = "payid",
+                            saltedMakerAccountId = "payid"
+                        )
+                    ),
                     offerOptions = listOf(),
                     supportedLanguageCodes = listOf("EN")
                 ),

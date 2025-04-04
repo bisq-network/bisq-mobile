@@ -20,7 +20,14 @@ import kotlinx.serialization.Serializable
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 
 @Serializable
-data class PriceQuoteVO(val value: Long, val market: MarketVO)
+data class PriceQuoteVO(
+ val value: Long,
+ val precision: Int,
+ val lowPrecision: Int,
+ val market: MarketVO,
+ val baseSideMonetary: MonetaryVO,
+ val quoteSideMonetary: MonetaryVO
+)
 
 
 

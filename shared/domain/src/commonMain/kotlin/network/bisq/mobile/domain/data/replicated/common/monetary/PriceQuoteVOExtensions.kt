@@ -23,8 +23,8 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVOExtensions.decimalMode
 
 object PriceQuoteVOExtensions {
-    val PriceQuoteVO.baseSideMonetary: MonetaryVO get() = CoinVOFactory.fromFaceValue(1.0, market.baseCurrencyCode)
-    val PriceQuoteVO.quoteSideMonetary: MonetaryVO get() = FiatVOFactory.from(value, market.quoteCurrencyCode)
+    // val PriceQuoteVO.baseSideMonetary: MonetaryVO get() = CoinVOFactory.fromFaceValue(1.0, market.baseCurrencyCode)
+    // val PriceQuoteVO.quoteSideMonetary: MonetaryVO get() = FiatVOFactory.from(value, market.quoteCurrencyCode)
 
     fun PriceQuoteVO.toDouble(value: Long): Double {
         return BigDecimal.fromLong(value)
@@ -67,10 +67,16 @@ object PriceQuoteVOExtensions {
         // TODO: PriceQuoteVO doesn't have baseSideMonetary as in bisq2 code,
         // but it's hardcoded to be CoinVO always, in this Extension
         // @Henrik: Is this right?
-        return if (this.baseSideMonetary is FiatVO) {
-            FiatVOFactory.from(value, this.baseSideMonetary.code, this.baseSideMonetary.precision)
+//        return if (this.baseSideMonetary is FiatVO) {
+//            FiatVOFactory.from(value, this.baseSideMonetary.code, this.baseSideMonetary.precision)
+//        } else {
+//            CoinVOFactory.from(value, this.baseSideMonetary.code, this.baseSideMonetary.precision)
+//        }
+
+        return if (quoteSideMonetary is FiatVO) {
+            FiatVOFactory.from(value, quoteSideMonetary.code, quoteSideMonetary.precision)
         } else {
-            CoinVOFactory.from(value, this.baseSideMonetary.code, this.baseSideMonetary.precision)
+            CoinVOFactory.from(value, quoteSideMonetary.code, quoteSideMonetary.precision)
         }
     }
 }

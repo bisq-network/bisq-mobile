@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
+import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.bitcoinFrom
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.from
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
@@ -52,7 +53,8 @@ class TakeOfferPresenter(
         takeOfferModel.hasMultipleBaseSidePaymentMethods = bisqEasyOffer.baseSidePaymentMethodSpecs.size > 1
 
         val amountSpec = bisqEasyOffer.amountSpec
-        takeOfferModel.hasAmountRange = amountSpec is network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
+        takeOfferModel.hasAmountRange =
+            amountSpec is network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
 
         val priceQuote: PriceQuoteVO = getMostRecentPriceQuote()
         takeOfferModel.priceQuote = priceQuote
@@ -142,7 +144,17 @@ class TakeOfferPresenter(
             // FIXME happens in client mode. probably market price data are not received in time
             log.e { "marketPriceItem must not be null" }
             val marketPriceItem: MarketPriceItem? = marketPriceServiceFacade.findMarketPriceItem(marketVO)
-            return PriceQuoteVO(0, marketVO)
+            return PriceQuoteVO(
+                0,
+                4, 2,
+                marketVO,
+                CoinVOFactory.bitcoinFrom(1),
+                FiatVOFactory.from(
+                    marketPriceItem?.priceQuote?.value ?: 0L,
+                    marketPriceItem?.market?.quoteCurrencyCode ?: "USD"
+                )
+
+            )
         }
     }
 }

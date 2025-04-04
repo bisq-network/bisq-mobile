@@ -560,6 +560,7 @@ class Mappings {
     }
 
     object PriceQuoteMapping {
+        // TODO:
         fun toBisq2Model(value: PriceQuoteVO): PriceQuote {
             val baseCurrencyCode = value.market.baseCurrencyCode
             val quoteCurrencyCode = value.market.quoteCurrencyCode
@@ -575,7 +576,11 @@ class Mappings {
         fun fromBisq2Model(value: PriceQuote): PriceQuoteVO {
             return PriceQuoteVO(
                 value.value,
-                MarketMapping.fromBisq2Model(value.market)
+                value.precision,
+                value.lowPrecision,
+                MarketMapping.fromBisq2Model(value.market),
+                MonetaryMapping.fromBisq2Model(value.baseSideMonetary),
+                MonetaryMapping.fromBisq2Model(value.quoteSideMonetary),
             )
         }
     }

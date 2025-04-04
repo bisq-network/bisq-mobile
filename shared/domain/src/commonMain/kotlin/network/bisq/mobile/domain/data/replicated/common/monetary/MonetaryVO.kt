@@ -44,7 +44,7 @@ sealed interface MonetaryVO {
     fun round(roundPrecision: Int): MonetaryVO
 
     fun toDouble(): Double {
-        return BigDecimal.fromLong(value).moveDecimalPoint(precision).doubleValue(false)
+        return BigDecimal.fromLong(value).moveDecimalPoint(-precision).doubleValue(false)
     }
 
 }

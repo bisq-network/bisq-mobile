@@ -124,19 +124,14 @@ class CreateOfferAmountPresenter(
 
                 val market = createOfferModel.market ?: return@launch
 
-                // TODO: Ideally this should be FiatVO, but now it's CoinVO
                 val reputationBasedMaxSell = BisqEasyTradeAmountLimits.getReputationBasedQuoteSideAmount(
                     marketPriceServiceFacade,
                     market,
                     _reputation.value!!.totalScore
                 )!!
 
-                val fiatValue: Long = reputationBasedMaxSell.value
                 _formattedReputationBasedMaxSellAmount.value = AmountFormatter.formatAmount(
-                    FiatVOFactory.from(
-                        fiatValue,
-                        quoteCurrencyCode
-                    ), // TODO: This could have been avoided if reputationBasedMaxSell is FiatVO
+                    reputationBasedMaxSell,
                     true, true
                 )
 
@@ -188,15 +183,15 @@ class CreateOfferAmountPresenter(
 
         val numSellersString = when (numPotentialTakersForMinAmount) {
             0 -> {
-                "bisqEasy.tradeWizard.amount.numOffers.0".i18n()
+                "bisqEasy.tradeWizard.amount.buyer.numSellers.0".i18n()
             }
 
             1 -> {
-                "bisqEasy.tradeWizard.amount.numOffers.1".i18n()
+                "bisqEasy.tradeWizard.amount.buyer.numSellers.1".i18n()
             }
 
             else -> {
-                "bisqEasy.tradeWizard.amount.numOffers.*".i18n(requiredReputationScoreForMaxOrFixedAmount)
+                "bisqEasy.tradeWizard.amount.buyer.numSellers.*".i18n(requiredReputationScoreForMaxOrFixedAmount)
             }
         }
 

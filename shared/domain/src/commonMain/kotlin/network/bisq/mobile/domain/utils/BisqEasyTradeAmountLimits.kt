@@ -17,21 +17,21 @@ import kotlin.math.roundToLong
 
 object BisqEasyTradeAmountLimits {
     fun getMinAmountValue(marketPriceServiceFacade: MarketPriceServiceFacade, quoteCurrencyCode: String): Long {
-        val value = fromUsd(
+        val minFiatAmount = fromUsd(
             marketPriceServiceFacade,
             network.bisq.mobile.domain.data.replicated.common.currency.MarketVO("BTC", quoteCurrencyCode),
             DEFAULT_MIN_USD_TRADE_AMOUNT
-        )?.value ?: 0
-        return (value.toDouble() / 10000).roundToLong() * 10000
+        )
+        return ((minFiatAmount?.value?.toDouble() ?: 0.0) / 10000).roundToLong() * 10000
     }
 
     fun getMaxAmountValue(marketPriceServiceFacade: MarketPriceServiceFacade, quoteCurrencyCode: String): Long {
-        val value = fromUsd(
+        val maxFiatAmount = fromUsd(
             marketPriceServiceFacade,
             network.bisq.mobile.domain.data.replicated.common.currency.MarketVO("BTC", quoteCurrencyCode),
             MAX_USD_TRADE_AMOUNT
-        )?.value ?: 0
-        return (value.toDouble() / 10000).roundToLong() * 10000
+        )
+        return ((maxFiatAmount?.value?.toDouble() ?: 0.0) / 10000).roundToLong() * 10000
     }
 
     val TOLERANCE: Double = 0.05
@@ -63,7 +63,8 @@ object BisqEasyTradeAmountLimits {
     }
 
     fun getRequiredReputationScoreByUsdAmount(usdAmount: MonetaryVO): Long {
-        val faceValue: Double = MonetaryVO.toFaceValue(usdAmount.round(0), 0);
+        val value = usdAmount.round(0)
+        val faceValue: Double = MonetaryVO.toFaceValue(value, 0);
         return (faceValue * REQUIRED_REPUTATION_SCORE_PER_USD).toLong()
     }
 
@@ -101,11 +102,9 @@ object BisqEasyTradeAmountLimits {
         myReputationScore: Long
     ): MonetaryVO? {
         val maxUsdTradeAmount: FiatVO = getMaxUsdTradeAmount(myReputationScore)
-
         val usdMarketPriceItem = marketPriceServiceFacade.findUSDMarketPriceItem() ?: return null
         val defaultMaxBtcTradeAmount = usdMarketPriceItem.priceQuote.toBaseSideMonetary(maxUsdTradeAmount)
         val marketPriceItem = marketPriceServiceFacade.findMarketPriceItem(market)
-        // TODO: This should return FiatVO. But now it's returning CoinV)
         val finalValue = marketPriceItem?.priceQuote?.toQuoteSideMonetary(defaultMaxBtcTradeAmount)
         return finalValue
     }

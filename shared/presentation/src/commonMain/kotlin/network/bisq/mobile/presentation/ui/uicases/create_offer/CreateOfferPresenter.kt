@@ -162,7 +162,10 @@ class CreateOfferPresenter(
             val marketVO = marketListDemoObj.find { market.baseCurrencyCode == it.baseCurrencyCode && market.quoteCurrencyCode == market.quoteCurrencyCode }
             return PriceQuoteVO(
                 100,
-                marketVO!!
+                4, 2,
+                marketVO!!,
+                CoinVO("BTC", 1, "BTC", 8, 4),
+                FiatVO("USD", 80000, "USD", 4, 2),
             )
         } else {
             val marketPriceItem: MarketPriceItem = marketPriceServiceFacade.findMarketPriceItem(market)!!

@@ -63,7 +63,14 @@ object PriceQuoteVOFactory {
             .divide(BigDecimal.fromLong(baseSideMonetary.value), baseSideMonetary.decimalMode)
             .longValue(false)
         val marketVO = MarketVO(baseSideMonetary.code, quoteSideMonetary.code)
-        return PriceQuoteVO(value, marketVO)
+        return PriceQuoteVO(
+            value,
+            quoteSideMonetary.precision,
+            quoteSideMonetary.lowPrecision,
+            marketVO,
+            baseSideMonetary,
+            quoteSideMonetary
+        )
     }
 
     private fun isFiat(code: String): Boolean {
