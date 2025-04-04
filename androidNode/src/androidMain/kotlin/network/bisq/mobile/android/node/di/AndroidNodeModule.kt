@@ -18,6 +18,7 @@ import network.bisq.mobile.android.node.service.market_price.NodeMarketPriceServ
 import network.bisq.mobile.android.node.service.mediation.NodeMediationServiceFacade
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
+import network.bisq.mobile.android.node.service.reputation.NodeReputationServiceFacade
 import network.bisq.mobile.android.node.service.settings.NodeSettingsServiceFacade
 import network.bisq.mobile.android.node.service.trades.NodeTradesServiceFacade
 import network.bisq.mobile.android.node.service.user_profile.NodeUserProfileServiceFacade
@@ -32,6 +33,7 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -81,6 +83,8 @@ val androidNodeModule = module {
     single<AccountsServiceFacade> { NodeAccountsServiceFacade(get()) }
 
     single<LanguageServiceFacade> { NodeLanguageServiceFacade(get()) }
+
+    single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
 
     single { NodeConnectivityService(get()) } bind ConnectivityService::class
 

@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.presentation.BasePresenter
@@ -17,6 +18,7 @@ import network.bisq.mobile.presentation.MainPresenter
 
 class UserProfileSettingsPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
+    private val reputationServiceFacade: ReputationServiceFacade,
     private val userRepository: UserRepository,
     connectivityService: ConnectivityService,
     mainPresenter: MainPresenter): BasePresenter(mainPresenter), IUserProfileSettingsPresenter {
@@ -60,7 +62,7 @@ class UserProfileSettingsPresenter(
         super.onViewAttached()
         backgroundScope.launch {
             userProfileServiceFacade.getSelectedUserProfile()?.let {
-//                _reputation.value = it.reputation // TODO reputation?
+                // _reputation.value = it.reputation // TODO reputation?
                 setProfileAge(it)
                 setProfileId(it)
                 setBotId(it)
@@ -71,6 +73,9 @@ class UserProfileSettingsPresenter(
                 setLastActivity(it)
                 setTradeTerms(it)
                 setStatement(it)
+            }
+            reputationServiceFacade.getReputation(profileId.value).let {
+                _reputation.value = it.totalScore.toString()
             }
             _uniqueAvatar.value = userRepository.fetch()?.uniqueAvatar
         }

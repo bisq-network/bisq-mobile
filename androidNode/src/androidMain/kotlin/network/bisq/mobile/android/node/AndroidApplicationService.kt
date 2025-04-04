@@ -23,6 +23,7 @@ import bisq.application.ApplicationService
 import bisq.application.State
 import bisq.bisq_easy.BisqEasyService
 import bisq.bonded_roles.BondedRolesService
+import bisq.bonded_roles.bonded_role.AuthorizedBondedRolesService
 import bisq.bonded_roles.security_manager.alert.AlertNotificationsService
 import bisq.chat.ChatService
 import bisq.common.observable.Observable
@@ -43,6 +44,10 @@ import bisq.settings.SettingsService
 import bisq.support.SupportService
 import bisq.trade.TradeService
 import bisq.user.UserService
+import bisq.user.banned.BannedUserService
+import bisq.user.identity.UserIdentityService
+import bisq.user.profile.UserProfileService
+import bisq.user.reputation.ReputationService
 import lombok.Getter
 import lombok.Setter
 import lombok.extern.slf4j.Slf4j
@@ -123,6 +128,8 @@ class AndroidApplicationService(
 
         var languageRepository: Supplier<LanguageRepository> =
             Supplier { applicationService.languageRepository }
+        var reputationService: Supplier<ReputationService> =
+            Supplier { applicationService.reputationService }
     }
 
     companion object {
@@ -169,6 +176,25 @@ class AndroidApplicationService(
         networkService,
         bondedRolesService
     )
+    val userIdentityService = UserIdentityService(
+        persistenceService,
+        securityService,
+        identityService,
+        networkService
+    )
+    val userProfileService = UserProfileService(
+        persistenceService,
+        securityService,
+        networkService,
+    )
+    val authorizedBondedRolesService = AuthorizedBondedRolesService(
+        networkService,
+        false // TODO: Is this right?
+    )
+    val bannedUserService = BannedUserService(
+        persistenceService,
+        authorizedBondedRolesService
+    )
     val chatService: ChatService
     val settingsService = SettingsService(persistenceService)
     val supportService: SupportService
@@ -179,6 +205,7 @@ class AndroidApplicationService(
     val favouriteMarketsService: FavouriteMarketsService
     val dontShowAgainService: DontShowAgainService
     val languageRepository: LanguageRepository
+    val reputationService: ReputationService
 
     init {
         chatService = ChatService(
@@ -236,6 +263,15 @@ class AndroidApplicationService(
         dontShowAgainService = DontShowAgainService(settingsService)
 
         languageRepository = LanguageRepository()
+
+        reputationService = ReputationService(
+            persistenceService,
+            networkService,
+            userIdentityService,
+            userProfileService,
+            bannedUserService,
+            authorizedBondedRolesService
+        )
     }
 
     override fun initialize(): CompletableFuture<Boolean> {
@@ -270,6 +306,7 @@ class AndroidApplicationService(
             .thenCompose { result: Boolean? -> tradeService.initialize() }
             .thenCompose { result: Boolean? -> alertNotificationsService.initialize() }
             .thenCompose { result: Boolean? -> favouriteMarketsService.initialize() }
+            .thenCompose { result: Boolean? -> reputationService.initialize() }
             .thenCompose { result: Boolean? -> dontShowAgainService.initialize() }
             .orTimeout(STARTUP_TIMEOUT_SEC, TimeUnit.SECONDS)
             .handle { result: Boolean?, throwable: Throwable? ->
@@ -303,6 +340,10 @@ class AndroidApplicationService(
         return CompletableFuture.supplyAsync<Boolean> {
             dontShowAgainService.shutdown()
                 .exceptionally { throwable: Throwable -> this.logError(throwable) }
+                .thenCompose { result: Boolean? ->
+                    reputationService.shutdown()
+                        .exceptionally { throwable: Throwable -> this.logError(throwable) }
+                }
                 .thenCompose { result: Boolean? ->
                     favouriteMarketsService.shutdown()
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }
