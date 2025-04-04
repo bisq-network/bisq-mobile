@@ -75,6 +75,10 @@ class ClientMarketPriceServiceFacade(
         }
     }
 
+    override fun findUSDMarketPriceItem(): MarketPriceItem? {
+        return findMarketPriceItem(MarketVOFactory.USD)
+    }
+
     private fun updateMarketPriceItem() {
         val quoteCurrencyCode: String = selectedMarket.quoteCurrencyCode
         quotes[quoteCurrencyCode]?.let { priceQuote ->

@@ -2,15 +2,17 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
+import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.data.replicated.common.monetary.*
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.DEFAULT_MIN_USD_TRADE_AMOUNT
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.MAX_USD_TRADE_AMOUNT
@@ -25,6 +27,8 @@ class CreateOfferAmountPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val createOfferPresenter: CreateOfferPresenter,
+    private val userProfileServiceFacade: UserProfileServiceFacade,
+    private val reputationServiceFacade: ReputationServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
     lateinit var headline: String
@@ -54,6 +58,8 @@ class CreateOfferAmountPresenter(
     val formattedQuoteSideMaxRangeAmount: StateFlow<String> = _formattedQuoteSideMaxRangeAmount
     private val _formattedBaseSideMaxRangeAmount = MutableStateFlow("")
     val formattedBaseSideMaxRangeAmount: StateFlow<String> = _formattedBaseSideMaxRangeAmount
+    private val _reputation = MutableStateFlow<ReputationScoreVO?>(null)
+    val reputation: StateFlow<ReputationScoreVO?> = _reputation
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
     private var minAmount: Long = DEFAULT_MIN_USD_TRADE_AMOUNT.value
@@ -65,9 +71,19 @@ class CreateOfferAmountPresenter(
     private lateinit var baseSideMinRangeAmount: CoinVO
     private lateinit var quoteSideMaxRangeAmount: FiatVO
     private lateinit var baseSideMaxRangeAmount: CoinVO
+    private var _isBuy: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    var isBuy: StateFlow<Boolean> = _isBuy
+    private var _formattedReputationBasedMaxSellAmount: MutableStateFlow<String> = MutableStateFlow("")
+    val formattedReputationBasedMaxSellAmount: StateFlow<String> = _formattedReputationBasedMaxSellAmount
 
+    private var _showSellerLimitPopup: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val showSellerLimitPopup: StateFlow<Boolean> = _showSellerLimitPopup
+    fun setShowSellerLimitPopup(newValue: Boolean) {
+        _showSellerLimitPopup.value = newValue
+    }
 
     override fun onViewAttached() {
+        super.onViewAttached()
         createOfferModel = createOfferPresenter.createOfferModel
         quoteCurrencyCode = createOfferModel.market!!.quoteCurrencyCode
         _amountType.value = createOfferModel.amountType
@@ -81,14 +97,39 @@ class CreateOfferAmountPresenter(
         maxAmount = BisqEasyTradeAmountLimits.getMaxAmountValue(marketPriceServiceFacade, quoteCurrencyCode)
 
         formattedMinAmount = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode))
-        formattedMinAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode), true, true)
-        formattedMaxAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
+        formattedMinAmountWithCode =
+            AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode), true, true)
+        formattedMaxAmountWithCode =
+            AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
 
         fixedAmountSliderPosition = createOfferModel.fixedAmountSliderPosition
         applyFixedAmountSliderValue(fixedAmountSliderPosition)
 
         rangeSliderPosition = createOfferModel.rangeSliderPosition
         applyRangeAmountSliderValue(rangeSliderPosition)
+
+        _isBuy.value = createOfferModel.direction.isBuy
+
+        backgroundScope.launch {
+            val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
+
+            _reputation.value = reputationServiceFacade.getReputation(profile.id)
+
+            val market = createOfferModel.market ?: return@launch
+
+            // TODO: Ideally this should be FiatVO, but now it's CoinVO
+            val reputationBasedMaxSell = BisqEasyTradeAmountLimits.getReputationBasedQuoteSideAmount(
+                marketPriceServiceFacade,
+                market,
+                _reputation.value!!.totalScore
+            )!!
+
+            val fiatValue: Long = reputationBasedMaxSell.value
+            _formattedReputationBasedMaxSellAmount.value = AmountFormatter.formatAmount(
+                FiatVOFactory.from(fiatValue, quoteCurrencyCode), // TODO: This could have been avoided if reputationBasedMaxSell is FiatVO
+                true, true)
+        }
+
     }
 
     fun onSelectAmountType(value: AmountType) {

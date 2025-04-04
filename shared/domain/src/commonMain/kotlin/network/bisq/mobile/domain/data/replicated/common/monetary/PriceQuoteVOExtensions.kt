@@ -64,6 +64,9 @@ object PriceQuoteVOExtensions {
             .multiply(BigDecimal.fromLong(value), baseSideMonetary.decimalMode)
             .moveDecimalPoint(-baseSideMonetary.precision)
             .longValue(false)
+        // TODO: PriceQuoteVO doesn't have baseSideMonetary as in bisq2 code,
+        // but it's hardcoded to be CoinVO always, in this Extension
+        // @Henrik: Is this right?
         return if (this.baseSideMonetary is FiatVO) {
             FiatVOFactory.from(value, this.baseSideMonetary.code, this.baseSideMonetary.precision)
         } else {

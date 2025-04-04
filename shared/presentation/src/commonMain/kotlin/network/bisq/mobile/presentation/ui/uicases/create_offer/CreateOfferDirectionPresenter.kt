@@ -2,7 +2,12 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -10,12 +15,14 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class CreateOfferDirectionPresenter(
     mainPresenter: MainPresenter,
-    private val createOfferPresenter: CreateOfferPresenter
+    private val createOfferPresenter: CreateOfferPresenter,
+    private val userProfileServiceFacade: UserProfileServiceFacade,
+    private val reputationServiceFacade: ReputationServiceFacade
 ) : BasePresenter(mainPresenter) {
 
     lateinit var direction: DirectionEnum
     lateinit var headline: String
-
+    private val _reputation = MutableStateFlow<ReputationScoreVO?>(null)
 
     private val _showSellerReputationWarning = MutableStateFlow(false)
     val showSellerReputationWarning: StateFlow<Boolean> get() = _showSellerReputationWarning
@@ -24,8 +31,14 @@ class CreateOfferDirectionPresenter(
     }
 
     override fun onViewAttached() {
+        super.onViewAttached()
         direction = createOfferPresenter.createOfferModel.direction
-        headline =  "bisqEasy.tradeWizard.directionAndMarket.headline".i18n() //TODO:i18n check
+        headline = "bisqEasy.tradeWizard.directionAndMarket.headline".i18n() //TODO:i18n check
+        backgroundScope.launch {
+            val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
+            val reputation = reputationServiceFacade.getReputation(profile.id)
+            _reputation.value = reputation
+        }
     }
 
     fun onBuySelected() {
@@ -34,9 +47,8 @@ class CreateOfferDirectionPresenter(
     }
 
     fun onSellSelected() {
-        // TODO show warning if no reputation
-        val userReputation = 0
-        if (userReputation == 0) {
+        val userReputation = _reputation.value?.totalScore ?: 0L
+        if (userReputation == 0L) {
             setShowSellerReputationWarning(true)
         } else {
             direction = DirectionEnum.SELL
@@ -45,7 +57,7 @@ class CreateOfferDirectionPresenter(
     }
 
     fun onSellWithoutReputation() {
-        setShowSellerReputationWarning(false) 
+        setShowSellerReputationWarning(false)
         direction = DirectionEnum.SELL
         navigateNext()
     }

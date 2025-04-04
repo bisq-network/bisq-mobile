@@ -6,10 +6,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText
@@ -17,6 +19,7 @@ import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardSc
 import network.bisq.mobile.presentation.ui.components.molecules.BisqAmountSelector
 import network.bisq.mobile.presentation.ui.components.molecules.RangeAmountSelector
 import network.bisq.mobile.presentation.ui.components.molecules.ToggleTab
+import network.bisq.mobile.presentation.ui.components.organisms.create_offer.ReputationBasedLimitsPopup
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.AmountType
@@ -25,6 +28,10 @@ import org.koin.compose.koinInject
 @Composable
 fun CreateOfferAmountSelectorScreen() {
     val presenter: CreateOfferAmountPresenter = koinInject()
+    val isBuy by presenter.isBuy.collectAsState()
+    val reputation by presenter.reputation.collectAsState()
+    val sellLimit by presenter.formattedReputationBasedMaxSellAmount.collectAsState()
+    val showSellerLimitPopup by presenter.showSellerLimitPopup.collectAsState()
     RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
@@ -99,16 +106,46 @@ fun CreateOfferAmountSelectorScreen() {
             // TODO:
             val matchingSellerCount = 2
             val countString = when (matchingSellerCount) {
-                0 -> { "bisqEasy.tradeWizard.amount.numOffers.0".i18n() }
-                1 -> { "bisqEasy.tradeWizard.amount.numOffers.1".i18n() }
-                else -> { "bisqEasy.tradeWizard.amount.numOffers.*".i18n(matchingSellerCount) }
+                0 -> {
+                    "bisqEasy.tradeWizard.amount.numOffers.0".i18n()
+                }
+
+                1 -> {
+                    "bisqEasy.tradeWizard.amount.numOffers.1".i18n()
+                }
+
+                else -> {
+                    "bisqEasy.tradeWizard.amount.numOffers.*".i18n(matchingSellerCount)
+                }
             }
 
-            NoteText(
-                notes = "bisqEasy.tradeWizard.amount.buyer.limitInfo".i18n(countString, presenter.formattedQuoteSideFixedAmount.value),
-                linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
-            )
+            if (isBuy) {
+                NoteText(
+                    notes = "bisqEasy.tradeWizard.amount.buyer.limitInfo".i18n(
+                        countString,
+                        presenter.formattedQuoteSideFixedAmount.value
+                    ),
+                    linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
+                )
+            } else {
+                NoteText(
+                    notes = "bisqEasy.tradeWizard.amount.seller.limitInfo".i18n(sellLimit),
+                    linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
+                    onLinkClick = {
+                        presenter.setShowSellerLimitPopup(true)
+                    }
+                )
+            }
 
         }
+    }
+
+    if (showSellerLimitPopup) {
+        ReputationBasedLimitsPopup(
+            onDismiss = { presenter.setShowSellerLimitPopup(false) },
+            reputationScore = reputation!!.totalScore.toString(),
+            maxSellAmount = sellLimit,
+        )
+
     }
 }

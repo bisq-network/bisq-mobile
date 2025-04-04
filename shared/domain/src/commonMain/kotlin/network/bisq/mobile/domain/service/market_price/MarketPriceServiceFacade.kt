@@ -12,4 +12,5 @@ interface MarketPriceServiceFacade : LifeCycleAware {
 
     fun selectMarket(marketListItem: MarketListItem)
     fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem?
+    fun findUSDMarketPriceItem(): MarketPriceItem?
 }

@@ -16,10 +16,20 @@
  */
 package network.bisq.mobile.domain.data.replicated.common.monetary
 
+import kotlin.math.pow
+import kotlin.math.round
+
 sealed interface MonetaryVO {
     val id: String
     val value: Long
     val code: String
     val precision: Int
     val lowPrecision: Int
+
+    // TODO: Is this good?
+    fun toFaceValue(_precision: Int = 2): Double {
+        val fullPrecision = value / 10.0.pow(precision)
+        return round(fullPrecision * 10.0.pow(_precision)) / 10.0.pow(_precision)
+    }
+
 }

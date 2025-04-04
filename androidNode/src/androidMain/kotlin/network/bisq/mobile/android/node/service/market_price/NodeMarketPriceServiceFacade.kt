@@ -11,6 +11,7 @@ import network.bisq.mobile.android.node.mapping.Mappings.MarketMapping
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
 import network.bisq.mobile.domain.formatters.MarketPriceFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -63,6 +64,10 @@ class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplic
                 MarketPriceItem(marketVO, priceQuoteVO, formattedPrice)
             }
             .orElse(null)
+    }
+
+    override fun findUSDMarketPriceItem(): MarketPriceItem? {
+        return findMarketPriceItem(MarketVOFactory.USD)
     }
 
     // Private
