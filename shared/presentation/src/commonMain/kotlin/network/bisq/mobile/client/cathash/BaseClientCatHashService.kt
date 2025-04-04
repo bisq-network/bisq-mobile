@@ -8,13 +8,13 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.pubKeyHashAsByteArray
+import network.bisq.mobile.domain.getSystemFileSystem
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.base64ToByteArray
 import network.bisq.mobile.domain.utils.concat
 import network.bisq.mobile.domain.utils.toHex
 import okio.FileSystem
-import okio.Path.Companion.toPath
-import okio.SYSTEM
+import okio.Path
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 abstract class BaseClientCatHashService(private val baseDirPath: String) :
@@ -25,7 +25,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
         const val CATHASH_ICONS_PATH = "db/cache/cat_hash_icons"
     }
 
-    private val fileSystem: FileSystem = FileSystem.SYSTEM
+    private val fileSystem = getSystemFileSystem()
     private val cache = mutableMapOf<BigInteger, PlatformImage>()
 
     protected abstract fun composeImage(paths: Array<String>, size: Int): PlatformImage?
@@ -109,7 +109,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
     fun pruneOutdatedProfileIcons(userProfiles: Collection<UserProfileVO>) {
         if (userProfiles.isEmpty()) return
 
-        val iconsDirectory = baseDirPath.toPath().resolve(CATHASH_ICONS_PATH)
+        val iconsDirectory = baseDirPath.toPath().resolve(CATHASH_ICONS_PATH.toPath())
         val versionDirs =
             fileSystem.listOrNull(iconsDirectory)?.filter { fileSystem.metadata(it).isDirectory }
                 ?: return
@@ -121,11 +121,11 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
             val fromDisk = fileSystem.list(versionDir).map { it.name }.toSet()
             val fromData =
                 userProfilesByVersion[version]?.map { "${it.id}.raw" }?.toSet() ?: emptySet()
-            val toRemove = fromDisk - fromData
+            val toRemove = fromDisk.subtract(fromData)
 
             log.i("Removing outdated profile icons: $toRemove")
             toRemove.forEach { fileName ->
-                val fileToDelete = versionDir.resolve(fileName)
+                val fileToDelete = versionDir.div(fileName)
                 try {
                     fileSystem.delete(fileToDelete)
                 } catch (e: Exception) {
@@ -143,5 +143,6 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
             else -> throw IllegalArgumentException("Unsupported avatarVersion: $avatarVersion")
         }
     }
-}
 
+    private fun String.toPath(): Path = this.toPath()
+}

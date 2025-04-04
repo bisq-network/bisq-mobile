@@ -21,6 +21,9 @@ local.properties
 # for release
 credentials
 
+# Web
+kotlin-js-store
+
 ## iOS - we currently have this tracked by the repo
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj

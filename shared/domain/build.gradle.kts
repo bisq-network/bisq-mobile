@@ -69,6 +69,10 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
+    js(IR) {
+        browser()
+        binaries.executable()
+    }
 
     cocoapods {
         summary = "Shared Domain business logic and KOJOs"
@@ -83,73 +87,87 @@ kotlin {
     }
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(libs.androidx.activity.compose)
-        }
-        commonMain.dependencies {
-            //put your multiplatform dependencies here
-            implementation(libs.koin.core)
-            implementation(libs.kotlinx.coroutines)
-            implementation(libs.logging.kermit)
-            implementation(libs.okio)
-            implementation(libs.kotlinx.datetime)
-            implementation(libs.bignum)
+        val commonMain by getting {
+            dependencies {
+                implementation(libs.kotlinx.coroutines)
+                implementation(libs.koin.core)
+                implementation(libs.logging.kermit)
+                implementation(libs.okio)
+                implementation(libs.kotlinx.datetime)
+                implementation(libs.bignum)
+                implementation(libs.ktor.client.core)
+                implementation(libs.kotlinx.serialization.core)
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.client.websockets)
+                implementation(libs.ktor.client.json)
+                implementation(libs.ktor.client.serialization)
 
-            implementation(libs.ktor.client.core)
-            implementation(libs.kotlinx.serialization.core)
-            implementation(libs.ktor.client.serialization)
-            implementation(libs.ktor.client.json)
-            implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.ktor.client.cio)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.jetbrains.serialization.gradle.plugin)
-            implementation(libs.kotlinx.serialization.json)
-            implementation(libs.ktor.client.websockets)
+                implementation(libs.multiplatform.settings)
+                implementation(libs.atomicfu)
+                implementation(libs.jetbrains.kotlin.reflect)
 
-            implementation(libs.multiplatform.settings)
-
-            implementation(libs.atomicfu)
-            implementation(libs.jetbrains.kotlin.reflect)
-
-            configurations.all {
-                exclude(group = "org.slf4j", module = "slf4j-api")
+                configurations.all {
+                    exclude(group = "org.slf4j", module = "slf4j-api")
+                }
             }
         }
 
-        commonTest.dependencies {
-            implementation(libs.kotlin.test)
-            implementation(libs.multiplatform.settings.test)
-            implementation(libs.kotlinx.coroutines.test)
-            implementation(libs.koin.test)
-        }
-        androidMain.dependencies {
-            implementation(libs.androidx.core)
-
-            implementation(libs.koin.core)
-            implementation(libs.koin.android)
-        }
-        androidUnitTest.dependencies {
-            implementation(libs.mock.io)
-            implementation(libs.kotlin.test.junit.v180)
-            implementation(libs.junit)
-
-            implementation(libs.roboelectric)
-            implementation(libs.androidx.test)
-            implementation(libs.androidx.test.espresso)
-            implementation(libs.androidx.test.junit)
-
-//            implementation("com.russhwolf:multiplatform-settings-datastore:1.2.0")
-//
-//            implementation("androidx.test:core:1.5.0")
-//            implementation("androidx.test.ext:junit:1.1.5")
-//            implementation("androidx.test.espresso:espresso-core:3.5.1")
-//            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
+                implementation(libs.koin.test)
+                implementation(libs.kotlinx.coroutines.test)
+                implementation(libs.multiplatform.settings.test.v120)
+            }
         }
 
-        iosMain.dependencies {
-            implementation(libs.koin.core)
+        val androidMain by getting {
+            dependencies {
+                implementation(libs.androidx.core)
+                implementation(libs.koin.android)
+                implementation(libs.ktor.client.okhttp)
+            }
+        }
+
+        val androidUnitTest by getting {
+            dependencies {
+                implementation(libs.mock.io)
+                implementation(libs.kotlin.test.junit.v180)
+                implementation(libs.junit)
+                implementation(libs.roboelectric)
+                implementation(libs.androidx.test)
+                implementation(libs.androidx.test.espresso)
+                implementation(libs.androidx.test.junit)
+            }
+        }
+
+        val iosX64Main by getting
+        val iosArm64Main by getting
+        val iosSimulatorArm64Main by getting
+        val iosMain by creating {
+            dependsOn(commonMain)
+            iosX64Main.dependsOn(this)
+            iosArm64Main.dependsOn(this)
+            iosSimulatorArm64Main.dependsOn(this)
+            dependencies {
+                implementation(libs.koin.core)
+                implementation(libs.ktor.client.darwin)
+            }
+        }
+
+        val jsMain by getting {
+            dependencies {
+                implementation(libs.kotlinx.coroutines)
+                implementation(libs.ktor.client.js)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.websockets)
+            }
         }
     }
+
 }
 
 android {
@@ -164,6 +182,9 @@ android {
     }
 
     sourceSets["main"].resources.srcDirs("src/commonMain/resources")
+}
+dependencies {
+    implementation(libs.androidx.ui.graphics.android)
 }
 
 tasks.withType<Copy> {

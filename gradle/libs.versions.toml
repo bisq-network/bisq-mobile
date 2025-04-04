@@ -13,6 +13,7 @@ androidx-core-ktx = "1.13.1"
 androidx-espresso-core = "3.6.1"
 androidx-material = "1.12.0"
 
+multiplatformSettingsTest = "1.2.0"
 roboelectric = "4.10.3"
 androidx-test = "1.6.1"
 androidx-test-junit = "1.2.1"
@@ -24,7 +25,7 @@ androidx-multidex = "2.0.1"
 atomicfu = "0.26.1"
 bignum-lib= "0.3.10"
 bisq-core = "2.1.7"
-# API version is usually same as bisq-cor but for more control we keep it separated
+# API version is usually same as bisq-core but for more control we keep it separatedst
 bisq-api = "2.1.7"
 coilCompose = "3.0.3"
 compose-plugin = "1.7.0"
@@ -32,7 +33,8 @@ junit = "4.13.2"
 kotlinReflect = "2.0.21"
 kotlinxDatetime = "0.4.0"
 kotlinxSerialization = "1.7.3"
-ktorClient = "3.0.1"
+#ktor = "3.1.0"
+ktor = "2.3.4"
 mockio = "1.12.0"
 kotlin = "2.0.20"
 kotlinTestJunit = "2.0.20"
@@ -40,6 +42,7 @@ kotlinx = "1.9.0"
 kermit = "2.0.4"
 buildconfig = "5.5.0"
 navigationCompose = "2.7.0-alpha07"
+# okio = "3.5.0"
 okio = "3.9.1"
 serializationPlugin = "2.0.21"
 protobuf = "0.9.4"
@@ -73,6 +76,7 @@ lombok-lib = { strictly = '1.18.34' }
 typesafe-config-lib = { strictly = '1.4.3' }
 
 multiplatform-settings = "1.2.0"
+uiGraphicsAndroid = "1.7.8"
 
 [libraries]
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
@@ -85,13 +89,16 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
-ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClient" }
-ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClient" }
-ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClient" }
-ktor-client-json = { module = "io.ktor:ktor-client-json", version.ref = "ktorClient" }
-ktor-client-serialization = { module = "io.ktor:ktor-client-serialization", version.ref = "ktorClient" }
-ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktorClient" }
-ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktorClient" }
+ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-json = { module = "io.ktor:ktor-client-json", version.ref = "ktor" }
+ktor-client-serialization = { module = "io.ktor:ktor-client-serialization", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
+ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktor" }
+ktor-client-js = { module = "io.ktor:ktor-client-js", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 
 mock-io = { module = "io.mockk:mockk", version.ref = "mockio" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -102,6 +109,7 @@ androidx-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manife
 #kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 androidx-core = { group = "androidx.core", name = "core", version.ref = "androidx-core" }
 #androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core-ktx" }
+multiplatform-settings-test-v120 = { module = "com.russhwolf:multiplatform-settings-test", version.ref = "multiplatformSettingsTest" }
 roboelectric = { group = "org.robolectric", name = "robolectric", version.ref = "roboelectric" }
 androidx-test = { group = "androidx.test", name = "core", version.ref = "androidx-test" }
 androidx-test-espresso = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "androidx-test-espresso" }
@@ -196,8 +204,9 @@ koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
 
 
 # mp-settings
-multiplatform-settings = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatform-settings" }
+multiplatform-settings = { module = "com.russhwolf:multiplatform-settings", version.ref = "multiplatform-settings" }
 multiplatform-settings-test = { module = "com.russhwolf:multiplatform-settings-test", version.ref = "multiplatform-settings" }
+androidx-ui-graphics-android = { group = "androidx.compose.ui", name = "ui-graphics-android", version.ref = "uiGraphicsAndroid" }
 
 [bundles]
 #glassfish-jersey = ['glassfish-jersey-jdk-http', 'glassfish-jersey-json-jackson', 'glassfish-jersey-inject-hk2', 'glassfish-jaxb-runtime']

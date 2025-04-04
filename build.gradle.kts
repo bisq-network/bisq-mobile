@@ -12,6 +12,18 @@ plugins {
     alias(libs.plugins.protobuf).apply(false)
 }
 
+allprojects {
+    configurations.all {
+        resolutionStrategy {
+            eachDependency {
+                if (requested.group == "org.jetbrains.kotlin" && requested.name.startsWith("kotlin-")) {
+                    useVersion(libs.versions.kotlin.get())
+                }
+            }
+        }
+    }
+}
+
 // ios versioning linking
 tasks.register("updatePlist") {
     doLast {
@@ -38,4 +50,8 @@ tasks.register("updatePlist") {
 // Ensure it runs before iOS builds
 tasks.matching { it.name.startsWith("link") }.configureEach {
     dependsOn("updatePlist")
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.targets.js.npm.tasks.KotlinNpmInstallTask> {
+    args.add("--ignore-scripts")
 }
