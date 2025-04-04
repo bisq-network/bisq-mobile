@@ -19,7 +19,6 @@ package network.bisq.mobile.service
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import network.bisq.mobile.client.cathash.BaseClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.utils.AndroidImageUtil
@@ -38,11 +37,11 @@ class AndroidClientCatHashService(private val context: Context, filesDir: String
             size,
             size
         )
-        return PlatformImage(profileIcon)
+        return PlatformImage(profileIcon.asAndroidBitmap())
     }
 
     override fun writeRawImage(image: PlatformImage, iconFilePath: String) {
-        val bitmap: Bitmap = image.bitmap.asAndroidBitmap()
+        val bitmap: Bitmap = image.bitmap
         val file = File(iconFilePath)
         AndroidImageUtil.writeBitmapAsByteArray(bitmap, file)
     }
@@ -50,6 +49,6 @@ class AndroidClientCatHashService(private val context: Context, filesDir: String
     override fun readRawImage(iconFilePath: String): PlatformImage? {
         val file = File(iconFilePath)
         val bitmap: Bitmap? = AndroidImageUtil.readByteArrayAsBitmap(file)
-        return if (bitmap == null) null else PlatformImage(bitmap.asImageBitmap())
+        return if (bitmap == null) null else PlatformImage(bitmap)
     }
 }

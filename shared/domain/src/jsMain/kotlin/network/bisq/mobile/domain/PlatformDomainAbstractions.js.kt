@@ -14,7 +14,12 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
+import okio.FileSystem
 import kotlin.js.Date
+
+actual fun getSystemFileSystem(): FileSystem {
+    TODO("Not yet implemented")
+}
 
 actual fun getPlatformSettings(): Settings {
     return StorageSettings()

@@ -32,6 +32,7 @@ kotlin {
     iosSimulatorArm64()
     js(IR) {
         browser()
+        binaries.executable()
     }
 
     cocoapods {
@@ -67,7 +68,6 @@ kotlin {
             implementation(libs.ktor.client.serialization)
             implementation(libs.ktor.client.json)
             implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.ktor.client.cio)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.jetbrains.serialization.gradle.plugin)
             implementation(libs.kotlinx.serialization.json)
@@ -93,6 +93,9 @@ kotlin {
             implementation(libs.logging.kermit)
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.datetime)
+        }
+        androidMain.dependencies {
+            implementation(libs.ktor.client.cio)
         }
         androidUnitTest.dependencies {
             implementation(libs.mock.io)

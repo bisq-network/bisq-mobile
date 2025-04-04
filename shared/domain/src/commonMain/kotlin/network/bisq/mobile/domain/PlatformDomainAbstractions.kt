@@ -13,6 +13,7 @@ import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.json.Json
+import okio.FileSystem
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -25,6 +26,8 @@ interface PlatformInfo {
 interface UrlLauncher {
     fun openUrl(url: String)
 }
+
+expect fun getSystemFileSystem(): FileSystem
 
 expect fun formatDateTime(dateTime: LocalDateTime): String
 

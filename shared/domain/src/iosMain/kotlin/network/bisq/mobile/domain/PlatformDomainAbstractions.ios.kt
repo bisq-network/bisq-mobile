@@ -34,6 +34,11 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
+import okio.FileSystem
+
+actual fun getSystemFileSystem(): FileSystem {
+    TODO("Not yet implemented")
+}
 
 actual fun formatDateTime(dateTime: LocalDateTime): String {
     val formatter = NSDateFormatter().apply {

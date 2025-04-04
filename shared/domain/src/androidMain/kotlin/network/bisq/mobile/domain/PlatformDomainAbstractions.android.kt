@@ -27,6 +27,9 @@ import io.ktor.client.plugins.contentnegotiation.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
+import okio.FileSystem
+
+actual fun getSystemFileSystem(): FileSystem = FileSystem.SYSTEM
 
 actual fun formatDateTime(dateTime: LocalDateTime): String {
     val kotlinTimeZone = TimeZone.currentSystemDefault()

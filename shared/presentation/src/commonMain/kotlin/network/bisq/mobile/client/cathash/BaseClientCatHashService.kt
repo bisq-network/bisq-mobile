@@ -8,11 +8,13 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.pubKeyHashAsByteArray
+import network.bisq.mobile.domain.getSystemFileSystem
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.base64ToByteArray
 import network.bisq.mobile.domain.utils.concat
 import network.bisq.mobile.domain.utils.toHex
 import okio.FileSystem
+import okio.Path
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 abstract class BaseClientCatHashService(private val baseDirPath: String) :
@@ -23,7 +25,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
         const val CATHASH_ICONS_PATH = "db/cache/cat_hash_icons"
     }
 
-    private val fileSystem = FileSystem.SYSTEM
+    private val fileSystem = getSystemFileSystem()
     private val cache = mutableMapOf<BigInteger, PlatformImage>()
 
     protected abstract fun composeImage(paths: Array<String>, size: Int): PlatformImage?
@@ -144,4 +146,3 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
 
     private fun String.toPath(): Path = this.toPath()
 }
-
