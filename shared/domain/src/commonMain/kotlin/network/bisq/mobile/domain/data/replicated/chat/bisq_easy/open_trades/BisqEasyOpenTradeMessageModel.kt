@@ -2,7 +2,6 @@ package network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
@@ -20,13 +19,11 @@ class BisqEasyOpenTradeMessageModel(
     chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO>
 ) {
     // Delegates of BisqEasyOpenTradeMessageDto
-    val id: String = bisqEasyOpenTradeMessage.id
-    val chatChannelDomain: ChatChannelDomainEnum = bisqEasyOpenTradeMessage.chatChannelDomain
+    val id: String = bisqEasyOpenTradeMessage.messageId
     val channelId: String = bisqEasyOpenTradeMessage.channelId
     val text: String? = bisqEasyOpenTradeMessage.text
     val citation: CitationVO? = bisqEasyOpenTradeMessage.citation
     val date: Long = bisqEasyOpenTradeMessage.date
-    val wasEdited: Boolean = bisqEasyOpenTradeMessage.wasEdited
     val chatMessageType: ChatMessageTypeEnum = bisqEasyOpenTradeMessage.chatMessageType
     val receiverUserProfileId: String = bisqEasyOpenTradeMessage.receiverUserProfileId
     val senderUserProfile: UserProfileVO = bisqEasyOpenTradeMessage.senderUserProfile

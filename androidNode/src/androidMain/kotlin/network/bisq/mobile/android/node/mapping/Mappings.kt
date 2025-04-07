@@ -330,22 +330,40 @@ class Mappings {
     }
 
     object BisqEasyOpenTradeMessageVOMapping {
+        fun toBisq2Model(value: BisqEasyOpenTradeMessageDto): BisqEasyOpenTradeMessage {
+            return BisqEasyOpenTradeMessage(
+                value.tradeId,
+                value.messageId,
+                value.channelId,
+                UserProfileMapping.toBisq2Model(value.senderUserProfile),
+                value.receiverUserProfileId,
+                NetworkIdMapping.toBisq2Model(value.receiverNetworkId),
+                value.text,
+                Optional.ofNullable(value.citation?.let { CitationMapping.toBisq2Model(it) }),
+                value.date,
+                false,
+                Optional.ofNullable(value.mediator?.let { UserProfileMapping.toBisq2Model(it) }),
+                ChatMessageTypeMapping.toBisq2Model(value.chatMessageType),
+                Optional.ofNullable(value.bisqEasyOffer?.let { BisqEasyOfferMapping.toBisq2Model(it) }),
+                value.chatMessageReactions.map { BisqEasyOpenTradeMessageReactionMapping.toBisq2Model(it) }.toSet(),
+            )
+        }
+
         fun fromBisq2Model(value: BisqEasyOpenTradeMessage): BisqEasyOpenTradeMessageDto {
             return BisqEasyOpenTradeMessageDto(
+                value.tradeId,
                 value.id,
-                ChatChannelDomainMapping.fromBisq2Model(value.chatChannelDomain),
                 value.channelId,
+                UserProfileMapping.fromBisq2Model(value.senderUserProfile),
+                value.receiverUserProfileId,
+                NetworkIdMapping.fromBisq2Model(value.receiverNetworkId),
                 value.text.getOrNull(),
                 value.citation.getOrNull()?.let { CitationMapping.fromBisq2Model(it) },
                 value.date,
-                value.isWasEdited,
-                ChatMessageTypeMapping.fromBisq2Model(value.chatMessageType),
-                value.receiverUserProfileId,
-                UserProfileMapping.fromBisq2Model(value.senderUserProfile),
-                NetworkIdMapping.fromBisq2Model(value.receiverNetworkId),
-                value.tradeId,
                 value.mediator.getOrNull()?.let { UserProfileMapping.fromBisq2Model(it) },
+                ChatMessageTypeMapping.fromBisq2Model(value.chatMessageType),
                 value.bisqEasyOffer.getOrNull()?.let { BisqEasyOfferMapping.fromBisq2Model(it) },
+                value.chatMessageReactions.map { BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(it) }.toSet(),
             )
         }
     }
