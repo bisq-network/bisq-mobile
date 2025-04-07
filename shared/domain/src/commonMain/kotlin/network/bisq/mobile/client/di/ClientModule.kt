@@ -1,9 +1,5 @@
 package network.bisq.mobile.client.di
 
-import io.ktor.client.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.plugins.websocket.*
-import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -74,6 +70,7 @@ val clientModule = module {
 
     val json = Json {
         prettyPrint = true
+        isLenient = true
         serializersModule = SerializersModule {
             polymorphic(MonetaryVO::class) {
                 subclass(CoinVO::class, CoinVO.serializer())
@@ -207,6 +204,7 @@ val clientModule = module {
 
     single {
         Json {
+//            classDiscriminator = "type"
             ignoreUnknownKeys = true
             isLenient = true
             prettyPrint = false

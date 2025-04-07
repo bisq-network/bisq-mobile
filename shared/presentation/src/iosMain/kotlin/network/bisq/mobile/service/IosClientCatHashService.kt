@@ -1,6 +1,5 @@
 package network.bisq.mobile.service
 
-import io.ktor.utils.io.errors.*
 import network.bisq.mobile.client.cathash.BaseClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.utils.getFilesDir

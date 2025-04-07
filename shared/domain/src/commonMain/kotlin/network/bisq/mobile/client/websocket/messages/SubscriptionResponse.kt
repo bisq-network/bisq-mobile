@@ -9,5 +9,5 @@ data class SubscriptionResponse(
     override val requestId: String,
     val payload: String? = null,
     val errorMessage: String? = null
-) : WebSocketResponse
+) : WebSocketResponse()
 
