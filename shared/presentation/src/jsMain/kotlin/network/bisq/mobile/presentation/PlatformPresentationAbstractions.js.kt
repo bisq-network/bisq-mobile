@@ -12,7 +12,9 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import network.bisq.mobile.presentation.ui.helpers.WebCurrentTimeProvider
 import org.jetbrains.skia.Image
+import org.w3c.dom.HTMLCanvasElement
 import org.w3c.dom.HTMLImageElement
+import org.w3c.dom.CanvasRenderingContext2D
 import org.w3c.dom.url.URL
 
 actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
@@ -27,24 +29,32 @@ private fun createImageBitmapFromDataUrl(dataUrl: String): ImageBitmap {
     // a more robust method to convert data URLs to ImageBitmap
     val imageElement = document.createElement("img") as HTMLImageElement
     imageElement.src = dataUrl
-    
+
     // Create a canvas to draw the image
-    val canvas = document.createElement("canvas")
-    val ctx = canvas.getContext("2d")
-    
+    val canvas = document.createElement("canvas") as HTMLCanvasElement
+    val ctx = canvas.getContext("2d") as CanvasRenderingContext2D
+
     // Set canvas dimensions
     canvas.width = imageElement.width
     canvas.height = imageElement.height
-    
+
     // Draw image to canvas
     ctx.drawImage(imageElement, 0.0, 0.0)
-    
+
     // Get image data
     val imageData = ctx.getImageData(0.0, 0.0, canvas.width.toDouble(), canvas.height.toDouble())
-    
+
     // Convert to Skia Image and then to Compose ImageBitmap
     val skiaImage = Image.makeFromEncoded(imageElement.src.encodeToByteArray())
     return skiaImage.toComposeImageBitmap()
+}
+
+private fun createCanvasContext(width: Int, height: Int): Pair<HTMLCanvasElement, CanvasRenderingContext2D> {
+    val canvas = document.createElement("canvas") as HTMLCanvasElement
+    canvas.width = width
+    canvas.height = height
+    val context = canvas.getContext("2d") as CanvasRenderingContext2D
+    return Pair(canvas, context)
 }
 
 actual fun getPlatformCurrentTimeProvider(): TimeProvider = WebCurrentTimeProvider()
@@ -63,11 +73,11 @@ actual fun exitApp() {
 actual fun getScreenWidthDp(): Int {
     // Get the window width in pixels
     val widthPx = window.innerWidth
-    
+
     // Convert to DP using a standard conversion factor
     // Typical desktop displays have a device pixel ratio of 1-3
     val pixelRatio = window.devicePixelRatio
-    
+
     // Convert pixels to DP
     return (widthPx / pixelRatio).toInt()
 }
