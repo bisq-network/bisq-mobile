@@ -48,51 +48,48 @@ kotlin {
     }
 
     sourceSets {
-        commonMain.dependencies {
-            //put your multiplatform dependencies here
-            implementation(project(":shared:domain"))
+        commonMain {
+            dependencies {
+                implementation(project(":shared:domain"))
+                implementation(libs.koin.core)
+                implementation(libs.koin.compose)
+                implementation(libs.kotlinx.coroutines)
+                implementation(libs.logging.kermit)
+                implementation(libs.okio)
+                implementation(libs.kotlinx.datetime)
+                implementation(libs.bignum)
 
+                implementation(libs.ktor.client.core)
+                implementation(libs.kotlinx.serialization.core)
+                implementation(libs.ktor.client.serialization)
+                implementation(libs.ktor.client.json)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.jetbrains.serialization.gradle.plugin)
+                implementation(libs.kotlinx.serialization.json)
+                implementation(libs.ktor.client.websockets)
 
-            //put your multiplatform dependencies here
+                implementation(libs.multiplatform.settings)
 
-            implementation(libs.koin.core)
-            implementation(libs.koin.compose)
-            implementation(libs.kotlinx.coroutines)
-            implementation(libs.logging.kermit)
-            implementation(libs.okio)
-            implementation(libs.kotlinx.datetime)
-            implementation(libs.bignum)
+                implementation(libs.atomicfu)
+                implementation(libs.jetbrains.kotlin.reflect)
 
-            implementation(libs.ktor.client.core)
-            implementation(libs.kotlinx.serialization.core)
-            implementation(libs.ktor.client.serialization)
-            implementation(libs.ktor.client.json)
-            implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.ktor.client.content.negotiation)
-            implementation(libs.jetbrains.serialization.gradle.plugin)
-            implementation(libs.kotlinx.serialization.json)
-            implementation(libs.ktor.client.websockets)
+                implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material3)
+                implementation(compose.ui)
+                implementation(compose.components.resources)
+                implementation(compose.components.uiToolingPreview)
 
-            implementation(libs.multiplatform.settings)
-
-            implementation(libs.atomicfu)
-            implementation(libs.jetbrains.kotlin.reflect)
-
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation(compose.components.uiToolingPreview)
-
-            implementation(libs.navigation.compose)
-            implementation(libs.coil.compose)
-            
-            implementation(libs.androidx.lifecycle.viewmodel)
-            implementation(libs.androidx.lifecycle.runtime.compose)
-            implementation(libs.logging.kermit)
-            implementation(libs.kotlinx.coroutines)
-            implementation(libs.kotlinx.datetime)
+                implementation(libs.navigation.compose)
+                implementation(libs.coil.compose)
+                
+                implementation(libs.androidx.lifecycle.viewmodel)
+                implementation(libs.androidx.lifecycle.runtime.compose)
+                implementation(libs.logging.kermit)
+                implementation(libs.kotlinx.coroutines)
+                implementation(libs.kotlinx.datetime)
+            }
         }
         androidMain.dependencies {
             implementation(libs.ktor.client.cio)

@@ -13,6 +13,7 @@ import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationSe
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import kotlin.js.JsName
 
 
 /**
@@ -31,22 +32,26 @@ open class MainPresenter(
     private val _isContentVisible = MutableStateFlow(false)
     override val isContentVisible: StateFlow<Boolean> = _isContentVisible
 
-    private val _isSmallScreenState = MutableStateFlow(false)
-    override val isSmallScreen: StateFlow<Boolean> = _isSmallScreenState
+    private val _screenSizeState = MutableStateFlow(false)
+    override val isSmallScreen: StateFlow<Boolean> = _screenSizeState
+
+    // Add a separate property with @JsName that delegates to the override
+    @JsName("smallScreenState")
+    val jsSmallScreen: StateFlow<Boolean> = isSmallScreen
 
     override val languageCode: StateFlow<String> = settingsService.languageCode
 
     init {
         val localeCode = getDeviceLanguageCode()
         var screenWidth = getScreenWidthDp()
-        _isSmallScreenState.value = screenWidth < 480
+        _screenSizeState.value = screenWidth < 480
         log.i { "Shared Version: ${BuildConfig.SHARED_LIBS_VERSION}" }
         log.i { "iOS Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Client Version: ${BuildConfig.ANDROID_APP_VERSION}" }
         log.i { "Android Node Version: ${BuildNodeConfig.APP_VERSION}" }
         log.i { "Device language code: $localeCode"}
         log.i { "Screen width: $screenWidth"}
-        log.i { "Small screen: ${_isSmallScreenState.value}"}
+        log.i { "Small screen: ${_screenSizeState.value}"}
     }
 
     @CallSuper
@@ -88,4 +93,14 @@ open class MainPresenter(
     }
 
     override fun isDemo(): Boolean = false
+
+    override fun isSmallScreen(): Boolean {
+        return _screenSizeState.value
+    }
+
+    // Add a separate function with @JsName that delegates to the override
+    @JsName("checkIsSmallScreen")
+    fun jsIsSmallScreen(): Boolean {
+        return isSmallScreen()
+    }
 }

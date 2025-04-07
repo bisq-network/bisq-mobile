@@ -18,6 +18,7 @@ import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
+import kotlin.js.JsName
 
 interface AppPresenter : ViewPresenter {
     var navController: NavHostController
@@ -29,6 +30,8 @@ interface AppPresenter : ViewPresenter {
 
     val languageCode: StateFlow<String>
 
+    // Add JsName annotation to avoid name clash
+    @JsName("appIsSmallScreen")
     val isSmallScreen: StateFlow<Boolean>
 
     // Actions

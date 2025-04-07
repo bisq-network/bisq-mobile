@@ -43,11 +43,11 @@ kotlin {
                 implementation(project(":shared:presentation"))
                 implementation(compose.web.core)
                 implementation(compose.runtime)
-                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.7.3")
-                implementation("io.ktor:ktor-client-js:2.3.5")
-                implementation("io.ktor:ktor-client-content-negotiation:2.3.5")
-                implementation("io.ktor:ktor-serialization-kotlinx-json:2.3.5")
-                implementation("io.ktor:ktor-client-websockets:2.3.5")
+                implementation(libs.kotlinx.coroutines.core.js)
+                implementation(libs.ktor.client.js)
+                implementation(libs.ktor.client.content.negotiation)
+                implementation(libs.ktor.serialization.kotlinx.json)
+                implementation(libs.ktor.client.websockets)
             }
         }
     }

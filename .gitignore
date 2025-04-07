@@ -23,6 +23,7 @@ credentials
 
 # Web
 kotlin-js-store
+run_pwa.sh
 
 ## iOS - we currently have this tracked by the repo
 *.xcodeproj/*
