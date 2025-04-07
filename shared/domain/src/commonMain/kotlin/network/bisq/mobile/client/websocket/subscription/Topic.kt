@@ -16,6 +16,5 @@ enum class Topic(val typeOf: KType) {
     TRADES(typeOf<List<TradeItemPresentationDto>>()),
     TRADE_PROPERTIES(typeOf<List<Map<String, TradePropertiesDto>>>()),
 
-    I18N_PAIRS(typeOf<Map<String, String>>()),
     LANGUAGE_PAIRS(typeOf<Map<String, String>>()),
 }
