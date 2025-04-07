@@ -1,6 +1,6 @@
 package network.bisq.mobile.service
 
-import kotlinx.io.IOException
+import io.ktor.utils.io.errors.*
 import network.bisq.mobile.client.cathash.BaseClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.utils.getFilesDir
@@ -28,7 +28,7 @@ class IosClientCatHashService : BaseClientCatHashService("${getFilesDir()}/Bisq2
         if (data != null) {
             data.writeToFile(filePath, atomically = true)
         } else {
-            throw IOException("Failed to convert image to PNG data.")
+            throw IllegalStateException("Failed to convert image to PNG data.")
         }
     }
 
