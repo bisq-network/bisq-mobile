@@ -37,7 +37,7 @@ import kotlinx.serialization.json.Json
 import okio.FileSystem
 
 actual fun getSystemFileSystem(): FileSystem {
-    TODO("Not yet implemented")
+    return FileSystem.SYSTEM
 }
 
 actual fun formatDateTime(dateTime: LocalDateTime): String {
