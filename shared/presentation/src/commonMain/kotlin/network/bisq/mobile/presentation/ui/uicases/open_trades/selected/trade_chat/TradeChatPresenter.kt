@@ -38,8 +38,9 @@ class TradeChatPresenter(
         val selectedTrade = tradesServiceFacade.selectedTrade.value!!
 
         presenterScope.launch {
-            selectedTrade.bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
-                _chatMessages.value = messages
+            val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
+            bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
+                _chatMessages.value = messages.toList()
             }
         }
     }

@@ -13,6 +13,7 @@ import network.bisq.mobile.client.service.accounts.AccountsApiGateway
 import network.bisq.mobile.client.service.accounts.ClientAccountsServiceFacade
 import network.bisq.mobile.client.service.bootstrap.ClientApplicationBootstrapFacade
 import network.bisq.mobile.client.service.chat.trade.ClientTradeChatServiceFacade
+import network.bisq.mobile.client.service.chat.trade.TradeChatApiGateway
 import network.bisq.mobile.client.service.common.ClientLanguageServiceFacade
 import network.bisq.mobile.client.service.common.LanguageApiGateway
 import network.bisq.mobile.client.service.explorer.ClientExplorerServiceFacade
@@ -189,7 +190,8 @@ val clientModule = module {
     single { TradesApiGateway(get(), get()) }
     single<TradesServiceFacade> { ClientTradesServiceFacade(get(), get(), get()) }
 
-    single<TradeChatServiceFacade> { ClientTradeChatServiceFacade(get()) }
+    single { TradeChatApiGateway(get(), get()) }
+    single<TradeChatServiceFacade> { ClientTradeChatServiceFacade(get(), get(), get()) }
 
     single { ExplorerApiGateway(get()) }
     single<ExplorerServiceFacade> { ClientExplorerServiceFacade(get()) }

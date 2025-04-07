@@ -23,8 +23,8 @@ class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTra
     // Mutable properties
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> = _isInMediation
-    val _chatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(listOf())
-    val chatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> = _chatMessages
+    val _chatMessages: MutableStateFlow<Set<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(emptySet())
+    val chatMessages: StateFlow<Set<BisqEasyOpenTradeMessageModel>> = _chatMessages
     val chatChannelNotificationType: MutableStateFlow<ChatChannelNotificationTypeEnum> =
         MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
     val userProfileIdsOfActiveParticipants: MutableSet<String> = mutableSetOf()
@@ -66,9 +66,10 @@ class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTra
     }
 
     fun addChatMessages(message: BisqEasyOpenTradeMessageModel) {
-        // apply new list to trigger update
-        val list = _chatMessages.value.toList() + message
+        _chatMessages.value = _chatMessages.value.toSet() + message
+    }
 
-        _chatMessages.value = list
+    fun addAllChatMessages(messages: Set<BisqEasyOpenTradeMessageModel>) {
+        _chatMessages.value = _chatMessages.value.toSet() + messages
     }
 }
