@@ -13,8 +13,8 @@ import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.base64ToByteArray
 import network.bisq.mobile.domain.utils.concat
 import network.bisq.mobile.domain.utils.toHex
-import okio.FileSystem
 import okio.Path
+import okio.Path.Companion.toPath
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 abstract class BaseClientCatHashService(private val baseDirPath: String) :
@@ -55,7 +55,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
             val catHashInput = BigInteger.fromByteArray(combined, sign = Sign.POSITIVE)
             val userProfileId = pubKeyHash.toHex()
             val subPath = "db/cache/cat_hash_icons/v$avatarVersion"
-            val iconsDir = baseDirPath.toPath().resolve(subPath.toPath())
+            val iconsDir = baseDirPath.toOkioPath().resolve(subPath.toOkioPath())
             val iconFilePath = iconsDir.resolve("$userProfileId.raw")
 
             val useCache = size <= SIZE_OF_CACHED_ICONS
@@ -109,7 +109,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
     fun pruneOutdatedProfileIcons(userProfiles: Collection<UserProfileVO>) {
         if (userProfiles.isEmpty()) return
 
-        val iconsDirectory = baseDirPath.toPath().resolve(CATHASH_ICONS_PATH.toPath())
+        val iconsDirectory = baseDirPath.toOkioPath().resolve(CATHASH_ICONS_PATH.toOkioPath())
         val versionDirs =
             fileSystem.listOrNull(iconsDirectory)?.filter { fileSystem.metadata(it).isDirectory }
                 ?: return
@@ -135,8 +135,6 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
         }
     }
 
-    fun currentAvatarsVersion(): Int = BucketConfig.CURRENT_VERSION
-
     private fun getBucketConfig(avatarVersion: Int): BucketConfig {
         return when (avatarVersion) {
             0 -> BucketConfigV0()
@@ -144,5 +142,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
         }
     }
 
-    private fun String.toPath(): Path = this.toPath()
+    private fun String.toOkioPath(): Path {
+        return this.toPath()
+    }
 }
