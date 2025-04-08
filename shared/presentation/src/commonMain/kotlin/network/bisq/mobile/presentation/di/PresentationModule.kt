@@ -148,7 +148,7 @@ val presentationModule = module {
     single { CreateOfferDirectionPresenter(get(), get(), get(), get()) }
     single { CreateOfferMarketPresenter(get(), get(), get()) }
     single { CreateOfferPricePresenter(get(), get()) }
-    single { CreateOfferAmountPresenter(get(), get(), get(), get(), get(), get()) }
+    single { CreateOfferAmountPresenter(get(), get(), get(), get(), get(), get(), get()) }
     single { CreateOfferPaymentMethodPresenter(get(), get()) }
     single { CreateOfferReviewPresenter(get(), get()) }
 

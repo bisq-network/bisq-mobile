@@ -43,11 +43,12 @@ fun CreateOfferTradePriceSelectorScreen() {
         nextDisabled = !presenter.formattedPercentagePriceValid.collectAsState().value,
     ) {
         BisqText.h3Regular(
-            text = "bisqEasy.price.headline".i18n(),
+            text = "What is your trade price?", // TODO:i18n "bisqEasy.price.headline".i18n(),
             modifier = Modifier.align(Alignment.Start)
         )
         BisqGap.V1()
-        BisqText.largeLightGrey("bisqEasy.tradeWizard.price.subtitle".i18n())
+        // TODO:i18n "bisqEasy.tradeWizard.price.subtitle".i18n())
+        BisqText.largeLightGrey("This can be defined as a percentage price which floats with the market price or fixed price.")
         Column(
             modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding2X),
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)

@@ -1,27 +1,22 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.BisqAmountSelector
 import network.bisq.mobile.presentation.ui.components.molecules.RangeAmountSelector
 import network.bisq.mobile.presentation.ui.components.molecules.ToggleTab
-import network.bisq.mobile.presentation.ui.components.organisms.create_offer.ReputationBasedLimitsPopup
+import network.bisq.mobile.presentation.ui.components.organisms.create_offer.ReputationBasedBuyerLimitsPopup
+import network.bisq.mobile.presentation.ui.components.organisms.create_offer.ReputationBasedSellerLimitsPopup
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.AmountType
 import org.koin.compose.koinInject
 
@@ -31,8 +26,9 @@ fun CreateOfferAmountSelectorScreen() {
     val isBuy by presenter.isBuy.collectAsState()
     val reputation by presenter.reputation.collectAsState()
     val hintText by presenter.hintText.collectAsState()
-    val sellLimit by presenter.formattedReputationBasedMaxSellAmount.collectAsState()
+    val reputationBasedMaxSellAmount by presenter.formattedReputationBasedMaxSellAmount.collectAsState()
     val showLimitPopup by presenter.showLimitPopup.collectAsState()
+    val takersCount by presenter.takersCount.collectAsState()
     RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
@@ -40,7 +36,6 @@ fun CreateOfferAmountSelectorScreen() {
         stepIndex = 3,
         stepsLength = 6,
         prevOnClick = { presenter.onBack() },
-        nextButtonText = "action.next".i18n(),
         nextOnClick = { presenter.onNext() }
     ) {
 
@@ -50,97 +45,76 @@ fun CreateOfferAmountSelectorScreen() {
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
+        BisqGap.V2()
 
-        BisqText.largeLightGrey(
-            text = "bisqEasy.tradeWizard.amount.description.fixAmount".i18n(),
-            textAlign = TextAlign.Center,
+        ToggleTab(
+            options = AmountType.entries,
+            initialOption = presenter.amountType.value,
+            onStateChange = { value ->
+                presenter.onSelectAmountType(value)
+            },
+            getDisplayString = { direction ->
+                if (direction == AmountType.FIXED_AMOUNT)
+                    "bisqEasy.tradeWizard.amount.amountModel.fixedAmount".i18n()
+                else
+                    "bisqEasy.tradeWizard.amount.amountModel.rangeAmount".i18n()
+            },
             modifier = Modifier.align(Alignment.CenterHorizontally)
         )
 
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
+        BisqGap.V2()
 
-        Column(verticalArrangement = Arrangement.spacedBy(52.dp)) {
-
-            ToggleTab(
-                options = AmountType.entries,
-                initialOption = presenter.amountType.value,
-                onStateChange = { value ->
-                    presenter.onSelectAmountType(value)
-                },
-                getDisplayString = { direction ->
-                    if (direction == AmountType.FIXED_AMOUNT)
-                        "Fixed amount" // TODO:i18n
-                    else
-                        "Range amount" // TODO:i18n
-                },
-                modifier = Modifier.align(Alignment.CenterHorizontally)
+        if (presenter.amountType.collectAsState().value == AmountType.FIXED_AMOUNT) {
+            BisqAmountSelector(
+                presenter.quoteCurrencyCode,
+                presenter.formattedMinAmountWithCode,
+                presenter.formattedMaxAmountWithCode,
+                presenter.fixedAmountSliderPosition,
+                presenter.formattedQuoteSideFixedAmount,
+                presenter.formattedBaseSideFixedAmount,
+                { presenter.onFixedAmountSliderChanged(it) },
+                { presenter.onFixedAmountTextValueChanged(it) }
             )
-
-            if (presenter.amountType.collectAsState().value == AmountType.FIXED_AMOUNT) {
-                BisqAmountSelector(
-                    presenter.quoteCurrencyCode,
-                    presenter.formattedMinAmountWithCode,
-                    presenter.formattedMaxAmountWithCode,
-                    presenter.fixedAmountSliderPosition,
-                    presenter.formattedQuoteSideFixedAmount,
-                    presenter.formattedBaseSideFixedAmount,
-                    { presenter.onFixedAmountSliderChanged(it) },
-                    { presenter.onFixedAmountTextValueChanged(it) }
-                )
-            } else {
-                RangeAmountSelector(
-                    presenter.formattedMinAmountWithCode,
-                    presenter.formattedMaxAmountWithCode,
-                    presenter.quoteCurrencyCode,
-                    presenter.rangeSliderPosition,
-                    presenter.formattedQuoteSideMinRangeAmount,
-                    presenter.formattedBaseSideMinRangeAmount,
-                    presenter.formattedQuoteSideMaxRangeAmount,
-                    presenter.formattedBaseSideMaxRangeAmount,
-                    { presenter.onRangeAmountSliderChanged(it) },
-                    { presenter.onMinAmountTextValueChanged(it) },
-                    { presenter.onMaxAmountTextValueChanged(it) }
-                )
-            }
-
-            // TODO:
-            val matchingSellerCount = 2
-            val countString = when (matchingSellerCount) {
-                0 -> {
-                    "bisqEasy.tradeWizard.amount.numOffers.0".i18n()
-                }
-
-                1 -> {
-                    "bisqEasy.tradeWizard.amount.numOffers.1".i18n()
-                }
-
-                else -> {
-                    "bisqEasy.tradeWizard.amount.numOffers.*".i18n(matchingSellerCount)
-                }
-            }
-
-
-            NoteText(
-                notes = hintText,
-                linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
-                onLinkClick = {
-                    presenter.setShowLimitPopup(true)
-                }
+        } else {
+            RangeAmountSelector(
+                presenter.formattedMinAmountWithCode,
+                presenter.formattedMaxAmountWithCode,
+                presenter.quoteCurrencyCode,
+                presenter.rangeSliderPosition,
+                presenter.formattedQuoteSideMinRangeAmount,
+                presenter.formattedBaseSideMinRangeAmount,
+                presenter.formattedQuoteSideMaxRangeAmount,
+                presenter.formattedBaseSideMaxRangeAmount,
+                { presenter.onRangeAmountSliderChanged(it) },
+                { presenter.onMinAmountTextValueChanged(it) },
+                { presenter.onMaxAmountTextValueChanged(it) }
             )
-
         }
+
+        BisqGap.V2()
+
+        NoteText(
+            notes = hintText,
+            linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
+            onLinkClick = { presenter.setShowLimitPopup(true) }
+        )
+
     }
 
     if (showLimitPopup) {
         if (isBuy) {
-            ReputationBasedLimitsPopup(
+            ReputationBasedBuyerLimitsPopup(
                 onDismiss = { presenter.setShowLimitPopup(false) },
-                reputationScore = reputation!!.totalScore.toString(),
-                maxSellAmount = sellLimit,
+                reputationScore = reputation.toString(),
+                maxBuyAmount = presenter.maxBuyAmount.collectAsState().value,
+                takersCount = takersCount
             )
         } else {
-
+            ReputationBasedSellerLimitsPopup(
+                onDismiss = { presenter.setShowLimitPopup(false) },
+                reputationScore = reputation.toString(),
+                maxSellAmount = reputationBasedMaxSellAmount,
+            )
         }
     }
 }

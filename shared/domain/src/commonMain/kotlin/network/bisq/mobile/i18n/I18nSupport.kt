@@ -73,6 +73,20 @@ fun String.i18n(vararg arguments: Any): String {
     return result
 }
 
+fun String.i18nPlural(number: Int): String {
+    val pluralKey = when {
+        number == 1 && has("$this.1") -> "$this.1"
+        number == 0 && has("$this.0") -> "$this.0"
+        else -> "$this.*"
+    }
+    return pluralKey.i18n(number)
+}
+
+fun has(key: String): Boolean {
+    return bundles.firstOrNull { it.containsKey(key) } != null
+}
+
+
 fun String.i18n(): String {
     val result = bundles
         .firstOrNull { it.containsKey(this) }

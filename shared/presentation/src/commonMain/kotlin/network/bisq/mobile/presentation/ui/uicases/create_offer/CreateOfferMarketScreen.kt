@@ -16,6 +16,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 @Composable
@@ -39,7 +40,8 @@ fun CreateOfferCurrencySelectorScreen() {
         BisqText.h3Regular(presenter.headline)
         BisqGap.V1()
 
-        BisqText.largeLightGrey("bisqEasy.tradeWizard.market.subTitle".i18n())
+        // TODO:i18n "bisqEasy.tradeWizard.market.subTitle".i18n()
+        BisqText.largeLightGrey("Choose your trade currency")
 
         BisqGap.V2()
 
@@ -53,9 +55,8 @@ fun CreateOfferCurrencySelectorScreen() {
         BisqGap.V1()
 
         LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
         ) {
             items(filteredMarketList) { item ->
                 CurrencyCard(

@@ -14,12 +14,13 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class CreateOfferMarketPresenter(
     mainPresenter: MainPresenter,
-    offersServiceFacade: OffersServiceFacade,
+    private val offersServiceFacade: OffersServiceFacade,
     private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter) {
 
     lateinit var headline: String
     var market: MarketVO? = null
+    var marketListItem: MarketListItem? = null
 
     private var _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> = _searchText
@@ -48,13 +49,14 @@ class CreateOfferMarketPresenter(
     )
 
     override fun onViewAttached() {
+        super.onViewAttached()
         val createOfferModel = createOfferPresenter.createOfferModel
         market = createOfferModel.market
 
         headline = if (createOfferModel.direction.isBuy)
-            "bisqEasy.tradeWizard.market.headline.buyer".i18n()
+            "In which currency do you want to pay" // TODO:i18n "bisqEasy.tradeWizard.market.headline.buyer".i18n()
         else
-            "bisqEasy.tradeWizard.market.headline.seller".i18n()
+            "In which currency do you want to get paid?" // TODO:i18n "bisqEasy.tradeWizard.market.headline.seller".i18n()
 
         //todo for dev testing
         /* if (market == null) {
@@ -62,8 +64,9 @@ class CreateOfferMarketPresenter(
          }*/
     }
 
-    fun onSelectMarket(marketListItem: MarketListItem) {
-        market = marketListItem.market
+    fun onSelectMarket(_marketListItem: MarketListItem) {
+        marketListItem = _marketListItem
+        market = _marketListItem.market
         navigateNext()
     }
 
@@ -86,6 +89,7 @@ class CreateOfferMarketPresenter(
     private fun commitToModel() {
         if (isValid()) {
             createOfferPresenter.commitMarket(market!!)
+            offersServiceFacade.selectOfferbookMarket(marketListItem!!)
         }
     }
 

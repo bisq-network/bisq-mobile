@@ -7,10 +7,12 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.*
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_identity.UserIdentityServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -19,6 +21,7 @@ import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.DEFAULT_MIN_US
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.MAX_USD_TRADE_AMOUNT
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.withTolerance
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -32,7 +35,10 @@ class CreateOfferAmountPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val userIdentityServiceFacade: UserIdentityServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
+    private val offersServiceFacade: OffersServiceFacade,
 ) : BasePresenter(mainPresenter) {
+
+    val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = offersServiceFacade.offerbookListItems
 
     lateinit var headline: String
     lateinit var quoteCurrencyCode: String
@@ -61,8 +67,14 @@ class CreateOfferAmountPresenter(
     val formattedQuoteSideMaxRangeAmount: StateFlow<String> = _formattedQuoteSideMaxRangeAmount
     private val _formattedBaseSideMaxRangeAmount = MutableStateFlow("")
     val formattedBaseSideMaxRangeAmount: StateFlow<String> = _formattedBaseSideMaxRangeAmount
-    private val _reputation = MutableStateFlow<ReputationScoreVO?>(null)
-    val reputation: StateFlow<ReputationScoreVO?> = _reputation
+    private val _reputation = MutableStateFlow<Long>(0L)
+    val reputation: StateFlow<Long> = _reputation
+
+    private val _takersCount = MutableStateFlow<Int>(0)
+    val takersCount: StateFlow<Int> = _takersCount
+
+    private val _maxBuyAmount = MutableStateFlow<String>("")
+    val maxBuyAmount : StateFlow<String> = _maxBuyAmount
 
     private val _hintText = MutableStateFlow("")
     val hintText: StateFlow<String> = _hintText
@@ -116,33 +128,24 @@ class CreateOfferAmountPresenter(
 
         _isBuy.value = createOfferModel.direction.isBuy
 
-        if (!isBuy.value) {
-            backgroundScope.launch {
-                val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
-
-                _reputation.value = reputationServiceFacade.getReputation(profile.id)
-
-                val market = createOfferModel.market ?: return@launch
-
-                val reputationBasedMaxSell = BisqEasyTradeAmountLimits.getReputationBasedQuoteSideAmount(
-                    marketPriceServiceFacade,
-                    market,
-                    _reputation.value!!.totalScore
-                )!!
-
-                _formattedReputationBasedMaxSellAmount.value = AmountFormatter.formatAmount(
-                    reputationBasedMaxSell,
-                    true, true
-                )
-
-                _hintText.value = "bisqEasy.tradeWizard.amount.seller.limitInfo".i18n(_formattedReputationBasedMaxSellAmount.value)
-            }
+        if (isBuy.value) {
+            updateBuyerHintText(quoteSideFixedAmount)
+        } else {
+            updateSellerHintText()
         }
 
     }
 
     fun onSelectAmountType(value: AmountType) {
         _amountType.value = value
+
+        if (isBuy.value) {
+            updateBuyerHintText(if (value == AmountType.FIXED_AMOUNT)
+                quoteSideFixedAmount
+            else
+                quoteSideMaxRangeAmount
+            )
+        }
     }
 
     fun onFixedAmountTextValueChanged(textInput: String) {
@@ -159,47 +162,54 @@ class CreateOfferAmountPresenter(
 
     fun onFixedAmountSliderChanged(value: Float) {
         applyFixedAmountSliderValue(value)
-
-        val market = createOfferModel.market ?: return
-        val requiredReputationScoreForMaxOrFixedAmount: Long =
-            BisqEasyTradeAmountLimits.findRequiredReputationScoreByFiatAmount(
-                marketPriceServiceFacade,
-                market,
-                quoteSideFixedAmount
-            ) ?: 0L
-
-        val requiredReputationScoreForMinAmount: Long =
-            BisqEasyTradeAmountLimits.findRequiredReputationScoreByFiatAmount(
-                marketPriceServiceFacade,
-                market,
-                quoteSideFixedAmount
-            ) ?: 0L
-
-        val profiles = reputationServiceFacade.getScoreByUserProfileId()
-        val numPotentialTakersForMinAmount = reputationServiceFacade.getScoreByUserProfileId()
-            .filter { (key, value) -> userIdentityServiceFacade.findUserIdentity(key) == null }
-            .filter { (key, value) -> withTolerance(value) >= requiredReputationScoreForMaxOrFixedAmount }
-            .count()
-
-        val numSellersString = when (numPotentialTakersForMinAmount) {
-            0 -> {
-                "bisqEasy.tradeWizard.amount.buyer.numSellers.0".i18n()
-            }
-
-            1 -> {
-                "bisqEasy.tradeWizard.amount.buyer.numSellers.1".i18n()
-            }
-
-            else -> {
-                "bisqEasy.tradeWizard.amount.buyer.numSellers.*".i18n(requiredReputationScoreForMaxOrFixedAmount)
-            }
+        if (isBuy.value) {
+            updateBuyerHintText(quoteSideFixedAmount)
         }
-
-        _hintText.value = "bisqEasy.tradeWizard.amount.buyer.limitInfo".i18n(numSellersString)
     }
 
     fun onRangeAmountSliderChanged(value: ClosedFloatingPointRange<Float>) {
         applyRangeAmountSliderValue(value)
+        if (isBuy.value) {
+            updateBuyerHintText(quoteSideMaxRangeAmount)
+        }
+    }
+
+    private fun updateBuyerHintText(value: FiatVO) {
+        _maxBuyAmount.value = AmountFormatter.formatAmount(value, true, true)
+        val market = createOfferModel.market ?: return
+        val requiredReputation: Long =
+            BisqEasyTradeAmountLimits.findRequiredReputationScoreByFiatAmount(
+                marketPriceServiceFacade,
+                market,
+                value
+            ) ?: 0L
+        _reputation.value = requiredReputation
+        _takersCount.value = findPotentialTakers(requiredReputation)
+        val numSellersString = "bisqEasy.tradeWizard.amount.buyer.numSellers".i18nPlural(takersCount.value)
+        _hintText.value = "bisqEasy.tradeWizard.amount.buyer.limitInfo".i18n(numSellersString)
+    }
+
+    private fun updateSellerHintText() {
+        backgroundScope.launch {
+            val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
+
+            _reputation.value = reputationServiceFacade.getReputation(profile.id).totalScore
+
+            val market = createOfferModel.market ?: return@launch
+
+            val reputationBasedMaxSell = BisqEasyTradeAmountLimits.getReputationBasedQuoteSideAmount(
+                marketPriceServiceFacade,
+                market,
+                _reputation.value
+            )!!
+
+            _formattedReputationBasedMaxSellAmount.value = AmountFormatter.formatAmount(
+                reputationBasedMaxSell,
+                true, true
+            )
+
+            _hintText.value = "bisqEasy.tradeWizard.amount.seller.limitInfo".i18n(_formattedReputationBasedMaxSellAmount.value)
+        }
     }
 
     fun onBack() {
@@ -210,6 +220,29 @@ class CreateOfferAmountPresenter(
     fun onNext() {
         commitToModel()
         navigateTo(Routes.CreateOfferPrice)
+    }
+
+    private fun findPotentialTakers(requiredReputationScore: Long): Int {
+        // For dev testing
+        val profiles = mapOf<String, Long>(
+            "profile_1" to 10L,
+            "profile_2" to 100L,
+            "profile_3" to 500L,
+            "profile_4" to 1_000L,
+            "profile_5" to 5_000L,
+            "profile_6" to 10_000L,
+            "profile_7" to 20_000L,
+            "profile_8" to 40_000L,
+            "profile_9" to 60_000L,
+            "profile_10" to 80_000L,
+        )
+
+        // val profiles = reputationServiceFacade.getScoreByUserProfileId()
+        return profiles
+            //.filter { (key, value) -> userIdentityServiceFacade.findUserIdentity(key) == null } // Comment this for dev testing
+            .filter { (key, value) -> withTolerance(value) >= requiredReputationScore }
+            .count()
+
     }
 
     private fun applyRangeAmountSliderValue(rangeSliderPosition: ClosedFloatingPointRange<Float>) {
