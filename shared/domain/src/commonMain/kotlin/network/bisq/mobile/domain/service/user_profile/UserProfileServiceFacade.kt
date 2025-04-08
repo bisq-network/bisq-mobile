@@ -6,6 +6,9 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 interface UserProfileServiceFacade : LifeCycleAware {
+
+    val selectedUserProfile: StateFlow<UserProfileVO?>
+
     /**
      * Returns true if there is a user identity already created.
      * This should be used to detect a first time user who has no identity created yet and where
@@ -51,7 +54,4 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * @return UserProfile if existent, null otherwise
      */
     suspend fun getSelectedUserProfile(): UserProfileVO?
-
-    val selectedUserProfile: StateFlow<UserProfileVO?>
-
 }

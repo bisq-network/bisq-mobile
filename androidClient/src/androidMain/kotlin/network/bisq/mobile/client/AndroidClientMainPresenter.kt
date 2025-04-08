@@ -3,7 +3,7 @@ package network.bisq.mobile.client
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.chat.trade.TradeChatServiceFacade
+import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.network.ClientConnectivityService
@@ -21,7 +21,7 @@ class AndroidClientMainPresenter(
     openTradesNotificationService: OpenTradesNotificationService,
     userProfileServiceFacade: UserProfileServiceFacade,
     tradesServiceFacade: TradesServiceFacade,
-    tradeChatServiceFacade: TradeChatServiceFacade,
+    tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
     webSocketClientProvider: WebSocketClientProvider,
     applicationBootstrapFacade: ApplicationBootstrapFacade,
     offersServiceFacade: OffersServiceFacade,
@@ -34,7 +34,7 @@ class AndroidClientMainPresenter(
     openTradesNotificationService,
     userProfileServiceFacade,
     tradesServiceFacade,
-    tradeChatServiceFacade,
+    tradeChatMessagesServiceFacade,
     webSocketClientProvider,
     applicationBootstrapFacade,
     offersServiceFacade,

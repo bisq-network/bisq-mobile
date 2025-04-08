@@ -38,6 +38,8 @@ class OfferbookMarketPresenter(
 
     // flag to force market update trigger when needed
     private val _marketPriceUpdated = MutableStateFlow(false)
+
+    //TODO not used
     var marketPriceUpdated: StateFlow<Boolean> = _marketPriceUpdated
 
     private val _sortBy = MutableStateFlow(MarketSortBy.MostOffers)

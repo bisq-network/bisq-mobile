@@ -22,7 +22,6 @@ import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferIt
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.utils.Logging
-import network.bisq.mobile.i18n.i18n
 
 class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -121,7 +120,7 @@ class ClientOffersServiceFacade(
         if (apiResult.isSuccess) {
             return Result.success(apiResult.getOrThrow().offerId)
         } else {
-            throw apiResult.exceptionOrNull()!!
+            return Result.failure(apiResult.exceptionOrNull()!!)
         }
     }
 

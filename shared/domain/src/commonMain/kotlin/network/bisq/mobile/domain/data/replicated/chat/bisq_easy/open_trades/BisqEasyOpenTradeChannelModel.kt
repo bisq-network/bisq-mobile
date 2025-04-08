@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
@@ -66,7 +67,7 @@ class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTra
     }
 
     fun addChatMessages(message: BisqEasyOpenTradeMessageModel) {
-        _chatMessages.value = _chatMessages.value.toSet() + message
+        _chatMessages.update { it + message }
     }
 
     fun setAllChatMessages(messages: Set<BisqEasyOpenTradeMessageModel>) {

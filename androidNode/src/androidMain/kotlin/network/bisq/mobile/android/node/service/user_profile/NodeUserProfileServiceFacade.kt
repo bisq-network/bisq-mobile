@@ -125,7 +125,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             AVATAR_VERSION,
             "",
             ""
-        )
+        ).join()
 
         pubKeyHash = null
         keyPair = null

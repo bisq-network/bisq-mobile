@@ -12,8 +12,8 @@ import kotlinx.serialization.modules.subclass
 import network.bisq.mobile.client.service.accounts.AccountsApiGateway
 import network.bisq.mobile.client.service.accounts.ClientAccountsServiceFacade
 import network.bisq.mobile.client.service.bootstrap.ClientApplicationBootstrapFacade
-import network.bisq.mobile.client.service.chat.trade.ClientTradeChatServiceFacade
-import network.bisq.mobile.client.service.chat.trade.TradeChatApiGateway
+import network.bisq.mobile.client.service.chat.trade.ClientTradeChatMessagesServiceFacade
+import network.bisq.mobile.client.service.chat.trade.TradeChatMessagesApiGateway
 import network.bisq.mobile.client.service.common.ClientLanguageServiceFacade
 import network.bisq.mobile.client.service.common.LanguageApiGateway
 import network.bisq.mobile.client.service.explorer.ClientExplorerServiceFacade
@@ -61,7 +61,7 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.chat.trade.TradeChatServiceFacade
+import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -190,8 +190,8 @@ val clientModule = module {
     single { TradesApiGateway(get(), get()) }
     single<TradesServiceFacade> { ClientTradesServiceFacade(get(), get(), get()) }
 
-    single { TradeChatApiGateway(get(), get()) }
-    single<TradeChatServiceFacade> { ClientTradeChatServiceFacade(get(), get(), get(), get()) }
+    single { TradeChatMessagesApiGateway(get(), get()) }
+    single<TradeChatMessagesServiceFacade> { ClientTradeChatMessagesServiceFacade(get(), get(), get(), get()) }
 
     single { ExplorerApiGateway(get()) }
     single<ExplorerServiceFacade> { ClientExplorerServiceFacade(get()) }

@@ -11,7 +11,7 @@ import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.android.node.service.accounts.NodeAccountsServiceFacade
 import network.bisq.mobile.android.node.service.bootstrap.NodeApplicationBootstrapFacade
-import network.bisq.mobile.android.node.service.chat.trade.NodeTradeChatServiceFacade
+import network.bisq.mobile.android.node.service.chat.trade.NodeTradeChatMessagesServiceFacade
 import network.bisq.mobile.android.node.service.common.NodeLanguageServiceFacade
 import network.bisq.mobile.android.node.service.explorer.NodeExplorerServiceFacade
 import network.bisq.mobile.android.node.service.market_price.NodeMarketPriceServiceFacade
@@ -25,7 +25,7 @@ import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.chat.trade.TradeChatServiceFacade
+import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -72,7 +72,7 @@ val androidNodeModule = module {
 
     single<TradesServiceFacade> { NodeTradesServiceFacade(get()) }
 
-    single<TradeChatServiceFacade> { NodeTradeChatServiceFacade(get(), get()) }
+    single<TradeChatMessagesServiceFacade> { NodeTradeChatMessagesServiceFacade(get(), get()) }
 
     single<MediationServiceFacade> { NodeMediationServiceFacade(get()) }
 

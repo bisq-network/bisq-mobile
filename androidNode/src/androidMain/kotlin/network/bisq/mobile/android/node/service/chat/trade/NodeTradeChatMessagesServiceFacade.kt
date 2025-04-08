@@ -19,17 +19,17 @@ import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTra
 import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
-import network.bisq.mobile.domain.service.chat.trade.TradeChatServiceFacade
+import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 
 // When we add other chat types we will refactor that class to provide a base class for the common areas.
-class NodeTradeChatServiceFacade(
+class NodeTradeChatMessagesServiceFacade(
     applicationService: AndroidApplicationService.Provider,
     private val tradesServiceFacade: TradesServiceFacade
-) : TradeChatServiceFacade, Logging {
+) : TradeChatMessagesServiceFacade, Logging {
 
     // Dependencies
     private val bisqEasyOpenTradeChannelService: BisqEasyOpenTradeChannelService by lazy { applicationService.chatService.get().bisqEasyOpenTradeChannelService }
@@ -99,13 +99,18 @@ class NodeTradeChatServiceFacade(
         return addOrRemoveChatMessageReaction(messageId, reactionEnum, false)
     }
 
-    override suspend fun removeChatMessageReaction(messageId: String, reactionVO: BisqEasyOpenTradeMessageReactionVO): Result<Unit> {
-        if (userIdentityService.findUserIdentity(reactionVO.senderUserProfile.id).isPresent) {
+    override suspend fun removeChatMessageReaction(messageId: String, reactionVO: BisqEasyOpenTradeMessageReactionVO): Result<Boolean> {
+        return if (userIdentityService.findUserIdentity(reactionVO.senderUserProfile.id).isPresent) {
             val reaction = ReactionEnum.entries[reactionVO.reactionId]
-            return addOrRemoveChatMessageReaction(messageId, reaction, true)
+            val result = addOrRemoveChatMessageReaction(messageId, reaction, true)
+            if (result.isSuccess) {
+                Result.success(true)
+            } else {
+                throw result.exceptionOrNull()!!
+            }
         } else {
             // Not our reaction, so we cannot remove it
-            return Result.success(Unit)
+            Result.success(false)
         }
     }
 
@@ -136,7 +141,6 @@ class NodeTradeChatServiceFacade(
                             val chatMessageReactions = message.chatMessageReactions
                                 .filter { !it.isRemoved }
                                 .map { reaction -> BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(reaction) }
-                                .toList()
                             model.setReactions(chatMessageReactions)
                         }
                     }
@@ -174,9 +178,7 @@ class NodeTradeChatServiceFacade(
         unbindAllReactionsPins()
     }
 
-    private fun addOrRemoveChatMessageReaction(
-        messageId: String, reactionEnum: ReactionEnum, isRemoved: Boolean
-    ): Result<Unit> {
+    private fun addOrRemoveChatMessageReaction(messageId: String, reactionEnum: ReactionEnum, isRemoved: Boolean): Result<Unit> {
         selectedTrade.value?.bisqEasyOpenTradeChannelModel?.id.let { id ->
             bisqEasyOpenTradeChannelService.findChannel(id).getOrNull()?.let { channel ->
                 channel.chatMessages.find { it.id == messageId }?.let { message ->

@@ -7,9 +7,11 @@ import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
@@ -64,7 +66,7 @@ class WebSocketApiClient(
                     accept(ContentType.Application.Json)
                     setBody(requestBody)
                 }
-                return Result.success(response.body<T>())
+                return getResultFromHttpResponse<T>(response)
             } catch (e: Exception) {
                 return Result.failure(e)
             }
@@ -72,9 +74,6 @@ class WebSocketApiClient(
             val bodyAsJson = json.encodeToString(requestBody)
             return request<T>("PATCH", path, bodyAsJson)
         }
-
-        //val bodyAsJson = json.encodeToString(requestBody)
-        //  return request<T>("PATCH", path, bodyAsJson)
     }
 
     suspend inline fun <reified T, reified R> post(path: String, requestBody: R): Result<T> {
@@ -85,7 +84,7 @@ class WebSocketApiClient(
                     accept(ContentType.Application.Json)
                     setBody(requestBody)
                 }
-                return Result.success(response.body<T>())
+                return getResultFromHttpResponse<T>(response)
             } catch (e: Exception) {
                 return Result.failure(e)
             }
@@ -135,6 +134,16 @@ class WebSocketApiClient(
         } catch (e: Exception) {
             log.e(e) { "Failed to get WS request result" }
             return Result.failure(e)
+        }
+    }
+
+
+    suspend inline fun <reified T> getResultFromHttpResponse(response: HttpResponse): Result<T> {
+        return if (response.status.isSuccess()) {
+            Result.success(response.body<T>())
+        } else {
+            val errorText = response.bodyAsText()
+            Result.failure(WebSocketRestApiException(response.status, errorText))
         }
     }
 }

@@ -81,7 +81,7 @@ class ClientTradesServiceFacade(
             takeOfferStatus.value = TakeOfferStatus.SUCCESS
             return Result.success(apiResult.getOrThrow().tradeId)
         } else {
-            throw apiResult.exceptionOrNull()!!
+            return Result.failure(apiResult.exceptionOrNull()!!)
         }
     }
 

@@ -56,7 +56,7 @@ class ClientUserProfileServiceFacade(
             return
         }
 
-        jobs.map { it.cancel() }
+        jobs.forEach { it.cancel() }
         jobs.clear()
 
         active = false

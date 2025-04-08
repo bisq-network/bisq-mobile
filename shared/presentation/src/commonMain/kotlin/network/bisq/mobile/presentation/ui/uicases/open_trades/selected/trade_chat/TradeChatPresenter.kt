@@ -9,7 +9,7 @@ import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.Bis
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.service.chat.trade.TradeChatServiceFacade
+import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.BasePresenter
@@ -18,7 +18,7 @@ import network.bisq.mobile.presentation.MainPresenter
 class TradeChatPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
-    private val tradeChatServiceFacade: TradeChatServiceFacade
+    private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade
 ) : BasePresenter(mainPresenter), Logging {
     private var jobs: MutableSet<Job> = mutableSetOf()
 
@@ -61,20 +61,20 @@ class TradeChatPresenter(
                     )
                 }
             }
-            tradeChatServiceFacade.sendChatMessage(text, citation)
+            tradeChatMessagesServiceFacade.sendChatMessage(text, citation)
             _quotedMessage.value = null
         })
     }
 
     fun onAddReaction(message: BisqEasyOpenTradeMessageModel, reaction: ReactionEnum) {
         jobs.add(backgroundScope.launch {
-            tradeChatServiceFacade.addChatMessageReaction(message.id, reaction)
+            tradeChatMessagesServiceFacade.addChatMessageReaction(message.id, reaction)
         })
     }
 
     fun onRemoveReaction(message: BisqEasyOpenTradeMessageModel, reaction: BisqEasyOpenTradeMessageReactionVO) {
         jobs.add(backgroundScope.launch {
-            tradeChatServiceFacade.removeChatMessageReaction(message.id, reaction)
+            tradeChatMessagesServiceFacade.removeChatMessageReaction(message.id, reaction)
         })
     }
 
