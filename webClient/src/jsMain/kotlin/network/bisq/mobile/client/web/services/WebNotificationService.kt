@@ -2,10 +2,13 @@ package network.bisq.mobile.client.web.services
 
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
+import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 
-class WebNotificationService : OpenTradesNotificationService {
-    override val notificationServiceController = NotificationServiceController()
-    
+class WebNotificationService(
+    notificationServiceController: NotificationServiceController,
+    tradesServiceFacade: TradesServiceFacade)
+    : OpenTradesNotificationService(notificationServiceController, tradesServiceFacade) {
+
     override fun launchNotificationService() {
         // Web implementation for notifications
         // Could use the Web Notifications API

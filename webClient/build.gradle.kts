@@ -54,6 +54,9 @@ kotlin {
                 
                 // Add multiplatform settings
                 implementation(libs.multiplatform.settings)
+                
+                // Add Kermit for logging
+                implementation(libs.logging.kermit)
             }
         }
     }

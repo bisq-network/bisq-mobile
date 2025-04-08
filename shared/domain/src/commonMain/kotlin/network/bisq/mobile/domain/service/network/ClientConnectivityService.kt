@@ -6,7 +6,7 @@ import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.utils.Logging
 
-class ClientConnectivityService(
+open class ClientConnectivityService(
     private val webSocketClientProvider: WebSocketClientProvider
 ): ConnectivityService(), Logging {
     private val backgroundScope = CoroutineScope(BackgroundDispatcher)

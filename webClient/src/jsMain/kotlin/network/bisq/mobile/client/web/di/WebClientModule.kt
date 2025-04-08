@@ -23,8 +23,8 @@ import org.koin.dsl.module
 val webClientModule = module {
     // Web-specific implementations
     single<UrlLauncher> { WebUrlLauncher() }
-    single<ClientConnectivityService> { WebClientConnectivityService() }
-    single<OpenTradesNotificationService> { WebNotificationService() }
+    single<ClientConnectivityService> { WebClientConnectivityService(get()) }
+    single<OpenTradesNotificationService> { WebNotificationService(get(), get()) }
 
     single<MainPresenter> {
         WebAppPresenter(
