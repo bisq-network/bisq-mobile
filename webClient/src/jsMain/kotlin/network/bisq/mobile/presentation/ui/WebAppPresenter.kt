@@ -1,0 +1,1 @@
+return org.w3c.dom.window.innerWidth < 768

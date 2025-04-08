@@ -13,7 +13,7 @@ kotlin {
                 }
             }
             runTask {
-                outputFileName = "main.js"
+                mainOutputFileName = "main.js"
                 devServer = devServer.let {
                     it.copy(
                         open = false,
@@ -22,7 +22,7 @@ kotlin {
                 }
             }
             webpackTask {
-                outputFileName = "main.js"
+                mainOutputFileName = "main.js"
             }
             testTask {
                 useKarma {
@@ -30,8 +30,6 @@ kotlin {
                 }
             }
         }
-
-        // TODO specific node.js config?
         
         binaries.executable()
     }
@@ -43,16 +41,25 @@ kotlin {
                 implementation(project(":shared:presentation"))
                 implementation(compose.web.core)
                 implementation(compose.runtime)
+                
+                // Add Koin for dependency injection
+                implementation(libs.koin.core)
+                
+                // Add other necessary dependencies
                 implementation(libs.kotlinx.coroutines.core.js)
                 implementation(libs.ktor.client.js)
                 implementation(libs.ktor.client.content.negotiation)
                 implementation(libs.ktor.serialization.kotlinx.json)
                 implementation(libs.ktor.client.websockets)
+                
+                // Add multiplatform settings
+                implementation(libs.multiplatform.settings)
             }
         }
     }
 }
 
-compose.experimental {
-    web.application {}
-}
+// not needed anymore
+//compose.experimental {
+//    web.application {}
+//}
