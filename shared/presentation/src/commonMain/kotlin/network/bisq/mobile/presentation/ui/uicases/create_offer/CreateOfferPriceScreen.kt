@@ -17,6 +17,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.NoteText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.ToggleTab
+import network.bisq.mobile.presentation.ui.components.organisms.create_offer.WhyHighPricePopup
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -32,6 +33,9 @@ fun CreateOfferTradePriceSelectorScreen() {
     val formattedPercentagePriceValid by presenter.formattedPercentagePriceValid.collectAsState()
     val formattedPrice by presenter.formattedPrice.collectAsState()
     val priceType by presenter.priceType.collectAsState()
+    val isBuy by presenter.isBuy.collectAsState()
+    val showWhyPopup by presenter.showWhyPopup.collectAsState()
+    val hintText by presenter.hintText.collectAsState()
 
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.review.price.price".i18n(),
@@ -118,12 +122,22 @@ fun CreateOfferTradePriceSelectorScreen() {
                 }
             }
 
-            val tempStatus = "bisqEasy.price.feedback.sentence.some".i18n()
-            NoteText(
-                notes = "bisqEasy.price.feedback.sentence".i18n(tempStatus),
-                linkText = "bisqEasy.price.feedback.learnWhySection.openButton".i18n(),
-                textAlign = TextAlign.Center,
-            )
+            if (isBuy) {
+                NoteText(
+                    notes = hintText,
+                    linkText = "bisqEasy.price.feedback.learnWhySection.openButton".i18n(),
+                    textAlign = TextAlign.Center,
+                    onLinkClick = {
+                        presenter.setShowWhyPopup(true)
+                    }
+                )
+            }
         }
+    }
+
+    if (showWhyPopup) {
+        WhyHighPricePopup(
+            onDismiss = { presenter.setShowWhyPopup(false) }
+        )
     }
 }

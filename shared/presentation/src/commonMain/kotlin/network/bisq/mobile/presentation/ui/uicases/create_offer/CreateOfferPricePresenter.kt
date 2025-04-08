@@ -6,10 +6,13 @@ import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtens
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.parser.PercentageParser
 import network.bisq.mobile.domain.parser.PriceParser
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
@@ -19,6 +22,7 @@ import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPrese
 
 class CreateOfferPricePresenter(
     mainPresenter: MainPresenter,
+    private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter) {
 
@@ -40,9 +44,21 @@ class CreateOfferPricePresenter(
     private val _priceType = MutableStateFlow(PriceType.PERCENTAGE)
     val priceType: StateFlow<PriceType> = _priceType
 
+    private var _isBuy: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    var isBuy: StateFlow<Boolean> = _isBuy
+    private val _hintText = MutableStateFlow("")
+    val hintText: StateFlow<String> = _hintText
+
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
 
+    private var _showWhyPopup: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val showWhyPopup: StateFlow<Boolean> = _showWhyPopup
+    fun setShowWhyPopup(newValue: Boolean) {
+        _showWhyPopup.value = newValue
+    }
+
     override fun onViewAttached() {
+        super.onViewAttached()
         createOfferModel = createOfferPresenter.createOfferModel
 
         _priceType.value = createOfferModel.priceType
@@ -57,7 +73,12 @@ class CreateOfferPricePresenter(
 
         fixPriceDescription = "bisqEasy.price.tradePrice.inputBoxText".i18n(createOfferModel.market!!.marketCodes)
 
+        _isBuy.value = createOfferModel.direction.isBuy
         //onPercentagePriceChanged("10")
+
+        if (isBuy.value) {
+            updateHintText(percentagePriceValue)
+        }
     }
 
     fun getPriceTypeDisplayString(priceType: PriceType): String {
@@ -78,12 +99,16 @@ class CreateOfferPricePresenter(
             val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
             priceQuote = PriceUtil.fromMarketPriceMarkup(marketPriceQuote, this.percentagePriceValue)
             _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
-        } catch(_: Exception) {
+        } catch (_: Exception) {
 
         }
 
         _formattedPercentagePriceValid.value = isValid
         _formattedPriceValid.value = isValid
+
+        if (isBuy.value) {
+            updateHintText(percentagePriceValue)
+        }
     }
 
     fun onFixPriceChanged(value: String, isValid: Boolean) {
@@ -96,6 +121,34 @@ class CreateOfferPricePresenter(
 
         _formattedPercentagePriceValid.value = isValid
         _formattedPriceValid.value = isValid
+
+        if (isBuy.value) {
+            val percentageValue = PriceUtil.findPercentFromMarketPrice(
+                marketPriceServiceFacade,
+                FixPriceSpecVO(priceQuote),
+                createOfferModel.market!!,
+            )
+
+            updateHintText(percentageValue)
+        }
+
+    }
+
+    fun updateHintText(percentageValue: Double) {
+
+        val feedbackRating = if (percentageValue < -0.05) {
+            "bisqEasy.price.feedback.sentence.veryLow".i18n()
+        } else if (percentageValue < 0) {
+            "bisqEasy.price.feedback.sentence.low".i18n()
+        } else if (percentageValue < 0.05) {
+            "bisqEasy.price.feedback.sentence.some".i18n()
+        } else if (percentageValue < 0.15) {
+            "bisqEasy.price.feedback.sentence.good".i18n()
+        } else {
+            "bisqEasy.price.feedback.sentence.veryGood".i18n()
+        }
+
+        _hintText.value = "bisqEasy.price.feedback.buyOffer.sentence".i18n(feedbackRating)
     }
 
     fun onBack() {
