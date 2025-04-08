@@ -78,11 +78,16 @@ kotlin {
                 implementation(libs.logging.kermit)
 
                 // Add Node.js polyfills
-                // TODO
                 implementation(npm("os-browserify", "0.3.0"))
                 implementation(npm("path-browserify", "1.0.1"))
                 implementation(npm("buffer", "6.0.3"))
                 implementation(npm("stream-browserify", "3.0.0"))
+                
+                // Add lifecycle dependencies
+                implementation(libs.androidx.lifecycle.viewmodel)
+                implementation(libs.androidx.lifecycle.runtime)
+                implementation(libs.androidx.lifecycle.runtime.compose)
+                implementation(libs.navigation.compose)
             }
         }
     }

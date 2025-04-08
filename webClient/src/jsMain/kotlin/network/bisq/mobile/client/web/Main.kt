@@ -4,16 +4,17 @@ import androidx.compose.runtime.Composable
 import kotlinx.browser.document
 import network.bisq.mobile.client.di.clientModule
 import network.bisq.mobile.client.web.di.webClientModule
-import network.bisq.mobile.presentation.di.presentationModule
-import network.bisq.mobile.domain.di.serviceModule
+import network.bisq.mobile.client.web.ui.WebComposeProvider
 import network.bisq.mobile.domain.di.domainModule
+import network.bisq.mobile.domain.di.serviceModule
+import network.bisq.mobile.presentation.di.presentationModule
 import network.bisq.mobile.presentation.ui.App
 import org.jetbrains.compose.web.renderComposable
 import org.koin.core.context.startKoin
 
 fun main() {
     setupKoin()
-    
+
     renderComposable(rootElementId = "root") {
         BisqWebApp()
     }
@@ -21,7 +22,11 @@ fun main() {
 
 @Composable
 fun BisqWebApp() {
-    App()
+    // Provide all necessary CompositionLocals for web environment
+    WebComposeProvider {
+        // Render the App
+        App()
+    }
 }
 
 private fun setupKoin() {
