@@ -1,9 +1,15 @@
 package network.bisq.mobile.client.service.user_profile
 
 import io.ktor.util.decodeBase64Bytes
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -20,6 +26,42 @@ class ClientUserProfileServiceFacade(
 ) : UserProfileServiceFacade, Logging {
 
     private var keyMaterialResponse: KeyMaterialResponse? = null
+
+    // Properties
+    private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
+    override val selectedUserProfile: StateFlow<UserProfileVO?> = _selectedUserProfile
+
+    // Misc
+    private var active = false
+    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
+    private var jobs: MutableSet<Job> = mutableSetOf()
+
+
+    override fun activate() {
+        if (active) {
+            log.w { "deactivating first" }
+            deactivate()
+        }
+
+        jobs += coroutineScope.launch {
+            _selectedUserProfile.value = getSelectedUserProfile()
+        }
+
+        active = true
+    }
+
+    override fun deactivate() {
+        if (!active) {
+            log.w { "Skipping deactivation as its already deactivated" }
+            return
+        }
+
+        jobs.map { it.cancel() }
+        jobs.clear()
+
+        active = false
+    }
+
 
     // API
     override suspend fun hasUserProfile(): Boolean {
@@ -60,7 +102,9 @@ class ClientUserProfileServiceFacade(
 
         val response: CreateUserIdentityResponse = apiResult.getOrThrow()
         this.keyMaterialResponse = null
-        log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = ${response.userProfileId}" }
+        log.i { "Call to createAndPublishNewUserProfile successful. userProfileId = ${response.userProfile.id}" }
+
+        _selectedUserProfile.value = response.userProfile
     }
 
     override suspend fun getUserIdentityIds(): List<String> {

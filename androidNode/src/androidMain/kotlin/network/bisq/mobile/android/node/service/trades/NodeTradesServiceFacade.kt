@@ -30,6 +30,7 @@ import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
@@ -493,7 +494,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
 
         val tradeItemPresentationVO = TradeItemPresentationDtoFactory.create(trade, channel, userProfileService, reputationService)
         val openTradeItem = TradeItemPresentationModel(tradeItemPresentationVO)
-        _openTradeItems.value += openTradeItem
+        _openTradeItems.update { it + openTradeItem }
 
         val tradeId = trade.id
         pinsByTradeId[tradeId]?.forEach { it.unbind() }
@@ -561,7 +562,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         }
 
         val item = findListItem(trade).get()
-        _openTradeItems.value -= item
+        _openTradeItems.update { it - item }
 
         unbindPinByTradeId(tradeId)
     }

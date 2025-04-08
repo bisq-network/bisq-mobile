@@ -1,9 +1,11 @@
 package network.bisq.mobile.domain.service.user_profile
 
+import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
-interface UserProfileServiceFacade {
+interface UserProfileServiceFacade : LifeCycleAware {
     /**
      * Returns true if there is a user identity already created.
      * This should be used to detect a first time user who has no identity created yet and where
@@ -49,4 +51,7 @@ interface UserProfileServiceFacade {
      * @return UserProfile if existent, null otherwise
      */
     suspend fun getSelectedUserProfile(): UserProfileVO?
+
+    val selectedUserProfile: StateFlow<UserProfileVO?>
+
 }

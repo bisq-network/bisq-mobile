@@ -15,6 +15,7 @@ import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationSe
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
 /**
@@ -23,6 +24,7 @@ import network.bisq.mobile.presentation.MainPresenter
 open class ClientMainPresenter(
     private val connectivityService: ClientConnectivityService,
     openTradesNotificationService: OpenTradesNotificationService,
+    private val userProfileServiceFacade: UserProfileServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
     private val tradeChatServiceFacade: TradeChatServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider,
@@ -81,6 +83,7 @@ open class ClientMainPresenter(
     private fun activateServices() {
         runCatching {
             applicationBootstrapFacade.activate()
+            userProfileServiceFacade.activate()
             offersServiceFacade.activate()
             marketPriceServiceFacade.activate()
             tradesServiceFacade.activate()
@@ -96,6 +99,7 @@ open class ClientMainPresenter(
 
     private fun deactivateServices() {
         applicationBootstrapFacade.deactivate()
+        userProfileServiceFacade.deactivate()
         offersServiceFacade.deactivate()
         marketPriceServiceFacade.deactivate()
         tradesServiceFacade.deactivate()

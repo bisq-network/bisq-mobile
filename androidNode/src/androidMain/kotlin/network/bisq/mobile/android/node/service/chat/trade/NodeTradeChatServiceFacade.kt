@@ -133,12 +133,10 @@ class NodeTradeChatServiceFacade(
                 if (!reactionsPinByMessageId.containsKey(messageId)) {
                     val pin = message.chatMessageReactions.addObserver {
                         openTradeItem.bisqEasyOpenTradeChannelModel.chatMessages.value.find { messageId == it.id }?.let { model ->
-                            val chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO> =
-                                message.chatMessageReactions
-                                    .filter { !it.isRemoved }
-                                    .map { reaction ->
-                                        BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(reaction)
-                                    }
+                            val chatMessageReactions = message.chatMessageReactions
+                                .filter { !it.isRemoved }
+                                .map { reaction -> BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(reaction) }
+                                .toList()
                             model.setReactions(chatMessageReactions)
                         }
                     }

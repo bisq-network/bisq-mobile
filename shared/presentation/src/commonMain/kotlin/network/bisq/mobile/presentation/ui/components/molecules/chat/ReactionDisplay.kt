@@ -25,7 +25,7 @@ fun ReactionDisplay(
     onRemoveReaction: (BisqEasyOpenTradeMessageReactionVO) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val reactions by message.reactions.collectAsState()
+    val reactions by message.chatReactions.collectAsState()
 
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp),

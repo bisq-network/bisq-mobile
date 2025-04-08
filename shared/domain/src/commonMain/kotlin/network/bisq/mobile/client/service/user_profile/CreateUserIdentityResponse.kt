@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.service.user_profile
 
 import kotlinx.serialization.Serializable
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 @Serializable
-data class CreateUserIdentityResponse(val userProfileId: String)
+data class CreateUserIdentityResponse(val userProfile: UserProfileVO)

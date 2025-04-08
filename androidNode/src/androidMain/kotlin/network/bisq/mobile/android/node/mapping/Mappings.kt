@@ -311,8 +311,8 @@ class Mappings {
             myUserProfile: UserProfile
         ): BisqEasyOpenTradeMessageModel {
             userProfileDemoObj
-            val bisqEasyOpenTradeMessage = BisqEasyOpenTradeMessageVOMapping.fromBisq2Model(message)
             val citationAuthorUserProfileVO = citationAuthorUserProfile?.let { UserProfileMapping.fromBisq2Model(it) }
+            val bisqEasyOpenTradeMessage = BisqEasyOpenTradeMessageVOMapping.fromBisq2Model(message, citationAuthorUserProfileVO)
             val myUserProfileVO = UserProfileMapping.fromBisq2Model(myUserProfile)
             val chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO> =
                 message.chatMessageReactions
@@ -322,7 +322,6 @@ class Mappings {
                     }
             return BisqEasyOpenTradeMessageModel(
                 bisqEasyOpenTradeMessage,
-                citationAuthorUserProfileVO,
                 myUserProfileVO,
                 chatMessageReactions
             )
@@ -349,7 +348,7 @@ class Mappings {
             )
         }
 
-        fun fromBisq2Model(value: BisqEasyOpenTradeMessage): BisqEasyOpenTradeMessageDto {
+        fun fromBisq2Model(value: BisqEasyOpenTradeMessage, citationAuthorUserProfileVO: UserProfileVO?): BisqEasyOpenTradeMessageDto {
             return BisqEasyOpenTradeMessageDto(
                 value.tradeId,
                 value.id,
@@ -364,6 +363,7 @@ class Mappings {
                 ChatMessageTypeMapping.fromBisq2Model(value.chatMessageType),
                 value.bisqEasyOffer.getOrNull()?.let { BisqEasyOfferMapping.fromBisq2Model(it) },
                 value.chatMessageReactions.map { BisqEasyOpenTradeMessageReactionMapping.fromBisq2Model(it) }.toSet(),
+                citationAuthorUserProfileVO
             )
         }
     }

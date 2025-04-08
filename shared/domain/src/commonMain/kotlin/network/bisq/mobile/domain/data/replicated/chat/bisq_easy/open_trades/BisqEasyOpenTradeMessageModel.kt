@@ -14,9 +14,8 @@ import network.bisq.mobile.i18n.I18nSupport
 
 class BisqEasyOpenTradeMessageModel(
     bisqEasyOpenTradeMessage: BisqEasyOpenTradeMessageDto,
-    citationAuthorUserProfile: UserProfileVO?,
     myUserProfile: UserProfileVO,
-    chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO>
+    chatReactions: List<BisqEasyOpenTradeMessageReactionVO>
 ) {
     // Delegates of BisqEasyOpenTradeMessageDto
     val id: String = bisqEasyOpenTradeMessage.messageId
@@ -47,21 +46,21 @@ class BisqEasyOpenTradeMessageModel(
     val myUserName = myUserProfile.userName
     val myUserProfileId = myUserProfile.id
 
-    val citationAuthorUserName = citationAuthorUserProfile?.userName
-    val citationAuthorUserProfileId = myUserProfile.id
+    val citationAuthorUserName = bisqEasyOpenTradeMessage.citationAuthorUserProfile?.userName
+    val citationAuthorUserProfileId = bisqEasyOpenTradeMessage.citationAuthorUserProfile?.id
 
     val citationString: String = citation?.text ?: ""
 
     val isMyMessage: Boolean = senderUserProfileId == myUserProfileId
 
-    val _reactions: MutableStateFlow<List<BisqEasyOpenTradeMessageReactionVO>> = MutableStateFlow(chatMessageReactions)
-    val reactions: StateFlow<List<BisqEasyOpenTradeMessageReactionVO>> = _reactions
-
-    fun setReactions(chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO>) {
-        _reactions.value = chatMessageReactions
-    }
-
     fun isMyChatReaction(reaction: BisqEasyOpenTradeMessageReactionVO): Boolean {
         return myUserProfileId == reaction.senderUserProfile.id
+    }
+
+    val _chatReactions: MutableStateFlow<List<BisqEasyOpenTradeMessageReactionVO>> = MutableStateFlow(chatReactions)
+    val chatReactions: StateFlow<List<BisqEasyOpenTradeMessageReactionVO>> = _chatReactions
+
+    fun setReactions(chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO>) {
+        _chatReactions.value = chatMessageReactions
     }
 }

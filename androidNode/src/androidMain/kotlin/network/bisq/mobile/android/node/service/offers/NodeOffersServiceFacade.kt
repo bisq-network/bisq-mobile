@@ -25,6 +25,7 @@ import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
@@ -235,7 +236,7 @@ class NodeOffersServiceFacade(
                     if (message.hasBisqEasyOffer()) {
                         val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
                         val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
-                        _offerbookListItems.value += offerItemPresentationModel
+                        _offerbookListItems.update { it + offerItemPresentationModel }
                         bisqEasyOfferbookMessages.add(message)
                         log.i { "add offer $offerItemPresentationModel" }
                     }
@@ -244,10 +245,10 @@ class NodeOffersServiceFacade(
                 override fun remove(message: Any) {
                     if (message is BisqEasyOfferbookMessage && message.hasBisqEasyOffer()) {
                         val item = _offerbookListItems.value.firstOrNull { it.bisqEasyOffer.id == message.bisqEasyOffer.orElse(null)?.id }
-                        item?.let {
-                            _offerbookListItems.value -= it
+                        item?.let { model ->
+                            _offerbookListItems.update { it - model }
                             bisqEasyOfferbookMessages.remove(message)
-                            log.i { "Removed offer: $it" }
+                            log.i { "Removed offer: $model" }
                         }
                     }
                 }

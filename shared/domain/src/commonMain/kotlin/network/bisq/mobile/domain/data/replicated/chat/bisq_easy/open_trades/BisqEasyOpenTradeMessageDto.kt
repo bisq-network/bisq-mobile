@@ -23,4 +23,5 @@ data class BisqEasyOpenTradeMessageDto(
     val chatMessageType: ChatMessageTypeEnum,
     val bisqEasyOffer: BisqEasyOfferVO?,
     val chatMessageReactions: Set<BisqEasyOpenTradeMessageReactionVO>,
+    val citationAuthorUserProfile: UserProfileVO?
 )

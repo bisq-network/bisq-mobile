@@ -191,7 +191,7 @@ val clientModule = module {
     single<TradesServiceFacade> { ClientTradesServiceFacade(get(), get(), get()) }
 
     single { TradeChatApiGateway(get(), get()) }
-    single<TradeChatServiceFacade> { ClientTradeChatServiceFacade(get(), get(), get()) }
+    single<TradeChatServiceFacade> { ClientTradeChatServiceFacade(get(), get(), get(), get()) }
 
     single { ExplorerApiGateway(get()) }
     single<ExplorerServiceFacade> { ClientExplorerServiceFacade(get()) }

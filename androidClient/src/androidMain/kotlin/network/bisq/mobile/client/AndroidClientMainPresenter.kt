@@ -11,6 +11,7 @@ import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationSe
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 
 /**
  * Redefinition to be able to access activity for trading notifications click handling
@@ -18,6 +19,7 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 class AndroidClientMainPresenter(
     connectivityService: ClientConnectivityService,
     openTradesNotificationService: OpenTradesNotificationService,
+    userProfileServiceFacade: UserProfileServiceFacade,
     tradesServiceFacade: TradesServiceFacade,
     tradeChatServiceFacade: TradeChatServiceFacade,
     webSocketClientProvider: WebSocketClientProvider,
@@ -30,6 +32,7 @@ class AndroidClientMainPresenter(
 ) : ClientMainPresenter(
     connectivityService,
     openTradesNotificationService,
+    userProfileServiceFacade,
     tradesServiceFacade,
     tradeChatServiceFacade,
     webSocketClientProvider,

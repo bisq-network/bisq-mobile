@@ -6,10 +6,16 @@ import bisq.security.SecurityService
 import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -43,11 +49,45 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         applicationService.androidCatHashService.get()
     }
 
+    // Properties
+    private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
+    override val selectedUserProfile: StateFlow<UserProfileVO?> = _selectedUserProfile
+
+
     // Misc
+    private var active = false
+    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
+    private var jobs: MutableSet<Job> = mutableSetOf()
+
     private var pubKeyHash: ByteArray? = null
     private var keyPair: KeyPair? = null
     private var proofOfWork: ProofOfWork? = null
 
+
+    override fun activate() {
+        if (active) {
+            log.w { "deactivating first" }
+            deactivate()
+        }
+
+        jobs += coroutineScope.launch {
+            _selectedUserProfile.value = getSelectedUserProfile()
+        }
+
+        active = true
+    }
+
+    override fun deactivate() {
+        if (!active) {
+            log.w { "Skipping deactivation as its already deactivated" }
+            return
+        }
+
+        jobs.map { it.cancel() }
+        jobs.clear()
+
+        active = false
+    }
 
     // API
     override suspend fun hasUserProfile(): Boolean {
@@ -90,6 +130,8 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         pubKeyHash = null
         keyPair = null
         proofOfWork = null
+
+        _selectedUserProfile.value = getSelectedUserProfile()
     }
 
     override suspend fun getUserIdentityIds(): List<String> {

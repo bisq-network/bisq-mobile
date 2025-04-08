@@ -15,5 +15,9 @@ class TradeChatApiGateway(
     suspend fun subscribeTradeChats(): WebSocketEventObserver {
         return webSocketClientProvider.get().subscribe(Topic.TRADE_CHATS)
     }
+
+    suspend fun subscribeChatReactions(): WebSocketEventObserver {
+        return webSocketClientProvider.get().subscribe(Topic.CHAT_REACTIONS)
+    }
 }
 

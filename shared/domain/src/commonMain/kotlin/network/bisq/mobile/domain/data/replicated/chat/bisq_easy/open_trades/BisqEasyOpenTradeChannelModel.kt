@@ -69,7 +69,7 @@ class BisqEasyOpenTradeChannelModel(bisqEasyOpenTradeChannelDto: BisqEasyOpenTra
         _chatMessages.value = _chatMessages.value.toSet() + message
     }
 
-    fun addAllChatMessages(messages: Set<BisqEasyOpenTradeMessageModel>) {
-        _chatMessages.value = _chatMessages.value.toSet() + messages
+    fun setAllChatMessages(messages: Set<BisqEasyOpenTradeMessageModel>) {
+        _chatMessages.value = messages
     }
 }

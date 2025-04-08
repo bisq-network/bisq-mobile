@@ -1,11 +1,16 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
@@ -32,8 +37,8 @@ class OfferbookMarketPresenter(
     private var mainCurrencies = OffersServiceFacade.mainCurrencies
 
     // flag to force market update trigger when needed
-    private val _forceTrigger = MutableStateFlow(false)
-    var forceTrigger: StateFlow<Boolean> = _forceTrigger
+    private val _marketPriceUpdated = MutableStateFlow(false)
+    var marketPriceUpdated: StateFlow<Boolean> = _marketPriceUpdated
 
     private val _sortBy = MutableStateFlow(MarketSortBy.MostOffers)
     var sortBy: StateFlow<MarketSortBy> = _sortBy
@@ -57,7 +62,7 @@ class OfferbookMarketPresenter(
         _filter,
         _searchText,
         _sortBy,
-        _forceTrigger
+        _marketPriceUpdated
     ) { filter: MarketFilter, searchText: String, sortBy: MarketSortBy, forceTrigger: Boolean ->
         computeMarketList(filter, searchText, sortBy)
     }.stateIn(
@@ -135,6 +140,6 @@ class OfferbookMarketPresenter(
 
     private fun updateMarketPrices() {
         // fake trigger a refresh
-        _forceTrigger.value = !_forceTrigger.value
+        _marketPriceUpdated.value = !_marketPriceUpdated.value
     }
 }
