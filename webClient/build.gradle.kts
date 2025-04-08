@@ -11,6 +11,25 @@ kotlin {
                 cssSupport {
                     enabled.set(true)
                 }
+                // Add webpack fallbacks for Node.js core modules
+                devServer = devServer?.copy(
+                    open = false,
+                    port = 8080
+                )
+                // Configure webpack fallbacks for Node.js core modules
+//                this won't work
+//                commonWebpackConfig {
+//                    resolve {
+//                        fallback = mapOf(
+//                            "os" to false,
+//                            "path" to false,
+//                            "fs" to false,
+//                            "crypto" to false,
+//                            "buffer" to false,
+//                            "stream" to false
+//                        )
+//                    }
+//                }
             }
             runTask {
                 mainOutputFileName = "main.js"
@@ -57,6 +76,13 @@ kotlin {
                 
                 // Add Kermit for logging
                 implementation(libs.logging.kermit)
+
+                // Add Node.js polyfills
+                // TODO
+                implementation(npm("os-browserify", "0.3.0"))
+                implementation(npm("path-browserify", "1.0.1"))
+                implementation(npm("buffer", "6.0.3"))
+                implementation(npm("stream-browserify", "3.0.0"))
             }
         }
     }

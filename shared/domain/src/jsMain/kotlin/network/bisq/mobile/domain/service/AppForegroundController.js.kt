@@ -4,21 +4,33 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.utils.Logging
 
-@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
+/**
+ * JS-specific implementation of AppForegroundController
+ */
 actual class AppForegroundController : ForegroundDetector, Logging {
     private val _isForeground = MutableStateFlow(true)
     override val isForeground: StateFlow<Boolean> = _isForeground
 
     init {
-        // TODO For JS, we can use the document visibility API to detect foreground/background
-        // stub impl:
-        log.d { "Initializing JS AppForegroundController" }
-        setupVisibilityListener()
+        // Listen for visibility change events in the browser
+        js("""
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    this.onAppDidEnterBackground();
+                } else {
+                    this.onAppWillEnterForeground();
+                }
+            }.bind(this));
+        """)
     }
 
-    private fun setupVisibilityListener() {
-        // TODO implement JS interop
-        // For now, we'll just assume the app is always in foreground for JS
+    private fun onAppDidEnterBackground() {
+        log.d { "App is in foreground -> false" }
+        _isForeground.value = false
+    }
+
+    private fun onAppWillEnterForeground() {
+        log.d { "App is in foreground -> true" }
         _isForeground.value = true
     }
 }

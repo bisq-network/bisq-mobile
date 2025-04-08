@@ -22,6 +22,12 @@ fun SwipeBackIOSNavigationHandler(
 ) {
     val presenter: AppPresenter = koinInject()
 
+    // Skip swipe handling for non-iOS platforms
+    if (!presenter.isIOS()) {
+        content()
+        return
+    }
+
     // TODO: Find the right way to get screenWidth in KMP way.
     // This is not right.
     val screenWidthDp = remember { 360.dp }
@@ -33,36 +39,27 @@ fun SwipeBackIOSNavigationHandler(
     var cumulativeDrag by remember { mutableStateOf(0f) }
 
     Box(
-        modifier = if (presenter.isIOS()) {
-            Modifier.pointerInput(Unit) {
-                detectHorizontalDragGestures(
-                    onDragStart = {
-                        cumulativeDrag = 0f
-                    },
-                    onDragEnd = {
-                        cumulativeDrag = 0f
-                    },
-                    onDragCancel = {
-                    },
-                    onHorizontalDrag = { change, dragAmount ->
-                        cumulativeDrag += dragAmount.takeIf { it > 0 } ?: 0f
+        modifier = Modifier.pointerInput(Unit) {
+            detectHorizontalDragGestures(
+                onDragStart = {
+                    cumulativeDrag = 0f
+                },
+                onDragEnd = {
+                    cumulativeDrag = 0f
+                },
+                onDragCancel = {
+                },
+                onHorizontalDrag = { change, dragAmount ->
+                    cumulativeDrag += dragAmount.takeIf { it > 0 } ?: 0f
 
-                        if (cumulativeDrag >= threshold) {
-                            if (navController.currentBackStackEntry != null) {
-                                if (presenter.isIOS()) {
-                                    presenter.onMainBackNavigation()
-                                } else {
-                                    navController.popBackStack()
-                                }
-                            }
+                    if (cumulativeDrag >= threshold) {
+                        if (navController.currentBackStackEntry != null) {
+                            presenter.onMainBackNavigation()
                             cumulativeDrag = 0f
                         }
                     }
-                )
-            }
-        } else {
-            // Empty box if its android (these days native Android implements both swipe directions meaning "go back")
-            Modifier
+                }
+            )
         }
     ) {
         content()

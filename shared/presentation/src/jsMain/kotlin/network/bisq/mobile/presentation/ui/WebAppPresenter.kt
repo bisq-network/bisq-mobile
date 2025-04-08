@@ -42,4 +42,9 @@ class WebAppPresenter(
     override fun isSmallScreen(): Boolean {
         return js("window.innerWidth < 768")
     }
+
+    override fun isIOS(): Boolean {
+        // TODO implement browser detection of iOS device
+        return false
+    }
 }

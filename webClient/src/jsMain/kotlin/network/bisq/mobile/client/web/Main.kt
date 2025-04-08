@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import kotlinx.browser.document
 import network.bisq.mobile.client.di.clientModule
 import network.bisq.mobile.client.web.di.webClientModule
+import network.bisq.mobile.presentation.di.presentationModule
+import network.bisq.mobile.domain.di.serviceModule
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.presentation.ui.App
 import org.jetbrains.compose.web.renderComposable
@@ -25,9 +27,13 @@ fun BisqWebApp() {
 private fun setupKoin() {
     startKoin {
         modules(
-            domainModule,
-            clientModule,
-            webClientModule
+            listOf(
+                domainModule,
+                serviceModule,
+                presentationModule,
+                clientModule,
+                webClientModule
+            )
         )
     }
 }
