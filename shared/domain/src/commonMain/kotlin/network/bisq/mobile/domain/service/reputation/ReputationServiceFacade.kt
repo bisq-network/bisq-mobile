@@ -3,7 +3,7 @@ package network.bisq.mobile.domain.service.reputation
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 
 interface ReputationServiceFacade {
-    suspend fun getReputation(userProfileId: String): ReputationScoreVO
+    suspend fun getReputation(userId: String): Result<ReputationScoreVO>
 
-    fun getScoreByUserProfileId(): Map<String, Long>
+    suspend fun getScoreByUserProfileId(): Result<Map<String, Long>>
 }

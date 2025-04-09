@@ -131,7 +131,7 @@ class AndroidApplicationService(
         var languageRepository: Supplier<LanguageRepository> =
             Supplier { applicationService.languageRepository }
         var reputationService: Supplier<ReputationService> =
-            Supplier { applicationService.reputationService }
+            Supplier { applicationService.userService.reputationService }
     }
 
     companion object {
@@ -207,7 +207,6 @@ class AndroidApplicationService(
     val favouriteMarketsService: FavouriteMarketsService
     val dontShowAgainService: DontShowAgainService
     val languageRepository: LanguageRepository
-    val reputationService: ReputationService
 
     init {
         chatService = ChatService(
@@ -266,14 +265,6 @@ class AndroidApplicationService(
 
         languageRepository = LanguageRepository()
 
-        reputationService = ReputationService(
-            persistenceService,
-            networkService,
-            userIdentityService,
-            userProfileService,
-            bannedUserService,
-            authorizedBondedRolesService
-        )
     }
 
     override fun initialize(): CompletableFuture<Boolean> {
@@ -308,7 +299,6 @@ class AndroidApplicationService(
             .thenCompose { result: Boolean? -> tradeService.initialize() }
             .thenCompose { result: Boolean? -> alertNotificationsService.initialize() }
             .thenCompose { result: Boolean? -> favouriteMarketsService.initialize() }
-            .thenCompose { result: Boolean? -> reputationService.initialize() }
             .thenCompose { result: Boolean? -> dontShowAgainService.initialize() }
             .orTimeout(STARTUP_TIMEOUT_SEC, TimeUnit.SECONDS)
             .handle { result: Boolean?, throwable: Throwable? ->
@@ -342,10 +332,6 @@ class AndroidApplicationService(
         return CompletableFuture.supplyAsync<Boolean> {
             dontShowAgainService.shutdown()
                 .exceptionally { throwable: Throwable -> this.logError(throwable) }
-                .thenCompose { result: Boolean? ->
-                    reputationService.shutdown()
-                        .exceptionally { throwable: Throwable -> this.logError(throwable) }
-                }
                 .thenCompose { result: Boolean? ->
                     favouriteMarketsService.shutdown()
                         .exceptionally { throwable: Throwable -> this.logError(throwable) }

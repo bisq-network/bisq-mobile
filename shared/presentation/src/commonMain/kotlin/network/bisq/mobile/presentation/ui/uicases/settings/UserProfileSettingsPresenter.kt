@@ -74,8 +74,8 @@ class UserProfileSettingsPresenter(
                 setTradeTerms(it)
                 setStatement(it)
             }
-            reputationServiceFacade.getReputation(profileId.value).let {
-                _reputation.value = it.totalScore.toString()
+            reputationServiceFacade.getReputation(profileId.value).getOrNull().let {
+                _reputation.value = it?.totalScore.toString() ?: DEFAULT_UNKNOWN_VALUE
             }
             _uniqueAvatar.value = userRepository.fetch()?.uniqueAvatar
         }

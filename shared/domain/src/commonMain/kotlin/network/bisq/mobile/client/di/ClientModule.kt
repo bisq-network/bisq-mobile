@@ -22,8 +22,10 @@ import network.bisq.mobile.client.service.market.ClientMarketPriceServiceFacade
 import network.bisq.mobile.client.service.market.MarketPriceApiGateway
 import network.bisq.mobile.client.service.mediation.ClientMediationServiceFacade
 import network.bisq.mobile.client.service.mediation.MediationApiGateway
+import network.bisq.mobile.client.service.mediation.ReputationApiGateway
 import network.bisq.mobile.client.service.offers.ClientOffersServiceFacade
 import network.bisq.mobile.client.service.offers.OfferbookApiGateway
+import network.bisq.mobile.client.service.reputation.ClientReputationServiceFacade
 import network.bisq.mobile.client.service.settings.ClientSettingsServiceFacade
 import network.bisq.mobile.client.service.settings.SettingsApiGateway
 import network.bisq.mobile.client.service.trades.ClientTradesServiceFacade
@@ -67,8 +69,10 @@ import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.service.user_identity.UserIdentityServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
@@ -207,4 +211,8 @@ val clientModule = module {
 
     single<LanguageServiceFacade> { ClientLanguageServiceFacade(get(), get()) }
 
+    single { ReputationApiGateway(get()) }
+    single<ReputationServiceFacade> { ClientReputationServiceFacade(get()) }
+
+    single<UserIdentityServiceFacade> { UserIdentityServiceFacade(get()) }
 }

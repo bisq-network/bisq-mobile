@@ -184,16 +184,18 @@ class CreateOfferAmountPresenter(
                 value
             ) ?: 0L
         _reputation.value = requiredReputation
-        _takersCount.value = findPotentialTakers(requiredReputation)
-        val numSellersString = "bisqEasy.tradeWizard.amount.buyer.numSellers".i18nPlural(takersCount.value)
-        _hintText.value = "bisqEasy.tradeWizard.amount.buyer.limitInfo".i18n(numSellersString)
+        backgroundScope.launch {
+            _takersCount.value = findPotentialTakers(requiredReputation)
+            val numSellersString = "bisqEasy.tradeWizard.amount.buyer.numSellers".i18nPlural(takersCount.value)
+            _hintText.value = "bisqEasy.tradeWizard.amount.buyer.limitInfo".i18n(numSellersString)
+        }
     }
 
     private fun updateSellerHintText() {
         backgroundScope.launch {
             val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
 
-            _reputation.value = reputationServiceFacade.getReputation(profile.id).totalScore
+            _reputation.value = reputationServiceFacade.getReputation(profile.id).getOrNull()?.totalScore ?: 0L
 
             val market = createOfferModel.market ?: return@launch
 
@@ -222,8 +224,9 @@ class CreateOfferAmountPresenter(
         navigateTo(Routes.CreateOfferPrice)
     }
 
-    private fun findPotentialTakers(requiredReputationScore: Long): Int {
+    private suspend fun findPotentialTakers(requiredReputationScore: Long): Int {
         // For dev testing
+        /*
         val profiles = mapOf<String, Long>(
             "profile_1" to 10L,
             "profile_2" to 100L,
@@ -236,10 +239,11 @@ class CreateOfferAmountPresenter(
             "profile_9" to 60_000L,
             "profile_10" to 80_000L,
         )
+        */
 
-        // val profiles = reputationServiceFacade.getScoreByUserProfileId()
+        val profiles = reputationServiceFacade.getScoreByUserProfileId().getOrNull() ?: emptyMap()
         return profiles
-            //.filter { (key, value) -> userIdentityServiceFacade.findUserIdentity(key) == null } // Comment this for dev testing
+            .filter { (key, value) -> userIdentityServiceFacade.findUserIdentity(key) == null } // Comment this for dev testing
             .filter { (key, value) -> withTolerance(value) >= requiredReputationScore }
             .count()
 

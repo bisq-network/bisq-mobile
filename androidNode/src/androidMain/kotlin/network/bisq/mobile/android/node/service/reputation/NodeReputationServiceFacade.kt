@@ -14,14 +14,15 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
     }
 
     // API
-    override suspend fun getReputation(userProfileId: String): ReputationScoreVO {
-        return reputationService.getReputationScore(userProfileId).let {
+    override suspend fun getReputation(userId: String): Result<ReputationScoreVO> {
+        val reputation = reputationService.getReputationScore(userId).let {
             Mappings.ReputationScoreMapping.fromBisq2Model(it)
         }
+        return Result.success(reputation)
     }
 
-    override fun getScoreByUserProfileId(): Map<String, Long> {
-        return reputationService.scoreByUserProfileId
+    override suspend fun getScoreByUserProfileId(): Result<Map<String, Long>> {
+        return Result.success(reputationService.scoreByUserProfileId)
     }
 
 }

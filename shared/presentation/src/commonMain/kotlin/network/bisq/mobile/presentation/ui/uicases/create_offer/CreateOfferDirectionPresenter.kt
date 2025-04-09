@@ -36,7 +36,7 @@ class CreateOfferDirectionPresenter(
         headline = "bisqEasy.tradeWizard.directionAndMarket.headline".i18n() //TODO:i18n check
         backgroundScope.launch {
             val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
-            val reputation = reputationServiceFacade.getReputation(profile.id)
+            val reputation = reputationServiceFacade.getReputation(profile.id).getOrNull()
             _reputation.value = reputation
         }
     }
