@@ -16,6 +16,7 @@ import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -144,7 +145,25 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun getSelectedUserProfile(): UserProfileVO? {
-        return userService.userIdentityService.selectedUserIdentity?.userProfile?.let { Mappings.UserProfileMapping.fromBisq2Model(it) }
+        return userService.userIdentityService.selectedUserIdentity?.userProfile?.let {
+            Mappings.UserProfileMapping.fromBisq2Model(
+                it
+            )
+        }
+    }
+
+    override suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO> {
+        val idList: MutableList<UserIdentityVO> = mutableListOf()
+
+        ids.map {
+            val userIdentity = userService.userIdentityService.findUserIdentity(it)
+            if (userIdentity.isPresent) {
+                idList.add(Mappings.UserIdentityMapping.fromBisq2Model(userIdentity.get()))
+            }
+        }
+
+        return idList
+
     }
 
     // Private

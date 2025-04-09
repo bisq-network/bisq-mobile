@@ -14,6 +14,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun ReputationBasedBuyerLimitsPopup(
     onDismiss: () -> Unit,
+    onRepLinkClick: () -> Unit,
     reputationScore: String,
     maxBuyAmount: String,
     takersCount: Int,
@@ -41,7 +42,8 @@ fun ReputationBasedBuyerLimitsPopup(
         NoteText(
             "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.linkToWikiText".i18n(),
             linkText = "https://bisq.wiki/Reputation",
-            uri = "https://bisq.wiki/Reputation",
+            openConfirmation = true,
+            onLinkClick = onRepLinkClick
         )
 
         BisqGap.V1()

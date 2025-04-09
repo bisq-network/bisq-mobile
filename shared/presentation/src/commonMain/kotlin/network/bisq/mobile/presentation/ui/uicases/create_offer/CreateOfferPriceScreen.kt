@@ -102,13 +102,11 @@ fun CreateOfferTradePriceSelectorScreen() {
                             if (parsedValue == null) {
                                 return@BisqTextField "Value cannot be empty"
                             }
-                            val parsedPercent = formattedPercentagePrice.toDoubleOrNull()
-                            if (parsedPercent != null) {
-                                if (parsedPercent < -10) {
-                                    return@BisqTextField "Trade price should be greater than -10% of market price"
-                                } else if (parsedPercent > 50) {
-                                    return@BisqTextField "Trade price should be lesser than 50% of market price"
-                                }
+                            val parsedPercent = presenter.calculatePercentageForFixedValue(it)
+                            if (parsedPercent < -10) {
+                                return@BisqTextField "Trade price should be greater than -10% of market price"
+                            } else if (parsedPercent > 50) {
+                                return@BisqTextField "Trade price should be lesser than 50% of market price"
                             }
                             return@BisqTextField null
                         }

@@ -134,6 +134,14 @@ class CreateOfferPricePresenter(
 
     }
 
+    fun calculatePercentageForFixedValue(value: String): Double {
+        val valueAsDouble = PriceParser.parse(value)
+        priceQuote = PriceQuoteVOFactory.fromPrice(valueAsDouble, createOfferModel.market!!)
+        val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
+        percentagePriceValue = PriceUtil.getPercentageToMarketPrice(marketPriceQuote, priceQuote)
+        return percentagePriceValue * 100
+    }
+
     fun updateHintText(percentageValue: Double) {
 
         val feedbackRating = if (percentageValue < -0.05) {

@@ -72,7 +72,6 @@ import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.service.user_identity.UserIdentityServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
@@ -214,5 +213,4 @@ val clientModule = module {
     single { ReputationApiGateway(get()) }
     single<ReputationServiceFacade> { ClientReputationServiceFacade(get()) }
 
-    single<UserIdentityServiceFacade> { UserIdentityServiceFacade(get()) }
 }

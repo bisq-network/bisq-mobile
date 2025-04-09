@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -127,6 +128,14 @@ class ClientUserProfileServiceFacade(
             throw apiResult.exceptionOrNull()!!
         }
         return apiResult.getOrThrow()
+    }
+
+    override suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO> {
+        val apiResult = apiGateway.findUserIdentities(ids)
+        if (apiResult.isFailure) {
+            return emptyList()
+        }
+        return apiResult.getOrDefault(emptyList())
     }
 
     // Private

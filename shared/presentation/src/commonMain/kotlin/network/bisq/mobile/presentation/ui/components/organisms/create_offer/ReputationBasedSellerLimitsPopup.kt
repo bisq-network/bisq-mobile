@@ -16,6 +16,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun ReputationBasedSellerLimitsPopup(
     onDismiss: () -> Unit,
+    onBuildRepLinkClick: () -> Unit,
     reputationScore: String,
     maxSellAmount: String
 ) {
@@ -38,7 +39,8 @@ fun ReputationBasedSellerLimitsPopup(
             link = "https://bisq.wiki/Reputation#How_to_build_reputation",
             type = BisqButtonType.Outline,
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
-            fullWidth = true
+            fullWidth = true,
+            onClick = onBuildRepLinkClick
         )
 
         BisqGap.V1()

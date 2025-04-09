@@ -3,6 +3,7 @@ package network.bisq.mobile.domain.service.user_profile
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 interface UserProfileServiceFacade : LifeCycleAware {
@@ -54,4 +55,9 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * @return UserProfile if existent, null otherwise
      */
     suspend fun getSelectedUserProfile(): UserProfileVO?
+
+    /**
+     * @return UserIdentity if exists, null otherwise
+     */
+    suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO>
 }

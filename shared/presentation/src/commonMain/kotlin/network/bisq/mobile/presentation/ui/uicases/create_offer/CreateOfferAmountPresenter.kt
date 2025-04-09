@@ -9,12 +9,10 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOEx
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
-import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
-import network.bisq.mobile.domain.service.user_identity.UserIdentityServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.DEFAULT_MIN_USD_TRADE_AMOUNT
@@ -33,7 +31,6 @@ class CreateOfferAmountPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val createOfferPresenter: CreateOfferPresenter,
     private val userProfileServiceFacade: UserProfileServiceFacade,
-    private val userIdentityServiceFacade: UserIdentityServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
     private val offersServiceFacade: OffersServiceFacade,
 ) : BasePresenter(mainPresenter) {
@@ -224,6 +221,18 @@ class CreateOfferAmountPresenter(
         navigateTo(Routes.CreateOfferPrice)
     }
 
+    fun navigateToReputation() {
+        enableInteractive(false)
+        navigateToUrl("https://bisq.wiki/Reputation")
+        enableInteractive(true)
+    }
+
+    fun navigateToBuildReputation() {
+        enableInteractive(false)
+        navigateToUrl("https://bisq.wiki/Reputation#How_to_build_reputation")
+        enableInteractive(true)
+    }
+
     private suspend fun findPotentialTakers(requiredReputationScore: Long): Int {
         // For dev testing
         /*
@@ -242,8 +251,10 @@ class CreateOfferAmountPresenter(
         */
 
         val profiles = reputationServiceFacade.getScoreByUserProfileId().getOrNull() ?: emptyMap()
+        // val ids = userProfileServiceFacade.findUserIdentities(profiles.keys.toList()).map { it.userProfile.id }
+        val ids = userProfileServiceFacade.getUserIdentityIds()
         return profiles
-            .filter { (key, value) -> userIdentityServiceFacade.findUserIdentity(key) == null } // Comment this for dev testing
+            .filter { (key, value) -> !ids.contains(key) } // Comment this for dev testing
             .filter { (key, value) -> withTolerance(value) >= requiredReputationScore }
             .count()
 
