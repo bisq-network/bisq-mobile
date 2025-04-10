@@ -10,4 +10,4 @@ data class WebSocketRestApiRequest(
     val method: String,
     val path: String,
     val body: String,
-) : WebSocketRequest
+) : WebSocketRequest()

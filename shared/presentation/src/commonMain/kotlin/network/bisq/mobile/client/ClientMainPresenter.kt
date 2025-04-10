@@ -17,6 +17,7 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
+import kotlin.js.JsName
 
 /**
  * Contains all the share code for each client. Each specific app might extend this class if needed.
@@ -110,4 +111,10 @@ open class ClientMainPresenter(
     }
 
     override fun isDemo(): Boolean = ApplicationBootstrapFacade.isDemo
+
+    // Remove @JsName from the override function
+    override fun isSmallScreen(): Boolean {
+        // TODO web Implementation
+        return false
+    }
 }

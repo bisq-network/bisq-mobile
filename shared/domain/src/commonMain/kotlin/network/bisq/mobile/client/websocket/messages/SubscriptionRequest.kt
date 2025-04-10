@@ -10,5 +10,5 @@ data class SubscriptionRequest(
     override val requestId: String,
     val topic: Topic,
     val parameter: String? = null
-) : WebSocketRequest
+) : WebSocketRequest()
 

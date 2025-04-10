@@ -6,11 +6,11 @@ import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
-class OpenTradesNotificationService(
+open class OpenTradesNotificationService(
     val notificationServiceController: NotificationServiceController,
     private val tradesServiceFacade: TradesServiceFacade): Logging {
 
-    fun launchNotificationService() {
+    open fun launchNotificationService() {
         notificationServiceController.startService()
         runCatching {
             notificationServiceController.registerObserver(tradesServiceFacade.openTradeItems) { newValue ->
@@ -25,7 +25,7 @@ class OpenTradesNotificationService(
         }
     }
 
-    fun stopNotificationService() {
+    open fun stopNotificationService() {
         notificationServiceController.unregisterObserver(tradesServiceFacade.openTradeItems)
         // TODO unregister all ?
         notificationServiceController.stopService()

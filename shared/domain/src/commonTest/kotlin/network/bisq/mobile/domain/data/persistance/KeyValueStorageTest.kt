@@ -1,4 +1,5 @@
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.persistance.PersistenceSource
@@ -29,81 +30,95 @@ class KeyValueStorageTest : KoinTest {
     }
 
     @Test
-    fun testSaveAndGet() = runBlocking {
-        val item = Settings().apply { id = "1" }
-        persistenceSource.save(item)
+    fun testSaveAndGet() = runTest {
+        runBlocking {
+            val item = Settings().apply { id = "1" }
+            persistenceSource.save(item)
 
-        val testModel = Settings().apply { id = "1" }
-        val retrievedItem = persistenceSource.get(testModel)
-        assertEquals(item, retrievedItem)
+            val testModel = Settings().apply { id = "1" }
+            val retrievedItem = persistenceSource.get(testModel)
+            assertEquals(item, retrievedItem)
+        }
     }
 
     @Test
-    fun testSaveAllAndGetAll() = runBlocking {
-        val items = listOf(Settings().apply { id = "1" }, Settings().apply { id = "2" })
-        persistenceSource.saveAll(items)
+    fun testSaveAllAndGetAll() = runTest {
+        runBlocking {
+            val items = listOf(Settings().apply { id = "1" }, Settings().apply { id = "2" })
+            persistenceSource.saveAll(items)
 
-        val testModel = Settings()
-        val retrievedItems = persistenceSource.getAll(testModel)
-        assertEquals(items, retrievedItems)
+            val testModel = Settings()
+            val retrievedItems = persistenceSource.getAll(testModel)
+            assertEquals(items, retrievedItems)
+        }
     }
 
     @Test
-    fun testDelete() = runBlocking {
-        val item = Settings().apply { id = "1" }
-        persistenceSource.save(item)
+    fun testDelete() = runTest {
+        runBlocking {
+            val item = Settings().apply { id = "1" }
+            persistenceSource.save(item)
 
-        val testModel = Settings().apply { id = "1" }
-        persistenceSource.delete(item)
-        val retrievedItem = persistenceSource.get(testModel)
-        assertEquals(null, retrievedItem)
+            val testModel = Settings().apply { id = "1" }
+            persistenceSource.delete(item)
+            val retrievedItem = persistenceSource.get(testModel)
+            assertEquals(null, retrievedItem)
+        }
     }
 
     @Test
     fun testClear() = runBlocking {
-        val items = listOf(Settings().apply { id = "1" }, Settings().apply { id = "2" })
-        persistenceSource.saveAll(items)
+        runBlocking {
+            val items = listOf(Settings().apply { id = "1" }, Settings().apply { id = "2" })
+            persistenceSource.saveAll(items)
 
-        val testModel = Settings()
-        persistenceSource.clear()
-        val retrievedItems = persistenceSource.getAll(testModel)
-        assertEquals(emptyList<BaseModel>(), retrievedItems)
+            val testModel = Settings()
+            persistenceSource.clear()
+            val retrievedItems = persistenceSource.getAll(testModel)
+            assertEquals(emptyList<BaseModel>(), retrievedItems)
+        }
     }
 
     @Test
     fun testDuplicateIds() = runBlocking {
-        val item1 = Settings().apply { id = "1" }
-        val item2 = Settings().apply { id = "1" }
+        runBlocking {
+            val item1 = Settings().apply { id = "1" }
+            val item2 = Settings().apply { id = "1" }
 
-        persistenceSource.save(item1)
-        persistenceSource.save(item2)
+            persistenceSource.save(item1)
+            persistenceSource.save(item2)
 
-        val testModel = Settings().apply { id = "1" }
-        val retrievedItem = persistenceSource.get(testModel)
-        assertEquals(item2, retrievedItem)
+            val testModel = Settings().apply { id = "1" }
+            val retrievedItem = persistenceSource.get(testModel)
+            assertEquals(item2, retrievedItem)
+        }
     }
 
     @Test
     fun testNonExistentId() = runBlocking {
-        val testModel = Settings().apply { id = "999" }
-        val retrievedItem = persistenceSource.get(testModel)
-        assertEquals(null, retrievedItem)
+        runBlocking {
+            val testModel = Settings().apply { id = "999" }
+            val retrievedItem = persistenceSource.get(testModel)
+            assertEquals(null, retrievedItem)
+        }
     }
 
     @Test
     fun testKeyOverlap() = runBlocking {
-        val item1 = Settings().apply { id = "1" }
-        val item2 = Settings().apply { id = "10" }
+        runBlocking {
+            val item1 = Settings().apply { id = "1" }
+            val item2 = Settings().apply { id = "10" }
 
-        persistenceSource.save(item1)
-        persistenceSource.save(item2)
+            persistenceSource.save(item1)
+            persistenceSource.save(item2)
 
-        val testModel = Settings().apply { id = "1" }
-        val retrievedItem1 = persistenceSource.get(testModel)
-        val retrievedItem2 = persistenceSource.get(testModel.apply { id = "10" })
+            val testModel = Settings().apply { id = "1" }
+            val retrievedItem1 = persistenceSource.get(testModel)
+            val retrievedItem2 = persistenceSource.get(testModel.apply { id = "10" })
 
-        assertEquals(item1, retrievedItem1)
-        assertEquals(item2, retrievedItem2)
+            assertEquals(item1, retrievedItem1)
+            assertEquals(item2, retrievedItem2)
+        }
     }
 
     @Test
