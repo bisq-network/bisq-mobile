@@ -87,7 +87,7 @@ fun TopBar(
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = BisqTheme.colors.mid_grey10
+                tint = BisqTheme.colors.mid_grey30
             )
         }
     }

@@ -62,7 +62,7 @@ fun QuoteMessageBubble(
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter)
         ) {
             BisqText.baseMedium(message.citationAuthorUserName ?: "", color = BisqTheme.colors.mid_grey20)
-            BisqText.baseRegular(message.citationString, color = BisqTheme.colors.mid_grey10) // TODO: Trim this to max 2 lines
+            BisqText.baseRegular(message.citationString, color = BisqTheme.colors.mid_grey30) // TODO: Trim this to max 2 lines
         }
 
         content()

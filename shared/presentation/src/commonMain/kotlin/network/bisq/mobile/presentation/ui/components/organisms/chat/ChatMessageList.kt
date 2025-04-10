@@ -15,8 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
@@ -87,18 +85,8 @@ fun ChatMessageList(
             }
         }
 
-        // Does not work as expected
-        val jumpThreshold = with(LocalDensity.current) {
-            JumpToBottomThreshold.toPx()
-        }
-
-        // Show the button if the first visible item is not the first one or if the offset is
-        // greater than the threshold.
         val jumpToBottomButtonEnabled by remember {
-            derivedStateOf {
-                scrollState.firstVisibleItemIndex != 0 ||
-                        scrollState.firstVisibleItemScrollOffset > jumpThreshold
-            }
+            derivedStateOf { scrollState.canScrollForward }
         }
 
         JumpToBottomFloatingButton(
@@ -109,7 +97,3 @@ fun ChatMessageList(
         )
     }
 }
-
-private val JumpToBottomThreshold = 56.dp
-
-

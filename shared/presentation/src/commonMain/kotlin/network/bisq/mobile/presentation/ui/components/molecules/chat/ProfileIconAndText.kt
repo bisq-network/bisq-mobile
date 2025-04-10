@@ -18,8 +18,7 @@ fun ProfileIconAndText(
     message: BisqEasyOpenTradeMessageModel
 ) {
     Row(
-
-        verticalAlignment = Alignment.Top,
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.padding(
             vertical = BisqUIConstants.ScreenPaddingHalf,
             horizontal = BisqUIConstants.ScreenPadding

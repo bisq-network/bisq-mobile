@@ -1,13 +1,16 @@
 Chat UI structure
 
 ChatScreen
-  |- ChatWidget
-  |    |- ChatOuterBubble (repeated for each msgs in LazyColumn)
-| | |- ChatSystemMessage (in case of System message)
+  |- ChatMessageList
+  |    |- ChatRulesWarningMessageBox
+  |    |- Column (has an item for each msg)
+  |    |    |- ProtocolLogMessageBox
   |    |    |    (or)
-  |    |    |- Author Timestamp
-  |    |    |- QuoteMessageBubble (Only if current message quotes any prev msg)
-  |    |    |    |- ChatInnerBubble
-  |    |    |- Popup menu (on long press)
+  |    |    |- TradePeerLeftMessageBox
+  |    |    |    (or)
+  |    |    |- TextMessagebox
+  |    |         |- UserNameAndDate
+  |    |         |- Row (Reactions and MessageBo)
+  |    |         |- ChatMessageContextMenu (on long press)
   |    |- Jump to bottom FAB
   |- ChatInputField

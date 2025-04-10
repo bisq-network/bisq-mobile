@@ -62,7 +62,7 @@ fun TradeChatScreen() {
             onMessageSent = { text ->
                 chatText = ""
                 presenter.sendChatMessage(text)
-                scope.launch { scrollState.animateScrollToItem(0) }
+                scope.launch { scrollState.animateScrollToItem(Int.MAX_VALUE) }
             },
             onCloseReply = { presenter.onReply(null) }
         )

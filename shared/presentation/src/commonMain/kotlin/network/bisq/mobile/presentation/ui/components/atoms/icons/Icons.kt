@@ -40,7 +40,9 @@ import bisqapps.shared.presentation.generated.resources.icon_star_green
 import bisqapps.shared.presentation.generated.resources.icon_star_grey_hollow
 import bisqapps.shared.presentation.generated.resources.icon_star_half_green
 import bisqapps.shared.presentation.generated.resources.icon_warning
+import bisqapps.shared.presentation.generated.resources.icon_warning_light_grey
 import bisqapps.shared.presentation.generated.resources.icon_warning_grey
+import bisqapps.shared.presentation.generated.resources.icon_warning_white
 import bisqapps.shared.presentation.generated.resources.leave_chat_green
 import bisqapps.shared.presentation.generated.resources.remove_offer
 import bisqapps.shared.presentation.generated.resources.up_arrow
@@ -221,8 +223,18 @@ fun WarningIcon(modifier: Modifier = Modifier.size(24.dp)) {
 }
 
 @Composable
+fun WarningIconLightGrey(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_warning_light_grey), "Warning icon", modifier = modifier)
+}
+
+@Composable
 fun WarningIconGrey(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_warning_grey), "Warning icon", modifier = modifier)
+}
+
+@Composable
+fun WarningIconWhite(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_warning_white), "Warning icon", modifier = modifier)
 }
 
 @Composable

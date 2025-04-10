@@ -9,6 +9,7 @@ import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.Bis
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -18,7 +19,8 @@ import network.bisq.mobile.presentation.MainPresenter
 class TradeChatPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
-    private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade
+    private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
+    private val settingsRepository: SettingsRepository,
 ) : BasePresenter(mainPresenter), Logging {
     private var jobs: MutableSet<Job> = mutableSetOf()
 
@@ -34,10 +36,13 @@ class TradeChatPresenter(
     val showChatRulesWarnBox: StateFlow<Boolean> = _showChatRulesWarnBox
 
     override fun onViewAttached() {
+        super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val selectedTrade = tradesServiceFacade.selectedTrade.value!!
 
         presenterScope.launch {
+            val settings = settingsRepository.fetch()!!
+            _showChatRulesWarnBox.value = settings.showChatRulesWarnBox
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
             bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
                 _chatMessages.value = messages.toList()
@@ -46,6 +51,7 @@ class TradeChatPresenter(
     }
 
     override fun onViewUnattaching() {
+        super.onViewUnattaching()
         jobs.forEach { it.cancel() }
         jobs.clear()
     }
@@ -89,8 +95,12 @@ class TradeChatPresenter(
     }
 
     fun onDontShowAgainChatRulesWarningBox() {
-        // todo save in settings
-        _showChatRulesWarnBox.value = false
+        jobs.add(backgroundScope.launch {
+            _showChatRulesWarnBox.value = false
+            val settings = settingsRepository.fetch()!!
+            settings.showChatRulesWarnBox = false
+            settingsRepository.update(settings)
+        })
     }
 }
 

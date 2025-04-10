@@ -11,11 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
@@ -55,61 +52,72 @@ fun TextMessageBox(
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter)
     ) {
         UsernameAndDate(message)
-        Row(
-            modifier = Modifier.padding(BisqUIConstants.ScreenPaddingHalf)
-        ) {
-            val quoteAndProfileIconAndText = @Composable {
-                Column(
-                    horizontalAlignment = chatAlign,
-                    verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter),
-                ) {
-                    QuoteMessageBubble(message,
-                        onClick = {
-                            val chatMessageId = message.citation?.chatMessageId
-                            if (chatMessageId != null) {
-                                onScrollToMessage(message.citation!!.chatMessageId!!)
-                            }
-                        }) {
-                    }
-                    ProfileIconAndText(message)
-                }
-            }
-            val messageBox = @Composable {
-                Column(
-                    horizontalAlignment = chatAlign,
-                ) {
-                    Surface(
-                        color = bubbleBGColor,
-                        shape = RoundedCornerShape(BisqUIConstants.ScreenPadding),
-                        modifier = Modifier
-                            .padding(chatPadding)
-                            .wrapContentSize(contentAlign)
-                            .combinedClickable(onLongClick = { showMenu = true }, onClick = {}),
-                    ) {
-                        if (message.citation != null) {
-                            quoteAndProfileIconAndText()
-                        } else {
-                            ProfileIconAndText(message)
-                        }
-                    }
-                }
-            }
-
-            val reactions = @Composable {
-                ReactionDisplay(
+        val quoteAndProfileIconAndText = @Composable {
+            Column(
+                horizontalAlignment = chatAlign,
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter),
+            ) {
+                QuoteMessageBubble(
                     message,
-                    onAddReaction = onAddReaction,
-                    onRemoveReaction = onRemoveReaction,
-                    modifier = Modifier
-                        .wrapContentSize(contentAlign)
-                        .align(Alignment.Bottom)
-                )
+                    onClick = {
+                        val chatMessageId = message.citation?.chatMessageId
+                        if (chatMessageId != null) {
+                            onScrollToMessage(message.citation!!.chatMessageId!!)
+                        }
+                    }) {
+                }
+                ProfileIconAndText(message)
             }
+        }
+        val messageBox = @Composable {
+            Column(
+                horizontalAlignment = chatAlign,
+            ) {
+                Surface(
+                    color = bubbleBGColor,
+                    shape = RoundedCornerShape(BisqUIConstants.ScreenPadding),
+                    modifier = Modifier
+                        .padding(chatPadding)
+                        .wrapContentSize(contentAlign)
+                        .combinedClickable(onLongClick = { showMenu = true }, onClick = {}),
+                ) {
+                    if (message.citation != null) {
+                        quoteAndProfileIconAndText()
+                    } else {
+                        ProfileIconAndText(message)
+                    }
+                }
+            }
+        }
 
-            if (message.isMyMessage) {
-                reactions()
-                messageBox()
-            } else {
+        val reactions = @Composable {
+            ReactionDisplay(
+                message,
+                onAddReaction = onAddReaction,
+                onRemoveReaction = onRemoveReaction,
+                modifier = Modifier.wrapContentSize(contentAlign)
+            )
+        }
+
+        // If the message is short and there are less than 4 reactions,
+        // show the message and reactions in a single row.
+        val reactionsList by message.chatReactions.collectAsState()
+        val groupedReactions = reactionsList.groupBy { it.reactionId }
+        if (message.textString.length < 10 && groupedReactions.size < 4) {
+            Row {
+                if (message.isMyMessage) {
+                    reactions()
+                    messageBox()
+                } else {
+                    messageBox()
+                    reactions()
+                }
+            }
+        } else {
+            Column(
+                horizontalAlignment = chatAlign,
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)
+            ) {
                 messageBox()
                 reactions()
             }
