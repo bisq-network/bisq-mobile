@@ -138,7 +138,7 @@ actual fun setupUncaughtExceptionHandler(onCrash: () -> Unit) {
 
 class WebUrlLauncher : UrlLauncher {
     override fun openUrl(url: String) {
-        window.open(url, "_blank")
+        js("window.open(url, '_blank')")
     }
 }
 

@@ -9,7 +9,6 @@ import network.bisq.mobile.client.service.accounts.ClientAccountsServiceFacade
 import network.bisq.mobile.client.service.bootstrap.ClientApplicationBootstrapFacade
 import network.bisq.mobile.client.service.chat.trade.ClientTradeChatMessagesServiceFacade
 import network.bisq.mobile.client.service.chat.trade.TradeChatMessagesApiGateway
-import network.bisq.mobile.client.service.chat.trade.ClientTradeChatServiceFacade
 import network.bisq.mobile.client.service.common.ClientLanguageServiceFacade
 import network.bisq.mobile.client.service.explorer.ClientExplorerServiceFacade
 import network.bisq.mobile.client.service.explorer.ExplorerApiGateway
@@ -17,10 +16,8 @@ import network.bisq.mobile.client.service.market.ClientMarketPriceServiceFacade
 import network.bisq.mobile.client.service.market.MarketPriceApiGateway
 import network.bisq.mobile.client.service.mediation.ClientMediationServiceFacade
 import network.bisq.mobile.client.service.mediation.MediationApiGateway
-import network.bisq.mobile.client.service.mediation.ReputationApiGateway
 import network.bisq.mobile.client.service.offers.ClientOffersServiceFacade
 import network.bisq.mobile.client.service.offers.OfferbookApiGateway
-import network.bisq.mobile.client.service.reputation.ClientReputationServiceFacade
 import network.bisq.mobile.client.service.settings.ClientSettingsServiceFacade
 import network.bisq.mobile.client.service.settings.SettingsApiGateway
 import network.bisq.mobile.client.service.trades.ClientTradesServiceFacade
@@ -62,8 +59,6 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecV
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
-import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.chat.trade.TradeChatServiceFacade
 import org.koin.dsl.module
 
 val clientModule = module {
@@ -199,8 +194,8 @@ val clientModule = module {
 
     single<LanguageServiceFacade> { ClientLanguageServiceFacade(get()) }
 
-    single { ReputationApiGateway(get()) }
-    single<ReputationServiceFacade> { ClientReputationServiceFacade(get()) }
+//    single { ReputationApiGateway(get()) }
+//    single<ReputationServiceFacade> { ClientReputationServiceFacade(get()) }
 
     single {
         Json {
@@ -214,50 +209,14 @@ val clientModule = module {
     single {
         createHttpClient(get())
     }
-
-    single { TrustedNodeService(get()) }
-
-    // single { WebSocketHttpClient(get()) }
-    single {
-        println("Running on simulator: ${get<EnvironmentController>().isSimulator()}")
-        WebSocketApiClient(
-            get(),
-            get(),
-            get(),
-            get(named("WebsocketApiHost")),
-            get(named("WebsocketApiPort"))
-        )
-    }
-
-    single { LanguageApiGateway(get(), get()) }
-    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get(), get()) }
-
-    single { MarketPriceApiGateway(get(), get()) }
-    single<MarketPriceServiceFacade> { ClientMarketPriceServiceFacade(get(), get()) }
-
-    single { UserProfileApiGateway(get()) }
-    single<UserProfileServiceFacade> { ClientUserProfileServiceFacade(get(), get()) }
-
-    single { OfferbookApiGateway(get(), get()) }
     single<OffersServiceFacade> { ClientOffersServiceFacade(get(), get(), get()) }
 
     single { TradesApiGateway(get(), get()) }
     single<TradesServiceFacade> { ClientTradesServiceFacade(get(), get(), get()) }
 
-    single<TradeChatServiceFacade> { ClientTradeChatServiceFacade(get()) }
-
-    single { ExplorerApiGateway(get()) }
-    single<ExplorerServiceFacade> { ClientExplorerServiceFacade(get()) }
-
-    single { MediationApiGateway(get()) }
-    single<MediationServiceFacade> { ClientMediationServiceFacade(get()) }
-
-    single { SettingsApiGateway(get()) }
-    single<SettingsServiceFacade> { ClientSettingsServiceFacade(get()) }
-
     single { AccountsApiGateway(get(), get()) }
     single<AccountsServiceFacade> { ClientAccountsServiceFacade(get(), get()) }
 
-    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get(), get()) }
+    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get()) }
 
 }

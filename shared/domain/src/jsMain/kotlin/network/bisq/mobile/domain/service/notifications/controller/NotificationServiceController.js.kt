@@ -112,6 +112,7 @@ import network.bisq.mobile.domain.utils.Logging
 //        }
 //    }
 
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class NotificationServiceController(
     private val appForegroundController: AppForegroundController
 ) : ServiceController, Logging {

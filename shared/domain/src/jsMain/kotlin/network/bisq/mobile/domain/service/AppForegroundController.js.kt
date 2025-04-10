@@ -7,6 +7,7 @@ import network.bisq.mobile.domain.utils.Logging
 /**
  * JS-specific implementation of AppForegroundController
  */
+@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class AppForegroundController : ForegroundDetector, Logging {
     private val _isForeground = MutableStateFlow(true)
     override val isForeground: StateFlow<Boolean> = _isForeground

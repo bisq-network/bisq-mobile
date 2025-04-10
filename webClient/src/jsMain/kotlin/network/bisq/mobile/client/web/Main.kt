@@ -1,7 +1,6 @@
 package network.bisq.mobile.client.web
 
 import androidx.compose.runtime.Composable
-import kotlinx.browser.document
 import network.bisq.mobile.client.di.clientModule
 import network.bisq.mobile.client.web.di.webClientModule
 import network.bisq.mobile.client.web.ui.WebComposeProvider

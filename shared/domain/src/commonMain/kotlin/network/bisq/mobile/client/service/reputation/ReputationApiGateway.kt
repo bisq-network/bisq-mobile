@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.service.mediation
+package network.bisq.mobile.client.service.reputation
 
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
