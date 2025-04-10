@@ -15,7 +15,6 @@ import network.bisq.mobile.client.service.bootstrap.ClientApplicationBootstrapFa
 import network.bisq.mobile.client.service.chat.trade.ClientTradeChatMessagesServiceFacade
 import network.bisq.mobile.client.service.chat.trade.TradeChatMessagesApiGateway
 import network.bisq.mobile.client.service.common.ClientLanguageServiceFacade
-import network.bisq.mobile.client.service.common.LanguageApiGateway
 import network.bisq.mobile.client.service.explorer.ClientExplorerServiceFacade
 import network.bisq.mobile.client.service.explorer.ExplorerApiGateway
 import network.bisq.mobile.client.service.market.ClientMarketPriceServiceFacade
@@ -178,8 +177,7 @@ val clientModule = module {
         )
     }
 
-    single { LanguageApiGateway(get(), get()) }
-    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get(), get()) }
+    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get()) }
 
     single { MarketPriceApiGateway(get(), get()) }
     single<MarketPriceServiceFacade> { ClientMarketPriceServiceFacade(get(), get()) }
@@ -208,7 +206,7 @@ val clientModule = module {
     single { AccountsApiGateway(get(), get()) }
     single<AccountsServiceFacade> { ClientAccountsServiceFacade(get(), get()) }
 
-    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get(), get()) }
+    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get()) }
 
     single { ReputationApiGateway(get()) }
     single<ReputationServiceFacade> { ClientReputationServiceFacade(get()) }

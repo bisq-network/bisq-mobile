@@ -19,8 +19,4 @@ enum class Topic(val typeOf: KType) {
     TRADE_PROPERTIES(typeOf<List<Map<String, TradePropertiesDto>>>()),
     TRADE_CHAT_MESSAGES(typeOf<List<BisqEasyOpenTradeMessageDto>>()),
     CHAT_REACTIONS(typeOf<List<BisqEasyOpenTradeMessageReactionVO>>()),
-
-    //todo not used
-    I18N_PAIRS(typeOf<Map<String, String>>()),
-    LANGUAGE_PAIRS(typeOf<Map<String, String>>()),
 }

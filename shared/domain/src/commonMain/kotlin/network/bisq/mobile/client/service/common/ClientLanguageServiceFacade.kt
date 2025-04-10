@@ -1,25 +1,17 @@
 package network.bisq.mobile.client.service.common
 
-import io.ktor.util.collections.ConcurrentMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.service.market.MarketPriceApiGateway
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.data.BackgroundDispatcher
-import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.formatters.MarketPriceFormatter
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
 class ClientLanguageServiceFacade(
-    private val apiGateway: LanguageApiGateway,
     private val json: Json
 ) : LanguageServiceFacade, Logging {
 
