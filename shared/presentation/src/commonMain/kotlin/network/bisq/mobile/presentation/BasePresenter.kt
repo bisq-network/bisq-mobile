@@ -208,10 +208,12 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
      * Navigate to given destination
      */
     protected fun navigateTo(destination: Routes, customSetup: (NavOptionsBuilder) -> Unit = {}) {
+        enableInteractive(false)
         uiScope.launch(Dispatchers.Main) {
             rootNavigator.navigate(destination.name) {
                 customSetup(this)
             }
+            enableInteractive()
         }
     }
 
