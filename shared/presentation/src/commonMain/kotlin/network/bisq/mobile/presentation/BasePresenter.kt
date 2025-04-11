@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation
 
 import androidx.annotation.CallSuper
 import androidx.compose.material3.SnackbarHostState
-import androidx.compose.runtime.collectAsState
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
@@ -20,6 +19,7 @@ import network.bisq.mobile.domain.data.BackgroundDispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 /**
@@ -31,7 +31,6 @@ interface ViewPresenter {
      * allows to enable/disable UI components from the presenters
      */
     val isInteractive: StateFlow<Boolean>
-    val genericErrorMessage: StateFlow<String?>
 
     fun isDemo(): Boolean
 
@@ -117,9 +116,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     private val _isInteractive = MutableStateFlow(true)
     override val isInteractive: StateFlow<Boolean> = _isInteractive
     private val snackbarHostState: SnackbarHostState = SnackbarHostState()
-
-    val _genericErrorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
-    override val genericErrorMessage: StateFlow<String?> = _genericErrorMessage
 
     override fun getSnackState(): SnackbarHostState {
         return snackbarHostState
@@ -423,7 +419,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     override fun onCloseGenericErrorPanel() {
-        MainPresenter._genericErrorMessage.value = null
+        GenericErrorHandler.clearGenericError()
     }
 
     override fun navigateToReportError() {

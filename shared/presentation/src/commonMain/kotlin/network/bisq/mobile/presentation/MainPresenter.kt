@@ -11,10 +11,8 @@ import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.setupUncaughtExceptionHandler
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import kotlin.jvm.JvmStatic
 
 
 /**
@@ -26,19 +24,6 @@ open class MainPresenter(
     private val settingsService: SettingsServiceFacade,
     private val urlLauncher: UrlLauncher
 ) : BasePresenter(null), AppPresenter {
-    companion object {
-        // TODO based on this flag show user a modal explaining internal crash, devs reporte,d with a button to quit the app
-        val _systemCrashed = MutableStateFlow(false)
-        val _genericErrorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
-
-        @JvmStatic
-        fun init() {
-            setupUncaughtExceptionHandler {
-                _systemCrashed.value = true
-            }
-        }
-    }
-
     override lateinit var navController: NavHostController
     override lateinit var tabNavController: NavHostController
 
