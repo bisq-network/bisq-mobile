@@ -106,7 +106,7 @@ class NodeTradeChatMessagesServiceFacade(
             if (result.isSuccess) {
                 Result.success(true)
             } else {
-                throw result.exceptionOrNull()!!
+                throw result.exceptionOrNull() ?: IllegalStateException("No Exception is set in result failure")
             }
         } else {
             // Not our reaction, so we cannot remove it

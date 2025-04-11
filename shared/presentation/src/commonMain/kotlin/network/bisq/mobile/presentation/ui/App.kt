@@ -1,21 +1,23 @@
 package network.bisq.mobile.presentation.ui
 
 import ErrorOverlay
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import org.jetbrains.compose.ui.tooling.preview.Preview
-
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.I18nSupport
-import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import org.koin.compose.koinInject
-
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.koin.compose.koinInject
 
 interface AppPresenter : ViewPresenter {
     var navController: NavHostController
@@ -46,8 +48,6 @@ fun App() {
     val tabNavController = rememberNavController()
     var isNavControllerSet by remember { mutableStateOf(false) }
     val presenter: AppPresenter = koinInject()
-    val errorMessage = MainPresenter._genericErrorMessage.collectAsState().value
-    val systemCrashed = MainPresenter._systemCrashed.collectAsState().value
 
     RememberPresenterLifecycle(presenter, {
         presenter.navController = rootNavController
@@ -64,12 +64,6 @@ fun App() {
                 RootNavGraph(rootNavController)
             }
         }
-        ErrorOverlay(
-            errorMessage = errorMessage,
-            systemCrashed = systemCrashed,
-            onClose = {
-                presenter.onCloseGenericErrorPanel()
-            });
+        ErrorOverlay()
     }
-
 }

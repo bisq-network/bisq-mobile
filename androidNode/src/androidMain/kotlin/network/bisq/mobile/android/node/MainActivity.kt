@@ -15,6 +15,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.App
+import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import org.koin.android.ext.android.inject
 
@@ -25,7 +26,7 @@ class MainActivity : ComponentActivity() {
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
 
     init {
-        MainPresenter.init()
+        GenericErrorHandler.init()
     }
 
     override fun onNewIntent(intent: Intent) {

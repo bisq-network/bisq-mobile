@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -13,6 +14,7 @@ import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class CreateProfilePresenter(
@@ -48,15 +50,9 @@ open class CreateProfilePresenter(
 
     private val _generateKeyPairInProgress = MutableStateFlow(false)
     val generateKeyPairInProgress: StateFlow<Boolean> get() = _generateKeyPairInProgress
-    private fun setGenerateKeyPairInProgress(value: Boolean) {
-        _generateKeyPairInProgress.value = value
-    }
 
     private val _createAndPublishInProgress = MutableStateFlow(false)
     val createAndPublishInProgress: StateFlow<Boolean> get() = _createAndPublishInProgress
-    private fun setCreateAndPublishInProgress(value: Boolean) {
-        _createAndPublishInProgress.value = value
-    }
 
     // Misc
     private val coroutineScope = CoroutineScope(Dispatchers.Main) // rootNavigator.navigate requires Dispatchers.Main
@@ -98,12 +94,12 @@ open class CreateProfilePresenter(
             job = coroutineScope.launch {
                 enableInteractive(false)
                 log.i { "Show busy animation for createAndPublishInProgress" }
-                setCreateAndPublishInProgress(true)
+                _createAndPublishInProgress.value = true
                 runCatching {
                     userProfileService.createAndPublishNewUserProfile(nickName.value)
 
                     log.i { "Hide busy animation for createAndPublishInProgress" }
-                    setCreateAndPublishInProgress(false)
+                    _createAndPublishInProgress.value = false
 
                     // Skip for now the TrustedNodeSetup until its fully implemented with persisting the api URL.
                     /* navigateTo(Routes.TrustedNodeSetup) {
@@ -114,14 +110,7 @@ open class CreateProfilePresenter(
                     }
                     enableInteractive()
                 }.onFailure { e ->
-                    // TODO give user feedback (we could have a general error screen covering usual
-                    //  issues like connection issues and potential solutions)
-                    // Depending on error type,
-                    //  * show either Snackbar (for excepected issues) or
-                    //  * ReportBugPanel for unknown critical issues
-                    // define Exception handling framework, to take care of this.
-                    MainPresenter._genericErrorMessage.value = "onCreateAndPublishNewUserProfile failed" + e
-                    log.e("onCreateAndPublishNewUserProfile failed", e)
+                    GenericErrorHandler.handleGenericError("Creating and publishing new user profile failed.", e)
                     enableInteractive()
                 }
             }
@@ -133,31 +122,31 @@ open class CreateProfilePresenter(
         // We would never call onCreateAndPublishNewUserProfile while generateKeyPair is not
         // completed, thus we can assign to same job reference
         cancelJob()
-        job = coroutineScope.launch {
-            setGenerateKeyPairInProgress(true)
-            log.i { "Show busy animation for generateKeyPair" }
+        _generateKeyPairInProgress.value = true
+        log.i { "Show busy animation for generateKeyPair" }
 
-            runCatching {
-                // takes 200 -1000 ms
-                userProfileService.generateKeyPair { id, nym, profileIcon ->
-                    setId(id)
-                    setNym(nym)
-                    setProfileIcon(profileIcon)
-                    backgroundScope.launch {
-                        userRepository.update(User().apply {
-                            uniqueAvatar = profileIcon
-                            lastActivity = Clock.System.now().toEpochMilliseconds()
-                        })
+        runCatching {
+            job = presenterScope.launch {
+                val deferred = CoroutineScope(Dispatchers.Default).async {
+                    // takes 200 -1000 ms
+                    userProfileService.generateKeyPair { id, nym, profileIcon ->
+                        setId(id)
+                        setNym(nym)
+                        setProfileIcon(profileIcon)
                     }
                 }
-                setGenerateKeyPairInProgress(false)
+                deferred.await()
+                backgroundScope.launch {
+                    userRepository.update(User().apply {
+                        uniqueAvatar = profileIcon.value
+                        lastActivity = Clock.System.now().toEpochMilliseconds()
+                    })
+                }
+                _generateKeyPairInProgress.value = false
                 log.i { "Hide busy animation for generateKeyPair" }
-            }.onFailure { e ->
-                // TODO give user feedback (we could have a general error screen covering usual
-                //  issues like connection issues and potential solutions)
-                MainPresenter._genericErrorMessage.value = "generateKeyPair failed: " + e
-                log.e("generateKeyPair failed", e)
             }
+        }.onFailure { e ->
+            GenericErrorHandler.handleGenericError("Generating the key pair failed.", e)
         }
     }
 
