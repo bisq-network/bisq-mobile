@@ -2,23 +2,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
-import network.bisq.mobile.presentation.ui.components.organisms.GenericErrorPanel
 import network.bisq.mobile.presentation.ui.components.organisms.ReportBugPanel
 import network.bisq.mobile.presentation.ui.components.organisms.TrustedNodeAPIIncompatiblePopup
+import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import org.koin.compose.koinInject
 
 @Composable
-fun ErrorOverlay(
-    errorMessage: String?,
-    systemCrashed: Boolean,
-    onClose: () -> Unit
-) {
-    val presenter: AppPresenter = koinInject()
+fun ErrorOverlay() {
+    val appPresenter: AppPresenter = koinInject()
+
+    val errorMessage = GenericErrorHandler.genericErrorMessage.collectAsState().value
+    val isUncaughtException = GenericErrorHandler.isUncaughtException.collectAsState().value
 
     if (errorMessage != null) {
         Box(
@@ -32,15 +30,15 @@ fun ErrorOverlay(
                 TrustedNodeAPIIncompatiblePopup(
                     errorMessage = errorMessage,
                     onFix = {
-                        presenter.navigateToTrustedNode()
-                        MainPresenter._genericErrorMessage.value = null
+                        appPresenter.navigateToTrustedNode()
+                        GenericErrorHandler.clearGenericError()
                     }
                 )
             } else {
                 ReportBugPanel(
                     errorMessage = errorMessage,
-                    systemCrashed = systemCrashed,
-                    onClose = { onClose() }
+                    isUncaughtException = isUncaughtException,
+                    onClose = { GenericErrorHandler.clearGenericError() }
                 )
             }
         }

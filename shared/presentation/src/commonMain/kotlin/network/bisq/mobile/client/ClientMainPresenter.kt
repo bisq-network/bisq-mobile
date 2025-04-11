@@ -17,6 +17,7 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 
 /**
  * Contains all the share code for each client. Each specific app might extend this class if needed.
@@ -70,7 +71,10 @@ open class ClientMainPresenter(
             } else {
                 log.w { "configured trusted node doesn't have a compatible api version" }
                 val trustedNodeVersion = settingsServiceFacade.getTrustedNodeVersion()
-                MainPresenter._genericErrorMessage.value = "Your configured trusted node is running Bisq version $trustedNodeVersion.\nBisq Connect requires version ${BuildConfig.BISQ_API_VERSION} to run properly.\n"
+                GenericErrorHandler.handleGenericError(
+                    "Your configured trusted node is running Bisq version $trustedNodeVersion.\n" +
+                            "Bisq Connect requires version ${BuildConfig.BISQ_API_VERSION} to run properly.\n"
+                )
             }
         }
     }

@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.data.replicated.presentation.open_trades.Trade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 
 abstract class State4Presenter(
     mainPresenter: MainPresenter,
@@ -46,7 +47,7 @@ abstract class State4Presenter(
                 result.isFailure -> {
                     presenterScope.launch {
                         _showCloseTradeDialog.value = false
-                        _genericErrorMessage.value = result.exceptionOrNull()!!.message
+                        GenericErrorHandler.handleGenericError(result.exceptionOrNull()!!.message)
                     }
                 }
 

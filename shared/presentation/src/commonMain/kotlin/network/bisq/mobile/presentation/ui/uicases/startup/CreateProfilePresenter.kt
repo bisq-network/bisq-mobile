@@ -13,6 +13,7 @@ import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class CreateProfilePresenter(
@@ -114,14 +115,7 @@ open class CreateProfilePresenter(
                     }
                     enableInteractive()
                 }.onFailure { e ->
-                    // TODO give user feedback (we could have a general error screen covering usual
-                    //  issues like connection issues and potential solutions)
-                    // Depending on error type,
-                    //  * show either Snackbar (for excepected issues) or
-                    //  * ReportBugPanel for unknown critical issues
-                    // define Exception handling framework, to take care of this.
-                    MainPresenter._genericErrorMessage.value = "onCreateAndPublishNewUserProfile failed" + e
-                    log.e("onCreateAndPublishNewUserProfile failed", e)
+                    GenericErrorHandler.handleGenericError("Creating and publishing new user profile failed.", e)
                     enableInteractive()
                 }
             }
@@ -153,10 +147,7 @@ open class CreateProfilePresenter(
                 setGenerateKeyPairInProgress(false)
                 log.i { "Hide busy animation for generateKeyPair" }
             }.onFailure { e ->
-                // TODO give user feedback (we could have a general error screen covering usual
-                //  issues like connection issues and potential solutions)
-                MainPresenter._genericErrorMessage.value = "generateKeyPair failed: " + e
-                log.e("generateKeyPair failed", e)
+                GenericErrorHandler.handleGenericError("Generating the key pair failed.", e)
             }
         }
     }
