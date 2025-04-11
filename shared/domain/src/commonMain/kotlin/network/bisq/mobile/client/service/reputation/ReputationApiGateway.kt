@@ -9,11 +9,11 @@ class ReputationApiGateway(
 ) : Logging {
     private val basePath = "reputation"
 
-    suspend fun getReputation(userId: String): Result<ReputationScoreVO> {
-        return webSocketApiClient.get("$basePath/user/$userId")
+    suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
+        return webSocketApiClient.get("$basePath/scores/$userProfileId")
     }
 
     suspend fun getScoreByUserProfileId(): Result<Map<String, Long>> {
-        return webSocketApiClient.get("$basePath/getScoreByUserProfileId")
+        return webSocketApiClient.get("$basePath/scores")
     }
 }

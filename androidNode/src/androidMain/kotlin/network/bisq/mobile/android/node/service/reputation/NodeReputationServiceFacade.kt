@@ -14,8 +14,8 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
     }
 
     // API
-    override suspend fun getReputation(userId: String): Result<ReputationScoreVO> {
-        val reputation = reputationService.getReputationScore(userId).let {
+    override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
+        val reputation = reputationService.getReputationScore(userProfileId).let {
             Mappings.ReputationScoreMapping.fromBisq2Model(it)
         }
         return Result.success(reputation)
