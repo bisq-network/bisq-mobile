@@ -47,7 +47,8 @@ abstract class State4Presenter(
                 result.isFailure -> {
                     presenterScope.launch {
                         _showCloseTradeDialog.value = false
-                        GenericErrorHandler.handleGenericError(result.exceptionOrNull()!!.message)
+                        result.exceptionOrNull()?.let { exception -> GenericErrorHandler.handleGenericError(exception.message) }
+                            ?: GenericErrorHandler.handleGenericError("No Exception is set in result failure")
                     }
                 }
 

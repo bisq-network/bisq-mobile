@@ -12,7 +12,7 @@ class ClientExplorerServiceFacade(private val apiGateway: ExplorerApiGateway) : 
         return if (result.isSuccess) {
             Result.success(result.getOrThrow()["provider"]!!)
         } else {
-            Result.failure(result.exceptionOrNull()!!)
+            Result.failure(result.exceptionOrNull() ?: IllegalStateException("No Exception is set in result failure"))
         }
     }
 
@@ -33,8 +33,7 @@ class ClientExplorerServiceFacade(private val apiGateway: ExplorerApiGateway) : 
             log.i { "explorerResult $explorerResult" }
             return explorerResult
         } else {
-            val throwable = result.exceptionOrNull()!!
-            return ExplorerResult(errorMessage = throwable.message)
+            return ExplorerResult(errorMessage = result.exceptionOrNull()?.message ?: "No Exception is set in result failure")
         }
     }
 
