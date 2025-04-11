@@ -58,7 +58,7 @@ class ClientOffersServiceFacade(
         getMarketsJob = coroutineScope.launch {
             val result = apiGateway.getMarkets()
             if (result.isFailure) {
-                log.e { "GetMarkets request failed with exception ${result.exceptionOrNull()!!}" }
+                result.exceptionOrNull()?.let { log.e { "GetMarkets request failed with exception $it" } }
                 return@launch
             }
 
@@ -95,7 +95,7 @@ class ClientOffersServiceFacade(
         if (result.isSuccess) {
             return Result.success(true)
         } else {
-            throw result.exceptionOrNull()!!
+            throw result.exceptionOrNull() ?: IllegalStateException("No Exception is set in result failure")
         }
     }
 

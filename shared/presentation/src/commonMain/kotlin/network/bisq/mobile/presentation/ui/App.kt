@@ -64,6 +64,6 @@ fun App() {
                 RootNavGraph(rootNavController)
             }
         }
-        ErrorOverlay();
+        ErrorOverlay()
     }
 }
