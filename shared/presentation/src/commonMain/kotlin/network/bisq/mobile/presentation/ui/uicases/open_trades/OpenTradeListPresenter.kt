@@ -46,10 +46,8 @@ class OpenTradeListPresenter(
 
     fun onSelect(openTradeItem: TradeItemPresentationModel) {
         if (tradeRulesConfirmed.value) {
-            ioScope.launch {
-                tradesServiceFacade.selectOpenTrade(openTradeItem.tradeId)
-                navigateTo(Routes.OpenTrade)
-            }
+            tradesServiceFacade.selectOpenTrade(openTradeItem.tradeId)
+            navigateTo(Routes.OpenTrade)
         } else {
             log.w { "User hasn't accepted trade rules yet, showing dialog" }
             // TODO show dialogue to open trade guide
