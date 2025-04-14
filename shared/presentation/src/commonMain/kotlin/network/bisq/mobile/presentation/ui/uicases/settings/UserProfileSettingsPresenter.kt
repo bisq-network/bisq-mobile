@@ -4,7 +4,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -21,7 +23,8 @@ class UserProfileSettingsPresenter(
     private val reputationServiceFacade: ReputationServiceFacade,
     private val userRepository: UserRepository,
     connectivityService: ConnectivityService,
-    mainPresenter: MainPresenter): BasePresenter(mainPresenter), IUserProfileSettingsPresenter {
+    mainPresenter: MainPresenter
+) : BasePresenter(mainPresenter), IUserProfileSettingsPresenter {
 
     companion object {
         const val DEFAULT_UNKNOWN_VALUE = "N/A"
@@ -122,17 +125,20 @@ class UserProfileSettingsPresenter(
     }
 
     override fun onSave() {
-        ioScope.launch {
-            enableInteractive(false)
-            setShowLoading(true)
+        enableInteractive(false)
+        setShowLoading(true)
+        presenterScope.launch {
             try {
-                userRepository.fetch()!!.let {
-                    it.statement = statement.value
-                    it.tradeTerms = tradeTerms.value
-                    userRepository.update(it)
+                withContext(IODispatcher) {
+                    userRepository.fetch()!!.let {
+                        it.statement = statement.value
+                        it.tradeTerms = tradeTerms.value
+                        userRepository.update(it)
+
+                        // avoid flicker
+                        delay(500L)
+                    }
                 }
-                // avoid flicker
-                delay(500L)
             } catch (e: Exception) {
                 log.e(e) { "Failed to save user profile settings" }
             } finally {
