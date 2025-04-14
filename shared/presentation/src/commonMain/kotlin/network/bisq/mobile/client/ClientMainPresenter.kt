@@ -1,7 +1,7 @@
 package network.bisq.mobile.client
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
@@ -65,16 +65,18 @@ open class ClientMainPresenter(
     }
 
     private fun validateVersion() {
-        CoroutineScope(IODispatcher).launch {
-            if (settingsServiceFacade.isApiCompatible()) {
-                log.d { "trusted node is compatible, continue" }
-            } else {
+        presenterScope.launch {
+            val isApiCompatible = withContext(IODispatcher) { settingsServiceFacade.isApiCompatible() }
+            if (!isApiCompatible) {
                 log.w { "configured trusted node doesn't have a compatible api version" }
-                val trustedNodeVersion = settingsServiceFacade.getTrustedNodeVersion()
+
+                val trustedNodeVersion = withContext(IODispatcher) { settingsServiceFacade.getTrustedNodeVersion() }
                 GenericErrorHandler.handleGenericError(
                     "Your configured trusted node is running Bisq version $trustedNodeVersion.\n" +
                             "Bisq Connect requires version ${BuildConfig.BISQ_API_VERSION} to run properly.\n"
                 )
+            } else {
+                log.d { "trusted node is compatible, continue" }
             }
         }
     }
