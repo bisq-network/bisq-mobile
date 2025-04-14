@@ -60,13 +60,22 @@ private fun createCanvasContext(width: Int, height: Int): Pair<HTMLCanvasElement
 actual fun getPlatformCurrentTimeProvider(): TimeProvider = WebCurrentTimeProvider()
 
 actual fun exitApp() {
-    // For web, we can't truly exit the app, but we can close the tab/window
-    // or navigate to a "goodbye" page
     if (window.confirm("Are you sure you want to exit the application?")) {
-        window.close()
-        // If window.close() is blocked by the browser (common in modern browsers),
-        // redirect to a goodbye page or show a message
-        window.location.href = "#/goodbye"
+        try {
+            // Try to close the window
+            window.close()
+            
+            // If we get here, the window.close() call didn't throw an exception,
+            // but it might still have been blocked. After a short delay, check if 
+            // we're still here and redirect if necessary
+            window.setTimeout({
+                // If we're still here, the close was probably blocked
+                window.location.href = "#/goodbye"
+            }, 300)
+        } catch (e: Exception) {
+            // If close throws an exception, redirect
+            window.location.href = "#/goodbye"
+        }
     }
 }
 
