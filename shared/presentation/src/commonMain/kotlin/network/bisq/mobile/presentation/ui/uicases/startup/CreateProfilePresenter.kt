@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,7 +55,6 @@ open class CreateProfilePresenter(
     val createAndPublishInProgress: StateFlow<Boolean> get() = _createAndPublishInProgress
 
     // Misc
-    private val coroutineScope = CoroutineScope(Dispatchers.Main) // rootNavigator.navigate requires Dispatchers.Main
     private var job: Job? = null
 
     // Lifecycle
@@ -92,7 +90,7 @@ open class CreateProfilePresenter(
         if (nickName.value.isNotEmpty()) {
             // We would never call generateKeyPair while generateKeyPair is not
             // completed, thus we can assign to same job reference
-            job = coroutineScope.launch {
+            job = presenterScope.launch {
                 disableInteractive()
                 log.i { "Show busy animation for createAndPublishInProgress" }
                 _createAndPublishInProgress.value = true
