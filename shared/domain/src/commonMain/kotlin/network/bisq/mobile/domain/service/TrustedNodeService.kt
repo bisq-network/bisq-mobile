@@ -11,7 +11,7 @@ import network.bisq.mobile.domain.utils.Logging
  * against the trusted node for the client.
  */
 class TrustedNodeService(private val webSocketClientProvider: WebSocketClientProvider) : Logging {
-    private val backgroundScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(IODispatcher)
 
     var isConnected: Boolean = false
     private var observingConnectivity = false
@@ -44,7 +44,7 @@ class TrustedNodeService(private val webSocketClientProvider: WebSocketClientPro
     }
 
     private fun observeConnectivity() {
-        backgroundScope.launch {
+        ioScope.launch {
             webSocketClientProvider.get().webSocketClientStatus.collect {
                 log.d { "connectivity status changed - connected = $it" }
                 isConnected = webSocketClientProvider.get().isConnected()

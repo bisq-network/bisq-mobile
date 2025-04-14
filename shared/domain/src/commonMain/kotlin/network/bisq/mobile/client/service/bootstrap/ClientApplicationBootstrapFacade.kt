@@ -13,7 +13,7 @@ class ClientApplicationBootstrapFacade(
     private val trustedNodeService: TrustedNodeService
 ) : ApplicationBootstrapFacade() {
 
-    private val backgroundScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(IODispatcher)
     override fun activate() {
         if (isActive) {
             return
@@ -24,7 +24,7 @@ class ClientApplicationBootstrapFacade(
         setProgress(0f)
 
         // just dummy loading simulation, might be that there is no loading delay at the end...
-        backgroundScope.launch {
+        ioScope.launch {
             settingsRepository.fetch()
             val url = settingsRepository.data.value?.bisqApiUrl
             log.d { "Settings url $url" }

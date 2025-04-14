@@ -76,7 +76,7 @@ class WebSocketClient(
     private var connectionReady = CompletableDeferred<Boolean>()
     private val requestResponseHandlersMutex = Mutex()
 
-    private val backgroundScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(IODispatcher)
 
     enum class WebSocketClientStatus {
         DISCONNECTED,
@@ -132,7 +132,7 @@ class WebSocketClient(
     }
 
     private fun reconnect() {
-        backgroundScope.launch {
+        ioScope.launch {
             log.d { "Launching reconnect" }
             disconnect()
             delay(DELAY_TO_RECONNECT) // Delay before reconnecting

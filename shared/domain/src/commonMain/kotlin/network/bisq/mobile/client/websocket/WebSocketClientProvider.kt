@@ -26,7 +26,7 @@ class WebSocketClientProvider(
         }
     }
 
-    private val backgroundScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(IODispatcher)
 
     @Volatile
     private var currentClient: WebSocketClient? = null
@@ -34,7 +34,7 @@ class WebSocketClientProvider(
     init {
         // Listen to changes in WebSocket configuration and update the client
         // TODO we might need to replicate this for changes in settings to reconnect to channels
-        backgroundScope.launch {
+        ioScope.launch {
             try {
                 settingsRepository.data.collect { newSettings ->
                     var host = defaultHost

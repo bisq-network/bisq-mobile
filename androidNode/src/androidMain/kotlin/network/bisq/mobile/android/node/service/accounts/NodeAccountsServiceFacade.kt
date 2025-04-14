@@ -2,12 +2,10 @@ package network.bisq.mobile.android.node.service.accounts
 
 import bisq.account.AccountService
 import bisq.account.accounts.UserDefinedFiatAccount
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.UserDefinedFiatAccountMapping
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -20,8 +18,6 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
 
     private val _selectedAccount = MutableStateFlow<UserDefinedFiatAccountVO?>(null)
     override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = _selectedAccount
-
-    private val backgroundScope = CoroutineScope(IODispatcher)
 
     override suspend fun getAccounts(): List<UserDefinedFiatAccountVO> {
         log.e { "NodeAccountServiceFacade :: getAccounts()" }
