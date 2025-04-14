@@ -14,7 +14,14 @@ class WebNotificationService(
         // Could use the Web Notifications API
         js("""
             if (Notification.permission !== 'granted') {
-                Notification.requestPermission();
+                Notification.requestPermission().then(function(permission) {
+                    if (permission !== 'granted') {
+                        console.log('Notification permission denied');
+                        // Consider alternative notification strategy
+                    }
+                }).catch(function(error) {
+                    console.error('Error requesting notification permission:', error);
+                });
             }
         """)
     }
