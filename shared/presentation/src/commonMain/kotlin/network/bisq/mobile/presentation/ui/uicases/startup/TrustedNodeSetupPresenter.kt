@@ -81,24 +81,29 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun testConnection(isWorkflow: Boolean) {
-        ioScope.launch {
-            _isLoading.value = true
-            log.w { "Test: " + _bisqApiUrl.value }
-            WebSocketClientProvider.parseUri(_bisqApiUrl.value).let { connectionSettings ->
-                if (webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)) {
+        _isLoading.value = true
+        log.i { "Test: " + _bisqApiUrl.value }
+        val connectionSettings = WebSocketClientProvider.parseUri(_bisqApiUrl.value)
+        presenterScope.launch {
+            val success = withContext(IODispatcher) {
+                webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)
+            }
+
+            if (success) {
+                val validateVersion = withContext(IODispatcher) {
                     updateTrustedNodeSettings()
-                    _isConnected.value = true
-                    if (validateVersion()) {
-                        showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
-                        if (!isWorkflow) {
-                            navigateBack();
-                        }
-                    }
-                } else {
-                    showSnackbar("Could not connect to given url ${_bisqApiUrl.value}, please try again with another setup")
-                    _isConnected.value = false
+                    validateVersion()
                 }
-                _isLoading.value = false
+                if (validateVersion) {
+                    showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
+                    if (!isWorkflow) {
+                        navigateBack();
+                    }
+                }
+                _isConnected.value = true
+            } else {
+                showSnackbar("Could not connect to given url ${_bisqApiUrl.value}, please try again with another setup")
+                _isConnected.value = false
             }
         }
     }
