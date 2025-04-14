@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -64,7 +63,7 @@ class SellerState1Presenter(
 
     fun onSendPaymentData() {
         require(paymentAccountData.value.isNotEmpty())
-        job = CoroutineScope(IODispatcher).launch {
+        job = ioScope.launch {
             tradesServiceFacade.sellerSendsPaymentAccount(paymentAccountData.value)
         }
     }

@@ -1,11 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
@@ -77,7 +75,7 @@ class BuyerState1aPresenter(
     fun onSend() {
         require(bitcoinPaymentData.value.isNotEmpty())
 
-        job = CoroutineScope(IODispatcher).launch {
+        job = ioScope.launch {
             tradesServiceFacade.buyerSendBitcoinPaymentData(bitcoinPaymentData.value)
         }
     }
