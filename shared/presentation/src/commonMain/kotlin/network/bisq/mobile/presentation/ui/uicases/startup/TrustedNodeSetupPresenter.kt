@@ -3,7 +3,9 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -43,15 +45,15 @@ class TrustedNodeSetupPresenter(
 
     private fun initialize() {
         log.i { "View attached to Trusted node presenter" }
-        ioScope.launch {
+
+        presenterScope.launch {
             try {
-                settingsRepository.fetch()
-                settingsRepository.data.value.let {
-                    it?.let {
-                        log.d { "Settings url:${it.bisqApiUrl}" }
-                        updateBisqApiUrl(it.bisqApiUrl, true)
-                        validateVersion()
-                    }
+                val data = withContext(IODispatcher) {
+                    settingsRepository.fetch()
+                }
+                data?.let {
+                    updateBisqApiUrl(it.bisqApiUrl, true)
+                    validateVersion()
                 }
             } catch (e: Exception) {
                 log.e("Failed to load from repository", e)
