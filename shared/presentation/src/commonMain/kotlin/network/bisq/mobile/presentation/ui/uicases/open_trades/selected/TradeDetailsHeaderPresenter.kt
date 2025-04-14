@@ -250,9 +250,6 @@ class TradeDetailsHeaderPresenter(
                 }
             }
         }
-
-        ioScope.launch {
-        }
     }
 
     fun onOpenMediationConfirmationDialog() {
