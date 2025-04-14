@@ -2,7 +2,7 @@ package network.bisq.mobile.client.service.bootstrap
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -13,7 +13,7 @@ class ClientApplicationBootstrapFacade(
     private val trustedNodeService: TrustedNodeService
 ) : ApplicationBootstrapFacade() {
 
-    private val backgroundScope = CoroutineScope(BackgroundDispatcher)
+    private val backgroundScope = CoroutineScope(IODispatcher)
     override fun activate() {
         if (isActive) {
             return

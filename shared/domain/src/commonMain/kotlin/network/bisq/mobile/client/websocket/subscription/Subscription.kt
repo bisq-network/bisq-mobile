@@ -6,7 +6,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.utils.Logging
 
 class Subscription<T>(
@@ -17,7 +17,7 @@ class Subscription<T>(
 ) : Logging {
 
     // Misc
-    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
+    private val coroutineScope = CoroutineScope(IODispatcher)
     private var job: Job? = null
     private var sequenceNumber = atomic(-1)
 

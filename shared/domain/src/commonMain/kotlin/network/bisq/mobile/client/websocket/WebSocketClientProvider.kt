@@ -3,7 +3,7 @@ package network.bisq.mobile.client.websocket
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -26,7 +26,7 @@ class WebSocketClientProvider(
         }
     }
 
-    private val backgroundScope = CoroutineScope(BackgroundDispatcher)
+    private val backgroundScope = CoroutineScope(IODispatcher)
 
     @Volatile
     private var currentClient: WebSocketClient? = null

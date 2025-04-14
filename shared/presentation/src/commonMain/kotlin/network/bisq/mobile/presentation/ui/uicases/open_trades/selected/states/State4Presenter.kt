@@ -5,7 +5,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
@@ -41,7 +41,7 @@ abstract class State4Presenter(
     }
 
     fun onConfirmCloseTrade() {
-        jobs.add(CoroutineScope(BackgroundDispatcher).launch {
+        jobs.add(CoroutineScope(IODispatcher).launch {
             val result = tradesServiceFacade.closeTrade()
             when {
                 result.isFailure -> {
@@ -63,7 +63,7 @@ abstract class State4Presenter(
     }
 
     fun onExportTradeDate() {
-        jobs.add(CoroutineScope(BackgroundDispatcher).launch {
+        jobs.add(CoroutineScope(IODispatcher).launch {
             tradesServiceFacade.exportTradeDate()
         })
     }

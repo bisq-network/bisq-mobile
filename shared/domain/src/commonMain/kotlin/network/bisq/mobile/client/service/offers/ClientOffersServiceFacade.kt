@@ -10,7 +10,7 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -43,7 +43,7 @@ class ClientOffersServiceFacade(
     // Misc
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
 
-    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
+    private val coroutineScope = CoroutineScope(IODispatcher)
     private var offersSequenceNumber = atomic(-1)
     private var subscribeOffersJob: Job? = null
     private var observeMarketPriceJob: Job? = null

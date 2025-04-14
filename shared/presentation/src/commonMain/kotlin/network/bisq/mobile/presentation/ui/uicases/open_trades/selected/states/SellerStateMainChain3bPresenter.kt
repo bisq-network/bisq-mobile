@@ -6,7 +6,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.from
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -75,7 +75,7 @@ class SellerStateMainChain3bPresenter(
     }
 
     fun onCompleteTrade() {
-        jobs.add(CoroutineScope(BackgroundDispatcher).launch {
+        jobs.add(CoroutineScope(IODispatcher).launch {
             tradesServiceFacade.btcConfirmed()
         })
     }
@@ -91,7 +91,7 @@ class SellerStateMainChain3bPresenter(
         if (txId == null || address == null) {
             return
         }
-        jobs.add(CoroutineScope(BackgroundDispatcher).launch {
+        jobs.add(CoroutineScope(IODispatcher).launch {
             _blockExplorer.value = ""
             val result = explorerServiceFacade.getSelectedBlockExplorer()
             if (result.isSuccess) {
@@ -109,7 +109,7 @@ class SellerStateMainChain3bPresenter(
         address: String,
         openTradeItemModel: TradeItemPresentationModel
     ) {
-        jobs.add(CoroutineScope(BackgroundDispatcher).launch {
+        jobs.add(CoroutineScope(IODispatcher).launch {
             _txConfirmationState.value = REQUEST_STARTED
             _errorMessage.value = null
             _balanceFromTx.value = ""

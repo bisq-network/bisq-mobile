@@ -3,7 +3,7 @@ package network.bisq.mobile.domain.service
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.utils.Logging
 
 /**
@@ -11,7 +11,7 @@ import network.bisq.mobile.domain.utils.Logging
  * against the trusted node for the client.
  */
 class TrustedNodeService(private val webSocketClientProvider: WebSocketClientProvider) : Logging {
-    private val backgroundScope = CoroutineScope(BackgroundDispatcher)
+    private val backgroundScope = CoroutineScope(IODispatcher)
 
     var isConnected: Boolean = false
     private var observingConnectivity = false

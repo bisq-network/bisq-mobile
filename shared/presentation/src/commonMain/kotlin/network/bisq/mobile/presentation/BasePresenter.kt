@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.utils.Logging
@@ -108,7 +108,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     // Coroutine scope for the presenter
     protected val presenterScope = CoroutineScope(Dispatchers.Main + Job())
     protected val uiScope = CoroutineScope(Dispatchers.Main)
-    protected val backgroundScope = CoroutineScope(BackgroundDispatcher)
+    protected val backgroundScope = CoroutineScope(IODispatcher)
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
 

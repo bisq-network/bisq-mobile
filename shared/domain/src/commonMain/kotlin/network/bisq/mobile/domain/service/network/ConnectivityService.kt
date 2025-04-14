@@ -1,15 +1,14 @@
 package network.bisq.mobile.domain.service.network
 
 import kotlinx.coroutines.CoroutineScope
-import network.bisq.mobile.domain.data.BackgroundDispatcher
-
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.TimeoutCancellationException
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.utils.Logging
 
 /**
@@ -46,7 +45,7 @@ abstract class ConnectivityService: Logging {
         CONNECTED
     }
 
-    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
+    private val coroutineScope = CoroutineScope(IODispatcher)
     private var job: Job? = null
     private val _status = MutableStateFlow(ConnectivityStatus.DISCONNECTED)
     val status: StateFlow<ConnectivityStatus> = _status
@@ -57,7 +56,7 @@ abstract class ConnectivityService: Logging {
     fun startMonitoring(period: Long = PERIOD) {
         onStart()
         job?.cancel()
-        job = coroutineScope.launch(BackgroundDispatcher) {
+        job = coroutineScope.launch(IODispatcher) {
             while (true) {
                 try {
                     withTimeout(TIMEOUT) {

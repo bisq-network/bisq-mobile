@@ -5,7 +5,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -59,7 +59,7 @@ class SellerState1Presenter(
 
     fun onSendPaymentData() {
         require(paymentAccountData.value.isNotEmpty())
-        job = CoroutineScope(BackgroundDispatcher).launch {
+        job = CoroutineScope(IODispatcher).launch {
             tradesServiceFacade.sellerSendsPaymentAccount(paymentAccountData.value)
         }
     }

@@ -15,7 +15,7 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -57,7 +57,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     // Misc
     private var active = false
-    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
+    private val coroutineScope = CoroutineScope(IODispatcher)
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     private var pubKeyHash: ByteArray? = null

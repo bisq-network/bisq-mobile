@@ -30,7 +30,7 @@ import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.marketListDemoObj
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
@@ -76,7 +76,7 @@ class WebSocketClient(
     private var connectionReady = CompletableDeferred<Boolean>()
     private val requestResponseHandlersMutex = Mutex()
 
-    private val backgroundScope = CoroutineScope(BackgroundDispatcher)
+    private val backgroundScope = CoroutineScope(IODispatcher)
 
     enum class WebSockectClientStatus {
         DISCONNECTED,
@@ -99,7 +99,7 @@ class WebSocketClient(
                 session = httpClient.webSocketSession { url(webSocketUrl) }
                 if (session?.isActive == true) {
                     _connected.value = WebSockectClientStatus.CONNECTED
-                    CoroutineScope(BackgroundDispatcher).launch { startListening() }
+                    CoroutineScope(IODispatcher).launch { startListening() }
                     connectionReady.complete(true)
                     if (!isTest) {
                         log.d { "Websocket connected" }

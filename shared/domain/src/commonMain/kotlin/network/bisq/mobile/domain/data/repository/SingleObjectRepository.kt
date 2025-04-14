@@ -5,7 +5,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.data.persistance.PersistenceSource
 import network.bisq.mobile.domain.utils.Logging
@@ -29,7 +29,7 @@ abstract class SingleObjectRepository<out T : BaseModel>(
     override val data: StateFlow<T?> = _data
 
     private val job = Job()
-    private val scope = CoroutineScope(job + BackgroundDispatcher)
+    private val scope = CoroutineScope(job + IODispatcher)
 
     override suspend fun create(data: @UnsafeVariance T) {
         _data.value = data

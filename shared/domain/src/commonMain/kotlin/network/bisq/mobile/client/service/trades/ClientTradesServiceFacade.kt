@@ -9,7 +9,7 @@ import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Subscription
 import network.bisq.mobile.client.websocket.subscription.Topic
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationDto
@@ -34,7 +34,7 @@ class ClientTradesServiceFacade(
 
     // Misc
     private val tradeId get() = selectedTrade.value?.tradeId
-    private val coroutineScope = CoroutineScope(BackgroundDispatcher)
+    private val coroutineScope = CoroutineScope(IODispatcher)
     private val openTradesSubscription: Subscription<TradeItemPresentationDto> =
         Subscription(webSocketClientProvider, json, Topic.TRADES, this::handleTradeItemPresentationChange)
 

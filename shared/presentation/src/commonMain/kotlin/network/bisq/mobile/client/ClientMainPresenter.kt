@@ -5,7 +5,7 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
@@ -65,7 +65,7 @@ open class ClientMainPresenter(
     }
 
     private fun validateVersion() {
-        CoroutineScope(BackgroundDispatcher).launch {
+        CoroutineScope(IODispatcher).launch {
             if (settingsServiceFacade.isApiCompatible()) {
                 log.d { "trusted node is compatible, continue" }
             } else {
