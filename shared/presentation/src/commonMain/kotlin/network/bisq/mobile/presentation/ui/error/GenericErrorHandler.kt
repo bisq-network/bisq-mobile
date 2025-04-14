@@ -32,8 +32,7 @@ class GenericErrorHandler : Logging {
             getLogger("GenericErrorHandler").e(errorMessage, exception)
             _genericErrorMessage.value = errorMessage + "\nException: " + exception.message
         }
-
-        // TODO how to do it on iOS?
+        
         @JvmStatic
         fun init() {
             setupUncaughtExceptionHandler {

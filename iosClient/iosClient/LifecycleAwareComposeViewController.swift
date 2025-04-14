@@ -11,7 +11,7 @@ class LifecycleAwareComposeViewController: UIViewController {
     init(presenter: MainPresenter, notificationServiceWrapper: NotificationServiceWrapper) {
         self.presenter = presenter
         self.notificationServiceWrapper = notificationServiceWrapper
-        MainPresenter.companion.doInit()
+        GenericErrorHandler.companion.doInit()
         super.init(nibName: nil, bundle: nil)
     }
 
