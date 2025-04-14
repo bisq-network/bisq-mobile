@@ -110,7 +110,6 @@ open class ClientMainPresenter(
         tradeChatMessagesServiceFacade.deactivate()
         settingsServiceFacade.deactivate()
         languageServiceFacade.deactivate()
-        super.onViewUnattaching()
     }
 
     override fun isDemo(): Boolean = ApplicationBootstrapFacade.isDemo
