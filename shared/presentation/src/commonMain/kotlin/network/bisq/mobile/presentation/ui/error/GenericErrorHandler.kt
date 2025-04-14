@@ -32,7 +32,7 @@ class GenericErrorHandler : Logging {
             getLogger("GenericErrorHandler").e(errorMessage, exception)
             _genericErrorMessage.value = errorMessage + "\nException: " + exception.message
         }
-        
+
         @JvmStatic
         fun init() {
             setupUncaughtExceptionHandler {

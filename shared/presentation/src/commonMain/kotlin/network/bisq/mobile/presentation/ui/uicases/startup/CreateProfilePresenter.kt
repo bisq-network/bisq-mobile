@@ -3,10 +3,10 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.model.User
@@ -127,7 +127,7 @@ open class CreateProfilePresenter(
 
         runCatching {
             job = presenterScope.launch {
-                val deferred = CoroutineScope(Dispatchers.Default).async {
+                withContext(Dispatchers.Default) {
                     // takes 200 -1000 ms
                     userProfileService.generateKeyPair { id, nym, profileIcon ->
                         setId(id)
@@ -135,7 +135,6 @@ open class CreateProfilePresenter(
                         setProfileIcon(profileIcon)
                     }
                 }
-                deferred.await()
                 ioScope.launch {
                     userRepository.update(User().apply {
                         uniqueAvatar = profileIcon.value

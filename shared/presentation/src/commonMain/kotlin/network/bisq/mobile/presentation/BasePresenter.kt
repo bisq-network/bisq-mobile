@@ -46,6 +46,7 @@ interface ViewPresenter {
      * @return root navigation controller
      */
     fun getRootNavController(): NavHostController
+
     /**
      * @return main app tab nav controller
      */
@@ -61,7 +62,12 @@ interface ViewPresenter {
      */
     fun isAtHome(): Boolean
 
-    fun navigateToTab(destination: Routes, saveStateOnPopUp: Boolean = true, shouldLaunchSingleTop: Boolean = true, shouldRestoreState: Boolean = true)
+    fun navigateToTab(
+        destination: Routes,
+        saveStateOnPopUp: Boolean = true,
+        shouldLaunchSingleTop: Boolean = true,
+        shouldRestoreState: Boolean = true
+    )
 
     /**
      * Navigate back in the stack
@@ -99,15 +105,23 @@ interface ViewPresenter {
  * Base class allows to have a tree hierarchy of presenters. If the rootPresenter is null, this presenter acts as root
  * if root present is passed, this present attach itself to the root to get updates (consequently its dependants will be always empty
  */
-abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPresenter, Logging {
+abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPresenter, Logging {
     companion object {
         var isDemo = false
     }
 
     protected var view: Any? = null
-    // Coroutine scope for the presenter
+
+    // Coroutine scope for the presenter.
+    // Launches coroutines on the main thread and allows manual cancellation via `presenterScope.cancel()`.
+    // ⚠️ Must be explicitly cancelled (e.g., in onDestroy) to avoid memory leaks.
     protected val presenterScope = CoroutineScope(Dispatchers.Main + Job())
+
+    // Coroutine scope for transient UI tasks such as collecting StateFlows.
+    // ⚠️ This scope is not tied to any lifecycle and must also be manually cancelled when no longer needed.
     protected val uiScope = CoroutineScope(Dispatchers.Main)
+
+    // For network access, persistence or file IO
     protected val ioScope = CoroutineScope(IODispatcher)
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
@@ -148,7 +162,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     init {
         rootPresenter?.registerChild(child = this)
     }
-    
+
     protected fun enableInteractive(enable: Boolean = true) {
         uiScope.launch {
             if (enable) {
@@ -239,8 +253,13 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     /**
      * Navigates to the given tab route inside the main presentation, with default parameters.
      */
-    override fun navigateToTab(destination: Routes, saveStateOnPopUp: Boolean, shouldLaunchSingleTop: Boolean, shouldRestoreState: Boolean) {
-        log.d { "Navigating to tab ${destination.name} "}
+    override fun navigateToTab(
+        destination: Routes,
+        saveStateOnPopUp: Boolean,
+        shouldLaunchSingleTop: Boolean,
+        shouldRestoreState: Boolean
+    ) {
+        log.d { "Navigating to tab ${destination.name} " }
         uiScope.launch(Dispatchers.Main) {
             getRootTabNavController().navigate(destination.name) {
                 getRootTabNavController().graph.startDestinationRoute?.let { route ->
@@ -260,9 +279,11 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
                 showSnackbar("Swipe one more time to exit")
                 goBack()
             }
+
             isAtMainScreen() -> {
                 navigateToTab(Routes.TabHome, saveStateOnPopUp = true, shouldLaunchSingleTop = true, shouldRestoreState = false)
             }
+
             else -> {
                 // normal back navigation
                 goBack()
@@ -270,7 +291,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
         }
     }
 
-//    actual fun exitApp() {
+    //    actual fun exitApp() {
 //        UIApplication.sharedApplication.performSelector(NSSelectorFromString("suspend"))
 //    }
     override fun goBack(): Boolean {
@@ -305,7 +326,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
     }
 
     @CallSuper
-    override fun onViewUnattaching() { }
+    override fun onViewUnattaching() {
+    }
 
     @CallSuper
     override fun onDestroying() {
@@ -393,7 +415,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?): ViewPre
      * @param scope defaults to Coroutine.Main (view thread)
      * @param started defaults to Lazy loading
      */
-    protected fun <M: BaseModel, T> stateFlowFromRepository(
+    protected fun <M : BaseModel, T> stateFlowFromRepository(
         repositoryFlow: StateFlow<M?>,
         transform: (M?) -> T,
         initialValue: T,
