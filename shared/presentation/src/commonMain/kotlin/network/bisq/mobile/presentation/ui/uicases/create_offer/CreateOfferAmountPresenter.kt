@@ -3,8 +3,13 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.replicated.common.monetary.*
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.data.IODispatcher
+import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
@@ -71,7 +76,7 @@ class CreateOfferAmountPresenter(
     val takersCount: StateFlow<Int> = _takersCount
 
     private val _maxBuyAmount = MutableStateFlow<String>("")
-    val maxBuyAmount : StateFlow<String> = _maxBuyAmount
+    val maxBuyAmount: StateFlow<String> = _maxBuyAmount
 
     private val _hintText = MutableStateFlow("")
     val hintText: StateFlow<String> = _hintText
@@ -137,10 +142,11 @@ class CreateOfferAmountPresenter(
         _amountType.value = value
 
         if (isBuy.value) {
-            updateBuyerHintText(if (value == AmountType.FIXED_AMOUNT)
-                quoteSideFixedAmount
-            else
-                quoteSideMaxRangeAmount
+            updateBuyerHintText(
+                if (value == AmountType.FIXED_AMOUNT)
+                    quoteSideFixedAmount
+                else
+                    quoteSideMaxRangeAmount
             )
         }
     }
@@ -181,9 +187,13 @@ class CreateOfferAmountPresenter(
                 value
             ) ?: 0L
         _reputation.value = requiredReputation
-        ioScope.launch {
-            _takersCount.value = findPotentialTakers(requiredReputation)
-            val numSellersString = "bisqEasy.tradeWizard.amount.buyer.numSellers".i18nPlural(takersCount.value)
+
+        presenterScope.launch {
+            val numSellers = withContext(IODispatcher) {
+                findPotentialTakers(requiredReputation)
+            }
+            _takersCount.value = numSellers
+            val numSellersString = "bisqEasy.tradeWizard.amount.buyer.numSellers".i18nPlural(numSellers)
             _hintText.value = "bisqEasy.tradeWizard.amount.buyer.limitInfo".i18n(numSellersString)
         }
     }
@@ -257,7 +267,6 @@ class CreateOfferAmountPresenter(
             .filter { (key, value) -> !ids.contains(key) } // Comment this for dev testing
             .filter { (key, value) -> withTolerance(value) >= requiredReputationScore }
             .count()
-
     }
 
     private fun applyRangeAmountSliderValue(rangeSliderPosition: ClosedFloatingPointRange<Float>) {
