@@ -16,6 +16,7 @@ import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.utils.PriceUtil
+import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -70,9 +71,9 @@ class TakeOfferReviewPresenter(
             takeOfferErrorMessage
                 .drop(1) // To ignore the first init message
                 .collect { message ->
-                log.e { "takeOfferErrorMessage: $message" }
-                showSnackbar(message ?: "Unexpected error occurred, please try again", true)
-            }
+                    log.e { "takeOfferErrorMessage: $message" }
+                    showSnackbar(message ?: "Unexpected error occurred, please try again", true)
+                }
         }
 
         takeOfferModel = takeOfferPresenter.takeOfferModel
@@ -96,7 +97,7 @@ class TakeOfferReviewPresenter(
             amountToPay = formattedBaseAmount
             amountToReceive = formattedQuoteAmount
             fee = "bisqEasy.tradeWizard.review.sellerPaysMinerFee".i18n()
-            feeDetails ="bisqEasy.tradeWizard.review.noTradeFeesLong".i18n()
+            feeDetails = "bisqEasy.tradeWizard.review.noTradeFeesLong".i18n()
         }
 
         marketCodes = offerListItem.bisqEasyOffer.market.marketCodes
@@ -109,19 +110,17 @@ class TakeOfferReviewPresenter(
     }
 
     fun onTakeOffer() {
-        ioScope.launch {
-            setShowTakeOfferProgressDialog(true)
+        setShowTakeOfferProgressDialog(true)
+        enableInteractive(false)
+        presenterScope.launch {
             try {
-                enableInteractive(false)
+                // takeOffer use  withContext(IODispatcher) for calling the service
                 takeOfferPresenter.takeOffer(takeOfferStatus, takeOfferErrorMessage)
-                //delay(3000L)
-                setShowTakeOfferProgressDialog(false)
-                setShowTakeOfferSuccessDialog(true)
             } catch (e: Exception) {
                 log.e("Take offer failed", e)
-                takeOfferErrorMessage.value = e.message ?: "Offer cannot be taken at this time"
-                setShowTakeOfferProgressDialog(false)
+                takeOfferErrorMessage.value = e.message ?: ("Take offer failed with exception: " + e.toString().truncate(20))
             } finally {
+                setShowTakeOfferProgressDialog(false)
                 enableInteractive()
             }
         }
@@ -138,7 +137,7 @@ class TakeOfferReviewPresenter(
         // Navigate back to TabContainer, which is part of RootNavigator's nav stack.
         // Rather than navigating back to a specific Tab, which is part of TabNavController
         navigateBackTo(Routes.TabContainer)
-   }
+    }
 
     private fun applyPriceDetails() {
         val priceSpec = takeOfferModel.offerItemPresentationVO.bisqEasyOffer.priceSpec

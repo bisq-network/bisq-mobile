@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
@@ -117,20 +119,22 @@ class TakeOfferPresenter(
     ) {
         // todo add CompletableDeferred or callback to know when we have succeeded or failed
         // and get errors back
-        val result = tradesServiceFacade.takeOffer(
-            takeOfferModel.offerItemPresentationVO.bisqEasyOffer,
-            takeOfferModel.baseAmount,
-            takeOfferModel.quoteAmount,
-            takeOfferModel.baseSidePaymentMethod,
-            takeOfferModel.quoteSidePaymentMethod,
-            takeOfferStatus,
-            takeOfferErrorMessage
-        )
-        if (result.isSuccess) {
-            tradesServiceFacade.selectOpenTrade(result.getOrThrow())
-        } else {
-            // todo
-            log.w { "Take offer failed ${result.exceptionOrNull()}" }
+        withContext(IODispatcher) {
+            val result = tradesServiceFacade.takeOffer(
+                takeOfferModel.offerItemPresentationVO.bisqEasyOffer,
+                takeOfferModel.baseAmount,
+                takeOfferModel.quoteAmount,
+                takeOfferModel.baseSidePaymentMethod,
+                takeOfferModel.quoteSidePaymentMethod,
+                takeOfferStatus,
+                takeOfferErrorMessage
+            )
+            if (result.isSuccess) {
+                tradesServiceFacade.selectOpenTrade(result.getOrThrow())
+            } else {
+                // todo
+                log.w { "Take offer failed ${result.exceptionOrNull()}" }
+            }
         }
     }
 
