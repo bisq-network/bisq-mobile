@@ -4,6 +4,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
@@ -95,11 +97,17 @@ class TradeChatPresenter(
     }
 
     fun onDontShowAgainChatRulesWarningBox() {
-        jobs.add(ioScope.launch {
-            _showChatRulesWarnBox.value = false
-            val settings = settingsRepository.fetch()!!
-            settings.showChatRulesWarnBox = false
-            settingsRepository.update(settings)
+        _showChatRulesWarnBox.value = false
+
+        jobs.add(presenterScope.launch {
+            val settings = withContext(IODispatcher) {
+                settingsRepository.fetch()
+            }
+
+            settings?.let {
+                it.showChatRulesWarnBox = false
+                settingsRepository.update(it)
+            }
         })
     }
 }
