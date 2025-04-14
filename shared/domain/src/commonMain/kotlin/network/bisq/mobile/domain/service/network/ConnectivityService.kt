@@ -45,7 +45,7 @@ abstract class ConnectivityService: Logging {
         CONNECTED
     }
 
-    private val coroutineScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(IODispatcher)
     private var job: Job? = null
     private val _status = MutableStateFlow(ConnectivityStatus.DISCONNECTED)
     val status: StateFlow<ConnectivityStatus> = _status
@@ -56,7 +56,7 @@ abstract class ConnectivityService: Logging {
     fun startMonitoring(period: Long = PERIOD) {
         onStart()
         job?.cancel()
-        job = coroutineScope.launch(IODispatcher) {
+        job = ioScope.launch(IODispatcher) {
             while (true) {
                 try {
                     withTimeout(TIMEOUT) {

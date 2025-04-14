@@ -31,12 +31,12 @@ class ClientLanguageServiceFacade(
     }
 
     // Misc
-    private val coroutineScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(IODispatcher)
     private var job: Job? = null
 
     // Life cycle
     override fun activate() {
-        job = coroutineScope.launch {
+        job = ioScope.launch {
 
             _i18nPairs.value = listOf(
                 "en" to "English (English)",

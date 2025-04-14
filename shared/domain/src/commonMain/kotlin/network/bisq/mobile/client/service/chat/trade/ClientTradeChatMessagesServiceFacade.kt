@@ -41,7 +41,7 @@ class ClientTradeChatMessagesServiceFacade(
 
     // Misc
     private var active = false
-    private val coroutineScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(IODispatcher)
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     override fun activate() {
@@ -50,23 +50,23 @@ class ClientTradeChatMessagesServiceFacade(
             deactivate()
         }
 
-        jobs += coroutineScope.launch {
+        jobs += ioScope.launch {
             selectedTrade.collect { _ -> updateChatMessages() }
         }
-        jobs += coroutineScope.launch {
+        jobs += ioScope.launch {
             selectedUserProfileId.collect { _ -> updateChatMessages() }
         }
-        jobs += coroutineScope.launch {
+        jobs += ioScope.launch {
             allBisqEasyOpenTradeMessages.collect { _ -> updateChatMessages() }
         }
-        jobs += coroutineScope.launch {
+        jobs += ioScope.launch {
             allChatReactions.collect { _ -> updateChatMessages() }
         }
 
-        jobs += coroutineScope.launch {
+        jobs += ioScope.launch {
             subscribeTradeChats()
         }
-        jobs += coroutineScope.launch {
+        jobs += ioScope.launch {
             subscribeChatReactions()
         }
 

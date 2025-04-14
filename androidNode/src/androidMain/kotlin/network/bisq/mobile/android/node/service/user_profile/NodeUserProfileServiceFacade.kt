@@ -57,7 +57,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     // Misc
     private var active = false
-    private val coroutineScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(IODispatcher)
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     private var pubKeyHash: ByteArray? = null
@@ -71,7 +71,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             deactivate()
         }
 
-        jobs += coroutineScope.launch {
+        jobs += ioScope.launch {
             _selectedUserProfile.value = getSelectedUserProfile()
         }
 

@@ -34,7 +34,7 @@ class ClientUserProfileServiceFacade(
 
     // Misc
     private var active = false
-    private val coroutineScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(IODispatcher)
     private var jobs: MutableSet<Job> = mutableSetOf()
 
 
@@ -44,7 +44,7 @@ class ClientUserProfileServiceFacade(
             deactivate()
         }
 
-        jobs += coroutineScope.launch {
+        jobs += ioScope.launch {
             _selectedUserProfile.value = getSelectedUserProfile()
         }
 

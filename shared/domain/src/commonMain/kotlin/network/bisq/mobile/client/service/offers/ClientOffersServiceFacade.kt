@@ -43,7 +43,7 @@ class ClientOffersServiceFacade(
     // Misc
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
 
-    private val coroutineScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(IODispatcher)
     private var offersSequenceNumber = atomic(-1)
     private var subscribeOffersJob: Job? = null
     private var observeMarketPriceJob: Job? = null
@@ -55,7 +55,7 @@ class ClientOffersServiceFacade(
         observeMarketPriceJob = observeMarketPrice()
 
         cancelGetMarketsJob()
-        getMarketsJob = coroutineScope.launch {
+        getMarketsJob = ioScope.launch {
             val result = apiGateway.getMarkets()
             if (result.isFailure) {
                 result.exceptionOrNull()?.let { log.e { "GetMarkets request failed with exception $it" } }
@@ -127,7 +127,7 @@ class ClientOffersServiceFacade(
 
     // Private
     private fun observeMarketPrice(): Job {
-        return coroutineScope.launch {
+        return ioScope.launch {
             marketPriceServiceFacade.selectedMarketPriceItem.collectLatest { marketPriceItem ->
                 if (marketPriceItem != null) {
                     _selectedOfferbookMarket.value.setFormattedPrice(marketPriceItem.formattedPrice)
@@ -157,7 +157,7 @@ class ClientOffersServiceFacade(
 
     private fun subscribeOffers() {
         if (subscribeOffersJob == null) {
-            subscribeOffersJob = coroutineScope.launch {
+            subscribeOffersJob = ioScope.launch {
                 offersSequenceNumber = atomic(-1)
                 // We subscribe for all markets
                 val observer = apiGateway.subscribeOffers()

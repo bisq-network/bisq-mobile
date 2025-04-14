@@ -31,14 +31,14 @@ class ClientMarketPriceServiceFacade(
     override val selectedFormattedMarketPrice: StateFlow<String> = _selectedFormattedMarketPrice
 
     // Misc
-    private val coroutineScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(IODispatcher)
     private var job: Job? = null
     private var selectedMarket: MarketVO = MarketVOFactory.USD// todo use persisted or user default
     private val quotes = ConcurrentMap<String, PriceQuoteVO>()
 
     // Life cycle
     override fun activate() {
-        job = coroutineScope.launch {
+        job = ioScope.launch {
             val observer = apiGateway.subscribeMarketPrice()
             observer.webSocketEvent.collect { webSocketEvent ->
                 try {

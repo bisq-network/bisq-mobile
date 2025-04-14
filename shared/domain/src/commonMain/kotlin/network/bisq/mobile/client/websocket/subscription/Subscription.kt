@@ -17,13 +17,13 @@ class Subscription<T>(
 ) : Logging {
 
     // Misc
-    private val coroutineScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(IODispatcher)
     private var job: Job? = null
     private var sequenceNumber = atomic(-1)
 
     fun subscribe() {
         require(job == null)
-        job = coroutineScope.launch {
+        job = ioScope.launch {
             // subscribe blocks until we get a response
             val observer = webSocketClientProvider.get().subscribe(topic)
             observer.webSocketEvent.collect { webSocketEvent ->
