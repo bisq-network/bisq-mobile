@@ -3,8 +3,10 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
@@ -36,23 +38,30 @@ open class SplashPresenter(
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     override fun onViewAttached() {
-        log.d { "SplashPresenter running" }
-        jobs.add(ioScope.launch {
-            val settingsMobile: Settings = settingsRepository.fetch() ?: Settings()
-            if (settingsMobile.firstLaunch) {
-                val deviceLanguageCode = getDeviceLanguageCode()
-                val i18nSupportedCodes = languageServiceFacade.i18nPairs.value.map { it.first }
-                if (i18nSupportedCodes.contains(deviceLanguageCode)) {
-                    settingsServiceFacade.setLanguageCode(deviceLanguageCode)
-                } else {
-                    settingsServiceFacade.setLanguageCode("en")
+        jobs.add(presenterScope.launch {
+            val settings: Settings = withContext(IODispatcher) {
+                settingsRepository.fetch() ?: Settings()
+            }
+
+            if (settings.firstLaunch) {
+                withContext(IODispatcher) {
+                    val deviceLanguageCode = getDeviceLanguageCode()
+                    val i18nSupportedCodes = languageServiceFacade.i18nPairs.value.map { it.first }
+                    if (i18nSupportedCodes.contains(deviceLanguageCode)) {
+                        settingsServiceFacade.setLanguageCode(deviceLanguageCode)
+                    } else {
+                        settingsServiceFacade.setLanguageCode("en")
+                    }
                 }
             }
 
-            userRepository.fetch()?.let {
-                it.lastActivity = Clock.System.now().toEpochMilliseconds()
-                userRepository.update(it)
+            withContext(IODispatcher) {
+                userRepository.fetch()?.let {
+                    it.lastActivity = Clock.System.now().toEpochMilliseconds()
+                    userRepository.update(it)
+                }
             }
+
             progress.collect { value ->
                 when {
                     value == 1.0f -> navigateToNextScreen()
