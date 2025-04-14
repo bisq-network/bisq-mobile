@@ -43,9 +43,10 @@ class TradeChatPresenter(
         val selectedTrade = tradesServiceFacade.selectedTrade.value!!
 
         this.presenterScope.launch {
-            val settings = settingsRepository.fetch()!!
-            _showChatRulesWarnBox.value = settings.showChatRulesWarnBox
+            val settings = withContext(IODispatcher) { settingsRepository.fetch() }
+            settings?.let { _showChatRulesWarnBox.value = it.showChatRulesWarnBox }
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
+
             bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
                 _chatMessages.value = messages.toList()
             }
