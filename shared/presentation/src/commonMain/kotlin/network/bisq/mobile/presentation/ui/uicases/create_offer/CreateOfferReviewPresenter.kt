@@ -110,13 +110,16 @@ class CreateOfferReviewPresenter(
     }
 
     fun onCreateOffer() {
-        ioScope.launch {
-            enableInteractive(false)
-            // TODO deactivate buttons, show waiting state
+        // TODO deactivate buttons, show waiting state
+        enableInteractive(false)
+
+        presenterScope.launch {
+            // We use withContext(IODispatcher) for the service call, thus we switch context and block
             createOfferPresenter.createOffer()
-            // TODO hide waiting state, show successfully published state, show button to open offer book, clear navigation backstack
+            // After createOffer is completed  we are back on presenterScope
             onGoToOfferList()
             enableInteractive()
+            // TODO hide waiting state, show successfully published state, show button to open offer book, clear navigation backstack
         }
     }
 

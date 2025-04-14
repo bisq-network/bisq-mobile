@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.replicated.account.payment_method.BitcoinPaymentRailEnum
 import network.bisq.mobile.domain.data.replicated.account.payment_method.FiatPaymentRailUtil
@@ -9,13 +11,11 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVOExtensions.getPriceQuoteVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -122,9 +122,10 @@ class CreateOfferPresenter(
 
     suspend fun createOffer() {
         if (isDemo()) {
-            showSnackbar("Cannot create offer in demostrtion mode")
+            showSnackbar("Cannot create offer in demonstration mode")
             return
         }
+
         val direction: DirectionEnum = createOfferModel.direction
         val market: MarketVO = createOfferModel.market!!
         val bitcoinPaymentMethods: Set<String> = createOfferModel.selectedBaseSidePaymentMethods
@@ -146,20 +147,24 @@ class CreateOfferPresenter(
         }
 
         val supportedLanguageCodes: Set<String> = setOf("en") //todo
-        offersServiceFacade.createOffer(
-            direction,
-            market,
-            bitcoinPaymentMethods,
-            fiatPaymentMethods,
-            amountSpec,
-            priceSpec,
-            supportedLanguageCodes
-        )
+
+        withContext(IODispatcher) {
+            offersServiceFacade.createOffer(
+                direction,
+                market,
+                bitcoinPaymentMethods,
+                fiatPaymentMethods,
+                amountSpec,
+                priceSpec,
+                supportedLanguageCodes
+            )
+        }
     }
 
     fun getMostRecentPriceQuote(market: MarketVO): PriceQuoteVO {
         if (isDemo()) {
-            val marketVO = marketListDemoObj.find { market.baseCurrencyCode == it.baseCurrencyCode && market.quoteCurrencyCode == market.quoteCurrencyCode }
+            val marketVO =
+                marketListDemoObj.find { market.baseCurrencyCode == it.baseCurrencyCode && market.quoteCurrencyCode == market.quoteCurrencyCode }
             return PriceQuoteVO(
                 100,
                 4, 2,
