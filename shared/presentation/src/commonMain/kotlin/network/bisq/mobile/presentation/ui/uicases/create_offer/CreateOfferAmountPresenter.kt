@@ -13,6 +13,7 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -199,25 +200,28 @@ class CreateOfferAmountPresenter(
     }
 
     private fun updateSellerHintText() {
-        ioScope.launch {
-            val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
+        presenterScope.launch {
+            val userProfile: UserProfileVO? = withContext(IODispatcher) {
+                userProfileServiceFacade.getSelectedUserProfile()
+            }
+            userProfile?.let { profile ->
+                _reputation.value = reputationServiceFacade.getReputation(profile.id).getOrNull()?.totalScore ?: 0L
 
-            _reputation.value = reputationServiceFacade.getReputation(profile.id).getOrNull()?.totalScore ?: 0L
+                val market = createOfferModel.market ?: return@launch
+                val reputationBasedMaxSell = BisqEasyTradeAmountLimits.getReputationBasedQuoteSideAmount(
+                    marketPriceServiceFacade,
+                    market,
+                    _reputation.value
+                )
 
-            val market = createOfferModel.market ?: return@launch
-
-            val reputationBasedMaxSell = BisqEasyTradeAmountLimits.getReputationBasedQuoteSideAmount(
-                marketPriceServiceFacade,
-                market,
-                _reputation.value
-            )!!
-
-            _formattedReputationBasedMaxSellAmount.value = AmountFormatter.formatAmount(
-                reputationBasedMaxSell,
-                true, true
-            )
-
-            _hintText.value = "bisqEasy.tradeWizard.amount.seller.limitInfo".i18n(_formattedReputationBasedMaxSellAmount.value)
+                reputationBasedMaxSell?.let { amount ->
+                    _formattedReputationBasedMaxSellAmount.value = AmountFormatter.formatAmount(
+                        amount,
+                        true, true
+                    )
+                    _hintText.value = "bisqEasy.tradeWizard.amount.seller.limitInfo".i18n(_formattedReputationBasedMaxSellAmount.value)
+                }
+            }
         }
     }
 
