@@ -138,7 +138,7 @@ class TakeOfferReviewPresenter(
                 setShowTakeOfferSuccessDialog(true)
             } catch (e: Exception) {
                 log.e("Take offer failed", e)
-                takeOfferErrorMessage.value = e.message ?: ("Take offer failed with exception: " + e.toString().truncate(20))
+                takeOfferErrorMessage.value = e.message ?: ("Take offer failed with exception: " + e.toString().truncate(50))
             } finally {
                 setShowTakeOfferProgressDialog(false)
                 enableInteractive()

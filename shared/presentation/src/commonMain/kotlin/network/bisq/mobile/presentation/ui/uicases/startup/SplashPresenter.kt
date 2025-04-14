@@ -102,7 +102,7 @@ open class SplashPresenter(
 
                     // Scenario 1: All good and setup for both androidNode and xClients
                     if (user != null && hasProfile) {
-                        // TOOD:
+                        // TODO:
                         // 1) Is this the right condition?
                         // 2a) androidNode being able to connect with other peers and
                         // 2b) xClients being able to connect with remote instance happening successfuly as part of services init?
