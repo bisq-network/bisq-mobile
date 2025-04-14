@@ -171,7 +171,19 @@ actual class PlatformImage(val dataUrl: String) {
         actual fun deserialize(data: ByteArray): PlatformImage {
             // Convert ByteArray to data URL
             val base64 = js("btoa")(data.decodeToString()).unsafeCast<String>()
-            return PlatformImage("data:image/png;base64,$base64")
+            // Try to determine image type from the first few bytes
+            val imageType = when {
+                data.size >= 2 && data[0] == 0xFF.toByte() && data[1] == 0xD8.toByte() -> "image/jpeg"
+                data.size >= 4 && data[0] == 0x89.toByte() && data[1] == 0x50.toByte() &&
+                    data[2] == 0x4E.toByte() && data[3] == 0x47.toByte() -> "image/png"
+                data.size >= 6 && data[0] == 0x47.toByte() && data[1] == 0x49.toByte() &&
+                    data[2] == 0x46.toByte() -> "image/gif"
+                data.size >= 4 && data[0] == 0x57.toByte() && data[1] == 0x45.toByte() &&
+                    data[2] == 0x42.toByte() && data[3] == 0x50.toByte() -> "image/webp"
+                // Add more formats as needed
+                else -> "application/octet-stream" // Default fallback
+            }
+            return PlatformImage("data:$imageType;base64,$base64")
         }
     }
 }
