@@ -118,7 +118,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     protected val presenterScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     // For network access, persistence or file IO
-    protected val ioScope = CoroutineScope(IODispatcher)
+    protected val ioScope = CoroutineScope(IODispatcher + SupervisorJob())
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
 
