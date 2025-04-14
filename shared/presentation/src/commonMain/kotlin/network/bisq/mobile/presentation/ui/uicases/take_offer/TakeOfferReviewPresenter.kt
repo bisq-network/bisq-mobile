@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
@@ -50,24 +51,26 @@ class TakeOfferReviewPresenter(
 
     private val _showTakeOfferProgressDialog = MutableStateFlow(false)
     val showTakeOfferProgressDialog: StateFlow<Boolean> get() = _showTakeOfferProgressDialog
-    fun setShowTakeOfferProgressDialog(value: Boolean) {
+    private fun setShowTakeOfferProgressDialog(value: Boolean) {
         _showTakeOfferProgressDialog.value = value
     }
 
     private val _showTakeOfferSuccessDialog = MutableStateFlow(false)
     val showTakeOfferSuccessDialog: StateFlow<Boolean> get() = _showTakeOfferSuccessDialog
-    fun setShowTakeOfferSuccessDialog(value: Boolean) {
+    private fun setShowTakeOfferSuccessDialog(value: Boolean) {
         _showTakeOfferSuccessDialog.value = value
     }
 
+    private var jobs: MutableSet<Job> = mutableSetOf()
+
     override fun onViewAttached() {
-        this.presenterScope.launch {
+        presenterScope.launch {
             takeOfferStatus.collect { value ->
                 log.i { "takeOfferStatus: $value" }
                 //todo show state
             }
         }
-        this.presenterScope.launch {
+        presenterScope.launch {
             takeOfferErrorMessage
                 .drop(1) // To ignore the first init message
                 .collect { message ->
@@ -105,6 +108,11 @@ class TakeOfferReviewPresenter(
         applyPriceDetails()
     }
 
+    override fun onViewUnattaching() {
+        jobs.forEach { it.cancel() }
+        jobs.clear()
+    }
+
     fun onBack() {
         navigateBack()
     }
@@ -112,10 +120,22 @@ class TakeOfferReviewPresenter(
     fun onTakeOffer() {
         setShowTakeOfferProgressDialog(true)
         enableInteractive(false)
-        presenterScope.launch {
+
+        jobs.forEach { it.cancel() }
+        jobs.clear()
+        jobs.add(presenterScope.launch {
             try {
-                // takeOffer use  withContext(IODispatcher) for calling the service
-                takeOfferPresenter.takeOffer(takeOfferStatus, takeOfferErrorMessage)
+                // takeOffer use withContext(IODispatcher) for calling the service
+                val (statusFlow, errorFlow) = takeOfferPresenter.takeOffer()
+
+                // The stateFlow objects are set in the ioScope in the service. Thus we need to map them to the presenterScope.
+                jobs.add(launch {
+                    statusFlow.collect { takeOfferStatus.value = it }
+                })
+                jobs.add(launch {
+                    errorFlow.collect { takeOfferErrorMessage.value = it }
+                })
+                setShowTakeOfferSuccessDialog(true)
             } catch (e: Exception) {
                 log.e("Take offer failed", e)
                 takeOfferErrorMessage.value = e.message ?: ("Take offer failed with exception: " + e.toString().truncate(20))
@@ -123,7 +143,7 @@ class TakeOfferReviewPresenter(
                 setShowTakeOfferProgressDialog(false)
                 enableInteractive()
             }
-        }
+        })
     }
 
     fun onGoToOpenTrades() {

@@ -113,12 +113,10 @@ class TakeOfferPresenter(
         takeOfferModel.baseSidePaymentMethod = baseSidePaymentMethod
     }
 
-    suspend fun takeOffer(
-        takeOfferStatus: MutableStateFlow<TakeOfferStatus?>,
-        takeOfferErrorMessage: MutableStateFlow<String?>
-    ) {
-        // todo add CompletableDeferred or callback to know when we have succeeded or failed
-        // and get errors back
+    suspend fun takeOffer(): TakeOfferFlowResult {
+        val takeOfferStatus = MutableStateFlow<TakeOfferStatus?>(null)
+        val takeOfferErrorMessage = MutableStateFlow<String?>(null)
+
         withContext(IODispatcher) {
             val result = tradesServiceFacade.takeOffer(
                 takeOfferModel.offerItemPresentationVO.bisqEasyOffer,
@@ -136,6 +134,7 @@ class TakeOfferPresenter(
                 log.w { "Take offer failed ${result.exceptionOrNull()}" }
             }
         }
+        return TakeOfferFlowResult(takeOfferStatus, takeOfferErrorMessage)
     }
 
     fun getMostRecentPriceQuote(): PriceQuoteVO {
