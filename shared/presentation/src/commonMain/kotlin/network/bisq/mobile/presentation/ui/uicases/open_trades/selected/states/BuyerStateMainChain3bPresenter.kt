@@ -1,11 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.from
@@ -50,10 +50,10 @@ class BuyerStateMainChain3bPresenter(
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     override fun onViewAttached() {
-       if (txConfirmationState.value == CONFIRMED) {
-             _buttonText.value = "bisqEasy.tradeState.info.phase3b.button.next".i18n()
+        if (txConfirmationState.value == CONFIRMED) {
+            _buttonText.value = "bisqEasy.tradeState.info.phase3b.button.next".i18n()
         } else {
-             _buttonText.value = "bisqEasy.tradeState.info.phase3b.button.skip".i18n()
+            _buttonText.value = "bisqEasy.tradeState.info.phase3b.button.skip".i18n()
             _skip.value = true
         }
 
@@ -74,7 +74,7 @@ class BuyerStateMainChain3bPresenter(
     }
 
     fun onCompleteTrade() {
-        jobs.add(CoroutineScope(IODispatcher).launch {
+        jobs.add(ioScope.launch {
             tradesServiceFacade.btcConfirmed()
         })
     }
@@ -90,9 +90,12 @@ class BuyerStateMainChain3bPresenter(
         if (txId == null || address == null) {
             return
         }
-        jobs.add(CoroutineScope(IODispatcher).launch {
-            _blockExplorer.value = ""
-            val result = explorerServiceFacade.getSelectedBlockExplorer()
+
+        _blockExplorer.value = ""
+        jobs.add(presenterScope.launch {
+            val result = withContext(IODispatcher) {
+                explorerServiceFacade.getSelectedBlockExplorer()
+            }
             if (result.isSuccess) {
                 _blockExplorer.value = result.getOrThrow()
             } else {
@@ -108,11 +111,15 @@ class BuyerStateMainChain3bPresenter(
         address: String,
         openTradeItemModel: TradeItemPresentationModel
     ) {
-        jobs.add(CoroutineScope(IODispatcher).launch {
-            _txConfirmationState.value = REQUEST_STARTED
-            _errorMessage.value = null
-            _balanceFromTx.value = ""
-            val explorerResult = explorerServiceFacade.requestTx(txId, address)
+
+        _txConfirmationState.value = REQUEST_STARTED
+        _errorMessage.value = null
+        _balanceFromTx.value = ""
+        jobs.add(presenterScope.launch {
+            val explorerResult = withContext(IODispatcher) {
+                explorerServiceFacade.requestTx(txId, address)
+            }
+
             if (explorerResult.isSuccess) {
                 if (explorerResult.isConfirmed) {
                     _txConfirmationState.value = CONFIRMED
@@ -122,7 +129,7 @@ class BuyerStateMainChain3bPresenter(
 
                     // We request again after 20 seconds.
                     // As its presenterScope it will get canceled when presenter is deactivated.
-                    this@BuyerStateMainChain3bPresenter.presenterScope.launch {
+                    presenterScope.launch {
                         delay(20_000)
                         requestTx()
                     }
