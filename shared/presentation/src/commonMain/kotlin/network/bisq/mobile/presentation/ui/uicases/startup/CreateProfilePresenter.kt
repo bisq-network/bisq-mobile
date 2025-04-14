@@ -9,6 +9,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -126,7 +127,7 @@ open class CreateProfilePresenter(
         log.i { "Show busy animation for generateKeyPair" }
 
         runCatching {
-            job = this.presenterScope.launch {
+            job = presenterScope.launch {
                 withContext(Dispatchers.Default) {
                     // takes 200 -1000 ms
                     userProfileService.generateKeyPair { id, nym, profileIcon ->
@@ -135,17 +136,20 @@ open class CreateProfilePresenter(
                         setProfileIcon(profileIcon)
                     }
                 }
-                ioScope.launch {
+
+                withContext(IODispatcher) {
                     userRepository.update(User().apply {
                         uniqueAvatar = profileIcon.value
                         lastActivity = Clock.System.now().toEpochMilliseconds()
                     })
                 }
+
                 _generateKeyPairInProgress.value = false
                 log.i { "Hide busy animation for generateKeyPair" }
             }
         }.onFailure { e ->
             GenericErrorHandler.handleGenericError("Generating the key pair failed.", e)
+            _generateKeyPairInProgress.value = false
         }
     }
 
