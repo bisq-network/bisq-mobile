@@ -45,7 +45,7 @@ abstract class State4Presenter(
             val result = tradesServiceFacade.closeTrade()
             when {
                 result.isFailure -> {
-                    presenterScope.launch {
+                    this@State4Presenter.presenterScope.launch {
                         _showCloseTradeDialog.value = false
                         result.exceptionOrNull()?.let { exception -> GenericErrorHandler.handleGenericError(exception.message) }
                             ?: GenericErrorHandler.handleGenericError("No Exception is set in result failure")
@@ -53,7 +53,7 @@ abstract class State4Presenter(
                 }
 
                 result.isSuccess -> {
-                    presenterScope.launch {
+                    this@State4Presenter.presenterScope.launch {
                         _showCloseTradeDialog.value = false
                         navigateBack()
                     }

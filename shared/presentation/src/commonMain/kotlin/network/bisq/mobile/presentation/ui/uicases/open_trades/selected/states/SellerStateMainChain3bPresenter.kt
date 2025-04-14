@@ -123,7 +123,7 @@ class SellerStateMainChain3bPresenter(
 
                     // We request again after 20 seconds.
                     // As its presenterScope it will get canceled when presenter is deactivated.
-                    presenterScope.launch {
+                    this@SellerStateMainChain3bPresenter.presenterScope.launch {
                         delay(20_000)
                         requestTx()
                     }

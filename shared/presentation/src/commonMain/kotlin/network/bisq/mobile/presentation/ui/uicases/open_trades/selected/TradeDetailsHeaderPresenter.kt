@@ -77,13 +77,13 @@ class TradeDetailsHeaderPresenter(
             rightCode = openTradeItemModel.baseCurrencyCode
         }
 
-        presenterScope.launch {
+        this.presenterScope.launch {
             openTradeItemModel.bisqEasyTradeModel.tradeState.collect { tradeState ->
                 tradeStateChanged(tradeState)
             }
         }
 
-        presenterScope.launch {
+        this.presenterScope.launch {
             openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect { isInMediation ->
                 this@TradeDetailsHeaderPresenter._isInMediation.value = isInMediation
             }

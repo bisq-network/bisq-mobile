@@ -63,7 +63,7 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlo
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlowPresenter.TradePhaseState.SELLER_STATE4
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlowPresenter.TradePhaseState.SELLER_STATE_LIGHTNING3B
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlowPresenter.TradePhaseState.SELLER_STATE_MAIN_CHAIN3B
-import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.*
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.TradeStatesProvider
 
 
 class TradeFlowPresenter(
@@ -97,7 +97,7 @@ class TradeFlowPresenter(
         val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
         isMainChain = paymentMethod == "MAIN_CHAIN"
 
-        presenterScope.launch {
+        this.presenterScope.launch {
             openTradeItemModel.bisqEasyTradeModel.tradeState.collect { tradeState ->
                 log.d { "Trade State Changed to: $tradeState" }
                 tradeStateChanged(tradeState)

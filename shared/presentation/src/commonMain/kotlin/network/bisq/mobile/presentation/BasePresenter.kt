@@ -6,7 +6,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -115,11 +115,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     // Coroutine scope for the presenter.
     // Launches coroutines on the main thread and allows manual cancellation via `presenterScope.cancel()`.
     // ⚠️ Must be explicitly cancelled (e.g., in onDestroy) to avoid memory leaks.
-    protected val presenterScope = CoroutineScope(Dispatchers.Main + Job())
-
-    // Coroutine scope for transient UI tasks such as collecting StateFlows.
-    // ⚠️ This scope is not tied to any lifecycle and must also be manually cancelled when no longer needed.
-    protected val uiScope = CoroutineScope(Dispatchers.Main)
+    protected val presenterScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     // For network access, persistence or file IO
     protected val ioScope = CoroutineScope(IODispatcher)
@@ -136,13 +132,13 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     }
 
     override fun showSnackbar(message: String, isError: Boolean) {
-        uiScope.launch(Dispatchers.Main) {
+        this.presenterScope.launch(Dispatchers.Main) {
             snackbarHostState.showSnackbar(message, withDismissAction = true)
         }
     }
 
     override fun dismissSnackbar() {
-        uiScope.launch(Dispatchers.Main) {
+        this.presenterScope.launch(Dispatchers.Main) {
             snackbarHostState.currentSnackbarData?.dismiss()
         }
     }
@@ -164,7 +160,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     }
 
     protected fun enableInteractive(enable: Boolean = true) {
-        uiScope.launch {
+        this.presenterScope.launch {
             if (enable) {
                 delay(250L)
             }
@@ -223,7 +219,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
      */
     protected fun navigateTo(destination: Routes, customSetup: (NavOptionsBuilder) -> Unit = {}) {
         enableInteractive(false)
-        uiScope.launch(Dispatchers.Main) {
+        this.presenterScope.launch(Dispatchers.Main) {
             try {
                 rootNavigator.navigate(destination.name) {
                     customSetup(this)
@@ -245,7 +241,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
      * Back navigation popping back stack
      */
     protected fun navigateBackTo(destination: Routes, shouldInclusive: Boolean = false, shouldSaveState: Boolean = false) {
-        uiScope.launch(Dispatchers.Main) {
+        this.presenterScope.launch(Dispatchers.Main) {
             rootNavigator.popBackStack(destination.name, inclusive = shouldInclusive, saveState = shouldSaveState)
         }
     }
@@ -260,7 +256,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         shouldRestoreState: Boolean
     ) {
         log.d { "Navigating to tab ${destination.name} " }
-        uiScope.launch(Dispatchers.Main) {
+        this.presenterScope.launch(Dispatchers.Main) {
             getRootTabNavController().navigate(destination.name) {
                 getRootTabNavController().graph.startDestinationRoute?.let { route ->
                     popUpTo(route) {
@@ -297,7 +293,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     override fun goBack(): Boolean {
         enableInteractive(false)
         var wentBack = false
-        uiScope.launch(Dispatchers.Main) {
+        this.presenterScope.launch(Dispatchers.Main) {
             try {
                 log.i { "goBack default implementation" }
                 if (isIOS()) {
@@ -381,7 +377,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     }
 
     fun detachView() {
-        presenterScope.cancel()
+        this.presenterScope.cancel()
 
         onViewUnattaching()
         this.view = null
@@ -433,7 +429,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     private fun cleanup() {
         try {
-            presenterScope.cancel()
+            this.presenterScope.cancel()
             // copy to avoid concurrency exception - no problem with multiple on destroy calls
             dependants?.toList()?.forEach { it.onDestroy() }
         } catch (e: Exception) {

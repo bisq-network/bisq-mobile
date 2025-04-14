@@ -40,7 +40,7 @@ class TradeChatPresenter(
         require(tradesServiceFacade.selectedTrade.value != null)
         val selectedTrade = tradesServiceFacade.selectedTrade.value!!
 
-        presenterScope.launch {
+        this.presenterScope.launch {
             val settings = settingsRepository.fetch()!!
             _showChatRulesWarnBox.value = settings.showChatRulesWarnBox
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel

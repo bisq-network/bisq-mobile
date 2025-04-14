@@ -44,13 +44,13 @@ class OpenTradePresenter(
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
 
-        presenterScope.launch {
+        this.presenterScope.launch {
             openTradeItemModel.bisqEasyTradeModel.tradeState.collect { tradeState ->
                 tradeStateChanged(tradeState)
             }
         }
 
-        presenterScope.launch {
+        this.presenterScope.launch {
             openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect { isInMediation ->
                 _isInMediation.value = isInMediation
             }

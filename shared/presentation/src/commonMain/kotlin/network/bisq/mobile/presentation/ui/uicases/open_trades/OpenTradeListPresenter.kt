@@ -39,7 +39,7 @@ class OpenTradeListPresenter(
 
     fun onConfirmTradeRules(value: Boolean) {
         _tradeGuideVisible.value = false
-        presenterScope.launch {
+        this.presenterScope.launch {
             settingsServiceFacade.confirmTradeRules(value)
         }
     }

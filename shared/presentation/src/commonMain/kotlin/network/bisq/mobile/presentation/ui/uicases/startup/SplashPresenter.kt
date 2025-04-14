@@ -73,7 +73,7 @@ open class SplashPresenter(
     }
 
     private fun navigateToNextScreen() {
-        uiScope.launch {
+        presenterScope.launch {
             if (!hasConnectivity()) {
                 navigateToTrustedNodeSetup()
             }

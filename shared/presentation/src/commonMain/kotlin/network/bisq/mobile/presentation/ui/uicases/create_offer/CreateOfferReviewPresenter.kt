@@ -7,10 +7,10 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
-import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class CreateOfferReviewPresenter(
@@ -121,7 +121,7 @@ class CreateOfferReviewPresenter(
     }
 
     private fun onGoToOfferList() {
-        presenterScope.launch {
+        this.presenterScope.launch {
             // FIXME without clearing the backstack it does not work
             val rootNavController = getRootNavController()
             var currentBackStack = rootNavController.currentBackStack.value

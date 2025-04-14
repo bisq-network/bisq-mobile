@@ -60,13 +60,13 @@ class TakeOfferReviewPresenter(
     }
 
     override fun onViewAttached() {
-        presenterScope.launch {
+        this.presenterScope.launch {
             takeOfferStatus.collect { value ->
                 log.i { "takeOfferStatus: $value" }
                 //todo show state
             }
         }
-        presenterScope.launch {
+        this.presenterScope.launch {
             takeOfferErrorMessage
                 .drop(1) // To ignore the first init message
                 .collect { message ->

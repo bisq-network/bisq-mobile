@@ -126,7 +126,7 @@ open class CreateProfilePresenter(
         log.i { "Show busy animation for generateKeyPair" }
 
         runCatching {
-            job = presenterScope.launch {
+            job = this.presenterScope.launch {
                 withContext(Dispatchers.Default) {
                     // takes 200 -1000 ms
                     userProfileService.generateKeyPair { id, nym, profileIcon ->

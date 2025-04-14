@@ -151,7 +151,7 @@ class UserProfileSettingsPresenter(
     }
 
     private fun setShowLoading(show: Boolean = true) {
-        uiScope.launch {
+        presenterScope.launch {
             _showLoading.value = show
         }
     }

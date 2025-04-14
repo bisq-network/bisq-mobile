@@ -34,7 +34,7 @@ class TradeGuidePresenter(
     }
 
     fun tradeRulesNextClick() {
-        presenterScope.launch {
+        this.presenterScope.launch {
             val isConfirmed = tradeRulesConfirmed.first()
             if (!isConfirmed) {
                 settingsServiceFacade.confirmTradeRules(true)
