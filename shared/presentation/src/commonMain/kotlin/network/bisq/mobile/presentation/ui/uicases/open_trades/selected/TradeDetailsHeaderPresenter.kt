@@ -3,6 +3,8 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -222,21 +224,34 @@ class TradeDetailsHeaderPresenter(
     }
 
     fun onInterruptTrade() {
-        ioScope.launch {
-            require(selectedTrade.value != null)
+        require(selectedTrade.value != null)
 
-            var result: Result<Unit>? = null
-            if (tradeCloseType.value == TradeCloseType.REJECT) {
-                result = tradesServiceFacade.rejectTrade()
-            } else if (tradeCloseType.value == TradeCloseType.CANCEL) {
-                result = tradesServiceFacade.cancelTrade()
+        presenterScope.launch {
+            val result: Result<Unit>? = withContext(IODispatcher) {
+                when (tradeCloseType.value) {
+                    TradeCloseType.REJECT -> {
+                        tradesServiceFacade.rejectTrade()
+                    }
+
+                    TradeCloseType.CANCEL -> {
+                        tradesServiceFacade.cancelTrade()
+                    }
+
+                    else -> {
+                        null
+                    }
+                }
             }
+
             if (result != null) {
                 when {
                     result.isFailure -> _showInterruptionConfirmationDialog.value = false
                     result.isSuccess -> _showInterruptionConfirmationDialog.value = false
                 }
             }
+        }
+
+        ioScope.launch {
         }
     }
 
