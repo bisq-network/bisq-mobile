@@ -59,17 +59,19 @@ class TradeChatPresenter(
     }
 
     fun sendChatMessage(text: String) {
-        jobs.add(ioScope.launch {
-            val citation = quotedMessage.value?.let { quotedMessage ->
-                quotedMessage.text?.let { text ->
-                    CitationVO(
-                        quotedMessage.senderUserProfileId,
-                        text,
-                        quotedMessage.id
-                    )
-                }
+        val citation = quotedMessage.value?.let { quotedMessage ->
+            quotedMessage.text?.let { text ->
+                CitationVO(
+                    quotedMessage.senderUserProfileId,
+                    text,
+                    quotedMessage.id
+                )
             }
-            tradeChatMessagesServiceFacade.sendChatMessage(text, citation)
+        }
+        jobs.add(presenterScope.launch {
+            withContext(IODispatcher) {
+                tradeChatMessagesServiceFacade.sendChatMessage(text, citation)
+            }
             _quotedMessage.value = null
         })
     }
