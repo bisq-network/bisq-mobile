@@ -5,6 +5,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -33,8 +34,12 @@ class SellerState1Presenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        ioScope.launch {
-            val _accounts = accountsServiceFacade.getAccounts()
+
+        presenterScope.launch {
+            val _accounts = withContext(IODispatcher) {
+                accountsServiceFacade.getAccounts()
+            }
+
             if (_accounts.size > 0) {
                 onPaymentDataInput(_accounts[0].accountPayload.accountData, true)
                 _paymentAccountName.value = _accounts[0].accountName
