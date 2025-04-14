@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -63,24 +64,30 @@ class UserProfileSettingsPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        ioScope.launch {
-            userProfileServiceFacade.getSelectedUserProfile()?.let {
-                // _reputation.value = it.reputation // TODO reputation?
-                setProfileAge(it)
-                setProfileId(it)
-                setBotId(it)
-                setNickname(it)
+
+        presenterScope.launch {
+            val reputationScore: ReputationScoreVO? = withContext(IODispatcher) {
+                userProfileServiceFacade.getSelectedUserProfile()?.let {
+                    // _reputation.value = it.reputation // TODO reputation?
+                    setProfileAge(it)
+                    setProfileId(it)
+                    setBotId(it)
+                    setNickname(it)
+                }
+                userRepository.fetch()?.let {
+                    // The following should be local to the app
+                    setLastActivity(it)
+                    setTradeTerms(it)
+                    setStatement(it)
+                }
+
+                reputationServiceFacade.getReputation(profileId.value).getOrNull()
             }
-            userRepository.fetch()?.let {
-                // The following should be local to the app
-                setLastActivity(it)
-                setTradeTerms(it)
-                setStatement(it)
-            }
-            reputationServiceFacade.getReputation(profileId.value).getOrNull().let {
-                _reputation.value = it?.totalScore.toString() ?: DEFAULT_UNKNOWN_VALUE
-            }
-            _uniqueAvatar.value = userRepository.fetch()?.uniqueAvatar
+
+            _reputation.value = reputationScore?.totalScore?.toString() ?: DEFAULT_UNKNOWN_VALUE
+
+            val user = withContext(IODispatcher) { userRepository.fetch() }
+            user?.let { _uniqueAvatar.value = it.uniqueAvatar }
         }
     }
 
