@@ -55,7 +55,7 @@ open class ClientMainPresenter(
     private fun listenForConnectivity() {
         ioScope.launch {
             connectivityService.startMonitoring()
-            webSocketClientProvider.get().connected.collect {
+            webSocketClientProvider.get().webSocketClientStatus.collect {
                 if (webSocketClientProvider.get().isConnected()) {
                     log.d { "connectivity status changed to $it - reconnecting services" }
                     reactiveServices()

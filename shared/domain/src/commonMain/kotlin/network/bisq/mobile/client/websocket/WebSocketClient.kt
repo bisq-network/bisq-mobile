@@ -84,21 +84,21 @@ class WebSocketClient(
         CONNECTED
     }
 
-    val _connected = MutableStateFlow(WebSocketClientStatus.DISCONNECTED)
-    val connected: StateFlow<WebSocketClientStatus> = _connected
+    val _webSocketClientStatus = MutableStateFlow(WebSocketClientStatus.DISCONNECTED)
+    val webSocketClientStatus: StateFlow<WebSocketClientStatus> = _webSocketClientStatus
 
-    fun isConnected(): Boolean = connected.value == WebSocketClientStatus.CONNECTED || isDemo()
+    fun isConnected(): Boolean = webSocketClientStatus.value == WebSocketClientStatus.CONNECTED || isDemo()
 
     fun isDemo(): Boolean = webSocketUrl.startsWith(DEMO_URL)
 
     suspend fun connect(isTest: Boolean = false) {
         log.i("Connecting to websocket at: $webSocketUrl")
-        if (connected.value != WebSocketClientStatus.CONNECTED) {
+        if (webSocketClientStatus.value != WebSocketClientStatus.CONNECTED) {
             try {
-                _connected.value = WebSocketClientStatus.CONNECTING
+                _webSocketClientStatus.value = WebSocketClientStatus.CONNECTING
                 session = httpClient.webSocketSession { url(webSocketUrl) }
                 if (session?.isActive == true) {
-                    _connected.value = WebSocketClientStatus.CONNECTED
+                    _webSocketClientStatus.value = WebSocketClientStatus.CONNECTED
                     CoroutineScope(IODispatcher).launch { startListening() }
                     connectionReady.complete(true)
                     if (!isTest) {
@@ -107,7 +107,7 @@ class WebSocketClient(
                 }
             } catch (e: Exception) {
                 log.e("Connecting websocket failed", e)
-                _connected.value = WebSocketClientStatus.DISCONNECTED
+                _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
                 if (isTest) {
                     throw e
                 } else {
@@ -125,7 +125,7 @@ class WebSocketClient(
 
         session?.close()
         session = null
-        _connected.value = WebSocketClientStatus.DISCONNECTED
+        _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
         if (!isTest) {
             log.d { "WS disconnected" }
         }

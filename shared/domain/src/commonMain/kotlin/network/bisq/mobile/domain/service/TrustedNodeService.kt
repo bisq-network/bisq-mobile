@@ -45,7 +45,7 @@ class TrustedNodeService(private val webSocketClientProvider: WebSocketClientPro
 
     private fun observeConnectivity() {
         backgroundScope.launch {
-            webSocketClientProvider.get().connected.collect {
+            webSocketClientProvider.get().webSocketClientStatus.collect {
                 log.d { "connectivity status changed - connected = $it" }
                 isConnected = webSocketClientProvider.get().isConnected()
             }
