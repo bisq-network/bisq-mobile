@@ -3,6 +3,8 @@ package network.bisq.mobile.presentation.ui.uicases.offerbook
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -27,7 +29,7 @@ class OfferbookPresenter(
 
     private val _showDeleteConfirmation = MutableStateFlow(false)
     val showDeleteConfirmation: StateFlow<Boolean> = _showDeleteConfirmation
-    var selectedOffer: OfferItemPresentationModel? = null
+    private var selectedOffer: OfferItemPresentationModel? = null
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -47,8 +49,10 @@ class OfferbookPresenter(
         runCatching {
             selectedOffer?.let { item ->
                 if (item.isMyOffer) {
-                    ioScope.launch {
-                        offersServiceFacade.deleteOffer(item.offerId)
+                    presenterScope.launch {
+                        withContext(IODispatcher) {
+                            offersServiceFacade.deleteOffer(item.offerId)
+                        }
                         deselectOffer()
                     }
                 } else {
@@ -64,7 +68,10 @@ class OfferbookPresenter(
             }
         }.onFailure {
             log.e(it) { "Failed to ${if (selectedOffer?.isMyOffer == true) "delete" else "take"} offer" }
-            showSnackbar("Unable to ${if (selectedOffer?.isMyOffer == true) "delete" else "take"} offer ${selectedOffer?.offerId}, please try again", true)
+            showSnackbar(
+                "Unable to ${if (selectedOffer?.isMyOffer == true) "delete" else "take"} offer ${selectedOffer?.offerId}, please try again",
+                true
+            )
             deselectOffer()
         }
     }
@@ -84,7 +91,7 @@ class OfferbookPresenter(
 
     fun createOffer() {
         try {
-            val market =offersServiceFacade.selectedOfferbookMarket.value.market
+            val market = offersServiceFacade.selectedOfferbookMarket.value.market
             createOfferPresenter.onStartCreateOffer()
             createOfferPresenter.commitMarket(market)
             navigateTo(Routes.CreateOfferDirection)
