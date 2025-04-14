@@ -112,6 +112,7 @@ open class CreateProfilePresenter(
                     enableInteractive()
                 }.onFailure { e ->
                     GenericErrorHandler.handleGenericError("Creating and publishing new user profile failed.", e)
+                    _createAndPublishInProgress.value = false
                     enableInteractive()
                 }
             }
