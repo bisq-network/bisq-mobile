@@ -78,27 +78,27 @@ class WebSocketClient(
 
     private val backgroundScope = CoroutineScope(IODispatcher)
 
-    enum class WebSockectClientStatus {
+    enum class WebSocketClientStatus {
         DISCONNECTED,
         CONNECTING,
         CONNECTED
     }
 
-    val _connected = MutableStateFlow(WebSockectClientStatus.DISCONNECTED)
-    val connected: StateFlow<WebSockectClientStatus> = _connected
+    val _connected = MutableStateFlow(WebSocketClientStatus.DISCONNECTED)
+    val connected: StateFlow<WebSocketClientStatus> = _connected
 
-    fun isConnected(): Boolean = connected.value == WebSockectClientStatus.CONNECTED || isDemo()
+    fun isConnected(): Boolean = connected.value == WebSocketClientStatus.CONNECTED || isDemo()
 
     fun isDemo(): Boolean = webSocketUrl.startsWith(DEMO_URL)
 
     suspend fun connect(isTest: Boolean = false) {
         log.i("Connecting to websocket at: $webSocketUrl")
-        if (connected.value != WebSockectClientStatus.CONNECTED) {
+        if (connected.value != WebSocketClientStatus.CONNECTED) {
             try {
-                _connected.value = WebSockectClientStatus.CONNECTING
+                _connected.value = WebSocketClientStatus.CONNECTING
                 session = httpClient.webSocketSession { url(webSocketUrl) }
                 if (session?.isActive == true) {
-                    _connected.value = WebSockectClientStatus.CONNECTED
+                    _connected.value = WebSocketClientStatus.CONNECTED
                     CoroutineScope(IODispatcher).launch { startListening() }
                     connectionReady.complete(true)
                     if (!isTest) {
@@ -107,7 +107,7 @@ class WebSocketClient(
                 }
             } catch (e: Exception) {
                 log.e("Connecting websocket failed", e)
-                _connected.value = WebSockectClientStatus.DISCONNECTED
+                _connected.value = WebSocketClientStatus.DISCONNECTED
                 if (isTest) {
                     throw e
                 } else {
@@ -125,7 +125,7 @@ class WebSocketClient(
 
         session?.close()
         session = null
-        _connected.value = WebSockectClientStatus.DISCONNECTED
+        _connected.value = WebSocketClientStatus.DISCONNECTED
         if (!isTest) {
             log.d { "WS disconnected" }
         }
