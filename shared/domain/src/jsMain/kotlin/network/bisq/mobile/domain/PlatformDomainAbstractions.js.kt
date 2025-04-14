@@ -89,7 +89,6 @@ actual fun formatDateTime(dateTime: LocalDateTime): String {
     val instant = dateTime.toInstant(kotlinTimeZone)
     val jsDate = Date(instant.toEpochMilliseconds())
 
-    // Fix the toLocaleString call
     return jsDate.toLocaleString(arrayOf(), object : Date.LocaleOptions {
         override var year: String? = "numeric"
         override var month: String? = "2-digit"
@@ -101,8 +100,9 @@ actual fun formatDateTime(dateTime: LocalDateTime): String {
         override var era: String? = "short"
         override var formatMatcher: String? = "best fit"
         override var localeMatcher: String? = "best fit"
-        override var timeZone: String? = "UTC"
-        override var timeZoneName: String? = "UTC"
+        // Use the same timezone that was used to create the instant
+        override var timeZone: String? = kotlinTimeZone.id
+        override var timeZoneName: String? = kotlinTimeZone.id
         override var hour12: Boolean? = true
     })
 }
