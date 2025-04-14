@@ -60,7 +60,7 @@ class UserProfileSettingsPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        backgroundScope.launch {
+        ioScope.launch {
             userProfileServiceFacade.getSelectedUserProfile()?.let {
                 // _reputation.value = it.reputation // TODO reputation?
                 setProfileAge(it)
@@ -122,7 +122,7 @@ class UserProfileSettingsPresenter(
     }
 
     override fun onSave() {
-        backgroundScope.launch {
+        ioScope.launch {
             enableInteractive(false)
             setShowLoading(true)
             try {

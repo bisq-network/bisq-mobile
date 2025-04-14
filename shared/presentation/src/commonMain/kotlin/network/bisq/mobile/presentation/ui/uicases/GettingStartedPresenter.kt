@@ -56,7 +56,7 @@ open class GettingStartedPresenter(
     }
 
     private fun refresh() {
-        job = backgroundScope.launch {
+        job = ioScope.launch {
             try {
                 enableInteractive(false)
                 // TODO get published profiles data from service

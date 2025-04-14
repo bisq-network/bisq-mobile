@@ -25,7 +25,7 @@ class SellerState2bPresenter(
     }
 
     fun onConfirmFiatReceipt() {
-        job = backgroundScope.launch {
+        job = ioScope.launch {
             tradesServiceFacade.sellerConfirmFiatReceipt()
         }
     }

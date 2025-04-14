@@ -46,7 +46,7 @@ class OpenTradeListPresenter(
 
     fun onSelect(openTradeItem: TradeItemPresentationModel) {
         if (tradeRulesConfirmed.value) {
-            backgroundScope.launch {
+            ioScope.launch {
                 tradesServiceFacade.selectOpenTrade(openTradeItem.tradeId)
                 navigateTo(Routes.OpenTrade)
             }

@@ -222,7 +222,7 @@ class TradeDetailsHeaderPresenter(
     }
 
     fun onInterruptTrade() {
-        backgroundScope.launch {
+        ioScope.launch {
             require(selectedTrade.value != null)
 
             var result: Result<Unit>? = null
@@ -250,7 +250,7 @@ class TradeDetailsHeaderPresenter(
 
     fun onOpenMediation() {
         _showMediationConfirmationDialog.value = false
-        backgroundScope.launch {
+        ioScope.launch {
             mediationServiceFacade.reportToMediator(selectedTrade.value!!)
         }
     }

@@ -43,7 +43,7 @@ class TrustedNodeSetupPresenter(
 
     private fun initialize() {
         log.i { "View attached to Trusted node presenter" }
-        backgroundScope.launch {
+        ioScope.launch {
             try {
                 settingsRepository.fetch()
                 settingsRepository.data.value.let {
@@ -79,7 +79,7 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun testConnection(isWorkflow: Boolean) {
-        backgroundScope.launch {
+        ioScope.launch {
             _isLoading.value = true
             log.w { "Test: " + _bisqApiUrl.value }
             WebSocketClientProvider.parseUri(_bisqApiUrl.value).let { connectionSettings ->

@@ -53,7 +53,7 @@ open class ClientMainPresenter(
     }
 
     private fun listenForConnectivity() {
-        backgroundScope.launch {
+        ioScope.launch {
             connectivityService.startMonitoring()
             webSocketClientProvider.get().connected.collect {
                 if (webSocketClientProvider.get().isConnected()) {

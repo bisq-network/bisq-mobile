@@ -146,7 +146,7 @@ class InterruptedTradePresenter(
     }
 
     fun onCloseTrade() {
-        backgroundScope.launch {
+        ioScope.launch {
             if (selectedTrade.value != null) {
                 tradesServiceFacade.closeTrade()
             }
@@ -155,7 +155,7 @@ class InterruptedTradePresenter(
     }
 
     fun onReportToMediator() {
-        backgroundScope.launch {
+        ioScope.launch {
             mediationServiceFacade.reportToMediator(selectedTrade.value!!)
         }
     }

@@ -39,7 +39,7 @@ open class TopBarPresenter(
     }
 
     private fun refresh() {
-        backgroundScope.launch {
+        ioScope.launch {
             val uniqueAvatar = userRepository.fetch()?.uniqueAvatar
 //            log.d("Unique avatar fetched: $uniqueAvatar")
             setUniqueAvatar(uniqueAvatar)

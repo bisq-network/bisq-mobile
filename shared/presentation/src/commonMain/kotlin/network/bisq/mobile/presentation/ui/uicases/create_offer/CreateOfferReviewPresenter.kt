@@ -110,7 +110,7 @@ class CreateOfferReviewPresenter(
     }
 
     fun onCreateOffer() {
-        backgroundScope.launch {
+        ioScope.launch {
             enableInteractive(false)
             // TODO deactivate buttons, show waiting state
             createOfferPresenter.createOffer()

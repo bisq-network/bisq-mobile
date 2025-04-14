@@ -57,7 +57,7 @@ class TradeChatPresenter(
     }
 
     fun sendChatMessage(text: String) {
-        jobs.add(backgroundScope.launch {
+        jobs.add(ioScope.launch {
             val citation = quotedMessage.value?.let { quotedMessage ->
                 quotedMessage.text?.let { text ->
                     CitationVO(
@@ -73,13 +73,13 @@ class TradeChatPresenter(
     }
 
     fun onAddReaction(message: BisqEasyOpenTradeMessageModel, reaction: ReactionEnum) {
-        jobs.add(backgroundScope.launch {
+        jobs.add(ioScope.launch {
             tradeChatMessagesServiceFacade.addChatMessageReaction(message.id, reaction)
         })
     }
 
     fun onRemoveReaction(message: BisqEasyOpenTradeMessageModel, reaction: BisqEasyOpenTradeMessageReactionVO) {
-        jobs.add(backgroundScope.launch {
+        jobs.add(ioScope.launch {
             tradeChatMessagesServiceFacade.removeChatMessageReaction(message.id, reaction)
         })
     }
@@ -95,7 +95,7 @@ class TradeChatPresenter(
     }
 
     fun onDontShowAgainChatRulesWarningBox() {
-        jobs.add(backgroundScope.launch {
+        jobs.add(ioScope.launch {
             _showChatRulesWarnBox.value = false
             val settings = settingsRepository.fetch()!!
             settings.showChatRulesWarnBox = false

@@ -26,7 +26,7 @@ open class GeneralSettingsPresenter(
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
     override val languageCode: MutableStateFlow<String> = _languageCode
     override fun setLanguageCode(langCode: String) {
-        backgroundScope.launch {
+        ioScope.launch {
             settingsServiceFacade.setLanguageCode(langCode)
             // TODO: Is this right?
             // Doing this to reload all bundles of the newly selected language,
@@ -43,7 +43,7 @@ open class GeneralSettingsPresenter(
     private val _supportedLanguageCodes: MutableStateFlow<Set<String>> = MutableStateFlow(setOf("en"))
     override val supportedLanguageCodes: MutableStateFlow<Set<String>> = _supportedLanguageCodes
     override fun setSupportedLanguageCodes(langCodes: Set<String>) {
-        backgroundScope.launch {
+        ioScope.launch {
             _supportedLanguageCodes.value = langCodes
             settingsServiceFacade.setSupportedLanguageCodes(langCodes)
         }
@@ -54,7 +54,7 @@ open class GeneralSettingsPresenter(
     override val chatNotification: StateFlow<String> = _chatNotification
 
     override fun setChatNotification(value: String) {
-        backgroundScope.launch {
+        ioScope.launch {
             _chatNotification.value = value
             // settingsServiceFacade.setChatNotificationType(value)
         }
@@ -63,7 +63,7 @@ open class GeneralSettingsPresenter(
     private val _closeOfferWhenTradeTaken: MutableStateFlow<Boolean> = MutableStateFlow(true)
     override val closeOfferWhenTradeTaken: StateFlow<Boolean> = _closeOfferWhenTradeTaken
     override fun setCloseOfferWhenTradeTaken(value: Boolean) {
-        backgroundScope.launch {
+        ioScope.launch {
             _closeOfferWhenTradeTaken.value = value
             settingsServiceFacade.setCloseMyOfferWhenTaken(value)
         }
@@ -74,7 +74,7 @@ open class GeneralSettingsPresenter(
     private val _tradePriceTolerance: MutableStateFlow<String> = MutableStateFlow("5")
     override val tradePriceTolerance: StateFlow<String> = _tradePriceTolerance
     override fun setTradePriceTolerance(value: String, isValid: Boolean) {
-        backgroundScope.launch {
+        ioScope.launch {
             _tradePriceTolerance.value = value
             if (isValid) {
                 val _value = value.toDoubleOrNull()
@@ -86,7 +86,7 @@ open class GeneralSettingsPresenter(
     private val _numDaysAfterRedactingTradeData = MutableStateFlow("90")
     override val numDaysAfterRedactingTradeData: StateFlow<String> = _numDaysAfterRedactingTradeData
     override fun setNumDaysAfterRedactingTradeData(value: String, isValid: Boolean) {
-        backgroundScope.launch {
+        ioScope.launch {
             _numDaysAfterRedactingTradeData.value = value
             if (isValid) {
                 val _value = value.toIntOrNull()
@@ -100,7 +100,7 @@ open class GeneralSettingsPresenter(
     private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
     override val useAnimations: StateFlow<Boolean> = _useAnimations
     override fun setUseAnimations(value: Boolean) {
-        backgroundScope.launch {
+        ioScope.launch {
             _useAnimations.value = value
             settingsServiceFacade.setUseAnimations(value)
         }
@@ -109,7 +109,7 @@ open class GeneralSettingsPresenter(
     private val _powFactor: MutableStateFlow<String> = MutableStateFlow("1")
     override val powFactor: StateFlow<String> = _powFactor
     override fun setPowFactor(value: String, isValid: Boolean) {
-        backgroundScope.launch {
+        ioScope.launch {
             _powFactor.value = value
             if (isValid) {
                 val _value = value.toDoubleOrNull()
@@ -121,7 +121,7 @@ open class GeneralSettingsPresenter(
     private val _ignorePow: MutableStateFlow<Boolean> = MutableStateFlow(false)
     override val ignorePow: StateFlow<Boolean> = _ignorePow
     override fun setIgnorePow(value: Boolean) {
-        backgroundScope.launch {
+        ioScope.launch {
             _ignorePow.value = value
             settingsServiceFacade.setIgnoreDiffAdjustmentFromSecManager(value)
         }
@@ -132,7 +132,7 @@ open class GeneralSettingsPresenter(
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     override fun onViewAttached() {
-        jobs.add(backgroundScope.launch {
+        jobs.add(ioScope.launch {
             val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
             _languageCode.value = settings.languageCode
             _supportedLanguageCodes.value = if (settings.supportedLanguageCodes.isNotEmpty())

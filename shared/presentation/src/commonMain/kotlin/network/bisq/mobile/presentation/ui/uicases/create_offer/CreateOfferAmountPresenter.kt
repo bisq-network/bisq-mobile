@@ -181,7 +181,7 @@ class CreateOfferAmountPresenter(
                 value
             ) ?: 0L
         _reputation.value = requiredReputation
-        backgroundScope.launch {
+        ioScope.launch {
             _takersCount.value = findPotentialTakers(requiredReputation)
             val numSellersString = "bisqEasy.tradeWizard.amount.buyer.numSellers".i18nPlural(takersCount.value)
             _hintText.value = "bisqEasy.tradeWizard.amount.buyer.limitInfo".i18n(numSellersString)
@@ -189,7 +189,7 @@ class CreateOfferAmountPresenter(
     }
 
     private fun updateSellerHintText() {
-        backgroundScope.launch {
+        ioScope.launch {
             val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
 
             _reputation.value = reputationServiceFacade.getReputation(profile.id).getOrNull()?.totalScore ?: 0L

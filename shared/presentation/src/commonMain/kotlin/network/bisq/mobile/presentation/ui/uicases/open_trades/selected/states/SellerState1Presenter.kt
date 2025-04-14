@@ -33,7 +33,7 @@ class SellerState1Presenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        backgroundScope.launch {
+        ioScope.launch {
             val _accounts = accountsServiceFacade.getAccounts()
             if (_accounts.size > 0) {
                 onPaymentDataInput(_accounts[0].accountPayload.accountData, true)

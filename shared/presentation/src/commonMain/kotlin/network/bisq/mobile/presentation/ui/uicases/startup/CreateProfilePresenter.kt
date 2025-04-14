@@ -69,7 +69,7 @@ open class CreateProfilePresenter(
 
     init {
         // if this presenter gets to work, it means there is no profile saved
-        backgroundScope.launch {
+        ioScope.launch {
             userRepository.create(User())
         }
     }
@@ -136,7 +136,7 @@ open class CreateProfilePresenter(
                     }
                 }
                 deferred.await()
-                backgroundScope.launch {
+                ioScope.launch {
                     userRepository.update(User().apply {
                         uniqueAvatar = profileIcon.value
                         lastActivity = Clock.System.now().toEpochMilliseconds()

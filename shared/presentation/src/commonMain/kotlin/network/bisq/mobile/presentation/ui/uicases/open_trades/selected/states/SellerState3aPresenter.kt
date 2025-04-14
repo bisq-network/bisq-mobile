@@ -76,7 +76,7 @@ class SellerState3aPresenter(
         if (!isLightning.value) {
             require(paymentProof.value != null)
         }
-        job = backgroundScope.launch {
+        job = ioScope.launch {
             tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
         }
     }

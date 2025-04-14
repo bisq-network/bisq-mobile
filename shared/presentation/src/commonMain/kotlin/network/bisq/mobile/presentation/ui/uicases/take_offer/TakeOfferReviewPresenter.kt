@@ -109,7 +109,7 @@ class TakeOfferReviewPresenter(
     }
 
     fun onTakeOffer() {
-        backgroundScope.launch {
+        ioScope.launch {
             setShowTakeOfferProgressDialog(true)
             try {
                 enableInteractive(false)

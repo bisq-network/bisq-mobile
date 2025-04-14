@@ -47,7 +47,7 @@ class OfferbookPresenter(
         runCatching {
             selectedOffer?.let { item ->
                 if (item.isMyOffer) {
-                    backgroundScope.launch {
+                    ioScope.launch {
                         offersServiceFacade.deleteOffer(item.offerId)
                         deselectOffer()
                     }
