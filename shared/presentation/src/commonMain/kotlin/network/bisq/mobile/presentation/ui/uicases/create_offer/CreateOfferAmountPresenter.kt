@@ -236,15 +236,15 @@ class CreateOfferAmountPresenter(
     }
 
     fun navigateToReputation() {
-        enableInteractive(false)
+        disableInteractive()
         navigateToUrl("https://bisq.wiki/Reputation")
-        enableInteractive(true)
+        enableInteractive()
     }
 
     fun navigateToBuildReputation() {
-        enableInteractive(false)
+        disableInteractive()
         navigateToUrl("https://bisq.wiki/Reputation#How_to_build_reputation")
-        enableInteractive(true)
+        enableInteractive()
     }
 
     private suspend fun findPotentialTakers(requiredReputationScore: Long): Int {

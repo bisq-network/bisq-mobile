@@ -38,9 +38,9 @@ open class GettingStartedPresenter(
     private var job: Job? = null
 
     override fun onStartTrading() {
-        enableInteractive(false)
+        disableInteractive()
         navigateToTradingTab()
-        enableInteractive(true)
+        enableInteractive()
     }
 
     private fun navigateToTradingTab() {
@@ -48,9 +48,9 @@ open class GettingStartedPresenter(
     }
 
     override fun navigateLearnMore() {
-        enableInteractive(false)
+        disableInteractive()
         navigateToUrl("https://bisq.wiki/Bisq_Easy")
-        enableInteractive(true)
+        enableInteractive()
     }
 
     fun navigateToGuide() {
@@ -58,7 +58,7 @@ open class GettingStartedPresenter(
     }
 
     private fun refresh() {
-        enableInteractive(false)
+        disableInteractive()
         job = presenterScope.launch {
             val bisqStats = withContext(IODispatcher) {
                 bisqStatsRepository.fetch()
@@ -70,7 +70,7 @@ open class GettingStartedPresenter(
                     _offersOnline.value = it.size
                 }
             }
-            enableInteractive(true)
+            enableInteractive()
         }
     }
 

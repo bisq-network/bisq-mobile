@@ -111,7 +111,7 @@ class CreateOfferReviewPresenter(
 
     fun onCreateOffer() {
         // TODO deactivate buttons, show waiting state
-        enableInteractive(false)
+        disableInteractive()
 
         presenterScope.launch {
             // We use withContext(IODispatcher) for the service call, thus we switch context and block

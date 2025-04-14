@@ -45,9 +45,9 @@ class TradeGuidePresenter(
     }
 
     fun navigateSecurityLearnMore() {
-        enableInteractive(false)
+        disableInteractive()
         navigateToUrl("https://bisq.wiki/Bisq_Easy")
-        enableInteractive(true)
+        enableInteractive()
     }
 
 }

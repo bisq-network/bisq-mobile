@@ -78,9 +78,9 @@ class CreateOfferDirectionPresenter(
     }
 
     fun showLearnReputation() {
-        enableInteractive(false)
+        disableInteractive()
         navigateToUrl("https://bisq.wiki/Reputation#How_to_build_reputation")
-        enableInteractive(true)
+        enableInteractive()
     }
 
     private fun navigateNext() {

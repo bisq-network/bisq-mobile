@@ -34,21 +34,21 @@ class WalletGuidePresenter(
     }
 
     fun navigateToBlueWallet() {
-        enableInteractive(false)
+        disableInteractive()
         navigateToUrl(blueWalletLink)
-        enableInteractive(true)
+        enableInteractive()
     }
 
     fun navigateToBlueWalletTutorial1() {
-        enableInteractive(false)
+        disableInteractive()
         navigateToUrl(tutorial1Link)
-        enableInteractive(true)
+        enableInteractive()
     }
 
     fun navigateToBlueWalletTutorial2() {
-        enableInteractive(false)
+        disableInteractive()
         navigateToUrl(tutorial2Link)
-        enableInteractive(true)
+        enableInteractive()
     }
 
 }

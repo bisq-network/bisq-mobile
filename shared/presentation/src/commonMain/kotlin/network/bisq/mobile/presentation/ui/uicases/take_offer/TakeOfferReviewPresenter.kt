@@ -119,7 +119,7 @@ class TakeOfferReviewPresenter(
 
     fun onTakeOffer() {
         setShowTakeOfferProgressDialog(true)
-        enableInteractive(false)
+        disableInteractive()
 
         jobs.forEach { it.cancel() }
         jobs.clear()

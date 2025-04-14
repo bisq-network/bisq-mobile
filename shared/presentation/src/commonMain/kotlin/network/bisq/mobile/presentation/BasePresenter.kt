@@ -159,12 +159,14 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         rootPresenter?.registerChild(child = this)
     }
 
-    protected fun enableInteractive(enable: Boolean = true) {
-        this.presenterScope.launch {
-            if (enable) {
-                delay(250L)
-            }
-            _isInteractive.value = enable
+    protected fun disableInteractive() {
+        _isInteractive.value = false
+    }
+
+    protected fun enableInteractive() {
+        presenterScope.launch {
+            delay(250L)
+            _isInteractive.value = true
         }
     }
 
@@ -218,7 +220,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
      * Navigate to given destination
      */
     protected fun navigateTo(destination: Routes, customSetup: (NavOptionsBuilder) -> Unit = {}) {
-        enableInteractive(false)
+        disableInteractive()
         this.presenterScope.launch(Dispatchers.Main) {
             try {
                 rootNavigator.navigate(destination.name) {
@@ -291,7 +293,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 //        UIApplication.sharedApplication.performSelector(NSSelectorFromString("suspend"))
 //    }
     override fun goBack(): Boolean {
-        enableInteractive(false)
+        disableInteractive()
         var wentBack = false
         this.presenterScope.launch(Dispatchers.Main) {
             try {
@@ -448,9 +450,9 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     }
 
     override fun navigateToReportError() {
-        enableInteractive(false)
+        disableInteractive()
         navigateToUrl("https://github.com/bisq-network/bisq-mobile/issues")
-        enableInteractive(true)
+        enableInteractive()
     }
 
     override fun isDemo(): Boolean = rootPresenter?.isDemo() ?: false

@@ -93,7 +93,7 @@ open class CreateProfilePresenter(
             // We would never call generateKeyPair while generateKeyPair is not
             // completed, thus we can assign to same job reference
             job = coroutineScope.launch {
-                enableInteractive(false)
+                disableInteractive()
                 log.i { "Show busy animation for createAndPublishInProgress" }
                 _createAndPublishInProgress.value = true
                 runCatching {

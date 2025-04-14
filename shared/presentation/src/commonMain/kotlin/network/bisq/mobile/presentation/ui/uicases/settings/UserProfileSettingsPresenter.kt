@@ -132,7 +132,7 @@ class UserProfileSettingsPresenter(
     }
 
     override fun onSave() {
-        enableInteractive(false)
+        disableInteractive()
         setShowLoading(true)
         presenterScope.launch {
             try {
@@ -150,7 +150,7 @@ class UserProfileSettingsPresenter(
                 log.e(e) { "Failed to save user profile settings" }
             } finally {
                 setShowLoading(false)
-                enableInteractive(true)
+                enableInteractive()
             }
         }
     }
