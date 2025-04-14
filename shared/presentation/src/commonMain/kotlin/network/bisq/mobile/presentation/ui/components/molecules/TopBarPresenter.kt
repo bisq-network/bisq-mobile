@@ -3,7 +3,9 @@ package network.bisq.mobile.presentation.ui.components.molecules
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -16,7 +18,7 @@ open class TopBarPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     connectivityService: ConnectivityService,
     mainPresenter: MainPresenter
-): BasePresenter(mainPresenter), ITopBarPresenter {
+) : BasePresenter(mainPresenter), ITopBarPresenter {
 
     private val _uniqueAvatar = MutableStateFlow(userRepository.data.value?.uniqueAvatar)
     override val uniqueAvatar: StateFlow<PlatformImage?> get() = _uniqueAvatar
@@ -39,9 +41,10 @@ open class TopBarPresenter(
     }
 
     private fun refresh() {
-        ioScope.launch {
-            val uniqueAvatar = userRepository.fetch()?.uniqueAvatar
-//            log.d("Unique avatar fetched: $uniqueAvatar")
+        presenterScope.launch {
+            val uniqueAvatar = withContext(IODispatcher) {
+                userRepository.fetch()?.uniqueAvatar
+            }
             setUniqueAvatar(uniqueAvatar)
         }
     }
