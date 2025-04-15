@@ -76,8 +76,10 @@ class BuyerStateMainChain3bPresenter(
     }
 
     fun onCompleteTrade() {
-        jobs.add(ioScope.launch {
-            tradesServiceFacade.btcConfirmed()
+        jobs.add(presenterScope.launch {
+            withContext(IODispatcher) {
+                tradesServiceFacade.btcConfirmed()
+            }
         })
     }
 
