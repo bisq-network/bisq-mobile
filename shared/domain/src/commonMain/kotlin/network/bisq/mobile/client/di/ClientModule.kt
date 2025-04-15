@@ -38,7 +38,6 @@ import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
-import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -192,31 +191,13 @@ val clientModule = module {
     single { AccountsApiGateway(get(), get()) }
     single<AccountsServiceFacade> { ClientAccountsServiceFacade(get(), get()) }
 
-    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get()) }
-
 //    single { ReputationApiGateway(get()) }
 //    single<ReputationServiceFacade> { ClientReputationServiceFacade(get()) }
 
     single {
-        Json {
-//            classDiscriminator = "type"
-            ignoreUnknownKeys = true
-            isLenient = true
-            prettyPrint = false
-        }
-    }
-
-    single {
         createHttpClient(get())
     }
-    single<OffersServiceFacade> { ClientOffersServiceFacade(get(), get(), get()) }
 
-    single { TradesApiGateway(get(), get()) }
-    single<TradesServiceFacade> { ClientTradesServiceFacade(get(), get(), get()) }
-
-    single { AccountsApiGateway(get(), get()) }
     single<AccountsServiceFacade> { ClientAccountsServiceFacade(get(), get()) }
-
-    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get()) }
 
 }

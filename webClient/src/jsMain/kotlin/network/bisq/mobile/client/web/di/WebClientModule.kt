@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.web.di
 
+import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.client.web.services.WebClientConnectivityService
 import network.bisq.mobile.client.web.services.WebNotificationService
 import network.bisq.mobile.domain.UrlLauncher
@@ -9,6 +10,7 @@ import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationSe
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.WebAppPresenter
+import network.bisq.mobile.service.WebClientCatHashService
 
 import org.koin.core.module.Module
 import org.koin.dsl.bind
@@ -19,6 +21,8 @@ val webClientModule = module {
     single<UrlLauncher> { WebUrlLauncher() }
     single<ClientConnectivityService> { WebClientConnectivityService(get()) }
     single<OpenTradesNotificationService> { WebNotificationService(get(), get()) }
+
+    single { WebClientCatHashService() } bind ClientCatHashService::class
 
     single<MainPresenter> {
         WebAppPresenter(

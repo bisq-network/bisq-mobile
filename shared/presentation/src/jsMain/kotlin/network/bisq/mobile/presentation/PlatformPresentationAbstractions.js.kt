@@ -1,9 +1,7 @@
-@file:Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-
 package network.bisq.mobile.presentation
 
 import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import kotlinx.browser.document
@@ -11,42 +9,36 @@ import kotlinx.browser.window
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import network.bisq.mobile.presentation.ui.helpers.WebCurrentTimeProvider
-import org.jetbrains.skia.Image
 import org.w3c.dom.HTMLCanvasElement
-import org.w3c.dom.HTMLImageElement
 import org.w3c.dom.CanvasRenderingContext2D
-import org.w3c.dom.url.URL
+import org.w3c.dom.HTMLImageElement
 
 actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
-    // For web, we convert the data URL to a Skia image and then to a Compose ImageBitmap
     val dataUrl = platformImage.dataUrl
-    val image = createImageBitmapFromDataUrl(dataUrl)
-    return BitmapPainter(image)
-}
 
-private fun createImageBitmapFromDataUrl(dataUrl: String): ImageBitmap {
-    // This is a simplified approach - in a real implementation, you might want to use
-    // a more robust method to convert data URLs to ImageBitmap
-    val imageElement = document.createElement("img") as HTMLImageElement
-    imageElement.src = dataUrl
+    return object : Painter() {
+        override val intrinsicSize = androidx.compose.ui.geometry.Size.Unspecified
 
-    // Create a canvas to draw the image
-    val canvas = document.createElement("canvas") as HTMLCanvasElement
-    val ctx = canvas.getContext("2d") as CanvasRenderingContext2D
+        override fun DrawScope.onDraw() {
+            val canvas = drawContext.canvas
+            val paint = androidx.compose.ui.graphics.Paint()
 
-    // Set canvas dimensions
-    canvas.width = imageElement.width
-    canvas.height = imageElement.height
+            // Use DOM API to load and draw the image onto a canvas manually
+            val image = document.createElement("img") as HTMLImageElement
+            image.src = dataUrl
 
-    // Draw image to canvas
-    ctx.drawImage(imageElement, 0.0, 0.0)
+            image.onload = {
+                val (htmlCanvas, context) = createCanvasContext(image.width, image.height)
+                context.drawImage(image, 0.0, 0.0)
 
-    // Get image data
-    val imageData = ctx.getImageData(0.0, 0.0, canvas.width.toDouble(), canvas.height.toDouble())
+                // Compose Web doesn't currently support reading canvas as ImageBitmap directly,
+                // so this is mostly useful for mocking or basic layout sizing
+            }
 
-    // Convert to Skia Image and then to Compose ImageBitmap
-    val skiaImage = Image.makeFromEncoded(imageElement.src.encodeToByteArray())
-    return skiaImage.toComposeImageBitmap()
+            // For now: You can draw a placeholder or background to represent it
+            drawRect(color = androidx.compose.ui.graphics.Color.Gray)
+        }
+    }
 }
 
 private fun createCanvasContext(width: Int, height: Int): Pair<HTMLCanvasElement, CanvasRenderingContext2D> {
@@ -73,6 +65,7 @@ actual fun exitApp() {
                 window.location.href = "#/goodbye"
             }, 300)
         } catch (e: Exception) {
+            console.error("Error closing window:", e)
             // If close throws an exception, redirect
             window.location.href = "#/goodbye"
         }

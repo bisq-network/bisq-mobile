@@ -77,7 +77,7 @@ Alternatively, you could run `./gradlew clean build` (1) first from terminal and
 
 ### `Getting started for Android Node`
 
-Addicionally, for the `androidNode` module to build you need to have its dependent Bisq2 jars in your local maven2 repository ('~/.m2/repository'). Here are the steps to do that
+Additionally, for the `androidNode` module to build you need to have its dependent Bisq2 jars in your local maven2 repository ('~/.m2/repository'). Here are the steps to do that
 
 1. download [Bisq2](https://github.com/bisq-network/bisq2) if you don't have it already
 2. follow Bisq2 root `README.md` steps to build the project

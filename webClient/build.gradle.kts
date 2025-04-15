@@ -58,8 +58,11 @@ kotlin {
             dependencies {
                 implementation(project(":shared:domain"))
                 implementation(project(":shared:presentation"))
-                implementation(compose.web.core)
+                implementation(compose.html.core)
                 implementation(compose.runtime)
+                implementation(compose.foundation)
+                implementation(compose.material)
+                implementation(compose.ui)
                 
                 // Add Koin for dependency injection
                 implementation(libs.koin.core)

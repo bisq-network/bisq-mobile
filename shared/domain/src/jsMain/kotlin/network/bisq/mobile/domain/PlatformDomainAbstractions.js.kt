@@ -28,8 +28,8 @@ actual fun getSystemFileSystem(): FileSystem {
 }
 
 // Minimal implementation of FileSystem for browser environments
-private class BrowserFileSystem() : FileSystem() {
-    override fun listOrNull(path: Path): List<Path>? {
+private class BrowserFileSystem : FileSystem() {
+    override fun listOrNull(dir: Path): List<Path>? {
         throw UnsupportedOperationException("listOrNull not supported in browser environment")
     }
 

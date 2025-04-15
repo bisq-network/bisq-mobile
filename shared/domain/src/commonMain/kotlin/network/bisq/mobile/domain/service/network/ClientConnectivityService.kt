@@ -11,14 +11,8 @@ open class ClientConnectivityService(
 ): ConnectivityService(), Logging {
     private val backgroundScope = CoroutineScope(IODispatcher)
     
-    override fun isConnected(): Boolean {
-        var connected = false
-        backgroundScope.launch {
-            runCatching {
-                connected = webSocketClientProvider.get().isConnected()
-            }
-        }
-        return connected
+    override suspend fun isConnected(): Boolean {
+        return webSocketClientProvider.get().isConnected()
     }
     
     override fun onStart() {

@@ -86,7 +86,6 @@ kotlin {
                 
                 implementation(libs.androidx.lifecycle.viewmodel)
                 implementation(libs.androidx.lifecycle.runtime.compose)
-                implementation(libs.logging.kermit)
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.kotlinx.datetime)
             }
@@ -117,7 +116,10 @@ kotlin {
             dependencies {
                 implementation(project(":shared:domain"))
                 implementation(compose.runtime)
-                implementation(compose.web.core)
+                implementation(compose.html.core)
+                implementation(compose.foundation)
+                implementation(compose.material)
+                implementation(compose.ui)
                 implementation(libs.kotlinx.coroutines)
                 implementation(libs.ktor.client.js)
                 implementation(libs.ktor.client.content.negotiation)
