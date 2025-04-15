@@ -3,7 +3,7 @@ package network.bisq.mobile.client.web.services
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
-import network.bisq.mobile.domain.data.BackgroundDispatcher
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.domain.utils.Logging
 
@@ -11,7 +11,7 @@ class WebClientConnectivityService(
     private val webSocketClientProvider: WebSocketClientProvider
 ) : ClientConnectivityService(webSocketClientProvider), Logging {
 
-    private val backgroundScope = CoroutineScope(BackgroundDispatcher)
+    private val backgroundScope = CoroutineScope(IODispatcher)
 
     // Don't override these methods as they're already defined in the parent classes
     // and some are marked as final
