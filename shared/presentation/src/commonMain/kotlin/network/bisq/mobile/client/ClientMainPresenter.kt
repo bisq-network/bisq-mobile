@@ -115,4 +115,10 @@ open class ClientMainPresenter(
     }
 
     override fun isDemo(): Boolean = ApplicationBootstrapFacade.isDemo
+
+    // Remove @JsName from the override function
+    override fun isSmallScreen(): Boolean {
+        // TODO web Implementation
+        return false
+    }
 }

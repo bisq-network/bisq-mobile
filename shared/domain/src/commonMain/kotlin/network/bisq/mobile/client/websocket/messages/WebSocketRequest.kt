@@ -1,5 +1,8 @@
 package network.bisq.mobile.client.websocket.messages
 
-interface WebSocketRequest : WebSocketMessage {
-    val requestId: String
+import kotlinx.serialization.Serializable
+
+@Serializable
+sealed class WebSocketRequest : WebSocketMessage() {
+    abstract val requestId: String
 }

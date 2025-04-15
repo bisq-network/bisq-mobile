@@ -9,7 +9,7 @@ class NodeConnectivityService(private val applicationService: AndroidApplication
         const val SLOW_PEER_QUANTITY_THRESHOLD = 2
     }
 
-    override fun isConnected(): Boolean {
+    override suspend fun isConnected(): Boolean {
         val connections = currentConnections()
         log.d { "Connected peers = $connections"}
         return connections > 0

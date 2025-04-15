@@ -2,7 +2,6 @@ package network.bisq.mobile.client.websocket
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -84,12 +83,11 @@ class WebSocketClientProvider(
         return clientFactory(host, port)
     }
 
-    fun get(): WebSocketClient {
+    suspend fun get(): WebSocketClient {
         if (currentClient == null) {
-            runBlocking {
-                settingsRepository.fetch()
-            }
+            // Instead of using runBlocking, make this function suspend
+            settingsRepository.fetch()
         }
-        return currentClient!!
+        return currentClient ?: throw IllegalStateException("WebSocketClient is not initialized")
     }
 }

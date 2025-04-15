@@ -96,7 +96,7 @@ abstract class ConnectivityService: Logging {
         // default nth
     }
 
-    protected abstract fun isConnected(): Boolean
+    protected abstract suspend fun isConnected(): Boolean
 
     /**
      * Default implementation uses round trip average measuring.

@@ -225,3 +225,10 @@
     @org.koin.core.annotation.* <fields>;
     @org.koin.core.annotation.* <methods>;
 }
+
+# SLF4J
+-keep class org.slf4j.impl.StaticLoggerBinder { *; }
+-keep class org.slf4j.impl.StaticMDCBinder { *; }
+-keep class org.slf4j.impl.StaticMarkerBinder { *; }
+-keep class org.slf4j.** { *; }
+-dontwarn org.slf4j.**

@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.service.reputation
 
-import network.bisq.mobile.client.service.mediation.ReputationApiGateway
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.utils.Logging
