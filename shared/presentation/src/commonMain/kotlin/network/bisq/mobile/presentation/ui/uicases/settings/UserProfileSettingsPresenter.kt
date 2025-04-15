@@ -137,10 +137,10 @@ class UserProfileSettingsPresenter(
         presenterScope.launch {
             try {
                 withContext(IODispatcher) {
-                    userRepository.fetch()!!.let {
-                        it.statement = statement.value
-                        it.tradeTerms = tradeTerms.value
-                        userRepository.update(it)
+                    userRepository.fetch()?.let { user ->
+                        user.statement = statement.value
+                        user.tradeTerms = tradeTerms.value
+                        userRepository.update(user)
 
                         // avoid flicker
                         delay(500L)
