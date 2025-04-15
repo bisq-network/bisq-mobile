@@ -2,6 +2,8 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountPayloadVO
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
@@ -21,8 +23,10 @@ open class PaymentAccountPresenter(
 
 
     override fun selectAccount(account: UserDefinedFiatAccountVO) {
-        ioScope.launch {
-            accountsServiceFacade.setSelectedAccount(account)
+        presenterScope.launch {
+            withContext(IODispatcher) {
+                accountsServiceFacade.setSelectedAccount(account)
+            }
         }
     }
 
