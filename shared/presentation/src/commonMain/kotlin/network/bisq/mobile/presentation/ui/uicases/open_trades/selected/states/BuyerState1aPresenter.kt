@@ -75,8 +75,10 @@ class BuyerState1aPresenter(
     fun onSend() {
         require(bitcoinPaymentData.value.isNotEmpty())
 
-        job = ioScope.launch {
-            tradesServiceFacade.buyerSendBitcoinPaymentData(bitcoinPaymentData.value)
+        job = presenterScope.launch {
+            withContext(IODispatcher) {
+                tradesServiceFacade.buyerSendBitcoinPaymentData(bitcoinPaymentData.value)
+            }
         }
     }
 
