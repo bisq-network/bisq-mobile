@@ -25,9 +25,6 @@ class OpenTradeListPresenter(
     override fun onViewAttached() {
     }
 
-    override fun onViewUnattaching() {
-    }
-
     fun onOpenTradeGuide() {
         // _tradeGuideVisible.value = true
         navigateTo(Routes.TradeGuideOverview)

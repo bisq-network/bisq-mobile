@@ -22,6 +22,7 @@ class SellerState2bPresenter(
     override fun onViewUnattaching() {
         job?.cancel()
         job = null
+        super.onViewUnattaching()
     }
 
     fun onConfirmFiatReceipt() {

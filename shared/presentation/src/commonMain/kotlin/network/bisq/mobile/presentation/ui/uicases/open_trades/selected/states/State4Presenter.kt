@@ -30,6 +30,7 @@ abstract class State4Presenter(
         _showCloseTradeDialog.value = false
         jobs.forEach { it.cancel() }
         jobs.clear()
+        super.onViewUnattaching()
     }
 
     fun onCloseTrade() {

@@ -64,6 +64,7 @@ open class CreateProfilePresenter(
 
     override fun onViewUnattaching() {
         cancelJob()
+        super.onViewUnattaching()
     }
 
     init {

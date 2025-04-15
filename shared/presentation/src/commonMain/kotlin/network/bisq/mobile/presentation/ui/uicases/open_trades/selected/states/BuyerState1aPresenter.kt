@@ -4,6 +4,8 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
@@ -41,6 +43,7 @@ class BuyerState1aPresenter(
     private var job: Job? = null
 
     override fun onViewAttached() {
+        super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
         val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
@@ -57,6 +60,7 @@ class BuyerState1aPresenter(
         job = null
         _bitcoinPaymentData.value = ""
         _bitcoinPaymentDataValid.value = false
+        super.onViewUnattaching()
     }
 
     fun onBitcoinPaymentDataInput(value: String, isValid: Boolean) {

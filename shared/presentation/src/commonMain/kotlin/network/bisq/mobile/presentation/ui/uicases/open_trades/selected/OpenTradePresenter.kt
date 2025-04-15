@@ -61,6 +61,7 @@ class OpenTradePresenter(
         _tradeAbortedBoxVisible.value = false
         _tradeProcessBoxVisible.value = false
         _isInMediation.value = false
+        super.onViewUnattaching()
     }
 
     fun onOpenChat() {

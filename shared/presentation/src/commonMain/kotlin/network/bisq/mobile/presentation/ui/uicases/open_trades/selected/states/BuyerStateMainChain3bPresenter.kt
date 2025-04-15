@@ -50,6 +50,7 @@ class BuyerStateMainChain3bPresenter(
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     override fun onViewAttached() {
+        super.onViewAttached()
         if (txConfirmationState.value == CONFIRMED) {
             _buttonText.value = "bisqEasy.tradeState.info.phase3b.button.next".i18n()
         } else {
@@ -71,6 +72,7 @@ class BuyerStateMainChain3bPresenter(
         _blockExplorer.value = ""
         _balanceFromTx.value = ""
         _errorMessage.value = null
+        super.onViewUnattaching()
     }
 
     fun onCompleteTrade() {

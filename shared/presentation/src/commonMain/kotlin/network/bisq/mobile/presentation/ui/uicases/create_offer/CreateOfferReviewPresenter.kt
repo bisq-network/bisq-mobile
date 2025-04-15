@@ -37,6 +37,7 @@ class CreateOfferReviewPresenter(
 
 
     override fun onViewAttached() {
+        super.onViewAttached()
         createOfferModel = createOfferPresenter.createOfferModel
         direction = createOfferModel.direction
 
@@ -110,7 +111,6 @@ class CreateOfferReviewPresenter(
     }
 
     fun onCreateOffer() {
-        // TODO deactivate buttons, show waiting state
         disableInteractive()
 
         presenterScope.launch {
@@ -119,7 +119,6 @@ class CreateOfferReviewPresenter(
             // After createOffer is completed  we are back on presenterScope
             onGoToOfferList()
             enableInteractive()
-            // TODO hide waiting state, show successfully published state, show button to open offer book, clear navigation backstack
         }
     }
 

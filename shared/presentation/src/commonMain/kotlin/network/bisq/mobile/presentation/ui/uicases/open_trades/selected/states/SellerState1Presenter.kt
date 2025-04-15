@@ -50,6 +50,7 @@ class SellerState1Presenter(
         job?.cancel()
         job = null
         _paymentAccountData.value = ""
+        super.onViewUnattaching()
     }
 
     fun onPaymentDataInput(value: String, isValid: Boolean) {

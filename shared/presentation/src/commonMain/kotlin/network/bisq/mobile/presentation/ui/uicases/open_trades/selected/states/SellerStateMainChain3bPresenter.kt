@@ -72,6 +72,7 @@ class SellerStateMainChain3bPresenter(
         _blockExplorer.value = ""
         _balanceFromTx.value = ""
         _errorMessage.value = null
+        super.onViewUnattaching()
     }
 
     fun onCompleteTrade() {

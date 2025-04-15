@@ -54,9 +54,9 @@ class TradeChatPresenter(
     }
 
     override fun onViewUnattaching() {
-        super.onViewUnattaching()
         jobs.forEach { it.cancel() }
         jobs.clear()
+        super.onViewUnattaching()
     }
 
     fun sendChatMessage(text: String) {

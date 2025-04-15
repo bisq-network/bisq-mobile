@@ -61,6 +61,7 @@ open class SplashPresenter(
                     userRepository.update(it)
                 }
             }
+            super.onViewUnattaching()
 
             progress.collect { value ->
                 when {
@@ -77,6 +78,7 @@ open class SplashPresenter(
     override fun onViewUnattaching() {
         jobs.forEach { it.cancel() }
         jobs.clear()
+        super.onViewUnattaching()
     }
 
     private fun navigateToNextScreen() {

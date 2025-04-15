@@ -56,6 +56,7 @@ class TradeDetailsHeaderPresenter(
     val isInMediation: StateFlow<Boolean> = this._isInMediation
 
     override fun onViewAttached() {
+        super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
 
@@ -94,6 +95,7 @@ class TradeDetailsHeaderPresenter(
 
     override fun onViewUnattaching() {
         reset()
+        super.onViewUnattaching()
     }
 
     private fun tradeStateChanged(state: BisqEasyTradeStateEnum?) {

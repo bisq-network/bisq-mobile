@@ -111,6 +111,7 @@ class TakeOfferReviewPresenter(
     override fun onViewUnattaching() {
         jobs.forEach { it.cancel() }
         jobs.clear()
+        super.onViewUnattaching()
     }
 
     fun onBack() {

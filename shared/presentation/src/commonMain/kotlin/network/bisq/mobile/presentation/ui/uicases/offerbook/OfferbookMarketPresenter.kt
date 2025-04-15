@@ -122,6 +122,7 @@ class OfferbookMarketPresenter(
 
     override fun onViewUnattaching() {
         stopUpdatingMarketPrices()
+        super.onViewUnattaching()
     }
 
     private fun startUpdatingMarketPrices() {
