@@ -432,6 +432,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     private fun cleanup() {
         try {
             this.presenterScope.cancel()
+            this.ioScope.cancel()
             // copy to avoid concurrency exception - no problem with multiple on destroy calls
             dependants?.toList()?.forEach { it.onDestroy() }
         } catch (e: Exception) {
