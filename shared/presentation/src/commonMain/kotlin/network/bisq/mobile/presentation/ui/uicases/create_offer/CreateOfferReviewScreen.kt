@@ -17,6 +17,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -43,10 +44,24 @@ fun CreateOfferReviewOfferScreen() {
                 label = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
                 value = presenter.headLine,
             )
-            InfoBox(
-                label = "bisqEasy.takeOffer.review.method.fiat".i18n(),
-                value = presenter.quoteSidePaymentMethodDisplayString,
-            )
+
+            if (presenter.quoteSidePaymentMethodDisplayString.length + presenter.baseSidePaymentMethodDisplayString.length < 30) {
+                InfoRow(
+                    label1 = "bisqEasy.takeOffer.review.method.fiat".i18n(),
+                    value1 = presenter.quoteSidePaymentMethodDisplayString,
+                    label2 = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
+                    value2 = presenter.baseSidePaymentMethodDisplayString,
+                )
+            } else {
+                InfoBox(
+                    label = "bisqEasy.takeOffer.review.method.fiat".i18n(),
+                    value = presenter.quoteSidePaymentMethodDisplayString,
+                )
+                InfoBox(
+                    label = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
+                    value = presenter.baseSidePaymentMethodDisplayString
+                )
+            }
             if (presenter.isRangeOffer) {
                 if (presenter.direction == DirectionEnum.BUY) {
                     InfoBox(
@@ -57,7 +72,11 @@ fun CreateOfferReviewOfferScreen() {
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                         valueComposable = {
                             Row {
-                                BtcSatsText(presenter.formattedBaseRangeMinAmount, noCode = true, fontSize = FontSize.H6)
+                                BtcSatsText(
+                                    presenter.formattedBaseRangeMinAmount,
+                                    noCode = true,
+                                    fontSize = FontSize.H6
+                                )
                                 BisqText.baseRegular(" - ")
                                 BtcSatsText(presenter.formattedBaseRangeMaxAmount, fontSize = FontSize.H6)
                             }
@@ -72,7 +91,11 @@ fun CreateOfferReviewOfferScreen() {
                         label = "bisqEasy.tradeWizard.review.toSend".i18n().uppercase(),
                         valueComposable = {
                             Row {
-                                BtcSatsText(presenter.formattedBaseRangeMinAmount, noCode = true, fontSize = FontSize.H6)
+                                BtcSatsText(
+                                    presenter.formattedBaseRangeMinAmount,
+                                    noCode = true,
+                                    fontSize = FontSize.H6
+                                )
                                 BisqText.baseRegular(" - ")
                                 BtcSatsText(presenter.formattedBaseRangeMaxAmount, fontSize = FontSize.H6)
                             }
@@ -119,15 +142,6 @@ fun CreateOfferReviewOfferScreen() {
                     }
                 },
                 subvalue = presenter.priceDetails
-            )
-
-            InfoBox(
-                label = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
-                value = presenter.quoteSidePaymentMethodDisplayString
-            )
-            InfoBox(
-                label = "bisqEasy.takeOffer.review.method.fiat".i18n(),
-                value = presenter.baseSidePaymentMethodDisplayString
             )
 
             InfoBox(

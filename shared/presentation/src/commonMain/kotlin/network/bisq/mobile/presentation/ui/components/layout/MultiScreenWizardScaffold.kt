@@ -135,10 +135,7 @@ fun MultiScreenWizardScaffold(
         // as BissScrollScaffold's params, rather than creating a column here?
 
         Column(
-            modifier = Modifier.fillMaxHeight().padding(
-                horizontal = BisqUIConstants.ScreenPadding,
-                vertical = BisqUIConstants.ScreenPadding
-            ),
+            modifier = Modifier.fillMaxHeight(),
             horizontalAlignment = horizontalAlignment,
             verticalArrangement = Arrangement.Top,
         ) {

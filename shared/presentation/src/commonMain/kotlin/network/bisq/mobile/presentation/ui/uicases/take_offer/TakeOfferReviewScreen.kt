@@ -3,9 +3,11 @@ package network.bisq.mobile.presentation.ui.uicases.take_offer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.i18n
@@ -43,12 +45,13 @@ fun TakeOfferReviewTradeScreen() {
     ) {
         BisqText.h3Regular("bisqEasy.takeOffer.progress.review".i18n())
         BisqGap.V2()
-        Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
-            InfoRow(
-                label1 = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
-                value1 = presenter.headLine,
-                label2 = "bisqEasy.tradeState.phase2".i18n().uppercase(),
-                value2 = presenter.quoteSidePaymentMethodDisplayString,
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
+        ) {
+            InfoBox(
+                label = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
+                value = presenter.headLine,
             )
             if (presenter.takersDirection.isBuy) {
                 if (presenter.isSmallScreen()) {
@@ -119,12 +122,23 @@ fun TakeOfferReviewTradeScreen() {
                 }
             )
 
-            InfoRow(
-                label1 = "bisqEasy.tradeState.phase2".i18n(),
-                value1 = presenter.quoteSidePaymentMethodDisplayString,
-                label2 = "Bitcoin settlement", //TODO:i18n
-                value2 = presenter.baseSidePaymentMethodDisplayString,
-            )
+            if (presenter.quoteSidePaymentMethodDisplayString.length + presenter.baseSidePaymentMethodDisplayString.length < 30) {
+                InfoRow(
+                    label1 = "bisqEasy.takeOffer.review.method.fiat".i18n(),
+                    value1 = presenter.quoteSidePaymentMethodDisplayString,
+                    label2 = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
+                    value2 = presenter.baseSidePaymentMethodDisplayString,
+                )
+            } else {
+                InfoBox(
+                    label = "bisqEasy.takeOffer.review.method.fiat".i18n(),
+                    value = presenter.quoteSidePaymentMethodDisplayString,
+                )
+                InfoBox(
+                    label = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
+                    value = presenter.baseSidePaymentMethodDisplayString,
+                )
+            }
 
             InfoBox(
                 label = "bisqEasy.tradeWizard.review.feeDescription".i18n(),
