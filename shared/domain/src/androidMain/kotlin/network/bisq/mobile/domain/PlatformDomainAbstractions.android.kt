@@ -24,6 +24,8 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.text.NumberFormat
+import java.text.DecimalFormatSymbols
 
 actual fun formatDateTime(dateTime: LocalDateTime): String {
     val timeZone = TimeZone.currentSystemDefault()
@@ -116,4 +118,12 @@ actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
             "0"
         }
     }
+}
+
+actual fun setDefaultLocale(locale: String) {
+    Locale.setDefault(Locale(locale))
+}
+
+actual fun getDecimalSeparator(): Char {
+    return DecimalFormatSymbols(Locale.getDefault()).decimalSeparator
 }

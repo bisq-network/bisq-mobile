@@ -17,6 +17,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.getDecimalSeparator
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -96,7 +97,8 @@ fun BtcSatsText(
 private fun formatSatsToDisplay(formattedBtcAmountValue: String, noCode: Boolean): AnnotatedString {
 
     return buildAnnotatedString {
-        val parts = formattedBtcAmountValue.split(".")
+        val decimalSeparator = getDecimalSeparator()
+        val parts = formattedBtcAmountValue.split(decimalSeparator)
         val integerPart = parts[0]
         val fractionalPart = parts[1] ?: ""
 
@@ -108,7 +110,7 @@ private fun formatSatsToDisplay(formattedBtcAmountValue: String, noCode: Boolean
 
         withStyle(style = SpanStyle(color = prefixColor)) {
             append(integerPart)
-            append(".")
+            append(decimalSeparator)
         }
 
         withStyle(style = SpanStyle(color = prefixColor)) {

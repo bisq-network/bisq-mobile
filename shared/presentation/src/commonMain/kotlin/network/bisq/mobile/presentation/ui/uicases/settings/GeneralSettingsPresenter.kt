@@ -8,6 +8,7 @@ import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
@@ -37,6 +38,7 @@ open class GeneralSettingsPresenter(
             // languageServiceFacade.setDefaultLanguage(langCode)
             // languageServiceFacade.sync()
             _languageCode.value = langCode
+            setDefaultLocale(langCode)
         }
     }
 

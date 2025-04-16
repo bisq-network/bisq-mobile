@@ -173,3 +173,17 @@ actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
         return NSString.stringWithFormat(pattern, value)
     }
 }
+
+private var defaultLocale: NSLocale = NSLocale.currentLocale
+
+actual fun setDefaultLocale(locale: String) {
+    defaultLocale = NSLocale.localeWithLocaleIdentifier(locale)
+}
+
+actual fun getDecimalSeparator(): Char {
+    val formatter = NSNumberFormatter().apply {
+        numberStyle = NSNumberFormatterDecimalStyle
+        locale = defaultLocale
+    }
+    return formatter.decimalSeparator.first()
+}
