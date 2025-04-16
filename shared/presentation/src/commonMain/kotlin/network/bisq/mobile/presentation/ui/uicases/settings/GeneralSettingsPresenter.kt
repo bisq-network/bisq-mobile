@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
@@ -20,6 +21,14 @@ open class GeneralSettingsPresenter(
     private val languageServiceFacade: LanguageServiceFacade,
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IGeneralSettingsPresenter {
+
+    private val _restartAppPopup: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    override val restartAppPopup: StateFlow<Boolean> = _restartAppPopup
+    override fun setRestartAppPopup(value: Boolean) {
+        ioScope.launch {
+            _restartAppPopup.value = value
+        }
+    }
 
     override val i18nPairs: StateFlow<List<Pair<String, String>>> = languageServiceFacade.i18nPairs
     override val allLanguagePairs: StateFlow<List<Pair<String, String>>> = languageServiceFacade.allPairs
@@ -39,6 +48,7 @@ open class GeneralSettingsPresenter(
             // languageServiceFacade.sync()
             _languageCode.value = langCode
             setDefaultLocale(langCode)
+            _restartAppPopup.value = true
         }
     }
 
@@ -54,7 +64,6 @@ open class GeneralSettingsPresenter(
     private val _chatNotification: MutableStateFlow<String> =
         MutableStateFlow("chat.notificationsSettingsMenu.all".i18n())
     override val chatNotification: StateFlow<String> = _chatNotification
-
     override fun setChatNotification(value: String) {
         ioScope.launch {
             _chatNotification.value = value
@@ -79,7 +88,7 @@ open class GeneralSettingsPresenter(
         ioScope.launch {
             _tradePriceTolerance.value = value
             if (isValid) {
-                val _value = value.toDoubleOrNull()
+                val _value = value.toDoubleOrNullLocaleAware()
                 settingsServiceFacade.setMaxTradePriceDeviation((_value ?: 0.0)/100)
             }
         }
@@ -114,7 +123,7 @@ open class GeneralSettingsPresenter(
         ioScope.launch {
             _powFactor.value = value
             if (isValid) {
-                val _value = value.toDoubleOrNull()
+                val _value = value.toDoubleOrNullLocaleAware()
                 settingsServiceFacade.setDifficultyAdjustmentFactor(_value ?: 0.0)
             }
         }
@@ -134,6 +143,7 @@ open class GeneralSettingsPresenter(
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     override fun onViewAttached() {
+        super.onViewAttached()
         jobs.add(ioScope.launch {
             val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
             _languageCode.value = settings.languageCode

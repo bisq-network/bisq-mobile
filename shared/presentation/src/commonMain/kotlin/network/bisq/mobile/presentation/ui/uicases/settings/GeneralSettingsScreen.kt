@@ -5,6 +5,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.*
@@ -12,6 +13,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
 import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -19,6 +21,9 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 interface IGeneralSettingsPresenter : ViewPresenter {
+    val restartAppPopup: StateFlow<Boolean>
+    fun setRestartAppPopup(value: Boolean)
+
     val i18nPairs: StateFlow<List<Pair<String, String>>>
     val allLanguagePairs: StateFlow<List<Pair<String, String>>>
 
@@ -68,6 +73,7 @@ fun GeneralSettingsScreen() {
     val powFactor = presenter.powFactor.collectAsState().value
     val ignorePow = presenter.ignorePow.collectAsState().value
     val shouldShowPoWAdjustmentFactor = presenter.shouldShowPoWAdjustmentFactor.collectAsState().value
+    val restartAppPopup = presenter.restartAppPopup.collectAsState().value
 
     val menuTree: MenuItem = settingsPresenter.menuTree()
     val menuPath = remember { mutableStateListOf(menuTree) }
@@ -152,7 +158,7 @@ fun GeneralSettingsScreen() {
             numberWithTwoDecimals = true,
             valueSuffix = "%",
             validation = {
-                val parsedValue = it.toDoubleOrNull()
+                val parsedValue = it.toDoubleOrNullLocaleAware()
                 if (parsedValue == null) {
                     return@BisqTextField "Value cannot be empty"
                 }
@@ -184,7 +190,7 @@ fun GeneralSettingsScreen() {
             onValueChange = { it, isValid -> presenter.setNumDaysAfterRedactingTradeData(it, isValid) },
             helperText = "settings.trade.numDaysAfterRedactingTradeData.help".i18n(),
             validation = {
-                val parsedValue = it.toDoubleOrNull() ?: return@BisqTextField "Value cannot be empty"
+                val parsedValue = it.toDoubleOrNullLocaleAware() ?: return@BisqTextField "Value cannot be empty"
                 if (parsedValue < 30 || parsedValue > 365) {
                     return@BisqTextField "settings.trade.numDaysAfterRedactingTradeData.invalid".i18n(30, 365)
                 }
@@ -207,7 +213,7 @@ fun GeneralSettingsScreen() {
                 numberWithTwoDecimals = true,
                 onValueChange = { it, isValid -> presenter.setPowFactor(it, isValid) },
                 validation = {
-                    val parsedValue = it.toDoubleOrNull() ?: return@BisqTextField "Value cannot be empty"
+                    val parsedValue = it.toDoubleOrNullLocaleAware() ?: return@BisqTextField "Value cannot be empty"
                     if (parsedValue < 0 || parsedValue > 160_000) {
                         return@BisqTextField "authorizedRole.securityManager.difficultyAdjustment.invalid".i18n(
                             160000
@@ -230,6 +236,12 @@ fun GeneralSettingsScreen() {
             )
         }
 
+    }
+
+    if (restartAppPopup) {
+        BisqDialog(dismissOnClickOutside = false) {
+            BisqText.baseRegular("Language updated.\n\nPlease restart app for language change to take effect") // TODO:i18n
+        }
     }
 
 }

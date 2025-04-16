@@ -127,3 +127,12 @@ actual fun setDefaultLocale(locale: String) {
 actual fun getDecimalSeparator(): Char {
     return DecimalFormatSymbols(Locale.getDefault()).decimalSeparator
 }
+
+actual fun String.toDoubleOrNullLocaleAware(): Double? {
+    return try {
+        val javaLocale = Locale.getDefault()
+        NumberFormat.getInstance(javaLocale).parse(this)?.toDouble()
+    } catch (e: Exception) {
+        null
+    }
+}

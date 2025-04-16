@@ -187,3 +187,12 @@ actual fun getDecimalSeparator(): Char {
     }
     return formatter.decimalSeparator.first()
 }
+
+actual fun String.toDoubleOrNullLocaleAware(): Double? {
+    val formatter = NSNumberFormatter().apply {
+        numberStyle = NSNumberFormatterDecimalStyle
+        locale = defaultLocale
+    }
+    val number = formatter.numberFromString(this)
+    return number?.doubleValue?.toDouble()
+}

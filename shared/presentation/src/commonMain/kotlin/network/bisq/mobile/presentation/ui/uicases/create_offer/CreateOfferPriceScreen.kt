@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
@@ -74,7 +75,7 @@ fun CreateOfferTradePriceSelectorScreen() {
                         keyboardType = KeyboardType.Decimal,
                         onValueChange = { it, isValid -> presenter.onPercentagePriceChanged(it, isValid) },
                         validation = {
-                            val parsedValue = it.toDoubleOrNull()
+                            val parsedValue = it.toDoubleOrNullLocaleAware()
                             if (parsedValue == null) {
                                 return@BisqTextField "Value cannot be empty"
                             } else if (parsedValue < -10) {
@@ -98,7 +99,7 @@ fun CreateOfferTradePriceSelectorScreen() {
                         keyboardType = KeyboardType.Decimal,
                         onValueChange = { it, isValid -> presenter.onFixPriceChanged(it, isValid) },
                         validation = {
-                            val parsedValue = it.toDoubleOrNull()
+                            val parsedValue = it.toDoubleOrNullLocaleAware()
                             if (parsedValue == null) {
                                 return@BisqTextField "Value cannot be empty"
                             }
