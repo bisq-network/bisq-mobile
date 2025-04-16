@@ -104,7 +104,7 @@ actual class PlatformImage(val bitmap: ImageBitmap) {
 actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
     private val formatters: MutableMap<Int, DecimalFormat> = mutableMapOf()
     override fun format(value: Double, precision: Int): String {
-        formatters.getOrPut(precision) { DecimalFormat(generatePattern(precision)) }
+        formatters.getOrPut(precision) { DecimalFormat(generatePattern(precision), DecimalFormatSymbols(Locale.getDefault())) }
         return formatters[precision]!!.format(value)
     }
 

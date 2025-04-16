@@ -7,6 +7,8 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.formatters.NumberFormatter
+import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.setDefaultLocale
@@ -89,7 +91,9 @@ open class GeneralSettingsPresenter(
             _tradePriceTolerance.value = value
             if (isValid) {
                 val _value = value.toDoubleOrNullLocaleAware()
-                settingsServiceFacade.setMaxTradePriceDeviation((_value ?: 0.0)/100)
+                if (_value != null) {
+                    settingsServiceFacade.setMaxTradePriceDeviation((_value ?: 0.0)/100)
+                }
             }
         }
     }
@@ -154,10 +158,10 @@ open class GeneralSettingsPresenter(
 
             // _chatNotification.value =
             _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
-            _tradePriceTolerance.value = (settings.maxTradePriceDeviation * 100).toString()
+            _tradePriceTolerance.value = NumberFormatter.format(settings.maxTradePriceDeviation * 100)
             _useAnimations.value = settings.useAnimations
             _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData.toString()
-            _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value.toString()
+            _powFactor.value = NumberFormatter.format(settingsServiceFacade.difficultyAdjustmentFactor.value)
             _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
         })
     }

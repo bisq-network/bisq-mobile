@@ -61,7 +61,6 @@ object PlatformImageSerializer : KSerializer<PlatformImage> {
     }
 }
 
-
 interface DecimalFormatter {
     fun format(value: Double, precision: Int): String
 }
