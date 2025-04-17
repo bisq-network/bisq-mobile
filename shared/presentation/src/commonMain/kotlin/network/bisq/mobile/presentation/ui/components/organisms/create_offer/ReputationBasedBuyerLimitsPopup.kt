@@ -32,8 +32,6 @@ fun ReputationBasedBuyerLimitsPopup(
 
         BisqText.baseRegular(amountLimitInfo)
 
-        BisqGap.V1()
-
         NoteText(
             "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.linkToWikiText".i18n(),
             linkText = "https://bisq.wiki/Reputation",
@@ -41,7 +39,7 @@ fun ReputationBasedBuyerLimitsPopup(
             onLinkClick = onRepLinkClick
         )
 
-        BisqGap.V1()
+        BisqGap.V3()
 
         GreyCloseButton(onClick = onDismiss)
     }

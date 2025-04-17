@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -99,7 +100,7 @@ fun FiatInputField(
                         innerTextField()
                     }
 
-                    BisqText.h5Regular(currency)
+                    BisqText.h5Regular(currency, modifier = Modifier.offset(y = (-2).dp))
                 }
             }
         )

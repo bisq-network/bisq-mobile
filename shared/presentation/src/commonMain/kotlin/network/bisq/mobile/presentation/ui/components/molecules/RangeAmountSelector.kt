@@ -4,30 +4,38 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
+import network.bisq.mobile.presentation.ui.components.atoms.RangeAmountSlider
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 
-@OptIn(ExperimentalMaterial3Api::class)
 // TODO: This has more work to do
 @Composable
 fun RangeAmountSelector(
     formattedMinAmount: String,
     formattedMaxAmount: String,
     quoteCurrencyCode: String,
-    initialSliderPosition: ClosedFloatingPointRange<Float>,
+    minRangeInitialSliderValue: Float,
+    onMinRangeSliderValueChange: (Float) -> Unit,
+    maxRangeInitialSliderValue: Float,
+    onMaxRangeSliderValueChange: (Float) -> Unit,
+    maxSliderValue: StateFlow<Float?> = MutableStateFlow(null),
+    leftMarkerSliderValue: StateFlow<Float?> = MutableStateFlow(null),
+    rightMarkerSliderValue: StateFlow<Float?> = MutableStateFlow(null),
     formattedQuoteSideMinRangeAmount: StateFlow<String>,
     formattedBaseSideMinRangeAmount: StateFlow<String>,
     formattedQuoteSideMaxRangeAmount: StateFlow<String>,
     formattedBaseSideMaxRangeAmount: StateFlow<String>,
-    onSliderValueChange: (sliderValue: ClosedFloatingPointRange<Float>) -> Unit,
     onMinAmountTextValueChange: (String) -> Unit, // todo not applied yet
     onMaxAmountTextValueChange: (String) -> Unit // todo not applied yet
 ) {
@@ -44,44 +52,54 @@ fun RangeAmountSelector(
     Column {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
             Column(horizontalAlignment = Alignment.Start) {
-                BisqText.smallRegularGrey("Min")
+                BisqText.smallRegularGrey("min".i18n())
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.Bottom
                 ) {
                     if (smallFont) {
                         BisqText.h3Regular(quoteSideMinRangeAmountWithoutDecimal)
-                        BisqText.baseLight(quoteCurrencyCode)
+                        BisqText.baseLight(quoteCurrencyCode, modifier = Modifier.offset(y = (-2.5).dp))
                     } else {
                         BisqText.h2Regular(quoteSideMinRangeAmountWithoutDecimal)
-                        BisqText.h6Light(quoteCurrencyCode)
+                        BisqText.h6Light(quoteCurrencyCode, modifier = Modifier.offset(y = (-2.5).dp))
                     }
                 }
                 BtcSatsText(baseSideMinRangeAmount)
             }
             Column(horizontalAlignment = Alignment.End) {
-                BisqText.smallRegularGrey("Max")
+                BisqText.smallRegularGrey("max".i18n())
                 Row(
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                     verticalAlignment = Alignment.Bottom
                 ) {
                     if (smallFont) {
                         BisqText.h3Regular(quoteSideMaxRangeAmountWithoutDecimal)
-                        BisqText.baseLight(quoteCurrencyCode)
+                        BisqText.baseLight(quoteCurrencyCode, modifier = Modifier.offset(y = (-2.5).dp))
                     } else {
                         BisqText.h2Regular(quoteSideMaxRangeAmountWithoutDecimal)
-                        BisqText.h6Light(quoteCurrencyCode)
+                        BisqText.h6Light(quoteCurrencyCode, modifier = Modifier.offset(y = (-2.5).dp))
                     }
                 }
                 BtcSatsText(baseSideMaxRangeAmount)
             }
-
         }
-        Column {
-            BisqRangeSlider(
-                initialSliderPosition,
-                { onSliderValueChange.invoke(it) }
+
+        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+            BisqGap.V3()
+
+            RangeAmountSlider(
+                minRangeInitialValue = minRangeInitialSliderValue,
+                onMinRangeValueChange = onMinRangeSliderValueChange,
+                maxRangeInitialValue = maxRangeInitialSliderValue,
+                onMaxRangeValueChange = onMaxRangeSliderValueChange,
+                maxValue = maxSliderValue,
+                leftMarkerValue = leftMarkerSliderValue,
+                rightMarkerValue = rightMarkerSliderValue,
             )
+
+            BisqGap.V1()
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,

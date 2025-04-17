@@ -1538,8 +1538,10 @@ object GeneratedResourceBundles_it {
             "CASH_DEPOSIT_SHORT" to "Deposito in contanti",
         ),
         "mobile" to mapOf(
+            "min" to "Min",
             "error.warning" to "Warning",
             "bootstrap.connectedToTrustedNode" to "Connected to trusted node",
+            "max" to "Max",
             "error.exception" to "Exception",
             "genericError.errorMessage" to "Error message:",
             "confirmation.areYouSure" to "Are you sure?",

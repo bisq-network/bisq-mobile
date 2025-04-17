@@ -29,9 +29,9 @@ import org.koin.compose.koinInject
 fun CreateOfferAmountSelectorScreen() {
     val presenter: CreateOfferAmountPresenter = koinInject()
     val isBuy by presenter.isBuy.collectAsState()
-    val reputation by presenter.reputation.collectAsState()
+    val reputation by presenter.requiredReputation.collectAsState()
     val hintText by presenter.amountLimitInfo.collectAsState()
-    val reputationBasedMaxSellAmount by presenter.formattedReputationBasedMaxSellAmount.collectAsState()
+    val reputationBasedMaxSellAmount by presenter.formattedReputationBasedMaxAmount.collectAsState()
     val showLimitPopup by presenter.showLimitPopup.collectAsState()
     val shouldShowWarningIcon by presenter.shouldShowWarningIcon.collectAsState()
 
@@ -72,30 +72,35 @@ fun CreateOfferAmountSelectorScreen() {
 
         if (presenter.amountType.collectAsState().value == AmountType.FIXED_AMOUNT) {
             BisqAmountSelector(
-                presenter.quoteCurrencyCode,
-                presenter.formattedMinAmountWithCode,
-                presenter.formattedMaxAmountWithCode,
-                presenter.fixedAmountSliderPosition,
-                presenter.leftMarkerQuoteSideValue,
-                presenter.rightMarkerQuoteSideValue,
-                presenter.formattedQuoteSideFixedAmount,
-                presenter.formattedBaseSideFixedAmount,
-                { presenter.onFixedAmountSliderChanged(it) },
-                { presenter.onFixedAmountTextValueChanged(it) }
+                quoteCurrencyCode = presenter.quoteCurrencyCode,
+                formattedMinAmount = presenter.formattedMinAmountWithCode,
+                formattedMaxAmount = presenter.formattedMaxAmountWithCode,
+                initialSliderPosition = presenter.fixedAmountSliderPosition,
+                maxSliderValue = presenter.reputationBasedMaxSliderValue,
+                rightMarkerSliderValue = presenter.rightMarkerSliderValue,
+                formattedFiatAmount = presenter.formattedQuoteSideFixedAmount,
+                formattedBtcAmount = presenter.formattedBaseSideFixedAmount,
+                onSliderValueChange = { presenter.onFixedAmountSliderValueChange(it) },
+                onTextValueChange = { presenter.onFixedAmountTextValueChange(it) }
             )
         } else {
             RangeAmountSelector(
-                presenter.formattedMinAmountWithCode,
-                presenter.formattedMaxAmountWithCode,
-                presenter.quoteCurrencyCode,
-                presenter.rangeSliderPosition,
-                presenter.formattedQuoteSideMinRangeAmount,
-                presenter.formattedBaseSideMinRangeAmount,
-                presenter.formattedQuoteSideMaxRangeAmount,
-                presenter.formattedBaseSideMaxRangeAmount,
-                { presenter.onRangeAmountSliderChanged(it) },
-                { presenter.onMinAmountTextValueChanged(it) },
-                { presenter.onMaxAmountTextValueChanged(it) }
+                formattedMinAmount = presenter.formattedMinAmountWithCode,
+                formattedMaxAmount = presenter.formattedMaxAmountWithCode,
+                quoteCurrencyCode = presenter.quoteCurrencyCode,
+                minRangeInitialSliderValue = presenter.minRangeInitialSliderValue,
+                onMinRangeSliderValueChange = { presenter.onMinRangeSliderValueChange(it) },
+                maxRangeInitialSliderValue = presenter.maxRangeInitialSliderValue,
+                onMaxRangeSliderValueChange = { presenter.onMaxRangeSliderValueChange(it) },
+                maxSliderValue = presenter.reputationBasedMaxSliderValue,
+                rightMarkerSliderValue = presenter.rightMarkerSliderValue,
+                formattedQuoteSideMinRangeAmount = presenter.formattedQuoteSideMinRangeAmount,
+                formattedBaseSideMinRangeAmount = presenter.formattedBaseSideMinRangeAmount,
+                formattedQuoteSideMaxRangeAmount = presenter.formattedQuoteSideMaxRangeAmount,
+                formattedBaseSideMaxRangeAmount = presenter.formattedBaseSideMaxRangeAmount,
+
+                onMinAmountTextValueChange = { presenter.onMinAmountTextValueChange(it) },
+                onMaxAmountTextValueChange = { presenter.onMaxAmountTextValueChange(it) }
             )
         }
 
@@ -110,7 +115,7 @@ fun CreateOfferAmountSelectorScreen() {
             }
             NoteText(
                 notes = hintText,
-                linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
+                linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.more".i18n(),
                 onLinkClick = { presenter.setShowLimitPopup(true) }
             )
         }

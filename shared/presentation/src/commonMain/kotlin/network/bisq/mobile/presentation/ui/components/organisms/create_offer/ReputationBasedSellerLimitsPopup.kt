@@ -32,7 +32,7 @@ fun ReputationBasedSellerLimitsPopup(
 
         BisqText.baseRegular("bisqEasy.tradeWizard.amount.seller.limitInfo.overlay".i18n(reputationScore, maxSellAmount))
 
-        BisqGap.VHalf()
+        BisqGap.V3()
 
         LinkButton(
             text = "bisqEasy.tradeWizard.amount.limitInfo.overlay.learnHowToBuildReputation".i18n(),

@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -39,16 +38,14 @@ fun TakeOfferTradeAmountScreen() {
         Spacer(modifier = Modifier.height(128.dp))
 
         BisqAmountSelector(
-            presenter.quoteCurrencyCode,
-            presenter.formattedMinAmountWithCode,
-            presenter.formattedMaxAmountWithCode,
-            presenter.sliderPosition,
-            MutableStateFlow(0f), //todo
-            MutableStateFlow(0f),
-            presenter.formattedQuoteAmount,
-            presenter.formattedBaseAmount,
-            { sliderValue -> presenter.onSliderValueChanged(sliderValue) },
-            { textInput -> presenter.onTextValueChanged(textInput) }
+            quoteCurrencyCode = presenter.quoteCurrencyCode,
+            formattedMinAmount = presenter.formattedMinAmountWithCode,
+            formattedMaxAmount = presenter.formattedMaxAmountWithCode,
+            initialSliderPosition = presenter.sliderPosition,
+            formattedFiatAmount = presenter.formattedQuoteAmount,
+            formattedBtcAmount = presenter.formattedBaseAmount,
+            onSliderValueChange = { sliderValue -> presenter.onSliderValueChanged(sliderValue) },
+            onTextValueChange = { textInput -> presenter.onTextValueChanged(textInput) }
         )
     }
 }

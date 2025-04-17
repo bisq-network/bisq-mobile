@@ -1538,8 +1538,10 @@ object GeneratedResourceBundles_ru {
             "CASH_DEPOSIT_SHORT" to "Депозит наличными",
         ),
         "mobile" to mapOf(
+            "min" to "Min",
             "error.warning" to "Warning",
             "bootstrap.connectedToTrustedNode" to "Connected to trusted node",
+            "max" to "Max",
             "error.exception" to "Exception",
             "genericError.errorMessage" to "Error message:",
             "confirmation.areYouSure" to "Are you sure?",
