@@ -122,23 +122,14 @@ fun TakeOfferReviewTradeScreen() {
                 }
             )
 
-            if (presenter.quoteSidePaymentMethodDisplayString.length + presenter.baseSidePaymentMethodDisplayString.length < 30) {
-                InfoRow(
-                    label1 = "bisqEasy.takeOffer.review.method.fiat".i18n(),
-                    value1 = presenter.quoteSidePaymentMethodDisplayString,
-                    label2 = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
-                    value2 = presenter.baseSidePaymentMethodDisplayString,
-                )
-            } else {
-                InfoBox(
-                    label = "bisqEasy.takeOffer.review.method.fiat".i18n(),
-                    value = presenter.quoteSidePaymentMethodDisplayString,
-                )
-                InfoBox(
-                    label = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
-                    value = presenter.baseSidePaymentMethodDisplayString,
-                )
-            }
+            InfoBox(
+                label = "bisqEasy.takeOffer.review.method.fiat".i18n(),
+                value = presenter.quoteSidePaymentMethodDisplayString,
+            )
+            InfoBox(
+                label = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
+                value = presenter.baseSidePaymentMethodDisplayString,
+            )
 
             InfoBox(
                 label = "bisqEasy.tradeWizard.review.feeDescription".i18n(),
