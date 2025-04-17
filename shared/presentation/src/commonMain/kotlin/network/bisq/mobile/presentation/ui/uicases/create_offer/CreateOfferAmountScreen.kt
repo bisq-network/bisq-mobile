@@ -1,14 +1,19 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText
+import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIconLightGrey
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.BisqAmountSelector
@@ -25,10 +30,11 @@ fun CreateOfferAmountSelectorScreen() {
     val presenter: CreateOfferAmountPresenter = koinInject()
     val isBuy by presenter.isBuy.collectAsState()
     val reputation by presenter.reputation.collectAsState()
-    val hintText by presenter.hintText.collectAsState()
+    val hintText by presenter.amountLimitInfo.collectAsState()
     val reputationBasedMaxSellAmount by presenter.formattedReputationBasedMaxSellAmount.collectAsState()
     val showLimitPopup by presenter.showLimitPopup.collectAsState()
-    val takersCount by presenter.takersCount.collectAsState()
+    val shouldShowWarningIcon by presenter.shouldShowWarningIcon.collectAsState()
+
     RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
@@ -70,6 +76,8 @@ fun CreateOfferAmountSelectorScreen() {
                 presenter.formattedMinAmountWithCode,
                 presenter.formattedMaxAmountWithCode,
                 presenter.fixedAmountSliderPosition,
+                presenter.leftMarkerQuoteSideValue,
+                presenter.rightMarkerQuoteSideValue,
                 presenter.formattedQuoteSideFixedAmount,
                 presenter.formattedBaseSideFixedAmount,
                 { presenter.onFixedAmountSliderChanged(it) },
@@ -93,22 +101,27 @@ fun CreateOfferAmountSelectorScreen() {
 
         BisqGap.V2()
 
-        NoteText(
-            notes = hintText,
-            linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
-            onLinkClick = { presenter.setShowLimitPopup(true) }
-        )
-
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (shouldShowWarningIcon) {
+                WarningIconLightGrey(modifier = Modifier.size(18.dp))
+            }
+            NoteText(
+                notes = hintText,
+                linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
+                onLinkClick = { presenter.setShowLimitPopup(true) }
+            )
+        }
     }
 
     if (showLimitPopup) {
         if (isBuy) {
             ReputationBasedBuyerLimitsPopup(
                 onDismiss = { presenter.setShowLimitPopup(false) },
-                reputationScore = reputation.toString(),
-                maxBuyAmount = presenter.maxBuyAmount.collectAsState().value,
-                takersCount = takersCount,
-                onRepLinkClick = presenter::navigateToReputation
+                onRepLinkClick = presenter::navigateToReputation,
+                amountLimitInfoOverlayInfo = presenter.amountLimitInfoOverlayInfo
             )
         } else {
             ReputationBasedSellerLimitsPopup(

@@ -11,11 +11,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.presentation.ui.components.atoms.BisqSlider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
+import network.bisq.mobile.presentation.ui.components.atoms.SliderWithMarker
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.FiatInputField
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 // ToDiscuss:
@@ -29,6 +28,8 @@ fun BisqAmountSelector(
     formattedMinAmount: String,
     formattedMaxAmount: String,
     initialSliderPosition: Float,
+    leftMarkerQuoteSideValue: StateFlow<Float>,
+    rightMarkerQuoteSideValue: StateFlow<Float>,
     formattedFiatAmount: StateFlow<String>,
     formattedBtcAmount: StateFlow<String>,
     onSliderValueChange: (sliderValue: Float) -> Unit,
@@ -36,22 +37,6 @@ fun BisqAmountSelector(
 ) {
     val formattedFiatAmountValue = formattedFiatAmount.collectAsState().value
     val formattedBtcAmountValue = formattedBtcAmount.collectAsState().value
-
-    val btcAmountValueHighLightedZeros = formattedBtcAmountValue
-        .takeWhile { it == '0' || it == '.' }
-    val btcAmountValue = formattedBtcAmountValue
-        .dropWhile { it == '0' || it == '.' }
-        .reversed()
-        .chunked(3)
-        .joinToString(" ")
-        .reversed()
-
-    /* var fiatValue by remember { mutableDoubleStateOf((minAmount + maxAmount) * 0.5) }
-     val sats = (100_000_000L * (fiatValue.toDouble()) / exchangeRate).toLong()
-
-     LaunchedEffect(fiatValue) {
-         onValueChange?.invoke(fiatValue)
-     }*/
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -66,17 +51,16 @@ fun BisqAmountSelector(
             currency = fiatCurrencyCode
         )
 
-        /*if (fiatValue < minAmount || fiatValue > maxAmount) {
-            BisqText.baseRegular("Amount out of range", color = BisqTheme.colors.danger)
-        }*/
-
         BtcSatsText(formattedBtcAmountValue)
 
         Column {
-            BisqSlider(
-                initialSliderPosition,
-                { onSliderValueChange(it) }
+            SliderWithMarker(
+                initialValue = initialSliderPosition,
+                leftMarkerQuoteSideValue = leftMarkerQuoteSideValue,
+                rightMarkerQuoteSideValue = rightMarkerQuoteSideValue,
+                onValueChange = { onSliderValueChange(it) }
             )
+
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,

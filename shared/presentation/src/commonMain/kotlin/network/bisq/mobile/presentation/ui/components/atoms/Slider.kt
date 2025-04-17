@@ -22,11 +22,8 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @Composable
 fun BisqSlider(
     initialValue: Float,
-    onValueChange: (Float) -> Unit
-) {
-    var value by remember { mutableFloatStateOf(initialValue) }
-
-    val colors = SliderColors(
+    onValueChange: (Float) -> Unit,
+    colors: SliderColors = SliderColors(
         thumbColor = BisqTheme.colors.primary,
         activeTrackColor = BisqTheme.colors.mid_grey20,
         activeTickColor = Color.Unspecified,
@@ -38,6 +35,8 @@ fun BisqSlider(
         disabledInactiveTrackColor = Color.Unspecified,
         disabledInactiveTickColor = Color.Unspecified
     )
+) {
+    var value by remember { mutableFloatStateOf(initialValue) }
 
     Slider(
         modifier = Modifier.fillMaxWidth(),

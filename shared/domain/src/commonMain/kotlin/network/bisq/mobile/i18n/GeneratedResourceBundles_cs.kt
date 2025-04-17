@@ -1540,11 +1540,13 @@ object GeneratedResourceBundles_cs {
             "CASH_DEPOSIT_SHORT" to "Vklad v hotovosti",
         ),
         "mobile" to mapOf(
+            "error.warning" to "Warning",
             "bootstrap.connectedToTrustedNode" to "Connected to trusted node",
             "error.exception" to "Exception",
-            "error.warning" to "Warning",
+            "genericError.errorMessage" to "Error message:",
             "confirmation.areYouSure" to "Are you sure?",
             "mobile.openTrades.inMediation.banner" to "A mediator has joined the trade chat.\nPlease use the trade chat to get assistance from the mediator.",
+            "genericError.headline" to "An error occurred",
             "mobile.tradeState.info.buyer.phase2a.reasonForPaymentInfo" to "Use the trade ID {0} for the ''Reason for payment'' field",
         ),
     )

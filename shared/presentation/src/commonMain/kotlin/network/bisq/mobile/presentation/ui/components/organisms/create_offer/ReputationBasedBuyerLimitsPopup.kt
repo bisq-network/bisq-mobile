@@ -1,9 +1,11 @@
 package network.bisq.mobile.presentation.ui.components.organisms.create_offer
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText
 import network.bisq.mobile.presentation.ui.components.atoms.button.GreyCloseButton
@@ -15,10 +17,9 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 fun ReputationBasedBuyerLimitsPopup(
     onDismiss: () -> Unit,
     onRepLinkClick: () -> Unit,
-    reputationScore: String,
-    maxBuyAmount: String,
-    takersCount: Int,
+    amountLimitInfoOverlayInfo: StateFlow<String>
 ) {
+    val amountLimitInfo by amountLimitInfoOverlayInfo.collectAsState()
 
     BisqDialog(
         horizontalAlignment = Alignment.Start,
@@ -29,13 +30,7 @@ fun ReputationBasedBuyerLimitsPopup(
 
         BisqGap.V1()
 
-        val description = if (takersCount == 0) {
-            "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.noSellers".i18n(maxBuyAmount, reputationScore)
-        } else {
-            val sellers = "bisqEasy.tradeWizard.amount.buyer.numSellers".i18nPlural(takersCount)
-            "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.wSellers".i18n(maxBuyAmount, reputationScore, sellers)
-        }
-        BisqText.baseRegular(description)
+        BisqText.baseRegular(amountLimitInfo)
 
         BisqGap.V1()
 
@@ -49,6 +44,5 @@ fun ReputationBasedBuyerLimitsPopup(
         BisqGap.V1()
 
         GreyCloseButton(onClick = onDismiss)
-
     }
 }

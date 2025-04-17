@@ -9,8 +9,6 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toQuoteSideMonetary
-import network.bisq.mobile.domain.data.replicated.common.roundDouble
-import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import kotlin.math.roundToLong
 
@@ -123,5 +121,4 @@ object BisqEasyTradeAmountLimits {
     fun withTolerance(makersReputationScore: Long): Long {
         return (makersReputationScore * (1 + TOLERANCE)).toLong();
     }
-
 }
