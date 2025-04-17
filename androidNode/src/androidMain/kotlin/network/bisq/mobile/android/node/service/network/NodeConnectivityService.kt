@@ -3,7 +3,7 @@ package network.bisq.mobile.android.node.service.network
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.service.network.ConnectivityService
 
-class NodeConnectivityService(private val applicationService: AndroidApplicationService.Provider): ConnectivityService() {
+class NodeConnectivityService(private val applicationService: AndroidApplicationService.Provider) : ConnectivityService() {
 
     companion object {
         const val SLOW_PEER_QUANTITY_THRESHOLD = 2
@@ -11,7 +11,7 @@ class NodeConnectivityService(private val applicationService: AndroidApplication
 
     override fun isConnected(): Boolean {
         val connections = currentConnections()
-        log.d { "Connected peers = $connections"}
+        log.d { "Connected peers = $connections" }
         return connections > 0
     }
 
@@ -22,10 +22,8 @@ class NodeConnectivityService(private val applicationService: AndroidApplication
     }
 
     private fun currentConnections(): Int {
-        var connections = 0
-        applicationService.findAllServiceNodes().forEach {
-            connections += it.peerGroupManager.get().node.numConnections
-        }
-        return connections
+        return applicationService.networkService.get()
+            .serviceNodesByTransport.allServiceNodes
+            .sumOf { it.defaultNode.numConnections }
     }
 }
