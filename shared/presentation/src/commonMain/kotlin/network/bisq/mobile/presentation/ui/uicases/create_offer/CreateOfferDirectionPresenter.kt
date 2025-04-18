@@ -62,12 +62,6 @@ class CreateOfferDirectionPresenter(
         }
     }
 
-    fun onSellWithoutReputation() {
-        setShowSellerReputationWarning(false)
-        direction = DirectionEnum.SELL
-        navigateNext()
-    }
-
     fun onBack() {
         commitToModel()
         navigateBack()
@@ -78,9 +72,14 @@ class CreateOfferDirectionPresenter(
     }
 
     fun showLearnReputation() {
+        setShowSellerReputationWarning(false)
         disableInteractive()
         navigateToUrl("https://bisq.wiki/Reputation#How_to_build_reputation")
         enableInteractive()
+    }
+
+    fun onDismissSellerReputationWarning() {
+        setShowSellerReputationWarning(false)
     }
 
     private fun navigateNext() {

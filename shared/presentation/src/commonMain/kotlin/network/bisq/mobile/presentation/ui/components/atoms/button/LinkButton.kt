@@ -1,13 +1,17 @@
 package network.bisq.mobile.presentation.ui.components.atoms.button
 
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.WebLinkConfirmationDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -18,6 +22,7 @@ fun LinkButton(
     text: String,
     link: String,
     type: BisqButtonType = BisqButtonType.Clear,
+    color: Color = BisqTheme.colors.primary,
     padding: PaddingValues = PaddingValues(all = BisqUIConstants.Zero),
     onClick: (() -> Unit)? = null,
     fullWidth: Boolean = false,
@@ -30,7 +35,7 @@ fun LinkButton(
 
     BisqButton(
         text,
-        color = BisqTheme.colors.primary,
+        color = color,
         type = type,
         padding = padding,
         fullWidth = fullWidth,

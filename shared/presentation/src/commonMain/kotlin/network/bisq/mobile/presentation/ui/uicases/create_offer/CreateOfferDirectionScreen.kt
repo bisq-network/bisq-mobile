@@ -69,8 +69,7 @@ fun CreateOfferBuySellScreen() {
 
         if (showSellerReputationWarning) {
                 SellerReputationWarningDialog(
-                    onConfirm = { presenter.onSellWithoutReputation() },
-                    onDismiss = { presenter.setShowSellerReputationWarning(false) },
+                    onDismiss = { presenter.onDismissSellerReputationWarning() },
                     onLearnReputation = { presenter.showLearnReputation() },
                 )
             }
