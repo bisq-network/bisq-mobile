@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
@@ -83,7 +84,7 @@ open class GeneralSettingsPresenter(
             if (isValid) {
                 val _value = value.toDoubleOrNullLocaleAware()
                 if (_value != null) {
-                    settingsServiceFacade.setMaxTradePriceDeviation((_value ?: 0.0)/100)
+                    settingsServiceFacade.setMaxTradePriceDeviation((_value ?: 0.0) / 100)
                 }
             }
         }
@@ -137,23 +138,18 @@ open class GeneralSettingsPresenter(
 
     private var jobs: MutableSet<Job> = mutableSetOf()
 
+    init {
+        presenterScope.launch {
+            mainPresenter.languageCode.drop(1).collect {
+                fetchSettings()
+            }
+        }
+    }
+
     override fun onViewAttached() {
         super.onViewAttached()
         jobs.add(ioScope.launch {
-            val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
-            _languageCode.value = settings.languageCode
-            _supportedLanguageCodes.value = if (settings.supportedLanguageCodes.isNotEmpty())
-                settings.supportedLanguageCodes
-            else
-                setOf("en") // setOf(i18nPairs.collectAsState().value.first().first)
-
-            // _chatNotification.value =
-            _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
-            _tradePriceTolerance.value = NumberFormatter.format(settings.maxTradePriceDeviation * 100)
-            _useAnimations.value = settings.useAnimations
-            _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData.toString()
-            _powFactor.value = NumberFormatter.format(settingsServiceFacade.difficultyAdjustmentFactor.value)
-            _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
+            fetchSettings()
         })
     }
 
@@ -163,4 +159,20 @@ open class GeneralSettingsPresenter(
         super.onViewUnattaching()
     }
 
+    private suspend fun fetchSettings() {
+        val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
+        _languageCode.value = settings.languageCode
+        _supportedLanguageCodes.value = if (settings.supportedLanguageCodes.isNotEmpty())
+            settings.supportedLanguageCodes
+        else
+            setOf("en") // setOf(i18nPairs.collectAsState().value.first().first)
+
+        // _chatNotification.value =
+        _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
+        _tradePriceTolerance.value = NumberFormatter.format(settings.maxTradePriceDeviation * 100)
+        _useAnimations.value = settings.useAnimations
+        _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData.toString()
+        _powFactor.value = NumberFormatter.format(settingsServiceFacade.difficultyAdjustmentFactor.value)
+        _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
+    }
 }

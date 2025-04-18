@@ -4,6 +4,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.formatters.NumberFormatter
+import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
+import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
@@ -16,13 +19,30 @@ class OpenTradeListPresenter(
     private val settingsServiceFacade: SettingsServiceFacade
 ) : BasePresenter(mainPresenter) {
 
-    val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = tradesServiceFacade.openTradeItems
+    val _openTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
+    var openTradeItems: StateFlow<List<TradeItemPresentationModel>> = _openTradeItems
+
     val tradeRulesConfirmed: StateFlow<Boolean> = settingsServiceFacade.tradeRulesConfirmed
 
     private val _tradeGuideVisible = MutableStateFlow(false)
     val tradeGuideVisible: StateFlow<Boolean> get() = _tradeGuideVisible
 
+    init {
+        presenterScope.launch {
+            mainPresenter.languageCode.collect {
+                _openTradeItems.value = tradesServiceFacade.openTradeItems.value.map {
+                    it.apply {
+                        quoteAmountWithCode = "${NumberFormatter.format(it.quoteAmount.toDouble() / 10000.0)} ${it.quoteCurrencyCode}"
+                        formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec)
+                        formattedBaseAmount = NumberFormatter.format(it.baseAmount.toDouble())
+                    }
+                }
+            }
+        }
+    }
+
     override fun onViewAttached() {
+        super.onViewAttached()
     }
 
     fun onOpenTradeGuide() {

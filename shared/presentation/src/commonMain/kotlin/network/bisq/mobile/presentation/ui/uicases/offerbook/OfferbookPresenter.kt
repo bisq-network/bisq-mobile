@@ -23,6 +23,8 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExte
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.FixedAmountSpecVO
+import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -34,9 +36,8 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
 
-
 class OfferbookPresenter(
-    mainPresenter: MainPresenter,
+    private val mainPresenter: MainPresenter,
     private val offersServiceFacade: OffersServiceFacade,
     private val takeOfferPresenter: TakeOfferPresenter,
     private val createOfferPresenter: CreateOfferPresenter,
@@ -44,6 +45,13 @@ class OfferbookPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade
 ) : BasePresenter(mainPresenter) {
+
+    // val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = offersServiceFacade.offerbookListItems
+
+    var _offerbookListItems: MutableStateFlow<List<OfferItemPresentationModel>> = MutableStateFlow(emptyList())
+    var offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = _offerbookListItems
+
+    //todo for dev testing its more convenient
     private val _selectedDirection = MutableStateFlow(DirectionEnum.SELL)
     val selectedDirection: StateFlow<DirectionEnum> = _selectedDirection
     private val includeOfferPredicate: MutableStateFlow<(OfferItemPresentationModel) -> Boolean> =
@@ -71,6 +79,34 @@ class OfferbookPresenter(
     var notEnoughReputationMessage: String = ""
 
     private var selectedOffer: OfferItemPresentationModel? = null
+
+    init {
+        presenterScope.launch {
+            mainPresenter.languageCode.collect {
+                _offerbookListItems.value = offersServiceFacade.offerbookListItems.value.map {
+                    it.apply {
+                        formattedQuoteAmount = when (it.bisqEasyOffer.amountSpec) {
+                            is FixedAmountSpecVO -> {
+                                val amountSpec: FixedAmountSpecVO = it.bisqEasyOffer.amountSpec as FixedAmountSpecVO
+                                val fiatVO =
+                                    FiatVOFactory.from(amountSpec.amount, it.bisqEasyOffer.market.quoteCurrencyCode)
+                                AmountFormatter.formatAmount(fiatVO)
+                            }
+
+                            is RangeAmountSpecVO -> {
+                                val amountSpec: RangeAmountSpecVO = it.bisqEasyOffer.amountSpec as RangeAmountSpecVO
+                                val minFiatVO = FiatVOFactory.from(amountSpec.minAmount, it.bisqEasyOffer.market.quoteCurrencyCode)
+                                val maxFiatVO = FiatVOFactory.from(amountSpec.maxAmount, it.bisqEasyOffer.market.quoteCurrencyCode)
+                                AmountFormatter.formatRangeAmount(minFiatVO, maxFiatVO, true, true)
+                            }
+
+                        }
+                        formattedPriceSpec = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec)
+                    }
+                }
+            }
+        }
+    }
 
     override fun onViewAttached() {
         super.onViewAttached()
