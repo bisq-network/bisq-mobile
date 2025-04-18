@@ -9,4 +9,10 @@ object NumberFormatter {
         val formatted = decimalFormatter.format(canonical, 2)
         return formatted
     }
+
+    fun btcFormat(value: Long): String {
+        val fraction = value / 100_000_000.0
+        val formatted = decimalFormatter.format(fraction, 8)
+        return formatted
+    }
 }

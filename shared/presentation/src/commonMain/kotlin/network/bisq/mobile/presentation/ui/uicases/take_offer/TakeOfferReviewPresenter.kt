@@ -64,6 +64,7 @@ class TakeOfferReviewPresenter(
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     override fun onViewAttached() {
+        super.onViewAttached()
         presenterScope.launch {
             takeOfferStatus.collect { value ->
                 log.i { "takeOfferStatus: $value" }

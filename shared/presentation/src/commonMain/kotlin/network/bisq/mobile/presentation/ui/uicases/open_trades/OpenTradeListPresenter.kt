@@ -33,8 +33,8 @@ class OpenTradeListPresenter(
                 _openTradeItems.value = tradesServiceFacade.openTradeItems.value.map {
                     it.apply {
                         quoteAmountWithCode = "${NumberFormatter.format(it.quoteAmount.toDouble() / 10000.0)} ${it.quoteCurrencyCode}"
-                        formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec)
-                        formattedBaseAmount = NumberFormatter.format(it.baseAmount.toDouble())
+                        formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec, true)
+                        formattedBaseAmount = NumberFormatter.btcFormat(it.baseAmount)
                     }
                 }
             }

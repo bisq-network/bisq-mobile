@@ -13,16 +13,19 @@ object PriceSpecFormatter {
                 val price = PriceFormatter.formatWithCode(priceSpec.priceQuote)
                 "bisqEasy.tradeWizard.review.chatMessage.fixPrice".i18n(price)
             }
+
             is FloatPriceSpecVO -> {
                 val percent = PercentageFormatter.format(kotlin.math.abs(priceSpec.percentage))
                 val key = when {
                     priceSpec.percentage >= 0.0 -> if (abbreviated) "bisqEasy.tradeWizard.review.chatMessage.floatPrice.plus"
-                                                  else "bisqEasy.tradeWizard.review.chatMessage.floatPrice.above"
+                    else "bisqEasy.tradeWizard.review.chatMessage.floatPrice.above"
+
                     else -> if (abbreviated) "bisqEasy.tradeWizard.review.chatMessage.floatPrice.minus"
-                             else "bisqEasy.tradeWizard.review.chatMessage.floatPrice.below"
+                    else "bisqEasy.tradeWizard.review.chatMessage.floatPrice.below"
                 }
                 key.i18n(percent)
             }
+
             else -> "bisqEasy.tradeWizard.review.chatMessage.marketPrice".i18n()
         }
     }
@@ -33,6 +36,7 @@ object PriceSpecFormatter {
                 val price = PriceFormatter.formatWithCode(priceSpec.priceQuote)
                 "priceSpecFormatter.fixPrice".i18n(price)
             }
+
             is FloatPriceSpecVO -> {
                 val percent = PercentageFormatter.format(kotlin.math.abs(priceSpec.percentage))
                 val key = if (priceSpec.percentage >= 0.0) {
@@ -42,6 +46,7 @@ object PriceSpecFormatter {
                 }
                 key.i18n(percent, offerPrice)
             }
+
             else -> "priceSpecFormatter.marketPrice".i18n(offerPrice)
         }
     }

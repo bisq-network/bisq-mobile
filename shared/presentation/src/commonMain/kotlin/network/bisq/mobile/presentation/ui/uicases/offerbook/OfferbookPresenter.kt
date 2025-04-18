@@ -45,11 +45,8 @@ class OfferbookPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade
 ) : BasePresenter(mainPresenter) {
-
-    // val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = offersServiceFacade.offerbookListItems
-
     var _offerbookListItems: MutableStateFlow<List<OfferItemPresentationModel>> = MutableStateFlow(emptyList())
-    var offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = _offerbookListItems
+//    var offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = _offerbookListItems
 
     //todo for dev testing its more convenient
     private val _selectedDirection = MutableStateFlow(DirectionEnum.SELL)
