@@ -26,7 +26,7 @@ fun CancelTradeDialog(
     }
 
     WarningConfirmationDialog(
-        subMessage = warningText1,
+        message = warningText1,
         horizontalAlignment = Alignment.Start,
         marginTop = if (isRejection)
             BisqUIConstants.ScreenPadding5X

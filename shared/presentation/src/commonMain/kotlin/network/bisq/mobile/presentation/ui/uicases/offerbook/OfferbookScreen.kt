@@ -15,6 +15,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.WebLinkConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
@@ -33,6 +34,7 @@ fun OfferbookScreen() {
     val offerListItems = presenter.offerbookListItems.collectAsState().value
     val selectedDirection = presenter.selectedDirection.collectAsState().value
     val showDeleteConfirmationDialog = presenter.showDeleteConfirmation.collectAsState().value
+    val showNotEnoughReputationDialog = presenter.showNotEnoughReputationDialog.collectAsState().value
     val filteredList = offerListItems.filter { it.bisqEasyOffer.direction.mirror == selectedDirection }
     val sortedList = filteredList.sortedByDescending { it.bisqEasyOffer.date }
 
@@ -57,13 +59,28 @@ fun OfferbookScreen() {
 
         if (showDeleteConfirmationDialog) {
             ConfirmationDialog(
-                message = "bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n(),
-//                subMessage = "You can resume later",
+                headline = "bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n(),
                 onConfirm = {
-                    presenter.proceedWithOfferAction()
+                    presenter.onConfirmedDeleteOffer()
                 },
                 onDismiss = {
-                    presenter.onCancelDelete()
+                    presenter.onDismissDeleteOffer()
+                }
+            )
+        }
+
+        if (showNotEnoughReputationDialog) {
+            WebLinkConfirmationDialog(
+                link = "https://bisq.wiki/Reputation#How_to_build_reputation",
+                headline = presenter.notEnoughReputationHeadline,
+                message = presenter.notEnoughReputationMessage,
+                confirmButtonText = "confirmation.yes".i18n(),
+                dismissButtonText = "hyperlinks.openInBrowser.no".i18n(),
+                onConfirm = {
+                    presenter.onLearnHowToBuildReputation()
+                },
+                onDismiss = {
+                    presenter.onDismissNotEnoughReputationDialog()
                 }
             )
         }
@@ -75,7 +92,7 @@ fun OfferbookScreen() {
             items(sortedList) { item ->
                 OfferCard(
                     item,
-                    onSelectOffer = { presenter.onSelectOffer(item) },
+                    onSelectOffer = { presenter.onOfferSelected(item) },
                 )
             }
         }

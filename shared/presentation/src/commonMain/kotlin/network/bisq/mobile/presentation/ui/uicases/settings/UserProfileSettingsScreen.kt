@@ -1,10 +1,13 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
@@ -21,10 +24,9 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
 import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -142,7 +144,7 @@ fun UserProfileSettingsScreen() {
 
     if (showDeleteConfirmation) {
         ConfirmationDialog(
-            message = "Are you sure want to delete your profile",
+            headline = "Are you sure want to delete your profile",
             onConfirm = presenter::onDelete,
             onDismiss = { presenter.setShowDeleteProfileConfirmation(false) }
         )

@@ -18,13 +18,12 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun ConfirmationDialog(
-    title: String = "", // todo not used
-    message: String = "confirmation.areYouSure".i18n(), // Are you sure?
-    messageColor: Color = BisqTheme.colors.white,
-    messageLeftIcon: (@Composable () -> Unit)? = null,
-    subMessage: String = "",
+    headline: String = "",
+    headlineColor: Color = BisqTheme.colors.white,
+    headlineLeftIcon: (@Composable () -> Unit)? = null,
+    message: String = "",
     confirmButtonText: String = "confirmation.yes".i18n(),
-    cancelButtonText: String = "confirmation.no".i18n(),
+    dismissButtonText: String = "confirmation.no".i18n(),
     marginTop: Dp = BisqUIConstants.ScreenPadding5X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalButtonPlacement: Boolean = false,
@@ -35,49 +34,49 @@ fun ConfirmationDialog(
         horizontalAlignment = horizontalAlignment,
         marginTop = marginTop,
     ) {
-        if (message.isNotEmpty()) {
-            if (messageLeftIcon == null) {
-                BisqText.h6Regular(message, color = messageColor)
+        if (headline.isNotEmpty()) {
+            if (headlineLeftIcon == null) {
+                BisqText.h6Regular(headline, color = headlineColor)
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    messageLeftIcon()
+                    headlineLeftIcon()
                     BisqGap.H1()
-                    BisqText.h6Regular(message, color = messageColor)
+                    BisqText.h6Regular(headline, color = headlineColor)
                 }
             }
             BisqGap.V1()
         }
-        if (subMessage.isNotEmpty()) {
-            BisqText.baseRegular(subMessage)
-            BisqGap.V1()
+        if (message.isNotEmpty()) {
+            BisqText.baseRegular(message)
+            BisqGap.V2()
         }
         if (verticalButtonPlacement) {
             Column {
                 BisqButton(
-                    text = cancelButtonText,
-                    type = BisqButtonType.Grey,
-                    onClick = onDismiss,
+                    text = confirmButtonText,
+                    onClick = onConfirm,
                     fullWidth = true
                 )
                 BisqGap.VHalf()
                 BisqButton(
-                    text = confirmButtonText,
-                    onClick = onConfirm,
+                    text = dismissButtonText,
+                    type = BisqButtonType.Grey,
+                    onClick = onDismiss,
                     fullWidth = true
                 )
             }
         } else {
             Row(horizontalArrangement = Arrangement.SpaceBetween) {
                 BisqButton(
-                    text = cancelButtonText,
-                    type = BisqButtonType.Grey,
-                    onClick = onDismiss,
+                    text = confirmButtonText,
+                    onClick = onConfirm,
                     modifier = Modifier.weight(1.0F),
                 )
                 BisqGap.H1()
                 BisqButton(
-                    text = confirmButtonText,
-                    onClick = onConfirm,
+                    text = dismissButtonText,
+                    type = BisqButtonType.Grey,
+                    onClick = onDismiss,
                     modifier = Modifier.weight(1.0F),
                 )
             }

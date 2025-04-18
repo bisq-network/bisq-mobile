@@ -24,6 +24,6 @@ class NodeConnectivityService(private val applicationService: AndroidApplication
     private fun currentConnections(): Int {
         return applicationService.networkService.get()
             .serviceNodesByTransport.allServiceNodes
-            .sumOf { it.defaultNode.numConnections }
+            .sumOf { it.defaultNode?.numConnections ?: 0 }
     }
 }

@@ -14,8 +14,8 @@ fun OpenMediationDialog(
 ) {
 
     WarningConfirmationDialog(
-        message = "bisqEasy.mediation.request.confirm.headline".i18n(),
-        subMessage = "bisqEasy.mediation.request.confirm.msg".i18n(),
+        headline = "bisqEasy.mediation.request.confirm.headline".i18n(),
+        message = "bisqEasy.mediation.request.confirm.msg".i18n(),
         confirmButtonText = "bisqEasy.mediation.request.confirm.openMediation".i18n(),
         horizontalAlignment = Alignment.Start,
         marginTop = BisqUIConstants.ScreenPaddingHalf,

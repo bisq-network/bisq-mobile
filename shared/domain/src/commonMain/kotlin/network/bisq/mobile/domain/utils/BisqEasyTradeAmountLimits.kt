@@ -9,7 +9,10 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toQuoteSideMonetary
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.utils.OfferUtils.getFixedOrMaxAmount
+import network.bisq.mobile.domain.utils.OfferUtils.getFixedOrMinAmount
 import kotlin.math.roundToLong
 
 
@@ -49,6 +52,25 @@ object BisqEasyTradeAmountLimits {
                 marketPriceItem?.priceQuote?.toQuoteSideMonetary(defaultMinBtcTradeAmount)
             }
     }
+
+    fun findRequiredReputationScoreForMaxOrFixedAmount(
+        marketPriceService: MarketPriceServiceFacade,
+        offer: BisqEasyOfferVO
+    ): Long? {
+        val amount = getFixedOrMaxAmount(offer)
+        val fiatAmount = FiatVOFactory.from(amount, offer.market.quoteCurrencyCode)
+        return findRequiredReputationScoreByFiatAmount(marketPriceService, offer.market, fiatAmount)
+    }
+
+    fun findRequiredReputationScoreForMinOrFixedAmount(
+        marketPriceService: MarketPriceServiceFacade,
+        offer: BisqEasyOfferVO
+    ): Long? {
+        val amount = getFixedOrMinAmount(offer)
+        val fiatAmount = FiatVOFactory.from(amount, offer.market.quoteCurrencyCode)
+        return findRequiredReputationScoreByFiatAmount(marketPriceService, offer.market, fiatAmount)
+    }
+
 
     fun findRequiredReputationScoreByFiatAmount(
         marketPriceServiceFacade: MarketPriceServiceFacade,

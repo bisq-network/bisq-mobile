@@ -92,7 +92,15 @@ val presentationModule = module {
 
     single<SettingsPresenter> { SettingsPresenter(get(), get()) } bind ISettingsPresenter::class
 
-    single<UserProfileSettingsPresenter> { UserProfileSettingsPresenter(get(), get(), get(), get(), get()) } bind IUserProfileSettingsPresenter::class
+    single<UserProfileSettingsPresenter> {
+        UserProfileSettingsPresenter(
+            get(),
+            get(),
+            get(),
+            get(),
+            get()
+        )
+    } bind IUserProfileSettingsPresenter::class
 
     single<GettingStartedPresenter> { GettingStartedPresenter(get(), get(), get(), get()) }
 
@@ -135,7 +143,7 @@ val presentationModule = module {
 
     // Offerbook
     single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get()) }
-    single<OfferbookPresenter> { OfferbookPresenter(get(), get(), get(), get()) }
+    single<OfferbookPresenter> { OfferbookPresenter(get(), get(), get(), get(), get(), get(), get()) }
 
     // Take offer
     single { TakeOfferPresenter(get(), get(), get()) }

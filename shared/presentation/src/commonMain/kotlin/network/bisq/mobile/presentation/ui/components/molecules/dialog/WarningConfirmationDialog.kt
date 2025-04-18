@@ -10,10 +10,10 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun WarningConfirmationDialog(
-    message: String = "popup.headline.warning".i18n(),
-    subMessage: String = "",
+    headline: String = "popup.headline.warning".i18n(),
+    message: String = "",
     confirmButtonText: String = "confirmation.ok".i18n(),
-    cancelButtonText: String = "action.cancel".i18n(),
+    dismissButtonText: String = "action.cancel".i18n(),
     marginTop: Dp = BisqUIConstants.ScreenPadding5X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalButtonPlacement: Boolean = false,
@@ -21,12 +21,12 @@ fun WarningConfirmationDialog(
     onDismiss: () -> Unit,
 ) {
     ConfirmationDialog(
+        headline = headline,
+        headlineColor = BisqTheme.colors.warning,
+        headlineLeftIcon = { WarningIcon() },
         message = message,
-        messageColor = BisqTheme.colors.warning,
-        messageLeftIcon = { WarningIcon() },
-        subMessage = subMessage,
-        cancelButtonText = cancelButtonText,
         confirmButtonText = confirmButtonText,
+        dismissButtonText = dismissButtonText,
         onConfirm = onConfirm,
         onDismiss = onDismiss,
         marginTop = marginTop,
