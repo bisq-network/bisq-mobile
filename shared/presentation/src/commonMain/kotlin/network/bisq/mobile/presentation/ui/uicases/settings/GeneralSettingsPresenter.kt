@@ -8,7 +8,6 @@ import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.formatters.NumberFormatter
-import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.setDefaultLocale
@@ -21,16 +20,8 @@ open class GeneralSettingsPresenter(
     private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
-    mainPresenter: MainPresenter
+    private val mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IGeneralSettingsPresenter {
-
-    private val _restartAppPopup: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    override val restartAppPopup: StateFlow<Boolean> = _restartAppPopup
-    override fun setRestartAppPopup(value: Boolean) {
-        ioScope.launch {
-            _restartAppPopup.value = value
-        }
-    }
 
     override val i18nPairs: StateFlow<List<Pair<String, String>>> = languageServiceFacade.i18nPairs
     override val allLanguagePairs: StateFlow<List<Pair<String, String>>> = languageServiceFacade.allPairs
@@ -39,18 +30,18 @@ open class GeneralSettingsPresenter(
     override val languageCode: MutableStateFlow<String> = _languageCode
     override fun setLanguageCode(langCode: String) {
         ioScope.launch {
-            settingsServiceFacade.setLanguageCode(langCode)
+            settingsServiceFacade.setLanguageCode(langCode) // Update lang in bisq2 lib / WS
             // TODO: Is this right?
             // Doing this to reload all bundles of the newly selected language,
             // all String.i18n() across the app gets the text of selected language
-            I18nSupport.initialize(langCode)
+            I18nSupport.initialize(langCode) // update lang for mobile's i18n libs
             // As per chat with @Henrik Feb 4, it's okay not to translate these lists into selected languages, for now.
             // To update display values in i18Pairs, allLanguagePairs with the new language
             // languageServiceFacade.setDefaultLanguage(langCode)
             // languageServiceFacade.sync()
             _languageCode.value = langCode
-            setDefaultLocale(langCode)
-            _restartAppPopup.value = true
+            setDefaultLocale(langCode) // update lang in app's context
+            // _restartAppPopup.value = true
         }
     }
 

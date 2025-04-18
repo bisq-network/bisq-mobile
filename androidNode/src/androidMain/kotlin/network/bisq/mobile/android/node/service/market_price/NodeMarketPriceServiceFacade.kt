@@ -70,6 +70,10 @@ class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplic
         return findMarketPriceItem(MarketVOFactory.USD)
     }
 
+    override fun refreshSelectedFormattedMarketPrice() {
+        updateMarketPriceItem()
+    }
+
     // Private
     private fun observeMarketPrice() {
         marketPricePin = marketPriceService.marketPriceByCurrencyMap.addObserver(Runnable { updateMarketPriceItem() })

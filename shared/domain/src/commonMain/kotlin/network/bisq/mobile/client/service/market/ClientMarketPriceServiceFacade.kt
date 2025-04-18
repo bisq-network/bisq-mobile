@@ -79,6 +79,10 @@ class ClientMarketPriceServiceFacade(
         return findMarketPriceItem(MarketVOFactory.USD)
     }
 
+    override fun refreshSelectedFormattedMarketPrice() {
+        updateMarketPriceItem()
+    }
+
     private fun updateMarketPriceItem() {
         val quoteCurrencyCode: String = selectedMarket.quoteCurrencyCode
         quotes[quoteCurrencyCode]?.let { priceQuote ->

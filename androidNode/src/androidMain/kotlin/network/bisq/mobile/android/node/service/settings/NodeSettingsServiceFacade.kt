@@ -1,5 +1,6 @@
 package network.bisq.mobile.android.node.service.settings
 
+import bisq.common.locale.LocaleRepository
 import bisq.common.observable.Pin
 import bisq.settings.ChatNotificationType
 import bisq.settings.SettingsService
@@ -11,6 +12,7 @@ import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannel
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.utils.Logging
+import java.util.*
 
 class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Provider) : SettingsServiceFacade,
     Logging {
@@ -35,6 +37,20 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     override val languageCode: StateFlow<String> get() = _languageCode
     override suspend fun setLanguageCode(value: String) {
         settingsService.setLanguageCode(value)
+        when (value) {
+            "af-ZA" -> LocaleRepository.setDefaultLocale(Locale("af", "ZA"))
+            "cs" -> LocaleRepository.setDefaultLocale(Locale("cs", "CZ"))
+            "de" -> LocaleRepository.setDefaultLocale(Locale("de", "DE"))
+            "en" -> LocaleRepository.setDefaultLocale(Locale("en", "US"))
+            "es" -> LocaleRepository.setDefaultLocale(Locale("es", "ES"))
+            "it" -> LocaleRepository.setDefaultLocale(Locale("it", "IT"))
+            "pcm" -> LocaleRepository.setDefaultLocale(Locale("pcm", "NG"))
+            "pt-BR" -> LocaleRepository.setDefaultLocale(Locale("pt", "BR"))
+            "ru" -> LocaleRepository.setDefaultLocale(Locale("ru", "RU"))
+            else -> LocaleRepository.setDefaultLocale(Locale("en", "US"))
+        }
+        val l = LocaleRepository.getDefaultLocale()
+        _languageCode.value = value
     }
 
     private val _supportedLanguageCodes: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
