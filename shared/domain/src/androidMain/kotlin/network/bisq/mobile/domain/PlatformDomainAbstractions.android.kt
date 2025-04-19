@@ -24,6 +24,8 @@ import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
 import java.text.SimpleDateFormat
 import java.util.Date
+import java.text.NumberFormat
+import java.text.DecimalFormatSymbols
 
 actual fun formatDateTime(dateTime: LocalDateTime): String {
     val timeZone = TimeZone.currentSystemDefault()
@@ -100,10 +102,14 @@ actual class PlatformImage(val bitmap: ImageBitmap) {
 }
 
 actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
-    private val formatters: MutableMap<Int, DecimalFormat> = mutableMapOf()
+    private val formatters: MutableMap<Pair<Int, Locale>, DecimalFormat> = mutableMapOf()
     override fun format(value: Double, precision: Int): String {
-        formatters.getOrPut(precision) { DecimalFormat(generatePattern(precision)) }
-        return formatters[precision]!!.format(value)
+        val locale = Locale.getDefault()
+        val key = precision to locale
+        val formatter = formatters.getOrPut(key) {
+            DecimalFormat(generatePattern(precision), DecimalFormatSymbols(locale))
+        }
+        return formatter.format(value)
     }
 
     private fun generatePattern(precision: Int): String {
@@ -115,5 +121,22 @@ actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
         } else {
             "0"
         }
+    }
+}
+
+actual fun setDefaultLocale(locale: String) {
+    Locale.setDefault(Locale(locale))
+}
+
+actual fun getDecimalSeparator(): Char {
+    return DecimalFormatSymbols(Locale.getDefault()).decimalSeparator
+}
+
+actual fun String.toDoubleOrNullLocaleAware(): Double? {
+    return try {
+        val javaLocale = Locale.getDefault()
+        NumberFormat.getInstance(javaLocale).parse(this)?.toDouble()
+    } catch (e: Exception) {
+        null
     }
 }

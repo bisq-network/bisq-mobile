@@ -29,8 +29,8 @@ class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentation
     val isMyOffer = offerItemPresentationDto.isMyOffer
     val makersUserProfile = offerItemPresentationDto.userProfile
     val formattedDate = offerItemPresentationDto.formattedDate
-    val formattedQuoteAmount = offerItemPresentationDto.formattedQuoteAmount
-    val formattedPriceSpec = offerItemPresentationDto.formattedPriceSpec
+    var formattedQuoteAmount = offerItemPresentationDto.formattedQuoteAmount
+    var formattedPriceSpec = offerItemPresentationDto.formattedPriceSpec
     val quoteSidePaymentMethods = offerItemPresentationDto.quoteSidePaymentMethods
     val baseSidePaymentMethods = offerItemPresentationDto.baseSidePaymentMethods
 

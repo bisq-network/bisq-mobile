@@ -29,6 +29,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import network.bisq.mobile.domain.getDecimalSeparator
 import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.button.PasteIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -183,11 +184,27 @@ fun BisqTextField(
                         cleanValue = cleanValue.removeSuffix(valueSuffix)
                     }
                     if (numberWithTwoDecimals) {
-                        val decimalPattern = Regex("^\\d*\\.?\\d{0,2}$")
-                        if (decimalPattern.matches(cleanValue)) {
-                            validationError = validation?.invoke(cleanValue)
+                        val separator = getDecimalSeparator().toString()
+                        val escapedSeparator = Regex.escape(separator)
+                        val loosePattern = Regex("^\\d*${escapedSeparator}?\\d*$")
+
+                        if (loosePattern.matches(cleanValue)) {
+                            val trimmedValue = if (cleanValue.contains(separator)) {
+                                val parts = cleanValue.split(separator)
+                                if (parts.size == 2) {
+                                    val integer = parts[0]
+                                    val decimals = parts[1].take(2) // Trim to 2 decimal digits
+                                    "$integer$separator$decimals"
+                                } else {
+                                    cleanValue // malformed (multiple separators), leave as-is
+                                }
+                            } else {
+                                cleanValue
+                            }
+
+                            validationError = validation?.invoke(trimmedValue)
                             onValueChange?.invoke(
-                                cleanValue,
+                                trimmedValue,
                                 validationError == null || validationError?.isEmpty() == true
                             )
                         }

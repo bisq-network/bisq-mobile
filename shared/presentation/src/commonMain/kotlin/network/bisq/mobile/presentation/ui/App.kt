@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
@@ -57,6 +58,7 @@ fun App() {
 
     val languageCode = presenter.languageCode.collectAsState().value
     I18nSupport.initialize(languageCode)
+    setDefaultLocale(languageCode)
 
     BisqTheme(darkTheme = true) {
         if (isNavControllerSet) {

@@ -61,9 +61,13 @@ object PlatformImageSerializer : KSerializer<PlatformImage> {
     }
 }
 
-
 interface DecimalFormatter {
     fun format(value: Double, precision: Int): String
 }
 
 expect val decimalFormatter: DecimalFormatter
+
+expect fun setDefaultLocale(locale: String)
+expect fun getDecimalSeparator(): Char
+
+expect fun String.toDoubleOrNullLocaleAware(): Double?

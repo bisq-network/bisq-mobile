@@ -171,5 +171,37 @@ actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
     override fun format(value: Double, precision: Int): String {
         val pattern = "%.${precision}f"
         return NSString.stringWithFormat(pattern, value)
+
+        // TODO: Incorporate locale specific separator (Untested)
+//        val formatter = NSNumberFormatter().apply {
+//            numberStyle = NSNumberFormatterDecimalStyle
+//            maximumFractionDigits = precision.toULong()
+//            minimumFractionDigits = precision.toULong()
+//            locale = NSLocale.currentLocale()
+//        }
+//        return formatter.stringFromNumber(NSNumber(value)) ?: value.toString()
     }
+}
+
+private var defaultLocale: NSLocale = NSLocale.currentLocale
+
+actual fun setDefaultLocale(locale: String) {
+    defaultLocale = NSLocale.localeWithLocaleIdentifier(locale)
+}
+
+actual fun getDecimalSeparator(): Char {
+    val formatter = NSNumberFormatter().apply {
+        numberStyle = NSNumberFormatterDecimalStyle
+        locale = defaultLocale
+    }
+    return formatter.decimalSeparator.first()
+}
+
+actual fun String.toDoubleOrNullLocaleAware(): Double? {
+    val formatter = NSNumberFormatter().apply {
+        numberStyle = NSNumberFormatterDecimalStyle
+        locale = defaultLocale
+    }
+    val number = formatter.numberFromString(this)
+    return number?.doubleValue?.toDouble()
 }

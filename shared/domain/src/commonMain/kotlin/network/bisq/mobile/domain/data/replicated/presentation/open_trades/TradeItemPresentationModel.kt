@@ -21,9 +21,9 @@ class TradeItemPresentationModel(tradeItemPresentationDto: TradeItemPresentation
     val formattedTime = tradeItemPresentationDto.formattedTime
     val market = tradeItemPresentationDto.market
     val price = tradeItemPresentationDto.price
-    val formattedPrice = tradeItemPresentationDto.formattedPrice
+    var formattedPrice = tradeItemPresentationDto.formattedPrice
     val baseAmount = tradeItemPresentationDto.baseAmount
-    val formattedBaseAmount = tradeItemPresentationDto.formattedBaseAmount
+    var formattedBaseAmount = tradeItemPresentationDto.formattedBaseAmount
     val quoteAmount = tradeItemPresentationDto.quoteAmount
     val formattedQuoteAmount = tradeItemPresentationDto.formattedQuoteAmount
     val bitcoinSettlementMethod = tradeItemPresentationDto.bitcoinSettlementMethod
@@ -48,7 +48,7 @@ class TradeItemPresentationModel(tradeItemPresentationDto: TradeItemPresentation
     val shortTradeId = bisqEasyTradeModel.shortId
     val baseCurrencyCode: String = bisqEasyOffer.market.baseCurrencyCode
     val quoteCurrencyCode: String = bisqEasyOffer.market.quoteCurrencyCode
-    val quoteAmountWithCode = "$formattedQuoteAmount $quoteCurrencyCode"
+    var quoteAmountWithCode = "$formattedQuoteAmount $quoteCurrencyCode"
     val baseAmountWithCode = "$formattedBaseAmount $baseCurrencyCode"
 
     override fun toString(): String {
