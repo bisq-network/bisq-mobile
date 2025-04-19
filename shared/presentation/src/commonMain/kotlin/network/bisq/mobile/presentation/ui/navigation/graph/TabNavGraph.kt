@@ -14,7 +14,7 @@ import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.navigation.Graph
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.uicases.GettingStartedScreen
+import network.bisq.mobile.presentation.ui.uicases.DashboardScreen
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookMarketScreen
 import network.bisq.mobile.presentation.ui.uicases.open_trades.OpenTradeListScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsScreen
@@ -43,7 +43,7 @@ fun TabNavGraph() {
         ) {
             composable(route = Routes.TabHome.name) {
                 selectedTab.value = Routes.TabHome.name
-                GettingStartedScreen()
+                DashboardScreen()
             }
             composable(route = Routes.TabOfferbook.name) {
                 selectedTab.value = Routes.TabOfferbook.name

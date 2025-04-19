@@ -1561,6 +1561,7 @@ object GeneratedResourceBundles_en {
         ),
         "mobile" to mapOf(
             "mobile.reputation.buildReputation" to "Learn more about how to build up reputation at the Bisq Wiki.",
+            "offers" to "Offers",
             "error.warning" to "Warning",
             "max" to "Max",
             "error.exception" to "Exception",

@@ -146,15 +146,15 @@ class TakeOfferPresenter(
         } else {
             // FIXME happens in client mode. probably market price data are not received in time
             log.e { "marketPriceItem must not be null" }
-            val marketPriceItem: MarketPriceItem? = marketPriceServiceFacade.findMarketPriceItem(marketVO)
+            val item: MarketPriceItem? = marketPriceServiceFacade.findMarketPriceItem(marketVO)
             return PriceQuoteVO(
                 0,
                 4, 2,
                 marketVO,
                 CoinVOFactory.bitcoinFrom(1),
                 FiatVOFactory.from(
-                    marketPriceItem?.priceQuote?.value ?: 0L,
-                    marketPriceItem?.market?.quoteCurrencyCode ?: "USD"
+                    item?.priceQuote?.value ?: 0L,
+                    item?.market?.quoteCurrencyCode ?: "USD"
                 )
 
             )

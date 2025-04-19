@@ -78,7 +78,7 @@ class OfferbookMarketPresenter(
         searchText: String,
         sortBy: MarketSortBy
     ): List<MarketListItem> {
-        return offersServiceFacade.offerbookMarketItems
+        return offersServiceFacade.offerbookMarketItems.value
             .filter { item ->
                 when (filter) {
                     MarketFilter.WithOffers -> item.numOffers.value > 0

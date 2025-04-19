@@ -5,10 +5,10 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.button.BisqFABAddButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -22,7 +22,6 @@ import org.koin.compose.koinInject
 @Composable
 fun OfferbookScreen() {
     val presenter: OfferbookPresenter = koinInject()
-
     RememberPresenterLifecycle(presenter)
 
     // Offers are mirrored to what user wants. E.g. I want to buy Bitcoin using a sell offer
@@ -31,16 +30,14 @@ fun OfferbookScreen() {
         DirectionEnum.BUY
     )
 
-    val offerListItems = presenter.offerbookListItems.collectAsState().value
-    val selectedDirection = presenter.selectedDirection.collectAsState().value
-    val showDeleteConfirmationDialog = presenter.showDeleteConfirmation.collectAsState().value
-    val showNotEnoughReputationDialog = presenter.showNotEnoughReputationDialog.collectAsState().value
-    val filteredList = offerListItems.filter { it.bisqEasyOffer.direction.mirror == selectedDirection }
-    val sortedList = filteredList.sortedByDescending { it.bisqEasyOffer.date }
+    val sortedFilteredOffers by presenter.sortedFilteredOffers.collectAsState()
+    val selectedDirection by presenter.selectedDirection.collectAsState()
+    val showDeleteConfirmation by presenter.showDeleteConfirmation.collectAsState()
+    val showNotEnoughReputationDialog by presenter.showNotEnoughReputationDialog.collectAsState()
 
     BisqStaticScaffold(
         topBar = {
-            TopBar(title = "Offers") //TODO:i18n
+            TopBar(title = "offers".i18n())
         },
         floatingButton = {
             BisqFABAddButton(
@@ -57,15 +54,11 @@ fun OfferbookScreen() {
 
         BisqGap.V1()
 
-        if (showDeleteConfirmationDialog) {
+        if (showDeleteConfirmation) {
             ConfirmationDialog(
                 headline = "bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n(),
-                onConfirm = {
-                    presenter.onConfirmedDeleteOffer()
-                },
-                onDismiss = {
-                    presenter.onDismissDeleteOffer()
-                }
+                onConfirm = { presenter.onConfirmedDeleteOffer() },
+                onDismiss = { presenter.onDismissDeleteOffer() }
             )
         }
 
@@ -76,12 +69,8 @@ fun OfferbookScreen() {
                 message = presenter.notEnoughReputationMessage,
                 confirmButtonText = "confirmation.yes".i18n(),
                 dismissButtonText = "hyperlinks.openInBrowser.no".i18n(),
-                onConfirm = {
-                    presenter.onLearnHowToBuildReputation()
-                },
-                onDismiss = {
-                    presenter.onDismissNotEnoughReputationDialog()
-                }
+                onConfirm = { presenter.onLearnHowToBuildReputation() },
+                onDismiss = { presenter.onDismissNotEnoughReputationDialog() }
             )
         }
 
@@ -89,7 +78,7 @@ fun OfferbookScreen() {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            items(sortedList) { item ->
+            items(sortedFilteredOffers) { item ->
                 OfferCard(
                     item,
                     onSelectOffer = { presenter.onOfferSelected(item) },

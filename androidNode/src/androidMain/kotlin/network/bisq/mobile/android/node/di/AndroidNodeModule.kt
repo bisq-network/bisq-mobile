@@ -1,8 +1,8 @@
 package network.bisq.mobile.android.node.di
 
 import network.bisq.mobile.android.node.AndroidApplicationService
+import network.bisq.mobile.android.node.presentation.NodeDashboardPresenter
 import network.bisq.mobile.android.node.presentation.NodeGeneralSettingsPresenter
-import network.bisq.mobile.android.node.presentation.NodeGettingStartedPresenter
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
 import network.bisq.mobile.android.node.presentation.NodeSettingsPresenter
 import network.bisq.mobile.android.node.presentation.NodeSplashPresenter
@@ -39,7 +39,7 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
-import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
+import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
@@ -108,8 +108,8 @@ val androidNodeModule = module {
         )
     }
 
-    single<GettingStartedPresenter> {
-        NodeGettingStartedPresenter(get(), get(), get(), get())
+    single<DashboardPresenter> {
+        NodeDashboardPresenter(get(), get(), get(), get())
     }
 
     single<SettingsPresenter> { NodeSettingsPresenter(get(), get()) } bind ISettingsPresenter::class
