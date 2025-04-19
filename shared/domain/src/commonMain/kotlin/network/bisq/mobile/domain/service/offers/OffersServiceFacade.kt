@@ -12,7 +12,7 @@ import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferIt
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 
 interface OffersServiceFacade : LifeCycleAware {
-    val offerbookMarketItems: List<MarketListItem>
+    val offerbookMarketItems: StateFlow<List<MarketListItem>>
     val offerbookListItems: StateFlow<List<OfferItemPresentationModel>>
     val selectedOfferbookMarket: StateFlow<OfferbookMarket>
 
@@ -30,7 +30,7 @@ interface OffersServiceFacade : LifeCycleAware {
 
     fun selectOfferbookMarket(marketListItem: MarketListItem)
 
-    fun getSortedOfferbookMarketItems(): List<MarketListItem> = offerbookMarketItems
+    fun getSortedOfferbookMarketItems(): List<MarketListItem> = offerbookMarketItems.value
         .sortedWith(
             compareByDescending<MarketListItem> { it.numOffers.value }
                 .thenByDescending { mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) } // [1]

@@ -13,7 +13,7 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-open class GettingStartedPresenter(
+open class DashboardPresenter(
     mainPresenter: MainPresenter,
     private val bisqStatsRepository: BisqStatsRepository,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -27,10 +27,10 @@ open class GettingStartedPresenter(
         "Remote Management for Experts: Manage your trades on the go by connecting securely to your own desktop-based Bisq node, no matter where you are."
     )
 
-    private val _offersOnline = MutableStateFlow(145)
+    private val _offersOnline = MutableStateFlow(0)
     override val offersOnline: StateFlow<Int> = _offersOnline
 
-    private val _publishedProfiles = MutableStateFlow(1145)
+    private val _publishedProfiles = MutableStateFlow(0)
     override val publishedProfiles: StateFlow<Int> = _publishedProfiles
 
     val formattedMarketPrice: StateFlow<String> = marketPriceServiceFacade.selectedFormattedMarketPrice
@@ -66,8 +66,11 @@ open class GettingStartedPresenter(
             _publishedProfiles.value = bisqStats?.publishedProfiles ?: 0
 
             launch {
-                offersServiceFacade.offerbookListItems.collect {
-                    _offersOnline.value = it.size
+                offersServiceFacade.offerbookMarketItems.collect {
+                    _offersOnline.value = 0
+                    it.map { item ->
+                        _offersOnline.value += item.numOffers.value
+                    }
                 }
             }
             enableInteractive()

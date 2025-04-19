@@ -1,5 +1,7 @@
 package network.bisq.mobile.domain.utils
 
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
@@ -9,14 +11,20 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toQuoteSideMonetary
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.utils.OfferUtils.getFixedOrMaxAmount
 import network.bisq.mobile.domain.utils.OfferUtils.getFixedOrMinAmount
 import kotlin.math.roundToLong
 
 
 object BisqEasyTradeAmountLimits {
+    private val invalidSellOffers: MutableSet<String> = mutableSetOf()
+
     fun getMinAmountValue(marketPriceServiceFacade: MarketPriceServiceFacade, quoteCurrencyCode: String): Long {
         val minFiatAmount = fromUsd(
             marketPriceServiceFacade,
@@ -53,6 +61,55 @@ object BisqEasyTradeAmountLimits {
             }
     }
 
+    suspend fun isSellOfferInvalid(
+        item: OfferItemPresentationModel,
+        useCache: Boolean = true,
+        marketPriceServiceFacade: MarketPriceServiceFacade,
+        reputationServiceFacade: ReputationServiceFacade
+    ): Boolean {
+        val bisqEasyOffer = item.bisqEasyOffer
+        require(bisqEasyOffer.direction == DirectionEnum.SELL)
+
+        val offerId = bisqEasyOffer.id
+        if (useCache && invalidSellOffers.contains(offerId)) {
+            return true
+        }
+
+        val logger = getLogger("BisqEasyTradeAmountLimits")
+        val requiredReputationScoreForMinOrFixed =
+            findRequiredReputationScoreForMinOrFixedAmount(marketPriceServiceFacade, bisqEasyOffer)
+                ?: run {
+                    logger.e { "requiredReputationScoreForMinAmount is null" }
+                    return false
+                }
+
+        // TODO filter banned users
+        /* val chatMessage: ChatMessage = item.getChatMessage()
+         if (bannedUserService.isUserProfileBanned(chatMessage.getAuthorUserProfileId()) ||
+             bannedUserService.isUserProfileBanned(senderUserProfile.get())
+         ) {
+             return@Predicate false
+         }*/
+
+        // Currently we do not support IgnoredUser, thus not filtering for that
+
+        val userProfileId = bisqEasyOffer.makerNetworkId.pubKey.id
+        val sellersScore: Long = run {
+            val reputationScoreResult: Result<ReputationScoreVO> = withContext(IODispatcher) {
+                reputationServiceFacade.getReputation(userProfileId)
+            }
+            reputationScoreResult.exceptionOrNull()?.let { exception ->
+                logger.e("Exception at reputationServiceFacade.getReputation", exception)
+            }
+            reputationScoreResult.getOrNull()?.totalScore ?: 0
+        }
+        val isInvalid = sellersScore < requiredReputationScoreForMinOrFixed
+        if (isInvalid) {
+            invalidSellOffers.add(offerId) // We also add it if cache is false
+        }
+        return isInvalid
+    }
+
     fun findRequiredReputationScoreForMaxOrFixedAmount(
         marketPriceService: MarketPriceServiceFacade,
         offer: BisqEasyOfferVO
@@ -70,7 +127,6 @@ object BisqEasyTradeAmountLimits {
         val fiatAmount = FiatVOFactory.from(amount, offer.market.quoteCurrencyCode)
         return findRequiredReputationScoreByFiatAmount(marketPriceService, offer.market, fiatAmount)
     }
-
 
     fun findRequiredReputationScoreByFiatAmount(
         marketPriceServiceFacade: MarketPriceServiceFacade,

@@ -27,8 +27,7 @@ class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val apiGateway: OfferbookApiGateway,
     private val json: Json
-) :
-    OffersServiceFacade, Logging {
+) : OffersServiceFacade, Logging {
 
     // Properties
     private val _offerbookListItems = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
@@ -37,8 +36,8 @@ class ClientOffersServiceFacade(
     private val _selectedOfferbookMarket = MutableStateFlow(OfferbookMarket.EMPTY)
     override val selectedOfferbookMarket: StateFlow<OfferbookMarket> get() = _selectedOfferbookMarket //todo make nullable
 
-    private val _offerbookMarketItems: MutableList<MarketListItem> = mutableListOf()
-    override val offerbookMarketItems: List<MarketListItem> get() = _offerbookMarketItems
+    private val _offerbookMarketItems: MutableStateFlow<List<MarketListItem>> = MutableStateFlow(listOf())
+    override val offerbookMarketItems: StateFlow<List<MarketListItem>> = _offerbookMarketItems
 
     // Misc
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
@@ -72,7 +71,7 @@ class ClientOffersServiceFacade(
         cancelSubscribeOffersJob()
         cancelObserveMarketPriceJob()
         cancelGetMarketsJob()
-        _offerbookMarketItems.clear()
+        _offerbookMarketItems.value = emptyList()
     }
 
     // API
@@ -146,9 +145,8 @@ class ClientOffersServiceFacade(
             val webSocketEventPayload: WebSocketEventPayload<Map<String, Int>> =
                 WebSocketEventPayload.from(json, webSocketEvent)
             val numOffersByMarketCode = webSocketEventPayload.payload
-            offerbookMarketItems.map { marketListItem ->
-                val numOffers =
-                    numOffersByMarketCode[marketListItem.market.quoteCurrencyCode] ?: 0
+            offerbookMarketItems.value.map { marketListItem ->
+                val numOffers = numOffersByMarketCode[marketListItem.market.quoteCurrencyCode] ?: 0
                 marketListItem.setNumOffers(numOffers)
                 marketListItem
             }
@@ -223,8 +221,8 @@ class ClientOffersServiceFacade(
         val marketListItems = markets.map { marketVO ->
             MarketListItem(marketVO)
         }
-        _offerbookMarketItems.clear()
-        _offerbookMarketItems.addAll(marketListItems)
+
+        _offerbookMarketItems.value = marketListItems
     }
 
     private fun cancelGetMarketsJob() {

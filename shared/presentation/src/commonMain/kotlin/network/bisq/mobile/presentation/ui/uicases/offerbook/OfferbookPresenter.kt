@@ -1,13 +1,17 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -37,11 +41,22 @@ class OfferbookPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade
 ) : BasePresenter(mainPresenter) {
-    val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = offersServiceFacade.offerbookListItems
-
-    //todo for dev testing its more convenient
-    private val _selectedDirection = MutableStateFlow(DirectionEnum.BUY)
+    private val _selectedDirection = MutableStateFlow(DirectionEnum.SELL)
     val selectedDirection: StateFlow<DirectionEnum> = _selectedDirection
+    private val includeOfferPredicate: MutableStateFlow<(OfferItemPresentationModel) -> Boolean> =
+        MutableStateFlow { _: OfferItemPresentationModel -> true }
+
+    val sortedFilteredOffers: StateFlow<List<OfferItemPresentationModel>> =
+        combine(offersServiceFacade.offerbookListItems, selectedDirection, includeOfferPredicate) { offers, direction, includeOffer ->
+            offers.filter { it.bisqEasyOffer.direction.mirror == direction }
+                .filter(includeOffer)
+                .sortedWith(compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }
+                    .thenBy { it.bisqEasyOffer.id })
+        }.stateIn(
+            scope = presenterScope,
+            started = SharingStarted.Eagerly,
+            initialValue = emptyList()
+        )
 
     private val _showDeleteConfirmation = MutableStateFlow(false)
     val showDeleteConfirmation: StateFlow<Boolean> = _showDeleteConfirmation
@@ -56,7 +71,22 @@ class OfferbookPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
+
         selectedOffer = null
+        includeOfferPredicate.value = { _ -> true } // Reset to trigger update at screen change
+
+        presenterScope.launch {
+            combine(
+                offersServiceFacade.offerbookListItems,
+                selectedDirection
+            ) { offers, direction ->
+                offers to direction // create a new object to enforce to always emits
+            }.collect { (_, _) ->
+                updateIncludeOfferPredicate()
+            }
+        }
+
+        updateIncludeOfferPredicate()
     }
 
     fun onOfferSelected(item: OfferItemPresentationModel) {
@@ -94,6 +124,29 @@ class OfferbookPresenter(
         deselectOffer()
     }
 
+    private fun updateIncludeOfferPredicate() {
+        presenterScope.launch {
+            val invalidSellOfferIds = sortedFilteredOffers.value
+                .filter {
+                    it.bisqEasyOffer.direction == DirectionEnum.SELL &&
+                            withContext(IODispatcher) {
+                                BisqEasyTradeAmountLimits.isSellOfferInvalid(
+                                    it,
+                                    true,
+                                    marketPriceServiceFacade,
+                                    reputationServiceFacade
+                                )
+                            }
+                }
+                .map { it.bisqEasyOffer.id }
+                .toSet()
+
+            includeOfferPredicate.value = { item ->
+                item.bisqEasyOffer.id !in invalidSellOfferIds
+            }
+        }
+    }
+
     private fun takeOffer() {
         runCatching {
             selectedOffer?.let { item ->
@@ -125,7 +178,6 @@ class OfferbookPresenter(
 
     fun onLearnHowToBuildReputation() {
         _showNotEnoughReputationDialog.value = false
-
     }
 
     fun onDismissNotEnoughReputationDialog() {
@@ -209,7 +261,6 @@ class OfferbookPresenter(
                 ) + "\n\n" + learnMore + "\n\n\n" + link
             }
         }
-
 
         return canBuyerTakeOffer
     }

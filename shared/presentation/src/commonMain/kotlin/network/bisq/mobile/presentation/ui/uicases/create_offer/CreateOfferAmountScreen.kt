@@ -28,14 +28,14 @@ import org.koin.compose.koinInject
 @Composable
 fun CreateOfferAmountSelectorScreen() {
     val presenter: CreateOfferAmountPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
     val isBuy by presenter.isBuy.collectAsState()
     val reputation by presenter.requiredReputation.collectAsState()
     val hintText by presenter.amountLimitInfo.collectAsState()
     val reputationBasedMaxSellAmount by presenter.formattedReputationBasedMaxAmount.collectAsState()
     val showLimitPopup by presenter.showLimitPopup.collectAsState()
     val shouldShowWarningIcon by presenter.shouldShowWarningIcon.collectAsState()
-
-    RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
         "bisqEasy.openTrades.table.quoteAmount".i18n(),

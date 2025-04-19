@@ -4,6 +4,7 @@ import bisq.account.payment_method.BitcoinPaymentMethod
 import bisq.account.payment_method.BitcoinPaymentMethodUtil
 import bisq.account.payment_method.FiatPaymentMethod
 import bisq.account.payment_method.FiatPaymentMethodUtil
+import bisq.bisq_easy.BisqEasyOfferbookMessageService
 import bisq.bisq_easy.BisqEasyServiceUtil
 import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannel
@@ -57,6 +58,7 @@ class NodeOffersServiceFacade(
     private val userProfileService: UserProfileService by lazy { applicationService.userService.get().userProfileService }
     private val reputationService: ReputationService by lazy { applicationService.userService.get().reputationService }
     private val bisqEasyOfferbookChannelSelectionService: BisqEasyOfferbookSelectionService by lazy { applicationService.chatService.get().bisqEasyOfferbookChannelSelectionService }
+    private val bisqEasyOfferbookMessageService: BisqEasyOfferbookMessageService by lazy { applicationService.bisqEasyService.get().bisqEasyOfferbookMessageService }
 
     // Properties
     private val _offerbookListItems = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
@@ -65,12 +67,13 @@ class NodeOffersServiceFacade(
     private val _selectedOfferbookMarket = MutableStateFlow(OfferbookMarket.EMPTY)
     override val selectedOfferbookMarket: StateFlow<OfferbookMarket> get() = _selectedOfferbookMarket
 
-    private val _offerbookMarketItems: List<MarketListItem> by lazy { fillMarketListItems() }
-    override val offerbookMarketItems: List<MarketListItem> get() = _offerbookMarketItems
+    private val _offerbookMarketItems: MutableStateFlow<List<MarketListItem>> by lazy { MutableStateFlow(fillMarketListItems()) }
+    override val offerbookMarketItems: StateFlow<List<MarketListItem>> get() = _offerbookMarketItems
 
     // Misc
     private var selectedChannel: BisqEasyOfferbookChannel? = null
-    private val bisqEasyOfferbookMessages: MutableSet<BisqEasyOfferbookMessage> = mutableSetOf()
+
+    private val bisqEasyOfferbookMessageByOfferId: MutableMap<String, BisqEasyOfferbookMessage> = mutableMapOf()
     private var numOffersObservers: MutableList<NumOffersObserver> = mutableListOf()
     private var chatMessagesPin: Pin? = null
     private var selectedChannelPin: Pin? = null
@@ -233,21 +236,32 @@ class NodeOffersServiceFacade(
         chatMessagesPin =
             chatMessages.addObserver(object : CollectionObserver<BisqEasyOfferbookMessage> {
                 override fun add(message: BisqEasyOfferbookMessage) {
-                    if (message.hasBisqEasyOffer()) {
+                    if (!message.bisqEasyOffer.isPresent) {
+                        return
+                    }
+                    val offerId = message.bisqEasyOffer.get().id
+                    if (bisqEasyOfferbookMessageByOfferId.containsKey(offerId)) {
+                        return
+                    }
+                    if (bisqEasyOfferbookMessageService.isValid(message)) {
                         val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
                         val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
                         _offerbookListItems.update { it + offerItemPresentationModel }
-                        bisqEasyOfferbookMessages.add(message)
+                        bisqEasyOfferbookMessageByOfferId[offerId] to message
                         log.i { "add offer $offerItemPresentationModel" }
                     }
                 }
 
                 override fun remove(message: Any) {
-                    if (message is BisqEasyOfferbookMessage && message.hasBisqEasyOffer()) {
-                        val item = _offerbookListItems.value.firstOrNull { it.bisqEasyOffer.id == message.bisqEasyOffer.orElse(null)?.id }
+                    if (message is BisqEasyOfferbookMessage && message.bisqEasyOffer.isPresent) {
+                        val item = _offerbookListItems.value.firstOrNull {
+                            it.bisqEasyOffer.id == message.bisqEasyOffer.map { offer -> offer.id }
+                                .orElse(null)
+                        }
+                        val offerId = message.bisqEasyOffer.get().id
                         item?.let { model ->
                             _offerbookListItems.update { it - model }
-                            bisqEasyOfferbookMessages.remove(message)
+                            bisqEasyOfferbookMessageByOfferId.remove(offerId)
                             log.i { "Removed offer: $model" }
                         }
                     }
@@ -255,7 +269,7 @@ class NodeOffersServiceFacade(
 
                 override fun clear() {
                     _offerbookListItems.value = emptyList()
-                    bisqEasyOfferbookMessages.clear()
+                    bisqEasyOfferbookMessageByOfferId.clear()
                 }
             })
     }
@@ -264,7 +278,7 @@ class NodeOffersServiceFacade(
         val offerbookMarketItems: MutableList<MarketListItem> = mutableListOf()
         bisqEasyOfferbookChannelService.channels
             .forEach { channel ->
-                val marketVO = network.bisq.mobile.domain.data.replicated.common.currency.MarketVO(
+                val marketVO = MarketVO(
                     channel.market.baseCurrencyCode,
                     channel.market.quoteCurrencyCode,
                     channel.market.baseCurrencyName,
@@ -279,7 +293,11 @@ class NodeOffersServiceFacade(
                     marketPriceService.marketPriceByCurrencyMap.containsKey(market)
                 ) {
                     offerbookMarketItems.add(offerbookMarketItem)
-                    val numOffersObserver = NumOffersObserver(channel, offerbookMarketItem::setNumOffers)
+                    val numOffersObserver = NumOffersObserver(
+                        bisqEasyOfferbookMessageService,
+                        channel,
+                        offerbookMarketItem::setNumOffers
+                    )
                     numOffersObservers.add(numOffersObserver)
                 }
             }
@@ -300,9 +318,7 @@ class NodeOffersServiceFacade(
         }
     }
 
-    private fun findBisqEasyOfferbookMessage(offerId: String): Optional<BisqEasyOfferbookMessage> =
-        bisqEasyOfferbookMessages.stream()
-            .filter { it.hasBisqEasyOffer() }
-            .filter { it.bisqEasyOffer.get().id.equals(offerId) }
-            .findAny()
+    private fun findBisqEasyOfferbookMessage(offerId: String): Optional<BisqEasyOfferbookMessage> {
+        return Optional.ofNullable(bisqEasyOfferbookMessageByOfferId[offerId])
+    }
 }

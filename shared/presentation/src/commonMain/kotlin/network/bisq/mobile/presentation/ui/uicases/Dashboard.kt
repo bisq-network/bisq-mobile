@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -17,7 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
@@ -39,13 +39,12 @@ interface IGettingStarted : ViewPresenter {
 }
 
 @Composable
-fun GettingStartedScreen() {
-    val presenter: GettingStartedPresenter = koinInject()
-    val tabPresenter: ITabContainerPresenter = koinInject()
-    val offersOnline: Number = presenter.offersOnline.collectAsState().value
-    val publishedProfiles: Number = presenter.publishedProfiles.collectAsState().value
-
+fun DashboardScreen() {
+    val presenter: DashboardPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
+
+    val offersOnline: Number by presenter.offersOnline.collectAsState()
+    val publishedProfiles: Number by presenter.publishedProfiles.collectAsState()
 
     BisqScrollLayout(
         padding = PaddingValues(all = BisqUIConstants.Zero),
@@ -56,31 +55,31 @@ fun GettingStartedScreen() {
         Column {
             PriceProfileCard(
                 price = presenter.formattedMarketPrice.collectAsState().value,
-                priceText = "Market price"
+                priceText = "dashboard.marketPrice".i18n()
             )
             BisqGap.V1()
             Row(modifier = Modifier.fillMaxWidth()) {
                 Box(modifier = Modifier.weight(1f)) {
                     PriceProfileCard(
                         price = offersOnline.toString(),
-                        priceText = "Offers online"
+                        priceText = "dashboard.offersOnline".i18n()
                     )
                 }
                 BisqGap.H1()
                 Box(modifier = Modifier.weight(1f)) {
                     PriceProfileCard(
                         price = publishedProfiles.toString(),
-                        priceText = "Published profiles"
+                        priceText = "dashboard.activeUsers".i18n()
                     )
                 }
             }
         }
-        BisqButton("Trade guide", onClick = { presenter.navigateToGuide() })
+        BisqButton("bisqEasy.tradeGuide.tabs.headline".i18n(), onClick = { presenter.navigateToGuide() })
         WelcomeCard(
             presenter = presenter,
             title = presenter.title,
             bulletPoints = presenter.bulletPoints,
-            primaryButtonText = "Start Trading",
+            primaryButtonText = "Start Trading", //todo
             footerLink = "action.learnMore".i18n()
         )
     }
@@ -88,7 +87,7 @@ fun GettingStartedScreen() {
 
 @Composable
 fun WelcomeCard(
-    presenter: GettingStartedPresenter,
+    presenter: DashboardPresenter,
     title: String,
     bulletPoints: List<String>,
     primaryButtonText: String,

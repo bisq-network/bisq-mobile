@@ -7,7 +7,7 @@ import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
-import network.bisq.mobile.presentation.ui.uicases.GettingStartedPresenter
+import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
 import network.bisq.mobile.presentation.ui.uicases.ITabContainerPresenter
 import network.bisq.mobile.presentation.ui.uicases.TabContainerPresenter
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountPresenter
@@ -102,7 +102,7 @@ val presentationModule = module {
         )
     } bind IUserProfileSettingsPresenter::class
 
-    single<GettingStartedPresenter> { GettingStartedPresenter(get(), get(), get(), get()) }
+    single<DashboardPresenter> { DashboardPresenter(get(), get(), get(), get()) }
 
     single {
         CreateProfilePresenter(
