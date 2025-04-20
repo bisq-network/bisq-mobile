@@ -15,8 +15,6 @@ import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqE
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.PEER_CANCELLED
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.PEER_REJECTED
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.REJECTED
-import network.bisq.mobile.domain.formatters.NumberFormatter
-import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter

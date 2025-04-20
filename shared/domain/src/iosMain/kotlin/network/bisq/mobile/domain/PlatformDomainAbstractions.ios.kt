@@ -169,17 +169,13 @@ fun ByteArray.toNSData(): NSData {
 
 actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
     override fun format(value: Double, precision: Int): String {
-        val pattern = "%.${precision}f"
-        return NSString.stringWithFormat(pattern, value)
-
-        // TODO: Incorporate locale specific separator (Untested)
-//        val formatter = NSNumberFormatter().apply {
-//            numberStyle = NSNumberFormatterDecimalStyle
-//            maximumFractionDigits = precision.toULong()
-//            minimumFractionDigits = precision.toULong()
-//            locale = NSLocale.currentLocale()
-//        }
-//        return formatter.stringFromNumber(NSNumber(value)) ?: value.toString()
+        val formatter = NSNumberFormatter().apply {
+            numberStyle = NSNumberFormatterDecimalStyle
+            maximumFractionDigits = precision.toULong()
+            minimumFractionDigits = precision.toULong()
+            locale = defaultLocale
+        }
+        return formatter.stringFromNumber(NSNumber(value)) ?: value.toString()
     }
 }
 

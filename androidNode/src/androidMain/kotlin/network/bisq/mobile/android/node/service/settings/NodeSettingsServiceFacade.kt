@@ -49,7 +49,6 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
             "ru" -> LocaleRepository.setDefaultLocale(Locale("ru", "RU"))
             else -> LocaleRepository.setDefaultLocale(Locale("en", "US"))
         }
-        val l = LocaleRepository.getDefaultLocale()
         _languageCode.value = value
     }
 
