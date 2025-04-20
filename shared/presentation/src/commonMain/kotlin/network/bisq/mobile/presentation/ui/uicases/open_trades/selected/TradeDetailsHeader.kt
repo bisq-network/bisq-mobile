@@ -62,6 +62,10 @@ fun TradeDetailsHeader() {
     val tradeCloseType by presenter.tradeCloseType.collectAsState()
     val showInterruptionConfirmationDialog by presenter.showInterruptionConfirmationDialog.collectAsState()
     val showMediationConfirmationDialog by presenter.showMediationConfirmationDialog.collectAsState()
+    val leftAmount by presenter.leftAmount.collectAsState()
+    val leftCode by presenter.leftCode.collectAsState()
+    val rightAmount by presenter.rightAmount.collectAsState()
+    val rightCode by presenter.rightCode.collectAsState()
 
     val enterTransition = remember {
         expandVertically(
@@ -131,38 +135,38 @@ fun TradeDetailsHeader() {
 
             if (presenter.isSmallScreen()) {
                 if (isSell) {
-                    InfoBoxSats(label = presenter.leftAmountDescription, value = presenter.leftAmount)
+                    InfoBoxSats(label = presenter.leftAmountDescription, value = leftAmount)
                 } else {
                     InfoBox(
                         label = presenter.leftAmountDescription,
-                        value = "${presenter.leftAmount} ${presenter.leftCode}"
+                        value = "$leftAmount $leftCode"
                     )
                 }
                 if (isSell) {
                     InfoBox(
                         label = presenter.rightAmountDescription,
-                        value = "${presenter.rightAmount} ${presenter.rightCode}"
+                        value = "$rightAmount $rightCode"
                     )
                 } else {
-                    InfoBoxSats(label = presenter.rightAmountDescription, value = presenter.rightAmount)
+                    InfoBoxSats(label = presenter.rightAmountDescription, value = rightAmount)
                 }
             } else {
                 InfoRowContainer {
                     if (isSell) {
-                        InfoBoxSats(label = presenter.leftAmountDescription, value = presenter.leftAmount)
+                        InfoBoxSats(label = presenter.leftAmountDescription, value = leftAmount)
                     } else {
                         InfoBox(
                             label = presenter.leftAmountDescription,
-                            value = "${presenter.leftAmount} ${presenter.leftCode}"
+                            value = "$leftAmount $leftCode"
                         )
                     }
                     if (isSell) {
                         InfoBox(
                             label = presenter.rightAmountDescription,
-                            value = "${presenter.rightAmount} ${presenter.rightCode}"
+                            value = "$rightAmount $rightCode"
                         )
                     } else {
-                        InfoBoxSats(label = presenter.rightAmountDescription, value = presenter.rightAmount)
+                        InfoBoxSats(label = presenter.rightAmountDescription, value = rightAmount)
                     }
                 }
             }

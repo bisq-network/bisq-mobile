@@ -4,6 +4,8 @@ import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.Bis
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeDto
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeModel
+import network.bisq.mobile.domain.formatters.NumberFormatter
+import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 
 /**
  * This model is used in the UI and will get the mutual fields updated from domain services.
@@ -25,7 +27,7 @@ class TradeItemPresentationModel(tradeItemPresentationDto: TradeItemPresentation
     val baseAmount = tradeItemPresentationDto.baseAmount
     var formattedBaseAmount = tradeItemPresentationDto.formattedBaseAmount
     val quoteAmount = tradeItemPresentationDto.quoteAmount
-    val formattedQuoteAmount = tradeItemPresentationDto.formattedQuoteAmount
+    var formattedQuoteAmount = tradeItemPresentationDto.formattedQuoteAmount
     val bitcoinSettlementMethod = tradeItemPresentationDto.bitcoinSettlementMethod
     val bitcoinSettlementMethodDisplayString = tradeItemPresentationDto.bitcoinSettlementMethodDisplayString
     val fiatPaymentMethod = tradeItemPresentationDto.fiatPaymentMethod
@@ -50,6 +52,17 @@ class TradeItemPresentationModel(tradeItemPresentationDto: TradeItemPresentation
     val quoteCurrencyCode: String = bisqEasyOffer.market.quoteCurrencyCode
     var quoteAmountWithCode = "$formattedQuoteAmount $quoteCurrencyCode"
     val baseAmountWithCode = "$formattedBaseAmount $baseCurrencyCode"
+
+    fun reformat(): TradeItemPresentationModel {
+        return apply {
+            quoteAmountWithCode =
+                "${NumberFormatter.format(quoteAmount.toDouble() / 10000.0)} $quoteCurrencyCode"
+            formattedPrice =
+                PriceSpecFormatter.getFormattedPriceSpec(bisqEasyOffer.priceSpec, true)
+            formattedBaseAmount = NumberFormatter.btcFormat(baseAmount)
+            formattedQuoteAmount = NumberFormatter.format(quoteAmount.toDouble() / 10000.0)
+        }
+    }
 
     override fun toString(): String {
         return """

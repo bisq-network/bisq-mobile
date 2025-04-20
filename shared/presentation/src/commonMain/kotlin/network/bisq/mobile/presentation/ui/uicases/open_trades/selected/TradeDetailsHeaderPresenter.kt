@@ -1,7 +1,10 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
@@ -14,6 +17,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class TradeDetailsHeaderPresenter(
     mainPresenter: MainPresenter,
     var tradesServiceFacade: TradesServiceFacade,
@@ -26,16 +30,21 @@ class TradeDetailsHeaderPresenter(
         COMPLETED
     }
 
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
+    private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade
 
     var direction: String = ""
     var directionEnum: DirectionEnum = DirectionEnum.BUY
     var leftAmountDescription: String = ""
-    var leftAmount: String = ""
-    var leftCode: String = ""
+    private var _leftAmount: MutableStateFlow<String> = MutableStateFlow("")
+    var leftAmount: StateFlow<String> = _leftAmount
+    private var _leftCode: MutableStateFlow<String> = MutableStateFlow("")
+    var leftCode: StateFlow<String> = _leftCode
     var rightAmountDescription: String = ""
-    var rightAmount: String = ""
-    var rightCode: String = ""
+    private var _rightAmount: MutableStateFlow<String> = MutableStateFlow("")
+    var rightAmount: StateFlow<String> = _rightAmount
+    private var _rightCode: MutableStateFlow<String> = MutableStateFlow("")
+    var rightCode: StateFlow<String> = _rightCode
 
     private var _tradeCloseType: MutableStateFlow<TradeCloseType?> = MutableStateFlow(null)
     val tradeCloseType: StateFlow<TradeCloseType?> = _tradeCloseType
@@ -55,6 +64,31 @@ class TradeDetailsHeaderPresenter(
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> = this._isInMediation
 
+    init {
+        _selectedTrade.value = tradesServiceFacade.selectedTrade.value
+        presenterScope.launch {
+            mainPresenter.languageCode
+                .flatMapLatest { tradesServiceFacade.selectedTrade }
+                .filterNotNull()
+                .collect {
+                    val formatted = it.reformat()
+                    _selectedTrade.value = formatted
+
+                    if (it.bisqEasyTradeModel.isSeller) {
+                        _leftAmount.value = formatted.formattedBaseAmount
+                        _leftCode.value = formatted.baseCurrencyCode
+                        _rightAmount.value = formatted.formattedQuoteAmount
+                        _rightCode.value = formatted.quoteCurrencyCode
+                    } else {
+                        _leftAmount.value = formatted.formattedQuoteAmount
+                        _leftCode.value = formatted.quoteCurrencyCode
+                        _rightAmount.value = formatted.formattedBaseAmount
+                        _rightCode.value = formatted.baseCurrencyCode
+                    }
+                }
+        }
+    }
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -64,20 +98,12 @@ class TradeDetailsHeaderPresenter(
             directionEnum = DirectionEnum.SELL
             direction = "SELL" //"offer.sell"
             leftAmountDescription = "Amount to send" //"bisqEasy.tradeState.header.send"
-            leftAmount = openTradeItemModel.formattedBaseAmount
-            leftCode = openTradeItemModel.baseCurrencyCode
             rightAmountDescription = "Amount to receive" // "bisqEasy.tradeState.header.receive"
-            rightAmount = openTradeItemModel.formattedQuoteAmount
-            rightCode = openTradeItemModel.quoteCurrencyCode
         } else {
             directionEnum = DirectionEnum.BUY
             direction = "BUY" //"offer.sell"
             leftAmountDescription = "Amount to pay" //"bisqEasy.tradeState.header.pay"
-            leftAmount = openTradeItemModel.formattedQuoteAmount
-            leftCode = openTradeItemModel.quoteCurrencyCode
             rightAmountDescription = "Amount to receive" //"bisqEasy.tradeState.header.receive"
-            rightAmount = openTradeItemModel.formattedBaseAmount
-            rightCode = openTradeItemModel.baseCurrencyCode
         }
 
         this.presenterScope.launch {
@@ -272,11 +298,11 @@ class TradeDetailsHeaderPresenter(
     private fun reset() {
         direction = ""
         leftAmountDescription = ""
-        leftAmount = ""
-        leftCode = ""
+        _leftAmount.value = ""
+        _leftCode.value  = ""
         rightAmountDescription = ""
-        rightAmount = ""
-        rightCode = ""
+        _rightAmount.value  = ""
+        _rightCode.value  = ""
 
         _tradeCloseType.value = null
         _isInMediation.value = false

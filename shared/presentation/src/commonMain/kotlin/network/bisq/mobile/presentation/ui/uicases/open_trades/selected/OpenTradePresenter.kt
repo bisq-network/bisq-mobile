@@ -2,9 +2,9 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
 import androidx.compose.foundation.ScrollState
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -15,18 +15,22 @@ import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqE
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.PEER_CANCELLED
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.PEER_REJECTED
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.REJECTED
+import network.bisq.mobile.domain.formatters.NumberFormatter
+import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class OpenTradePresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
     val tradeFlowPresenter: TradeFlowPresenter
 ) : BasePresenter(mainPresenter) {
 
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
+    private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade // tradesServiceFacade.selectedTrade //
 
     private val _tradeAbortedBoxVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val tradeAbortedBoxVisible: StateFlow<Boolean> = _tradeAbortedBoxVisible
@@ -40,7 +44,20 @@ class OpenTradePresenter(
     private var _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
     private var _coroutineScope: CoroutineScope? = null
 
+    init {
+        _selectedTrade.value = tradesServiceFacade.selectedTrade.value
+        presenterScope.launch {
+            mainPresenter.languageCode
+                .flatMapLatest { tradesServiceFacade.selectedTrade }
+                .filterNotNull()
+                .collect {
+                    _selectedTrade.value = it.reformat()
+                }
+        }
+    }
+
     override fun onViewAttached() {
+        super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
 
