@@ -3,8 +3,6 @@ import org.apache.tools.ant.taskdefs.condition.Os
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
-import java.text.SimpleDateFormat
-import java.util.Date
 
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
@@ -252,6 +250,5 @@ tasks.withType<Test> {
 }
 
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {
-//    val date = SimpleDateFormat("yyyyMMdd").format(Date())
     return "Bisq-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 }
