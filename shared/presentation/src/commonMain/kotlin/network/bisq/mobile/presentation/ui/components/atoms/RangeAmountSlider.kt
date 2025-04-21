@@ -20,44 +20,40 @@ fun RangeAmountSlider(
     leftMarkerValue: StateFlow<Float?> = MutableStateFlow(null),
     rightMarkerValue: StateFlow<Float?> = MutableStateFlow(null),
 ) {
-    val minMutableValue = remember { MutableStateFlow(minRangeInitialValue) }
-    val minMutableVal by minMutableValue.collectAsState()
+    val minStateFlow = remember { MutableStateFlow(minRangeInitialValue) }
+    val minState by minStateFlow.collectAsState()
 
-    val maxMutableValue = remember { MutableStateFlow(maxRangeInitialValue) }
-    val maxMutableVal by maxMutableValue.collectAsState()
+    val maxStateFlow = remember { MutableStateFlow(maxRangeInitialValue) }
+    val maxState by maxStateFlow.collectAsState()
 
     Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
         AmountSlider(
-            value = minMutableValue,
+            value = minStateFlow,
             maxValue = maxValue,
             leftMarkerValue = leftMarkerValue,
             rightMarkerValue = rightMarkerValue,
-            onValueChange = { newMin ->
-                if (newMin > maxMutableVal) {
-                    minMutableValue.value = newMin
-                    maxMutableValue.value = newMin // shift max along with min
-                    onMaxRangeValueChange(maxMutableVal)
-                } else {
-                    minMutableValue.value = newMin
+            onValueChange = { value ->
+                minStateFlow.value = value
+                if (value > maxState) {
+                    maxStateFlow.value = value // shift max along with min
+                    onMaxRangeValueChange(value)
                 }
-                onMinRangeValueChange(newMin)
+                onMinRangeValueChange(value)
             }
         )
 
         AmountSlider(
-            value = maxMutableValue,
+            value = maxStateFlow,
             maxValue = maxValue,
             leftMarkerValue = leftMarkerValue,
             rightMarkerValue = rightMarkerValue,
-            onValueChange = { newMax ->
-                if (newMax < minMutableVal) {
-                    maxMutableValue.value = newMax
-                    minMutableValue.value = newMax // shift min along with max
-                    onMinRangeValueChange(minMutableVal)
-                } else {
-                    maxMutableValue.value = newMax
+            onValueChange = { value ->
+                maxStateFlow.value = value
+                if (value < minState) {
+                    minStateFlow.value = value // shift min along with max
+                    onMinRangeValueChange(value)
                 }
-                onMaxRangeValueChange(newMax)
+                onMaxRangeValueChange(value)
             }
         )
     }

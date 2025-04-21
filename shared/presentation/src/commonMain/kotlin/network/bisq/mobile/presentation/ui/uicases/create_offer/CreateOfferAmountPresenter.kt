@@ -9,7 +9,6 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
-import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
@@ -74,7 +73,7 @@ class CreateOfferAmountPresenter(
     // RANGE_AMOUNT
     var minRangeInitialSliderValue: Float = 0.1f
     var maxRangeInitialSliderValue: Float = 0.9f
-    var rangeSliderPosition: ClosedFloatingPointRange<Float> = 0.0f..1.0f
+    private var rangeSliderPosition: ClosedFloatingPointRange<Float> = 0.0f..1.0f
     private val _formattedQuoteSideMinRangeAmount = MutableStateFlow("")
     val formattedQuoteSideMinRangeAmount: StateFlow<String> = _formattedQuoteSideMinRangeAmount
     private val _formattedBaseSideMinRangeAmount = MutableStateFlow("")
@@ -108,9 +107,6 @@ class CreateOfferAmountPresenter(
     private lateinit var baseSideMaxRangeAmount: CoinVO
     private var _isBuy: MutableStateFlow<Boolean> = MutableStateFlow(true)
     var isBuy: StateFlow<Boolean> = _isBuy
-
-    private var _reputationBasedMaxAmount: MutableStateFlow<MonetaryVO?> = MutableStateFlow(null)
-    val reputationBasedMaxAmount: StateFlow<MonetaryVO?> = _reputationBasedMaxAmount
 
     private var _formattedReputationBasedMaxAmount: MutableStateFlow<String> = MutableStateFlow("")
     val formattedReputationBasedMaxAmount: StateFlow<String> = _formattedReputationBasedMaxAmount
@@ -264,20 +260,14 @@ class CreateOfferAmountPresenter(
                 reputationScore?.let { reputation ->
                     _requiredReputation.value = reputation.totalScore
                     val market = createOfferModel.market ?: return@launch
-                    _reputationBasedMaxAmount.value = getReputationBasedQuoteSideAmount(
+                    getReputationBasedQuoteSideAmount(
                         marketPriceServiceFacade,
                         market,
                         _requiredReputation.value
-                    )
-
-
-
-                    _reputationBasedMaxAmount.value?.let { amount ->
+                    )?.let { amount ->
                         val reputationBasedMaxValue = (amount.value.toFloat() - minAmount) / range
                         _reputationBasedMaxValue.value = reputationBasedMaxValue
                         _rightMarkerValue.value = reputationBasedMaxValue
-
-                        log.e { "_reputationBasedMaxValue.value " + _reputationBasedMaxValue.value }
 
                         _formattedReputationBasedMaxAmount.value = AmountFormatter.formatAmount(
                             amount,
