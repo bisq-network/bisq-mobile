@@ -92,6 +92,10 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            dependenciesInfo {
+                includeInApk = false
+                includeInBundle = false
+            }
             isDebuggable = false
         }
         getByName("debug") {
