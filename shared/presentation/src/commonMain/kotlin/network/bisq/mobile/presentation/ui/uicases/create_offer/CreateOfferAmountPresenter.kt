@@ -190,7 +190,7 @@ class CreateOfferAmountPresenter(
 
     fun onRangeAmountSliderChanged(value: ClosedFloatingPointRange<Float>) {
         applyRangeAmountSliderValue(value)
-        updateBuyersAmountLimitInfo()
+        updateAmountLimitInfo()
     }
 
     private fun updateBuyersAmountLimitInfo() {

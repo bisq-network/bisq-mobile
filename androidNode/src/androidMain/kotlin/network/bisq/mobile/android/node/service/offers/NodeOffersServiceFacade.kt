@@ -25,6 +25,7 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -84,15 +85,18 @@ class NodeOffersServiceFacade(
     private var chatMessagesPin: Pin? = null
     private var selectedChannelPin: Pin? = null
     private var marketPricePin: Pin? = null
+    private var serviceScope = CoroutineScope(IODispatcher)
 
     // Life cycle
     override fun activate() {
+        serviceScope = CoroutineScope(IODispatcher)
         observeSelectedChannel()
         observeMarketPrice()
         numOffersObservers.forEach { it.resume() }
     }
 
     override fun deactivate() {
+        serviceScope.cancel()
         chatMessagesPin?.unbind()
         chatMessagesPin = null
         selectedChannelPin?.unbind()
@@ -245,7 +249,7 @@ class NodeOffersServiceFacade(
                     if (!message.bisqEasyOffer.isPresent) {
                         return
                     }
-                    CoroutineScope(IODispatcher).launch {
+                    serviceScope.launch {
                         val offerId = message.bisqEasyOffer.get().id
                         if (!offerMessagesContainsKey(offerId) && bisqEasyOfferbookMessageService.isValid(message)) {
                             val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
@@ -265,7 +269,7 @@ class NodeOffersServiceFacade(
                         val offerId = message.bisqEasyOffer.get().id
                         item?.let { model ->
                             _offerbookListItems.update { it - model }
-                            CoroutineScope(IODispatcher).launch { removeOfferMessage(offerId) }
+                            serviceScope.launch { removeOfferMessage(offerId) }
                             log.i { "Removed offer: $model" }
                         }
                     }
@@ -273,12 +277,15 @@ class NodeOffersServiceFacade(
 
                 override fun clear() {
                     _offerbookListItems.value = emptyList()
-                    CoroutineScope(IODispatcher).launch { clearOfferMessages() }
+                    serviceScope.launch { clearOfferMessages() }
                 }
             })
     }
 
     private fun fillMarketListItems(): MutableList<MarketListItem> {
+        numOffersObservers.forEach { it.dispose() }
+        numOffersObservers.clear()
+
         val offerbookMarketItems: MutableList<MarketListItem> = mutableListOf()
         bisqEasyOfferbookChannelService.channels
             .forEach { channel ->
