@@ -38,6 +38,7 @@ open class SplashPresenter(
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     override fun onViewAttached() {
+        super.onViewAttached()
         jobs.add(presenterScope.launch {
             val settings: Settings = withContext(IODispatcher) {
                 settingsRepository.fetch() ?: Settings()
@@ -61,9 +62,10 @@ open class SplashPresenter(
                     userRepository.update(it)
                 }
             }
-            super.onViewUnattaching()
 
+            log.d { "collecting splash progress" }
             progress.collect { value ->
+                log.d { "Splash Progress: $value" }
                 when {
                     value == 1.0f -> navigateToNextScreen()
                 }
@@ -82,6 +84,7 @@ open class SplashPresenter(
     }
 
     private fun navigateToNextScreen() {
+        log.d { "Navigating to next screen" }
         presenterScope.launch {
             if (!hasConnectivity()) {
                 navigateToTrustedNodeSetup()

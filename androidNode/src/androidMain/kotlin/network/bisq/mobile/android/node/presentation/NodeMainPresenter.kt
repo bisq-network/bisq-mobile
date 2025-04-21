@@ -60,7 +60,7 @@ class NodeMainPresenter(
                 applicationService.initialize()
                     .whenComplete { r: Boolean?, throwable: Throwable? ->
                         if (throwable == null) {
-                            log.i { "ApplicationService initialized" }
+                            log.i { "ApplicationService initialization completed" }
                             applicationBootstrapFacade.deactivate()
 
                             offersServiceFacade.activate()

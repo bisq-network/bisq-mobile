@@ -112,13 +112,11 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     protected var view: Any? = null
 
-    // Coroutine scope for the presenter.
-    // Launches coroutines on the main thread and allows manual cancellation via `presenterScope.cancel()`.
-    // ⚠️ Must be explicitly cancelled (e.g., in onDestroy) to avoid memory leaks.
-    protected val presenterScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    // Coroutine scope for the presenter / UI.
+    protected var presenterScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
 
     // For network access, persistence or file IO
-    protected val ioScope = CoroutineScope(IODispatcher + SupervisorJob())
+    protected var ioScope = CoroutineScope(IODispatcher + SupervisorJob())
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
 
@@ -379,8 +377,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     }
 
     fun detachView() {
-        this.presenterScope.cancel()
-
+        resetPresenterScope()
         onViewUnattaching()
         this.view = null
         log.i { "Lifecycle: View Dettached from Presenter" }
@@ -431,8 +428,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     private fun cleanup() {
         try {
-            this.presenterScope.cancel()
-            this.ioScope.cancel()
+            resetPresenterScope()
+            resetIOScope()
             // copy to avoid concurrency exception - no problem with multiple on destroy calls
             dependants?.toList()?.forEach { it.onDestroy() }
         } catch (e: Exception) {
@@ -457,4 +454,14 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     }
 
     override fun isDemo(): Boolean = rootPresenter?.isDemo() ?: false
+
+    private fun resetPresenterScope() {
+        this.presenterScope.cancel()
+        this.presenterScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    }
+
+    private fun resetIOScope() {
+        this.ioScope.cancel()
+        this.ioScope = CoroutineScope(IODispatcher + SupervisorJob())
+    }
 }
