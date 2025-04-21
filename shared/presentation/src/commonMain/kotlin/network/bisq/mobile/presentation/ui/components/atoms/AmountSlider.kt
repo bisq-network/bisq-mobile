@@ -26,15 +26,16 @@ fun AmountSlider(
     rightMarkerValue: StateFlow<Float?> = MutableStateFlow(null),
     modifier: Modifier = Modifier,
 ) {
-    // val mutableValue = remember { MutableStateFlow(value) }
     val mutableVal by value.collectAsState()
 
+    // max and rightMarker cannot be > 1
+    // leftMarker cannot be < 0
     val max by maxValue.collectAsState()
     val leftMarker by leftMarkerValue.collectAsState()
     val rightMarker by rightMarkerValue.collectAsState()
 
     val dragState = rememberDraggableState { delta ->
-        val newValue = (mutableVal + delta / 1000f).coerceIn(0f, max ?: 1f)
+        val newValue = (mutableVal + delta / 1000f).coerceIn(0f, max ?: 1f).coerceIn(0f, 1f)
         onValueChange(newValue)
         value.value = newValue
     }
@@ -53,7 +54,7 @@ fun AmountSlider(
             val centerY = size.height / 2
             val trackHeight = 3.dp.toPx()  // We use 2 px in Bisq 2 but seems to small here
 
-            val maxPos = (max ?: 1f) * width
+            val maxPos = (max ?: 1f).coerceIn(0f, 1f) * width
             val thumbPos = mutableVal.coerceIn(0f, 1f) * width
 
             // Track
@@ -67,8 +68,8 @@ fun AmountSlider(
             // Marker range
             drawLine(
                 color = BisqTheme.colors.primary,
-                start = Offset((leftMarker ?: 0f) * width, centerY),
-                end = Offset(((max ?: rightMarker) ?: 0f) * width, centerY),
+                start = Offset((leftMarker ?: 0f).coerceIn(0f, 1f) * width, centerY),
+                end = Offset(((max ?: rightMarker) ?: 0f).coerceIn(0f, 1f) * width, centerY),
                 strokeWidth = trackHeight
             )
 

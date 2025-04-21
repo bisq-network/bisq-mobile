@@ -59,10 +59,10 @@ fun RangeAmountSelector(
                 ) {
                     if (smallFont) {
                         BisqText.h3Regular(quoteSideMinRangeAmountWithoutDecimal)
-                        BisqText.baseLight(quoteCurrencyCode, modifier = Modifier.offset(y = (-2.5).dp))
+                        BisqText.baseLight(quoteCurrencyCode, modifier = Modifier.offset(y = (-2.5f).dp))
                     } else {
                         BisqText.h2Regular(quoteSideMinRangeAmountWithoutDecimal)
-                        BisqText.h6Light(quoteCurrencyCode, modifier = Modifier.offset(y = (-2.5).dp))
+                        BisqText.h6Light(quoteCurrencyCode, modifier = Modifier.offset(y = (-2.5f).dp))
                     }
                 }
                 BtcSatsText(baseSideMinRangeAmount)
@@ -75,10 +75,10 @@ fun RangeAmountSelector(
                 ) {
                     if (smallFont) {
                         BisqText.h3Regular(quoteSideMaxRangeAmountWithoutDecimal)
-                        BisqText.baseLight(quoteCurrencyCode, modifier = Modifier.offset(y = (-2.5).dp))
+                        BisqText.baseLight(quoteCurrencyCode, modifier = Modifier.offset(y = (-2.5f).dp))
                     } else {
                         BisqText.h2Regular(quoteSideMaxRangeAmountWithoutDecimal)
-                        BisqText.h6Light(quoteCurrencyCode, modifier = Modifier.offset(y = (-2.5).dp))
+                        BisqText.h6Light(quoteCurrencyCode, modifier = Modifier.offset(y = (-2.5f).dp))
                     }
                 }
                 BtcSatsText(baseSideMaxRangeAmount)

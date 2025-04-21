@@ -26,10 +26,6 @@ fun RangeAmountSlider(
     val maxMutableValue = remember { MutableStateFlow(maxRangeInitialValue) }
     val maxMutableVal by maxMutableValue.collectAsState()
 
-
-    /*  var min by remember { mutableFloatStateOf(minRangeInitialValue) }
-      var max by remember { mutableFloatStateOf(maxRangeInitialValue) }
-  */
     Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
         AmountSlider(
             value = minMutableValue,
@@ -44,7 +40,7 @@ fun RangeAmountSlider(
                 } else {
                     minMutableValue.value = newMin
                 }
-                onMinRangeValueChange(minMutableVal)
+                onMinRangeValueChange(newMin)
             }
         )
 
@@ -61,7 +57,7 @@ fun RangeAmountSlider(
                 } else {
                     maxMutableValue.value = newMax
                 }
-                onMaxRangeValueChange(maxMutableVal)
+                onMaxRangeValueChange(newMax)
             }
         )
     }

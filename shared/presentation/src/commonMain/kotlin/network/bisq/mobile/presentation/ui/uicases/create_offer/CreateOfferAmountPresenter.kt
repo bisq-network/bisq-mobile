@@ -149,16 +149,12 @@ class CreateOfferAmountPresenter(
 
         _isBuy.value = createOfferModel.direction.isBuy
 
-        if (isBuy.value) {
-            updateBuyersAmountLimitInfo()
-        } else {
-            updateSellerAmountLimitInfo()
-        }
+        updateAmountLimitInfo()
     }
 
     fun onSelectAmountType(value: AmountType) {
         _amountType.value = value
-        updateBuyersAmountLimitInfo()
+        updateAmountLimitInfo()
     }
 
     fun onFixedAmountTextValueChange(textInput: String) {
@@ -175,17 +171,25 @@ class CreateOfferAmountPresenter(
 
     fun onFixedAmountSliderValueChange(value: Float) {
         applyFixedAmountSliderValue(value)
-        updateBuyersAmountLimitInfo()
+        updateAmountLimitInfo()
     }
 
     fun onMinRangeSliderValueChange(value: Float) {
         applyMinRangeAmountSliderValue(value)
-        updateBuyersAmountLimitInfo()
+        updateAmountLimitInfo()
     }
 
     fun onMaxRangeSliderValueChange(value: Float) {
         applyMaxRangeAmountSliderValue(value)
-        updateBuyersAmountLimitInfo()
+        updateAmountLimitInfo()
+    }
+
+    private fun updateAmountLimitInfo() {
+        if (isBuy.value) {
+            updateBuyersAmountLimitInfo()
+        } else {
+            updateSellerAmountLimitInfo()
+        }
     }
 
     fun onRangeAmountSliderChanged(value: ClosedFloatingPointRange<Float>) {
@@ -227,9 +231,9 @@ class CreateOfferAmountPresenter(
             val highestScore = peersScoreByUserProfileId.maxOfOrNull { it.value } ?: 0L
             val highestPossibleAmountFromSellers =
                 getReputationBasedQuoteSideAmount(marketPriceServiceFacade, market, highestScore)?.value ?: 0
-            val withTolerance: Float = withTolerance(highestPossibleAmountFromSellers).toFloat()
+            val highestPossibleAmountWithTolerance: Float = withTolerance(highestPossibleAmountFromSellers).toFloat()
             val range = maxAmount - minAmount
-            _rightMarkerValue.value = (withTolerance - minAmount) / range
+            _rightMarkerValue.value = (highestPossibleAmountWithTolerance - minAmount) / range
 
             val formattedFixedOrMinAmount = AmountFormatter.formatAmount(fixedOrMinAmount, useLowPrecision = true, withCode = true)
             val firstPart: String =

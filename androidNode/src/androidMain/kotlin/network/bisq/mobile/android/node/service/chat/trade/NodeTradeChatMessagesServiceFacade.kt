@@ -144,7 +144,7 @@ class NodeTradeChatMessagesServiceFacade(
                             model.setReactions(chatMessageReactions)
                         }
                     }
-                    reactionsPinByMessageId[messageId] to pin
+                    reactionsPinByMessageId[messageId] = pin
                 }
 
                 val citationAuthorUserProfile: UserProfile? =

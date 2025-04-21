@@ -24,12 +24,17 @@ import bisq.user.identity.UserIdentity
 import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -74,6 +79,7 @@ class NodeOffersServiceFacade(
     private var selectedChannel: BisqEasyOfferbookChannel? = null
 
     private val bisqEasyOfferbookMessageByOfferId: MutableMap<String, BisqEasyOfferbookMessage> = mutableMapOf()
+    private val offerMapMutex = Mutex()
     private var numOffersObservers: MutableList<NumOffersObserver> = mutableListOf()
     private var chatMessagesPin: Pin? = null
     private var selectedChannelPin: Pin? = null
@@ -239,29 +245,27 @@ class NodeOffersServiceFacade(
                     if (!message.bisqEasyOffer.isPresent) {
                         return
                     }
-                    val offerId = message.bisqEasyOffer.get().id
-                    if (bisqEasyOfferbookMessageByOfferId.containsKey(offerId)) {
-                        return
-                    }
-                    if (bisqEasyOfferbookMessageService.isValid(message)) {
-                        val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
-                        val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
-                        _offerbookListItems.update { it + offerItemPresentationModel }
-                        bisqEasyOfferbookMessageByOfferId[offerId] to message
-                        log.i { "add offer $offerItemPresentationModel" }
+                    CoroutineScope(IODispatcher).launch {
+                        val offerId = message.bisqEasyOffer.get().id
+                        if (!offerMessagesContainsKey(offerId) && bisqEasyOfferbookMessageService.isValid(message)) {
+                            val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
+                            val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
+                            _offerbookListItems.update { it + offerItemPresentationModel }
+                            putOfferMessage(offerId, message)
+                            log.i { "add offer $offerItemPresentationModel" }
+                        }
                     }
                 }
 
                 override fun remove(message: Any) {
                     if (message is BisqEasyOfferbookMessage && message.bisqEasyOffer.isPresent) {
                         val item = _offerbookListItems.value.firstOrNull {
-                            it.bisqEasyOffer.id == message.bisqEasyOffer.map { offer -> offer.id }
-                                .orElse(null)
+                            it.bisqEasyOffer.id == message.bisqEasyOffer.map { offer -> offer.id }.orElse(null)
                         }
                         val offerId = message.bisqEasyOffer.get().id
                         item?.let { model ->
                             _offerbookListItems.update { it - model }
-                            bisqEasyOfferbookMessageByOfferId.remove(offerId)
+                            CoroutineScope(IODispatcher).launch { removeOfferMessage(offerId) }
                             log.i { "Removed offer: $model" }
                         }
                     }
@@ -269,7 +273,7 @@ class NodeOffersServiceFacade(
 
                 override fun clear() {
                     _offerbookListItems.value = emptyList()
-                    bisqEasyOfferbookMessageByOfferId.clear()
+                    CoroutineScope(IODispatcher).launch { clearOfferMessages() }
                 }
             })
     }
@@ -318,7 +322,37 @@ class NodeOffersServiceFacade(
         }
     }
 
-    private fun findBisqEasyOfferbookMessage(offerId: String): Optional<BisqEasyOfferbookMessage> {
-        return Optional.ofNullable(bisqEasyOfferbookMessageByOfferId[offerId])
+    private suspend fun findBisqEasyOfferbookMessage(offerId: String): Optional<BisqEasyOfferbookMessage> {
+        return Optional.ofNullable(getOfferMessage(offerId))
+    }
+
+    private suspend fun putOfferMessage(offerId: String, message: BisqEasyOfferbookMessage) {
+        offerMapMutex.withLock {
+            bisqEasyOfferbookMessageByOfferId[offerId] = message
+        }
+    }
+
+    private suspend fun removeOfferMessage(offerId: String) {
+        offerMapMutex.withLock {
+            bisqEasyOfferbookMessageByOfferId.remove(offerId)
+        }
+    }
+
+    private suspend fun clearOfferMessages() {
+        offerMapMutex.withLock {
+            bisqEasyOfferbookMessageByOfferId.clear()
+        }
+    }
+
+    private suspend fun getOfferMessage(offerId: String): BisqEasyOfferbookMessage? {
+        return offerMapMutex.withLock {
+            bisqEasyOfferbookMessageByOfferId[offerId]
+        }
+    }
+
+    private suspend fun offerMessagesContainsKey(offerId: String): Boolean {
+        return offerMapMutex.withLock {
+            bisqEasyOfferbookMessageByOfferId.containsKey(offerId)
+        }
     }
 }

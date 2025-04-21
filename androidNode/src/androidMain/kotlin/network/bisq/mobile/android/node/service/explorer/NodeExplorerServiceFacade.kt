@@ -13,7 +13,7 @@ import network.bisq.mobile.domain.utils.Logging
 class NodeExplorerServiceFacade(applicationService: AndroidApplicationService.Provider) : ExplorerServiceFacade, Logging {
     // Dependencies
     private val explorerService: ExplorerService by lazy { applicationService.bondedRolesService.get().explorerService }
-    private val cachedExplorerResults: Map<String, ExplorerResult> = HashMap()
+    private val cachedExplorerResults: MutableMap<String, ExplorerResult> = HashMap()
 
     override suspend fun getSelectedBlockExplorer(): Result<String> {
         log.i { "Selected block explorer " + explorerService.selectedProvider.get().baseUrl }
@@ -32,7 +32,7 @@ class NodeExplorerServiceFacade(applicationService: AndroidApplicationService.Pr
                     val outputValues = filterOutputsByAddress(tx, address)
                     val explorerResult = ExplorerResult(isConfirmed, outputValues)
                     if (isConfirmed) {
-                        cachedExplorerResults[txId] to explorerResult
+                        cachedExplorerResults[txId] = explorerResult
                     }
                     log.i { "explorerResult $explorerResult" }
                     return@thenApply explorerResult

@@ -1,5 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -47,9 +50,9 @@ class OfferbookPresenter(
         MutableStateFlow { _: OfferItemPresentationModel -> true }
 
     val sortedFilteredOffers: StateFlow<List<OfferItemPresentationModel>> =
-        combine(offersServiceFacade.offerbookListItems, selectedDirection, includeOfferPredicate) { offers, direction, includeOffer ->
-            offers.filter { it.bisqEasyOffer.direction.mirror == direction }
-                .filter(includeOffer)
+        combine(offersServiceFacade.offerbookListItems, selectedDirection, includeOfferPredicate) { offers, direction, predicate ->
+            offers.filter { it.bisqEasyOffer.direction.mirror == direction } // Use mirrored direction as we are in potential taker role
+                .filter(predicate)
                 .sortedWith(compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }
                     .thenBy { it.bisqEasyOffer.id })
         }.stateIn(
@@ -106,6 +109,7 @@ class OfferbookPresenter(
                     withContext(IODispatcher) {
                         offersServiceFacade.deleteOffer(item.offerId)
                     }
+                    _showDeleteConfirmation.value = false
                     deselectOffer()
                 }
             }
@@ -125,22 +129,29 @@ class OfferbookPresenter(
     }
 
     private fun updateIncludeOfferPredicate() {
-        presenterScope.launch {
-            val invalidSellOfferIds = sortedFilteredOffers.value
-                .filter {
-                    it.bisqEasyOffer.direction == DirectionEnum.SELL &&
-                            withContext(IODispatcher) {
-                                BisqEasyTradeAmountLimits.isSellOfferInvalid(
-                                    it,
+        ioScope.launch {
+            val invalidSellOfferIds = coroutineScope {
+                sortedFilteredOffers.value
+                    .filter { it.bisqEasyOffer.direction == DirectionEnum.SELL }
+                    .map { offer ->
+                        async {
+                            if (BisqEasyTradeAmountLimits.isSellOfferInvalid(
+                                    offer,
                                     true,
                                     marketPriceServiceFacade,
                                     reputationServiceFacade
                                 )
+                            ) {
+                                offer.bisqEasyOffer.id
+                            } else {
+                                null
                             }
-                }
-                .map { it.bisqEasyOffer.id }
-                .toSet()
-
+                        }
+                    }
+                    .awaitAll()
+                    .filterNotNull()
+                    .toSet()
+            }
             includeOfferPredicate.value = { item ->
                 item.bisqEasyOffer.id !in invalidSellOfferIds
             }
@@ -152,17 +163,21 @@ class OfferbookPresenter(
             selectedOffer?.let { item ->
                 require(!item.isMyOffer)
                 presenterScope.launch {
-                    if (canTakeOffer(item)) {
-                        takeOfferPresenter.selectOfferToTake(item)
-                        if (takeOfferPresenter.showAmountScreen()) {
-                            navigateTo(Routes.TakeOfferTradeAmount)
-                        } else if (takeOfferPresenter.showPaymentMethodsScreen()) {
-                            navigateTo(Routes.TakeOfferPaymentMethod)
+                    try {
+                        if (canTakeOffer(item)) {
+                            takeOfferPresenter.selectOfferToTake(item)
+                            if (takeOfferPresenter.showAmountScreen()) {
+                                navigateTo(Routes.TakeOfferTradeAmount)
+                            } else if (takeOfferPresenter.showPaymentMethodsScreen()) {
+                                navigateTo(Routes.TakeOfferPaymentMethod)
+                            } else {
+                                navigateTo(Routes.TakeOfferReviewTrade)
+                            }
                         } else {
-                            navigateTo(Routes.TakeOfferReviewTrade)
+                            _showNotEnoughReputationDialog.value = true
                         }
-                    } else {
-                        _showNotEnoughReputationDialog.value = true
+                    } catch (e: Exception) {
+                        log.e("canTakeOffer call failed", e)
                     }
                 }
             }
@@ -187,22 +202,13 @@ class OfferbookPresenter(
     private suspend fun canTakeOffer(item: OfferItemPresentationModel): Boolean {
         val bisqEasyOffer = item.bisqEasyOffer
         val selectedUserProfile = userProfileServiceFacade.getSelectedUserProfile()
-            ?: run {
-                log.w { "SelectedUserProfile is null" }
-                return false
-            }
+        require(selectedUserProfile != null) { "SelectedUserProfile is null" }
         val requiredReputationScoreForMaxOrFixed =
             BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(marketPriceServiceFacade, bisqEasyOffer)
-                ?: run {
-                    log.w { "requiredReputationScoreForMaxOrFixedAmount is null" }
-                    return false
-                }
+        require(requiredReputationScoreForMaxOrFixed != null) { "requiredReputationScoreForMaxOrFixedAmount is null" }
         val requiredReputationScoreForMinOrFixed =
             BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(marketPriceServiceFacade, bisqEasyOffer)
-                ?: run {
-                    log.w { "requiredReputationScoreForMinAmount is null" }
-                    return false
-                }
+        require(requiredReputationScoreForMinOrFixed != null) { "requiredReputationScoreForMinAmount is null" }
 
         val market = bisqEasyOffer.market
         val quoteCurrencyCode = market.quoteCurrencyCode

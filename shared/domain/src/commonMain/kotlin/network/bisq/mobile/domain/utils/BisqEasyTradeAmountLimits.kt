@@ -1,5 +1,7 @@
 package network.bisq.mobile.domain.utils
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -24,11 +26,12 @@ import kotlin.math.roundToLong
 
 object BisqEasyTradeAmountLimits {
     private val invalidSellOffers: MutableSet<String> = mutableSetOf()
+    private val invalidSellOffersMutex = Mutex()
 
     fun getMinAmountValue(marketPriceServiceFacade: MarketPriceServiceFacade, quoteCurrencyCode: String): Long {
         val minFiatAmount = fromUsd(
             marketPriceServiceFacade,
-            network.bisq.mobile.domain.data.replicated.common.currency.MarketVO("BTC", quoteCurrencyCode),
+            MarketVO("BTC", quoteCurrencyCode),
             DEFAULT_MIN_USD_TRADE_AMOUNT
         )
         return ((minFiatAmount?.value?.toDouble() ?: 0.0) / 10000).roundToLong() * 10000
@@ -37,7 +40,7 @@ object BisqEasyTradeAmountLimits {
     fun getMaxAmountValue(marketPriceServiceFacade: MarketPriceServiceFacade, quoteCurrencyCode: String): Long {
         val maxFiatAmount = fromUsd(
             marketPriceServiceFacade,
-            network.bisq.mobile.domain.data.replicated.common.currency.MarketVO("BTC", quoteCurrencyCode),
+            MarketVO("BTC", quoteCurrencyCode),
             MAX_USD_TRADE_AMOUNT
         )
         return ((maxFiatAmount?.value?.toDouble() ?: 0.0) / 10000).roundToLong() * 10000
@@ -71,7 +74,7 @@ object BisqEasyTradeAmountLimits {
         require(bisqEasyOffer.direction == DirectionEnum.SELL)
 
         val offerId = bisqEasyOffer.id
-        if (useCache && invalidSellOffers.contains(offerId)) {
+        if (useCache && isInvalidSellOffer(offerId)) {
             return true
         }
 
@@ -82,16 +85,6 @@ object BisqEasyTradeAmountLimits {
                     logger.e { "requiredReputationScoreForMinAmount is null" }
                     return false
                 }
-
-        // TODO filter banned users
-        /* val chatMessage: ChatMessage = item.getChatMessage()
-         if (bannedUserService.isUserProfileBanned(chatMessage.getAuthorUserProfileId()) ||
-             bannedUserService.isUserProfileBanned(senderUserProfile.get())
-         ) {
-             return@Predicate false
-         }*/
-
-        // Currently we do not support IgnoredUser, thus not filtering for that
 
         val userProfileId = bisqEasyOffer.makerNetworkId.pubKey.id
         val sellersScore: Long = run {
@@ -105,7 +98,7 @@ object BisqEasyTradeAmountLimits {
         }
         val isInvalid = sellersScore < requiredReputationScoreForMinOrFixed
         if (isInvalid) {
-            invalidSellOffers.add(offerId) // We also add it if cache is false
+            addInvalidSellOffer(offerId) // We also add it if cache is false
         }
         return isInvalid
     }
@@ -198,5 +191,17 @@ object BisqEasyTradeAmountLimits {
 
     fun withTolerance(makersReputationScore: Long): Long {
         return (makersReputationScore * (1 + TOLERANCE)).toLong();
+    }
+
+    suspend fun addInvalidSellOffer(id: String) {
+        invalidSellOffersMutex.withLock {
+            invalidSellOffers.add(id)
+        }
+    }
+
+    suspend fun isInvalidSellOffer(id: String): Boolean {
+        return invalidSellOffersMutex.withLock {
+            id in invalidSellOffers
+        }
     }
 }

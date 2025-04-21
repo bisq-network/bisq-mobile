@@ -5,7 +5,7 @@ import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
 class ClientExplorerServiceFacade(private val apiGateway: ExplorerApiGateway) : ExplorerServiceFacade, Logging {
-    private val cachedExplorerResults: Map<String, ExplorerResult> = HashMap()
+    private val cachedExplorerResults: MutableMap<String, ExplorerResult> = HashMap()
 
     override suspend fun getSelectedBlockExplorer(): Result<String> {
         val result = apiGateway.getSelectedBlockExplorer()
@@ -28,7 +28,7 @@ class ClientExplorerServiceFacade(private val apiGateway: ExplorerApiGateway) : 
             val outputValues = filterOutputsByAddress(tx, address)
             val explorerResult = ExplorerResult(isConfirmed, outputValues)
             if (isConfirmed) {
-                cachedExplorerResults[txId] to explorerResult
+                cachedExplorerResults[txId] = explorerResult
             }
             log.i { "explorerResult $explorerResult" }
             return explorerResult
