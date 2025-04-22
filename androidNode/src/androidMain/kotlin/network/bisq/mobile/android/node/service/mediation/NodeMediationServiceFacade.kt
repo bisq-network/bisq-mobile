@@ -7,23 +7,22 @@ import bisq.support.mediation.MediationRequestService
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 
-class NodeMediationServiceFacade(applicationService: AndroidApplicationService.Provider) : MediationServiceFacade, Logging {
-
+class NodeMediationServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), MediationServiceFacade {
     // Dependencies
     private val channelService: BisqEasyOpenTradeChannelService by lazy { applicationService.chatService.get().bisqEasyOpenTradeChannelService }
     private val mediationRequestService: MediationRequestService by lazy { applicationService.supportService.get().mediationRequestService }
 
-    // API
     override fun activate() {
+        super<ServiceFacade>.activate()
     }
 
     override fun deactivate() {
+        super<ServiceFacade>.deactivate()
     }
 
-    // API
     override suspend fun reportToMediator(value: TradeItemPresentationModel): Result<Unit> {
         val tradeId = value.tradeId
         val optionalChannel = channelService.findChannelByTradeId(tradeId)
