@@ -8,18 +8,17 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 
 class NodeApplicationBootstrapFacade(
     private val applicationService: AndroidApplicationService.Provider
-) :
-    ApplicationBootstrapFacade() {
+) : ApplicationBootstrapFacade() {
 
     // Dependencies
-    private val applicationServiceState: Observable<State> by lazy {
-        applicationService.state.get()
-    }
+    private val applicationServiceState: Observable<State> by lazy { applicationService.state.get() }
 
     // Misc
     private var applicationServiceStatePin: Pin? = null
 
     override fun activate() {
+        super.activate()
+
         applicationServiceStatePin = applicationServiceState.addObserver { state: State ->
             when (state) {
                 State.INITIALIZE_APP -> {
@@ -57,5 +56,7 @@ class NodeApplicationBootstrapFacade(
     override fun deactivate() {
         applicationServiceStatePin?.unbind()
         applicationServiceStatePin = null
+
+        super.deactivate()
     }
 }

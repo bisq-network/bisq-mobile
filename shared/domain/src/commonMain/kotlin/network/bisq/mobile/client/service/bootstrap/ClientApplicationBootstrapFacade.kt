@@ -1,8 +1,6 @@
 package network.bisq.mobile.client.service.bootstrap
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -13,8 +11,9 @@ class ClientApplicationBootstrapFacade(
     private val trustedNodeService: TrustedNodeService
 ) : ApplicationBootstrapFacade() {
 
-    private val ioScope = CoroutineScope(IODispatcher)
     override fun activate() {
+        super.activate()
+
         if (isActive) {
             return
         }
@@ -24,7 +23,7 @@ class ClientApplicationBootstrapFacade(
         setProgress(0f)
 
         // just dummy loading simulation, might be that there is no loading delay at the end...
-        ioScope.launch {
+        serviceScope.launch {
             settingsRepository.fetch()
             val url = settingsRepository.data.value?.bisqApiUrl
             log.d { "Settings url $url" }
@@ -66,5 +65,7 @@ class ClientApplicationBootstrapFacade(
 
     override fun deactivate() {
         isActive = false
+
+        super.deactivate()
     }
 }
