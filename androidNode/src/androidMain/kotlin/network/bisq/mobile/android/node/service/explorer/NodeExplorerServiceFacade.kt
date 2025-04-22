@@ -3,17 +3,25 @@ package network.bisq.mobile.android.node.service.explorer
 import bisq.bonded_roles.explorer.ExplorerService
 import bisq.bonded_roles.explorer.dto.Tx
 import network.bisq.mobile.android.node.AndroidApplicationService
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerResult
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.utils.ExceptionUtils.getRootCause
 import network.bisq.mobile.domain.utils.ExceptionUtils.getRootCauseMessage
-import network.bisq.mobile.domain.utils.Logging
 
 
-class NodeExplorerServiceFacade(applicationService: AndroidApplicationService.Provider) : ExplorerServiceFacade, Logging {
+class NodeExplorerServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), ExplorerServiceFacade {
     // Dependencies
     private val explorerService: ExplorerService by lazy { applicationService.bondedRolesService.get().explorerService }
     private val cachedExplorerResults: MutableMap<String, ExplorerResult> = HashMap()
+
+    override fun activate() {
+        super<ServiceFacade>.activate()
+    }
+
+    override fun deactivate() {
+        super<ServiceFacade>.deactivate()
+    }
 
     override suspend fun getSelectedBlockExplorer(): Result<String> {
         log.i { "Selected block explorer " + explorerService.selectedProvider.get().baseUrl }

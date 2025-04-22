@@ -1,11 +1,19 @@
 package network.bisq.mobile.client.service.explorer
 
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerResult
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 
-class ClientExplorerServiceFacade(private val apiGateway: ExplorerApiGateway) : ExplorerServiceFacade, Logging {
+class ClientExplorerServiceFacade(private val apiGateway: ExplorerApiGateway) : ServiceFacade(), ExplorerServiceFacade {
     private val cachedExplorerResults: MutableMap<String, ExplorerResult> = HashMap()
+
+    override fun activate() {
+        super<ServiceFacade>.activate()
+    }
+
+    override fun deactivate() {
+        super<ServiceFacade>.deactivate()
+    }
 
     override suspend fun getSelectedBlockExplorer(): Result<String> {
         val result = apiGateway.getSelectedBlockExplorer()
