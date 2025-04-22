@@ -13,11 +13,11 @@ import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
 import network.bisq.mobile.domain.formatters.MarketPriceFormatter
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 
 class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplicationService.Provider) :
-    MarketPriceServiceFacade, Logging {
+    ServiceFacade(), MarketPriceServiceFacade {
 
     // Dependencies
     private val marketPriceService: MarketPriceService by lazy {
@@ -37,6 +37,8 @@ class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplic
 
     // Life cycle
     override fun activate() {
+        super<ServiceFacade>.activate()
+
         observeSelectedMarket()
         observeMarketPrice()
     }
@@ -46,6 +48,8 @@ class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplic
         selectedMarketPin = null
         marketPricePin?.unbind()
         marketPricePin = null
+
+        super<ServiceFacade>.deactivate()
     }
 
     // API

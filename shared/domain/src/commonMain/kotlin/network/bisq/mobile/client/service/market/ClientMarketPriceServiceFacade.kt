@@ -1,27 +1,25 @@
 package network.bisq.mobile.client.service.market
 
 import io.ktor.util.collections.ConcurrentMap
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.formatters.MarketPriceFormatter
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 
 class ClientMarketPriceServiceFacade(
     private val apiGateway: MarketPriceApiGateway,
     private val json: Json
-) : MarketPriceServiceFacade, Logging {
+) : ServiceFacade(), MarketPriceServiceFacade {
 
     // Properties
     private val _selectedMarketPriceItem: MutableStateFlow<MarketPriceItem?> = MutableStateFlow(null)
@@ -31,14 +29,15 @@ class ClientMarketPriceServiceFacade(
     override val selectedFormattedMarketPrice: StateFlow<String> = _selectedFormattedMarketPrice
 
     // Misc
-    private val ioScope = CoroutineScope(IODispatcher)
     private var job: Job? = null
     private var selectedMarket: MarketVO = MarketVOFactory.USD// todo use persisted or user default
     private val quotes = ConcurrentMap<String, PriceQuoteVO>()
 
     // Life cycle
     override fun activate() {
-        job = ioScope.launch {
+        super<ServiceFacade>.activate()
+
+        job = serviceScope.launch {
             val observer = apiGateway.subscribeMarketPrice()
             observer.webSocketEvent.collect { webSocketEvent ->
                 try {
@@ -59,6 +58,8 @@ class ClientMarketPriceServiceFacade(
 
     override fun deactivate() {
         cancelJob()
+
+        super<ServiceFacade>.deactivate()
     }
 
     // API
