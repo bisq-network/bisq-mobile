@@ -24,8 +24,6 @@ import bisq.user.identity.UserIdentity
 import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -35,7 +33,6 @@ import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -44,9 +41,9 @@ import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 import java.util.Date
 import java.util.Optional
 
@@ -54,8 +51,7 @@ import java.util.Optional
 class NodeOffersServiceFacade(
     applicationService: AndroidApplicationService.Provider,
     private val marketPriceServiceFacade: MarketPriceServiceFacade
-) :
-    OffersServiceFacade, Logging {
+) : ServiceFacade(), OffersServiceFacade {
 
     // Dependencies
     private val userIdentityService: UserIdentityService by lazy { applicationService.userService.get().userIdentityService }
@@ -85,26 +81,26 @@ class NodeOffersServiceFacade(
     private var chatMessagesPin: Pin? = null
     private var selectedChannelPin: Pin? = null
     private var marketPricePin: Pin? = null
-    private var serviceScope = CoroutineScope(IODispatcher)
 
     // Life cycle
     override fun activate() {
-        serviceScope = CoroutineScope(IODispatcher)
+        super<ServiceFacade>.activate()
+
         observeSelectedChannel()
         observeMarketPrice()
         numOffersObservers.forEach { it.resume() }
     }
 
     override fun deactivate() {
-        serviceScope.cancel()
         chatMessagesPin?.unbind()
         chatMessagesPin = null
         selectedChannelPin?.unbind()
         selectedChannelPin = null
         marketPricePin?.unbind()
         marketPricePin = null
-
         numOffersObservers.forEach { it.dispose() }
+
+        super<ServiceFacade>.deactivate()
     }
 
     // API

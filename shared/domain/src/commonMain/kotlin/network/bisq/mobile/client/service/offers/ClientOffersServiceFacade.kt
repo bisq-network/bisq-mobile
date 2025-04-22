@@ -1,7 +1,6 @@
 package network.bisq.mobile.client.service.offers
 
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -10,7 +9,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -19,15 +17,15 @@ import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 
 class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val apiGateway: OfferbookApiGateway,
     private val json: Json
-) : OffersServiceFacade, Logging {
+) : ServiceFacade(), OffersServiceFacade {
 
     // Properties
     private val _offerbookListItems = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
@@ -42,7 +40,6 @@ class ClientOffersServiceFacade(
     // Misc
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
 
-    private val ioScope = CoroutineScope(IODispatcher)
     private var offersSequenceNumber = atomic(-1)
     private var subscribeOffersJob: Job? = null
     private var observeMarketPriceJob: Job? = null
@@ -51,10 +48,12 @@ class ClientOffersServiceFacade(
 
     // Life cycle
     override fun activate() {
+        super<ServiceFacade>.activate()
+
         observeMarketPriceJob = observeMarketPrice()
 
         cancelGetMarketsJob()
-        getMarketsJob = ioScope.launch {
+        getMarketsJob = serviceScope.launch {
             val result = apiGateway.getMarkets()
             if (result.isFailure) {
                 result.exceptionOrNull()?.let { log.e { "GetMarkets request failed with exception $it" } }
@@ -72,6 +71,8 @@ class ClientOffersServiceFacade(
         cancelObserveMarketPriceJob()
         cancelGetMarketsJob()
         _offerbookMarketItems.value = emptyList()
+
+        super<ServiceFacade>.deactivate()
     }
 
     // API
@@ -126,7 +127,7 @@ class ClientOffersServiceFacade(
 
     // Private
     private fun observeMarketPrice(): Job {
-        return ioScope.launch {
+        return serviceScope.launch {
             marketPriceServiceFacade.selectedMarketPriceItem.collectLatest { marketPriceItem ->
                 if (marketPriceItem != null) {
                     _selectedOfferbookMarket.value.setFormattedPrice(marketPriceItem.formattedPrice)
@@ -155,7 +156,7 @@ class ClientOffersServiceFacade(
 
     private fun subscribeOffers() {
         if (subscribeOffersJob == null) {
-            subscribeOffersJob = ioScope.launch {
+            subscribeOffersJob = serviceScope.launch {
                 offersSequenceNumber = atomic(-1)
                 // We subscribe for all markets
                 val observer = apiGateway.subscribeOffers()

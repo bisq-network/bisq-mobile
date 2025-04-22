@@ -53,7 +53,8 @@ interface OffersServiceFacade : LifeCycleAware {
                 BisqEasyTradeStateEnum.FAILED,
                 BisqEasyTradeStateEnum.FAILED_AT_PEER,
                 BisqEasyTradeStateEnum.REJECTED,
-                BisqEasyTradeStateEnum.PEER_REJECTED,  -> true
+                BisqEasyTradeStateEnum.PEER_REJECTED,
+                    -> true
                 else -> false
             }
         }
