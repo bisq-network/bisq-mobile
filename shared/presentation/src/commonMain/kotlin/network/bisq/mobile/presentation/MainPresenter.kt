@@ -21,7 +21,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 open class MainPresenter(
     private val connectivityService: ConnectivityService,
     private val openTradesNotificationService: OpenTradesNotificationService,
-    private val settingsService: SettingsServiceFacade,
+    settingsService: SettingsServiceFacade,
     private val urlLauncher: UrlLauncher
 ) : BasePresenter(null), AppPresenter {
     override lateinit var navController: NavHostController

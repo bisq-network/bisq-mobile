@@ -93,7 +93,25 @@ val androidNodeModule = module {
     // this line showcases both, the possibility to change behaviour of the app by changing one definition
     // and binding the same obj to 2 different abstractions
     single<MainPresenter> {
-        NodeMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get())
+        NodeMainPresenter(
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get()
+        )
     } bind AppPresenter::class
 
     single<SplashPresenter> {

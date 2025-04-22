@@ -6,13 +6,17 @@ import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.IODispatcher
+import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
+import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.network.ClientConnectivityService
+import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
+import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -23,17 +27,21 @@ import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
  * Contains all the share code for each client. Each specific app might extend this class if needed.
  */
 open class ClientMainPresenter(
-    private val connectivityService: ClientConnectivityService,
-    openTradesNotificationService: OpenTradesNotificationService,
-    private val userProfileServiceFacade: UserProfileServiceFacade,
-    private val tradesServiceFacade: TradesServiceFacade,
-    private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
-    private val webSocketClientProvider: WebSocketClientProvider,
+    private val accountsServiceFacade: AccountsServiceFacade,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
-    private val offersServiceFacade: OffersServiceFacade,
-    private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val settingsServiceFacade: SettingsServiceFacade,
+    private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
+    private val explorerServiceFacade: ExplorerServiceFacade,
+    private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val mediationServiceFacade: MediationServiceFacade,
+    private val connectivityService: ConnectivityService,
+    private val offersServiceFacade: OffersServiceFacade,
+    private val reputationServiceFacade: ReputationServiceFacade,
+    private val settingsServiceFacade: SettingsServiceFacade,
+    private val tradesServiceFacade: TradesServiceFacade,
+    private val userProfileServiceFacade: UserProfileServiceFacade,
+    openTradesNotificationService: OpenTradesNotificationService,
+    private val webSocketClientProvider: WebSocketClientProvider,
     urlLauncher: UrlLauncher
 ) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, urlLauncher) {
 
@@ -96,6 +104,12 @@ open class ClientMainPresenter(
             tradeChatMessagesServiceFacade.activate()
             settingsServiceFacade.activate()
             languageServiceFacade.activate()
+
+            accountsServiceFacade.activate()
+            explorerServiceFacade.activate()
+            mediationServiceFacade.activate()
+            reputationServiceFacade.activate()
+            userProfileServiceFacade.activate()
         }.onFailure { e ->
             // TODO give user feedback (we could have a general error screen covering usual
             //  issues like connection issues and potential solutions)
@@ -112,6 +126,12 @@ open class ClientMainPresenter(
         tradeChatMessagesServiceFacade.deactivate()
         settingsServiceFacade.deactivate()
         languageServiceFacade.deactivate()
+
+        accountsServiceFacade.deactivate()
+        explorerServiceFacade.deactivate()
+        mediationServiceFacade.deactivate()
+        reputationServiceFacade.deactivate()
+        userProfileServiceFacade.deactivate()
     }
 
     override fun isDemo(): Boolean = ApplicationBootstrapFacade.isDemo

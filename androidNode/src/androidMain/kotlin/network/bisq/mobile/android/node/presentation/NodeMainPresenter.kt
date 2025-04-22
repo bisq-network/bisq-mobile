@@ -4,16 +4,21 @@ import android.app.Activity
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.MainActivity
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
-import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.UrlLauncher
+import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
+import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
+import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 
 /**
@@ -22,16 +27,21 @@ import network.bisq.mobile.presentation.MainPresenter
 class NodeMainPresenter(
     urlLauncher: UrlLauncher,
     openTradesNotificationService: OpenTradesNotificationService,
-    private val connectivityService: NodeConnectivityService,
-    private val tradesServiceFacade: TradesServiceFacade,
+    private val accountsServiceFacade: AccountsServiceFacade,
+    private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
+    private val languageServiceFacade: LanguageServiceFacade,
+    private val explorerServiceFacade: ExplorerServiceFacade,
+    private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val mediationServiceFacade: MediationServiceFacade,
+    private val connectivityService: ConnectivityService,
+    private val offersServiceFacade: OffersServiceFacade,
+    private val reputationServiceFacade: ReputationServiceFacade,
+    private val settingsServiceFacade: SettingsServiceFacade,
+    private val tradesServiceFacade: TradesServiceFacade,
+    private val userProfileServiceFacade: UserProfileServiceFacade,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
-    private val applicationBootstrapFacade: ApplicationBootstrapFacade,
-    private val settingsServiceFacade: SettingsServiceFacade,
-    private val offersServiceFacade: OffersServiceFacade,
-    private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val languageServiceFacade: LanguageServiceFacade,
 ) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, urlLauncher) {
 
     private var applicationServiceCreated = false
@@ -39,6 +49,7 @@ class NodeMainPresenter(
     init {
         openTradesNotificationService.notificationServiceController.activityClassForIntents = MainActivity::class.java
     }
+
     override fun onViewAttached() {
         super.onViewAttached()
 
@@ -58,7 +69,7 @@ class NodeMainPresenter(
                 settingsServiceFacade.activate()
                 log.i { "Start initializing applicationService" }
                 applicationService.initialize()
-                    .whenComplete { r: Boolean?, throwable: Throwable? ->
+                    .whenComplete { _: Boolean?, throwable: Throwable? ->
                         if (throwable == null) {
                             log.i { "ApplicationService initialization completed" }
                             applicationBootstrapFacade.deactivate()
@@ -68,6 +79,12 @@ class NodeMainPresenter(
                             tradesServiceFacade.activate()
                             tradeChatMessagesServiceFacade.activate()
                             languageServiceFacade.activate()
+
+                            accountsServiceFacade.activate()
+                            explorerServiceFacade.activate()
+                            mediationServiceFacade.activate()
+                            reputationServiceFacade.activate()
+                            userProfileServiceFacade.activate()
                         } else {
                             log.e("Initializing applicationService failed", throwable)
                         }
@@ -81,6 +98,12 @@ class NodeMainPresenter(
                 tradesServiceFacade.activate()
                 tradeChatMessagesServiceFacade.activate()
                 languageServiceFacade.activate()
+
+                accountsServiceFacade.activate()
+                explorerServiceFacade.activate()
+                mediationServiceFacade.activate()
+                reputationServiceFacade.activate()
+                userProfileServiceFacade.activate()
             }
         }.onFailure { e ->
             // TODO give user feedback (we could have a general error screen covering usual
@@ -112,5 +135,16 @@ class NodeMainPresenter(
         tradesServiceFacade.deactivate()
         tradeChatMessagesServiceFacade.deactivate()
         languageServiceFacade.deactivate()
+
+        accountsServiceFacade.deactivate()
+        explorerServiceFacade.deactivate()
+        mediationServiceFacade.deactivate()
+        reputationServiceFacade.deactivate()
+
+        accountsServiceFacade.deactivate()
+        explorerServiceFacade.deactivate()
+        mediationServiceFacade.deactivate()
+        reputationServiceFacade.deactivate()
+        userProfileServiceFacade.deactivate()
     }
 }
