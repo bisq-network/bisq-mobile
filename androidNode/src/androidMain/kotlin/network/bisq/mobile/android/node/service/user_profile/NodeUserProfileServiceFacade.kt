@@ -19,8 +19,8 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 import java.security.KeyPair
 import java.util.Random
 import kotlin.math.max
@@ -32,8 +32,8 @@ import kotlin.math.min
  * It uses in a in-memory model for the relevant data required for the presenter to reflect the domains state.
  * Persistence is done inside the Bisq 2 libraries.
  */
-class NodeUserProfileServiceFacade(private val applicationService: AndroidApplicationService.Provider) :
-    UserProfileServiceFacade, Logging {
+class NodeUserProfileServiceFacade(private val applicationService: AndroidApplicationService.Provider) : ServiceFacade(),
+    UserProfileServiceFacade {
 
     companion object {
         private const val AVATAR_VERSION = 0
@@ -66,6 +66,8 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
 
     override fun activate() {
+        super<ServiceFacade>.activate()
+
         if (active) {
             log.w { "deactivating first" }
             deactivate()
@@ -88,6 +90,8 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         jobs.clear()
 
         active = false
+
+        super<ServiceFacade>.deactivate()
     }
 
     // API

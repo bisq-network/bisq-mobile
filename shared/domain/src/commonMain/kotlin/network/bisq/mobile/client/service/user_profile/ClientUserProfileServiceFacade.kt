@@ -13,8 +13,8 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.hexToByteArray
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.max
@@ -24,7 +24,7 @@ import kotlin.random.Random
 class ClientUserProfileServiceFacade(
     private val apiGateway: UserProfileApiGateway,
     private val clientCatHashService: ClientCatHashService<PlatformImage>
-) : UserProfileServiceFacade, Logging {
+) : ServiceFacade(), UserProfileServiceFacade {
 
     private var keyMaterialResponse: KeyMaterialResponse? = null
 
@@ -39,6 +39,8 @@ class ClientUserProfileServiceFacade(
 
 
     override fun activate() {
+        super<ServiceFacade>.activate()
+
         if (active) {
             log.w { "deactivating first" }
             deactivate()
@@ -61,6 +63,8 @@ class ClientUserProfileServiceFacade(
         jobs.clear()
 
         active = false
+
+        super<ServiceFacade>.deactivate()
     }
 
 
