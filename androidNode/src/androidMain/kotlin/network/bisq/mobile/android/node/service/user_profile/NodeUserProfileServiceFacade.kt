@@ -7,6 +7,7 @@ import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -140,22 +141,15 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     // Private
-    private fun createSimulatedDelay(powDuration: Long) {
-        try {
-            // Proof of work creation for difficulty 65536 takes about 50 ms to 100 ms on a 4 GHz Intel Core i7.
-            // Target duration would be 200-1000 ms, but it is hard to find the right difficulty that works
-            // well also for low-end CPUs. So we take a rather safe lower difficulty value and add here some
-            // delay to not have a too fast flicker-effect in the UI when recreating the nym.
-            // We add a min delay of 200 ms with some randomness to make the usage of the proof of work more
-            // visible.
-            val random: Int = Random().nextInt(800)
-            // Limit to 200-2000 ms
-            Thread.sleep(
-                min(1000.0, max(200.0, (200 + random - powDuration).toDouble()))
-                    .toLong()
-            )
-        } catch (e: InterruptedException) {
-            throw RuntimeException(e)
-        }
+    private suspend fun createSimulatedDelay(powDuration: Long) {
+        // Proof of work creation for difficulty 65536 takes about 50 ms to 100 ms on a 4 GHz Intel Core i7.
+        // Target duration would be 200-1000 ms, but it is hard to find the right difficulty that works
+        // well also for low-end CPUs. So we take a rather safe lower difficulty value and add here some
+        // delay to not have a too fast flicker-effect in the UI when recreating the nym.
+        // We add a min delay of 200 ms with some randomness to make the usage of the proof of work more
+        // visible.
+        val random: Int = Random().nextInt(800)
+        // Limit to 200-2000 ms
+        delay(min(1000.0, max(200.0, (200 + random - powDuration).toDouble())).toLong())
     }
 }

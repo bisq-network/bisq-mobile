@@ -47,8 +47,10 @@ abstract class ServiceFacade : LifeCycleAware, Logging {
 
     override fun deactivate() {
         if (!isActivated) {
-            "deactivate called on ${this::class.simpleName} while service is not activated. " +
-                    "This might be a valid case if we shut down fast before service got activated."
+            log.w {
+                "deactivate called on ${this::class.simpleName} while service is not activated. " +
+                        "This might be a valid case if we shut down fast before service got activated."
+            }
         }
         _serviceScope?.cancel()
         _serviceJob = null
