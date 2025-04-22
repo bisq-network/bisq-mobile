@@ -16,6 +16,8 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMaxAmount
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMinAmount
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
@@ -25,8 +27,6 @@ import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
-import network.bisq.mobile.domain.utils.OfferUtils.getFixedOrMaxAmount
-import network.bisq.mobile.domain.utils.OfferUtils.getFixedOrMinAmount
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -213,12 +213,12 @@ class OfferbookPresenter(
         val market = bisqEasyOffer.market
         val quoteCurrencyCode = market.quoteCurrencyCode
         val minFiatAmount: String = AmountFormatter.formatAmount(
-            FiatVOFactory.from(getFixedOrMinAmount(bisqEasyOffer), quoteCurrencyCode),
+            FiatVOFactory.from(bisqEasyOffer.getFixedOrMinAmount(), quoteCurrencyCode),
             useLowPrecision = true,
             withCode = true
         )
         val maxFiatAmount: String = AmountFormatter.formatAmount(
-            FiatVOFactory.from(getFixedOrMaxAmount(bisqEasyOffer), quoteCurrencyCode),
+            FiatVOFactory.from(bisqEasyOffer.getFixedOrMaxAmount(), quoteCurrencyCode),
             useLowPrecision = true,
             withCode = true
         )

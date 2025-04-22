@@ -16,9 +16,7 @@
  */
 package network.bisq.mobile.domain.data.replicated.offer
 
-import kotlinx.serialization.Serializable
 
-@Serializable
 object DirectionEnumExtensions {
     val DirectionEnum.isBuy: Boolean
         get() {
