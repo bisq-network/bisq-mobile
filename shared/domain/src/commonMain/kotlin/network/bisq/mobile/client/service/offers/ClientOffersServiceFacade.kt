@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.service.offers
 
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -40,7 +41,7 @@ class ClientOffersServiceFacade(
     // Misc
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
     private var offersSequenceNumber = atomic(-1)
-    private var subscribeOffersJob: Job? = null
+    private var hasSubscribedToOffers = atomic(false)
     private var observeMarketPriceJob: Job? = null
 
 
@@ -64,7 +65,6 @@ class ClientOffersServiceFacade(
     }
 
     override fun deactivate() {
-        cancelSubscribeOffersJob()
         cancelObserveMarketPriceJob()
         _offerbookMarketItems.value = emptyList()
 
@@ -76,7 +76,7 @@ class ClientOffersServiceFacade(
         marketPriceServiceFacade.selectMarket(marketListItem)
         _selectedOfferbookMarket.value = OfferbookMarket(marketListItem.market)
 
-        if (subscribeOffersJob == null) {
+        if (hasSubscribedToOffers.compareAndSet(expect = false, update = true)) {
             subscribeOffers()
         } else {
             applyOffersToSelectedMarket()
@@ -123,11 +123,15 @@ class ClientOffersServiceFacade(
 
     // Private
     private fun observeMarketPrice(): Job {
-        return serviceScope.launch {
-            marketPriceServiceFacade.selectedMarketPriceItem.collectLatest { marketPriceItem ->
-                if (marketPriceItem != null) {
-                    _selectedOfferbookMarket.value.setFormattedPrice(marketPriceItem.formattedPrice)
+        return serviceScope.launch(Dispatchers.Default) {
+            runCatching {
+                marketPriceServiceFacade.selectedMarketPriceItem.collectLatest { marketPriceItem ->
+                    if (marketPriceItem != null) {
+                        _selectedOfferbookMarket.value.setFormattedPrice(marketPriceItem.formattedPrice)
+                    }
                 }
+            }.onFailure {
+                log.e(it) { "Error at marketPriceServiceFacade.selectedMarketPriceItem.collectLatest" }
             }
         }
     }
@@ -151,50 +155,46 @@ class ClientOffersServiceFacade(
     }
 
     private fun subscribeOffers() {
-        if (subscribeOffersJob == null) {
-            subscribeOffersJob = serviceScope.launch {
-                offersSequenceNumber = atomic(-1)
-                // We subscribe for all markets
-                val observer = apiGateway.subscribeOffers()
-                observer.webSocketEvent.collect { webSocketEvent ->
-                    if (webSocketEvent?.deferredPayload == null) {
-                        return@collect
+        serviceScope.launch {
+            offersSequenceNumber = atomic(-1)
+            // We subscribe for all markets
+            val observer = apiGateway.subscribeOffers()
+            observer.webSocketEvent.collect { webSocketEvent ->
+                if (webSocketEvent?.deferredPayload == null) {
+                    return@collect
+                }
+                if (offersSequenceNumber.value >= webSocketEvent.sequenceNumber) {
+                    log.w {
+                        "Sequence number is larger or equal than the one we " +
+                                "received from the backend. We ignore that event."
                     }
-                    if (offersSequenceNumber.value >= webSocketEvent.sequenceNumber) {
-                        log.w {
-                            "Sequence number is larger or equal than the one we " +
-                                    "received from the backend. We ignore that event."
-                        }
-                        return@collect
-                    }
+                    return@collect
+                }
 
-                    offersSequenceNumber.value = webSocketEvent.sequenceNumber
-                    val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
-                        WebSocketEventPayload.from(json, webSocketEvent)
-                    val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
-                    if (webSocketEvent.modificationType == ModificationType.REPLACE ||
-                        webSocketEvent.modificationType == ModificationType.ADDED
-                    ) {
-                        payload.forEach { item ->
-                            // TODO:
-                            // to apply bisq.offer.price.spec.PriceSpecFormatter.getFormattedPriceSpec to item here.
+                offersSequenceNumber.value = webSocketEvent.sequenceNumber
+                val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
+                    WebSocketEventPayload.from(json, webSocketEvent)
+                val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
+                if (webSocketEvent.modificationType == ModificationType.REPLACE ||
+                    webSocketEvent.modificationType == ModificationType.ADDED
+                ) {
+                    payload.forEach { item ->
+                        val model = OfferItemPresentationModel(item)
+                        val quoteCurrencyCode = item.bisqEasyOffer.market.quoteCurrencyCode
+                        offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }[model.offerId] = model
+                    }
+                } else if (webSocketEvent.modificationType == ModificationType.REMOVED) {
+                    payload.forEach { item ->
+                        offerbookListItemsByMarket[item.bisqEasyOffer.market.quoteCurrencyCode]?.let { map ->
                             val model = OfferItemPresentationModel(item)
-                            offerbookListItemsByMarket.getOrPut(item.bisqEasyOffer.market.quoteCurrencyCode) { mutableMapOf() }
-                                .put(model.offerId, model)
-                        }
-                    } else if (webSocketEvent.modificationType == ModificationType.REMOVED) {
-                        payload.forEach { item ->
-                            offerbookListItemsByMarket[item.bisqEasyOffer.market.quoteCurrencyCode]?.let { map ->
-                                val model = OfferItemPresentationModel(item)
-                                map.remove(model.offerId)
-                                if (map.isEmpty()) {
-                                    offerbookListItemsByMarket.remove(item.bisqEasyOffer.market.quoteCurrencyCode)
-                                }
+                            map.remove(model.offerId)
+                            if (map.isEmpty()) {
+                                offerbookListItemsByMarket.remove(item.bisqEasyOffer.market.quoteCurrencyCode)
                             }
                         }
                     }
-                    applyOffersToSelectedMarket()
                 }
+                applyOffersToSelectedMarket()
             }
         }
     }
@@ -202,11 +202,6 @@ class ClientOffersServiceFacade(
     private fun applyOffersToSelectedMarket() {
         val list = offerbookListItemsByMarket[selectedOfferbookMarket.value.market.quoteCurrencyCode]?.values?.toList()
         _offerbookListItems.value = list ?: emptyList()
-    }
-
-    private fun cancelSubscribeOffersJob() {
-        subscribeOffersJob?.cancel()
-        subscribeOffersJob = null
     }
 
     private fun cancelObserveMarketPriceJob() {

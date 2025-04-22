@@ -43,7 +43,7 @@ class NodeLanguageServiceFacade : ServiceFacade(), LanguageServiceFacade {
     }
 
     override fun setDefaultLanguage(languageCode: String) {
-        return LanguageRepository.setDefaultLanguage(languageCode)
+        LanguageRepository.setDefaultLanguage(languageCode)
     }
 
     override suspend fun sync() {

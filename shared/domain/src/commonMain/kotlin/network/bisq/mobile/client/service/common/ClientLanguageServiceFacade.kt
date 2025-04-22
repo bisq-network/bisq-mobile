@@ -1,6 +1,6 @@
 package network.bisq.mobile.client.service.common
 
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -19,13 +19,12 @@ class ClientLanguageServiceFacade : ServiceFacade(), LanguageServiceFacade {
     private val _defaultLanguage: MutableStateFlow<String> = MutableStateFlow("en")
 
     // Misc
-    private var job: Job? = null
 
     // Life cycle
     override fun activate() {
         super<ServiceFacade>.activate()
 
-        job = serviceScope.launch {
+        serviceScope.launch(Dispatchers.Default) {
 
             _i18nPairs.value = listOf(
                 "en" to "English (English)",
@@ -121,7 +120,6 @@ class ClientLanguageServiceFacade : ServiceFacade(), LanguageServiceFacade {
     }
 
     override fun deactivate() {
-        cancelJob()
         super<ServiceFacade>.deactivate()
     }
 
@@ -131,13 +129,5 @@ class ClientLanguageServiceFacade : ServiceFacade(), LanguageServiceFacade {
 
     override suspend fun sync() {
         activate()
-//        val subscriberId = _i18nObserver.value?.webSocketEvent?.value?.subscriberId ?: ""
-//        apiGateway.syncI18NCodes(subscriberId, _defaultLanguage.value)
-//        apiGateway.syncAllLanguageCodes(subscriberId, _defaultLanguage.value)
-    }
-
-    private fun cancelJob() {
-        job?.cancel()
-        job = null
     }
 }

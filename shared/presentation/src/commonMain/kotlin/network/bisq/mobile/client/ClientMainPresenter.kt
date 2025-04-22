@@ -109,7 +109,6 @@ open class ClientMainPresenter(
             explorerServiceFacade.activate()
             mediationServiceFacade.activate()
             reputationServiceFacade.activate()
-            userProfileServiceFacade.activate()
         }.onFailure { e ->
             // TODO give user feedback (we could have a general error screen covering usual
             //  issues like connection issues and potential solutions)
@@ -131,7 +130,6 @@ open class ClientMainPresenter(
         explorerServiceFacade.deactivate()
         mediationServiceFacade.deactivate()
         reputationServiceFacade.deactivate()
-        userProfileServiceFacade.deactivate()
     }
 
     override fun isDemo(): Boolean = ApplicationBootstrapFacade.isDemo

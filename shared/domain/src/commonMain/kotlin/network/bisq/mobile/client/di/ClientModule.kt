@@ -177,8 +177,6 @@ val clientModule = module {
         )
     }
 
-    single<LanguageServiceFacade> { ClientLanguageServiceFacade() }
-
     single { MarketPriceApiGateway(get(), get()) }
     single<MarketPriceServiceFacade> { ClientMarketPriceServiceFacade(get(), get()) }
 

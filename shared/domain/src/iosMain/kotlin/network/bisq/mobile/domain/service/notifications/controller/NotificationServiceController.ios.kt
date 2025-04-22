@@ -1,22 +1,41 @@
 package network.bisq.mobile.domain.service.notifications.controller
 
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.utils.Logging
-import platform.BackgroundTasks.*
+import platform.BackgroundTasks.BGProcessingTask
+import platform.BackgroundTasks.BGProcessingTaskRequest
+import platform.BackgroundTasks.BGTaskScheduler
 import platform.Foundation.NSDate
 import platform.Foundation.NSUUID
 import platform.Foundation.setValue
-import platform.UserNotifications.*
+import platform.UserNotifications.UNAuthorizationOptionAlert
+import platform.UserNotifications.UNAuthorizationOptionBadge
+import platform.UserNotifications.UNAuthorizationOptionSound
+import platform.UserNotifications.UNMutableNotificationContent
+import platform.UserNotifications.UNNotification
+import platform.UserNotifications.UNNotificationPresentationOptionAlert
+import platform.UserNotifications.UNNotificationPresentationOptionBadge
+import platform.UserNotifications.UNNotificationPresentationOptionSound
+import platform.UserNotifications.UNNotificationPresentationOptions
+import platform.UserNotifications.UNNotificationRequest
+import platform.UserNotifications.UNNotificationResponse
+import platform.UserNotifications.UNNotificationSound
+import platform.UserNotifications.UNTimeIntervalNotificationTrigger
+import platform.UserNotifications.UNUserNotificationCenter
+import platform.UserNotifications.UNUserNotificationCenterDelegateProtocol
 import platform.darwin.NSObject
-import platform.darwin.dispatch_get_main_queue
-import platform.darwin.dispatch_sync
 
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-actual class NotificationServiceController(private val appForegroundController: AppForegroundController): ServiceController, Logging {
+actual class NotificationServiceController(private val appForegroundController: AppForegroundController) : ServiceController, Logging {
 
     companion object {
         const val BACKGROUND_TASK_ID = "network.bisq.mobile.iosUC4273Y485"
@@ -95,10 +114,8 @@ actual class NotificationServiceController(private val appForegroundController: 
             log.w { "State flow observer already registered, skipping registration" }
             return
         }
-        val job = serviceScope.launch {
-            stateFlow.collect {
-                onStateChange(it)
-            }
+        val job = serviceScope.launch(Dispatchers.Default) {
+            stateFlow.collect { onStateChange(it) }
         }
         observerJobs[stateFlow] = job
     }
@@ -117,7 +134,7 @@ actual class NotificationServiceController(private val appForegroundController: 
             log.w { "Skipping notification since app is in the foreground" }
             return
         }
-        
+
         val content = UNMutableNotificationContent().apply {
             setValue(title, forKey = "title")
             setValue(message, forKey = "body")

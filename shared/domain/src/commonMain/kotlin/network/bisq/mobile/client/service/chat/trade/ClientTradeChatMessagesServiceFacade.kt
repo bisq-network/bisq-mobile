@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.service.chat.trade
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -40,16 +41,16 @@ class ClientTradeChatMessagesServiceFacade(
     override fun activate() {
         super<ServiceFacade>.activate()
 
-        serviceScope.launch {
+        serviceScope.launch(Dispatchers.Default) {
             selectedTrade.collect { _ -> updateChatMessages() }
         }
-        serviceScope.launch {
+        serviceScope.launch(Dispatchers.Default) {
             selectedUserProfileId.collect { _ -> updateChatMessages() }
         }
-        serviceScope.launch {
+        serviceScope.launch(Dispatchers.Default) {
             allBisqEasyOpenTradeMessages.collect { _ -> updateChatMessages() }
         }
-        serviceScope.launch {
+        serviceScope.launch(Dispatchers.Default) {
             allChatReactions.collect { _ -> updateChatMessages() }
         }
 

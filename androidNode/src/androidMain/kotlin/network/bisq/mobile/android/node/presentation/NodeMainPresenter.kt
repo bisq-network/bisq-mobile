@@ -140,11 +140,6 @@ class NodeMainPresenter(
         explorerServiceFacade.deactivate()
         mediationServiceFacade.deactivate()
         reputationServiceFacade.deactivate()
-
-        accountsServiceFacade.deactivate()
-        explorerServiceFacade.deactivate()
-        mediationServiceFacade.deactivate()
-        reputationServiceFacade.deactivate()
         userProfileServiceFacade.deactivate()
     }
 }

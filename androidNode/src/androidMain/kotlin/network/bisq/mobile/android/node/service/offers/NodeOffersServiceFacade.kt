@@ -24,6 +24,7 @@ import bisq.user.identity.UserIdentity
 import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -245,7 +246,7 @@ class NodeOffersServiceFacade(
                     if (!message.bisqEasyOffer.isPresent) {
                         return
                     }
-                    serviceScope.launch {
+                    serviceScope.launch(Dispatchers.Default) {
                         val offerId = message.bisqEasyOffer.get().id
                         if (!offerMessagesContainsKey(offerId) && bisqEasyOfferbookMessageService.isValid(message)) {
                             val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
@@ -265,7 +266,7 @@ class NodeOffersServiceFacade(
                         val offerId = message.bisqEasyOffer.get().id
                         item?.let { model ->
                             _offerbookListItems.update { it - model }
-                            serviceScope.launch { removeOfferMessage(offerId) }
+                            serviceScope.launch(Dispatchers.Default) { removeOfferMessage(offerId) }
                             log.i { "Removed offer: $model" }
                         }
                     }
@@ -273,7 +274,7 @@ class NodeOffersServiceFacade(
 
                 override fun clear() {
                     _offerbookListItems.value = emptyList()
-                    serviceScope.launch { clearOfferMessages() }
+                    serviceScope.launch(Dispatchers.Default) { clearOfferMessages() }
                 }
             })
     }

@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
@@ -74,10 +75,8 @@ actual class NotificationServiceController (private val appForegroundController:
         if (observerJobs.contains(stateFlow)) {
             log.w { "State flow observer already registered, skipping registration" }
         }
-        val job = serviceScope.launch {
-            stateFlow.collect {
-                onStateChange(it)
-            }
+        val job = serviceScope.launch(Dispatchers.Default) {
+            stateFlow.collect { onStateChange(it) }
         }
         observerJobs[stateFlow] = job
     }

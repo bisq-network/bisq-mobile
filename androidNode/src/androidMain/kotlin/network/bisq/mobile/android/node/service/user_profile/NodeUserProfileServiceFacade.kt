@@ -6,6 +6,7 @@ import bisq.security.SecurityService
 import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -55,7 +56,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     override fun activate() {
         super<ServiceFacade>.activate()
 
-        serviceScope.launch {
+        serviceScope.launch(Dispatchers.Default) {
             _selectedUserProfile.value = getSelectedUserProfile()
         }
     }
@@ -120,9 +121,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     override suspend fun getSelectedUserProfile(): UserProfileVO? {
         return userService.userIdentityService.selectedUserIdentity?.userProfile?.let {
-            Mappings.UserProfileMapping.fromBisq2Model(
-                it
-            )
+            Mappings.UserProfileMapping.fromBisq2Model(it)
         }
     }
 
