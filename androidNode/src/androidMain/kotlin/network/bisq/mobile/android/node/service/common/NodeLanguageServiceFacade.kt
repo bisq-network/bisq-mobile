@@ -1,22 +1,14 @@
 package network.bisq.mobile.android.node.service.common
 
-import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.common.locale.LanguageRepository
-import bisq.common.observable.Pin
-import bisq.presentation.formatters.PriceFormatter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.zip
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.mapping.Mappings
-import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.formatters.MarketPriceFormatter
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 
 class NodeLanguageServiceFacade(private val applicationService: AndroidApplicationService.Provider) :
-    LanguageServiceFacade, Logging {
+    ServiceFacade(), LanguageServiceFacade {
 
     // Dependencies
     private val languageService: LanguageRepository by lazy {
@@ -30,12 +22,10 @@ class NodeLanguageServiceFacade(private val applicationService: AndroidApplicati
     private val _allPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(emptyList())
     override val allPairs: StateFlow<List<Pair<String, String>>> = _allPairs
 
-    override fun setDefaultLanguage(languageCode: String) {
-        return LanguageRepository.setDefaultLanguage(languageCode)
-    }
-
     // Life cycle
     override fun activate() {
+        super<ServiceFacade>.activate()
+
         // To keep "en" the only language for language lists
         val langCode = LanguageRepository.getDefaultLanguage() ?: "en"
         LanguageRepository.setDefaultLanguage("en")
@@ -55,11 +45,15 @@ class NodeLanguageServiceFacade(private val applicationService: AndroidApplicati
         LanguageRepository.setDefaultLanguage(langCode)
     }
 
+    override fun deactivate() {
+        super<ServiceFacade>.deactivate()
+    }
+
+    override fun setDefaultLanguage(languageCode: String) {
+        return LanguageRepository.setDefaultLanguage(languageCode)
+    }
+
     override suspend fun sync() {
         activate()
     }
-
-    override fun deactivate() {
-    }
-
 }
