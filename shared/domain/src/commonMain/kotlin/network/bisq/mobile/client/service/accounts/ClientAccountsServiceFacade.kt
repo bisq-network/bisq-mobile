@@ -4,19 +4,27 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 
 class ClientAccountsServiceFacade(
     private val apiGateway: AccountsApiGateway,
     private val json: Json
-) : AccountsServiceFacade, Logging {
+) : ServiceFacade(), AccountsServiceFacade {
 
     private val _accounts = MutableStateFlow<List<UserDefinedFiatAccountVO>>(emptyList())
     override val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = _accounts
 
     private val _selectedAccount = MutableStateFlow<UserDefinedFiatAccountVO?>(null)
     override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = _selectedAccount
+
+    override fun activate() {
+        super<ServiceFacade>.activate()
+    }
+
+    override fun deactivate() {
+        super<ServiceFacade>.deactivate()
+    }
 
     override suspend fun getAccounts(): List<UserDefinedFiatAccountVO> {
         val result = apiGateway.getPaymentAccounts()

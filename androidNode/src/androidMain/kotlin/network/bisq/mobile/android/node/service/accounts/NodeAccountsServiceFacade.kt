@@ -7,10 +7,10 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.UserDefinedFiatAccountMapping
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 
-class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Provider) : AccountsServiceFacade, Logging {
+class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), AccountsServiceFacade {
     private val accountService: AccountService by lazy { applicationService.accountService.get() }
 
     private val _accounts = MutableStateFlow<List<UserDefinedFiatAccountVO>>(emptyList())
@@ -18,6 +18,14 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
 
     private val _selectedAccount = MutableStateFlow<UserDefinedFiatAccountVO?>(null)
     override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = _selectedAccount
+
+    override fun activate() {
+        super<ServiceFacade>.activate()
+    }
+
+    override fun deactivate() {
+        super<ServiceFacade>.deactivate()
+    }
 
     override suspend fun getAccounts(): List<UserDefinedFiatAccountVO> {
         log.e { "NodeAccountServiceFacade :: getAccounts()" }
@@ -65,13 +73,5 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
             val account: UserDefinedFiatAccountVO  = UserDefinedFiatAccountMapping.fromBisq2Model(bisq2Account)
             _selectedAccount.value = account
         }
-    }
-
-    override fun activate() {
-        log.i("Activating NodeAccountsServiceFacade")
-    }
-
-    override fun deactivate() {
-        log.i("Deactivating NodeAccountsServiceFacade")
     }
 }
