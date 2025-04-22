@@ -10,11 +10,12 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import java.util.*
 
-class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Provider) : SettingsServiceFacade,
+class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), SettingsServiceFacade,
     Logging {
 
     private val languageToLocaleMap = mapOf(
@@ -73,7 +74,6 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
                 ChatChannelNotificationTypeEnum.GLOBAL_DEFAULT -> ChatNotificationType.ALL
             }
         )
-
     }
 
     private val _closeMyOfferWhenTaken = MutableStateFlow(true)
@@ -115,8 +115,8 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     // Misc
     private var tradeRulesConfirmedPin: Pin? = null
 
-
     override fun activate() {
+        super<ServiceFacade>.activate()
         settingsService.languageCode.addObserver { code ->
             _languageCode.value = code
         }
@@ -148,11 +148,12 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
 
     override fun deactivate() {
         tradeRulesConfirmedPin?.unbind()
+
+        super<ServiceFacade>.deactivate()
     }
 
     // API
     override suspend fun getSettings(): Result<SettingsVO> {
         return Result.success(Mappings.SettingsMapping.from(settingsService))
     }
-
 }

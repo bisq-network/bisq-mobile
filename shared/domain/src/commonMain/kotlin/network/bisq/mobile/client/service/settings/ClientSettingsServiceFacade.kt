@@ -5,10 +5,10 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 
-class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : SettingsServiceFacade, Logging {
+class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : ServiceFacade(), SettingsServiceFacade {
     // Properties
 
     private val _isTacAccepted: MutableStateFlow<Boolean?> = MutableStateFlow(null)
@@ -101,6 +101,14 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
     override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> get() = _ignoreDiffAdjustmentFromSecManager
     override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean) {
         // Not applicable for xClients
+    }
+
+    override fun activate() {
+        super<ServiceFacade>.activate()
+    }
+
+    override fun deactivate() {
+        super<ServiceFacade>.deactivate()
     }
 
     // API

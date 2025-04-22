@@ -9,13 +9,13 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.domain.data.IODispatcher
-import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.service.ServiceFacade
 
 /**
  * Base definition for the connectivity service. Each app type should implement / override the default
  * based on its network type.
  */
-abstract class ConnectivityService: Logging {
+abstract class ConnectivityService : ServiceFacade() {
     companion object {
         const val TIMEOUT = 5000L
         const val PERIOD = 10000L // default check every 10 sec
@@ -32,6 +32,7 @@ abstract class ConnectivityService: Logging {
                 DEFAULT_AVERAGE_TRIP_TIME -> {
                     timeInMs
                 }
+
                 else -> {
                     (averageTripTime + timeInMs) / 2
                 }
@@ -39,6 +40,7 @@ abstract class ConnectivityService: Logging {
             sessionTotalRequests++
         }
     }
+
     enum class ConnectivityStatus {
         DISCONNECTED,
         SLOW,
@@ -49,6 +51,15 @@ abstract class ConnectivityService: Logging {
     private var job: Job? = null
     private val _status = MutableStateFlow(ConnectivityStatus.DISCONNECTED)
     val status: StateFlow<ConnectivityStatus> = _status
+
+
+    override fun activate() {
+        super.activate()
+    }
+
+    override fun deactivate() {
+        super.deactivate()
+    }
 
     /**
      * Starts monitoring connectivity every given period (ms). Default is 10 seconds.
