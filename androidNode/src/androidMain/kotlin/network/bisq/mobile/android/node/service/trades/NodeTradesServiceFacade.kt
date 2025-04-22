@@ -38,15 +38,16 @@ import network.bisq.mobile.android.node.mapping.TradeItemPresentationDtoFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
 import kotlin.time.Duration.Companion.seconds
 
 
-class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Provider) : TradesServiceFacade, Logging {
+class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Provider) :
+    ServiceFacade(), TradesServiceFacade {
 
     // Dependencies
     private val marketPriceService: MarketPriceService by lazy { applicationService.bondedRolesService.get().marketPriceService }
@@ -77,6 +78,8 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
     private val pinsByTradeId: MutableMap<String, MutableSet<Pin>> = mutableMapOf()
 
     override fun activate() {
+        super<ServiceFacade>.activate()
+
         if (active) {
             log.w { "deactivating first" }
             deactivate()
@@ -130,6 +133,8 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         unbindAllPinsByTradeId()
 
         active = false
+
+        super<ServiceFacade>.deactivate()
     }
 
     // API

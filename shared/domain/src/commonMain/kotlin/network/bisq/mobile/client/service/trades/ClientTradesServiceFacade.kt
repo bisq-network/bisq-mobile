@@ -12,16 +12,15 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 
 class ClientTradesServiceFacade(
     private val apiGateway: TradesApiGateway,
     webSocketClientProvider: WebSocketClientProvider,
     json: Json
-) :
-    TradesServiceFacade, Logging {
+) : ServiceFacade(), TradesServiceFacade {
 
     // Properties
     private val _openTradeItems = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
@@ -42,6 +41,8 @@ class ClientTradesServiceFacade(
     // private var tradePropertiesSubscriptionJob: Job? = null
 
     override fun activate() {
+        super<ServiceFacade>.activate()
+
         openTradesSubscription.subscribe()
         tradePropertiesSubscription.subscribe()
     }
@@ -55,6 +56,8 @@ class ClientTradesServiceFacade(
 
                 tradePropertiesSubscriptionJob?.cancel()
                 tradePropertiesSubscriptionJob = null*/
+
+        super<ServiceFacade>.deactivate()
     }
 
     // API
