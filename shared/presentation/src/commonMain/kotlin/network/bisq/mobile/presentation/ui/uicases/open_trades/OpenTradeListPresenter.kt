@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.formatters.NumberFormatter
-import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -19,8 +18,8 @@ class OpenTradeListPresenter(
     private val settingsServiceFacade: SettingsServiceFacade
 ) : BasePresenter(mainPresenter) {
 
-    val _openTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
-    var openTradeItems: StateFlow<List<TradeItemPresentationModel>> = _openTradeItems
+    private val _openTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
+    val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = _openTradeItems
 
     val tradeRulesConfirmed: StateFlow<Boolean> = settingsServiceFacade.tradeRulesConfirmed
 

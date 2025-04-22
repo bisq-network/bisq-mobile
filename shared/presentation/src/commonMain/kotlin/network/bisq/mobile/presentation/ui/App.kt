@@ -1,16 +1,10 @@
 package network.bisq.mobile.presentation.ui
 
 import ErrorOverlay
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
@@ -49,16 +43,15 @@ fun App() {
     val tabNavController = rememberNavController()
     var isNavControllerSet by remember { mutableStateOf(false) }
     val presenter: AppPresenter = koinInject()
+    val languageCode by presenter.languageCode.collectAsState()
+
+    I18nSupport.initialize(languageCode)
 
     RememberPresenterLifecycle(presenter, {
         presenter.navController = rootNavController
         presenter.tabNavController = tabNavController
         isNavControllerSet = true
     })
-
-    val languageCode = presenter.languageCode.collectAsState().value
-    I18nSupport.initialize(languageCode)
-    setDefaultLocale(languageCode)
 
     BisqTheme(darkTheme = true) {
         if (isNavControllerSet) {

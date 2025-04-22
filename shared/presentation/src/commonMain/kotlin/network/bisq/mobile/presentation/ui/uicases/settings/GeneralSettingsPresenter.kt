@@ -31,18 +31,18 @@ open class GeneralSettingsPresenter(
     override val languageCode: MutableStateFlow<String> = _languageCode
     override fun setLanguageCode(langCode: String) {
         ioScope.launch {
+            println("i18n :: GeneralSettingsPresenter :: setLanguageCode :: $langCode")
+            setDefaultLocale(langCode) // update lang in app's context
             settingsServiceFacade.setLanguageCode(langCode) // Update lang in bisq2 lib / WS
-            // TODO: Is this right?
             // Doing this to reload all bundles of the newly selected language,
             // all String.i18n() across the app gets the text of selected language
             I18nSupport.initialize(langCode) // update lang for mobile's i18n libs
-            // As per chat with @Henrik Feb 4, it's okay not to translate these lists into selected languages, for now.
+            _languageCode.value = langCode
+
+            // As per chat with @Henrik Feb 4, it's okay not to translate `supported languages` lists into selected languages, for now.
             // To update display values in i18Pairs, allLanguagePairs with the new language
             // languageServiceFacade.setDefaultLanguage(langCode)
             // languageServiceFacade.sync()
-            _languageCode.value = langCode
-            setDefaultLocale(langCode) // update lang in app's context
-            // _restartAppPopup.value = true
         }
     }
 

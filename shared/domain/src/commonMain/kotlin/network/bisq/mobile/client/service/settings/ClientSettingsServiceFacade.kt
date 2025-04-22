@@ -29,7 +29,7 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
         }
     }
 
-    private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
+    private val _languageCode: MutableStateFlow<String> = MutableStateFlow("")
     override val languageCode: StateFlow<String> get() = _languageCode
     override suspend fun setLanguageCode(value: String) {
         val result = apiGateway.setLanguageCode(value)

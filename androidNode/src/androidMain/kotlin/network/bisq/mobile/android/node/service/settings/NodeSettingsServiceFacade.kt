@@ -16,6 +16,19 @@ import java.util.*
 
 class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Provider) : SettingsServiceFacade,
     Logging {
+
+    private val languageToLocaleMap = mapOf(
+        "af-ZA" to Locale("af", "ZA"),
+        "cs" to Locale("cs", "CZ"),
+        "de" to Locale("de", "DE"),
+        "en" to Locale("en", "US"),
+        "es" to Locale("es", "ES"),
+        "it" to Locale("it", "IT"),
+        "pcm" to Locale("pcm", "NG"),
+        "pt-BR" to Locale("pt", "BR"),
+        "ru" to Locale("ru", "RU")
+    )
+
     // Dependencies
     private val settingsService: SettingsService by lazy { applicationService.settingsService.get() }
 
@@ -33,22 +46,12 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
         settingsService.setTradeRulesConfirmed(value)
     }
 
-    private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
+    private val _languageCode: MutableStateFlow<String> = MutableStateFlow("")
     override val languageCode: StateFlow<String> get() = _languageCode
     override suspend fun setLanguageCode(value: String) {
         settingsService.setLanguageCode(value)
-        when (value) {
-            "af-ZA" -> LocaleRepository.setDefaultLocale(Locale("af", "ZA"))
-            "cs" -> LocaleRepository.setDefaultLocale(Locale("cs", "CZ"))
-            "de" -> LocaleRepository.setDefaultLocale(Locale("de", "DE"))
-            "en" -> LocaleRepository.setDefaultLocale(Locale("en", "US"))
-            "es" -> LocaleRepository.setDefaultLocale(Locale("es", "ES"))
-            "it" -> LocaleRepository.setDefaultLocale(Locale("it", "IT"))
-            "pcm" -> LocaleRepository.setDefaultLocale(Locale("pcm", "NG"))
-            "pt-BR" -> LocaleRepository.setDefaultLocale(Locale("pt", "BR"))
-            "ru" -> LocaleRepository.setDefaultLocale(Locale("ru", "RU"))
-            else -> LocaleRepository.setDefaultLocale(Locale("en", "US"))
-        }
+        val locale = languageToLocaleMap[value] ?: Locale("en", "US")
+        LocaleRepository.setDefaultLocale(locale)
         _languageCode.value = value
     }
 

@@ -45,8 +45,8 @@ class OfferbookPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade
 ) : BasePresenter(mainPresenter) {
-    var _offerbookListItems: MutableStateFlow<List<OfferItemPresentationModel>> = MutableStateFlow(emptyList())
-//    var offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = _offerbookListItems
+    private val _offerbookListItems: MutableStateFlow<List<OfferItemPresentationModel>> = MutableStateFlow(emptyList())
+    val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = _offerbookListItems
 
     //todo for dev testing its more convenient
     private val _selectedDirection = MutableStateFlow(DirectionEnum.SELL)
@@ -87,7 +87,7 @@ class OfferbookPresenter(
                                 val amountSpec: FixedAmountSpecVO = it.bisqEasyOffer.amountSpec as FixedAmountSpecVO
                                 val fiatVO =
                                     FiatVOFactory.from(amountSpec.amount, it.bisqEasyOffer.market.quoteCurrencyCode)
-                                AmountFormatter.formatAmount(fiatVO)
+                                AmountFormatter.formatAmount(fiatVO, true, true)
                             }
 
                             is RangeAmountSpecVO -> {

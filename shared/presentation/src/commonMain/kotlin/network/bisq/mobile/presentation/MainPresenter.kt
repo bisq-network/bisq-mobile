@@ -2,8 +2,7 @@ package network.bisq.mobile.presentation
 
 import androidx.annotation.CallSuper
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
@@ -11,6 +10,7 @@ import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
@@ -34,7 +34,7 @@ open class MainPresenter(
     private val _isSmallScreen = MutableStateFlow(false)
     override val isSmallScreen: StateFlow<Boolean> = _isSmallScreen
 
-    override val languageCode: StateFlow<String> = settingsService.languageCode
+    final override val languageCode: StateFlow<String> = settingsService.languageCode
 
     init {
         val localeCode = getDeviceLanguageCode()
@@ -52,6 +52,16 @@ open class MainPresenter(
     @CallSuper
     override fun onViewAttached() {
         super.onViewAttached()
+
+        languageCode
+            .filter { it.isNotEmpty() }
+            .onEach {
+                // I18nSupport.initialize(it) // Done in App.kt, before view initializes
+                setDefaultLocale(it)
+                settingsService.setLanguageCode(it)
+            }
+            .take(1)
+            .launchIn(presenterScope)
     }
 
     override fun onResume() {
