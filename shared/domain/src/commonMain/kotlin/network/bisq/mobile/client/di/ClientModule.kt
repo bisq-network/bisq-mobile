@@ -177,7 +177,7 @@ val clientModule = module {
         )
     }
 
-    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get()) }
+    single<LanguageServiceFacade> { ClientLanguageServiceFacade() }
 
     single { MarketPriceApiGateway(get(), get()) }
     single<MarketPriceServiceFacade> { ClientMarketPriceServiceFacade(get(), get()) }
@@ -204,9 +204,9 @@ val clientModule = module {
     single<SettingsServiceFacade> { ClientSettingsServiceFacade(get()) }
 
     single { AccountsApiGateway(get(), get()) }
-    single<AccountsServiceFacade> { ClientAccountsServiceFacade(get(), get()) }
+    single<AccountsServiceFacade> { ClientAccountsServiceFacade(get()) }
 
-    single<LanguageServiceFacade> { ClientLanguageServiceFacade(get()) }
+    single<LanguageServiceFacade> { ClientLanguageServiceFacade() }
 
     single { ReputationApiGateway(get()) }
     single<ReputationServiceFacade> { ClientReputationServiceFacade(get()) }

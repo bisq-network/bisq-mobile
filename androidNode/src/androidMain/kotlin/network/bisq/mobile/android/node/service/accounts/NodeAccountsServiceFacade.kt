@@ -30,7 +30,7 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
     override suspend fun getAccounts(): List<UserDefinedFiatAccountVO> {
         log.e { "NodeAccountServiceFacade :: getAccounts()" }
         return accountService
-            .getAccountByNameMap()
+            .accountByNameMap
             .values
             .map { UserDefinedFiatAccountMapping.fromBisq2Model(it as UserDefinedFiatAccount) }
             .sortedBy { it.accountName }

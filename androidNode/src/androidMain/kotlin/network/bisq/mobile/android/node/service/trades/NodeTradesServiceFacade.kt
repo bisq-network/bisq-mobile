@@ -226,7 +226,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         try {
             val (channel, trade, userName) = getTradeChannelUserNameTriple()
             val paymentMethod = selectedTrade.value!!.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
-            val key = "bisqEasy.tradeState.info.buyer.phase1a.tradeLogMessage.$paymentMethod";
+            val key = "bisqEasy.tradeState.info.buyer.phase1a.tradeLogMessage.$paymentMethod"
             val encoded = Res.encode(
                 key,
                 userName,
@@ -281,13 +281,13 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
             val paymentMethod = trade.contract.baseSidePaymentMethodSpec.paymentMethod
             val paymentRailName = paymentMethod.paymentRail.name
             val proofType = Res.get("bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.paymentProof.$paymentRailName")
-            if (paymentProof == null) {
-                encoded = Res.encode(
+            encoded = if (paymentProof == null) {
+                Res.encode(
                     "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage.noProofProvided",
                     userName
                 )
             } else {
-                encoded = Res.encode(
+                Res.encode(
                     "bisqEasy.tradeState.info.seller.phase3a.tradeLogMessage",
                     userName,
                     proofType,
@@ -380,7 +380,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
                 }
             }
 
-            bisqEasyTradeService.takeOffer(bisqEasyTrade);
+            bisqEasyTradeService.takeOffer(bisqEasyTrade)
             takeOfferStatus.value = TakeOfferStatus.SENT
             val contract: BisqEasyContract = bisqEasyTrade.contract
 

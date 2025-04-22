@@ -3,6 +3,7 @@ package network.bisq.mobile.android.node.service.network
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.service.network.ConnectivityService
 
+@Suppress("RedundantOverride")
 class NodeConnectivityService(private val applicationService: AndroidApplicationService.Provider) : ConnectivityService() {
 
     companion object {
@@ -24,7 +25,7 @@ class NodeConnectivityService(private val applicationService: AndroidApplication
     }
 
     override suspend fun isSlow(): Boolean {
-        // TODO improve impl using ConnectivityService#newRequestRoundTripTime() call needs to be applied when a P2P roundtrip call is done for the
+        // TODO improve impl using ConnectivityService#newRequestRoundTripTime() call needs to be applied when a P2P round-trip call is done for the
         // parent isSlow impl to work
         return currentConnections() < SLOW_PEER_QUANTITY_THRESHOLD
     }

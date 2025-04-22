@@ -3,17 +3,10 @@ package network.bisq.mobile.android.node.service.common
 import bisq.common.locale.LanguageRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 
-class NodeLanguageServiceFacade(private val applicationService: AndroidApplicationService.Provider) :
-    ServiceFacade(), LanguageServiceFacade {
-
-    // Dependencies
-    private val languageService: LanguageRepository by lazy {
-        applicationService.languageRepository.get()
-    }
+class NodeLanguageServiceFacade : ServiceFacade(), LanguageServiceFacade {
 
     // Properties
     private val _i18nPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(emptyList())

@@ -9,7 +9,7 @@ import java.util.concurrent.CompletableFuture
 /**
  * Memory report for bisq jars calculations
  */
-class AndroidMemoryReportService(private val context: Context) : MemoryReportService, Logging {
+class AndroidMemoryReportService(context: Context) : MemoryReportService, Logging {
 
     private val activityManager =
         context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager

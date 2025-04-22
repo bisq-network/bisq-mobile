@@ -82,7 +82,7 @@ val androidNodeModule = module {
 
     single<AccountsServiceFacade> { NodeAccountsServiceFacade(get()) }
 
-    single<LanguageServiceFacade> { NodeLanguageServiceFacade(get()) }
+    single<LanguageServiceFacade> { NodeLanguageServiceFacade() }
 
     single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
 

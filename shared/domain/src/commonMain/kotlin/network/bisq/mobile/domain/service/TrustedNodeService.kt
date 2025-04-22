@@ -7,7 +7,7 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.utils.Logging
 
 /**
- * This service allows to interact with the underlaying connectivity system
+ * This service allows to interact with the underlying connectivity system
  * against the trusted node for the client.
  */
 class TrustedNodeService(private val webSocketClientProvider: WebSocketClientProvider) : Logging {

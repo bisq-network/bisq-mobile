@@ -43,7 +43,7 @@ class OpenTradesNotificationService(
                 notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.tradeState)
                 notificationServiceController.pushNotification(
                     "Trade [${trade.shortTradeId}] completed",
-                    "Your trade with ${trade.peersUserName} has finished as ${it}"
+                    "Your trade with ${trade.peersUserName} has finished as $it"
                 )
             } else {
                 notificationServiceController.pushNotification(

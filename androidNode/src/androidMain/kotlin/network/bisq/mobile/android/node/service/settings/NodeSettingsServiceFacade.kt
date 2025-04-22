@@ -12,12 +12,9 @@ import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannel
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 import java.util.*
 
-class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), SettingsServiceFacade,
-    Logging {
-
+class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), SettingsServiceFacade {
     private val languageToLocaleMap = mapOf(
         "af-ZA" to Locale("af", "ZA"),
         "cs" to Locale("cs", "CZ"),
@@ -29,7 +26,6 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
         "pt-BR" to Locale("pt", "BR"),
         "ru" to Locale("ru", "RU")
     )
-
     // Dependencies
     private val settingsService: SettingsService by lazy { applicationService.settingsService.get() }
 

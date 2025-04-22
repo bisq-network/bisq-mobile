@@ -2,14 +2,12 @@ package network.bisq.mobile.client.service.accounts
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.serialization.json.Json
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 
 class ClientAccountsServiceFacade(
     private val apiGateway: AccountsApiGateway,
-    private val json: Json
 ) : ServiceFacade(), AccountsServiceFacade {
 
     private val _accounts = MutableStateFlow<List<UserDefinedFiatAccountVO>>(emptyList())
