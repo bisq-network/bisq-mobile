@@ -4,17 +4,13 @@ import network.bisq.mobile.domain.data.replicated.offer.amount.spec.FixedAmountS
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
 
 object BisqEasyOfferVOExtensions {
-    fun BisqEasyOfferVO.getFixedOrMaxAmount() = if (amountSpec is FixedAmountSpecVO) {
-        amountSpec.amount
-    } else {
-        (amountSpec as? RangeAmountSpecVO)?.maxAmount
-            ?: throw IllegalArgumentException("Unexpected amountSpec type: ${amountSpec::class.simpleName}")
+    fun BisqEasyOfferVO.getFixedOrMaxAmount() = when (val spec = amountSpec) {
+        is FixedAmountSpecVO -> spec.amount
+        is RangeAmountSpecVO -> spec.maxAmount
     }
 
-    fun BisqEasyOfferVO.getFixedOrMinAmount() = if (amountSpec is FixedAmountSpecVO) {
-        amountSpec.amount
-    } else {
-        (amountSpec as? RangeAmountSpecVO)?.minAmount
-            ?: throw IllegalArgumentException("Unexpected amountSpec type: ${amountSpec::class.simpleName}")
+    fun BisqEasyOfferVO.getFixedOrMinAmount() = when (val spec = amountSpec) {
+        is FixedAmountSpecVO -> spec.amount
+        is RangeAmountSpecVO -> spec.minAmount
     }
 }
