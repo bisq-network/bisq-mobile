@@ -37,9 +37,6 @@ class ClientTradesServiceFacade(
     private val tradePropertiesSubscription: Subscription<Map<String, TradePropertiesDto>> =
         Subscription(webSocketClientProvider, json, Topic.TRADE_PROPERTIES, this::handleTradePropertiesChange)
 
-    //private var openTradesSubscriptionJob: Job? = null
-    // private var tradePropertiesSubscriptionJob: Job? = null
-
     override fun activate() {
         super<ServiceFacade>.activate()
 
@@ -50,12 +47,6 @@ class ClientTradesServiceFacade(
     override fun deactivate() {
         openTradesSubscription.dispose()
         tradePropertiesSubscription.dispose()
-
-        /*        openTradesSubscriptionJob?.cancel()
-                openTradesSubscriptionJob = null
-
-                tradePropertiesSubscriptionJob?.cancel()
-                tradePropertiesSubscriptionJob = null*/
 
         super<ServiceFacade>.deactivate()
     }
@@ -150,7 +141,6 @@ class ClientTradesServiceFacade(
                 }
             }
         }
-        //applyOffersToSelectedMarket()
     }
 
     private fun handleTradePropertiesChange(payload: List<Map<String, TradePropertiesDto>>, modificationType: ModificationType) {

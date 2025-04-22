@@ -20,9 +20,7 @@ class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplic
     ServiceFacade(), MarketPriceServiceFacade {
 
     // Dependencies
-    private val marketPriceService: MarketPriceService by lazy {
-        applicationService.bondedRolesService.get().marketPriceService
-    }
+    private val marketPriceService: MarketPriceService by lazy { applicationService.bondedRolesService.get().marketPriceService }
 
     // Properties
     private val _selectedMarketPriceItem: MutableStateFlow<MarketPriceItem?> = MutableStateFlow(null)

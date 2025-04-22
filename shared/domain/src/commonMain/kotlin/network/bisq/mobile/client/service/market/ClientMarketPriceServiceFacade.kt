@@ -1,7 +1,6 @@
 package network.bisq.mobile.client.service.market
 
 import io.ktor.util.collections.ConcurrentMap
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -29,7 +28,6 @@ class ClientMarketPriceServiceFacade(
     override val selectedFormattedMarketPrice: StateFlow<String> = _selectedFormattedMarketPrice
 
     // Misc
-    private var job: Job? = null
     private var selectedMarket: MarketVO = MarketVOFactory.USD// todo use persisted or user default
     private val quotes = ConcurrentMap<String, PriceQuoteVO>()
 
@@ -37,7 +35,7 @@ class ClientMarketPriceServiceFacade(
     override fun activate() {
         super<ServiceFacade>.activate()
 
-        job = serviceScope.launch {
+        serviceScope.launch {
             val observer = apiGateway.subscribeMarketPrice()
             observer.webSocketEvent.collect { webSocketEvent ->
                 try {
@@ -57,8 +55,6 @@ class ClientMarketPriceServiceFacade(
     }
 
     override fun deactivate() {
-        cancelJob()
-
         super<ServiceFacade>.deactivate()
     }
 
@@ -93,10 +89,5 @@ class ClientMarketPriceServiceFacade(
             _selectedFormattedMarketPrice.value = formattedPrice
             log.i { "upDateMarketPriceItem: code=$quoteCurrencyCode; priceQuote =$priceQuote; formattedPrice =$formattedPrice" }
         }
-    }
-
-    private fun cancelJob() {
-        job?.cancel()
-        job = null
     }
 }

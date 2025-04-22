@@ -39,11 +39,9 @@ class ClientOffersServiceFacade(
 
     // Misc
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
-
     private var offersSequenceNumber = atomic(-1)
     private var subscribeOffersJob: Job? = null
     private var observeMarketPriceJob: Job? = null
-    private var getMarketsJob: Job? = null
 
 
     // Life cycle
@@ -52,8 +50,7 @@ class ClientOffersServiceFacade(
 
         observeMarketPriceJob = observeMarketPrice()
 
-        cancelGetMarketsJob()
-        getMarketsJob = serviceScope.launch {
+        serviceScope.launch {
             val result = apiGateway.getMarkets()
             if (result.isFailure) {
                 result.exceptionOrNull()?.let { log.e { "GetMarkets request failed with exception $it" } }
@@ -69,7 +66,6 @@ class ClientOffersServiceFacade(
     override fun deactivate() {
         cancelSubscribeOffersJob()
         cancelObserveMarketPriceJob()
-        cancelGetMarketsJob()
         _offerbookMarketItems.value = emptyList()
 
         super<ServiceFacade>.deactivate()
@@ -224,10 +220,5 @@ class ClientOffersServiceFacade(
         }
 
         _offerbookMarketItems.value = marketListItems
-    }
-
-    private fun cancelGetMarketsJob() {
-        getMarketsJob?.cancel()
-        getMarketsJob = null
     }
 }

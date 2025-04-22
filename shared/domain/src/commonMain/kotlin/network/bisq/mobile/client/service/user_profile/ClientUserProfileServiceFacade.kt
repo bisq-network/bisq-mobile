@@ -1,15 +1,12 @@
 package network.bisq.mobile.client.service.user_profile
 
 import io.ktor.util.decodeBase64Bytes
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -34,8 +31,6 @@ class ClientUserProfileServiceFacade(
 
     // Misc
     private var active = false
-    private val ioScope = CoroutineScope(IODispatcher)
-    private var jobs: MutableSet<Job> = mutableSetOf()
 
 
     override fun activate() {
@@ -46,7 +41,7 @@ class ClientUserProfileServiceFacade(
             deactivate()
         }
 
-        jobs += ioScope.launch {
+        serviceScope.launch {
             _selectedUserProfile.value = getSelectedUserProfile()
         }
 
@@ -58,9 +53,6 @@ class ClientUserProfileServiceFacade(
             log.w { "Skipping deactivation as its already deactivated" }
             return
         }
-
-        jobs.forEach { it.cancel() }
-        jobs.clear()
 
         active = false
 
@@ -150,8 +142,7 @@ class ClientUserProfileServiceFacade(
         // The delay should avoid a too fast flicker-effect in the UI when recreating the nym,
         // and should make the usage of the proof of work more visible.
         val random: Int = Random.nextInt(800)
-        val delayDuration = min(1000.0, max(200.0, (200 + random - requestDuration).toDouble()))
-            .toLong()
+        val delayDuration = min(1000.0, max(200.0, (200 + random - requestDuration).toDouble())).toLong()
         delay(delayDuration)
     }
 }

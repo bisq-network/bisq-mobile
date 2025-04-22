@@ -1,14 +1,11 @@
 package network.bisq.mobile.client.service.chat.trade
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
@@ -41,8 +38,6 @@ class ClientTradeChatMessagesServiceFacade(
 
     // Misc
     private var active = false
-    private val ioScope = CoroutineScope(IODispatcher)
-    private var jobs: MutableSet<Job> = mutableSetOf()
 
     override fun activate() {
         super<ServiceFacade>.activate()
@@ -52,23 +47,23 @@ class ClientTradeChatMessagesServiceFacade(
             deactivate()
         }
 
-        jobs += ioScope.launch {
+        serviceScope.launch {
             selectedTrade.collect { _ -> updateChatMessages() }
         }
-        jobs += ioScope.launch {
+        serviceScope.launch {
             selectedUserProfileId.collect { _ -> updateChatMessages() }
         }
-        jobs += ioScope.launch {
+        serviceScope.launch {
             allBisqEasyOpenTradeMessages.collect { _ -> updateChatMessages() }
         }
-        jobs += ioScope.launch {
+        serviceScope.launch {
             allChatReactions.collect { _ -> updateChatMessages() }
         }
 
-        jobs += ioScope.launch {
+        serviceScope.launch {
             subscribeTradeChats()
         }
-        jobs += ioScope.launch {
+        serviceScope.launch {
             subscribeChatReactions()
         }
 
@@ -80,9 +75,6 @@ class ClientTradeChatMessagesServiceFacade(
             log.w { "Skipping deactivation as its already deactivated" }
             return
         }
-
-        jobs.forEach { it.cancel() }
-        jobs.clear()
 
         active = false
 

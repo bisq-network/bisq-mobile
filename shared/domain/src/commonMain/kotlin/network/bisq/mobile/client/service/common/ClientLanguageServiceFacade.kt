@@ -4,7 +4,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 
@@ -18,8 +17,6 @@ class ClientLanguageServiceFacade : ServiceFacade(), LanguageServiceFacade {
     override val allPairs: StateFlow<List<Pair<String, String>>> = _allPairs
 
     private val _defaultLanguage: MutableStateFlow<String> = MutableStateFlow("en")
-    private val _i18nObserver: MutableStateFlow<WebSocketEventObserver?> = MutableStateFlow(null)
-    private val _allPairsObserver: MutableStateFlow<WebSocketEventObserver?> = MutableStateFlow(null)
 
     // Misc
     private var job: Job? = null

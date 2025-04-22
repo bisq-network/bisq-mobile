@@ -6,8 +6,6 @@ import bisq.security.SecurityService
 import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -15,7 +13,6 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -40,15 +37,9 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     // Dependencies
-    private val securityService: SecurityService by lazy {
-        applicationService.securityService.get()
-    }
-    private val userService: UserService by lazy {
-        applicationService.userService.get()
-    }
-    private val catHashService: AndroidNodeCatHashService by lazy {
-        applicationService.androidCatHashService.get()
-    }
+    private val securityService: SecurityService by lazy { applicationService.securityService.get() }
+    private val userService: UserService by lazy { applicationService.userService.get() }
+    private val catHashService: AndroidNodeCatHashService by lazy { applicationService.androidCatHashService.get() }
 
     // Properties
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
@@ -57,9 +48,6 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     // Misc
     private var active = false
-    private val ioScope = CoroutineScope(IODispatcher)
-    private var jobs: MutableSet<Job> = mutableSetOf()
-
     private var pubKeyHash: ByteArray? = null
     private var keyPair: KeyPair? = null
     private var proofOfWork: ProofOfWork? = null
@@ -73,7 +61,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             deactivate()
         }
 
-        jobs += ioScope.launch {
+        serviceScope.launch {
             _selectedUserProfile.value = getSelectedUserProfile()
         }
 
@@ -85,9 +73,6 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             log.w { "Skipping deactivation as its already deactivated" }
             return
         }
-
-        jobs.map { it.cancel() }
-        jobs.clear()
 
         active = false
 

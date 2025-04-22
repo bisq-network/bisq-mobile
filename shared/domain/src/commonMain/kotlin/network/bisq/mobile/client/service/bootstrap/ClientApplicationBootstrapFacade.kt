@@ -17,7 +17,6 @@ class ClientApplicationBootstrapFacade(
         if (isActive) {
             return
         }
-        log.d { "Running bootstrap." }
         // TODO all texts here shoul use the translation module
         setState("Bootstrapping..")
         setProgress(0f)
