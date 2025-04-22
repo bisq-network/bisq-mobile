@@ -47,7 +47,6 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
 
     // Misc
-    private var active = false
     private var pubKeyHash: ByteArray? = null
     private var keyPair: KeyPair? = null
     private var proofOfWork: ProofOfWork? = null
@@ -56,26 +55,12 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     override fun activate() {
         super<ServiceFacade>.activate()
 
-        if (active) {
-            log.w { "deactivating first" }
-            deactivate()
-        }
-
         serviceScope.launch {
             _selectedUserProfile.value = getSelectedUserProfile()
         }
-
-        active = true
     }
 
     override fun deactivate() {
-        if (!active) {
-            log.w { "Skipping deactivation as its already deactivated" }
-            return
-        }
-
-        active = false
-
         super<ServiceFacade>.deactivate()
     }
 

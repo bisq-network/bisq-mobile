@@ -41,18 +41,12 @@ class NodeTradeChatMessagesServiceFacade(
     private val openTradeItems: StateFlow<List<TradeItemPresentationModel>> get() = tradesServiceFacade.openTradeItems
 
     // Misc
-    private var active = false
     private var channelsPin: Pin? = null
     private val reactionsPinByMessageId: MutableMap<String, Pin> = mutableMapOf()
     private val pinsByTradeId: MutableMap<String, MutableSet<Pin>> = mutableMapOf()
 
     override fun activate() {
         super<ServiceFacade>.activate()
-
-        if (active) {
-            log.w { "deactivating first" }
-            deactivate()
-        }
 
         channelsPin = bisqEasyOpenTradeChannelService.channels.addObserver(object : CollectionObserver<BisqEasyOpenTradeChannel?> {
             override fun add(channel: BisqEasyOpenTradeChannel?) {
@@ -71,21 +65,13 @@ class NodeTradeChatMessagesServiceFacade(
                 handleChannelsCleared()
             }
         })
-
-        active = true
     }
 
     override fun deactivate() {
-        if (!active) {
-            log.w { "Skipping deactivation as its already deactivated" }
-            return
-        }
         channelsPin?.unbind()
 
         unbindAllReactionsPins()
         unbindAllPinsByTradeId()
-
-        active = false
 
         super<ServiceFacade>.deactivate()
     }

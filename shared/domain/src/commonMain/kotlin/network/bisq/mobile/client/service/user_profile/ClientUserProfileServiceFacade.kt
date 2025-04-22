@@ -30,32 +30,15 @@ class ClientUserProfileServiceFacade(
     override val selectedUserProfile: StateFlow<UserProfileVO?> = _selectedUserProfile
 
     // Misc
-    private var active = false
-
-
     override fun activate() {
         super<ServiceFacade>.activate()
-
-        if (active) {
-            log.w { "deactivating first" }
-            deactivate()
-        }
 
         serviceScope.launch {
             _selectedUserProfile.value = getSelectedUserProfile()
         }
-
-        active = true
     }
 
     override fun deactivate() {
-        if (!active) {
-            log.w { "Skipping deactivation as its already deactivated" }
-            return
-        }
-
-        active = false
-
         super<ServiceFacade>.deactivate()
     }
 

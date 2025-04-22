@@ -37,15 +37,8 @@ class ClientTradeChatMessagesServiceFacade(
     private val allChatReactions: StateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> = _allChatReactions
 
     // Misc
-    private var active = false
-
     override fun activate() {
         super<ServiceFacade>.activate()
-
-        if (active) {
-            log.w { "deactivating first" }
-            deactivate()
-        }
 
         serviceScope.launch {
             selectedTrade.collect { _ -> updateChatMessages() }
@@ -66,18 +59,9 @@ class ClientTradeChatMessagesServiceFacade(
         serviceScope.launch {
             subscribeChatReactions()
         }
-
-        active = true
     }
 
     override fun deactivate() {
-        if (!active) {
-            log.w { "Skipping deactivation as its already deactivated" }
-            return
-        }
-
-        active = false
-
         super<ServiceFacade>.deactivate()
     }
 

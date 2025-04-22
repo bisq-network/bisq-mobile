@@ -27,6 +27,7 @@ import network.bisq.mobile.domain.utils.Logging
 abstract class ServiceFacade : LifeCycleAware, Logging {
     private var _serviceJob: Job? = null
     private var _serviceScope: CoroutineScope? = null
+    private var isActivated = false
 
     protected val serviceScope: CoroutineScope
         get() {
@@ -38,13 +39,21 @@ abstract class ServiceFacade : LifeCycleAware, Logging {
         }
 
     override fun activate() {
+        require(!isActivated) { "activate called on ${this::class.simpleName} while service is already activated" }
+
         log.i { "${this::class.simpleName} activated" }
+        isActivated = true
     }
 
     override fun deactivate() {
+        if (!isActivated) {
+            "deactivate called on ${this::class.simpleName} while service is not activated. " +
+                    "This might be a valid case if we shut down fast before service got activated."
+        }
         _serviceScope?.cancel()
         _serviceJob = null
         _serviceScope = null
+        isActivated = false
 
         log.i { "${this::class.simpleName} deactivates" }
     }
