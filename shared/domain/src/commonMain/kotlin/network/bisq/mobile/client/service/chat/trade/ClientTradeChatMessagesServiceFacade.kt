@@ -17,17 +17,17 @@ import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.utils.Logging
 
 class ClientTradeChatMessagesServiceFacade(
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val apiGateway: TradeChatMessagesApiGateway,
     private val json: Json
-) : TradeChatMessagesServiceFacade, Logging {
+) : ServiceFacade(), TradeChatMessagesServiceFacade {
 
     // Properties
     private val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
@@ -45,6 +45,8 @@ class ClientTradeChatMessagesServiceFacade(
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     override fun activate() {
+        super<ServiceFacade>.activate()
+
         if (active) {
             log.w { "deactivating first" }
             deactivate()
@@ -83,6 +85,8 @@ class ClientTradeChatMessagesServiceFacade(
         jobs.clear()
 
         active = false
+
+        super<ServiceFacade>.deactivate()
     }
 
     private suspend fun subscribeTradeChats() {
