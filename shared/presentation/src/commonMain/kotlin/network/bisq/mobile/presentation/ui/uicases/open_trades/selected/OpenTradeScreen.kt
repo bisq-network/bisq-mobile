@@ -8,10 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
@@ -56,12 +53,16 @@ fun OpenTradeScreen() {
     val buyerState4ShowCloseTradeDialog by buyerState4Presenter.showCloseTradeDialog.collectAsState()
     val sellerState4ShowCloseTradeDialog by sellerState4Presenter.showCloseTradeDialog.collectAsState()
 
-    val shouldBlurBg = showInterruptionConfirmationDialog
-            || showMediationConfirmationDialog
-            || buyerState1aShowInvalidAddressDialog
-            || sellerState3aShowInvalidAddressDialog
-            || buyerState4ShowCloseTradeDialog
-            || sellerState4ShowCloseTradeDialog
+    val shouldBlurBg by remember {
+        derivedStateOf {
+            showInterruptionConfirmationDialog ||
+                    showMediationConfirmationDialog ||
+                    buyerState1aShowInvalidAddressDialog ||
+                    sellerState3aShowInvalidAddressDialog ||
+                    buyerState4ShowCloseTradeDialog ||
+                    sellerState4ShowCloseTradeDialog
+        }
+    }
 
     RememberPresenterLifecycle(presenter, {
         presenter.setTradePaneScrollState(scrollState)
