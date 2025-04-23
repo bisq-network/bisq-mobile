@@ -33,36 +33,23 @@ fun BisqDialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(dismissOnClickOutside = dismissOnClickOutside)
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .clickable(
-                    onClick = { if (dismissOnClickOutside) onDismissRequest() },
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                )
-                .padding(top = marginTop)
+        Card(
+            modifier = Modifier.wrapContentHeight(),
+            colors = CardColors(
+                containerColor = BisqTheme.colors.dark_grey40,
+                contentColor = Color.Unspecified,
+                disabledContainerColor = Color.Unspecified,
+                disabledContentColor = Color.Unspecified,
+            ),
+            shape = RoundedCornerShape(16.dp),
         ) {
-            Card(
+            Column(
                 modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .fillMaxWidth(),
-                colors = CardColors(
-                    containerColor = BisqTheme.colors.dark_grey40,
-                    contentColor = Color.Unspecified,
-                    disabledContainerColor = Color.Unspecified,
-                    disabledContentColor = Color.Unspecified,
-                ),
-                shape = RoundedCornerShape(16.dp),
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = horizontalAlignment,
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(padding)
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = horizontalAlignment,
-                ) {
-                    content()
-                }
+                content()
             }
         }
     }

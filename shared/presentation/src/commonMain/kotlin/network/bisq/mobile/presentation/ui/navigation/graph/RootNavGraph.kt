@@ -15,7 +15,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountSelectorScreen
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferBuySellScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferDirectionScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferCurrencySelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPaymentMethodSelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferReviewOfferScreen
@@ -89,7 +89,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
         }
 
         val createOfferScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
-            Routes.CreateOfferDirection to { CreateOfferBuySellScreen() },
+            Routes.CreateOfferDirection to { CreateOfferDirectionScreen() },
             Routes.CreateOfferMarket to { CreateOfferCurrencySelectorScreen() },
             Routes.CreateOfferAmount to { CreateOfferAmountSelectorScreen() },
             Routes.CreateOfferPrice to { CreateOfferTradePriceSelectorScreen() },

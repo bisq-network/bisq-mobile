@@ -12,7 +12,6 @@ fun OpenMediationDialog(
     onCancelConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-
     WarningConfirmationDialog(
         headline = "bisqEasy.mediation.request.confirm.headline".i18n(),
         message = "bisqEasy.mediation.request.confirm.msg".i18n(),
@@ -22,5 +21,4 @@ fun OpenMediationDialog(
         onDismiss = onDismiss,
         onConfirm = onCancelConfirm
     )
-
 }

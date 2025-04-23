@@ -42,6 +42,7 @@ fun TakeOfferReviewTradeScreen() {
         nextOnClick = { presenter.onTakeOffer() },
         snackbarHostState = presenter.getSnackState(),
         isInteractive = presenter.isInteractive.collectAsState().value,
+        shouldBlurBg = showProgressDialog || showSuccessDialog,
     ) {
         BisqText.h3Regular("bisqEasy.takeOffer.progress.review".i18n())
         BisqGap.V2()
@@ -149,16 +150,16 @@ fun TakeOfferReviewTradeScreen() {
                 }
             )
         }
-
-        if (showProgressDialog) {
-            TakeOfferProgressDialog()
-        }
-
-        if (showSuccessDialog) {
-            TakeOfferSuccessDialog(
-                onShowTrades = { presenter.onGoToOpenTrades() }
-            )
-        }
-
     }
+
+    if (showProgressDialog) {
+        TakeOfferProgressDialog()
+    }
+
+    if (showSuccessDialog) {
+        TakeOfferSuccessDialog(
+            onShowTrades = { presenter.onGoToOpenTrades() }
+        )
+    }
+
 }

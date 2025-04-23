@@ -89,7 +89,8 @@ fun UserProfileSettingsScreen() {
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         isInteractive = presenter.isInteractive.collectAsState().value,
-        ) {
+        shouldBlurBg = showDeleteConfirmation,
+    ) {
         BreadcrumbNavigation(path = menuPath) { index ->
             if (index == 0) settingsPresenter.settingsNavigateBack()
         }

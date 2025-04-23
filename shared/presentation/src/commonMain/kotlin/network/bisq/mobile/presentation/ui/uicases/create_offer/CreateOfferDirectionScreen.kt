@@ -21,7 +21,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 @Composable
-fun CreateOfferBuySellScreen() {
+fun CreateOfferDirectionScreen() {
     val presenter: CreateOfferDirectionPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
@@ -33,7 +33,8 @@ fun CreateOfferBuySellScreen() {
         stepsLength = 6,
         horizontalAlignment = Alignment.Start,
         prevOnClick = { presenter.onBack() },
-        nextOnClick = { presenter.onNext() }
+        nextOnClick = { presenter.onNext() },
+        shouldBlurBg = showSellerReputationWarning
     ) {
         BisqText.h3Regular(presenter.headline)
 
@@ -66,12 +67,12 @@ fun CreateOfferBuySellScreen() {
         )
         BisqGap.VHalf()
         BisqText.largeLightGrey("Experienced Bisq users with reputation can act as seller") //TODO:i18n
+    }
 
-        if (showSellerReputationWarning) {
-                SellerReputationWarningDialog(
-                    onDismiss = { presenter.onDismissSellerReputationWarning() },
-                    onLearnReputation = { presenter.showLearnReputation() },
-                )
-            }
+    if (showSellerReputationWarning) {
+        SellerReputationWarningDialog(
+            onDismiss = { presenter.onDismissSellerReputationWarning() },
+            onLearnReputation = { presenter.showLearnReputation() },
+        )
     }
 }

@@ -71,6 +71,7 @@ fun PaymentAccountSettingsScreen() {
         topBar = { TopBar("user.paymentAccounts".i18n()) },
         verticalArrangement = if (accounts.isEmpty()) Arrangement.Center else Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         snackbarHostState = presenter.getSnackState(),
+        shouldBlurBg = showConfirmationDialog,
     ) {
         if (accounts.isNotEmpty()) {
             BreadcrumbNavigation(path = menuPath) { index ->

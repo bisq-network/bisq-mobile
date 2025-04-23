@@ -44,7 +44,8 @@ fun OfferbookScreen() {
                 onClick = { presenter.createOffer() },
                 enabled = !presenter.isDemo()
             )
-        }
+        },
+        shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog
     ) {
         DirectionToggle(
             offerDirections,
@@ -53,26 +54,6 @@ fun OfferbookScreen() {
         )
 
         BisqGap.V1()
-
-        if (showDeleteConfirmation) {
-            ConfirmationDialog(
-                headline = "bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n(),
-                onConfirm = { presenter.onConfirmedDeleteOffer() },
-                onDismiss = { presenter.onDismissDeleteOffer() }
-            )
-        }
-
-        if (showNotEnoughReputationDialog) {
-            WebLinkConfirmationDialog(
-                link = "https://bisq.wiki/Reputation#How_to_build_reputation",
-                headline = presenter.notEnoughReputationHeadline,
-                message = presenter.notEnoughReputationMessage,
-                confirmButtonText = "confirmation.yes".i18n(),
-                dismissButtonText = "hyperlinks.openInBrowser.no".i18n(),
-                onConfirm = { presenter.onLearnHowToBuildReputation() },
-                onDismiss = { presenter.onDismissNotEnoughReputationDialog() }
-            )
-        }
 
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -86,5 +67,26 @@ fun OfferbookScreen() {
             }
         }
     }
+
+    if (showDeleteConfirmation) {
+        ConfirmationDialog(
+            headline = "bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n(),
+            onConfirm = { presenter.onConfirmedDeleteOffer() },
+            onDismiss = { presenter.onDismissDeleteOffer() }
+        )
+    }
+
+    if (showNotEnoughReputationDialog) {
+        WebLinkConfirmationDialog(
+            link = "https://bisq.wiki/Reputation#How_to_build_reputation",
+            headline = presenter.notEnoughReputationHeadline,
+            message = presenter.notEnoughReputationMessage,
+            confirmButtonText = "confirmation.yes".i18n(),
+            dismissButtonText = "hyperlinks.openInBrowser.no".i18n(),
+            onConfirm = { presenter.onLearnHowToBuildReputation() },
+            onDismiss = { presenter.onDismissNotEnoughReputationDialog() }
+        )
+    }
+
 }
 

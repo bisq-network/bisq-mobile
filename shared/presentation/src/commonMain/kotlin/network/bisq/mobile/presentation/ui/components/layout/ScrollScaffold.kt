@@ -5,10 +5,9 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import network.bisq.mobile.presentation.ui.components.organisms.BisqSnackbar
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -31,10 +30,12 @@ fun BisqScrollScaffold(
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     isInteractive: Boolean = true,
     showJumpToBottom: Boolean = false,
+    shouldBlurBg: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
 
     Scaffold(
+        modifier = Modifier.blur(if (shouldBlurBg) BisqUIConstants.ScreenPaddingHalf else BisqUIConstants.Zero),
         containerColor = BisqTheme.colors.backgroundColor,
         topBar = topBar ?: {},
         bottomBar = bottomBar ?: {},

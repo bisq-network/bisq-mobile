@@ -42,7 +42,8 @@ fun CreateOfferAmountSelectorScreen() {
         stepIndex = 3,
         stepsLength = 6,
         prevOnClick = { presenter.onBack() },
-        nextOnClick = { presenter.onNext() }
+        nextOnClick = { presenter.onNext() },
+        shouldBlurBg = showLimitPopup,
     ) {
 
         BisqText.h3Regular(

@@ -263,19 +263,4 @@ fun TradeDetailsHeader() {
         }
     }
 
-    if (showInterruptionConfirmationDialog) {
-        CancelTradeDialog(
-            onCancelConfirm = { presenter.onInterruptTrade() },
-            onDismiss = { presenter.onCloseInterruptionConfirmationDialog() },
-            isBuyer = presenter.directionEnum.isBuy,
-            isRejection = tradeCloseType == TradeDetailsHeaderPresenter.TradeCloseType.REJECT
-        )
-    }
-
-    if (showMediationConfirmationDialog) {
-        OpenMediationDialog(
-            onCancelConfirm = { presenter.onOpenMediation() },
-            onDismiss = { presenter.onCloseMediationConfirmationDialog() },
-        )
-    }
 }

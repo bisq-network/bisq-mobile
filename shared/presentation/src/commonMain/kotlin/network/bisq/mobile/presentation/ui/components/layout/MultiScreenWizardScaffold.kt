@@ -31,6 +31,7 @@ fun MultiScreenWizardScaffold(
     snackbarHostState: SnackbarHostState? = null,
     isInteractive: Boolean = true,
     showJumpToBottom: Boolean = false,
+    shouldBlurBg: Boolean = false,
     content: @Composable ColumnScope.() -> Unit
 ) {
 
@@ -42,9 +43,10 @@ fun MultiScreenWizardScaffold(
         vArrangement: Arrangement.Vertical,
         snackbarHostState: SnackbarHostState?,
         jumpToBottom: Boolean,
+        shouldBlurBg: Boolean,
         content: @Composable ColumnScope.() -> Unit
     ) -> Unit =
-        if (useStaticScaffold) { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState,_showJumpToBottom, innerContent ->
+        if (useStaticScaffold) { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState,_showJumpToBottom, _shouldBlurBg, innerContent ->
             BisqStaticScaffold(
                 padding = padding,
                 topBar = topBar,
@@ -53,9 +55,10 @@ fun MultiScreenWizardScaffold(
                 verticalArrangement = verticalArrangement,
                 snackbarHostState = snackState,
                 isInteractive = isInteractive,
+                shouldBlurBg = _shouldBlurBg,
                 content = innerContent
             )
-        } else { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, innerContent ->
+        } else { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, _shouldBlurBg, innerContent ->
             BisqScrollScaffold(
                 padding = padding,
                 topBar = topBar,
@@ -65,6 +68,7 @@ fun MultiScreenWizardScaffold(
                 snackbarHostState = snackState,
                 isInteractive = isInteractive,
                 showJumpToBottom = _showJumpToBottom,
+                shouldBlurBg = _shouldBlurBg,
                 content = innerContent
             )
         }
@@ -129,6 +133,7 @@ fun MultiScreenWizardScaffold(
         Arrangement.Top,
         snackbarHostState,
         showJumpToBottom,
+        shouldBlurBg,
     ) {
 
         // TODO: Should pass these values to the column deep inside BisqScrollLayout

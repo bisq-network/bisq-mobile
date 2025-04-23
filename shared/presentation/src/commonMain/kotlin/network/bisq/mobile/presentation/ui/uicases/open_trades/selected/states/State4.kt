@@ -78,12 +78,13 @@ fun State4(
                 )
             }
 
-            if (showCloseTradeDialog) {
-                CloseTradeDialog(
-                    onDismiss = presenter::onDismissCloseTrade,
-                    onConfirm = presenter::onConfirmCloseTrade,
-                )
-            }
         }
+    }
+
+    if (showCloseTradeDialog) {
+        CloseTradeDialog(
+            onDismiss = presenter::onDismissCloseTrade,
+            onConfirm = presenter::onConfirmCloseTrade,
+        )
     }
 }

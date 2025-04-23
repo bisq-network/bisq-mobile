@@ -46,6 +46,7 @@ fun CreateOfferTradePriceSelectorScreen() {
         nextButtonText = "action.next".i18n(),
         nextOnClick = { presenter.onNext() },
         nextDisabled = !presenter.formattedPercentagePriceValid.collectAsState().value,
+        shouldBlurBg = showWhyPopup,
     ) {
         BisqText.h3Regular(
             text = "What is your trade price?", // TODO:i18n "bisqEasy.price.headline".i18n(),

@@ -75,6 +75,5 @@ fun BuyerState1a(
             onConfirm = presenter::onSend,
             onDismiss = { presenter.setShowInvalidAddressDialog(false) },
         )
-
     }
 }

@@ -18,7 +18,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun ConfirmationDialog(
-    headline: String = "",
+    headline: String = "confirmation.areYouSure".i18n(),
     headlineColor: Color = BisqTheme.colors.white,
     headlineLeftIcon: (@Composable () -> Unit)? = null,
     message: String = "",
@@ -33,6 +33,7 @@ fun ConfirmationDialog(
     BisqDialog(
         horizontalAlignment = horizontalAlignment,
         marginTop = marginTop,
+        onDismissRequest = onDismiss
     ) {
         if (headline.isNotEmpty()) {
             if (headlineLeftIcon == null) {
