@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.check_circle
 import bisqapps.shared.presentation.generated.resources.exchange_h_arrow
 import bisqapps.shared.presentation.generated.resources.exchange_v_arrow
 import bisqapps.shared.presentation.generated.resources.field_add_white
@@ -104,6 +105,11 @@ fun BellIcon(modifier: Modifier = Modifier.size(30.dp)) {
 @Composable
 fun ChatIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_chat_outlined), "Chat icon", modifier = modifier)
+}
+
+@Composable
+fun CheckCircleIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.check_circle), "Check circle icon", modifier = modifier)
 }
 
 @Composable
