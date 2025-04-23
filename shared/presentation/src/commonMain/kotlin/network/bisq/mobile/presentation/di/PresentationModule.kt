@@ -164,20 +164,20 @@ val presentationModule = module {
     factory { SellerState1Presenter(get(), get(), get()) }
     factory { SellerState2aPresenter(get(), get()) }
     factory { SellerState2bPresenter(get(), get()) }
-    factory { SellerState3aPresenter(get(), get()) }
+    single { SellerState3aPresenter(get(), get()) }
     factory { SellerStateMainChain3bPresenter(get(), get(), get()) }
     factory { SellerStateLightning3bPresenter(get(), get()) }
-    factory { SellerState4Presenter(get(), get()) }
+    single { SellerState4Presenter(get(), get()) }
 
     // Trade Buyer
-    factory { BuyerState1aPresenter(get(), get()) }
+    single { BuyerState1aPresenter(get(), get()) }
     // BuyerState1bPresenter does not exist as it a static UI
     factory { BuyerState2aPresenter(get(), get()) }
     factory { BuyerState2bPresenter(get(), get()) }
     factory { BuyerState3aPresenter(get(), get()) }
     factory { BuyerStateMainChain3bPresenter(get(), get(), get()) }
     factory { BuyerStateLightning3bPresenter(get(), get()) }
-    factory { BuyerState4Presenter(get(), get()) }
+    single { BuyerState4Presenter(get(), get()) }
 
     // Trade General process
     factory { TradeStatesProvider(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }

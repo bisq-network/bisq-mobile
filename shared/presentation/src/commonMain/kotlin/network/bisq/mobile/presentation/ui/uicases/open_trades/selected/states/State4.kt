@@ -31,7 +31,6 @@ fun State4(
     val tradeItemModel = presenter.selectedTrade.value
     val quoteAmount = tradeItemModel?.quoteAmountWithCode ?: ""
     val baseAmount = tradeItemModel?.formattedBaseAmount ?: ""
-    val showCloseTradeDialog = presenter.showCloseTradeDialog.collectAsState().value
 
     Column {
         BisqGap.V1()
@@ -81,10 +80,4 @@ fun State4(
         }
     }
 
-    if (showCloseTradeDialog) {
-        CloseTradeDialog(
-            onDismiss = presenter::onDismissCloseTrade,
-            onConfirm = presenter::onConfirmCloseTrade,
-        )
-    }
 }

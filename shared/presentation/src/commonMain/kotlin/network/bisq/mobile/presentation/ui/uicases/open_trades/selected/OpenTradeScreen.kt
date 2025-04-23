@@ -21,15 +21,20 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
-import network.bisq.mobile.presentation.ui.components.organisms.trades.CancelTradeDialog
-import network.bisq.mobile.presentation.ui.components.organisms.trades.OpenMediationDialog
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
+import network.bisq.mobile.presentation.ui.components.organisms.trades.*
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.*
 import org.koin.compose.koinInject
 
 @Composable
 fun OpenTradeScreen() {
     val presenter: OpenTradePresenter = koinInject()
     val headerPresenter: TradeDetailsHeaderPresenter = koinInject()
+    val buyerState1aPresenter: BuyerState1aPresenter = koinInject()
+    val sellerState3aPresenter: SellerState3aPresenter = koinInject()
+    val buyerState4Presenter: BuyerState4Presenter = koinInject()
+    val sellerState4Presenter: SellerState4Presenter = koinInject()
 
     RememberPresenterLifecycle(presenter)
     val focusManager = LocalFocusManager.current
@@ -43,6 +48,20 @@ fun OpenTradeScreen() {
     val tradeCloseType by headerPresenter.tradeCloseType.collectAsState()
     val showInterruptionConfirmationDialog by headerPresenter.showInterruptionConfirmationDialog.collectAsState()
     val showMediationConfirmationDialog by headerPresenter.showMediationConfirmationDialog.collectAsState()
+
+    val buyerState1aAddressFieldType by buyerState1aPresenter.bitcoinLnAddressFieldType.collectAsState()
+    val buyerState1aShowInvalidAddressDialog by buyerState1aPresenter.showInvalidAddressDialog.collectAsState()
+    val sellerState3aShowInvalidAddressDialog by sellerState3aPresenter.showInvalidAddressDialog.collectAsState()
+    val sellerState3aIsLightning by sellerState3aPresenter.isLightning.collectAsState()
+    val buyerState4ShowCloseTradeDialog by buyerState4Presenter.showCloseTradeDialog.collectAsState()
+    val sellerState4ShowCloseTradeDialog by sellerState4Presenter.showCloseTradeDialog.collectAsState()
+
+    val shouldBlurBg = showInterruptionConfirmationDialog
+            || showMediationConfirmationDialog
+            || buyerState1aShowInvalidAddressDialog
+            || sellerState3aShowInvalidAddressDialog
+            || buyerState4ShowCloseTradeDialog
+            || sellerState4ShowCloseTradeDialog
 
     RememberPresenterLifecycle(presenter, {
         presenter.setTradePaneScrollState(scrollState)
@@ -58,7 +77,7 @@ fun OpenTradeScreen() {
                 ChatIcon(modifier = Modifier.size(34.dp))
             }
         },
-        shouldBlurBg = showInterruptionConfirmationDialog || showMediationConfirmationDialog,
+        shouldBlurBg = shouldBlurBg,
     ) {
         Box(
             modifier = Modifier
@@ -110,6 +129,36 @@ fun OpenTradeScreen() {
         OpenMediationDialog(
             onCancelConfirm = headerPresenter::onOpenMediation,
             onDismiss = headerPresenter::onCloseMediationConfirmationDialog,
+        )
+    }
+
+    if (buyerState1aShowInvalidAddressDialog) {
+        InvalidAddressConfirmationDialog(
+            addressType = buyerState1aAddressFieldType,
+            onConfirm = buyerState1aPresenter::onSend,
+            onDismiss = { buyerState1aPresenter.setShowInvalidAddressDialog(false) },
+        )
+    }
+
+    if (sellerState3aShowInvalidAddressDialog) {
+        InvalidPaymentProofConfirmationDialog(
+            paymentProofType = if (sellerState3aIsLightning) PaymentProofType.LightningPreImage else PaymentProofType.BitcoinTx,
+            onDismiss = { sellerState3aPresenter.setShowInvalidAddressDialog(false) },
+            onConfirm = sellerState3aPresenter::confirmSend,
+        )
+    }
+
+    if (buyerState4ShowCloseTradeDialog) {
+        CloseTradeDialog(
+            onDismiss = buyerState4Presenter::onDismissCloseTrade,
+            onConfirm = buyerState4Presenter::onConfirmCloseTrade,
+        )
+    }
+
+    if (sellerState4ShowCloseTradeDialog) {
+        CloseTradeDialog(
+            onDismiss = sellerState4Presenter::onDismissCloseTrade,
+            onConfirm = sellerState4Presenter::onConfirmCloseTrade,
         )
     }
 

@@ -115,11 +115,4 @@ fun SellerState3a(
         )
     }
 
-    if (showInvalidAddressDialog) {
-        InvalidPaymentProofConfirmationDialog(
-            paymentProofType = if (isLightning) PaymentProofType.LightningPreImage else PaymentProofType.BitcoinTx,
-            onDismiss = { presenter.setShowInvalidAddressDialog(false) },
-            onConfirm = presenter::confirmSend,
-        )
-    }
 }

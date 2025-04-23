@@ -69,11 +69,4 @@ fun BuyerState1a(
         }
     }
 
-    if (showInvalidAddressDialog) {
-        InvalidAddressConfirmationDialog(
-            addressType = addressFieldType,
-            onConfirm = presenter::onSend,
-            onDismiss = { presenter.setShowInvalidAddressDialog(false) },
-        )
-    }
 }
