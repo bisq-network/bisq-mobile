@@ -14,13 +14,14 @@ fun SellerState2b(
 ) {
     RememberPresenterLifecycle(presenter)
 
+    val shortId = presenter.selectedTrade.value!!.shortTradeId
     val quoteAmountWithCode = presenter.selectedTrade.value!!.quoteAmountWithCode
 
     Column {
         BisqGap.V1()
         BisqGap.VHalf()
-        // Check if you have received {0}
-        BisqText.h5Light("bisqEasy.tradeState.info.seller.phase2b.headline".i18n(quoteAmountWithCode))
+        // Check if you have received {0} with reason for payment ''{1}''
+        BisqText.h5Light("bisqEasy.tradeState.info.seller.phase2b.headline".i18n(quoteAmountWithCode, shortId))
 
         BisqGap.V1()
         BisqText.baseLightGrey(
