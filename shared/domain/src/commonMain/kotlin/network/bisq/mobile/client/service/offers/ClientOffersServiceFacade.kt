@@ -156,7 +156,7 @@ class ClientOffersServiceFacade(
 
     private fun subscribeOffers() {
         serviceScope.launch {
-            offersSequenceNumber = atomic(-1)
+            offersSequenceNumber.value = -1
             // We subscribe for all markets
             val observer = apiGateway.subscribeOffers()
             observer.webSocketEvent.collect { webSocketEvent ->
