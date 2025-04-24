@@ -1,9 +1,8 @@
 package network.bisq.mobile.domain.service
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.utils.Logging
@@ -29,11 +28,15 @@ abstract class ServiceFacade : LifeCycleAware, Logging {
     private var _serviceScope: CoroutineScope? = null
     private var isActivated = false
 
+    private val scopeMutex = Mutex()
+
     protected val serviceScope: CoroutineScope
+        // thread-safe sync getter
         get() {
             if (_serviceScope == null || _serviceJob?.isCancelled == true) {
-                _serviceJob = SupervisorJob()
-                _serviceScope = CoroutineScope(IODispatcher + _serviceJob!!)
+                runBlocking {
+                    initializeScopeIfNeeded()
+                }
             }
             return _serviceScope!!
         }
@@ -58,5 +61,14 @@ abstract class ServiceFacade : LifeCycleAware, Logging {
         isActivated = false
 
         log.i { "${this::class.simpleName} deactivates" }
+    }
+
+    private suspend fun initializeScopeIfNeeded() {
+        scopeMutex.withLock {
+            if (_serviceScope == null || _serviceJob?.isCancelled == true) {
+                _serviceJob = SupervisorJob()
+                _serviceScope = CoroutineScope(IODispatcher + _serviceJob!!)
+            }
+        }
     }
 }
