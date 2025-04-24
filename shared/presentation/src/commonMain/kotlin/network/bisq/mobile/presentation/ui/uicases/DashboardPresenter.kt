@@ -58,17 +58,6 @@ open class DashboardPresenter(
         navigateTo(Routes.TradeGuideOverview)
     }
 
-    init {
-        presenterScope.launch {
-            // Listening to languageCode change here and refreshing,
-            // rather than doing this in onViewAttached,
-            // so refresh doesn't happen on every screen enter navigation
-            mainPresenter.languageCode.drop(1).collect {
-                marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
-            }
-        }
-    }
-
     private fun refresh() {
         disableInteractive()
         job = presenterScope.launch {
@@ -85,6 +74,13 @@ open class DashboardPresenter(
                     }
                 }
             }
+
+            launch {
+                mainPresenter.languageCode.collect {
+                    marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
+                }
+            }
+
             enableInteractive()
         }
     }
