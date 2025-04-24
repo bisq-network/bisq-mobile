@@ -1,5 +1,6 @@
 package network.bisq.mobile.domain.service
 
+import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -26,7 +27,7 @@ import network.bisq.mobile.domain.utils.Logging
 abstract class ServiceFacade : LifeCycleAware, Logging {
     private var _serviceJob: Job? = null
     private var _serviceScope: CoroutineScope? = null
-    private var isActivated = false
+    private var isActivated = atomic(false)
 
     private val scopeMutex = Mutex()
 
@@ -42,14 +43,14 @@ abstract class ServiceFacade : LifeCycleAware, Logging {
         }
 
     override fun activate() {
-        require(!isActivated) { "activate called on ${this::class.simpleName} while service is already activated" }
+        require(!isActivated.value) { "activate called on ${this::class.simpleName} while service is already activated" }
 
         log.i { "${this::class.simpleName} activated" }
-        isActivated = true
+        isActivated.value = true
     }
 
     override fun deactivate() {
-        if (!isActivated) {
+        if (!isActivated.value) {
             log.w {
                 "deactivate called on ${this::class.simpleName} while service is not activated. " +
                         "This might be a valid case if we shut down fast before service got activated."
@@ -58,7 +59,7 @@ abstract class ServiceFacade : LifeCycleAware, Logging {
         _serviceScope?.cancel()
         _serviceJob = null
         _serviceScope = null
-        isActivated = false
+        isActivated.value = false
 
         log.i { "${this::class.simpleName} deactivates" }
     }
