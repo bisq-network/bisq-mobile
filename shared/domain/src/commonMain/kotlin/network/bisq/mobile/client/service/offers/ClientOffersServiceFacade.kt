@@ -67,7 +67,7 @@ class ClientOffersServiceFacade(
     override fun deactivate() {
         cancelObserveMarketPriceJob()
         _offerbookMarketItems.value = emptyList()
-
+        hasSubscribedToOffers.value = false
         super<ServiceFacade>.deactivate()
     }
 

@@ -34,12 +34,15 @@ abstract class ServiceFacade : LifeCycleAware, Logging {
     protected val serviceScope: CoroutineScope
         // thread-safe sync getter
         get() {
-            if (_serviceScope == null || _serviceJob?.isCancelled == true) {
-                runBlocking {
-                    initializeScopeIfNeeded()
+            _serviceScope?.let { scope ->
+                if (!scope.coroutineContext[Job]!!.isCancelled) {
+                    return scope
                 }
             }
-            return _serviceScope!!
+            return runBlocking {
+                initializeScopeIfNeeded()
+                _serviceScope!!
+            }
         }
 
     override fun activate() {
