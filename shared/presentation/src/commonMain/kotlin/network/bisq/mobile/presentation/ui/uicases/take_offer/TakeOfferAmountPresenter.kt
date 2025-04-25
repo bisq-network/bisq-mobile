@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.take_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
@@ -23,7 +24,9 @@ class TakeOfferAmountPresenter(
     private val takeOfferPresenter: TakeOfferPresenter
 ) : BasePresenter(mainPresenter) {
 
-    var sliderPosition: Float = 0.5f
+    var _sliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
+    var sliderPosition: StateFlow<Float> = _sliderPosition
+
     lateinit var quoteCurrencyCode: String
     lateinit var formattedMinAmount: String
     lateinit var formattedMinAmountWithCode: String
@@ -42,6 +45,7 @@ class TakeOfferAmountPresenter(
     private lateinit var baseAmount: CoinVO
 
     override fun onViewAttached() {
+        super.onViewAttached()
         runCatching {
             takeOfferModel = takeOfferPresenter.takeOfferModel
             val offerListItem = takeOfferModel.offerItemPresentationVO
@@ -63,8 +67,8 @@ class TakeOfferAmountPresenter(
             _formattedQuoteAmount.value = offerListItem.formattedQuoteAmount
             _formattedBaseAmount.value = offerListItem.formattedBaseAmount.value
 
-            sliderPosition = 0.5f
-            applySliderValue(sliderPosition)
+            _sliderPosition.value = 0.5f
+            applySliderValue(sliderPosition.value)
         }.onFailure { e ->
             log.e(e) { "Failed to present view" }
         }
@@ -75,7 +79,28 @@ class TakeOfferAmountPresenter(
     }
 
     fun onTextValueChanged(textInput: String) {
-        //todo parse input string and apply it to model
+        val _value = textInput.toDoubleOrNullLocaleAware()
+        if (_value != null) {
+            onSliderValueChanged(getFractionForFiat(_value))
+        }
+    }
+
+    fun validateTextField(value: String): String? {
+        val _value = value.toDoubleOrNullLocaleAware()
+
+        when {
+            _value == null -> return "Invalid number" // TODO: i18n
+            _value * 10000 < minAmount -> return "Should be greater than ${minAmount / 10000.0}" // TODO: i18n
+            _value * 10000 > maxAmount -> return "Should be less than ${maxAmount / 10000.0}" // TODO: i18n
+            else -> return null
+        }
+
+    }
+
+    fun getFractionForFiat(value: Double): Float {
+        val range = maxAmount - minAmount
+        val inFraction = ((value * 10000) - minAmount) / range
+        return inFraction.toFloat()
     }
 
     fun onBack() {
@@ -95,7 +120,7 @@ class TakeOfferAmountPresenter(
 
     private fun applySliderValue(sliderPosition: Float) {
         try {
-            this.sliderPosition = sliderPosition
+            _sliderPosition.value = sliderPosition
             val range = maxAmount - minAmount
             val value: Float = minAmount + (sliderPosition * range)
             val roundedFiatValue: Long = (value / 10000.0f).roundToLong() * 10000

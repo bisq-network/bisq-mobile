@@ -56,7 +56,8 @@ class CreateOfferAmountPresenter(
     val amountType: StateFlow<AmountType> = _amountType
 
     // FIXED_AMOUNT
-    var fixedAmountSliderPosition: Float = 0.5f
+    var _fixedAmountSliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
+    var fixedAmountSliderPosition: StateFlow<Float> = _fixedAmountSliderPosition
 
     private val _reputationBasedMaxValue: MutableStateFlow<Float?> = MutableStateFlow(null)
     val reputationBasedMaxSliderValue: StateFlow<Float?> = _reputationBasedMaxValue
@@ -118,9 +119,6 @@ class CreateOfferAmountPresenter(
         _showLimitPopup.value = newValue
     }
 
-    var _fixedSliderPosition: MutableStateFlow<Float> = MutableStateFlow(0f)
-    val fixedSliderPosition: StateFlow<Float> = _fixedSliderPosition
-
     override fun onViewAttached() {
         super.onViewAttached()
         createOfferModel = createOfferPresenter.createOfferModel
@@ -141,8 +139,8 @@ class CreateOfferAmountPresenter(
         formattedMaxAmountWithCode =
             AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
 
-        fixedAmountSliderPosition = createOfferModel.fixedAmountSliderPosition
-        applyFixedAmountSliderValue(fixedAmountSliderPosition)
+        _fixedAmountSliderPosition.value = createOfferModel.fixedAmountSliderPosition
+        applyFixedAmountSliderValue(fixedAmountSliderPosition.value)
 
         rangeSliderPosition = createOfferModel.rangeSliderPosition
         applyRangeAmountSliderValue(rangeSliderPosition)
@@ -323,7 +321,7 @@ class CreateOfferAmountPresenter(
         enableInteractive()
     }
 
-    fun validateFiatField(value: String): String? {
+    fun validateTextField(value: String): String? {
         val _value = value.toDoubleOrNullLocaleAware()
 
         when {
@@ -396,9 +394,8 @@ class CreateOfferAmountPresenter(
     }
 
     private fun applyFixedAmountSliderValue(amount: Float) {
-        fixedAmountSliderPosition = amount
-        _fixedSliderPosition.value = amount
-        quoteSideFixedAmount = FiatVOFactory.from(sliderValueToAmount(fixedAmountSliderPosition), quoteCurrencyCode)
+        _fixedAmountSliderPosition.value = amount
+        quoteSideFixedAmount = FiatVOFactory.from(sliderValueToAmount(fixedAmountSliderPosition.value), quoteCurrencyCode)
         _formattedQuoteSideFixedAmount.value = AmountFormatter.formatAmount(quoteSideFixedAmount)
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideFixedAmount = priceQuote.toBaseSideMonetary(quoteSideFixedAmount) as CoinVO
