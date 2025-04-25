@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -44,11 +43,19 @@ fun RangeAmountSelector(
     validateRangeMaxTextField: ((String) -> String?)? = null,
 ) {
     val quoteSideMinRangeAmount = formattedQuoteSideMinRangeAmount.collectAsState().value
-    val quoteSideMinRangeAmountWithoutDecimal = quoteSideMinRangeAmount.split(".").first()
+    val minSplits = quoteSideMinRangeAmount.split(".")
+    val quoteSideMinRangeAmountWithoutDecimal = if (minSplits.isEmpty())
+        ""
+    else
+        minSplits.first()
     val baseSideMinRangeAmount = formattedBaseSideMinRangeAmount.collectAsState().value
 
     val quoteSideMaxRangeAmount = formattedQuoteSideMaxRangeAmount.collectAsState().value
-    val quoteSideMaxRangeAmountWithoutDecimal = quoteSideMaxRangeAmount.split(".").first()
+    val maxSplits = quoteSideMaxRangeAmount.split(".")
+    val quoteSideMaxRangeAmountWithoutDecimal = if (maxSplits.isEmpty())
+        ""
+    else
+        maxSplits.first()
     val baseSideMaxRangeAmount = formattedBaseSideMaxRangeAmount.collectAsState().value
 
     val smallFont = maxOf(quoteSideMaxRangeAmount.length, quoteSideMinRangeAmount.length) > 6

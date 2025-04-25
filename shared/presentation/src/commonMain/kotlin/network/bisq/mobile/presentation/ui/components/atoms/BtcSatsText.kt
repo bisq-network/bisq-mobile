@@ -97,35 +97,30 @@ fun BtcSatsText(
 private fun formatSatsToDisplay(formattedBtcAmountValue: String, noCode: Boolean): AnnotatedString {
 
     return buildAnnotatedString {
-        try {
-            val decimalSeparator = getDecimalSeparator()
-            val parts = formattedBtcAmountValue.split(decimalSeparator)
-            val integerPart = parts[0]
-            val fractionalPart = parts[1] ?: ""
+        val decimalSeparator = getDecimalSeparator()
+        val parts = formattedBtcAmountValue.split(decimalSeparator)
+        val integerPart = parts[0]
+        val fractionalPart = parts[1] ?: ""
 
-            val formattedFractional = fractionalPart.reversed().chunked(3).joinToString(" ").reversed()
-            val leadingZeros = formattedFractional.takeWhile { it == '0' || it == ' ' }
-            val significantDigits = formattedFractional.dropWhile { it == '0' || it == ' ' }
+        val formattedFractional = fractionalPart.reversed().chunked(3).joinToString(" ").reversed()
+        val leadingZeros = formattedFractional.takeWhile { it == '0' || it == ' ' }
+        val significantDigits = formattedFractional.dropWhile { it == '0' || it == ' ' }
 
-            val prefixColor = if (integerPart.toInt() > 0) BisqTheme.colors.white else BisqTheme.colors.mid_grey20
+        val prefixColor = if (integerPart.toInt() > 0) BisqTheme.colors.white else BisqTheme.colors.mid_grey20
 
-            withStyle(style = SpanStyle(color = prefixColor)) {
-                append(integerPart)
-                append(decimalSeparator)
-            }
+        withStyle(style = SpanStyle(color = prefixColor)) {
+            append(integerPart)
+            append(decimalSeparator)
+        }
 
-            withStyle(style = SpanStyle(color = prefixColor)) {
-                append(leadingZeros)
-            }
+        withStyle(style = SpanStyle(color = prefixColor)) {
+            append(leadingZeros)
+        }
 
-            withStyle(style = SpanStyle(color = BisqTheme.colors.white)) {
-                append(significantDigits)
-                if (!noCode)
-                    append(" BTC")
-            }
-        } catch (e: Exception) {
-            // TODO find the real cause of crash when rendering card from self created offer
-            e.printStackTrace()
+        withStyle(style = SpanStyle(color = BisqTheme.colors.white)) {
+            append(significantDigits)
+            if (!noCode)
+                append(" BTC")
         }
     }
 }

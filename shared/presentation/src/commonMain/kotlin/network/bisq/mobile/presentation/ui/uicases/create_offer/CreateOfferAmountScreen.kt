@@ -43,6 +43,7 @@ fun CreateOfferAmountSelectorScreen() {
         stepsLength = 6,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() },
+        nextDisabled = !presenter.amountValid.collectAsState().value,
         snackbarHostState = presenter.getSnackState(),
         shouldBlurBg = showLimitPopup,
     ) {

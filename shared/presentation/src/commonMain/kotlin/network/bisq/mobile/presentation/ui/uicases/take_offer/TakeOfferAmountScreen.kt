@@ -3,9 +3,9 @@ package network.bisq.mobile.presentation.ui.uicases.take_offer
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -24,7 +24,8 @@ fun TakeOfferTradeAmountScreen() {
         stepIndex = 1,
         stepsLength = 3,
         prevOnClick = { presenter.onBack() },
-        nextOnClick = { presenter.onNext() }
+        nextOnClick = { presenter.onNext() },
+        nextDisabled = !presenter.amountValid.collectAsState().value,
     ) {
         BisqText.h3Regular("bisqEasy.takeOffer.amount.headline.buyer".i18n())
         BisqGap.V1()

@@ -122,6 +122,9 @@ class CreateOfferAmountPresenter(
         _showLimitPopup.value = newValue
     }
 
+    private var _amountValid: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    val amountValid: StateFlow<Boolean> = _amountValid
+
     override fun onViewAttached() {
         super.onViewAttached()
         createOfferModel = createOfferPresenter.createOfferModel
@@ -161,24 +164,45 @@ class CreateOfferAmountPresenter(
     fun onFixedAmountTextValueChange(textInput: String) {
         val _value = textInput.toDoubleOrNullLocaleAware()
         if (_value != null) {
-            applyFixedAmountSliderValue(getFractionForFiat(_value))
+            val valueInFraction = getFractionForFiat(_value)
+            _amountValid.value = valueInFraction >= 0.0 && valueInFraction <= 1.0
+            applyFixedAmountSliderValue(valueInFraction)
             updateAmountLimitInfo()
+        } else {
+            _formattedQuoteSideFixedAmount.value = ""
+            _amountValid.value = false
         }
     }
 
     fun onMinAmountTextValueChange(textInput: String) {
         val _value = textInput.toDoubleOrNullLocaleAware()
         if (_value != null) {
-            applyMinRangeAmountSliderValue(getFractionForFiat(_value))
+            val valueInFraction = getFractionForFiat(_value)
+            val maxValueInFraction = getFractionForFiat(quoteSideMaxRangeAmount.asDouble())
+            _amountValid.value = valueInFraction in 0.0..1.0
+                                 && maxValueInFraction in 0.0..1.0
+                                 && quoteSideMaxRangeAmount.asDouble() > quoteSideMinRangeAmount.asDouble()
+            applyMinRangeAmountSliderValue(valueInFraction)
             updateAmountLimitInfo()
+        } else {
+            _formattedQuoteSideMinRangeAmount.value = ""
+            _amountValid.value = false
         }
     }
 
     fun onMaxAmountTextValueChange(textInput: String) {
         val _value = textInput.toDoubleOrNullLocaleAware()
         if (_value != null) {
-            applyMaxRangeAmountSliderValue(getFractionForFiat(_value))
+            val valueInFraction = getFractionForFiat(_value)
+            val minValueInFraction = getFractionForFiat(quoteSideMinRangeAmount.asDouble())
+            _amountValid.value = valueInFraction in 0.0..1.0
+                    && minValueInFraction in 0.0..1.0
+                    && quoteSideMaxRangeAmount.asDouble() > quoteSideMinRangeAmount.asDouble()
+            applyMaxRangeAmountSliderValue(valueInFraction)
             updateAmountLimitInfo()
+        } else {
+            _formattedQuoteSideMaxRangeAmount.value = ""
+            _amountValid.value = false
         }
     }
 
@@ -390,7 +414,7 @@ class CreateOfferAmountPresenter(
         val range = maxAmount - minAmount
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
 
-        val min = rangeSliderPosition.start;
+        val min = rangeSliderPosition.start
         val minValue: Float = minAmount + (min * range)
         val roundedMinQuoteValue: Long = (minValue / 10000f).roundToLong() * 10000
 

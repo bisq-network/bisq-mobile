@@ -44,6 +44,9 @@ class TakeOfferAmountPresenter(
     private lateinit var quoteAmount: FiatVO
     private lateinit var baseAmount: CoinVO
 
+    private var _amountValid: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    val amountValid: StateFlow<Boolean> = _amountValid
+
     override fun onViewAttached() {
         super.onViewAttached()
         runCatching {
@@ -81,7 +84,12 @@ class TakeOfferAmountPresenter(
     fun onTextValueChanged(textInput: String) {
         val _value = textInput.toDoubleOrNullLocaleAware()
         if (_value != null) {
-            onSliderValueChanged(getFractionForFiat(_value))
+            val valueInFraction = getFractionForFiat(_value)
+            _amountValid.value = valueInFraction >= 0.0 && valueInFraction <= 1.0
+            onSliderValueChanged(valueInFraction)
+        } else {
+            _formattedQuoteAmount.value = ""
+            _amountValid.value = false
         }
     }
 
