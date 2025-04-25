@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
@@ -117,6 +118,9 @@ class CreateOfferAmountPresenter(
         _showLimitPopup.value = newValue
     }
 
+    var _fixedSliderPosition: MutableStateFlow<Float> = MutableStateFlow(0f)
+    val fixedSliderPosition: StateFlow<Float> = _fixedSliderPosition
+
     override fun onViewAttached() {
         super.onViewAttached()
         createOfferModel = createOfferPresenter.createOfferModel
@@ -154,7 +158,11 @@ class CreateOfferAmountPresenter(
     }
 
     fun onFixedAmountTextValueChange(textInput: String) {
-        //todo parse input string and apply it to model
+        val _value = textInput.toDoubleOrNullLocaleAware()
+        if (_value != null) {
+            applyFixedAmountSliderValue(getFractionForFiat(_value))
+            updateAmountLimitInfo()
+        }
     }
 
     fun onMinAmountTextValueChange(textInput: String) {
@@ -193,6 +201,12 @@ class CreateOfferAmountPresenter(
         updateAmountLimitInfo()
     }
 
+    fun getFractionForFiat(value: Double): Float {
+        val range = maxAmount - minAmount
+        val inFraction = ((value * 10000) - minAmount) / range
+        return inFraction.toFloat()
+    }
+
     private fun updateBuyersAmountLimitInfo() {
         if (!isBuy.value) {
             return
@@ -218,7 +232,8 @@ class CreateOfferAmountPresenter(
             val peersScoreByUserProfileId = withContext(IODispatcher) {
                 getPeersScoreByUserProfileId()
             }
-            val numPotentialTakers = peersScoreByUserProfileId.filter { (_, value) -> withTolerance(value) >= requiredReputation }.count()
+            val numPotentialTakers =
+                peersScoreByUserProfileId.filter { (_, value) -> withTolerance(value) >= requiredReputation }.count()
             _shouldShowWarningIcon.value = numPotentialTakers == 0
 
             val numSellers = "bisqEasy.tradeWizard.amount.buyer.numSellers".i18nPlural(numPotentialTakers)
@@ -231,9 +246,13 @@ class CreateOfferAmountPresenter(
             val range = maxAmount - minAmount
             _rightMarkerValue.value = (highestPossibleAmountWithTolerance - minAmount) / range
 
-            val formattedFixedOrMinAmount = AmountFormatter.formatAmount(fixedOrMinAmount, useLowPrecision = true, withCode = true)
+            val formattedFixedOrMinAmount =
+                AmountFormatter.formatAmount(fixedOrMinAmount, useLowPrecision = true, withCode = true)
             val firstPart: String =
-                "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.firstPart".i18n(formattedFixedOrMinAmount, requiredReputation)
+                "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.firstPart".i18n(
+                    formattedFixedOrMinAmount,
+                    requiredReputation
+                )
             val secondPart = if (numPotentialTakers == 0) {
                 "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.info.secondPart.noSellers".i18n()
             } else {
@@ -304,8 +323,21 @@ class CreateOfferAmountPresenter(
         enableInteractive()
     }
 
+    fun validateFiatField(value: String): String? {
+        val _value = value.toDoubleOrNullLocaleAware()
+
+        when {
+            _value == null -> return "Invalid number" // TODO: i18n
+            _value * 10000 < minAmount -> return "Should be greater than ${minAmount / 10000.0}" // TODO: i18n
+            _value * 10000 > maxAmount -> return "Should be less than ${maxAmount / 10000.0}" // TODO: i18n
+            else -> return null
+        }
+
+    }
+
     private suspend fun getNumPotentialTakers(requiredReputationScore: Long): Int {
-        return getPeersScoreByUserProfileId().filter { (_, value) -> withTolerance(value) >= requiredReputationScore }.count()
+        return getPeersScoreByUserProfileId().filter { (_, value) -> withTolerance(value) >= requiredReputationScore }
+            .count()
     }
 
     private suspend fun getPeersScoreByUserProfileId(): Map<String, Long> {
@@ -365,6 +397,7 @@ class CreateOfferAmountPresenter(
 
     private fun applyFixedAmountSliderValue(amount: Float) {
         fixedAmountSliderPosition = amount
+        _fixedSliderPosition.value = amount
         quoteSideFixedAmount = FiatVOFactory.from(sliderValueToAmount(fixedAmountSliderPosition), quoteCurrencyCode)
         _formattedQuoteSideFixedAmount.value = AmountFormatter.formatAmount(quoteSideFixedAmount)
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)

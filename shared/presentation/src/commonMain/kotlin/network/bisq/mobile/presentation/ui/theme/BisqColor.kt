@@ -35,6 +35,7 @@ data class BisqColors(
     val warningHover: Color,
     val warningDisabled: Color,
     val backgroundColor: Color,
+    val transparent: Color,
 
     val yellow: Color,
     val yellow10: Color,
@@ -76,6 +77,7 @@ val darkColors = BisqColors(
     warningHover = Color(0xFFFFAC4E).adjustGamma(),
     warningDisabled = Color(0xB3FF9823).adjustGamma(),
     backgroundColor = Color(0xFF1C1C1C).adjustGamma(),
+    transparent = Color.Transparent,
 
     yellow = Color(0xFFd0831f).adjustGamma(),
     yellow10 = Color(0xFFbb751b).adjustGamma(),

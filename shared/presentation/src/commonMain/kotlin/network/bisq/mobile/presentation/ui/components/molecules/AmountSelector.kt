@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.AmountSlider
+import network.bisq.mobile.presentation.ui.components.atoms.BisqSlider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -27,18 +28,22 @@ fun BisqAmountSelector(
     formattedMinAmount: String,
     formattedMaxAmount: String,
     initialSliderPosition: Float,
+    sliderPosition: MutableStateFlow<Float>,
     maxSliderValue: StateFlow<Float?> = MutableStateFlow(null),
     leftMarkerSliderValue: StateFlow<Float?> = MutableStateFlow(null),
     rightMarkerSliderValue: StateFlow<Float?> = MutableStateFlow(null),
     formattedFiatAmount: StateFlow<String>,
     formattedBtcAmount: StateFlow<String>,
     onSliderValueChange: (sliderValue: Float) -> Unit,
-    onTextValueChange: (String) -> Unit
+    onTextValueChange: (String) -> Unit,
+    validateFiatField: ((String) -> String?)? = null,
 ) {
     val formattedFiatAmountValue = formattedFiatAmount.collectAsState().value
+    val formattedFiatAmountValueInt = formattedFiatAmountValue.split(".")[0]
     val formattedBtcAmountValue = formattedBtcAmount.collectAsState().value
 
-    val initialSliderValue = remember { MutableStateFlow(initialSliderPosition) }
+    // val initialSliderValue = remember { MutableStateFlow(initialSliderPosition) }
+    val sld = remember { MutableStateFlow(0.5f) }
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -47,10 +52,16 @@ fun BisqAmountSelector(
     ) {
 
         FiatInputField(
-            text = formattedFiatAmountValue,
+            text = formattedFiatAmountValueInt,
             onValueChanged = { onTextValueChange.invoke(it) },
-            enabled = false, //TODO when setting to true, its not working yet, probably due bidirectional binding issues
-            currency = quoteCurrencyCode
+            // enabled = false, //TODO when setting to true, its not working yet, probably due bidirectional binding issues
+            currency = quoteCurrencyCode,
+            validation = {
+                if (validateFiatField != null) {
+                    return@FiatInputField validateFiatField(it)
+                }
+                return@FiatInputField null
+            }
         )
 
         BtcSatsText(formattedBtcAmountValue)
@@ -59,7 +70,7 @@ fun BisqAmountSelector(
             BisqGap.V3()
 
             AmountSlider(
-                value = initialSliderValue,
+                value = sliderPosition,
                 maxValue = maxSliderValue,
                 leftMarkerValue = leftMarkerSliderValue,
                 rightMarkerValue = rightMarkerSliderValue,

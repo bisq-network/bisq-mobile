@@ -77,12 +77,14 @@ fun CreateOfferAmountSelectorScreen() {
                 formattedMinAmount = presenter.formattedMinAmountWithCode,
                 formattedMaxAmount = presenter.formattedMaxAmountWithCode,
                 initialSliderPosition = presenter.fixedAmountSliderPosition,
+                sliderPosition = presenter._fixedSliderPosition,
                 maxSliderValue = presenter.reputationBasedMaxSliderValue,
                 rightMarkerSliderValue = presenter.rightMarkerSliderValue,
                 formattedFiatAmount = presenter.formattedQuoteSideFixedAmount,
                 formattedBtcAmount = presenter.formattedBaseSideFixedAmount,
                 onSliderValueChange = { presenter.onFixedAmountSliderValueChange(it) },
-                onTextValueChange = { presenter.onFixedAmountTextValueChange(it) }
+                onTextValueChange = { presenter.onFixedAmountTextValueChange(it) },
+                validateFiatField = { presenter.validateFiatField(it) }
             )
         } else {
             RangeAmountSelector(

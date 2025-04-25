@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.components.molecules.inputfield
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,76 +34,56 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun FiatInputField(
     text: String,
     onValueChanged: (String) -> Unit = {},
-    label: String = "",
     enabled: Boolean = true,
     currency: String,
     paddingValues: PaddingValues = PaddingValues(all = 0.dp),
-    indicatorColor: Color = BisqTheme.colors.primary,
+    validation: ((String) -> String?)? = null,
 ) {
-    var isFocused by remember { mutableStateOf(false) }
-
-    val keyboardController = LocalSoftwareKeyboardController.current
-
+    var validationError: String? by remember { mutableStateOf(null) }
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(paddingValues)
             .clip(shape = RoundedCornerShape(6.dp))
             .background(color = BisqTheme.colors.dark_grey40)
-            .drawBehind {
-                if (isFocused) {
-                    drawLine(
-                        color = indicatorColor,
-                        start = Offset(0f, size.height),
-                        end = Offset(size.width, size.height),
-                        strokeWidth = 4.dp.toPx()
-                    )
-                }
-            }
+            .border(
+                1.dp,
+                if (validationError == null) BisqTheme.colors.transparent else BisqTheme.colors.danger,
+                RoundedCornerShape(BisqUIConstants.ScreenPadding)
+            )
     ) {
-        BasicTextField(
+        BisqTextField(
             value = text,
-            onValueChange = onValueChanged,
-            enabled = enabled,
-            modifier = Modifier
-                .padding(12.dp)
-                .fillMaxWidth()
-                .onFocusChanged { focusState ->
-                    isFocused = focusState.isFocused
-                },
+            onValueChange = { newValue, isValid ->
+                onValueChanged(newValue)
+            },
+            keyboardType = KeyboardType.Number,
+            rightSuffix = {
+                BisqText.h5Regular(currency, modifier = Modifier.offset(y = (-2).dp))
+            },
+            indicatorColor = BisqTheme.colors.transparent,
             textStyle = TextStyle(
                 color = Color.White,
                 fontSize = 32.sp,
                 textAlign = TextAlign.End,
                 textDecoration = TextDecoration.None
             ),
-            keyboardOptions = KeyboardOptions.Default.copy(keyboardType = KeyboardType.Number),
-            keyboardActions = KeyboardActions(onDone = { keyboardController?.hide() }),
-            cursorBrush = SolidColor(BisqTheme.colors.primary),
-            decorationBox = { innerTextField ->
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(24.dp),
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    if (label.isNotEmpty()) {
-                        BisqText.h5RegularGrey(
-                            text = label,
-                            modifier = Modifier.align(Alignment.CenterVertically)
-                        )
-                    }
-                    Box(modifier = Modifier.weight(1f)) {
-                        innerTextField()
-                    }
-
-                    BisqText.h5Regular(currency, modifier = Modifier.offset(y = (-2).dp))
+            validation = {
+                if (validation != null) {
+                    validationError = validation(it)
+                    return@BisqTextField null
                 }
-            }
+                return@BisqTextField null
+            },
+            disabled = !enabled,
         )
     }
 }
