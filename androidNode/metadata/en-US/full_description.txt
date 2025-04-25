@@ -1,0 +1,13 @@
+Bisq Node for Android is a decentralized peer-to-peer (P2P) communication tool designed to facilitate secure connections between users, enabling them to exchange information directly without relying on centralized servers. This application serves as a bridge for individuals looking to interact over the Bisq network, ensuring privacy and autonomy in their communications.
+
+Key Features:
+
+ - Decentralized Communication: Operate within a fully decentralized network, eliminating the need for central authorities and reducing single points of failure.
+ - Privacy-Focused: Your data remains on your device; Bisq Node does not store or track any user information, ensuring complete privacy.
+ - Secure Peer Connections: Utilize robust encryption protocols to establish secure channels between peers, safeguarding your interactions.
+ - Facilitates Information Exchange: While the app does not handle financial transactions or store assets, it enables users to coordinate and communicate effectively for activities such as arranging trades or sharing data.
+ - User-Friendly Interface: Designed with simplicity in mind, allowing both novice and experienced users to navigate and utilize the app with ease.
+
+Bisq Node for Android is an essential tool for those seeking a decentralized platform to manage their peer-to-peer communications securely. By prioritizing user privacy and eliminating the need for central intermediaries, it empowers individuals to maintain control over their interactions in the digital realm.
+
+Note: This application does not include wallet functionalities for cryptocurrencies or fiat currencies and does not facilitate direct trading or financial transactions. It serves solely as a communication facilitator within the Bisq network.
