@@ -45,6 +45,7 @@ fun FiatInputField(
     enabled: Boolean = true,
     currency: String,
     paddingValues: PaddingValues = PaddingValues(all = 0.dp),
+    textAlign: TextAlign = TextAlign.End,
     validation: ((String) -> String?)? = null,
 ) {
     var validationError: String? by remember { mutableStateOf(null) }
@@ -52,12 +53,12 @@ fun FiatInputField(
         modifier = Modifier
             .fillMaxWidth()
             .padding(paddingValues)
-            .clip(shape = RoundedCornerShape(6.dp))
+            .clip(shape = RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf))
             .background(color = BisqTheme.colors.dark_grey40)
             .border(
                 1.dp,
                 if (validationError == null) BisqTheme.colors.transparent else BisqTheme.colors.danger,
-                RoundedCornerShape(BisqUIConstants.ScreenPadding)
+                RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf)
             )
     ) {
         BisqTextField(
@@ -73,7 +74,7 @@ fun FiatInputField(
             textStyle = TextStyle(
                 color = Color.White,
                 fontSize = 32.sp,
-                textAlign = TextAlign.End,
+                textAlign = textAlign,
                 textDecoration = TextDecoration.None
             ),
             validation = {

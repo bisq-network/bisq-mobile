@@ -43,6 +43,7 @@ fun CreateOfferAmountSelectorScreen() {
         stepsLength = 6,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() },
+        snackbarHostState = presenter.getSnackState(),
         shouldBlurBg = showLimitPopup,
     ) {
 
@@ -83,16 +84,16 @@ fun CreateOfferAmountSelectorScreen() {
                 formattedBtcAmount = presenter.formattedBaseSideFixedAmount,
                 onSliderValueChange = { presenter.onFixedAmountSliderValueChange(it) },
                 onTextValueChange = { presenter.onFixedAmountTextValueChange(it) },
-                validateTextField = { presenter.validateTextField(it) }
+                validateTextField = { presenter.validateTextField(it) },
             )
         } else {
             RangeAmountSelector(
                 formattedMinAmount = presenter.formattedMinAmountWithCode,
                 formattedMaxAmount = presenter.formattedMaxAmountWithCode,
                 quoteCurrencyCode = presenter.quoteCurrencyCode,
-                minRangeInitialSliderValue = presenter.minRangeInitialSliderValue,
+                minRangeSliderValue = presenter._minRangeInitialSliderValue,
                 onMinRangeSliderValueChange = { presenter.onMinRangeSliderValueChange(it) },
-                maxRangeInitialSliderValue = presenter.maxRangeInitialSliderValue,
+                maxRangeSliderValue = presenter._maxRangeInitialSliderValue,
                 onMaxRangeSliderValueChange = { presenter.onMaxRangeSliderValueChange(it) },
                 maxSliderValue = presenter.reputationBasedMaxSliderValue,
                 rightMarkerSliderValue = presenter.rightMarkerSliderValue,
@@ -100,9 +101,10 @@ fun CreateOfferAmountSelectorScreen() {
                 formattedBaseSideMinRangeAmount = presenter.formattedBaseSideMinRangeAmount,
                 formattedQuoteSideMaxRangeAmount = presenter.formattedQuoteSideMaxRangeAmount,
                 formattedBaseSideMaxRangeAmount = presenter.formattedBaseSideMaxRangeAmount,
-
                 onMinAmountTextValueChange = { presenter.onMinAmountTextValueChange(it) },
-                onMaxAmountTextValueChange = { presenter.onMaxAmountTextValueChange(it) }
+                onMaxAmountTextValueChange = { presenter.onMaxAmountTextValueChange(it) },
+                validateRangeMinTextField = { presenter.validateRangeMinTextField(it) },
+                validateRangeMaxTextField = { presenter.validateRangeMaxTextField(it) },
             )
         }
 

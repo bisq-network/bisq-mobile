@@ -36,7 +36,7 @@ fun BisqAmountSelector(
     validateTextField: ((String) -> String?)? = null,
 ) {
     val formattedFiatAmountValue = formattedFiatAmount.collectAsState().value
-    val formattedFiatAmountValueInt = formattedFiatAmountValue.split(".")[0]
+    val formattedFiatAmountValueInt = formattedFiatAmountValue.split(".").first()
     val formattedBtcAmountValue = formattedBtcAmount.collectAsState().value
 
     Column(

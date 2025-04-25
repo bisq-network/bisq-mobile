@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
+import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVOExtensions.asDouble
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
@@ -73,8 +74,10 @@ class CreateOfferAmountPresenter(
     val formattedBaseSideFixedAmount: StateFlow<String> = _formattedBaseSideFixedAmount
 
     // RANGE_AMOUNT
-    var minRangeInitialSliderValue: Float = 0.1f
-    var maxRangeInitialSliderValue: Float = 0.9f
+    var _minRangeInitialSliderValue: MutableStateFlow<Float> = MutableStateFlow(0.1f)
+    var minRangeInitialSliderValue: StateFlow<Float> = _minRangeInitialSliderValue
+    var _maxRangeInitialSliderValue: MutableStateFlow<Float> = MutableStateFlow(0.9f)
+    var maxRangeInitialSliderValue: StateFlow<Float> = _maxRangeInitialSliderValue
     private var rangeSliderPosition: ClosedFloatingPointRange<Float> = 0.0f..1.0f
     private val _formattedQuoteSideMinRangeAmount = MutableStateFlow("")
     val formattedQuoteSideMinRangeAmount: StateFlow<String> = _formattedQuoteSideMinRangeAmount
@@ -164,11 +167,19 @@ class CreateOfferAmountPresenter(
     }
 
     fun onMinAmountTextValueChange(textInput: String) {
-        //todo parse input string and apply it to model
+        val _value = textInput.toDoubleOrNullLocaleAware()
+        if (_value != null) {
+            applyMinRangeAmountSliderValue(getFractionForFiat(_value))
+            updateAmountLimitInfo()
+        }
     }
 
     fun onMaxAmountTextValueChange(textInput: String) {
-        //todo parse input string and apply it to model
+        val _value = textInput.toDoubleOrNullLocaleAware()
+        if (_value != null) {
+            applyMaxRangeAmountSliderValue(getFractionForFiat(_value))
+            updateAmountLimitInfo()
+        }
     }
 
     fun onFixedAmountSliderValueChange(value: Float) {
@@ -305,6 +316,10 @@ class CreateOfferAmountPresenter(
     }
 
     fun onNext() {
+        if (quoteSideMaxRangeAmount.asDouble() < quoteSideMinRangeAmount.asDouble()) {
+            showSnackbar("Min should be lesser than Max") // TODO:i18n
+            return
+        }
         commitToModel()
         navigateTo(Routes.CreateOfferPrice)
     }
@@ -331,6 +346,30 @@ class CreateOfferAmountPresenter(
             else -> return null
         }
 
+    }
+
+    fun validateRangeMinTextField(value: String): String? {
+        val _value = value.toDoubleOrNullLocaleAware()
+
+        when {
+            _value == null -> return "Invalid number" // TODO: i18n
+            _value * 10000 < minAmount -> return "Should be greater than ${minAmount / 10000.0}" // TODO: i18n
+            _value * 10000 > maxAmount -> return "Should be less than ${maxAmount / 10000.0}" // TODO: i18n
+            // _value > quoteSideMaxRangeAmount.asDouble()  -> return "Min should be lesser than max" // TODO: i18n
+            else -> return null
+        }
+    }
+
+    fun validateRangeMaxTextField(value: String): String? {
+        val _value = value.toDoubleOrNullLocaleAware()
+
+        when {
+            _value == null -> return "Invalid number" // TODO: i18n
+            _value * 10000 < minAmount -> return "Should be greater than ${minAmount / 10000.0}" // TODO: i18n
+            _value * 10000 > maxAmount -> return "Should be less than ${maxAmount / 10000.0}" // TODO: i18n
+            // quoteSideMinRangeAmount.asDouble() > _value  -> return "Min should be lesser than max" // TODO: i18n
+            else -> return null
+        }
     }
 
     private suspend fun getNumPotentialTakers(requiredReputationScore: Long): Int {
@@ -376,8 +415,9 @@ class CreateOfferAmountPresenter(
 
 
     private fun applyMinRangeAmountSliderValue(amount: Float) {
-        minRangeInitialSliderValue = amount
-        quoteSideMinRangeAmount = FiatVOFactory.from(sliderValueToAmount(minRangeInitialSliderValue), quoteCurrencyCode)
+        _minRangeInitialSliderValue.value = amount
+        quoteSideMinRangeAmount =
+            FiatVOFactory.from(sliderValueToAmount(minRangeInitialSliderValue.value), quoteCurrencyCode)
         _formattedQuoteSideMinRangeAmount.value = AmountFormatter.formatAmount(quoteSideMinRangeAmount)
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideMinRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMinRangeAmount) as CoinVO
@@ -385,8 +425,9 @@ class CreateOfferAmountPresenter(
     }
 
     private fun applyMaxRangeAmountSliderValue(amount: Float) {
-        maxRangeInitialSliderValue = amount
-        quoteSideMaxRangeAmount = FiatVOFactory.from(sliderValueToAmount(maxRangeInitialSliderValue), quoteCurrencyCode)
+        _maxRangeInitialSliderValue.value = amount
+        quoteSideMaxRangeAmount =
+            FiatVOFactory.from(sliderValueToAmount(maxRangeInitialSliderValue.value), quoteCurrencyCode)
         _formattedQuoteSideMaxRangeAmount.value = AmountFormatter.formatAmount(quoteSideMaxRangeAmount)
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideMaxRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMaxRangeAmount) as CoinVO
@@ -395,7 +436,8 @@ class CreateOfferAmountPresenter(
 
     private fun applyFixedAmountSliderValue(amount: Float) {
         _fixedAmountSliderPosition.value = amount
-        quoteSideFixedAmount = FiatVOFactory.from(sliderValueToAmount(fixedAmountSliderPosition.value), quoteCurrencyCode)
+        quoteSideFixedAmount =
+            FiatVOFactory.from(sliderValueToAmount(fixedAmountSliderPosition.value), quoteCurrencyCode)
         _formattedQuoteSideFixedAmount.value = AmountFormatter.formatAmount(quoteSideFixedAmount)
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideFixedAmount = priceQuote.toBaseSideMonetary(quoteSideFixedAmount) as CoinVO
