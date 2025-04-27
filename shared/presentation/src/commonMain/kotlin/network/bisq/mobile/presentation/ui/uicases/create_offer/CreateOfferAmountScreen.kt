@@ -21,6 +21,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.RangeAmountSelec
 import network.bisq.mobile.presentation.ui.components.molecules.ToggleTab
 import network.bisq.mobile.presentation.ui.components.organisms.create_offer.ReputationBasedBuyerLimitsPopup
 import network.bisq.mobile.presentation.ui.components.organisms.create_offer.ReputationBasedSellerLimitsPopup
+import network.bisq.mobile.presentation.ui.helpers.AmountValidator
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.AmountType
 import org.koin.compose.koinInject
@@ -104,8 +105,8 @@ fun CreateOfferAmountSelectorScreen() {
                 formattedBaseSideMaxRangeAmount = presenter.formattedBaseSideMaxRangeAmount.collectAsState().value,
                 onMinAmountTextValueChange = { presenter.onMinAmountTextValueChange(it) },
                 onMaxAmountTextValueChange = { presenter.onMaxAmountTextValueChange(it) },
-                validateRangeMinTextField = { presenter.validateRangeMinTextField(it) },
-                validateRangeMaxTextField = { presenter.validateRangeMaxTextField(it) },
+                validateRangeMinTextField = { presenter.validateTextField(it) },
+                validateRangeMaxTextField = { presenter.validateTextField(it) },
             )
         }
 

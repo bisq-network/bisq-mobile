@@ -15,6 +15,7 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.helpers.AmountValidator
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import kotlin.math.roundToLong
 
@@ -64,8 +65,10 @@ class TakeOfferAmountPresenter(
             maxAmount = minOf(maxAmount, rangeAmountSpec.maxAmount)
 
             formattedMinAmount = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode))
-            formattedMinAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode), true, true)
-            formattedMaxAmountWithCode = AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
+            formattedMinAmountWithCode =
+                AmountFormatter.formatAmount(FiatVOFactory.from(minAmount, quoteCurrencyCode), true, true)
+            formattedMaxAmountWithCode =
+                AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
 
             _formattedQuoteAmount.value = offerListItem.formattedQuoteAmount
             _formattedBaseAmount.value = offerListItem.formattedBaseAmount.value
@@ -85,7 +88,7 @@ class TakeOfferAmountPresenter(
         val _value = textInput.toDoubleOrNullLocaleAware()
         if (_value != null) {
             val valueInFraction = getFractionForFiat(_value)
-            _amountValid.value = valueInFraction >= 0.0 && valueInFraction <= 1.0
+            _amountValid.value = valueInFraction in 0f..1f
             onSliderValueChanged(valueInFraction)
         } else {
             _formattedQuoteAmount.value = ""
@@ -94,19 +97,11 @@ class TakeOfferAmountPresenter(
     }
 
     fun validateTextField(value: String): String? {
-        val _value = value.toDoubleOrNullLocaleAware()
-
-        when {
-            _value == null -> return "Invalid number" // TODO: i18n
-            _value * 10000 < minAmount -> return "Should be greater than ${minAmount / 10000.0}" // TODO: i18n
-            _value * 10000 > maxAmount -> return "Should be less than ${maxAmount / 10000.0}" // TODO: i18n
-            else -> return null
-        }
-
+        return AmountValidator.validate(value, minAmount, maxAmount)
     }
 
     fun getFractionForFiat(value: Double): Float {
-        val range = maxAmount - minAmount
+        val range = (maxAmount - minAmount).takeIf { it != 0L } ?: return 0f
         val inFraction = ((value * 10000) - minAmount) / range
         return inFraction.toFloat()
     }

@@ -33,6 +33,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.helpers.AmountValidator
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.AmountType
 import kotlin.math.roundToLong
@@ -165,7 +166,7 @@ class CreateOfferAmountPresenter(
         val _value = textInput.toDoubleOrNullLocaleAware()
         if (_value != null) {
             val valueInFraction = getFractionForFiat(_value)
-            _amountValid.value = valueInFraction >= 0.0 && valueInFraction <= 1.0
+            _amountValid.value = valueInFraction in 0.0..1.0
             applyFixedAmountSliderValue(valueInFraction)
             updateAmountLimitInfo()
         } else {
@@ -235,7 +236,7 @@ class CreateOfferAmountPresenter(
     }
 
     fun getFractionForFiat(value: Double): Float {
-        val range = maxAmount - minAmount
+        val range = (maxAmount - minAmount).takeIf { it != 0L } ?: return 0f
         val inFraction = ((value * 10000) - minAmount) / range
         return inFraction.toFloat()
     }
@@ -361,39 +362,7 @@ class CreateOfferAmountPresenter(
     }
 
     fun validateTextField(value: String): String? {
-        val _value = value.toDoubleOrNullLocaleAware()
-
-        when {
-            _value == null -> return "Invalid number" // TODO: i18n
-            _value * 10000 < minAmount -> return "Should be greater than ${minAmount / 10000.0}" // TODO: i18n
-            _value * 10000 > maxAmount -> return "Should be less than ${maxAmount / 10000.0}" // TODO: i18n
-            else -> return null
-        }
-
-    }
-
-    fun validateRangeMinTextField(value: String): String? {
-        val _value = value.toDoubleOrNullLocaleAware()
-
-        when {
-            _value == null -> return "Invalid number" // TODO: i18n
-            _value * 10000 < minAmount -> return "Should be greater than ${minAmount / 10000.0}" // TODO: i18n
-            _value * 10000 > maxAmount -> return "Should be less than ${maxAmount / 10000.0}" // TODO: i18n
-            // _value > quoteSideMaxRangeAmount.asDouble()  -> return "Min should be lesser than max" // TODO: i18n
-            else -> return null
-        }
-    }
-
-    fun validateRangeMaxTextField(value: String): String? {
-        val _value = value.toDoubleOrNullLocaleAware()
-
-        when {
-            _value == null -> return "Invalid number" // TODO: i18n
-            _value * 10000 < minAmount -> return "Should be greater than ${minAmount / 10000.0}" // TODO: i18n
-            _value * 10000 > maxAmount -> return "Should be less than ${maxAmount / 10000.0}" // TODO: i18n
-            // quoteSideMinRangeAmount.asDouble() > _value  -> return "Min should be lesser than max" // TODO: i18n
-            else -> return null
-        }
+        return AmountValidator.validate(value, minAmount, maxAmount)
     }
 
     private suspend fun getNumPotentialTakers(requiredReputationScore: Long): Int {

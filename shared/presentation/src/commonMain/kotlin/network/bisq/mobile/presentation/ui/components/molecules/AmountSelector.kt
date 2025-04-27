@@ -32,11 +32,7 @@ fun BisqAmountSelector(
     onTextValueChange: (String) -> Unit,
     validateTextField: ((String) -> String?)? = null,
 ) {
-    val splits = formattedFiatAmount.split(".")
-    val formattedFiatAmountValueInt = if (splits.isEmpty())
-        ""
-    else
-        splits.first()
+    val formattedFiatAmountValueInt = formattedFiatAmount.substringBefore('.')
 
     Column(
         modifier = Modifier.fillMaxWidth(),

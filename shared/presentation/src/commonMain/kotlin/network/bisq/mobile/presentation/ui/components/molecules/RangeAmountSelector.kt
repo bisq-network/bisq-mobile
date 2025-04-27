@@ -39,19 +39,8 @@ fun RangeAmountSelector(
     validateRangeMinTextField: ((String) -> String?)? = null,
     validateRangeMaxTextField: ((String) -> String?)? = null,
 ) {
-    val minSplits = formattedQuoteSideMinRangeAmount.split(".")
-    val quoteSideMinRangeAmountWithoutDecimal = if (minSplits.isEmpty())
-        ""
-    else
-        minSplits.first()
-
-    val maxSplits = formattedQuoteSideMaxRangeAmount.split(".")
-    val quoteSideMaxRangeAmountWithoutDecimal = if (maxSplits.isEmpty())
-        ""
-    else
-        maxSplits.first()
-
-    val smallFont = maxOf(formattedQuoteSideMaxRangeAmount.length, formattedQuoteSideMinRangeAmount.length) > 6
+    val quoteSideMinRangeAmountWithoutDecimal = formattedQuoteSideMinRangeAmount.substringBefore('.')
+    val quoteSideMaxRangeAmountWithoutDecimal = formattedQuoteSideMaxRangeAmount.substringBefore('.')
 
     Column {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {

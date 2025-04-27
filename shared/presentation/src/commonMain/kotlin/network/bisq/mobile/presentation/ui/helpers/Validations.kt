@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.helpers
 
+import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import kotlin.text.Regex
 
 // Ref: bisq2:common/src/main/java/bisq/common/validation/LightningInvoiceValidation.java
@@ -36,5 +37,18 @@ object BitcoinTransactionValidation {
 
     fun validateTxId(txId: String): Boolean {
         return TXID_PATTERN.matches(txId)
+    }
+}
+
+object AmountValidator {
+    fun validate(value: String, min: Long, max: Long): String? {
+        val _value = value.toDoubleOrNullLocaleAware()
+
+        when {
+            _value == null -> return "Invalid number" // TODO: i18n
+            _value * 10000 < min-> return "Should be greater than ${min/ 10000.0}" // TODO: i18n
+            _value * 10000 > max-> return "Should be less than ${max/ 10000.0}" // TODO: i18n
+            else -> return null
+        }
     }
 }
