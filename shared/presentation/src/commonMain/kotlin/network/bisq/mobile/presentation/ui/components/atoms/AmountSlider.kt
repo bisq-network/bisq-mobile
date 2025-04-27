@@ -14,30 +14,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun AmountSlider(
-    value: MutableStateFlow<Float>,
+    value: Float,
     onValueChange: (Float) -> Unit,
-    maxValue: StateFlow<Float?> = MutableStateFlow(null),
-    leftMarkerValue: StateFlow<Float?> = MutableStateFlow(null),
-    rightMarkerValue: StateFlow<Float?> = MutableStateFlow(null),
+    max: Float? = null,
+    leftMarker: Float? = null,
+    rightMarker: Float? = null,
     modifier: Modifier = Modifier,
 ) {
-    val mutableVal by value.collectAsState()
 
     // max and rightMarker cannot be > 1
     // leftMarker cannot be < 0
-    val max by maxValue.collectAsState()
-    val leftMarker by leftMarkerValue.collectAsState()
-    val rightMarker by rightMarkerValue.collectAsState()
 
     val dragState = rememberDraggableState { delta ->
-        val newValue = (mutableVal + delta / 1000f).coerceIn(0f, max ?: 1f).coerceIn(0f, 1f)
+        val newValue = (value + delta / 1000f).coerceIn(0f, max ?: 1f).coerceIn(0f, 1f)
         onValueChange(newValue)
-        value.value = newValue
     }
 
     Box(
@@ -55,7 +49,7 @@ fun AmountSlider(
             val trackHeight = 3.dp.toPx()  // We use 2 px in Bisq 2 but seems to small here
 
             val maxPos = (max ?: 1f).coerceIn(0f, 1f) * width
-            val thumbPos = mutableVal.coerceIn(0f, 1f) * width
+            val thumbPos = value.coerceIn(0f, 1f) * width
 
             // Track
             drawLine(

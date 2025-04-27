@@ -4,11 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -34,6 +30,15 @@ fun FiatInputField(
     validation: ((String) -> String?)? = null,
 ) {
     var validationError: String? by remember { mutableStateOf(null) }
+
+    // This triggers double validation, when user types value in the field
+    // But is necessary to re-validate when value changes from outside.
+    LaunchedEffect(text) {
+        if (validation != null) {
+            validationError = validation(text)
+        }
+    }
+
     Box(
         modifier = Modifier
             .fillMaxWidth()

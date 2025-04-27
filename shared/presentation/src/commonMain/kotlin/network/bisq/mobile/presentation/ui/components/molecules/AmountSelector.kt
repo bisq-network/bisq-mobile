@@ -6,12 +6,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.AmountSlider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -25,23 +22,21 @@ fun BisqAmountSelector(
     quoteCurrencyCode: String,
     formattedMinAmount: String,
     formattedMaxAmount: String,
-    sliderPosition: MutableStateFlow<Float>,
-    maxSliderValue: StateFlow<Float?> = MutableStateFlow(null),
-    leftMarkerSliderValue: StateFlow<Float?> = MutableStateFlow(null),
-    rightMarkerSliderValue: StateFlow<Float?> = MutableStateFlow(null),
-    formattedFiatAmount: StateFlow<String>,
-    formattedBtcAmount: StateFlow<String>,
+    sliderPosition: Float,
+    maxSliderValue: Float? = null,
+    leftMarkerSliderValue: Float? = null,
+    rightMarkerSliderValue: Float? = null,
+    formattedFiatAmount: String,
+    formattedBtcAmount: String,
     onSliderValueChange: (sliderValue: Float) -> Unit,
     onTextValueChange: (String) -> Unit,
     validateTextField: ((String) -> String?)? = null,
 ) {
-    val formattedFiatAmountValue = formattedFiatAmount.collectAsState().value
-    val splits = formattedFiatAmountValue.split(".")
+    val splits = formattedFiatAmount.split(".")
     val formattedFiatAmountValueInt = if (splits.isEmpty())
         ""
     else
         splits.first()
-    val formattedBtcAmountValue = formattedBtcAmount.collectAsState().value
 
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -61,16 +56,16 @@ fun BisqAmountSelector(
             }
         )
 
-        BtcSatsText(formattedBtcAmountValue)
+        BtcSatsText(formattedBtcAmount)
 
         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
             BisqGap.V3()
 
             AmountSlider(
                 value = sliderPosition,
-                maxValue = maxSliderValue,
-                leftMarkerValue = leftMarkerSliderValue,
-                rightMarkerValue = rightMarkerSliderValue,
+                max = maxSliderValue,
+                leftMarker = leftMarkerSliderValue,
+                rightMarker = rightMarkerSliderValue,
                 onValueChange = { onSliderValueChange(it) }
             )
 

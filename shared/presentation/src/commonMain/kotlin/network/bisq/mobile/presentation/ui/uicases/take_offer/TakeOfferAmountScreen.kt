@@ -43,12 +43,12 @@ fun TakeOfferTradeAmountScreen() {
             quoteCurrencyCode = presenter.quoteCurrencyCode,
             formattedMinAmount = presenter.formattedMinAmountWithCode,
             formattedMaxAmount = presenter.formattedMaxAmountWithCode,
-            formattedFiatAmount = presenter.formattedQuoteAmount,
-            formattedBtcAmount = presenter.formattedBaseAmount,
+            formattedFiatAmount = presenter.formattedQuoteAmount.collectAsState().value,
+            formattedBtcAmount = presenter.formattedBaseAmount.collectAsState().value,
             onSliderValueChange = { sliderValue -> presenter.onSliderValueChanged(sliderValue) },
             onTextValueChange = { textInput -> presenter.onTextValueChanged(textInput) },
             validateTextField = { presenter.validateTextField(it) },
-            sliderPosition = presenter._sliderPosition,
+            sliderPosition = presenter._sliderPosition.collectAsState().value,
         )
     }
 }

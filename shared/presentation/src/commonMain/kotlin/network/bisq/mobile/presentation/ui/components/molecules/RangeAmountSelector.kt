@@ -6,13 +6,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
@@ -26,39 +23,35 @@ fun RangeAmountSelector(
     formattedMinAmount: String,
     formattedMaxAmount: String,
     quoteCurrencyCode: String,
-    minRangeSliderValue: MutableStateFlow<Float>,
+    minRangeSliderValue: Float,
     onMinRangeSliderValueChange: (Float) -> Unit,
-    maxRangeSliderValue: MutableStateFlow<Float>,
+    maxRangeSliderValue: Float,
     onMaxRangeSliderValueChange: (Float) -> Unit,
-    maxSliderValue: StateFlow<Float?> = MutableStateFlow(null),
-    leftMarkerSliderValue: StateFlow<Float?> = MutableStateFlow(null),
-    rightMarkerSliderValue: StateFlow<Float?> = MutableStateFlow(null),
-    formattedQuoteSideMinRangeAmount: StateFlow<String>,
-    formattedBaseSideMinRangeAmount: StateFlow<String>,
-    formattedQuoteSideMaxRangeAmount: StateFlow<String>,
-    formattedBaseSideMaxRangeAmount: StateFlow<String>,
+    maxSliderValue: Float? = null,
+    leftMarkerSliderValue: Float? = null,
+    rightMarkerSliderValue: Float? = null,
+    formattedQuoteSideMinRangeAmount: String,
+    formattedBaseSideMinRangeAmount: String,
+    formattedQuoteSideMaxRangeAmount: String,
+    formattedBaseSideMaxRangeAmount: String,
     onMinAmountTextValueChange: (String) -> Unit, // todo not applied yet
     onMaxAmountTextValueChange: (String) -> Unit, // todo not applied yet
     validateRangeMinTextField: ((String) -> String?)? = null,
     validateRangeMaxTextField: ((String) -> String?)? = null,
 ) {
-    val quoteSideMinRangeAmount = formattedQuoteSideMinRangeAmount.collectAsState().value
-    val minSplits = quoteSideMinRangeAmount.split(".")
+    val minSplits = formattedQuoteSideMinRangeAmount.split(".")
     val quoteSideMinRangeAmountWithoutDecimal = if (minSplits.isEmpty())
         ""
     else
         minSplits.first()
-    val baseSideMinRangeAmount = formattedBaseSideMinRangeAmount.collectAsState().value
 
-    val quoteSideMaxRangeAmount = formattedQuoteSideMaxRangeAmount.collectAsState().value
-    val maxSplits = quoteSideMaxRangeAmount.split(".")
+    val maxSplits = formattedQuoteSideMaxRangeAmount.split(".")
     val quoteSideMaxRangeAmountWithoutDecimal = if (maxSplits.isEmpty())
         ""
     else
         maxSplits.first()
-    val baseSideMaxRangeAmount = formattedBaseSideMaxRangeAmount.collectAsState().value
 
-    val smallFont = maxOf(quoteSideMaxRangeAmount.length, quoteSideMinRangeAmount.length) > 6
+    val smallFont = maxOf(formattedQuoteSideMaxRangeAmount.length, formattedQuoteSideMinRangeAmount.length) > 6
 
     Column {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -79,7 +72,7 @@ fun RangeAmountSelector(
                         return@FiatInputField null
                     }
                 )
-                BtcSatsText(baseSideMinRangeAmount)
+                BtcSatsText(formattedBaseSideMinRangeAmount)
             }
             BisqGap.H1()
             Column(
@@ -99,7 +92,7 @@ fun RangeAmountSelector(
                         return@FiatInputField null
                     }
                 )
-                BtcSatsText(baseSideMaxRangeAmount)
+                BtcSatsText(formattedBaseSideMaxRangeAmount)
             }
         }
 
