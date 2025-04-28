@@ -48,7 +48,7 @@ fun TakeOfferTradeAmountScreen() {
             onSliderValueChange = { sliderValue -> presenter.onSliderValueChanged(sliderValue) },
             onTextValueChange = { textInput -> presenter.onTextValueChanged(textInput) },
             validateTextField = { presenter.validateTextField(it) },
-            sliderPosition = presenter._sliderPosition.collectAsState().value,
+            sliderPosition = presenter.sliderPosition.collectAsState().value,
         )
     }
 }

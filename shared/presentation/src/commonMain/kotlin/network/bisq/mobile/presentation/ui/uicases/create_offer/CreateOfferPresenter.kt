@@ -50,7 +50,7 @@ class CreateOfferPresenter(
         var baseSideFixedAmount: CoinVO? = null
 
         // RANGE_AMOUNT
-        var rangeSliderPosition: ClosedFloatingPointRange<Float> = 0.0f..1.0f
+        var rangeSliderPosition: ClosedFloatingPointRange<Float> = 0.1f..0.9f
         var quoteSideMinRangeAmount: FiatVO? = null
         var baseSideMinRangeAmount: CoinVO? = null
         var quoteSideMaxRangeAmount: FiatVO? = null

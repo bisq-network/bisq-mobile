@@ -58,8 +58,8 @@ class CreateOfferAmountPresenter(
     val amountType: StateFlow<AmountType> = _amountType
 
     // FIXED_AMOUNT
-    var _fixedAmountSliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
-    var fixedAmountSliderPosition: StateFlow<Float> = _fixedAmountSliderPosition
+    private val _fixedAmountSliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
+    val fixedAmountSliderPosition: StateFlow<Float> = _fixedAmountSliderPosition
 
     private val _reputationBasedMaxValue: MutableStateFlow<Float?> = MutableStateFlow(null)
     val reputationBasedMaxSliderValue: StateFlow<Float?> = _reputationBasedMaxValue
@@ -75,10 +75,10 @@ class CreateOfferAmountPresenter(
     val formattedBaseSideFixedAmount: StateFlow<String> = _formattedBaseSideFixedAmount
 
     // RANGE_AMOUNT
-    var _minRangeInitialSliderValue: MutableStateFlow<Float> = MutableStateFlow(0.1f)
-    var minRangeInitialSliderValue: StateFlow<Float> = _minRangeInitialSliderValue
-    var _maxRangeInitialSliderValue: MutableStateFlow<Float> = MutableStateFlow(0.9f)
-    var maxRangeInitialSliderValue: StateFlow<Float> = _maxRangeInitialSliderValue
+    private val _minRangeSliderValue: MutableStateFlow<Float> = MutableStateFlow(0.1f)
+    var minRangeSliderValue: StateFlow<Float> = _minRangeSliderValue
+    private val _maxRangeSliderValue: MutableStateFlow<Float> = MutableStateFlow(0.9f)
+    var maxRangeSliderValue: StateFlow<Float> = _maxRangeSliderValue
     private var rangeSliderPosition: ClosedFloatingPointRange<Float> = 0.0f..1.0f
     private val _formattedQuoteSideMinRangeAmount = MutableStateFlow("")
     val formattedQuoteSideMinRangeAmount: StateFlow<String> = _formattedQuoteSideMinRangeAmount
@@ -151,6 +151,8 @@ class CreateOfferAmountPresenter(
 
         rangeSliderPosition = createOfferModel.rangeSliderPosition
         applyRangeAmountSliderValue(rangeSliderPosition)
+        _minRangeSliderValue.value = rangeSliderPosition.start
+        _maxRangeSliderValue.value = rangeSliderPosition.endInclusive
 
         _isBuy.value = createOfferModel.direction.isBuy
 
@@ -408,9 +410,9 @@ class CreateOfferAmountPresenter(
 
 
     private fun applyMinRangeAmountSliderValue(amount: Float) {
-        _minRangeInitialSliderValue.value = amount
+        _minRangeSliderValue.value = amount
         quoteSideMinRangeAmount =
-            FiatVOFactory.from(sliderValueToAmount(minRangeInitialSliderValue.value), quoteCurrencyCode)
+            FiatVOFactory.from(sliderValueToAmount(minRangeSliderValue.value), quoteCurrencyCode)
         _formattedQuoteSideMinRangeAmount.value = AmountFormatter.formatAmount(quoteSideMinRangeAmount)
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideMinRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMinRangeAmount) as CoinVO
@@ -418,9 +420,9 @@ class CreateOfferAmountPresenter(
     }
 
     private fun applyMaxRangeAmountSliderValue(amount: Float) {
-        _maxRangeInitialSliderValue.value = amount
+        _maxRangeSliderValue.value = amount
         quoteSideMaxRangeAmount =
-            FiatVOFactory.from(sliderValueToAmount(maxRangeInitialSliderValue.value), quoteCurrencyCode)
+            FiatVOFactory.from(sliderValueToAmount(maxRangeSliderValue.value), quoteCurrencyCode)
         _formattedQuoteSideMaxRangeAmount.value = AmountFormatter.formatAmount(quoteSideMaxRangeAmount)
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideMaxRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMaxRangeAmount) as CoinVO

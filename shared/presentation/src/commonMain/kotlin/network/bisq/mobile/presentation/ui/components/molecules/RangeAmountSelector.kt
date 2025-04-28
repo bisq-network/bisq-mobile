@@ -34,8 +34,8 @@ fun RangeAmountSelector(
     formattedBaseSideMinRangeAmount: String,
     formattedQuoteSideMaxRangeAmount: String,
     formattedBaseSideMaxRangeAmount: String,
-    onMinAmountTextValueChange: (String) -> Unit, // todo not applied yet
-    onMaxAmountTextValueChange: (String) -> Unit, // todo not applied yet
+    onMinAmountTextValueChange: (String) -> Unit,
+    onMaxAmountTextValueChange: (String) -> Unit,
     validateRangeMinTextField: ((String) -> String?)? = null,
     validateRangeMaxTextField: ((String) -> String?)? = null,
 ) {
