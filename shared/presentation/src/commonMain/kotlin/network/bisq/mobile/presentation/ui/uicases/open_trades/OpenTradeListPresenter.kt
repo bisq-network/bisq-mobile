@@ -45,11 +45,10 @@ class OpenTradeListPresenter(
     }
 
     fun onOpenTradeGuide() {
-        // _tradeGuideVisible.value = true
         navigateTo(Routes.TradeGuideOverview)
     }
 
-    fun onCloseTradeGuide() {
+    fun onCloseTradeGuideConfirmation() {
         _tradeGuideVisible.value = false
     }
 
@@ -66,7 +65,6 @@ class OpenTradeListPresenter(
             navigateTo(Routes.OpenTrade)
         } else {
             log.w { "User hasn't accepted trade rules yet, showing dialog" }
-            // TODO show dialogue to open trade guide
             _tradeGuideVisible.value = true
         }
     }

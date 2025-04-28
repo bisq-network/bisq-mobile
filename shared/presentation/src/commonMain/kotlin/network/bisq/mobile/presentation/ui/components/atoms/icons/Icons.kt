@@ -28,6 +28,7 @@ import bisqapps.shared.presentation.generated.resources.icon_flash_light
 import bisqapps.shared.presentation.generated.resources.icon_gallery
 import bisqapps.shared.presentation.generated.resources.icon_info
 import bisqapps.shared.presentation.generated.resources.icon_info_green
+import bisqapps.shared.presentation.generated.resources.icon_info_green_filled
 import bisqapps.shared.presentation.generated.resources.icon_language_grey
 import bisqapps.shared.presentation.generated.resources.icon_paste
 import bisqapps.shared.presentation.generated.resources.icon_qr
@@ -140,6 +141,11 @@ fun LanguageIcon(modifier: Modifier = Modifier.size(16.dp)) {
 @Composable
 fun InfoIcon(modifier: Modifier = Modifier.size(16.dp)) {
     Image(painterResource(Res.drawable.icon_info), "Info icon", modifier = modifier)
+}
+
+@Composable
+fun InfoGreenFilledIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_info_green_filled), "Green filled info icon", modifier = modifier)
 }
 
 @Composable

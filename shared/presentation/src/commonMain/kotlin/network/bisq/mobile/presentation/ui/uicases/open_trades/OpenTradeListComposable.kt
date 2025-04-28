@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -15,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -24,15 +22,16 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.fiat_btc
 import bisqapps.shared.presentation.generated.resources.reputation
 import bisqapps.shared.presentation.generated.resources.thumbs_up
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.InformationConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.DrawableResource
@@ -44,10 +43,20 @@ fun OpenTradeListScreen() {
     val presenter: OpenTradeListPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val sortedList = presenter.openTradeItems.collectAsState().value.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
+    val sortedList =
+        presenter.openTradeItems.collectAsState().value.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
 
     if (presenter.tradeGuideVisible.collectAsState().value) {
-        TradeGuide(presenter)
+        InformationConfirmationDialog(
+            message = "bisqEasy.tradeGuide.notConfirmed.warn".i18n(),
+            confirmButtonText = "bisqEasy.tradeGuide.open".i18n(),
+            dismissButtonText = "action.close".i18n(),
+            onConfirm = {
+                presenter.onCloseTradeGuideConfirmation()
+                presenter.onOpenTradeGuide()
+            },
+            onDismiss = presenter::onCloseTradeGuideConfirmation
+        )
     }
 
     if (presenter.openTradeItems.collectAsState().value.isEmpty()) {
@@ -56,7 +65,8 @@ fun OpenTradeListScreen() {
         LazyColumn(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = if (presenter.tradeGuideVisible.value) Modifier.fillMaxSize().blur(8.dp) else Modifier.fillMaxSize()
+            modifier = if (presenter.tradeGuideVisible.value) Modifier.fillMaxSize()
+                .blur(8.dp) else Modifier.fillMaxSize()
         ) {
             item {
                 Column(
@@ -74,7 +84,7 @@ fun OpenTradeListScreen() {
                         .padding(12.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    BisqText.h5Light("My open trades")
+                    BisqText.h5Light("bisqEasy.openTrades.table.headline".i18n()) // My open trades
                     HorizontalDivider(
                         modifier = Modifier,
                         thickness = 0.5.dp,
@@ -109,14 +119,13 @@ fun WelcomeToFirstTradePane(presenter: OpenTradeListPresenter) {
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         BisqText.h1Light(
-            text = "Welcome to your first Bisq Easy trade!", //bisqEasy.openTrades.welcome.headline
+            text = "bisqEasy.openTrades.welcome.headline".i18n(), // Welcome to your first Bisq Easy trade!
             textAlign = TextAlign.Center
         )
         BisqGap.VHalf()
         BisqText.baseRegularGrey(
-            // bisqEasy.openTrades.welcome.info
-            text = "Please make yourself familiar with the concept, process and rules for trading on Bisq Easy.\n" +
-                    "After you have read and accepted the trade rules you can start the trade.",
+            // Please make yourself familiar with the concept, process and rules for trading on Bisq
+            "bisqEasy.openTrades.welcome.info".i18n()
         )
         BisqGap.V1()
         Column(
@@ -125,23 +134,21 @@ fun WelcomeToFirstTradePane(presenter: OpenTradeListPresenter) {
         ) {
             IconWithTextLine(
                 image = Res.drawable.reputation,
-                title = "Learn about the security model of Bisq easy" //bisqEasy.openTrades.welcome.line1
+                title = "bisqEasy.openTrades.welcome.line1".i18n() // Learn about the security model of Bisq easy
             )
             IconWithTextLine(
                 image = Res.drawable.fiat_btc,
-                title = "See how the trade process works"  //bisqEasy.openTrades.welcome.line2
+                title = "bisqEasy.openTrades.welcome.line2".i18n() // See how the trade process works
             )
             IconWithTextLine(
                 image = Res.drawable.thumbs_up,
-                title = "Make yourself familiar with the trade rules"  //bisqEasy.openTrades.welcome.line3
+                title = "bisqEasy.openTrades.welcome.line3".i18n()  // Make yourself familiar with the trade rules
             )
         }
         BisqGap.V1()
         BisqButton(
-            text = "Open trade guide",  //bisqEasy.tradeGuide.open
-            onClick = {
-                presenter.onOpenTradeGuide()
-            }
+            text = "bisqEasy.tradeGuide.open".i18n(), // Open trade guide
+            onClick = presenter::onOpenTradeGuide
         )
     }
 }
@@ -164,48 +171,13 @@ fun NoTradesSection(presenter: OpenTradeListPresenter) {
             verticalArrangement = Arrangement.spacedBy(64.dp)
         ) {
             BisqText.h4LightGrey(
-                text = "You don't have any open trades", // bisqEasy.openTrades.noTrades
+                text = "bisqEasy.openTrades.noTrades".i18n(), // You don't have any open trades
                 textAlign = TextAlign.Center
             )
             BisqButton(
-                text = "Browse offerbook",
-                onClick = { presenter.onNavigateToOfferbook() }
+                text = "bisqEasy.tradeWizard.selectOffer.noMatchingOffers.browseOfferbook".i18n(), // Browse offerbook
+                onClick = presenter::onNavigateToOfferbook
             )
-        }
-    }
-}
-
-
-// TODO Just for dev now. Will be custom screen with multiple sub screens...
-@Composable
-fun TradeGuide(presenter: OpenTradeListPresenter) {
-    Dialog(
-        onDismissRequest = { presenter.onCloseTradeGuide() } // Called when the user clicks outside the dialog
-
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            shape = RoundedCornerShape(12.0.dp),
-            color = BisqTheme.colors.backgroundColor
-        ) {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(12.dp)
-            ) {
-                BisqText.h3Light("Trade guide")
-                BisqText.baseRegularGrey(text = "Trade guide content... TODO")
-                BisqButton(
-                    text = "Confirm trade rules",
-                    onClick = { presenter.onConfirmTradeRules(true) },
-                )
-                BisqButton(
-                    text = "Close",
-                    onClick = { presenter.onCloseTradeGuide() },
-                    backgroundColor = BisqTheme.colors.mid_grey30,
-                )
-            }
         }
     }
 }

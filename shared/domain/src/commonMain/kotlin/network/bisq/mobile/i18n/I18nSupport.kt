@@ -29,12 +29,6 @@ class I18nSupport {
             return bundles.any { it.containsKey(key) }
         }
 
-        fun encode(key: String, vararg arguments: Any): String {
-            if (arguments.isEmpty()) return key
-            val args = arguments.joinToString(ARGS_SEPARATOR.toString())
-            return "$key$PARAM_SEPARATOR$args"
-        }
-
         fun decode(encoded: String): String {
             if (encoded.isEmpty()) {
                 return ""
@@ -92,6 +86,15 @@ fun String.i18n(): String {
         .firstOrNull { it.containsKey(this) }
         ?.getString(this) ?: "MISSING: [$this]"
     return result
+}
+
+fun String.i18nEncode(vararg arguments: Any): String {
+    return if (arguments.isEmpty()) {
+        this
+    } else {
+        val args = arguments.joinToString(ARGS_SEPARATOR.toString())
+        this + PARAM_SEPARATOR + args
+    }
 }
 
 lateinit var bundles: List<ResourceBundle>
