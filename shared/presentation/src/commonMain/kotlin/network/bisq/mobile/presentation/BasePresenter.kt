@@ -107,6 +107,7 @@ interface ViewPresenter {
  */
 abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPresenter, Logging {
     companion object {
+        const val EXIT_WARNING_TIMEOUT = 3000L
         var isDemo = false
     }
 
@@ -276,17 +277,16 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         when {
             isAtHome() -> {
                 if (exitWarningShown) {
-                    log.d { "view is $view"}
                     rootPresenter?.exitApp()
                     exitWarningShown = false // Reset after action
                 } else {
                     // Show warning first time
-                    showSnackbar("Swipe once again to exit")
+                    showSnackbar("Press/Swipe back again to exit")
                     exitWarningShown = true
 
                     // Set a timer to reset the warning state after a few seconds
                     presenterScope.launch {
-                        delay(3000L) // 3 seconds timeout for exit warning
+                        delay(EXIT_WARNING_TIMEOUT) // 3 seconds timeout for exit warning
                         exitWarningShown = false
                     }
                 }
