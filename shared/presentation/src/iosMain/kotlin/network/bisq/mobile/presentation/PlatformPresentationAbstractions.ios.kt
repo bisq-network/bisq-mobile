@@ -64,7 +64,7 @@ actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
 }
 
 @OptIn(ExperimentalForeignApi::class)
-actual fun exitApp() {
+actual fun exitApp(view: Any?) {
     UIApplication.sharedApplication.performSelector(NSSelectorFromString("suspend"))
 }
 

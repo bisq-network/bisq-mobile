@@ -13,8 +13,18 @@ actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
 
 actual fun getPlatformCurrentTimeProvider(): TimeProvider = AndroidCurrentTimeProvider()
 
-actual fun exitApp() {
-    // not used in Android
+actual fun exitApp(view: Any?) {
+    if (view == null) {
+        android.os.Process.killProcess(android.os.Process.myPid())
+    } else {
+//        (view as android.app.Activity).finish()
+        val activity = view as android.app.Activity
+        // Move task to the background (similar to pressing Home button)
+        val homeIntent = android.content.Intent(android.content.Intent.ACTION_MAIN)
+        homeIntent.addCategory(android.content.Intent.CATEGORY_HOME)
+        homeIntent.flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+        activity.startActivity(homeIntent)
+    }
 }
 
 actual fun getScreenWidthDp(): Int {

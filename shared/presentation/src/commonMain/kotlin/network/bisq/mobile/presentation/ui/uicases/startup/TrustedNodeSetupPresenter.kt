@@ -88,6 +88,7 @@ class TrustedNodeSetupPresenter(
             val success = withContext(IODispatcher) {
                 webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)
             }
+            _isLoading.value = false
 
             if (success) {
                 val validateVersion = withContext(IODispatcher) {

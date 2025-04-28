@@ -93,8 +93,8 @@ class WebSocketClient(
 
     suspend fun connect(isTest: Boolean = false) {
         log.i("Connecting to websocket at: $webSocketUrl")
-        if (webSocketClientStatus.value != WebSocketClientStatus.CONNECTED) {
-            try {
+        try {
+            if (webSocketClientStatus.value != WebSocketClientStatus.CONNECTED) {
                 _webSocketClientStatus.value = WebSocketClientStatus.CONNECTING
                 session = httpClient.webSocketSession { url(webSocketUrl) }
                 if (session?.isActive == true) {
@@ -105,14 +105,14 @@ class WebSocketClient(
                         log.d { "Websocket connected" }
                     }
                 }
-            } catch (e: Exception) {
-                log.e("Connecting websocket failed", e)
-                _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
-                if (isTest) {
-                    throw e
-                } else {
-                    reconnect()
-                }
+            }
+        } catch (e: Exception) {
+            log.e("Connecting websocket failed", e)
+            _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
+            if (isTest) {
+                throw e
+            } else {
+                reconnect()
             }
         }
     }
