@@ -6,6 +6,10 @@ import network.bisq.mobile.domain.data.persistance.PersistenceSource
 
 /**
  * Repository for managing multiple Trade objects.
+ *
+ * This implementation was designed for open trades tracking and therefore doesn't
+ * support large amounts of trades. To bring support filtering mechanisms need to be added
+ * on the find methods
  * 
  * @param persistenceSource Optional persistence mechanism to save/load trades
  * @param prototype Optional prototype instance of Trade

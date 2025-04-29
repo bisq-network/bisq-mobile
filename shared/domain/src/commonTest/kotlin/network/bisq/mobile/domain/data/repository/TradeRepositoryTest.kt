@@ -158,14 +158,13 @@ class TradeRepositoryTest : KoinTest {
     }
 
     private fun createSampleTrade(id: String, currency: String, status: String): Trade {
-        return Trade().apply {
+        return Trade(id).apply {
             offerCurrency = currency
             this.status = status
             offerAmount = 1.0
             price = 50000.0
             createdAt = Clock.System.now().toEpochMilliseconds()
             updatedAt = createdAt
-            updateTradeId(id)
         }
     }
 }

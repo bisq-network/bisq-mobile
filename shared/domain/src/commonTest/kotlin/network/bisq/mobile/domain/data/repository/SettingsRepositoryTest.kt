@@ -17,6 +17,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.fail
 
 class SettingsRepositoryTest : KoinTest {
 
@@ -128,6 +129,18 @@ class SettingsRepositoryTest : KoinTest {
         // Verify settings are cleared
         val fetchedSettings = settingsRepository.fetch()
         assertNull(fetchedSettings)
+    }
+
+    @Test
+    fun testUpdateNonExistentSettings() = runBlocking {
+        // Try to update settings that haven't been created yet
+        val settings = createSampleSettings()
+        settingsRepository.update(settings)
+
+        // Verify the update operation still works
+        val fetchedSettings = settingsRepository.fetch()
+        assertNotNull(fetchedSettings)
+        assertEquals("https://api.bisq.network", fetchedSettings.bisqApiUrl)
     }
 
     private fun createSampleSettings(): Settings {

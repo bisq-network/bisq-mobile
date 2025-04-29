@@ -104,6 +104,8 @@ abstract class MultiObjectRepository<out T : BaseModel>(
 
     /**
      * Clears all objects from the repository.
+     * Note: This method cancels the internal coroutine scope, making the repository
+     * instance unusable after calling this method. Create a new instance if needed.
      */
     suspend fun clear() {
         try {
