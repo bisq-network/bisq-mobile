@@ -66,11 +66,10 @@ If you are a mobile enthusiast and feel driven by Bisq goals, please reach out!
 
 ### Getting started
 
- 1. Download this repo code
- 2. Open [Fleet IDE](https://www.jetbrains.com/help/fleet/getting-started.html) and open the folder you've just downloaded.
- 3. Wait for the smart mode to run the `Pre-flight`. This will let you know what's missing in your machine to run the project. Follow its instructions to install everything. The project has an [sdkman](https://sdkman.io/) file, if you have sdkman installed the right java version will be picked up for you.
- 4. Once the preflight is successful, you should see all the items checked
-    1. If you are on a MacOS computer building the iOS app you can go ahead and open the subfolder [iosClient](./iosClient) with your Xcode, build the project and run it in your device or emulator. After that you can just do it from Fleet
+ 1. Get [sdkman](https://sdkman.io/) installed since the project uses JDK 
+ 2. Open [Fleet IDE](https://www.jetbrains.com/help/fleet/getting-started.html) or Intelij Idea / Android Studio and open the folder you've just downloaded.
+ 3. Wait for the smart mode to run the `Pre-flight` or `Gradle` to download the dependencies. This will let you know what's missing in your machine to run the project. 
+    1. If you are on a MacOS computer building the iOS app you can go ahead and run `setup_ios.sh` script and build the project and run it in your device or emulator.
     2. For Android it can run on any machine, just run the preconfigured configurations `androidClient` and/or `androidNode`
 
 Alternatively, you could run `./gradlew clean build` (1) first from terminal and then open with your IDE of preference.
