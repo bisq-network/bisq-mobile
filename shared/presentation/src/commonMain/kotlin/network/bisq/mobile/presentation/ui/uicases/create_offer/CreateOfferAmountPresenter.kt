@@ -20,6 +20,7 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
+import network.bisq.mobile.domain.getGroupingSeparator
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -387,6 +388,7 @@ class CreateOfferAmountPresenter(
     }
 
     private fun applyRangeAmountSliderValue(rangeSliderPosition: ClosedFloatingPointRange<Float>) {
+        val separator = getGroupingSeparator().toString()
         this.rangeSliderPosition = rangeSliderPosition
 
         val range = maxAmount - minAmount
@@ -397,7 +399,9 @@ class CreateOfferAmountPresenter(
         val roundedMinQuoteValue: Long = (minValue / 10000f).roundToLong() * 10000
 
         quoteSideMinRangeAmount = FiatVOFactory.from(roundedMinQuoteValue, quoteCurrencyCode)
-        _formattedQuoteSideMinRangeAmount.value = AmountFormatter.formatAmount(quoteSideMinRangeAmount)
+        // iOS specific Fix: Removing the grouping separator (,), to keep displayed value, typed valid in sync,
+        // to avoid BasicTextField text reset issue
+        _formattedQuoteSideMinRangeAmount.value = AmountFormatter.formatAmount(quoteSideMinRangeAmount).replace(separator, "")
 
         baseSideMinRangeAmount =
             priceQuote.toBaseSideMonetary(quoteSideMinRangeAmount) as CoinVO
@@ -408,7 +412,7 @@ class CreateOfferAmountPresenter(
         val roundedMaxQuoteValue: Long = (maxValue / 10000f).roundToLong() * 10000
 
         quoteSideMaxRangeAmount = FiatVOFactory.from(roundedMaxQuoteValue, quoteCurrencyCode)
-        _formattedQuoteSideMaxRangeAmount.value = AmountFormatter.formatAmount(quoteSideMaxRangeAmount)
+        _formattedQuoteSideMaxRangeAmount.value = AmountFormatter.formatAmount(quoteSideMaxRangeAmount).replace(separator, "")
 
         baseSideMaxRangeAmount =
             priceQuote.toBaseSideMonetary(quoteSideMaxRangeAmount) as CoinVO
@@ -417,30 +421,33 @@ class CreateOfferAmountPresenter(
 
 
     private fun applyMinRangeAmountSliderValue(amount: Float) {
+        val separator = getGroupingSeparator().toString()
         _minRangeSliderValue.value = amount
         quoteSideMinRangeAmount =
             FiatVOFactory.from(sliderValueToAmount(minRangeSliderValue.value), quoteCurrencyCode)
-        _formattedQuoteSideMinRangeAmount.value = AmountFormatter.formatAmount(quoteSideMinRangeAmount)
+        _formattedQuoteSideMinRangeAmount.value = AmountFormatter.formatAmount(quoteSideMinRangeAmount).replace(separator, "")
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideMinRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMinRangeAmount) as CoinVO
         _formattedBaseSideMinRangeAmount.value = AmountFormatter.formatAmount(baseSideMinRangeAmount, false)
     }
 
     private fun applyMaxRangeAmountSliderValue(amount: Float) {
+        val separator = getGroupingSeparator().toString()
         _maxRangeSliderValue.value = amount
         quoteSideMaxRangeAmount =
             FiatVOFactory.from(sliderValueToAmount(maxRangeSliderValue.value), quoteCurrencyCode)
-        _formattedQuoteSideMaxRangeAmount.value = AmountFormatter.formatAmount(quoteSideMaxRangeAmount)
+        _formattedQuoteSideMaxRangeAmount.value = AmountFormatter.formatAmount(quoteSideMaxRangeAmount).replace(separator, "")
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideMaxRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMaxRangeAmount) as CoinVO
         _formattedBaseSideMaxRangeAmount.value = AmountFormatter.formatAmount(baseSideMaxRangeAmount, false)
     }
 
     private fun applyFixedAmountSliderValue(amount: Float) {
+        val separator = getGroupingSeparator().toString()
         _fixedAmountSliderPosition.value = amount
         quoteSideFixedAmount =
             FiatVOFactory.from(sliderValueToAmount(fixedAmountSliderPosition.value), quoteCurrencyCode)
-        _formattedQuoteSideFixedAmount.value = AmountFormatter.formatAmount(quoteSideFixedAmount)
+        _formattedQuoteSideFixedAmount.value = AmountFormatter.formatAmount(quoteSideFixedAmount).replace(separator, "")
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideFixedAmount = priceQuote.toBaseSideMonetary(quoteSideFixedAmount) as CoinVO
         _formattedBaseSideFixedAmount.value = AmountFormatter.formatAmount(baseSideFixedAmount, false)
