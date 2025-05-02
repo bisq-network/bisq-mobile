@@ -111,7 +111,7 @@ fun PaymentAccountSettingsScreen() {
             text = "user.paymentAccounts.createAccount".i18n(),
             onClick = { showBottomSheet = !showBottomSheet },
             padding = PaddingValues(horizontal = 18.dp, vertical = 6.dp),
-            modifier = Modifier.align(Alignment.End)
+            modifier = Modifier.align(Alignment.Start)
         )
 
         BisqGap.V1()
