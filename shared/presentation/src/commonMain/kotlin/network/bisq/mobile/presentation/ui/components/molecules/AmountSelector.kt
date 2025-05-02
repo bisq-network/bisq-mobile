@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.domain.getDecimalSeparator
 import network.bisq.mobile.presentation.ui.components.atoms.AmountSlider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
@@ -32,7 +33,8 @@ fun BisqAmountSelector(
     onTextValueChange: (String) -> Unit,
     validateTextField: ((String) -> String?)? = null,
 ) {
-    val formattedFiatAmountValueInt = formattedFiatAmount.substringBefore('.')
+    val decimalSeparator = getDecimalSeparator()
+    val formattedFiatAmountValueInt = formattedFiatAmount.substringBefore(decimalSeparator)
 
     Column(
         modifier = Modifier.fillMaxWidth(),

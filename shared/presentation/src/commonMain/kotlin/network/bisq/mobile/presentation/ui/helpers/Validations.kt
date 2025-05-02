@@ -45,9 +45,9 @@ object AmountValidator {
         val _value = value.toDoubleOrNullLocaleAware()
 
         when {
-            _value == null -> return "Invalid number" // TODO: i18n
-            _value * 10000 < min-> return "Should be greater than ${min/ 10000.0}" // TODO: i18n
-            _value * 10000 > max-> return "Should be less than ${max/ 10000.0}" // TODO: i18n
+            _value == null -> return "Invalid number" // TODO:i18n
+            _value * 10000 < min-> return "Should be greater than ${min/ 10000.0}" // TODO:i18n
+            _value * 10000 > max-> return "Should be less than ${max/ 10000.0}" // TODO:i18n
             else -> return null
         }
     }

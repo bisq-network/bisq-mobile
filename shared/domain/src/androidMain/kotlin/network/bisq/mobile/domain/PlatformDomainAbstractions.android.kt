@@ -132,6 +132,10 @@ actual fun getDecimalSeparator(): Char {
     return DecimalFormatSymbols(Locale.getDefault()).decimalSeparator
 }
 
+actual fun getGroupingSeparator(): Char {
+    return DecimalFormatSymbols(Locale.getDefault()).groupingSeparator
+}
+
 actual fun String.toDoubleOrNullLocaleAware(): Double? {
     return try {
         val javaLocale = Locale.getDefault()

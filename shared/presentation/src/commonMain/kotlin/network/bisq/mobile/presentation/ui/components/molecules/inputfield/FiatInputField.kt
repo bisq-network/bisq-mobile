@@ -28,8 +28,10 @@ fun FiatInputField(
     paddingValues: PaddingValues = PaddingValues(all = 0.dp),
     textAlign: TextAlign = TextAlign.End,
     validation: ((String) -> String?)? = null,
+    smallFont: Boolean = false
 ) {
     var validationError: String? by remember { mutableStateOf(null) }
+    val maxLength = 8
 
     // This triggers double validation, when user types value in the field
     // But is necessary to re-validate when value changes from outside.
@@ -51,6 +53,16 @@ fun FiatInputField(
                 RoundedCornerShape(BisqUIConstants.ScreenPaddingHalf)
             )
     ) {
+        val fontSize = if (smallFont) {
+            if (text.length < 6)
+                24.sp
+            else if (text.length < 8)
+                20.sp
+            else
+                16.sp
+        } else {
+            32.sp
+        }
         BisqTextField(
             value = text,
             onValueChange = { newValue, isValid ->
@@ -58,12 +70,15 @@ fun FiatInputField(
             },
             keyboardType = KeyboardType.Number,
             rightSuffix = {
-                BisqText.h5Regular(currency, modifier = Modifier.offset(y = (-2).dp))
+                if (smallFont)
+                    BisqText.h6Regular(currency, modifier = Modifier.offset(y = (-2).dp))
+                else
+                    BisqText.h5Regular(currency, modifier = Modifier.offset(y = (-2).dp))
             },
             indicatorColor = BisqTheme.colors.transparent,
             textStyle = TextStyle(
                 color = Color.White,
-                fontSize = 32.sp,
+                fontSize = fontSize,
                 textAlign = textAlign,
                 textDecoration = TextDecoration.None
             ),
@@ -74,6 +89,7 @@ fun FiatInputField(
                 }
                 return@BisqTextField null
             },
+            maxLength = maxLength,
             disabled = !enabled,
         )
     }

@@ -58,6 +58,7 @@ fun BisqTextField(
     isTextArea: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Unspecified,
     paddingValues: PaddingValues = PaddingValues(all = BisqUIConstants.ScreenPadding),
+    maxLength: Int = 0,
     disabled: Boolean = false,
     color: Color = BisqTheme.colors.light_grey20,
     showCopy: Boolean = false,
@@ -187,6 +188,9 @@ fun BisqTextField(
                     }
                     if (valueSuffix != null && cleanValue.endsWith(valueSuffix)) {
                         cleanValue = cleanValue.removeSuffix(valueSuffix)
+                    }
+                    if (maxLength != 0 && cleanValue.length > maxLength) {
+                        return@BasicTextField
                     }
                     if (numberWithTwoDecimals) {
                         val separator = getDecimalSeparator().toString()

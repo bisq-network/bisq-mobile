@@ -193,6 +193,14 @@ actual fun getDecimalSeparator(): Char {
     return formatter.decimalSeparator.first()
 }
 
+actual fun getGroupingSeparator(): Char {
+    val formatter = NSNumberFormatter().apply {
+        numberStyle = NSNumberFormatterDecimalStyle
+        locale = defaultLocale
+    }
+    return formatter.groupingSeparator.first()
+}
+
 actual fun String.toDoubleOrNullLocaleAware(): Double? {
     val formatter = NSNumberFormatter().apply {
         numberStyle = NSNumberFormatterDecimalStyle

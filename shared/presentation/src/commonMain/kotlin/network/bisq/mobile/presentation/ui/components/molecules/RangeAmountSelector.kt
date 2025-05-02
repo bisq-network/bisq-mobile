@@ -10,6 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.getDecimalSeparator
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
@@ -39,8 +40,9 @@ fun RangeAmountSelector(
     validateRangeMinTextField: ((String) -> String?)? = null,
     validateRangeMaxTextField: ((String) -> String?)? = null,
 ) {
-    val quoteSideMinRangeAmountWithoutDecimal = formattedQuoteSideMinRangeAmount.substringBefore('.')
-    val quoteSideMaxRangeAmountWithoutDecimal = formattedQuoteSideMaxRangeAmount.substringBefore('.')
+    val decimalSeparator = getDecimalSeparator()
+    val quoteSideMinRangeAmountWithoutDecimal = formattedQuoteSideMinRangeAmount.substringBefore(decimalSeparator)
+    val quoteSideMaxRangeAmountWithoutDecimal = formattedQuoteSideMaxRangeAmount.substringBefore(decimalSeparator)
 
     Column {
         Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
@@ -59,7 +61,8 @@ fun RangeAmountSelector(
                             return@FiatInputField validateRangeMinTextField(it)
                         }
                         return@FiatInputField null
-                    }
+                    },
+                    smallFont = true
                 )
                 BtcSatsText(formattedBaseSideMinRangeAmount)
             }
@@ -79,7 +82,8 @@ fun RangeAmountSelector(
                             return@FiatInputField validateRangeMaxTextField(it)
                         }
                         return@FiatInputField null
-                    }
+                    },
+                    smallFont = true
                 )
                 BtcSatsText(formattedBaseSideMaxRangeAmount)
             }
