@@ -7,7 +7,7 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.i18n.i18nEncode
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 
@@ -33,8 +33,7 @@ class SellerStateLightning3bPresenter(
                 for (message in messages) {
                     if (message.chatMessageType == ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE && message.textString.isNotEmpty()) {
                         val encodedLogMessage = message.textString
-                        val encodedWithUserName = I18nSupport.encode(
-                            "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln",
+                        val encodedWithUserName = "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln".i18nEncode(
                             peersUserName
                         )
                         val encodedWithNickName = getEncodedWithNickName(bisqEasyOpenTradeChannelModel);
@@ -70,8 +69,7 @@ class SellerStateLightning3bPresenter(
     }
 
     private fun getEncodedWithNickName(bisqEasyOpenTradeChannel: BisqEasyOpenTradeChannelModel): String {
-        return I18nSupport.encode(
-            "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln",
+        return "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln".i18nEncode(
             bisqEasyOpenTradeChannel.getPeer().nickName
         )
     }
