@@ -110,8 +110,7 @@ fun PaymentAccountSettingsScreen() {
         BisqButton(
             text = "user.paymentAccounts.createAccount".i18n(),
             onClick = { showBottomSheet = !showBottomSheet },
-            padding = PaddingValues(horizontal = 18.dp, vertical = 6.dp),
-            modifier = Modifier.align(Alignment.Start)
+            padding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
         )
 
         BisqGap.V1()
