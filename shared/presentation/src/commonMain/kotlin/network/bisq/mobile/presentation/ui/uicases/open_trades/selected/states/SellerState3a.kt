@@ -20,7 +20,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressField
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofField
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
-import network.bisq.mobile.presentation.ui.components.organisms.trades.InvalidPaymentProofConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.jetbrains.compose.resources.painterResource
 

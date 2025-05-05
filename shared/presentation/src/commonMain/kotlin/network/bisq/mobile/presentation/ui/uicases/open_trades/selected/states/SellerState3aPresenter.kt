@@ -43,6 +43,7 @@ class SellerState3aPresenter(
     private var job: Job? = null
 
     override fun onViewAttached() {
+        super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
         val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
@@ -58,6 +59,7 @@ class SellerState3aPresenter(
         job?.cancel()
         job = null
         _paymentProof.value = null
+        super.onViewUnattaching()
     }
 
     fun onPaymentProofInput(value: String, isValid: Boolean) {
@@ -75,13 +77,22 @@ class SellerState3aPresenter(
     }
 
     fun confirmSend() {
-        if (!isLightning.value) {
-            require(paymentProof.value != null)
-        }
-        job = presenterScope.launch {
-            withContext(IODispatcher) {
-                tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
+        try {
+            // For non-Lightning transactions, ensure payment proof is provided
+            if (!isLightning.value && paymentProof.value == null) {
+                _showInvalidAddressDialog.value = true
+                return
             }
+
+            job = presenterScope.launch {
+                withContext(IODispatcher) {
+                    tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
+                }
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to confirm BTC sent" }
+        } finally {
+            setShowInvalidAddressDialog(false)
         }
     }
 
