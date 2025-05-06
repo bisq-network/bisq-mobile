@@ -377,9 +377,10 @@ class CreateOfferAmountPresenter(
 
     private suspend fun getPeersScoreByUserProfileId(): Map<String, Long> {
         val myProfileIds = userProfileServiceFacade.getUserIdentityIds()
-        val scoreByUserProfileId = reputationServiceFacade.getScoreByUserProfileId().getOrNull() ?: emptyMap()
-        return scoreByUserProfileId.filter { (key, _) -> !myProfileIds.contains(key) }
-
+        val scoreByUserProfileId = reputationServiceFacade.reputationByUserProfileId.value
+        return scoreByUserProfileId
+            .filter { (key, _) -> !myProfileIds.contains(key) }
+            .mapValues { it.value.totalScore }
     }
 
     private fun applyRangeAmountSliderValue(rangeSliderPosition: ClosedFloatingPointRange<Float>) {

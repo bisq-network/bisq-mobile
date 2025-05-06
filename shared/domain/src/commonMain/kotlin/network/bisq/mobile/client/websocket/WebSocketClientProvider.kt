@@ -48,9 +48,11 @@ class WebSocketClientProvider(
                     }
                     // only update if there was actually a change
                     if (currentClient == null || currentClient!!.host != host || currentClient!!.port != port) {
+                        /*
                         if (currentClient?.isConnected() == true) {
                             currentClient?.disconnect()
                         }
+                        */
                         log.d { "Websocket client updated with url $host:$port" }
                         currentClient = createClient(host, port)
                     }
@@ -70,6 +72,7 @@ class WebSocketClientProvider(
                 return true
             }
             // if connection is refused, catch will execute returning false
+            log.i { "testClient: $url" }
             client.connect(true)
             return client.isConnected()
         } catch (e: Exception) {
