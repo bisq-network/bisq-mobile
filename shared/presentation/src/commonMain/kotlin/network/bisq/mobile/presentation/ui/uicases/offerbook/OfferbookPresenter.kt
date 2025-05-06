@@ -140,10 +140,16 @@ class OfferbookPresenter(
                 require(item.isMyOffer)
                 presenterScope.launch {
                     withContext(IODispatcher) {
-                        offersServiceFacade.deleteOffer(item.offerId)
+                        val result = offersServiceFacade.deleteOffer(item.offerId).getOrDefault(false)
+                        log.d { "delete offer success $result" }
+                        if (result) {
+                            _showDeleteConfirmation.value = false
+                            deselectOffer()
+                        } else {
+                            log.w { "Failed to delete offer ${item.offerId}" }
+                            showSnackbar("Failed to delete offer ${item.offerId}, please try again", true)
+                        }
                     }
-                    _showDeleteConfirmation.value = false
-                    deselectOffer()
                 }
             }
         }.onFailure {

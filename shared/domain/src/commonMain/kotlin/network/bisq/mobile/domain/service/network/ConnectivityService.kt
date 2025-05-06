@@ -15,7 +15,6 @@ import network.bisq.mobile.domain.service.ServiceFacade
  * Base definition for the connectivity service. Each app type should implement / override the default
  * based on its network type.
  */
-@Suppress("RedundantOverride")
 abstract class ConnectivityService : ServiceFacade() {
     companion object {
         const val TIMEOUT = 5000L
