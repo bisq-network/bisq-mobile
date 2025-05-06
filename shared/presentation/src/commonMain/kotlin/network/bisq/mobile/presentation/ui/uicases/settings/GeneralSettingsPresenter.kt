@@ -84,7 +84,7 @@ open class GeneralSettingsPresenter(
             if (isValid) {
                 val _value = value.toDoubleOrNullLocaleAware()
                 if (_value != null) {
-                    settingsServiceFacade.setMaxTradePriceDeviation((_value ?: 0.0) / 100)
+                    settingsServiceFacade.setMaxTradePriceDeviation(_value/100)
                 }
             }
         }

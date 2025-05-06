@@ -63,9 +63,7 @@ class SellerStateLightning3bPresenter(
     }
 
     fun completeTrade() {
-        job = ioScope.launch {
-            tradesServiceFacade.btcConfirmed()
-        }
+        skipWaiting()
     }
 
     private fun getEncodedWithNickName(bisqEasyOpenTradeChannel: BisqEasyOpenTradeChannelModel): String {

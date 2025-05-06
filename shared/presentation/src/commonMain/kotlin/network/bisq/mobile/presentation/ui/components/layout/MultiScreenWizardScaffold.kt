@@ -46,7 +46,7 @@ fun MultiScreenWizardScaffold(
         shouldBlurBg: Boolean,
         content: @Composable ColumnScope.() -> Unit
     ) -> Unit =
-        if (useStaticScaffold) { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState,_showJumpToBottom, _shouldBlurBg, innerContent ->
+        if (useStaticScaffold) { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, _shouldBlurBg, innerContent ->
             BisqStaticScaffold(
                 padding = padding,
                 topBar = topBar,

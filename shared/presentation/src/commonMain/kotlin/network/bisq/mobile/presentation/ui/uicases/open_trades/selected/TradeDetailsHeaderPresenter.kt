@@ -310,5 +310,6 @@ class TradeDetailsHeaderPresenter(
         _openMediationButtonText.value = ""
         _showInterruptionConfirmationDialog.value = false
         _showMediationConfirmationDialog.value = false
+        _selectedTrade.value = null
     }
 }

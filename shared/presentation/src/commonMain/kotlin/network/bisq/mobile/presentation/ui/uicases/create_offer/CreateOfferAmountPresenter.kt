@@ -167,39 +167,27 @@ class CreateOfferAmountPresenter(
     }
 
     fun onFixedAmountTextValueChange(textInput: String) {
-        val _value = textInput.toDoubleOrNullLocaleAware()
-        if (_value != null) {
-            val valueInFraction = getFractionForFiat(_value)
-            applyFixedAmountSliderValue(valueInFraction)
-            updateAmountLimitInfo()
-        } else {
-            _formattedQuoteSideFixedAmount.value = ""
-            _amountValid.value = false
-        }
+        handleAmountTextChange(
+            textInput,
+            { valueInFraction -> applyFixedAmountSliderValue(valueInFraction) },
+            { _formattedQuoteSideFixedAmount.value = "" }
+        )
     }
 
     fun onMinAmountTextValueChange(textInput: String) {
-        val _value = textInput.toDoubleOrNullLocaleAware()
-        if (_value != null) {
-            val valueInFraction = getFractionForFiat(_value)
-            applyMinRangeAmountSliderValue(valueInFraction)
-            updateAmountLimitInfo()
-        } else {
-            _formattedQuoteSideMinRangeAmount.value = ""
-            _amountValid.value = false
-        }
+        handleAmountTextChange(
+            textInput,
+            { valueInFraction -> applyMinRangeAmountSliderValue(valueInFraction) },
+            { _formattedQuoteSideMinRangeAmount.value = "" }
+        )
     }
 
     fun onMaxAmountTextValueChange(textInput: String) {
-        val _value = textInput.toDoubleOrNullLocaleAware()
-        if (_value != null) {
-            val valueInFraction = getFractionForFiat(_value)
-            applyMaxRangeAmountSliderValue(valueInFraction)
-            updateAmountLimitInfo()
-        } else {
-            _formattedQuoteSideMaxRangeAmount.value = ""
-            _amountValid.value = false
-        }
+        handleAmountTextChange(
+            textInput,
+            { valueInFraction -> applyMaxRangeAmountSliderValue(valueInFraction) },
+            { _formattedQuoteSideMaxRangeAmount.value = "" }
+        )
     }
 
     fun onFixedAmountSliderValueChange(value: Float) {
@@ -234,6 +222,63 @@ class CreateOfferAmountPresenter(
         val range = (maxAmount - minAmount).takeIf { it != 0L } ?: return 0f
         val inFraction = ((value * 10000) - minAmount) / range
         return inFraction.toFloat()
+    }
+
+    fun onBack() {
+        commitToModel()
+        navigateBack()
+    }
+
+    fun onNext() {
+        if (quoteSideMaxRangeAmount.asDouble() < quoteSideMinRangeAmount.asDouble()) {
+            showSnackbar("Min should be lesser than Max") // TODO:i18n
+            return
+        }
+        commitToModel()
+        navigateTo(Routes.CreateOfferPrice)
+    }
+
+    fun navigateToReputation() {
+        disableInteractive()
+        navigateToUrl("https://bisq.wiki/Reputation")
+        enableInteractive()
+    }
+
+    fun navigateToBuildReputation() {
+        disableInteractive()
+        navigateToUrl("https://bisq.wiki/Reputation#How_to_build_reputation")
+        enableInteractive()
+    }
+
+    fun validateTextField(value: String): String? {
+        val maxRepBasedValue = if (reputationBasedMaxSliderValue.value == null)
+            0L
+        else
+            sliderValueToAmount(reputationBasedMaxSliderValue.value!!)
+        val maxAmountForValiation = if (maxRepBasedValue == 0L)
+            maxAmount
+        else
+            minOf(maxAmount, maxRepBasedValue)
+        val validateError = AmountValidator.validate(value, minAmount, maxAmountForValiation)
+        _amountValid.value = validateError == null
+        return validateError
+    }
+
+    // private
+    private fun handleAmountTextChange(
+        textInput: String,
+        onValueParsed: (Float) -> Unit,
+        onInvalidInput: () -> Unit
+    ) {
+        val _value = textInput.toDoubleOrNullLocaleAware()
+        if (_value != null) {
+            val valueInFraction = getFractionForFiat(_value)
+            onValueParsed(valueInFraction)
+            updateAmountLimitInfo()
+        } else {
+            onInvalidInput()
+            _amountValid.value = false
+        }
     }
 
     private fun updateBuyersAmountLimitInfo() {
@@ -335,46 +380,6 @@ class CreateOfferAmountPresenter(
         }
     }
 
-    fun onBack() {
-        commitToModel()
-        navigateBack()
-    }
-
-    fun onNext() {
-        if (quoteSideMaxRangeAmount.asDouble() < quoteSideMinRangeAmount.asDouble()) {
-            showSnackbar("Min should be lesser than Max") // TODO:i18n
-            return
-        }
-        commitToModel()
-        navigateTo(Routes.CreateOfferPrice)
-    }
-
-    fun navigateToReputation() {
-        disableInteractive()
-        navigateToUrl("https://bisq.wiki/Reputation")
-        enableInteractive()
-    }
-
-    fun navigateToBuildReputation() {
-        disableInteractive()
-        navigateToUrl("https://bisq.wiki/Reputation#How_to_build_reputation")
-        enableInteractive()
-    }
-
-    fun validateTextField(value: String): String? {
-        val maxRepBasedValue = if (reputationBasedMaxSliderValue.value == null)
-            0L
-        else
-            sliderValueToAmount(reputationBasedMaxSliderValue.value!!)
-        val maxAmountForValiation = if (maxRepBasedValue == 0L)
-            maxAmount
-        else
-            minOf(maxAmount, maxRepBasedValue)
-        val validateError = AmountValidator.validate(value, minAmount, maxAmountForValiation)
-        _amountValid.value = validateError == null
-        return validateError
-    }
-
     private suspend fun getNumPotentialTakers(requiredReputationScore: Long): Int {
         return getPeersScoreByUserProfileId().filter { (_, value) -> withTolerance(value) >= requiredReputationScore }
             .count()
@@ -401,7 +406,8 @@ class CreateOfferAmountPresenter(
         quoteSideMinRangeAmount = FiatVOFactory.from(roundedMinQuoteValue, quoteCurrencyCode)
         // iOS specific Fix: Removing the grouping separator (,), to keep displayed value, typed valid in sync,
         // to avoid BasicTextField text reset issue
-        _formattedQuoteSideMinRangeAmount.value = AmountFormatter.formatAmount(quoteSideMinRangeAmount).replace(separator, "")
+        _formattedQuoteSideMinRangeAmount.value =
+            AmountFormatter.formatAmount(quoteSideMinRangeAmount).replace(separator, "")
 
         baseSideMinRangeAmount =
             priceQuote.toBaseSideMonetary(quoteSideMinRangeAmount) as CoinVO
@@ -412,7 +418,8 @@ class CreateOfferAmountPresenter(
         val roundedMaxQuoteValue: Long = (maxValue / 10000f).roundToLong() * 10000
 
         quoteSideMaxRangeAmount = FiatVOFactory.from(roundedMaxQuoteValue, quoteCurrencyCode)
-        _formattedQuoteSideMaxRangeAmount.value = AmountFormatter.formatAmount(quoteSideMaxRangeAmount).replace(separator, "")
+        _formattedQuoteSideMaxRangeAmount.value =
+            AmountFormatter.formatAmount(quoteSideMaxRangeAmount).replace(separator, "")
 
         baseSideMaxRangeAmount =
             priceQuote.toBaseSideMonetary(quoteSideMaxRangeAmount) as CoinVO
@@ -425,7 +432,8 @@ class CreateOfferAmountPresenter(
         _minRangeSliderValue.value = amount
         quoteSideMinRangeAmount =
             FiatVOFactory.from(sliderValueToAmount(minRangeSliderValue.value), quoteCurrencyCode)
-        _formattedQuoteSideMinRangeAmount.value = AmountFormatter.formatAmount(quoteSideMinRangeAmount).replace(separator, "")
+        _formattedQuoteSideMinRangeAmount.value =
+            AmountFormatter.formatAmount(quoteSideMinRangeAmount).replace(separator, "")
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideMinRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMinRangeAmount) as CoinVO
         _formattedBaseSideMinRangeAmount.value = AmountFormatter.formatAmount(baseSideMinRangeAmount, false)
@@ -436,7 +444,8 @@ class CreateOfferAmountPresenter(
         _maxRangeSliderValue.value = amount
         quoteSideMaxRangeAmount =
             FiatVOFactory.from(sliderValueToAmount(maxRangeSliderValue.value), quoteCurrencyCode)
-        _formattedQuoteSideMaxRangeAmount.value = AmountFormatter.formatAmount(quoteSideMaxRangeAmount).replace(separator, "")
+        _formattedQuoteSideMaxRangeAmount.value =
+            AmountFormatter.formatAmount(quoteSideMaxRangeAmount).replace(separator, "")
         priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
         baseSideMaxRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMaxRangeAmount) as CoinVO
         _formattedBaseSideMaxRangeAmount.value = AmountFormatter.formatAmount(baseSideMaxRangeAmount, false)
