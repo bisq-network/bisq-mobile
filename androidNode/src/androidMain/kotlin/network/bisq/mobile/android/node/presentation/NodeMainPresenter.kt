@@ -52,6 +52,7 @@ class NodeMainPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
+        log.d { "Make sure the service is initialized" }
 
         runCatching {
             if (!applicationServiceCreated) {

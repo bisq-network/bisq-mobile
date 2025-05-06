@@ -76,6 +76,7 @@ import bisq.trade.bisq_easy.protocol.BisqEasyTradeState
 import bisq.user.identity.UserIdentity
 import bisq.user.profile.UserProfile
 import bisq.user.reputation.ReputationScore
+import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.domain.data.replicated.account.protocol_type.TradeProtocolTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
@@ -142,6 +143,7 @@ import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.userProfileDemoObj
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.node.BuildConfig
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.PublicKey
@@ -158,7 +160,7 @@ class Mappings {
         fun toBisq2Model(value: TradeProtocolTypeEnum): TradeProtocolType {
             return when (value) {
                 TradeProtocolTypeEnum.BISQ_EASY -> TradeProtocolType.BISQ_EASY
-                TradeProtocolTypeEnum.BISQ_MU_SIG -> TradeProtocolType.BISQ_MU_SIG
+//                TradeProtocolTypeEnum.BISQ_MU_SIG -> TradeProtocolType.BISQ_MU_SIG
                 TradeProtocolTypeEnum.SUBMARINE -> TradeProtocolType.SUBMARINE
                 TradeProtocolTypeEnum.LIQUID_MU_SIG -> TradeProtocolType.LIQUID_MU_SIG
                 TradeProtocolTypeEnum.BISQ_LIGHTNING -> TradeProtocolType.BISQ_LIGHTNING
@@ -173,7 +175,7 @@ class Mappings {
         fun fromBisq2Model(value: TradeProtocolType): TradeProtocolTypeEnum {
             return when (value) {
                 TradeProtocolType.BISQ_EASY -> TradeProtocolTypeEnum.BISQ_EASY
-                TradeProtocolType.BISQ_MU_SIG -> TradeProtocolTypeEnum.BISQ_MU_SIG
+//                TradeProtocolType.BISQ_MU_SIG -> TradeProtocolTypeEnum.BISQ_MU_SIG
                 TradeProtocolType.SUBMARINE -> TradeProtocolTypeEnum.SUBMARINE
                 TradeProtocolType.LIQUID_MU_SIG -> TradeProtocolTypeEnum.LIQUID_MU_SIG
                 TradeProtocolType.BISQ_LIGHTNING -> TradeProtocolTypeEnum.BISQ_LIGHTNING
@@ -205,6 +207,7 @@ class Mappings {
                 ChatChannelDomain.DISCUSSION -> ChatChannelDomainEnum.DISCUSSION
                 ChatChannelDomain.SUPPORT -> ChatChannelDomainEnum.SUPPORT
                 ChatChannelDomain.BISQ_EASY_PRIVATE_CHAT -> ChatChannelDomainEnum.DISCUSSION
+                ChatChannelDomain.MU_SIG_OFFERBOOK -> ChatChannelDomainEnum.BISQ_EASY_OFFERBOOK
                 ChatChannelDomain.EVENTS -> ChatChannelDomainEnum.DISCUSSION
             }
         }
@@ -901,11 +904,14 @@ class Mappings {
                 MarketMapping.toBisq2Model(value.market),
                 AmountSpecMapping.toBisq2Model(value.amountSpec),
                 PriceSpecMapping.toBisq2Model(value.priceSpec),
-                value.protocolTypes.map { TradeProtocolTypeMapping.toBisq2Model(it) },
-                value.baseSidePaymentMethodSpecs.map { BitcoinPaymentMethodSpecMapping.toBisq2Model(it) },
-                value.quoteSidePaymentMethodSpecs.map { FiatPaymentMethodSpecMapping.toBisq2Model(it) },
-                value.offerOptions.map { OfferOptionMapping.toBisq2Model(it) },
-                value.supportedLanguageCodes
+                value.protocolTypes.map { TradeProtocolTypeMapping.toBisq2Model(it) }.toList(),
+                value.baseSidePaymentMethodSpecs.map { BitcoinPaymentMethodSpecMapping.toBisq2Model(it) }.toList(),
+                value.quoteSidePaymentMethodSpecs.map { FiatPaymentMethodSpecMapping.toBisq2Model(it) }.toList(),
+                value.offerOptions.map { OfferOptionMapping.toBisq2Model(it) }.toList(),
+                value.supportedLanguageCodes,
+                BuildNodeConfig.TRADE_OFFER_VERSION,
+                BuildNodeConfig.TRADE_PROTOCOL_VERSION,
+                BuildNodeConfig.APP_VERSION
             )
         }
 

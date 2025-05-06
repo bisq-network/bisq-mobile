@@ -32,6 +32,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.android.node.AndroidApplicationService
+import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
@@ -188,7 +189,8 @@ class NodeOffersServiceFacade(
             bitcoinPaymentMethods,
             fiatPaymentMethods,
             userProfile.terms,
-            supportedLanguageCodes
+            supportedLanguageCodes,
+            BuildNodeConfig.TRADE_PROTOCOL_VERSION,
         )
 
         val channel: BisqEasyOfferbookChannel = bisqEasyOfferbookChannelService.findChannel(market).get()
