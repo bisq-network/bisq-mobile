@@ -143,7 +143,6 @@ import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.userProfileDemoObj
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
-import network.bisq.mobile.node.BuildConfig
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.PublicKey
