@@ -1,10 +1,11 @@
 package network.bisq.mobile.android.node.service.reputation
 
-import android.content.res.Resources.NotFoundException
 import bisq.common.observable.Pin
 import bisq.user.reputation.ReputationService
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
@@ -16,21 +17,24 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
     private val reputationService: ReputationService by lazy { applicationService.reputationService.get() }
 
     // Properties
-    private val _reputationByUserProfileId: MutableStateFlow<Map<String, ReputationScoreVO>> = MutableStateFlow(emptyMap())
+    private val _reputationByUserProfileId: MutableStateFlow<Map<String, ReputationScoreVO>> =
+        MutableStateFlow(emptyMap())
     override val reputationByUserProfileId: StateFlow<Map<String, ReputationScoreVO>> get() = _reputationByUserProfileId
 
     // Misc
-    private var selectedReputationPin: Pin? = null
+    private var reputationChangePin: Pin? = null
 
     // Life cycle
     override fun activate() {
         super<ServiceFacade>.activate()
-        observeReputation()
+        serviceScope.launch {
+            observeReputation()
+        }
     }
 
     override fun deactivate() {
-        selectedReputationPin?.unbind()
-        selectedReputationPin = null
+        reputationChangePin?.unbind()
+        reputationChangePin = null
         super<ServiceFacade>.deactivate()
     }
 
@@ -38,17 +42,20 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
         val reputation = reputationByUserProfileId.value[userProfileId]
         if (reputation == null) {
-            return Result.failure(NotFoundException())
+            return Result.failure(NoSuchElementException())
         } else {
             return Result.success(reputation)
         }
     }
 
     // Private
-    private fun observeReputation() {
-        selectedReputationPin = reputationService.userProfileIdWithScoreChange.addObserver{ userProfileId ->
+    private suspend fun observeReputation() {
+        reputationChangePin?.unbind()
+        reputationChangePin = reputationService.userProfileIdWithScoreChange.addObserver { userProfileId ->
             try {
-                updateUserReputation(userProfileId)
+                if (userProfileId != null) {
+                    updateUserReputation(userProfileId)
+                }
             } catch (e: Exception) {
                 log.e("Failed to update user reputation", e)
             }
@@ -59,6 +66,21 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
         val reputation = reputationService.getReputationScore(userProfileId).let {
             Mappings.ReputationScoreMapping.fromBisq2Model(it)
         }
+
+        /*
+                _reputationByUserProfileId.update { current ->
+                    current.toMutableMap().apply {
+                        this[userProfileId] = reputation
+                    }.toMap()
+                }
+                */
+
+        /*
+        _reputationByUserProfileId.value = _reputationByUserProfileId.value.toMutableMap().apply {
+            this[userProfileId] = reputation
+        }
+        */
+
         val profileScoreMap = reputationByUserProfileId.value.toMutableMap()
         profileScoreMap[userProfileId] = reputation
 

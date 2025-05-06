@@ -21,7 +21,7 @@ class ClientReputationServiceFacade(
     override val reputationByUserProfileId: StateFlow<Map<String, ReputationScoreVO>> get() = _reputationByUserProfileId
 
     // Misc
-    private var offersSequenceNumber = atomic(-1)
+    private var reputationSequenceNumber = atomic(-1)
 
     // Life cycle
     override fun activate() {
@@ -39,7 +39,7 @@ class ClientReputationServiceFacade(
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
         val reputation = reputationByUserProfileId.value[userProfileId]
         if (reputation == null) {
-            return Result.failure(Exception())
+            return Result.failure(IllegalStateException("Reputation for userId=$userProfileId not cached yet"))
         } else {
             return Result.success(reputation)
         }
@@ -52,18 +52,22 @@ class ClientReputationServiceFacade(
             if (webSocketEvent?.deferredPayload == null) {
                 return@collect
             }
-            if (offersSequenceNumber.value >= webSocketEvent.sequenceNumber) {
+            if (reputationSequenceNumber.value >= webSocketEvent.sequenceNumber) {
                 log.w {
                     "Sequence number is larger or equal than the one we " +
                             "received from the backend. We ignore that event."
                 }
                 return@collect
             }
-            offersSequenceNumber.value = webSocketEvent.sequenceNumber
-            val webSocketEventPayload: WebSocketEventPayload<Map<String, ReputationScoreVO>> =
-                WebSocketEventPayload.from(json, webSocketEvent)
-            val payload: Map<String, ReputationScoreVO> = webSocketEventPayload.payload
-            _reputationByUserProfileId.value = payload
+            reputationSequenceNumber.value = webSocketEvent.sequenceNumber
+
+            runCatching {
+                WebSocketEventPayload.from<Map<String, ReputationScoreVO>>(json, webSocketEvent).payload
+            }.onSuccess { payload ->
+                _reputationByUserProfileId.value = payload
+            }.onFailure { t ->
+                log.e(t) { "Failed to deserialize reputation payload; event ignored." }
+            }
         }
     }
 }
