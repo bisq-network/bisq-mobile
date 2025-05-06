@@ -52,10 +52,23 @@ class NodeMainPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        log.d { "Make sure the service is initialized" }
-
         runCatching {
-            if (!applicationServiceCreated) {
+            if (applicationServiceCreated) {
+                log.d { "Application service already created, ensuring its activated" }
+                settingsServiceFacade.activate()
+                offersServiceFacade.activate()
+                marketPriceServiceFacade.activate()
+                tradesServiceFacade.activate()
+                tradeChatMessagesServiceFacade.activate()
+                languageServiceFacade.activate()
+
+                accountsServiceFacade.activate()
+                explorerServiceFacade.activate()
+                mediationServiceFacade.activate()
+                reputationServiceFacade.activate()
+                userProfileServiceFacade.activate()
+            } else {
+                log.d { "Application service not created, creating.." }
                 val filesDirsPath = (view as Activity).filesDir.toPath()
                 val applicationContext = (view as Activity).applicationContext
                 val applicationService =
@@ -92,19 +105,7 @@ class NodeMainPresenter(
                     }
                 applicationServiceCreated = true
                 connectivityService.startMonitoring()
-            } else {
-                settingsServiceFacade.activate()
-                offersServiceFacade.activate()
-                marketPriceServiceFacade.activate()
-                tradesServiceFacade.activate()
-                tradeChatMessagesServiceFacade.activate()
-                languageServiceFacade.activate()
-
-                accountsServiceFacade.activate()
-                explorerServiceFacade.activate()
-                mediationServiceFacade.activate()
-                reputationServiceFacade.activate()
-                userProfileServiceFacade.activate()
+                log.d { "Application service created, monitoring connectivity.." }
             }
         }.onFailure { e ->
             // TODO give user feedback (we could have a general error screen covering usual
