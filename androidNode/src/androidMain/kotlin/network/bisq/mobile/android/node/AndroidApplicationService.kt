@@ -300,10 +300,6 @@ class AndroidApplicationService(
             }
     }
 
-    fun onStop() {
-        shutdown().join()
-    }
-
     override fun shutdown(): CompletableFuture<Boolean> {
         log.i("shutdown")
         // We shut down services in opposite order as they are initialized

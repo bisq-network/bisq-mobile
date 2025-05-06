@@ -18,13 +18,22 @@ class NodeApplicationBootstrapFacade(
     private var applicationServiceStatePin: Pin? = null
 
     override fun activate() {
+        // Check if already active to prevent duplicate activation
+        if (isActive) {
+            log.d { "Bootstrap already active, forcing reset" }
+            // Force reset of bootstrap state to ensure it runs again
+            deactivate()
+        }
+        
         super.activate()
-
+        
+        // Reset progress and state
+        onInitializeAppState()
+        
         applicationServiceStatePin = applicationServiceState.addObserver { state: State ->
             when (state) {
                 State.INITIALIZE_APP -> {
-                    setState("splash.applicationServiceState.INITIALIZE_APP".i18n())
-                    setProgress(0f)
+                    onInitializeAppState()
                 }
 
                 State.INITIALIZE_NETWORK -> {
@@ -42,6 +51,8 @@ class NodeApplicationBootstrapFacade(
                 }
 
                 State.APP_INITIALIZED -> {
+                    isActive = true
+                    log.i { "Bootstrap activated" }
                     setState("splash.applicationServiceState.APP_INITIALIZED".i18n())
                     setProgress(1f)
                 }
@@ -54,10 +65,15 @@ class NodeApplicationBootstrapFacade(
         }
     }
 
+    private fun onInitializeAppState() {
+        setState("splash.applicationServiceState.INITIALIZE_APP".i18n())
+        setProgress(0f)
+    }
+
     override fun deactivate() {
         applicationServiceStatePin?.unbind()
         applicationServiceStatePin = null
-
+        isActive = false
         super.deactivate()
     }
 }

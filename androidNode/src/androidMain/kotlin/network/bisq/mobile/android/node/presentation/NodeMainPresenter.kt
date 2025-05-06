@@ -120,11 +120,40 @@ class NodeMainPresenter(
     }
 
     override fun onDestroying() {
-//        TODO for notifications to work even if the app gets killed this needs to be commented out
-//        but it can't be done yet because of lack of support in bisq2 jars
-        provider.applicationService.onStop()
-        applicationServiceCreated = false
+        log.i { "Destroying NodeMainPresenter" }
+
+        if (applicationServiceCreated) {
+            try {
+                log.i { "Stopping application service, ensuring persistent services stop" }
+                provider.applicationService.shutdown().join()
+                stopPersistentServices()
+                applicationServiceCreated = false
+                log.i { "Application service stopped successfully" }
+            } catch (e: Exception) {
+                log.e("Error stopping application service", e)
+            }
+        }
+        
         super.onDestroying()
+    }
+
+    private fun stopPersistentServices() {
+        try {
+            // Explicitly stop services that might continue running
+            val networkService = provider.applicationService.networkService
+            networkService.shutdown().join()
+            
+            // Stop UserIdentityService
+            provider.applicationService.identityService.shutdown().join()
+            // TODO need to implement ? Stop AuthenticatedDataStorageService (part of persistence service)
+//            provider.applicationService.persistenceService.shutdown().join()
+            // Stop PeerExchangeService (part of network service)
+            // This is already covered by networkService.shutdown() but we'll be explicit
+            
+            log.i { "Persistent services stopped successfully" }
+        } catch (e: Exception) {
+            log.e("Error stopping persistent services", e)
+        }
     }
 
     private fun deactivateServices() {
