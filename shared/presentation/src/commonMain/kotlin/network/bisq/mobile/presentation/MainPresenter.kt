@@ -66,13 +66,23 @@ open class MainPresenter(
 
     override fun onResume() {
         super.onResume()
-        openTradesNotificationService.stopNotificationService()
+        onResumeServices()
     }
 
     override fun onPause() {
-        connectivityService.stopMonitoring()
-        openTradesNotificationService.launchNotificationService()
+        onPauseServices()
         super.onPause()
+    }
+
+    protected open fun onResumeServices() {
+        openTradesNotificationService.stopNotificationService()
+    }
+
+    protected open fun onPauseServices() {
+        connectivityService.stopMonitoring()
+//        FIXME this is causing issues with restarting the app after manual kill
+//        openTradesNotificationService.launchNotificationService()
+
     }
 
     // Toggle action
