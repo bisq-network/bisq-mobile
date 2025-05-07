@@ -1,15 +1,10 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.text.style.TextAlign
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap

@@ -17,7 +17,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
-import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.ui.components.organisms.offer.TakeOfferProgressDialog
 import network.bisq.mobile.presentation.ui.components.organisms.offer.TakeOfferSuccessDialog

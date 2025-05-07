@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText

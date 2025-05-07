@@ -7,7 +7,6 @@ import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes

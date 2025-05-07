@@ -44,11 +44,11 @@ object AmountValidator {
     fun validate(value: String, min: Long, max: Long): String? {
         val _value = value.toDoubleOrNullLocaleAware()
 
-        when {
-            _value == null -> return "Invalid number" // TODO:i18n
-            _value * 10000 < min-> return "Should be greater than ${min/ 10000.0}" // TODO:i18n
-            _value * 10000 > max-> return "Should be less than ${max/ 10000.0}" // TODO:i18n
-            else -> return null
+        return when {
+            _value == null -> "Invalid number" // TODO:i18n
+            _value * 10000 < min-> "Should be greater than ${min/ 10000.0}" // TODO:i18n
+            _value * 10000 > max-> "Should be less than ${max/ 10000.0}" // TODO:i18n
+            else -> null
         }
     }
 }

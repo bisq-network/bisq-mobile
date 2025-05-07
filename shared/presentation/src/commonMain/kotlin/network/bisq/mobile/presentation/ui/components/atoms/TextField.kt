@@ -129,7 +129,7 @@ fun BisqTextField(
 
     // Trigger validation for read only fields, on first render
     LaunchedEffect(disabled) {
-        if (disabled == true && value.isNotEmpty()) {
+        if (disabled && value.isNotEmpty()) {
             hasInteracted = true
             validationError = validation?.invoke(value)
         }

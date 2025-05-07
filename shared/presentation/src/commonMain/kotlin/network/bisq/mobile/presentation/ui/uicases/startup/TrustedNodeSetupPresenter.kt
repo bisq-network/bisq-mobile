@@ -98,7 +98,7 @@ class TrustedNodeSetupPresenter(
                 if (validateVersion) {
                     showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
                     if (!isWorkflow) {
-                        navigateBack();
+                        navigateBack()
                     }
                 }
                 _isConnected.value = true

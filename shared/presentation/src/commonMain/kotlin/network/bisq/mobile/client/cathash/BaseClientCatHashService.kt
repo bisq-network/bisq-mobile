@@ -102,7 +102,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
             return image
         } catch (e: Exception) {
             log.e { e.toString() }
-            throw e;
+            throw e
         }
     }
 

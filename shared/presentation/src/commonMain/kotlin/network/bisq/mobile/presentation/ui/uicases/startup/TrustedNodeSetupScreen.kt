@@ -5,15 +5,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -174,7 +166,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 )
             }
             BisqGap.V3()
-            if (isConnected && isVersionValid == false) {
+            if (isConnected && !isVersionValid) {
                 BisqText.baseRegular("Expected API version: ${BuildConfig.BISQ_API_VERSION}") // TODO:i18n
                 BisqText.baseRegular("Node API version: $trustedNodeVersion") // TODO:i18n
             }

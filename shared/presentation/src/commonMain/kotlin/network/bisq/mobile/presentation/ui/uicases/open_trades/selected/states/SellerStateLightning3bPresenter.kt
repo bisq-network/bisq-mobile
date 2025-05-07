@@ -36,7 +36,7 @@ class SellerStateLightning3bPresenter(
                         val encodedWithUserName = "bisqEasy.tradeState.info.buyer.phase3b.tradeLogMessage.ln".i18nEncode(
                             peersUserName
                         )
-                        val encodedWithNickName = getEncodedWithNickName(bisqEasyOpenTradeChannelModel);
+                        val encodedWithNickName = getEncodedWithNickName(bisqEasyOpenTradeChannelModel)
 
                         if (encodedLogMessage.equals(encodedWithUserName) || encodedLogMessage.equals(
                                 encodedWithNickName

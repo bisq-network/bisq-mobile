@@ -59,7 +59,7 @@ class BuyerStateMainChain3bPresenter(
         }
 
         if (txConfirmationState.value == IDLE) {
-            requestTx();
+            requestTx()
         }
     }
 

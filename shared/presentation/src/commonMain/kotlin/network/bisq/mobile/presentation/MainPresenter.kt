@@ -38,7 +38,7 @@ open class MainPresenter(
 
     init {
         val localeCode = getDeviceLanguageCode()
-        var screenWidth = getScreenWidthDp()
+        val screenWidth = getScreenWidthDp()
         _isSmallScreen.value = screenWidth < 480
         log.i { "Shared Version: ${BuildConfig.SHARED_LIBS_VERSION}" }
         log.i { "iOS Client Version: ${BuildConfig.IOS_APP_VERSION}" }

@@ -1,12 +1,10 @@
 package network.bisq.mobile.presentation.ui.components.organisms.market
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import network.bisq.mobile.presentation.ui.components.atoms.BisqDropDown
 import network.bisq.mobile.presentation.ui.components.atoms.BisqSegmentButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants

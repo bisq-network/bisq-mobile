@@ -46,7 +46,7 @@ fun BisqStaticScaffold(
             }
         },
         floatingActionButton = floatingButton ?: {},
-        content = { it ->
+        content = {
             BisqStaticLayout(
                 padding = if (topBar != null) it else padding,
                 horizontalAlignment = horizontalAlignment,

@@ -329,7 +329,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
                 enableInteractive()
             }
         }
-        return wentBack;
+        return wentBack
     }
 
     @CallSuper

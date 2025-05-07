@@ -100,10 +100,7 @@ fun CreateOfferTradePriceSelectorScreen() {
                         keyboardType = KeyboardType.Decimal,
                         onValueChange = { it, isValid -> presenter.onFixPriceChanged(it, isValid) },
                         validation = {
-                            val parsedValue = it.toDoubleOrNullLocaleAware()
-                            if (parsedValue == null) {
-                                return@BisqTextField "Value cannot be empty"
-                            }
+                            val parsedValue = it.toDoubleOrNullLocaleAware() ?: return@BisqTextField "Value cannot be empty"
                             val parsedPercent = presenter.calculatePercentageForFixedValue(it)
                             if (parsedPercent < -10) {
                                 return@BisqTextField "Trade price should be greater than -10% of market price"

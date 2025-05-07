@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
-import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -18,7 +17,6 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 
 open class GeneralSettingsPresenter(
-    private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
     private val mainPresenter: MainPresenter

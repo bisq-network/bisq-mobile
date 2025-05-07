@@ -22,7 +22,6 @@ import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 
-
 class CreateOfferPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,

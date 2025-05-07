@@ -9,77 +9,77 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 object BisqGap {
 
-    @Composable()
+    @Composable
     fun VQuarter() {
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPaddingQuarter))
     }
 
-    @Composable()
+    @Composable
     fun VHalf() {
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPaddingHalf))
     }
 
-    @Composable()
+    @Composable
     fun VHalfQuarter() {
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPaddingHalfQuarter))
     }
 
-    @Composable()
+    @Composable
     fun V1() {
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
     }
 
-    @Composable()
+    @Composable
     fun V2() {
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding2X))
     }
 
-    @Composable()
+    @Composable
     fun V3() {
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding3X))
     }
 
-    @Composable()
+    @Composable
     fun V4() {
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding4X))
     }
 
-    @Composable()
+    @Composable
     fun V5() {
         Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding5X))
     }
 
-    @Composable()
+    @Composable
     fun HQuarter() {
         Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPaddingQuarter))
     }
 
-    @Composable()
+    @Composable
     fun HHalf() {
         Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPaddingHalf))
     }
 
-    @Composable()
+    @Composable
     fun HHalfQuarter() {
         Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPaddingHalfQuarter))
     }
 
-    @Composable()
+    @Composable
     fun H1() {
         Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPadding))
     }
 
-    @Composable()
+    @Composable
     fun H2() {
         Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPadding2X))
     }
 
-    @Composable()
+    @Composable
     fun H3() {
         Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPadding3X))
     }
 
-    @Composable()
+    @Composable
     fun H4() {
         Spacer(modifier = Modifier.width(BisqUIConstants.ScreenPadding4X))
     }

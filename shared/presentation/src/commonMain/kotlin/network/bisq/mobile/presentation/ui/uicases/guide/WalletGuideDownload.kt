@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.guide
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -14,7 +13,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
 @Composable

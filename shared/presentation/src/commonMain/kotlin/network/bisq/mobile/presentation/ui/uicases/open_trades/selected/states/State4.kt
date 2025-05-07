@@ -5,21 +5,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.trade_completed
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
-import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsStyle
-import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
-import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
+import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.organisms.trades.CloseTradeDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 
 @Composable

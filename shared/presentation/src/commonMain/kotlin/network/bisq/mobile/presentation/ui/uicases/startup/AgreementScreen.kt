@@ -14,7 +14,6 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.koin.compose.koinInject
 
 interface IAgreementPresenter : ViewPresenter {

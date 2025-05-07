@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher

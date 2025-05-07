@@ -36,7 +36,7 @@ fun BtcSatsText(
     noCode: Boolean = false
 ) {
     if (formattedBtcAmountValue.isEmpty())
-        return;
+        return
 
     val formattedValue = formatSatsToDisplay(formattedBtcAmountValue, noCode)
     val finalFontSize = fontSize

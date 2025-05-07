@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.guide
 
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
 import androidx.compose.runtime.remember
@@ -51,7 +50,7 @@ fun TradeGuideTradeRules() {
 
         BisqGap.V1()
 
-        if (userAgreed == false)
+        if (!userAgreed)
             BisqCheckbox(
                 "tac.confirm".i18n(),
                 checked = _userAgreed,

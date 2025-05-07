@@ -1,6 +1,9 @@
 package network.bisq.mobile.presentation.ui.components.organisms
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -9,7 +12,6 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.icons.ExclamationRedIcon
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 

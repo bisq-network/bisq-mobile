@@ -1,11 +1,10 @@
 package network.bisq.mobile.presentation.ui.components.organisms
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -15,7 +14,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import org.koin.compose.koinInject
 
 @Composable
 fun TrustedNodeAPIIncompatiblePopup(

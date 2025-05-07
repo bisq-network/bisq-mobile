@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import androidx.compose.runtime.collectAsState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -15,14 +14,12 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVOExte
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
-import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.getGroupingSeparator
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
@@ -47,10 +44,7 @@ class CreateOfferAmountPresenter(
     private val createOfferPresenter: CreateOfferPresenter,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
-    private val offersServiceFacade: OffersServiceFacade,
 ) : BasePresenter(mainPresenter) {
-
-    val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = offersServiceFacade.offerbookListItems
 
     lateinit var headline: String
     lateinit var quoteCurrencyCode: String
@@ -128,6 +122,7 @@ class CreateOfferAmountPresenter(
     private var _amountValid: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val amountValid: StateFlow<Boolean> = _amountValid
 
+    // Life cycle
     override fun onViewAttached() {
         super.onViewAttached()
         createOfferModel = createOfferPresenter.createOfferModel
@@ -161,6 +156,7 @@ class CreateOfferAmountPresenter(
         updateAmountLimitInfo(true)
     }
 
+    // Handlers
     fun onSelectAmountType(value: AmountType) {
         _amountType.value = value
         updateAmountLimitInfo()
@@ -205,23 +201,9 @@ class CreateOfferAmountPresenter(
         updateAmountLimitInfo()
     }
 
-    private fun updateAmountLimitInfo(firstLoad: Boolean = false) {
-        if (isBuy.value) {
-            updateBuyersAmountLimitInfo()
-        } else {
-            updateSellerAmountLimitInfo(firstLoad)
-        }
-    }
-
     fun onRangeAmountSliderChanged(value: ClosedFloatingPointRange<Float>) {
         applyRangeAmountSliderValue(value)
         updateAmountLimitInfo()
-    }
-
-    fun getFractionForFiat(value: Double): Float {
-        val range = (maxAmount - minAmount).takeIf { it != 0L } ?: return 0f
-        val inFraction = ((value * 10000) - minAmount) / range
-        return inFraction.toFloat()
     }
 
     fun onBack() {
@@ -265,6 +247,14 @@ class CreateOfferAmountPresenter(
     }
 
     // private
+    private fun updateAmountLimitInfo(firstLoad: Boolean = false) {
+        if (isBuy.value) {
+            updateBuyersAmountLimitInfo()
+        } else {
+            updateSellerAmountLimitInfo(firstLoad)
+        }
+    }
+
     private fun handleAmountTextChange(
         textInput: String,
         onValueParsed: (Float) -> Unit,
@@ -466,6 +456,12 @@ class CreateOfferAmountPresenter(
         val range = maxAmount - minAmount
         val value: Float = minAmount + (amount * range)
         return (value / 10000f).roundToLong() * 10000
+    }
+
+    private fun getFractionForFiat(value: Double): Float {
+        val range = (maxAmount - minAmount).takeIf { it != 0L } ?: return 0f
+        val inFraction = ((value * 10000) - minAmount) / range
+        return inFraction.toFloat()
     }
 
     private fun commitToModel() {

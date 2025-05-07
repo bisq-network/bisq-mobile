@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -9,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bot_image
 import kotlinx.coroutines.flow.StateFlow
@@ -41,7 +39,7 @@ fun UserProfile(
             modifier = Modifier.size(BisqUIConstants.ScreenPadding3X)
         )
         BisqGap.V1()
-        Column() {
+        Column {
             if (showUserName) {
                 BisqText.baseRegular(
                     text = user.userName,

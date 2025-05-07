@@ -2,10 +2,11 @@ package network.bisq.mobile.presentation.ui.helpers
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.*
+import androidx.compose.ui.text.TextMeasurer
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.sp
 import network.bisq.mobile.presentation.ui.components.atoms.FontSize
 
 object StringHelper {

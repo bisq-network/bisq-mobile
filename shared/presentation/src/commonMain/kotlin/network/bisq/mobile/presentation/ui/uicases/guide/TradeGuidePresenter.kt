@@ -8,14 +8,12 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-
 class TradeGuidePresenter(
     mainPresenter: MainPresenter,
     private val settingsServiceFacade: SettingsServiceFacade
 ) : BasePresenter(mainPresenter) {
 
     val tradeRulesConfirmed: StateFlow<Boolean> = settingsServiceFacade.tradeRulesConfirmed
-    val dontShowLinkPopup: StateFlow<Boolean> = settingsServiceFacade.tradeRulesConfirmed
 
     fun prevClick() {
         navigateBack()

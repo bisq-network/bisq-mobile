@@ -13,7 +13,6 @@ import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressFieldType
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-// todo: btc address/ ln invoice validation missing
 class BuyerState1aPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,

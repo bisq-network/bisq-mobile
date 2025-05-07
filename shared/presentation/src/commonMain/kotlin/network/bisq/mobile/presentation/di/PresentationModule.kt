@@ -121,25 +121,9 @@ val presentationModule = module {
         )
     } bind ITrustedNodeSetupPresenter::class
 
-    /*
-    single<MarketListPresenter> { MarketListPresenter(get(), get()) }
+    single { GeneralSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
-    single { OffersListPresenter(get(), get(), get(), get()) } bind IOffersListPresenter::class
-
-    single {
-        MyTradesPresenter(
-            get(),
-            get(),
-            get(),
-        )
-    } bind IMyTrades::class
-
-    single { TradeFlowPresenter(get(), get()) } bind ITradeFlowPresenter::class
-    */
-
-    single { GeneralSettingsPresenter(get(), get(), get(), get()) } bind IGeneralSettingsPresenter::class
-
-    single { PaymentAccountPresenter(get(), get(), get()) } bind IPaymentAccountSettingsPresenter::class
+    single { PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
 
     // Offerbook
     single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get()) }
@@ -156,7 +140,7 @@ val presentationModule = module {
     single { CreateOfferDirectionPresenter(get(), get(), get(), get()) }
     single { CreateOfferMarketPresenter(get(), get(), get()) }
     single { CreateOfferPricePresenter(get(), get(), get()) }
-    single { CreateOfferAmountPresenter(get(), get(), get(), get(), get(), get()) }
+    single { CreateOfferAmountPresenter(get(), get(), get(), get(), get()) }
     single { CreateOfferPaymentMethodPresenter(get(), get()) }
     single { CreateOfferReviewPresenter(get(), get()) }
 

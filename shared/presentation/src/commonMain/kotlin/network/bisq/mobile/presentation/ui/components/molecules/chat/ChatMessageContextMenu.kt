@@ -32,7 +32,7 @@ fun ChatMessageContextMenu(
     onReportUser: () -> Unit = {}
 ) {
     val isPeersMessage = !message.isMyMessage
-    Surface(/*modifier = Modifier.align(menuPosition)*/) {
+    Surface {
         DropdownMenu(
             expanded = showMenu,
             onDismissRequest = { onSetShowMenu(false) },
