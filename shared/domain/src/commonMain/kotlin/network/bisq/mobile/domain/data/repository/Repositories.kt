@@ -11,4 +11,4 @@ import network.bisq.mobile.domain.data.persistance.KeyValueStorage
 open class BisqStatsRepository : SingleObjectRepository<BisqStats>()
 open class SettingsRepository(keyValueStorage: KeyValueStorage<Settings>) : SingleObjectRepository<Settings>(keyValueStorage, Settings())
 open class UserRepository(keyValueStorage: KeyValueStorage<User>) : SingleObjectRepository<User>(keyValueStorage, User())
-open class TradeMessageRepository(keyValueStorage: KeyValueStorage<TradeMessageMap>) : SingleObjectRepository<TradeMessageMap>(keyValueStorage, TradeMessageMap())
+open class TradeMessageMapRepository(keyValueStorage: KeyValueStorage<TradeMessageMap>) : SingleObjectRepository<TradeMessageMap>(keyValueStorage, TradeMessageMap())

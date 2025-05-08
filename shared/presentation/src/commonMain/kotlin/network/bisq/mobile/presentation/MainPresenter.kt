@@ -8,7 +8,7 @@ import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.model.TradeMessageMap
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.data.repository.TradeMessageMapRepository
 import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
@@ -18,7 +18,6 @@ import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-
 /**
  * Main Presenter as an example of implementation for now.
  */
@@ -27,7 +26,7 @@ open class MainPresenter(
     private val openTradesNotificationService: OpenTradesNotificationService,
     private val settingsService: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
-    private val tradeMessageMapRepository: tradeMessageMapRepository,
+    private val tradeMessageMapRepository: TradeMessageMapRepository,
     private val urlLauncher: UrlLauncher
 ) : BasePresenter(null), AppPresenter {
     override lateinit var navController: NavHostController
@@ -73,15 +72,21 @@ open class MainPresenter(
             .launchIn(presenterScope)
 
         presenterScope.launch {
-            tradesServiceFacade.openTradeItems.collect{
+            combine(
+                tradesServiceFacade.openTradeItems,
+                tradesServiceFacade.selectedTrade
+            ) { tradeList, selectedTrade ->
+                tradeList
+            }.collect {
                 val readTradeMap = tradeMessageMapRepository.fetch() ?: TradeMessageMap()
                 _unreadTrades.value = it.map { trade ->
                     val chatSize = trade.bisqEasyOpenTradeChannelModel.chatMessages.value.size
                     log.d { "open trade chats: ${trade.tradeId} --> $chatSize" }
                     return@map trade.tradeId to chatSize
                 }.filter { idSizePair ->
-                    val mapItem = readTradeMap.map[idSizePair.first]
-                    if (mapItem != null && mapItem == idSizePair.second) {
+                    val chatCount = readTradeMap.map[idSizePair.first]
+                    if (chatCount != null && chatCount == idSizePair.second) {
+                        log.d { "open trade chats: ${idSizePair.first} --> is read" }
                         return@filter false
                     }
                     return@filter true

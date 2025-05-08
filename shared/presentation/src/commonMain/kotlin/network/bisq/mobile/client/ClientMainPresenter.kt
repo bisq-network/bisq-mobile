@@ -6,6 +6,7 @@ import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.IODispatcher
+import network.bisq.mobile.domain.data.repository.TradeMessageMapRepository
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
@@ -41,7 +42,7 @@ open class ClientMainPresenter(
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     openTradesNotificationService: OpenTradesNotificationService,
-    private val tradeMessageMapRepository: tradeMessageMapRepository,
+    private val tradeMessageMapRepository: TradeMessageMapRepository,
     private val webSocketClientProvider: WebSocketClientProvider,
     urlLauncher: UrlLauncher
 ) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, tradeMessageMapRepository, urlLauncher) {

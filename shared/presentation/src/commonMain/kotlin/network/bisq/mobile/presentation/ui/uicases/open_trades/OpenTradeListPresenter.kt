@@ -3,7 +3,9 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.data.model.TradeMessageMap
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.data.repository.TradeMessageMapRepository
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -15,7 +17,8 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 class OpenTradeListPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
-    private val settingsServiceFacade: SettingsServiceFacade
+    private val settingsServiceFacade: SettingsServiceFacade,
+    private val tradeMessageMapRepository: TradeMessageMapRepository,
 ) : BasePresenter(mainPresenter) {
 
     private val _openTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
@@ -42,6 +45,9 @@ class OpenTradeListPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
+        this.presenterScope.launch {
+            val readTradeMap = tradeMessageMapRepository.fetch() ?: TradeMessageMap()
+        }
     }
 
     fun onOpenTradeGuide() {
