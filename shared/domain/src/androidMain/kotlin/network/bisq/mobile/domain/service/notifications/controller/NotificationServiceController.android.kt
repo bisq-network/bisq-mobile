@@ -62,9 +62,9 @@ actual class NotificationServiceController (private val appForegroundController:
     actual override fun stopService() {
         // TODO we need to leave the service running if the user is ok with it
         if (isRunning) {
-            deleteNotificationChannel()
             val intent = Intent(context, BisqForegroundService::class.java)
             context.stopService(intent)
+            deleteNotificationChannel()
             isRunning = false
         } else {
             log.w { "Service is not running, skipping stop call" }

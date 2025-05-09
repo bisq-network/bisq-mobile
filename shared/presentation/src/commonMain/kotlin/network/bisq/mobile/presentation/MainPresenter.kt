@@ -74,15 +74,20 @@ open class MainPresenter(
         super.onPause()
     }
 
+    @CallSuper
+    override fun onDestroying() {
+        // to stop notification service and fully kill app (no zombie mode)
+        onResumeServices()
+        super.onDestroying()
+    }
+
     protected open fun onResumeServices() {
         openTradesNotificationService.stopNotificationService()
     }
 
     protected open fun onPauseServices() {
         connectivityService.stopMonitoring()
-//        FIXME this is causing issues with restarting the app after manual kill
-//        openTradesNotificationService.launchNotificationService()
-
+        openTradesNotificationService.launchNotificationService()
     }
 
     // Toggle action
