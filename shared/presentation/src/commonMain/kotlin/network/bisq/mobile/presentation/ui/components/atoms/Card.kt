@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -18,12 +19,13 @@ fun BisqCard(
     borderRadius: Dp = BisqUIConstants.ScreenPaddingHalf,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
+    backgroundColor: Color = BisqTheme.colors.dark_grey40,
     content: @Composable ColumnScope.() -> Unit
 ) {
     Column(
         modifier = Modifier
             .clip(RoundedCornerShape(borderRadius))
-            .background(BisqTheme.colors.dark_grey40)
+            .background(backgroundColor)
             .padding(padding)
             .fillMaxWidth(),
         horizontalAlignment = horizontalAlignment,

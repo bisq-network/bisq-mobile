@@ -26,7 +26,13 @@ fun OpenTradeListItem(
     item: TradeItemPresentationModel,
     onSelect: () -> Unit,
 ) {
-    BisqCard {
+    val hasUpdate = true
+    val bgColor = if (hasUpdate)
+        BisqTheme.colors.primary.copy(alpha = 0.35f)
+    else
+        BisqTheme.colors.dark_grey40
+
+    BisqCard(backgroundColor = bgColor) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
