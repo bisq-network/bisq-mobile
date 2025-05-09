@@ -18,6 +18,9 @@ import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import org.koin.android.ext.android.inject
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
 
 class MainActivity : ComponentActivity() {
     private val presenter : MainPresenter by inject()
@@ -39,6 +42,8 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        cleanupKoin()
+
         presenter.attachView(this)
 
         setContent {
@@ -46,6 +51,11 @@ class MainActivity : ComponentActivity() {
         }
 
         handleDynamicPermissions()
+    }
+
+    private fun cleanupKoin() {
+        // this is needed here to ensure cleanups in "zombie state"
+        MainApplication.setupKoinDI(applicationContext)
     }
 
     override fun onStart() {

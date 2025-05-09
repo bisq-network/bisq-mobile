@@ -90,8 +90,6 @@ val androidNodeModule = module {
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 
-    // this line showcases both, the possibility to change behaviour of the app by changing one definition
-    // and binding the same obj to 2 different abstractions
     single<MainPresenter> {
         NodeMainPresenter(
             get(),
