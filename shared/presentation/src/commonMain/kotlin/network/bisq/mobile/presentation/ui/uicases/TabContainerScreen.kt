@@ -1,9 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import bisqapps.shared.presentation.generated.resources.Res
@@ -11,11 +8,13 @@ import bisqapps.shared.presentation.generated.resources.icon_home
 import bisqapps.shared.presentation.generated.resources.icon_market
 import bisqapps.shared.presentation.generated.resources.icon_settings
 import bisqapps.shared.presentation.generated.resources.icon_trades
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.button.BisqFABAddButton
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.composeModels.BottomNavigationItem
+import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.navigation.BottomNavigation
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.navigation.graph.TabNavGraph
@@ -29,6 +28,7 @@ val navigationListItem = listOf(
 )
 
 interface ITabContainerPresenter : ViewPresenter {
+    val unreadTrades: StateFlow<Map<String, Int>>
     fun createOffer()
 }
 
@@ -42,6 +42,9 @@ fun TabContainerScreen() {
             navBackStackEntry?.destination?.route
         }
     }
+    val unreadTradeCount by presenter.unreadTrades.collectAsState()
+
+    RememberPresenterLifecycle(presenter)
 
     BisqStaticScaffold(
         topBar = {
@@ -69,6 +72,7 @@ fun TabContainerScreen() {
             BottomNavigation(
                 items = navigationListItem,
                 currentRoute = currentRoute.orEmpty(),
+                unreadTradeCount = unreadTradeCount.size,
                 onItemClick = { currentNavigationItem ->
                     Routes.fromString(currentNavigationItem.route)?.let { presenter.navigateToTab(it) }
                 })

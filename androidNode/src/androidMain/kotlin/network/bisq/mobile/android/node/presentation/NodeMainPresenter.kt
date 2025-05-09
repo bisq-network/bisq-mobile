@@ -40,9 +40,10 @@ class NodeMainPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
+    private val tradeMessageMapRepository: tradeMessageMapRepository,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
-) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, urlLauncher) {
+) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, tradeMessageMapRepository, urlLauncher) {
 
     private var applicationServiceCreated = false
 

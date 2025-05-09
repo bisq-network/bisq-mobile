@@ -21,10 +21,9 @@ import org.jetbrains.compose.resources.painterResource
 fun BottomNavigation(
     items: List<BottomNavigationItem>,
     currentRoute: String,
+    unreadTradeCount: Int,
     onItemClick: (BottomNavigationItem) -> Unit
 ) {
-
-    val badgeCount = 10
 
     NavigationBar(
         containerColor = BisqTheme.colors.backgroundColor
@@ -45,11 +44,11 @@ fun BottomNavigation(
                 onClick = { onItemClick(navigationItem) },
                 icon = {
 
-                    if (index == 2 && badgeCount > 0) {
+                    if (index == 2 && unreadTradeCount > 0) {
                         BadgedBox(
                             badge = {
                                 AnimatedBadge {
-                                    BisqText.xsmallLight(badgeCount.toString(), textAlign = TextAlign.Center)
+                                    BisqText.xsmallLight(unreadTradeCount.toString(), textAlign = TextAlign.Center)
                                 }
                             }
                         ) {

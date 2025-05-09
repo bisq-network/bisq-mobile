@@ -3,13 +3,17 @@ package network.bisq.mobile.presentation
 import androidx.annotation.CallSuper
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
+import network.bisq.mobile.domain.data.model.TradeMessageMap
+import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -22,6 +26,8 @@ open class MainPresenter(
     private val connectivityService: ConnectivityService,
     private val openTradesNotificationService: OpenTradesNotificationService,
     private val settingsService: SettingsServiceFacade,
+    private val tradesServiceFacade: TradesServiceFacade,
+    private val tradeMessageMapRepository: tradeMessageMapRepository,
     private val urlLauncher: UrlLauncher
 ) : BasePresenter(null), AppPresenter {
     override lateinit var navController: NavHostController
@@ -35,6 +41,9 @@ open class MainPresenter(
     override val isSmallScreen: StateFlow<Boolean> = _isSmallScreen
 
     final override val languageCode: StateFlow<String> = settingsService.languageCode
+
+    private val _unreadTrades: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
+    override val unreadTrades: StateFlow<Map<String, Int>> = _unreadTrades
 
     init {
         val localeCode = getDeviceLanguageCode()
@@ -62,6 +71,23 @@ open class MainPresenter(
             }
             .take(1)
             .launchIn(presenterScope)
+
+        presenterScope.launch {
+            tradesServiceFacade.openTradeItems.collect{
+                val readTradeMap = tradeMessageMapRepository.fetch() ?: TradeMessageMap()
+                _unreadTrades.value = it.map { trade ->
+                    val chatSize = trade.bisqEasyOpenTradeChannelModel.chatMessages.value.size
+                    log.d { "open trade chats: ${trade.tradeId} --> $chatSize" }
+                    return@map trade.tradeId to chatSize
+                }.filter { idSizePair ->
+                    val mapItem = readTradeMap.map[idSizePair.first]
+                    if (mapItem != null && mapItem == idSizePair.second) {
+                        return@filter false
+                    }
+                    return@filter true
+                }.toMap()
+            }
+        }
     }
 
     override fun onResume() {

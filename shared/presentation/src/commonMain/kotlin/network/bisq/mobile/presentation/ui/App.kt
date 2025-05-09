@@ -26,6 +26,8 @@ interface AppPresenter : ViewPresenter {
 
     val isSmallScreen: StateFlow<Boolean>
 
+    val unreadTrades: StateFlow<Map<String, Int>>
+
     // Actions
     fun toggleContentVisibility()
 
