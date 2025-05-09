@@ -6,11 +6,14 @@ class NotificationServiceWrapper: ObservableObject {
 
     init() {
         self.notificationServiceController = get()
+        self.notificationServiceController.registerBackgroundTask()
     }
 }
 
 @main
 struct iosClient: App {
+
+//    @Environment(\.scenePhase) var scenePhase
     @StateObject var notificationServiceWrapper = NotificationServiceWrapper()
 
     init() {
@@ -21,6 +24,12 @@ struct iosClient: App {
         WindowGroup {
             ContentView()
                 .environmentObject(notificationServiceWrapper)
+//                .onChange(of: scenePhase) { newPhase in
+//                    if newPhase == .active {
+//                        // ensure no zombie mode - TODO not working causes crash
+//                        DependenciesProviderHelper().doInitKoin()
+//                    }
+//                }
         }
     }
 }

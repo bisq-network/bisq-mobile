@@ -13,11 +13,7 @@ import org.koin.dsl.module
 val iosClientModule = module {
     single<UrlLauncher> { IOSUrlLauncher() }
     single<AppForegroundController> { AppForegroundController() } bind ForegroundDetector::class
-    single<NotificationServiceController> {
-        NotificationServiceController(get()).apply {
-            this.registerBackgroundTask()
-        }
-    }
+    single<NotificationServiceController> { NotificationServiceController(get()) }
 
     single { ClientConnectivityService(get()) } bind ConnectivityService::class
 }
