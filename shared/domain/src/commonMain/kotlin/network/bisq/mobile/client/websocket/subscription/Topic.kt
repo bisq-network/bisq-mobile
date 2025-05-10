@@ -7,6 +7,7 @@ import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTra
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationDto
+import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -19,4 +20,5 @@ enum class Topic(val typeOf: KType) {
     TRADE_PROPERTIES(typeOf<List<Map<String, TradePropertiesDto>>>()),
     TRADE_CHAT_MESSAGES(typeOf<List<BisqEasyOpenTradeMessageDto>>()),
     CHAT_REACTIONS(typeOf<List<BisqEasyOpenTradeMessageReactionVO>>()),
+    USER_REPUTATION(typeOf<Map<String, ReputationScoreVO>>()),
 }

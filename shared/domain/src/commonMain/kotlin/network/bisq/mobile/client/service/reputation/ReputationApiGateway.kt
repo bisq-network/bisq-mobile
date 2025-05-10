@@ -1,19 +1,14 @@
-package network.bisq.mobile.client.service.mediation
+package network.bisq.mobile.client.service.reputation
 
-import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
-import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.subscription.Topic
+import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.utils.Logging
 
 class ReputationApiGateway(
-    private val webSocketApiClient: WebSocketApiClient
+    private val webSocketClientProvider: WebSocketClientProvider,
 ) : Logging {
-    private val basePath = "reputation"
-
-    suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
-        return webSocketApiClient.get("$basePath/scores/$userProfileId")
-    }
-
-    suspend fun getScoreByUserProfileId(): Result<Map<String, Long>> {
-        return webSocketApiClient.get("$basePath/scores")
+    suspend fun subscribeUserReputation(): WebSocketEventObserver {
+        return webSocketClientProvider.get().subscribe(Topic.USER_REPUTATION)
     }
 }
