@@ -327,7 +327,8 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         var errorMessagePin: Pin? = null
         var peersErrorMessagePin: Pin? = null
         try {
-            check(!bannedUserService.isNetworkIdBanned(bisqEasyOffer.makerNetworkId)) { "You cannot take the offer because the maker is banned" }
+//            FIXME api doesn't exist anymore with latest bisq2 jars API changes
+//            check(!bannedUserService.isNetworkIdBanned(bisqEasyOffer.makerNetworkId)) { "You cannot take the offer because the maker is banned" }
             val takerIdentity = userIdentityService.selectedUserIdentity
             check(!bannedUserService.isUserProfileBanned(takerIdentity.userProfile)) // if taker is banned we don't give him hints.
             val mediator = mediationRequestService.selectMediator(bisqEasyOffer.makersUserProfileId, takerIdentity.id, bisqEasyOffer.id)

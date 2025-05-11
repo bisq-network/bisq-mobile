@@ -206,7 +206,7 @@ class Mappings {
                 ChatChannelDomain.DISCUSSION -> ChatChannelDomainEnum.DISCUSSION
                 ChatChannelDomain.SUPPORT -> ChatChannelDomainEnum.SUPPORT
                 ChatChannelDomain.BISQ_EASY_PRIVATE_CHAT -> ChatChannelDomainEnum.DISCUSSION
-                ChatChannelDomain.MU_SIG_OFFERBOOK -> ChatChannelDomainEnum.BISQ_EASY_OFFERBOOK
+                ChatChannelDomain.MU_SIG_OPEN_TRADES -> ChatChannelDomainEnum.BISQ_EASY_OFFERBOOK // FIXME when musig gets incorporated
                 ChatChannelDomain.EVENTS -> ChatChannelDomainEnum.DISCUSSION
             }
         }
