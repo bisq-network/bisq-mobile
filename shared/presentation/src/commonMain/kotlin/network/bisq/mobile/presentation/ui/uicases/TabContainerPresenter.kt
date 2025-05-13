@@ -1,12 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases
 
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -17,8 +14,8 @@ class TabContainerPresenter(
     private val createOfferPresenter: CreateOfferPresenter,
 ) : BasePresenter(mainPresenter), ITabContainerPresenter {
 
-    private val _unreadTrades: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
-    override val unreadTrades: StateFlow<Map<String, Int>> = _unreadTrades
+    private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
+    override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> = _tradesWithUnreadMessages
 
     private var job: Job? = null
 
@@ -26,7 +23,7 @@ class TabContainerPresenter(
         super.onViewAttached()
 
         job = presenterScope.launch {
-            mainPresenter.unreadTrades.collect{ _unreadTrades.value = it }
+            mainPresenter.tradesWithUnreadMessages.collect{ _tradesWithUnreadMessages.value = it }
         }
     }
 

@@ -4,6 +4,7 @@ import ErrorOverlay
 import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.ViewPresenter
@@ -26,7 +27,7 @@ interface AppPresenter : ViewPresenter {
 
     val isSmallScreen: StateFlow<Boolean>
 
-    val unreadTrades: StateFlow<Map<String, Int>>
+    val tradesWithUnreadMessages: StateFlow<Map<String, Int>>
 
     // Actions
     fun toggleContentVisibility()

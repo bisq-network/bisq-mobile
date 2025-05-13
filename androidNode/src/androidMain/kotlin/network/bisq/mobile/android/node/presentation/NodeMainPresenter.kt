@@ -5,7 +5,7 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.MainActivity
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.UrlLauncher
-import network.bisq.mobile.domain.data.repository.TradeMessageMapRepository
+import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
@@ -41,10 +41,10 @@ class NodeMainPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
-    private val tradeMessageMapRepository: TradeMessageMapRepository,
+    private val tradeReadStateRepository: TradeReadStateRepository,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
-) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, tradeMessageMapRepository, urlLauncher) {
+) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, tradeReadStateRepository, urlLauncher) {
 
     private var applicationServiceCreated = false
 

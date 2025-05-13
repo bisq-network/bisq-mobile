@@ -14,8 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -26,6 +25,7 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.fiat_btc
 import bisqapps.shared.presentation.generated.resources.reputation
 import bisqapps.shared.presentation.generated.resources.thumbs_up
+import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -41,10 +41,19 @@ import org.koin.compose.koinInject
 @Composable
 fun OpenTradeListScreen() {
     val presenter: OpenTradeListPresenter = koinInject()
-    RememberPresenterLifecycle(presenter)
+
+    val readMessageCountsByTrade by presenter.readMessageCountsByTrade.collectAsState()
 
     val sortedList =
         presenter.openTradeItems.collectAsState().value.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
+
+    RememberPresenterLifecycle(presenter)
+
+    fun isTradeUnread(trade: TradeItemPresentationModel, read: Map<String, Int>): Boolean {
+        val chatCount = trade.bisqEasyOpenTradeChannelModel.chatMessages.value.size
+        val recordedCount = read[trade.tradeId]
+        return recordedCount == null || recordedCount < chatCount
+    }
 
     if (presenter.tradeGuideVisible.collectAsState().value) {
         InformationConfirmationDialog(
@@ -92,8 +101,13 @@ fun OpenTradeListScreen() {
                     )
                 }
             }
-            items(sortedList) { openTradeItem ->
-                OpenTradeListItem(openTradeItem, { presenter.onSelect(openTradeItem) })
+            items(sortedList) { trade ->
+                val isUnread = isTradeUnread(trade, readMessageCountsByTrade)
+                OpenTradeListItem(
+                    trade,
+                    isUnread = isUnread,
+                  { presenter.onSelect(trade) }
+                )
             }
         }
         //}
@@ -103,8 +117,13 @@ fun OpenTradeListScreen() {
             verticalArrangement = Arrangement.spacedBy(12.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            items(sortedList) { openTradeItem ->
-                OpenTradeListItem(openTradeItem, { presenter.onSelect(openTradeItem) })
+            items(sortedList) { trade ->
+                val isUnread = isTradeUnread(trade, readMessageCountsByTrade)
+                OpenTradeListItem(
+                    trade,
+                    isUnread = isUnread,
+                    { presenter.onSelect(trade) }
+                )
             }
         }
     }

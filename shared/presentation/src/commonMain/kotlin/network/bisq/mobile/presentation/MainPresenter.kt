@@ -2,13 +2,14 @@ package network.bisq.mobile.presentation
 
 import androidx.annotation.CallSuper
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
-import network.bisq.mobile.domain.data.model.TradeMessageMap
-import network.bisq.mobile.domain.data.repository.TradeMessageMapRepository
+import network.bisq.mobile.domain.data.model.TradeReadState
+import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
@@ -26,9 +27,11 @@ open class MainPresenter(
     private val openTradesNotificationService: OpenTradesNotificationService,
     private val settingsService: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
-    private val tradeMessageMapRepository: TradeMessageMapRepository,
+    private val tradeReadStateRepository: TradeReadStateRepository,
     private val urlLauncher: UrlLauncher
 ) : BasePresenter(null), AppPresenter {
+
+    val NOTIFICATION_SYNC_INTERVAL = 25_000L//60_000L
     override lateinit var navController: NavHostController
     override lateinit var tabNavController: NavHostController
 
@@ -41,8 +44,8 @@ open class MainPresenter(
 
     final override val languageCode: StateFlow<String> = settingsService.languageCode
 
-    private val _unreadTrades: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
-    override val unreadTrades: StateFlow<Map<String, Int>> = _unreadTrades
+    private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
+    override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> = _tradesWithUnreadMessages
 
     init {
         val localeCode = getDeviceLanguageCode()
@@ -52,9 +55,41 @@ open class MainPresenter(
         log.i { "iOS Client Version: ${BuildConfig.IOS_APP_VERSION}" }
         log.i { "Android Client Version: ${BuildConfig.ANDROID_APP_VERSION}" }
         log.i { "Android Node Version: ${BuildNodeConfig.APP_VERSION}" }
-        log.i { "Device language code: $localeCode"}
-        log.i { "Screen width: $screenWidth"}
-        log.i { "Small screen: ${_isSmallScreen.value}"}
+        log.i { "Device language code: $localeCode" }
+        log.i { "Screen width: $screenWidth" }
+        log.i { "Small screen: ${_isSmallScreen.value}" }
+
+        val notificationTimerFlow = flow {
+            while (true) {
+                emit(Unit)
+                delay(NOTIFICATION_SYNC_INTERVAL)
+            }
+        }
+
+        ioScope.launch {
+            combine(
+                tradesServiceFacade.openTradeItems,
+                tradesServiceFacade.selectedTrade,
+                notificationTimerFlow.onStart { emit(Unit) }
+            ) { tradeList, selectedTrade, _ ->
+                tradeList
+            }.collect {
+                val readState = tradeReadStateRepository.fetch() ?: TradeReadState()
+                log.d { "open trade chats: [[[start]]] ${readState.map.size}" }
+                _tradesWithUnreadMessages.value = it.map { trade ->
+                    val chatSize = trade.bisqEasyOpenTradeChannelModel.chatMessages.value.size
+                    log.d { "open trade chats: ${trade.tradeId} --> $chatSize" }
+                    return@map trade.tradeId to chatSize
+                }.filter { idSizePair ->
+                    val recordedSize = readState.map[idSizePair.first]
+                    if (recordedSize != null && recordedSize >= idSizePair.second) {
+                        log.d { "open trade chats: ${idSizePair.first} --> is read" }
+                        return@filter false
+                    }
+                    return@filter true
+                }.toMap()
+            }
+        }
     }
 
     @CallSuper
@@ -72,26 +107,7 @@ open class MainPresenter(
             .launchIn(presenterScope)
 
         presenterScope.launch {
-            combine(
-                tradesServiceFacade.openTradeItems,
-                tradesServiceFacade.selectedTrade
-            ) { tradeList, selectedTrade ->
-                tradeList
-            }.collect {
-                val readTradeMap = tradeMessageMapRepository.fetch() ?: TradeMessageMap()
-                _unreadTrades.value = it.map { trade ->
-                    val chatSize = trade.bisqEasyOpenTradeChannelModel.chatMessages.value.size
-                    log.d { "open trade chats: ${trade.tradeId} --> $chatSize" }
-                    return@map trade.tradeId to chatSize
-                }.filter { idSizePair ->
-                    val chatCount = readTradeMap.map[idSizePair.first]
-                    if (chatCount != null && chatCount == idSizePair.second) {
-                        log.d { "open trade chats: ${idSizePair.first} --> is read" }
-                        return@filter false
-                    }
-                    return@filter true
-                }.toMap()
-            }
+
         }
     }
 
@@ -144,4 +160,5 @@ open class MainPresenter(
     }
 
     override fun isDemo(): Boolean = false
+
 }

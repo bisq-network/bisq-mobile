@@ -46,8 +46,8 @@ fun AnimatedBadge(
     )
 
     Badge(
-        containerColor = BisqTheme.colors.danger,
-        contentColor = BisqTheme.colors.white,
+        containerColor = BisqTheme.colors.warningHover,
+        contentColor = BisqTheme.colors.dark_grey20,
         modifier = Modifier
             .offset(y = (-4).dp)
             .graphicsLayer {

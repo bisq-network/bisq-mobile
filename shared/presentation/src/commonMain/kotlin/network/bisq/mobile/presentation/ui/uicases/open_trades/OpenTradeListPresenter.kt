@@ -1,11 +1,10 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.model.TradeMessageMap
+import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.data.repository.TradeMessageMapRepository
+import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -18,7 +17,7 @@ class OpenTradeListPresenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
-    private val tradeMessageMapRepository: TradeMessageMapRepository,
+    private val tradeReadStateRepository: TradeReadStateRepository,
 ) : BasePresenter(mainPresenter) {
 
     private val _openTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
@@ -29,15 +28,28 @@ class OpenTradeListPresenter(
     private val _tradeGuideVisible = MutableStateFlow(false)
     val tradeGuideVisible: StateFlow<Boolean> get() = _tradeGuideVisible
 
+    private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
+    val tradesWithUnreadMessages: StateFlow<Map<String, Int>> = _tradesWithUnreadMessages
+
+    private val _readMessageCountsByTrade = MutableStateFlow(emptyMap<String, Int>())
+    val readMessageCountsByTrade: StateFlow<Map<String, Int>> = _readMessageCountsByTrade
+
     init {
         presenterScope.launch {
             mainPresenter.languageCode.collect {
                 _openTradeItems.value = tradesServiceFacade.openTradeItems.value.map {
                     it.apply {
-                        quoteAmountWithCode = "${NumberFormatter.format(it.quoteAmount.toDouble() / 10000.0)} ${it.quoteCurrencyCode}"
+                        quoteAmountWithCode =
+                            "${NumberFormatter.format(it.quoteAmount.toDouble() / 10000.0)} ${it.quoteCurrencyCode}"
                         formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec, true)
                         formattedBaseAmount = NumberFormatter.btcFormat(it.baseAmount)
                     }
+                }
+
+                mainPresenter.tradesWithUnreadMessages.collect {
+                    log.d { "open trade [OpenTradeListPresenter] ${it.size}"}
+                    _tradesWithUnreadMessages.value = it
+                    _readMessageCountsByTrade.value = (tradeReadStateRepository.fetch() ?: TradeReadState()).map
                 }
             }
         }
@@ -45,9 +57,12 @@ class OpenTradeListPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        this.presenterScope.launch {
-            val readTradeMap = tradeMessageMapRepository.fetch() ?: TradeMessageMap()
-        }
+    }
+
+    fun isRead(trade: TradeItemPresentationModel): Boolean {
+        val latestChatCount = trade.bisqEasyOpenTradeChannelModel.chatMessages.value.size
+        val chatCount = _readMessageCountsByTrade.value[trade.tradeId]
+        return chatCount != null && chatCount == latestChatCount
     }
 
     fun onOpenTradeGuide() {

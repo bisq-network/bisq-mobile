@@ -24,11 +24,11 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @Composable
 fun OpenTradeListItem(
     item: TradeItemPresentationModel,
+    isUnread: Boolean,
     onSelect: () -> Unit,
 ) {
-    val hasUpdate = true
-    val bgColor = if (hasUpdate)
-        BisqTheme.colors.primary.copy(alpha = 0.35f)
+    val bgColor = if (isUnread)
+        BisqTheme.colors.warning.copy(alpha = 0.15f)
     else
         BisqTheme.colors.dark_grey40
 
