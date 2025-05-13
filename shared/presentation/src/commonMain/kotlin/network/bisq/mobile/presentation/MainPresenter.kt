@@ -31,7 +31,7 @@ open class MainPresenter(
     private val urlLauncher: UrlLauncher
 ) : BasePresenter(null), AppPresenter {
 
-    val NOTIFICATION_SYNC_INTERVAL = 25_000L//60_000L
+    val NOTIFICATION_SYNC_INTERVAL = 30_000L//60_000L
     override lateinit var navController: NavHostController
     override lateinit var tabNavController: NavHostController
 
@@ -46,6 +46,9 @@ open class MainPresenter(
 
     private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
     override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> = _tradesWithUnreadMessages
+
+    private val _readMessageCountsByTrade = MutableStateFlow(emptyMap<String, Int>())
+    override val readMessageCountsByTrade: StateFlow<Map<String, Int>> = _readMessageCountsByTrade
 
     init {
         val localeCode = getDeviceLanguageCode()

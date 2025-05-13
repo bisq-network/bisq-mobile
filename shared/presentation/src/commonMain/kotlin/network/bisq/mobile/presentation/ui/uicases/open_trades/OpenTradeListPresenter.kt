@@ -49,7 +49,7 @@ class OpenTradeListPresenter(
                 mainPresenter.tradesWithUnreadMessages.collect {
                     log.d { "open trade [OpenTradeListPresenter] ${it.size}"}
                     _tradesWithUnreadMessages.value = it
-                    _readMessageCountsByTrade.value = (tradeReadStateRepository.fetch() ?: TradeReadState()).map
+                    _readMessageCountsByTrade.value = mainPresenter.readMessageCountsByTrade.value
                 }
             }
         }
@@ -57,6 +57,7 @@ class OpenTradeListPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
+        tradesServiceFacade.resetSelectedTradeToNull()
     }
 
     fun isRead(trade: TradeItemPresentationModel): Boolean {
