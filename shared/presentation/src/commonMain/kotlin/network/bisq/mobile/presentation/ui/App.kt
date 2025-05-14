@@ -4,7 +4,6 @@ import ErrorOverlay
 import androidx.compose.runtime.*
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.ViewPresenter

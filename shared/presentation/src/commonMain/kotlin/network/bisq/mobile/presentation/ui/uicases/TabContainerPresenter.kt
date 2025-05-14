@@ -30,6 +30,7 @@ class TabContainerPresenter(
     override fun onViewUnattaching() {
         job?.cancel()
         job = null
+        _tradesWithUnreadMessages.value = emptyMap()
         super.onViewUnattaching()
     }
 

@@ -17,6 +17,7 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.presentation.ui.AppPresenter
+import network.bisq.mobile.presentation.ui.BisqConfig
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 /**
@@ -31,7 +32,6 @@ open class MainPresenter(
     private val urlLauncher: UrlLauncher
 ) : BasePresenter(null), AppPresenter {
 
-    val NOTIFICATION_SYNC_INTERVAL = 30_000L//60_000L
     override lateinit var navController: NavHostController
     override lateinit var tabNavController: NavHostController
 
@@ -65,7 +65,7 @@ open class MainPresenter(
         val notificationTimerFlow = flow {
             while (true) {
                 emit(Unit)
-                delay(NOTIFICATION_SYNC_INTERVAL)
+                delay(BisqConfig.NOTIFICATION_SYNC_INTERVAL)
             }
         }
 
@@ -78,6 +78,7 @@ open class MainPresenter(
                 tradeList
             }.collect {
                 val readState = tradeReadStateRepository.fetch() ?: TradeReadState()
+                _readMessageCountsByTrade.value = readState.map
                 _tradesWithUnreadMessages.value = it.map { trade ->
                     val chatSize = trade.bisqEasyOpenTradeChannelModel.chatMessages.value.size
                     return@map trade.tradeId to chatSize
@@ -106,9 +107,6 @@ open class MainPresenter(
             .take(1)
             .launchIn(presenterScope)
 
-        presenterScope.launch {
-
-        }
     }
 
     override fun onResume() {

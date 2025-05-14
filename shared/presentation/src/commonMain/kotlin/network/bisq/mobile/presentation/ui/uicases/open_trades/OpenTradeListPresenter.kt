@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -13,10 +12,9 @@ import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class OpenTradeListPresenter(
-    mainPresenter: MainPresenter,
+    private val mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
-    private val tradeReadStateRepository: TradeReadStateRepository,
 ) : BasePresenter(mainPresenter) {
 
     private val _openTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
@@ -30,9 +28,6 @@ class OpenTradeListPresenter(
     private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>> = _tradesWithUnreadMessages
 
-    private val _readMessageCountsByTrade = MutableStateFlow(emptyMap<String, Int>())
-    val readMessageCountsByTrade: StateFlow<Map<String, Int>> = _readMessageCountsByTrade
-
     init {
         presenterScope.launch {
             mainPresenter.languageCode.collect {
@@ -44,11 +39,12 @@ class OpenTradeListPresenter(
                         formattedBaseAmount = NumberFormatter.btcFormat(it.baseAmount)
                     }
                 }
+            }
+        }
 
-                mainPresenter.tradesWithUnreadMessages.collect {
-                    _tradesWithUnreadMessages.value = it
-                    _readMessageCountsByTrade.value = mainPresenter.readMessageCountsByTrade.value
-                }
+        presenterScope.launch {
+            mainPresenter.tradesWithUnreadMessages.collect {
+                _tradesWithUnreadMessages.value = it
             }
         }
     }
@@ -60,7 +56,7 @@ class OpenTradeListPresenter(
 
     fun isRead(trade: TradeItemPresentationModel): Boolean {
         val latestChatCount = trade.bisqEasyOpenTradeChannelModel.chatMessages.value.size
-        val chatCount = _readMessageCountsByTrade.value[trade.tradeId]
+        val chatCount = mainPresenter.readMessageCountsByTrade.value[trade.tradeId]
         return chatCount != null && chatCount == latestChatCount
     }
 

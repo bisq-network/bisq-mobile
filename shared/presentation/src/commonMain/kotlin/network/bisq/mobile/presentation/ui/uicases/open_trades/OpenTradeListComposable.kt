@@ -42,7 +42,6 @@ import org.koin.compose.koinInject
 fun OpenTradeListScreen() {
     val presenter: OpenTradeListPresenter = koinInject()
 
-    // val readMessageCountsByTrade by presenter.readMessageCountsByTrade.collectAsState()
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
 
     val sortedList =
@@ -50,10 +49,8 @@ fun OpenTradeListScreen() {
 
     RememberPresenterLifecycle(presenter)
 
-    fun isTradeUnread(trade: TradeItemPresentationModel): Boolean {
-        // val chatCount = trade.bisqEasyOpenTradeChannelModel.chatMessages.value.size
-        //val recordedCount = read[trade.tradeId]
-        return trade.tradeId in tradesWithUnreadMessages.keys
+    fun isTradeUnread(tradeId: String): Boolean {
+        return tradeId in tradesWithUnreadMessages.keys
     }
 
     if (presenter.tradeGuideVisible.collectAsState().value) {
@@ -103,7 +100,7 @@ fun OpenTradeListScreen() {
                 }
             }
             items(sortedList) { trade ->
-                val isUnread = isTradeUnread(trade) //, readMessageCountsByTrade)
+                val isUnread = isTradeUnread(trade.tradeId)
                 OpenTradeListItem(
                     trade,
                     isUnread = isUnread,
@@ -119,7 +116,7 @@ fun OpenTradeListScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             items(sortedList) { trade ->
-                val isUnread = isTradeUnread(trade) //, readMessageCountsByTrade)
+                val isUnread = isTradeUnread(trade.tradeId)
                 OpenTradeListItem(
                     trade,
                     isUnread = isUnread,

@@ -44,6 +44,17 @@ fun BottomNavigation(
                 onClick = { onItemClick(navigationItem) },
                 icon = {
 
+                    val icon = @Composable {
+                        Image(
+                            painter = painterResource(navigationItem.icon),
+                            contentDescription = "",
+                            modifier = Modifier.size(24.dp),
+                            colorFilter = ColorFilter.tint(
+                                color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else Color.White
+                            )
+                        )
+                    }
+
                     if (index == 2 && unreadTradeCount > 0) {
                         BadgedBox(
                             badge = {
@@ -56,24 +67,10 @@ fun BottomNavigation(
                                 }
                             }
                         ) {
-                            Image(
-                                painter = painterResource(navigationItem.icon),
-                                contentDescription = "",
-                                modifier = Modifier.size(24.dp),
-                                colorFilter = ColorFilter.tint(
-                                    color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else Color.White
-                                )
-                            )
+                            icon()
                         }
                     } else {
-                        Image(
-                            painter = painterResource(navigationItem.icon),
-                            contentDescription = "",
-                            modifier = Modifier.size(24.dp),
-                            colorFilter = ColorFilter.tint(
-                                color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else Color.White
-                            )
-                        )
+                        icon()
                     }
                 },
                 label = {

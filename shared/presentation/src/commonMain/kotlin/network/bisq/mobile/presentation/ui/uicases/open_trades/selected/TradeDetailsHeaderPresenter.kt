@@ -294,6 +294,9 @@ class TradeDetailsHeaderPresenter(
         }
     }
 
+    // nostrbuddha: I commented this function's call
+    // Since reset happens, when moving from Trade screen to Chat screen,
+    // when navigating pop, many vars are being empty
     private fun reset() {
         direction = ""
         leftAmountDescription = ""
