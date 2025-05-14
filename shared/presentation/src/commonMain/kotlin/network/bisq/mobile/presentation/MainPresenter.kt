@@ -78,15 +78,12 @@ open class MainPresenter(
                 tradeList
             }.collect {
                 val readState = tradeReadStateRepository.fetch() ?: TradeReadState()
-                log.d { "open trade chats: [[[start]]] ${readState.map.size}" }
                 _tradesWithUnreadMessages.value = it.map { trade ->
                     val chatSize = trade.bisqEasyOpenTradeChannelModel.chatMessages.value.size
-                    log.d { "open trade chats: ${trade.tradeId} --> $chatSize" }
                     return@map trade.tradeId to chatSize
                 }.filter { idSizePair ->
                     val recordedSize = readState.map[idSizePair.first]
                     if (recordedSize != null && recordedSize >= idSizePair.second) {
-                        log.d { "open trade chats: ${idSizePair.first} --> is read" }
                         return@filter false
                     }
                     return@filter true

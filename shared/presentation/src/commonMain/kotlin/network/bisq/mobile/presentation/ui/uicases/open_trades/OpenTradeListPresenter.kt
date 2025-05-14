@@ -46,7 +46,6 @@ class OpenTradeListPresenter(
                 }
 
                 mainPresenter.tradesWithUnreadMessages.collect {
-                    log.d { "open trade [OpenTradeListPresenter] ${it.size}"}
                     _tradesWithUnreadMessages.value = it
                     _readMessageCountsByTrade.value = mainPresenter.readMessageCountsByTrade.value
                 }

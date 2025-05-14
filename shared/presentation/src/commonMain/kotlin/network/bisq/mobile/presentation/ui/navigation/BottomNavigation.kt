@@ -75,39 +75,6 @@ fun BottomNavigation(
                             )
                         )
                     }
-
-                    /*
-                    Box(contentAlignment = Alignment.TopEnd) {
-                        Image(
-                            painter = painterResource(navigationItem.icon),
-                            contentDescription = "",
-                            modifier = Modifier.size(24.dp),
-                            colorFilter = ColorFilter.tint(
-                                color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else Color.White
-                            )
-                        )
-                        if (index == 2 && badgeCount > 0) {
-                            Box(
-                                modifier = Modifier
-                                    .offset(x = 12.dp, y = (-4).dp)
-                                    .size(20.dp)
-                                    .clip(CircleShape)
-                                    .background(BisqTheme.colors.primary),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                BisqText.xsmallLight(badgeCount.toString(), textAlign = TextAlign.Center)
-                            }
-                        }
-                    }
-                    */
-
-                    /*
-                    Image(
-                        painterResource(navigationItem.icon), "",
-                        modifier = Modifier.size(24.dp),
-                        colorFilter = ColorFilter.tint(color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else Color.White)
-                    )
-                    */
                 },
                 label = {
                     BisqText.baseRegular(
