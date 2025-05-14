@@ -120,11 +120,15 @@ class ClientTradeChatMessagesServiceFacade(
                     _allChatReactions.update { it + reaction }
                 }
                 // To update bisqEasyOpenTradeChannelModel of the trades
-                val tradeId = _allBisqEasyOpenTradeMessages.value.find {
-                    it.messageId == reaction.chatMessageId
-                }?.tradeId
-                if (tradeId != null) {
-                    updateChatMessages(tradeId = tradeId)
+                try {
+                    val tradeId = _allBisqEasyOpenTradeMessages.value.find {
+                        it.messageId == reaction.chatMessageId
+                    }?.tradeId
+                    if (tradeId != null) {
+                        updateChatMessages(tradeId = tradeId)
+                    }
+                } catch (e: Exception) {
+                    log.e { "Error while parsing reaction ${reaction.id}: $e" }
                 }
             }
         }
@@ -132,18 +136,19 @@ class ClientTradeChatMessagesServiceFacade(
 
     private fun updateChatMessages(tradeId: String) {
         val myUserProfile = selectedUserProfileId.value ?: return
-            val bisqEasyOpenTradeChannelModel = tradesServiceFacade.openTradeItems.value
-                .find { it.tradeId == tradeId }
-                ?.bisqEasyOpenTradeChannelModel ?: return
-            val messages = allBisqEasyOpenTradeMessages.value
-                .filter { it.tradeId == tradeId }
-                .map { message ->
-                    val chatReactions =
-                        allChatReactions.value.filter { it.chatMessageId == message.messageId && !it.isRemoved }
-                    BisqEasyOpenTradeMessageModel(message, myUserProfile, chatReactions)
-                }
-                .toSet()
-            bisqEasyOpenTradeChannelModel.setAllChatMessages(messages)
+        val bisqEasyOpenTradeChannelModel = tradesServiceFacade.openTradeItems.value
+            .find { it.tradeId == tradeId }
+            ?.bisqEasyOpenTradeChannelModel ?: return
+        val messages = allBisqEasyOpenTradeMessages.value
+            .asSequence()
+            .filter { it.tradeId == tradeId }
+            .map { message ->
+                val chatReactions =
+                    allChatReactions.value.filter { it.chatMessageId == message.messageId && !it.isRemoved }
+                BisqEasyOpenTradeMessageModel(message, myUserProfile, chatReactions)
+            }
+            .toSet()
+        bisqEasyOpenTradeChannelModel.setAllChatMessages(messages)
     }
 
     override suspend fun sendChatMessage(text: String, citationVO: CitationVO?): Result<Unit> {
