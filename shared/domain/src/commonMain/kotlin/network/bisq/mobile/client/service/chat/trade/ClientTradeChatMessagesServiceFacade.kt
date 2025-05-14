@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.service.chat.trade
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -40,40 +41,38 @@ class ClientTradeChatMessagesServiceFacade(
         MutableStateFlow(emptySet())
     private val allChatReactions: StateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> = _allChatReactions
 
+    private var jobs: MutableSet<Job> = mutableSetOf()
+
     // Misc
     override fun activate() {
         super<ServiceFacade>.activate()
 
-        serviceScope.launch(Dispatchers.Default) {
+        jobs.add(serviceScope.launch(Dispatchers.Default) {
             selectedTrade.collect {
                 if (it != null) {
                     updateChatMessages(tradeId = it.tradeId)
                 }
             }
-        }
-        serviceScope.launch(Dispatchers.Default) {
+        })
+        jobs.add(serviceScope.launch(Dispatchers.Default) {
             selectedUserProfileId.collect { _ ->
                 if (selectedTrade.value != null) {
                     updateChatMessages(tradeId = selectedTrade.value!!.tradeId)
                 }
             }
-        }
-        // serviceScope.launch(Dispatchers.Default) {
-            // allBisqEasyOpenTradeMessages.collect { updateChatMessages(messages = it) }
-        // }
-//        serviceScope.launch(Dispatchers.Default) {
-//            allChatReactions.collect{ updateChatMessages(reactions = it) }
-//        }
+        })
 
-        serviceScope.launch {
+        jobs.add(serviceScope.launch {
             subscribeTradeChats()
-        }
-        serviceScope.launch {
+        })
+        jobs.add(serviceScope.launch {
             subscribeChatReactions()
-        }
+        })
     }
 
     override fun deactivate() {
+        jobs.forEach { it.cancel() }
+        jobs.clear()
         super<ServiceFacade>.deactivate()
     }
 

@@ -19,7 +19,7 @@ import network.bisq.mobile.presentation.MainPresenter
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TradeDetailsHeaderPresenter(
-    mainPresenter: MainPresenter,
+    private var mainPresenter: MainPresenter,
     var tradesServiceFacade: TradesServiceFacade,
     var mediationServiceFacade: MediationServiceFacade,
 ) : BasePresenter(mainPresenter) {
@@ -65,6 +65,12 @@ class TradeDetailsHeaderPresenter(
     val isInMediation: StateFlow<Boolean> = this._isInMediation
 
     init {
+
+    }
+
+    override fun onViewAttached() {
+        super.onViewAttached()
+
         presenterScope.launch {
             mainPresenter.languageCode
                 .flatMapLatest { tradesServiceFacade.selectedTrade }
@@ -86,10 +92,7 @@ class TradeDetailsHeaderPresenter(
                     }
                 }
         }
-    }
 
-    override fun onViewAttached() {
-        super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
 
@@ -119,7 +122,7 @@ class TradeDetailsHeaderPresenter(
     }
 
     override fun onViewUnattaching() {
-        // reset()
+        reset()
         super.onViewUnattaching()
     }
 
@@ -294,9 +297,6 @@ class TradeDetailsHeaderPresenter(
         }
     }
 
-    // nostrbuddha: I commented this function's call
-    // Since reset happens, when moving from Trade screen to Chat screen,
-    // when navigating pop, many vars are being empty
     private fun reset() {
         direction = ""
         leftAmountDescription = ""
@@ -312,6 +312,6 @@ class TradeDetailsHeaderPresenter(
         _openMediationButtonText.value = ""
         _showInterruptionConfirmationDialog.value = false
         _showMediationConfirmationDialog.value = false
-        _selectedTrade.value = null
+        // _selectedTrade.value = null
     }
 }
