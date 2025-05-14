@@ -376,7 +376,7 @@ class CreateOfferAmountPresenter(
     }
 
     private suspend fun getPeersScoreByUserProfileId(): Map<String, Long> {
-        val myProfileIds = userProfileServiceFacade.getUserIdentityIds().toHashSet()
+        val myProfileIds: Set<String> = userProfileServiceFacade.getUserIdentityIds().toSet()
         val scoreByUserProfileId = reputationServiceFacade.reputationByUserProfileId.value
         return scoreByUserProfileId
             .filterKeys { it !in myProfileIds }

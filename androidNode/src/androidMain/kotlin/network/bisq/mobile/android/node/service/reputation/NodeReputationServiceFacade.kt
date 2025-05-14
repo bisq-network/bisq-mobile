@@ -2,9 +2,9 @@ package network.bisq.mobile.android.node.service.reputation
 
 import bisq.common.observable.Pin
 import bisq.user.reputation.ReputationService
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
@@ -67,23 +67,8 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
             Mappings.ReputationScoreMapping.fromBisq2Model(it)
         }
 
-        /*
-                _reputationByUserProfileId.update { current ->
-                    current.toMutableMap().apply {
-                        this[userProfileId] = reputation
-                    }.toMap()
-                }
-                */
-
-        /*
-        _reputationByUserProfileId.value = _reputationByUserProfileId.value.toMutableMap().apply {
-            this[userProfileId] = reputation
+        _reputationByUserProfileId.update { current ->
+            current + (userProfileId to reputation)
         }
-        */
-
-        val profileScoreMap = reputationByUserProfileId.value.toMutableMap()
-        profileScoreMap[userProfileId] = reputation
-
-        _reputationByUserProfileId.value = profileScoreMap
     }
 }
