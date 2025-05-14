@@ -31,10 +31,13 @@ class ClientTradeChatMessagesServiceFacade(
     private val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
     private val selectedUserProfileId: StateFlow<UserProfileVO?> get() = userProfileServiceFacade.selectedUserProfile
 
-    private val _allBisqEasyOpenTradeMessages: MutableStateFlow<Set<BisqEasyOpenTradeMessageDto>> = MutableStateFlow(emptySet())
-    private val allBisqEasyOpenTradeMessages: StateFlow<Set<BisqEasyOpenTradeMessageDto>> = _allBisqEasyOpenTradeMessages
+    private val _allBisqEasyOpenTradeMessages: MutableStateFlow<Set<BisqEasyOpenTradeMessageDto>> =
+        MutableStateFlow(emptySet())
+    private val allBisqEasyOpenTradeMessages: StateFlow<Set<BisqEasyOpenTradeMessageDto>> =
+        _allBisqEasyOpenTradeMessages
 
-    private val _allChatReactions: MutableStateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> = MutableStateFlow(emptySet())
+    private val _allChatReactions: MutableStateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> =
+        MutableStateFlow(emptySet())
     private val allChatReactions: StateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> = _allChatReactions
 
     // Misc
@@ -42,17 +45,25 @@ class ClientTradeChatMessagesServiceFacade(
         super<ServiceFacade>.activate()
 
         serviceScope.launch(Dispatchers.Default) {
-            selectedTrade.collect { _ -> updateChatMessages() }
+            selectedTrade.collect {
+                if (it != null) {
+                    updateChatMessages(tradeId = it.tradeId)
+                }
+            }
         }
         serviceScope.launch(Dispatchers.Default) {
-            selectedUserProfileId.collect { _ -> updateChatMessages() }
+            selectedUserProfileId.collect { _ ->
+                if (selectedTrade.value != null) {
+                    updateChatMessages(tradeId = selectedTrade.value!!.tradeId)
+                }
+            }
         }
-        serviceScope.launch(Dispatchers.Default) {
-            allBisqEasyOpenTradeMessages.collect { _ -> updateChatMessages() }
-        }
-        serviceScope.launch(Dispatchers.Default) {
-            allChatReactions.collect { _ -> updateChatMessages() }
-        }
+        // serviceScope.launch(Dispatchers.Default) {
+            // allBisqEasyOpenTradeMessages.collect { updateChatMessages(messages = it) }
+        // }
+//        serviceScope.launch(Dispatchers.Default) {
+//            allChatReactions.collect{ updateChatMessages(reactions = it) }
+//        }
 
         serviceScope.launch {
             subscribeTradeChats()
@@ -76,6 +87,11 @@ class ClientTradeChatMessagesServiceFacade(
                 WebSocketEventPayload.from(json, webSocketEvent)
             val payload = webSocketEventPayload.payload
             _allBisqEasyOpenTradeMessages.update { it + payload }
+            // To update bisqEasyOpenTradeChannelModel of the trades
+            val updatedTradeIds = payload.map { it.tradeId }.toSet()
+            updatedTradeIds.forEach { tradeId ->
+                updateChatMessages(tradeId)
+            }
         }
     }
 
@@ -104,21 +120,31 @@ class ClientTradeChatMessagesServiceFacade(
                 } else {
                     _allChatReactions.update { it + reaction }
                 }
+                // To update bisqEasyOpenTradeChannelModel of the trades
+                val tradeId = _allBisqEasyOpenTradeMessages.value.find {
+                    it.messageId == reaction.chatMessageId
+                }?.tradeId
+                if (tradeId != null) {
+                    updateChatMessages(tradeId = tradeId)
+                }
             }
         }
     }
 
-    private fun updateChatMessages() {
+    private fun updateChatMessages(tradeId: String) {
         val myUserProfile = selectedUserProfileId.value ?: return
-        val bisqEasyOpenTradeChannelModel = selectedTrade.value?.bisqEasyOpenTradeChannelModel
-        val messages = allBisqEasyOpenTradeMessages.value
-            .filter { it.tradeId == bisqEasyOpenTradeChannelModel?.tradeId }
-            .map { message ->
-                val chatReactions = allChatReactions.value.filter { it.chatMessageId == message.messageId && !it.isRemoved }
-                BisqEasyOpenTradeMessageModel(message, myUserProfile, chatReactions)
-            }
-            .toSet()
-        bisqEasyOpenTradeChannelModel?.setAllChatMessages(messages)
+            val bisqEasyOpenTradeChannelModel = tradesServiceFacade.openTradeItems.value
+                .find { it.tradeId == tradeId }
+                ?.bisqEasyOpenTradeChannelModel ?: return
+            val messages = allBisqEasyOpenTradeMessages.value
+                .filter { it.tradeId == tradeId }
+                .map { message ->
+                    val chatReactions =
+                        allChatReactions.value.filter { it.chatMessageId == message.messageId && !it.isRemoved }
+                    BisqEasyOpenTradeMessageModel(message, myUserProfile, chatReactions)
+                }
+                .toSet()
+            bisqEasyOpenTradeChannelModel.setAllChatMessages(messages)
     }
 
     override suspend fun sendChatMessage(text: String, citationVO: CitationVO?): Result<Unit> {
@@ -146,7 +172,10 @@ class ClientTradeChatMessagesServiceFacade(
     }
 
     // Returns true if we could remove the reaction (if it was created by ourself)
-    override suspend fun removeChatMessageReaction(messageId: String, reactionVO: BisqEasyOpenTradeMessageReactionVO): Result<Boolean> {
+    override suspend fun removeChatMessageReaction(
+        messageId: String,
+        reactionVO: BisqEasyOpenTradeMessageReactionVO
+    ): Result<Boolean> {
         require(selectedTrade.value != null)
         selectedTrade.value!!.bisqEasyOpenTradeChannelModel.id.let { channelId ->
             val apiResult = apiGateway.removeChatMessageReaction(channelId, messageId, reactionVO)

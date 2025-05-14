@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades
 
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.formatters.NumberFormatter
