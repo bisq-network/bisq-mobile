@@ -34,7 +34,7 @@ fun TradeDetailsHeader() {
     val presenter: TradeDetailsHeaderPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val item: TradeItemPresentationModel = presenter.selectedTrade.value!!
+    val item: TradeItemPresentationModel = presenter.selectedTrade.collectAsState().value ?: return
     val interruptTradeButtonText by presenter.interruptTradeButtonText.collectAsState()
     val openMediationButtonText by presenter.openMediationButtonText.collectAsState()
     val isInMediation by presenter.isInMediation.collectAsState()

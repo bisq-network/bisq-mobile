@@ -6,12 +6,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
+import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -23,6 +25,7 @@ class TradeChatPresenter(
     private val tradesServiceFacade: TradesServiceFacade,
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
     private val settingsRepository: SettingsRepository,
+    private val tradeReadStateRepository: TradeReadStateRepository,
 ) : BasePresenter(mainPresenter), Logging {
     private var jobs: MutableSet<Job> = mutableSetOf()
 
@@ -49,6 +52,10 @@ class TradeChatPresenter(
 
             bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
                 _chatMessages.value = messages.toList()
+
+                val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
+                readState[selectedTrade.tradeId] = _chatMessages.value.size
+                tradeReadStateRepository.update(TradeReadState().apply { map = readState })
             }
         }
     }

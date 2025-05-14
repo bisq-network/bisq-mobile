@@ -30,7 +30,7 @@ class TradeDetailsHeaderPresenter(
         COMPLETED
     }
 
-    private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
+    private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> = MutableStateFlow(tradesServiceFacade.selectedTrade.value)
     val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade
 
     var direction: String = ""
@@ -65,7 +65,6 @@ class TradeDetailsHeaderPresenter(
     val isInMediation: StateFlow<Boolean> = this._isInMediation
 
     init {
-        _selectedTrade.value = tradesServiceFacade.selectedTrade.value
         presenterScope.launch {
             mainPresenter.languageCode
                 .flatMapLatest { tradesServiceFacade.selectedTrade }
@@ -120,7 +119,7 @@ class TradeDetailsHeaderPresenter(
     }
 
     override fun onViewUnattaching() {
-        reset()
+        // reset()
         super.onViewUnattaching()
     }
 
