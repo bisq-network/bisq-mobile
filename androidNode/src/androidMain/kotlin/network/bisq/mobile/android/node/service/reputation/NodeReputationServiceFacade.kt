@@ -41,10 +41,10 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
     // API
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
         val reputation = reputationByUserProfileId.value[userProfileId]
-        if (reputation == null) {
-            return Result.failure(NoSuchElementException())
+        return if (reputation == null) {
+            Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not cached yet"))
         } else {
-            return Result.success(reputation)
+            Result.success(reputation)
         }
     }
 

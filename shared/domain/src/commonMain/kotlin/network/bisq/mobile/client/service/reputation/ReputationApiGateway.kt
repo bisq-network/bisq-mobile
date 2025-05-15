@@ -9,6 +9,11 @@ class ReputationApiGateway(
     private val webSocketClientProvider: WebSocketClientProvider,
 ) : Logging {
     suspend fun subscribeUserReputation(): WebSocketEventObserver {
-        return webSocketClientProvider.get().subscribe(Topic.REPUTATION)
+        try {
+            return webSocketClientProvider.get().subscribe(Topic.REPUTATION)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to subscribe to reputation events: ${e.message}" }
+            throw e
+        }
     }
 }

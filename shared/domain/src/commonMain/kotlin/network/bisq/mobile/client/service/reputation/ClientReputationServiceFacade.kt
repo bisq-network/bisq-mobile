@@ -27,7 +27,11 @@ class ClientReputationServiceFacade(
     override fun activate() {
         super<ServiceFacade>.activate()
         serviceScope.launch {
-            subscribeReputation()
+            runCatching {
+                subscribeReputation()
+            }.onFailure {
+                log.w { "Failed to activate client reputation service" }
+            }
         }
     }
 
@@ -38,10 +42,10 @@ class ClientReputationServiceFacade(
     // API
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
         val reputation = reputationByUserProfileId.value[userProfileId]
-        if (reputation == null) {
-            return Result.failure(IllegalStateException("Reputation for userId=$userProfileId not cached yet"))
+        return if (reputation == null) {
+            Result.failure(IllegalStateException("Reputation for userId=$userProfileId not cached yet"))
         } else {
-            return Result.success(reputation)
+            Result.success(reputation)
         }
     }
 
