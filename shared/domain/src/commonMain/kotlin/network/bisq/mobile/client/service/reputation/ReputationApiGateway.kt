@@ -9,6 +9,6 @@ class ReputationApiGateway(
     private val webSocketClientProvider: WebSocketClientProvider,
 ) : Logging {
     suspend fun subscribeUserReputation(): WebSocketEventObserver {
-        return webSocketClientProvider.get().subscribe(Topic.USER_REPUTATION)
+        return webSocketClientProvider.get().subscribe(Topic.REPUTATION)
     }
 }
