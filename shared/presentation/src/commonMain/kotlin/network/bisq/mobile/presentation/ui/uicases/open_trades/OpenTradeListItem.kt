@@ -24,9 +24,15 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @Composable
 fun OpenTradeListItem(
     item: TradeItemPresentationModel,
+    isUnread: Boolean,
     onSelect: () -> Unit,
 ) {
-    BisqCard {
+    val bgColor = if (isUnread)
+        BisqTheme.colors.warning.copy(alpha = 0.15f)
+    else
+        BisqTheme.colors.dark_grey40
+
+    BisqCard(backgroundColor = bgColor) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()

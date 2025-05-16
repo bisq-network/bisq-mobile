@@ -108,6 +108,7 @@ val androidNodeModule = module {
             get(),
             get(),
             get(),
+            get(),
             get()
         )
     } bind AppPresenter::class

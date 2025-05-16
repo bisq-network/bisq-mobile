@@ -7,6 +7,7 @@ import network.bisq.mobile.domain.data.persistance.KeyValueStorage
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.TradeRepository
+import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.getPlatformSettings
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
@@ -30,6 +31,7 @@ val domainModule = module {
     single<SettingsRepository> { SettingsRepository(get()) }
     single<UserRepository> { UserRepository(get()) }
     single<TradeRepository> { TradeRepository(get()) }
+    single<TradeReadStateRepository> { TradeReadStateRepository(get()) }
 
     // Services
     single<OpenTradesNotificationService> { OpenTradesNotificationService(get(), get()) }

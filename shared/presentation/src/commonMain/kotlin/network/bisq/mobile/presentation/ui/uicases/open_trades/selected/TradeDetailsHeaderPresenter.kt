@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
@@ -19,7 +20,7 @@ import network.bisq.mobile.presentation.MainPresenter
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class TradeDetailsHeaderPresenter(
-    mainPresenter: MainPresenter,
+    private val mainPresenter: MainPresenter,
     var tradesServiceFacade: TradesServiceFacade,
     var mediationServiceFacade: MediationServiceFacade,
 ) : BasePresenter(mainPresenter) {
@@ -30,7 +31,7 @@ class TradeDetailsHeaderPresenter(
         COMPLETED
     }
 
-    private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
+    private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> = MutableStateFlow(tradesServiceFacade.selectedTrade.value)
     val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade
 
     var direction: String = ""
@@ -64,9 +65,14 @@ class TradeDetailsHeaderPresenter(
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> = this._isInMediation
 
-    init {
-        _selectedTrade.value = tradesServiceFacade.selectedTrade.value
-        presenterScope.launch {
+    private var selectedTradeJob: Job? = null
+    private var tradeStateJob: Job? = null
+    private var mediationJob: Job? = null
+
+    override fun onViewAttached() {
+        super.onViewAttached()
+
+        selectedTradeJob = presenterScope.launch {
             mainPresenter.languageCode
                 .flatMapLatest { tradesServiceFacade.selectedTrade }
                 .filterNotNull()
@@ -87,10 +93,7 @@ class TradeDetailsHeaderPresenter(
                     }
                 }
         }
-    }
 
-    override fun onViewAttached() {
-        super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
 
@@ -106,13 +109,13 @@ class TradeDetailsHeaderPresenter(
             rightAmountDescription = "Amount to receive" //"bisqEasy.tradeState.header.receive"
         }
 
-        this.presenterScope.launch {
+        tradeStateJob = this.presenterScope.launch {
             openTradeItemModel.bisqEasyTradeModel.tradeState.collect { tradeState ->
                 tradeStateChanged(tradeState)
             }
         }
 
-        this.presenterScope.launch {
+        mediationJob = this.presenterScope.launch {
             openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect { isInMediation ->
                 this@TradeDetailsHeaderPresenter._isInMediation.value = isInMediation
             }
@@ -296,6 +299,13 @@ class TradeDetailsHeaderPresenter(
     }
 
     private fun reset() {
+        selectedTradeJob?.cancel()
+        tradeStateJob?.cancel()
+        mediationJob?.cancel()
+        selectedTradeJob = null
+        tradeStateJob = null
+        mediationJob = null
+
         direction = ""
         leftAmountDescription = ""
         _leftAmount.value = ""
@@ -310,6 +320,7 @@ class TradeDetailsHeaderPresenter(
         _openMediationButtonText.value = ""
         _showInterruptionConfirmationDialog.value = false
         _showMediationConfirmationDialog.value = false
-        _selectedTrade.value = null
+        // Intentionally not resetting _selectedTrade to maintain trade context between view attach/detach cycles
+        // _selectedTrade.value = null
     }
 }

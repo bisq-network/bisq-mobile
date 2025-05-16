@@ -125,6 +125,10 @@ class ClientTradesServiceFacade(
         return Result.success(Unit)
     }
 
+    override fun resetSelectedTradeToNull() {
+        _selectedTrade.value = null
+    }
+
     // Private
     private fun handleTradeItemPresentationChange(payload: List<TradeItemPresentationDto>, modificationType: ModificationType) {
         if (modificationType == ModificationType.REPLACE ||

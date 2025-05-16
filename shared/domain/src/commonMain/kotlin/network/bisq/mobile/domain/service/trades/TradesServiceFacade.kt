@@ -42,4 +42,6 @@ interface TradesServiceFacade : LifeCycleAware {
     suspend fun btcConfirmed(): Result<Unit>
 
     suspend fun exportTradeDate(): Result<Unit>
+
+    fun resetSelectedTradeToNull()
 }

@@ -314,6 +314,10 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         return Result.success(Unit)
     }
 
+    override fun resetSelectedTradeToNull() {
+        _selectedTrade.value = null
+    }
+
     // Private
     private suspend fun doTakeOffer(
         bisqEasyOffer: BisqEasyOffer,
