@@ -124,7 +124,9 @@ class ClientTradeChatMessagesServiceFacade(
                     val tradeId = _allBisqEasyOpenTradeMessages.value.find {
                         it.messageId == reaction.chatMessageId
                     }?.tradeId
-                    if (tradeId != null) {
+                    if (tradeId == null) {
+                        log.d { "No message found for reaction: messageId=${reaction.chatMessageId}" }
+                    } else {
                         updateChatMessages(tradeId = tradeId)
                     }
                 } catch (e: Exception) {

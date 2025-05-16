@@ -53,9 +53,11 @@ class TradeChatPresenter(
             bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
                 _chatMessages.value = messages.toList()
 
-                val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
-                readState[selectedTrade.tradeId] = _chatMessages.value.size
-                tradeReadStateRepository.update(TradeReadState().apply { map = readState })
+                withContext(IODispatcher) {
+                    val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
+                    readState[selectedTrade.tradeId] = _chatMessages.value.size
+                    tradeReadStateRepository.update(TradeReadState().apply { map = readState })
+                }
             }
         }
     }
