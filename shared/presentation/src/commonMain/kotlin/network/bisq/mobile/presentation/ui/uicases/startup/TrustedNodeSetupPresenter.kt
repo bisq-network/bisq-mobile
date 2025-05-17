@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -93,13 +94,19 @@ class TrustedNodeSetupPresenter(
             if (success) {
                 val validateVersion = withContext(IODispatcher) {
                     updateTrustedNodeSettings()
+                    delay(250L)
+                    webSocketClientProvider.get().await()
                     validateVersion()
                 }
                 if (validateVersion) {
+                    log.d { "Connected successfully to ${_bisqApiUrl.value} is workflow: $isWorkflow" }
                     showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
                     if (!isWorkflow) {
                         navigateBack()
                     }
+                } else {
+                    log.d { "Invalid version cannot connect" }
+                    showSnackbar("Trusted node incompatible version, cannot connect")
                 }
                 _isConnected.value = true
             } else {

@@ -8,13 +8,9 @@ import io.ktor.util.collections.ConcurrentMap
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.encodeToString
@@ -87,27 +83,32 @@ class WebSocketClient(
     val _webSocketClientStatus = MutableStateFlow(WebSocketClientStatus.DISCONNECTED)
     val webSocketClientStatus: StateFlow<WebSocketClientStatus> = _webSocketClientStatus
 
+    private var listenerJob: Job? = null
+
     fun isConnected(): Boolean = webSocketClientStatus.value == WebSocketClientStatus.CONNECTED || isDemo()
 
     fun isDemo(): Boolean = webSocketUrl.startsWith(DEMO_URL)
 
     suspend fun connect(isTest: Boolean = false) {
-        log.i("Connecting to websocket at: $webSocketUrl")
+        log.i("Connecting to websocket at: $webSocketUrl - is test: $isTest")
         try {
             if (webSocketClientStatus.value != WebSocketClientStatus.CONNECTED) {
-                _webSocketClientStatus.value = WebSocketClientStatus.CONNECTING
-                session = httpClient.webSocketSession { url(webSocketUrl) }
-                if (session?.isActive == true) {
+                disconnect(isTest)
+            }
+            _webSocketClientStatus.value = WebSocketClientStatus.CONNECTING
+            session = httpClient.webSocketSession { url(webSocketUrl) }
+            if (session?.isActive == true) {
+//                if (isTest) {
+//                    disconnect(isTest)
+//                } else {
                     _webSocketClientStatus.value = WebSocketClientStatus.CONNECTED
-                    CoroutineScope(IODispatcher).launch { startListening() }
+                    listenerJob = ioScope.launch { startListening() }
                     connectionReady.complete(true)
-                    if (!isTest) {
-                        log.d { "Websocket connected" }
-                    }
-                }
+//                }
+                log.d { "Websocket connected successfully" }
             }
         } catch (e: Exception) {
-            log.e("Connecting websocket failed", e)
+            log.e("Connecting websocket failed $webSocketUrl", e)
             _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
             if (isTest) {
                 throw e
@@ -118,6 +119,8 @@ class WebSocketClient(
     }
 
     suspend fun disconnect(isTest: Boolean = false) {
+        listenerJob?.cancel()
+        listenerJob = null
         requestResponseHandlersMutex.withLock {
             requestResponseHandlers.values.forEach { it.dispose() }
             requestResponseHandlers.clear()
@@ -127,7 +130,7 @@ class WebSocketClient(
         session = null
         _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
         if (!isTest) {
-            log.d { "WS disconnected" }
+            log.d { "WS client disconnected" }
         }
     }
 
@@ -161,6 +164,8 @@ class WebSocketClient(
             }
         }
     }
+
+    suspend fun await() = connectionReady.await()
 
     private fun fakeResponse(webSocketRequest: WebSocketRequest): WebSocketResponse {
         webSocketRequest as WebSocketRestApiRequest
