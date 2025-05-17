@@ -40,7 +40,7 @@ class WebSocketClientProvider(
                     var host = defaultHost
                     var port = defaultPort
                     newSettings?.bisqApiUrl?.takeIf { it.isNotBlank() }?.let { url ->
-                        log.d { "new bisq url $url "}
+                        log.d { "new bisq url detected $url "}
                         parseUri(url).apply {
                             host = first
                             port = second
@@ -51,8 +51,10 @@ class WebSocketClientProvider(
                         if (currentClient?.isConnected() == true) {
                             currentClient?.disconnect()
                         }
-                        log.d { "Websocket client updated with url $host:$port" }
                         currentClient = createClient(host, port)
+                        log.d { "Websocket client updated with url $host:$port" }
+                        log.d { "Websocket client - connecting" }
+                        currentClient?.connect()
                     }
                 }
             } catch (e: Exception) {
@@ -63,7 +65,8 @@ class WebSocketClientProvider(
 
     suspend fun testClient(host: String, port: Int): Boolean {
         val client = createClient(host, port)
-        val url = "ws://$host:$port"
+        // not including path websocket will get connection refused
+        val url = "ws://$host:$port/websocket"
         return try {
             if (client.isDemo()) {
                 ApplicationBootstrapFacade.isDemo = true
@@ -71,7 +74,7 @@ class WebSocketClientProvider(
             }
             // if connection is refused, catch will execute returning false
             client.connect(true)
-            return client.isConnected()
+            return true
         } catch (e: Exception) {
             log.e("Error testing connection to $url: ${e.message}")
             false

@@ -45,6 +45,8 @@ open class ClientMainPresenter(
     urlLauncher: UrlLauncher
 ) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, urlLauncher) {
 
+    private var lastConnectedStatus: Boolean? = null
+
     override fun onViewAttached() {
         super.onViewAttached()
         validateVersion()
@@ -64,9 +66,12 @@ open class ClientMainPresenter(
         connectivityService.startMonitoring()
         presenterScope.launch {
             webSocketClientProvider.get().webSocketClientStatus.collect {
-                if (webSocketClientProvider.get().isConnected()) {
+                if (webSocketClientProvider.get().isConnected() && lastConnectedStatus != true) {
                     log.d { "connectivity status changed to $it - reconnecting services" }
                     reactiveServices()
+                    lastConnectedStatus = true
+                } else {
+                    lastConnectedStatus = false
                 }
             }
         }

@@ -1,6 +1,7 @@
 package network.bisq.mobile.domain.service
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.IODispatcher
@@ -28,6 +29,7 @@ class TrustedNodeService(private val webSocketClientProvider: WebSocketClientPro
             webSocketClientProvider.get().let {
                 if (!it.isDemo()) {
                     it.connect(true)
+                    delay(250L)
                     it.connect()
                 }
             }
