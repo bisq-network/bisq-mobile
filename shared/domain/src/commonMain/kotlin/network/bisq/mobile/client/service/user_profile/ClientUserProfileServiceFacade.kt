@@ -103,11 +103,17 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun getSelectedUserProfile(): UserProfileVO {
-        val apiResult = apiGateway.getSelectedUserProfile()
-        if (apiResult.isFailure) {
-            throw apiResult.exceptionOrNull()!!
+        try {
+            val apiResult = apiGateway.getSelectedUserProfile()
+            if (apiResult.isFailure) {
+                throw apiResult.exceptionOrNull()!!
+            }
+            return apiResult.getOrThrow()
+        } catch (e: Exception) {
+            log.e(e) { "Failed to get selected user profile from service facade" }
+            throw e
         }
-        return apiResult.getOrThrow()
+
     }
 
     override suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO> {

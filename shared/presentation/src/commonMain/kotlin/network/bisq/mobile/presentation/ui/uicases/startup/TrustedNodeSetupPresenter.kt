@@ -21,7 +21,7 @@ class TrustedNodeSetupPresenter(
     private val webSocketClientProvider: WebSocketClientProvider
 ) : BasePresenter(mainPresenter), ITrustedNodeSetupPresenter {
 
-    private val _isBisqApiUrlValid = MutableStateFlow(false)
+    private val _isBisqApiUrlValid = MutableStateFlow(true)
     override val isBisqApiUrlValid: StateFlow<Boolean> = _isBisqApiUrlValid
 
     private val _isBisqApiVersionValid = MutableStateFlow(true)
@@ -89,7 +89,6 @@ class TrustedNodeSetupPresenter(
             val success = withContext(IODispatcher) {
                 webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)
             }
-            _isLoading.value = false
 
             if (success) {
                 val validateVersion = withContext(IODispatcher) {
@@ -104,14 +103,17 @@ class TrustedNodeSetupPresenter(
                     if (!isWorkflow) {
                         navigateBack()
                     }
+                    _isConnected.value = true
                 } else {
                     log.d { "Invalid version cannot connect" }
                     showSnackbar("Trusted node incompatible version, cannot connect")
+                    _isConnected.value = false
                 }
-                _isConnected.value = true
+                _isLoading.value = false
             } else {
                 showSnackbar("Could not connect to given url ${_bisqApiUrl.value}, please try again with another setup")
                 _isConnected.value = false
+                _isLoading.value = false
             }
         }
     }

@@ -63,7 +63,14 @@ class WebSocketClient(
     companion object {
         const val DEMO_URL = "ws://demo.bisq:21"
         const val DELAY_TO_RECONNECT = 3000L
+        const val MAX_RECONNECT_ATTEMPTS = 5
+        const val MAX_RECONNECT_DELAY = 30000L // 30 seconds max delay
     }
+
+    // Add these properties to track reconnection state
+    private var reconnectAttempts = 0
+    private var isReconnecting = false
+    private var reconnectJob: Job? = null
 
     private val webSocketUrl: String = "ws://$host:$port/websocket"
     private var session: DefaultClientWebSocketSession? = null
@@ -98,14 +105,13 @@ class WebSocketClient(
             _webSocketClientStatus.value = WebSocketClientStatus.CONNECTING
             session = httpClient.webSocketSession { url(webSocketUrl) }
             if (session?.isActive == true) {
-//                if (isTest) {
-//                    disconnect(isTest)
-//                } else {
-                    _webSocketClientStatus.value = WebSocketClientStatus.CONNECTED
-                    listenerJob = ioScope.launch { startListening() }
-                    connectionReady.complete(true)
-//                }
+                _webSocketClientStatus.value = WebSocketClientStatus.CONNECTED
+                listenerJob = ioScope.launch { startListening() }
+                connectionReady.complete(true)
                 log.d { "Websocket connected successfully" }
+                
+                // Reset reconnect attempts on successful connection
+                reconnectAttempts = 0
             }
         } catch (e: Exception) {
             log.e("Connecting websocket failed $webSocketUrl", e)
@@ -119,6 +125,8 @@ class WebSocketClient(
     }
 
     suspend fun disconnect(isTest: Boolean = false) {
+        reconnectJob?.cancel()
+        reconnectJob = null
         listenerJob?.cancel()
         listenerJob = null
         requestResponseHandlersMutex.withLock {
@@ -135,11 +143,44 @@ class WebSocketClient(
     }
 
     private fun reconnect() {
-        ioScope.launch {
-            log.d { "Launching reconnect" }
-            disconnect()
-            delay(DELAY_TO_RECONNECT) // Delay before reconnecting
-            connect()  // Try reconnecting recursively
+        // Cancel any existing reconnect job
+        reconnectJob?.cancel()
+        
+        // Only proceed if we're not already reconnecting
+        if (isReconnecting) {
+            log.d { "Reconnect already in progress, skipping" }
+            return
+        }
+        
+        reconnectJob = ioScope.launch {
+            isReconnecting = true
+            log.d { "Launching reconnect attempt #${reconnectAttempts + 1}" }
+            
+            try {
+                // Implement exponential backoff
+                val delay = minOf(
+                    DELAY_TO_RECONNECT * (1 shl minOf(reconnectAttempts, 4)), // Exponential backoff
+                    MAX_RECONNECT_DELAY
+                )
+                
+                log.d { "Waiting ${delay}ms before reconnect attempt" }
+                disconnect()
+                delay(delay)
+                
+                // Check if we've exceeded max attempts
+                if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                    log.w { "Maximum reconnect attempts ($MAX_RECONNECT_ATTEMPTS) reached" }
+                    _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
+                    // Reset counter for future reconnects
+                    reconnectAttempts = 0
+                    return@launch
+                }
+                
+                reconnectAttempts++
+                connect()
+            } finally {
+                isReconnecting = false
+            }
         }
     }
 
@@ -255,13 +296,16 @@ class WebSocketClient(
                         }
                     }
                 }
+                
+                // If we get here, the loop exited normally (session closed gracefully)
+                log.d { "WebSocket session closed normally" }
+                _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
+                
             } catch (e: Exception) {
-                log.e(e) { "Exception ocurred whilst listening for WS messages - triggering reconnect" }
-            } finally {
-                log.d { "Not listening for WS messages anymore - launching reconnect" }
+                log.e(e) { "Exception occurred whilst listening for WS messages - triggering reconnect" }
+                // Only reconnect on exception
                 reconnect()
             }
-
         }
     }
 

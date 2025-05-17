@@ -155,6 +155,7 @@ open class SplashPresenter(
     }
 
     private fun navigateToAgreement() {
+        log.d { "Navigating to agreement" }
         navigateTo(Routes.Agreement) {
             it.popUpTo(Routes.Splash.name) { inclusive = true }
         }

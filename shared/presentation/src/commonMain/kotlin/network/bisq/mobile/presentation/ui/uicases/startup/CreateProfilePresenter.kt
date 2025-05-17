@@ -130,10 +130,15 @@ open class CreateProfilePresenter(
             job = presenterScope.launch {
                 withContext(Dispatchers.Default) {
                     // takes 200 -1000 ms
-                    userProfileService.generateKeyPair { id, nym, profileIcon ->
-                        setId(id)
-                        setNym(nym)
-                        setProfileIcon(profileIcon)
+                    runCatching {
+                        userProfileService.generateKeyPair { id, nym, profileIcon ->
+                            setId(id)
+                            setNym(nym)
+                            setProfileIcon(profileIcon)
+                        }
+                    }.onFailure {
+                        disableInteractive()
+                        showSnackbar("Generating the key pair failed. Profile generation won't work")
                     }
                 }
 
