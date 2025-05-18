@@ -31,7 +31,8 @@ class TradeDetailsHeaderPresenter(
         COMPLETED
     }
 
-    private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> = MutableStateFlow(tradesServiceFacade.selectedTrade.value)
+    private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> =
+        MutableStateFlow(tradesServiceFacade.selectedTrade.value)
     val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade
 
     var direction: String = ""
@@ -110,14 +111,22 @@ class TradeDetailsHeaderPresenter(
         }
 
         tradeStateJob = this.presenterScope.launch {
-            openTradeItemModel.bisqEasyTradeModel.tradeState.collect { tradeState ->
-                tradeStateChanged(tradeState)
+            try {
+                openTradeItemModel.bisqEasyTradeModel.tradeState.collect { tradeState ->
+                    tradeStateChanged(tradeState)
+                }
+            } catch (e: Exception) {
+                log.e { "Error collecting tradeState $e" }
             }
         }
 
         mediationJob = this.presenterScope.launch {
-            openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect { isInMediation ->
-                this@TradeDetailsHeaderPresenter._isInMediation.value = isInMediation
+            try {
+                openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect { isInMediation ->
+                    this@TradeDetailsHeaderPresenter._isInMediation.value = isInMediation
+                }
+            } catch (e: Exception) {
+                log.e { "Error collecting mediationState $e" }
             }
         }
     }
@@ -309,10 +318,10 @@ class TradeDetailsHeaderPresenter(
         direction = ""
         leftAmountDescription = ""
         _leftAmount.value = ""
-        _leftCode.value  = ""
+        _leftCode.value = ""
         rightAmountDescription = ""
-        _rightAmount.value  = ""
-        _rightCode.value  = ""
+        _rightAmount.value = ""
+        _rightCode.value = ""
 
         _tradeCloseType.value = null
         _isInMediation.value = false

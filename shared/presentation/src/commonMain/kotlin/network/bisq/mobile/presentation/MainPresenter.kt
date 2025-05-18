@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation
 
 import androidx.annotation.CallSuper
 import androidx.navigation.NavHostController
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -50,6 +51,8 @@ open class MainPresenter(
     private val _readMessageCountsByTrade = MutableStateFlow(emptyMap<String, Int>())
     override val readMessageCountsByTrade: StateFlow<Map<String, Int>> = _readMessageCountsByTrade
 
+    private var job: Job? = null
+
     init {
         val localeCode = getDeviceLanguageCode()
         val screenWidth = getScreenWidthDp()
@@ -69,7 +72,7 @@ open class MainPresenter(
             }
         }
 
-        ioScope.launch {
+        job = ioScope.launch {
             combine(
                 tradesServiceFacade.openTradeItems,
                 tradesServiceFacade.selectedTrade,
@@ -121,6 +124,7 @@ open class MainPresenter(
 
     @CallSuper
     override fun onDestroying() {
+        job?.cancel()
         // to stop notification service and fully kill app (no zombie mode)
         onResumeServices()
         super.onDestroying()

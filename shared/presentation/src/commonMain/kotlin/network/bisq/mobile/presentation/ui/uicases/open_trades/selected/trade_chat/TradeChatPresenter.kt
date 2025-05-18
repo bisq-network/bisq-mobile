@@ -45,7 +45,7 @@ class TradeChatPresenter(
         require(tradesServiceFacade.selectedTrade.value != null)
         val selectedTrade = tradesServiceFacade.selectedTrade.value!!
 
-        this.presenterScope.launch {
+        jobs.add(this.presenterScope.launch {
             val settings = withContext(IODispatcher) { settingsRepository.fetch() }
             settings?.let { _showChatRulesWarnBox.value = it.showChatRulesWarnBox }
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
@@ -59,7 +59,7 @@ class TradeChatPresenter(
                     tradeReadStateRepository.update(TradeReadState().apply { map = readState })
                 }
             }
-        }
+        })
     }
 
     override fun onViewUnattaching() {
