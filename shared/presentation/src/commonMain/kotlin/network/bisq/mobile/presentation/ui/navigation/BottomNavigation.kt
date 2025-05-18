@@ -22,6 +22,7 @@ fun BottomNavigation(
     items: List<BottomNavigationItem>,
     currentRoute: String,
     unreadTradeCount: Int,
+    showAnimation: Boolean,
     onItemClick: (BottomNavigationItem) -> Unit
 ) {
 
@@ -58,7 +59,7 @@ fun BottomNavigation(
                     if (index == 2 && unreadTradeCount > 0) {
                         BadgedBox(
                             badge = {
-                                AnimatedBadge {
+                                AnimatedBadge(showAnimation = showAnimation) {
                                     BisqText.xsmallLight(
                                         unreadTradeCount.toString(),
                                         textAlign = TextAlign.Center,

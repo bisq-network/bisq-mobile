@@ -29,6 +29,7 @@ val navigationListItem = listOf(
 
 interface ITabContainerPresenter : ViewPresenter {
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>>
+    val showAnimation: StateFlow<Boolean>
     fun createOffer()
 }
 
@@ -43,6 +44,7 @@ fun TabContainerScreen() {
         }
     }
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
+    val showAnimation by presenter.showAnimation.collectAsState()
 
     RememberPresenterLifecycle(presenter)
 
@@ -73,6 +75,7 @@ fun TabContainerScreen() {
                 items = navigationListItem,
                 currentRoute = currentRoute.orEmpty(),
                 unreadTradeCount = tradesWithUnreadMessages.size,
+                showAnimation = showAnimation,
                 onItemClick = { currentNavigationItem ->
                     Routes.fromString(currentNavigationItem.route)?.let { presenter.navigateToTab(it) }
                 })
