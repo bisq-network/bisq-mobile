@@ -1,11 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
 import androidx.compose.foundation.ScrollState
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -45,9 +42,13 @@ class OpenTradePresenter(
     private var _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
     private var _coroutineScope: CoroutineScope? = null
 
+    private var languageJob: Job? = null
+    private var tradeStateJob: Job? = null
+    private var mediationJob: Job? = null
+
     init {
         _selectedTrade.value = tradesServiceFacade.selectedTrade.value
-        presenterScope.launch {
+        languageJob = presenterScope.launch {
             mainPresenter.languageCode
                 .flatMapLatest { tradesServiceFacade.selectedTrade }
                 .filterNotNull()
@@ -62,7 +63,7 @@ class OpenTradePresenter(
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
 
-        this.presenterScope.launch {
+        tradeStateJob = this.presenterScope.launch {
             openTradeItemModel.bisqEasyTradeModel.tradeState.collect { tradeState ->
                 val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
                 readState[openTradeItemModel.tradeId] = openTradeItemModel.bisqEasyOpenTradeChannelModel.chatMessages.value.size
@@ -72,7 +73,7 @@ class OpenTradePresenter(
             }
         }
 
-        this.presenterScope.launch {
+        mediationJob = this.presenterScope.launch {
             openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect { isInMediation ->
                 _isInMediation.value = isInMediation
             }
@@ -83,6 +84,14 @@ class OpenTradePresenter(
         _tradeAbortedBoxVisible.value = false
         _tradeProcessBoxVisible.value = false
         _isInMediation.value = false
+
+        languageJob?.cancel()
+        tradeStateJob?.cancel()
+        mediationJob?.cancel()
+        languageJob = null
+        tradeStateJob = null
+        mediationJob = null
+
         super.onViewUnattaching()
     }
 
