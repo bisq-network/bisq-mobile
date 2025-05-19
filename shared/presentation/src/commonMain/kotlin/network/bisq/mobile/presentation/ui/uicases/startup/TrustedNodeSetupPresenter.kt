@@ -91,13 +91,13 @@ class TrustedNodeSetupPresenter(
             }
 
             if (success) {
-                val validateVersion = withContext(IODispatcher) {
+                val isCompatibleVersion = withContext(IODispatcher) {
                     updateTrustedNodeSettings()
                     delay(250L)
                     webSocketClientProvider.get().await()
                     validateVersion()
                 }
-                if (validateVersion) {
+                if (isCompatibleVersion) {
                     log.d { "Connected successfully to ${_bisqApiUrl.value} is workflow: $isWorkflow" }
                     showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
                     if (!isWorkflow) {

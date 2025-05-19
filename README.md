@@ -98,6 +98,7 @@ You need to run the seed node as explained above + the http-api module with the 
  -Dapplication.appName=bisq2_restApi_clear
  -Dapplication.network.supportedTransportTypes.2=CLEAR
  -Dapplication.devMode=true
+ -Dapplication.devModeReputationScore=50000
 ```
 
 Default networking setup for the WebSocket (WS) connection can be found in `gradle.properties` file. You can change there for locally building pointing at the ip you are interested in.

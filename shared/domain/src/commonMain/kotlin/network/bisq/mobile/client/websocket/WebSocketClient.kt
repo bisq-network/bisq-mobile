@@ -99,7 +99,7 @@ class WebSocketClient(
     suspend fun connect(isTest: Boolean = false) {
         log.i("Connecting to websocket at: $webSocketUrl - is test: $isTest")
         try {
-            if (webSocketClientStatus.value != WebSocketClientStatus.CONNECTED) {
+            if (webSocketClientStatus.value == WebSocketClientStatus.CONNECTED) {
                 disconnect(isTest)
             }
             _webSocketClientStatus.value = WebSocketClientStatus.CONNECTING
@@ -124,11 +124,18 @@ class WebSocketClient(
         }
     }
 
-    suspend fun disconnect(isTest: Boolean = false) {
-        reconnectJob?.cancel()
-        reconnectJob = null
+    /**
+     * @param isTest true if the connection of this client was a test connection
+     * @param isReconnect true if this was called from a reconnect method
+     */
+    suspend fun disconnect(isTest: Boolean = false, isReconnect: Boolean = false) {
+        if (!isReconnect) {
+            reconnectJob?.cancel()
+            reconnectJob = null
+        }
         listenerJob?.cancel()
         listenerJob = null
+        connectionReady = CompletableDeferred<Boolean>()
         requestResponseHandlersMutex.withLock {
             requestResponseHandlers.values.forEach { it.dispose() }
             requestResponseHandlers.clear()
@@ -158,14 +165,14 @@ class WebSocketClient(
             
             try {
                 // Implement exponential backoff
-                val delay = minOf(
+                val delayMillis = minOf(
                     DELAY_TO_RECONNECT * (1 shl minOf(reconnectAttempts, 4)), // Exponential backoff
                     MAX_RECONNECT_DELAY
                 )
                 
-                log.d { "Waiting ${delay}ms before reconnect attempt" }
-                disconnect()
-                delay(delay)
+                log.d { "Waiting ${delayMillis}ms before reconnect attempt" }
+                disconnect(false, true)
+                delay(delayMillis)
                 
                 // Check if we've exceeded max attempts
                 if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
