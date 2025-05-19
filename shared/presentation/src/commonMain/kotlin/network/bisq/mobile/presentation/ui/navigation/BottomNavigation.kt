@@ -26,7 +26,7 @@ fun BottomNavigation(
     onItemClick: (BottomNavigationItem) -> Unit
 ) {
 
-    val NOTIFICATION_TAB_INDEX = 2
+    val MY_TRADES_TAB_INDEX = 2
 
     NavigationBar(
         containerColor = BisqTheme.colors.backgroundColor
@@ -58,7 +58,7 @@ fun BottomNavigation(
                         )
                     }
 
-                    if (index == NOTIFICATION_TAB_INDEX && unreadTradeCount > 0) {
+                    if (index == MY_TRADES_TAB_INDEX && unreadTradeCount > 0) {
                         BadgedBox(
                             badge = {
                                 AnimatedBadge(showAnimation = showAnimation) {
