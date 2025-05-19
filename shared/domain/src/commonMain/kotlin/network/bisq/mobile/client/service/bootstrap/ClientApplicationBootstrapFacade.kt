@@ -47,7 +47,7 @@ class ClientApplicationBootstrapFacade(
                     setState("bootstrap.connectedToTrustedNode".i18n())
                     setProgress(1.0f)
                 } catch (e: Exception) {
-                    log.e(e) { "Failed to connect to trusted node" }
+                    log.e(e) { "Failed to connect to trusted node: ${e.message}" }
                     setState("No connectivity")
                     setProgress(1.0f)
                 }

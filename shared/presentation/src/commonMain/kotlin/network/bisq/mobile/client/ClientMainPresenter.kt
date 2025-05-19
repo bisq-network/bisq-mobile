@@ -57,7 +57,6 @@ open class ClientMainPresenter(
     override fun onViewUnattaching() {
         // For Tor we might want to leave it running while in background to avoid delay of re-connect
         // when going into foreground again.
-        // presenterScope.launch {  webSocketClient.disconnect() }
         deactivateServices()
         super.onViewUnattaching()
     }

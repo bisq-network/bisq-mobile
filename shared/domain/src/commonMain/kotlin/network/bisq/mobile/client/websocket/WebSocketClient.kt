@@ -97,17 +97,20 @@ class WebSocketClient(
     fun isDemo(): Boolean = webSocketUrl.startsWith(DEMO_URL)
 
     suspend fun connect(isTest: Boolean = false) {
-        log.i("Connecting to websocket at: $webSocketUrl - is test: $isTest")
         try {
             if (webSocketClientStatus.value == WebSocketClientStatus.CONNECTED) {
-                disconnect(isTest)
+                throw IllegalStateException("Cannot connect an already connected client, please call disconnect first")
             }
             _webSocketClientStatus.value = WebSocketClientStatus.CONNECTING
             session = httpClient.webSocketSession { url(webSocketUrl) }
             if (session?.isActive == true) {
                 _webSocketClientStatus.value = WebSocketClientStatus.CONNECTED
-                listenerJob = ioScope.launch { startListening() }
-                connectionReady.complete(true)
+                if (!isTest) {
+                    listenerJob = ioScope.launch { startListening() }
+                }
+                if (!connectionReady.isCompleted) {
+                    connectionReady.complete(true)
+                }
                 log.d { "Websocket connected successfully" }
                 
                 // Reset reconnect attempts on successful connection
@@ -129,6 +132,7 @@ class WebSocketClient(
      * @param isReconnect true if this was called from a reconnect method
      */
     suspend fun disconnect(isTest: Boolean = false, isReconnect: Boolean = false) {
+        log.d { "disconnecting socket isTest $isTest isReconnected $isReconnect" }
         if (!isReconnect) {
             reconnectJob?.cancel()
             reconnectJob = null
@@ -311,7 +315,8 @@ class WebSocketClient(
             } catch (e: Exception) {
                 log.e(e) { "Exception occurred whilst listening for WS messages - triggering reconnect" }
                 // Only reconnect on exception
-                reconnect()
+//                TODO this needs more work
+//                reconnect()
             }
         }
     }

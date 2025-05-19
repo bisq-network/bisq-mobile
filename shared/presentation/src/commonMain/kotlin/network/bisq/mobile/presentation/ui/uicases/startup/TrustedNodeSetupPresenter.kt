@@ -83,11 +83,11 @@ class TrustedNodeSetupPresenter(
 
     override fun testConnection(isWorkflow: Boolean) {
         _isLoading.value = true
-        log.i { "Test: " + _bisqApiUrl.value }
+        log.d { "Test: ${_bisqApiUrl.value} isWorkflow $isWorkflow" }
         val connectionSettings = WebSocketClientProvider.parseUri(_bisqApiUrl.value)
         presenterScope.launch {
             val success = withContext(IODispatcher) {
-                webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)
+                return@withContext webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)
             }
 
             if (success) {
@@ -101,10 +101,12 @@ class TrustedNodeSetupPresenter(
                     log.d { "Connected successfully to ${_bisqApiUrl.value} is workflow: $isWorkflow" }
                     showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
                     if (!isWorkflow) {
+                        _isLoading.value = false
                         navigateBack()
                     }
                     _isConnected.value = true
                 } else {
+                    webSocketClientProvider.get().disconnect(isTest = true)
                     log.d { "Invalid version cannot connect" }
                     showSnackbar("Trusted node incompatible version, cannot connect")
                     _isConnected.value = false
