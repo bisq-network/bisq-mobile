@@ -3,6 +3,8 @@ package network.bisq.mobile.client.websocket
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -33,28 +35,34 @@ class WebSocketClientProvider(
 
     init {
         // Listen to changes in WebSocket configuration and update the client
-        // TODO we might need to replicate this for changes in settings to reconnect to channels
+        // TODO launching on init means it will be checking settings change from app cold start, probably better after first usage of the provider
         ioScope.launch {
             try {
+                val mutex = Mutex()
                 settingsRepository.data.collect { newSettings ->
-                    var host = defaultHost
-                    var port = defaultPort
-                    newSettings?.bisqApiUrl?.takeIf { it.isNotBlank() }?.let { url ->
-                        log.d { "new bisq url detected $url "}
-                        parseUri(url).apply {
-                            host = first
-                            port = second
+                    mutex.withLock {
+                        var host = defaultHost
+                        var port = defaultPort
+                        newSettings?.bisqApiUrl?.takeIf { it.isNotBlank() }?.let { url ->
+                            log.d { "new bisq url detected $url "}
+                            parseUri(url).apply {
+                                host = first
+                                port = second
+                            }
                         }
-                    }
-                    // only update if there was actually a change
-                    if (currentClient == null || currentClient!!.host != host || currentClient!!.port != port) {
-                        if (currentClient?.isConnected() == true) {
-                            currentClient?.disconnect()
+                        // only update if there was actually a change
+                        if (currentClient == null || currentClient!!.host != host || currentClient!!.port != port) {
+                            if (currentClient != null) {
+                                log.d { "trusted node changing from ${currentClient!!.host}:${currentClient!!.port} to $host:$port" }
+                            }
+                            if (currentClient?.isConnected() == true) {
+                                currentClient?.disconnect()
+                            }
+                            currentClient = createClient(host, port)
+                            log.d { "Websocket client updated with url $host:$port" }
+                            log.d { "Websocket client - connecting" }
+                            currentClient?.connect()
                         }
-                        currentClient = createClient(host, port)
-                        log.d { "Websocket client updated with url $host:$port" }
-                        log.d { "Websocket client - connecting" }
-                        currentClient?.connect()
                     }
                 }
             } catch (e: Exception) {
