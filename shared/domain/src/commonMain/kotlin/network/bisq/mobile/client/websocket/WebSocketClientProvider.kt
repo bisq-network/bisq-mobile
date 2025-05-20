@@ -2,6 +2,7 @@ package network.bisq.mobile.client.websocket
 
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
@@ -20,6 +21,8 @@ class WebSocketClientProvider(
     private val defaultPort: Int,
     private val settingsRepository: SettingsRepository,
     private val clientFactory: (String, Int) -> WebSocketClient) : Logging {
+    private var observeSettingsJob: Job? = null
+    private val mutex = Mutex()
 
     companion object {
         fun parseUri(uri: String): Pair<String,Int> {
@@ -72,22 +75,27 @@ class WebSocketClientProvider(
 
     private fun lunchObserveSettingsChange() {
         // Listen to changes in WebSocket configuration and update the client
-        ioScope.launch {
+        if (observeSettingsJob != null) {
+            log.w { "already observing settings changes" }
+            return
+        }
+        observeSettingsJob = ioScope.launch {
             try {
-                val mutex = Mutex()
                 settingsRepository.data.collect { newSettings ->
                     mutex.withLock {
                         var host = defaultHost
                         var port = defaultPort
                         newSettings?.bisqApiUrl?.takeIf { it.isNotBlank() }?.let { url ->
-                            log.d { "new bisq url detected $url "}
                             parseUri(url).apply {
+                                if (nodeAddressChanged(first, second)) {
+                                    log.d { "new bisq url detected $url" }
+                                }
                                 host = first
                                 port = second
                             }
                         }
                         // only update if there was actually a change
-                        if (currentClient == null || currentClient!!.host != host || currentClient!!.port != port) {
+                        if (nodeAddressChanged(host, port)) {
                             if (currentClient != null) {
                                 log.d { "trusted node changing from ${currentClient!!.host}:${currentClient!!.port} to $host:$port" }
                             }
@@ -109,4 +117,7 @@ class WebSocketClientProvider(
             }
         }
     }
+
+    private fun nodeAddressChanged(host: String, port: Int) =
+        currentClient == null || currentClient!!.host != host || currentClient!!.port != port
 }

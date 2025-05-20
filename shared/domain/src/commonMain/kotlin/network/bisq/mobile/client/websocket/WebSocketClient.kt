@@ -63,6 +63,7 @@ class WebSocketClient(
     companion object {
         const val DEMO_URL = "ws://demo.bisq:21"
         const val DELAY_TO_RECONNECT = 3000L
+        const val CONNECT_TIMEOUT = 10000L
         const val MAX_RECONNECT_ATTEMPTS = 5
         const val MAX_RECONNECT_DELAY = 30000L // 30 seconds max delay
     }
@@ -77,6 +78,7 @@ class WebSocketClient(
     private val webSocketEventObservers = ConcurrentMap<String, WebSocketEventObserver>()
     private val requestResponseHandlers = mutableMapOf<String, RequestResponseHandler>()
     private var connectionReady = CompletableDeferred<Boolean>()
+    private val connectionMutex = Mutex()
     private val requestResponseHandlersMutex = Mutex()
 
     private val ioScope = CoroutineScope(IODispatcher)
@@ -97,32 +99,43 @@ class WebSocketClient(
     fun isDemo(): Boolean = webSocketUrl.startsWith(DEMO_URL)
 
     suspend fun connect(isTest: Boolean = false) {
-        try {
-            if (webSocketClientStatus.value == WebSocketClientStatus.CONNECTED) {
-                throw IllegalStateException("Cannot connect an already connected client, please call disconnect first")
-            }
-            _webSocketClientStatus.value = WebSocketClientStatus.CONNECTING
-            session = httpClient.webSocketSession { url(webSocketUrl) }
-            if (session?.isActive == true) {
-                _webSocketClientStatus.value = WebSocketClientStatus.CONNECTED
-                if (!isTest) {
-                    listenerJob = ioScope.launch { startListening() }
+        connectionMutex.withLock {
+            try {
+                if (webSocketClientStatus.value == WebSocketClientStatus.CONNECTED) {
+                    throw IllegalStateException("Cannot connect an already connected client, please call disconnect first")
                 }
-                if (!connectionReady.isCompleted) {
-                    connectionReady.complete(true)
+                log.d { "WS connecting.." }
+                _webSocketClientStatus.value = WebSocketClientStatus.CONNECTING
+                val newSession = withTimeout(CONNECT_TIMEOUT) {
+                    httpClient.webSocketSession { url(webSocketUrl) }
                 }
-                log.d { "Websocket connected successfully" }
-                
-                // Reset reconnect attempts on successful connection
-                reconnectAttempts = 0
-            }
-        } catch (e: Exception) {
-            log.e("Connecting websocket failed $webSocketUrl", e)
-            _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
-            if (isTest) {
-                throw e
-            } else {
-                reconnect()
+                session = newSession
+                if (session?.isActive == true) {
+                    log.d { "WS connected successfully" }
+                    _webSocketClientStatus.value = WebSocketClientStatus.CONNECTED
+                    if (!isTest) {
+                        listenerJob = ioScope.launch { startListening() }
+                    }
+                    if (!connectionReady.isCompleted) {
+                        connectionReady.complete(true)
+                    }
+
+                    // Reset reconnect attempts on successful connection
+                    reconnectAttempts = 0
+                }
+            } catch (e: IllegalStateException) {
+                log.w { "Connection attempt ignored: ${e.message}" }
+                if (isTest) {
+                    throw e
+                }
+            } catch (e: Exception) {
+                log.e("Connecting websocket failed $webSocketUrl: ${e.message}", e)
+                _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
+                if (isTest) {
+                    throw e
+                } else {
+                    reconnect()
+                }
             }
         }
     }
@@ -132,24 +145,26 @@ class WebSocketClient(
      * @param isReconnect true if this was called from a reconnect method
      */
     suspend fun disconnect(isTest: Boolean = false, isReconnect: Boolean = false) {
-        log.d { "disconnecting socket isTest $isTest isReconnected $isReconnect" }
-        if (!isReconnect) {
-            reconnectJob?.cancel()
-            reconnectJob = null
-        }
-        listenerJob?.cancel()
-        listenerJob = null
-        connectionReady = CompletableDeferred<Boolean>()
-        requestResponseHandlersMutex.withLock {
-            requestResponseHandlers.values.forEach { it.dispose() }
-            requestResponseHandlers.clear()
-        }
+        connectionMutex.withLock {
+            log.d { "disconnecting socket isTest $isTest isReconnected $isReconnect" }
+            if (!isReconnect) {
+                reconnectJob?.cancel()
+                reconnectJob = null
+            }
+            listenerJob?.cancel()
+            listenerJob = null
+            connectionReady = CompletableDeferred<Boolean>()
+            requestResponseHandlersMutex.withLock {
+                requestResponseHandlers.values.forEach { it.dispose() }
+                requestResponseHandlers.clear()
+            }
 
-        session?.close()
-        session = null
-        _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
-        if (!isTest) {
-            log.d { "WS client disconnected" }
+            session?.close()
+            session = null
+            _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
+            if (!isTest) {
+                log.d { "WS disconnected" }
+            }
         }
     }
 

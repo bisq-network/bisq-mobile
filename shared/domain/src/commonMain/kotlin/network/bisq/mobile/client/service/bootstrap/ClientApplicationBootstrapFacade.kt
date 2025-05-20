@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.service.bootstrap
 
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.TrustedNodeService
@@ -11,38 +12,36 @@ class ClientApplicationBootstrapFacade(
     private val trustedNodeService: TrustedNodeService
 ) : ApplicationBootstrapFacade() {
 
+    private var bootstrapJob: Job? = null
+
     override fun activate() {
         super.activate()
 
         if (isActive) {
             return
         }
-        // TODO all texts here shoul use the translation module
+        // TODO all texts here should use the translation module
         setState("Bootstrapping..")
         setProgress(0f)
 
-        // just dummy loading simulation, might be that there is no loading delay at the end...
-        serviceScope.launch {
+        bootstrapJob = serviceScope.launch {
             settingsRepository.fetch()
             val url = settingsRepository.data.value?.bisqApiUrl
             log.d { "Settings url $url" }
 
-//            TODO this is validated elsewhere, need to unify it or get
-//            rid of this facade otherwise
-//            Main issue is that the Trusted node setup screen is not
-//            if (url == null) {
-//                setState("Trusted node not configured")
-//                setProgress(0f)
-//            } else {
             if (trustedNodeService.isDemo()) {
                 isDemo = true
             }
             setProgress(0.5f)
             setState("Connecting to Trusted Node..")
-            if (!trustedNodeService.isConnected) {
+            if (trustedNodeService.isConnected) {
+                setState("bootstrap.connectedToTrustedNode".i18n())
+                setProgress(1.0f)
+            } else {
                 try {
                     if (!trustedNodeService.isDemo()) {
                         trustedNodeService.connect()
+                        trustedNodeService.await()
                     }
                     setState("bootstrap.connectedToTrustedNode".i18n())
                     setProgress(1.0f)
@@ -51,11 +50,7 @@ class ClientApplicationBootstrapFacade(
                     setState("No connectivity")
                     setProgress(1.0f)
                 }
-            } else {
-                setState("bootstrap.connectedToTrustedNode".i18n())
-                setProgress(1.0f)
             }
-//            }
         }
 
         isActive = true
@@ -63,6 +58,8 @@ class ClientApplicationBootstrapFacade(
     }
 
     override fun deactivate() {
+        bootstrapJob?.cancel()
+        bootstrapJob = null
         isActive = false
 
         super.deactivate()

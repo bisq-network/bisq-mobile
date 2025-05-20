@@ -18,7 +18,7 @@ import network.bisq.mobile.domain.service.ServiceFacade
 abstract class ConnectivityService : ServiceFacade() {
     companion object {
         const val TIMEOUT = 5000L
-        const val PERIOD = 10000L // default check every 10 sec
+        const val PERIOD = 5000L // default check every 5 sec
         const val ROUND_TRIP_SLOW_THRESHOLD = 500L
 
         private const val DEFAULT_AVERAGE_TRIP_TIME = -1L // invalid
@@ -69,27 +69,33 @@ abstract class ConnectivityService : ServiceFacade() {
         job?.cancel()
         job = ioScope.launch(IODispatcher) {
             while (true) {
-                try {
-                    withTimeout(TIMEOUT) {
-                        val currentStatus = _status.value
-                        when {
-                            !isConnected() -> _status.value = ConnectivityStatus.DISCONNECTED
-                            isSlow() -> _status.value = ConnectivityStatus.SLOW
-                            else -> _status.value = ConnectivityStatus.CONNECTED
-                        }
-                        if (currentStatus != _status.value) {
-                            log.d { "Connectivity transition from $currentStatus to ${_status.value}" }
-                        }
-                    }
-                } catch (e: TimeoutCancellationException) {
-                    log.e(e) { "Connectivity check timed out, assuming no connection" }
-                    _status.value = ConnectivityStatus.DISCONNECTED
-                } catch (e: Exception) {
-                    log.e(e) { "Failed checking connectivity, assuming no connection" }
-                    _status.value = ConnectivityStatus.DISCONNECTED
-                }
+                checkConnectivity()
                 delay(period)
             }
+        }
+        log.d { "Connectivity is being monitored" }
+    }
+
+    private suspend fun checkConnectivity() {
+        try {
+//            log.d { "Checking connectivity whilst ${_status.value}" }
+            withTimeout(TIMEOUT) {
+                val currentStatus = _status.value
+                when {
+                    !isConnected() -> _status.value = ConnectivityStatus.DISCONNECTED
+                    isSlow() -> _status.value = ConnectivityStatus.SLOW
+                    else -> _status.value = ConnectivityStatus.CONNECTED
+                }
+                if (currentStatus != _status.value) {
+                    log.d { "Connectivity transition from $currentStatus to ${_status.value}" }
+                }
+            }
+        } catch (e: TimeoutCancellationException) {
+            log.e(e) { "Connectivity check timed out, assuming no connection" }
+            _status.value = ConnectivityStatus.DISCONNECTED
+        } catch (e: Exception) {
+            log.e(e) { "Failed checking connectivity, assuming no connection" }
+            _status.value = ConnectivityStatus.DISCONNECTED
         }
     }
 
@@ -97,6 +103,7 @@ abstract class ConnectivityService : ServiceFacade() {
         job?.cancel()
         job = null
         onStop()
+        log.d { "Connectivity stopped being monitored" }
     }
 
     protected open fun onStart() {

@@ -48,6 +48,8 @@ class TrustedNodeService(private val webSocketClientProvider: WebSocketClientPro
         // TODO
     }
 
+    suspend fun await() = webSocketClientProvider.get().await()
+
     private fun observeConnectivity() {
         connectivityObserverJob = ioScope.launch {
             webSocketClientProvider.get().webSocketClientStatus.collect {
