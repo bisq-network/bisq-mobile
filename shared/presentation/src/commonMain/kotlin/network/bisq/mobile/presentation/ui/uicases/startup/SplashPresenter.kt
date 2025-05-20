@@ -1,18 +1,13 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
-import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -23,7 +18,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class SplashPresenter(
     mainPresenter: MainPresenter,
-    private val applicationBootstrapFacade: ApplicationBootstrapFacade,
+    applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val userProfileService: UserProfileServiceFacade,
     private val userRepository: UserRepository,
     private val settingsRepository: SettingsRepository,
@@ -35,52 +30,19 @@ open class SplashPresenter(
     val state: StateFlow<String> = applicationBootstrapFacade.state
     val progress: StateFlow<Float> = applicationBootstrapFacade.progress
 
-    private var jobs: MutableSet<Job> = mutableSetOf()
-
     override fun onViewAttached() {
         super.onViewAttached()
-        jobs.add(presenterScope.launch {
-            val settings: Settings = withContext(IODispatcher) {
-                settingsRepository.fetch() ?: Settings()
+        
+        collectUI(state) { value ->
+            log.d { "Splash State: $value" }
+        }
+        
+        collectUI(progress) { value ->
+            log.d { "Splash Progress: $value" }
+            when {
+                value == 1.0f -> navigateToNextScreen()
             }
-
-            if (settings.firstLaunch) {
-                withContext(IODispatcher) {
-                    val deviceLanguageCode = getDeviceLanguageCode()
-                    val i18nSupportedCodes = languageServiceFacade.i18nPairs.value.map { it.first }
-                    if (i18nSupportedCodes.contains(deviceLanguageCode)) {
-                        settingsServiceFacade.setLanguageCode(deviceLanguageCode)
-                    } else {
-                        settingsServiceFacade.setLanguageCode("en")
-                    }
-                }
-            }
-
-            withContext(IODispatcher) {
-                userRepository.fetch()?.let {
-                    it.lastActivity = Clock.System.now().toEpochMilliseconds()
-                    userRepository.update(it)
-                }
-            }
-
-            log.d { "collecting splash progress" }
-            progress.collect { value ->
-                log.d { "Splash Progress: $value" }
-                when {
-                    value == 1.0f -> navigateToNextScreen()
-                }
-            }
-        })
-
-        // todo this should happen after connection to backend is configured if client mode
-        // and it must not be cancelled at onViewUnattaching in case the presenter is just quickly activated
-        // best its not called from a presenter but a service which checks if the url to backend is set...
-    }
-
-    override fun onViewUnattaching() {
-        jobs.forEach { it.cancel() }
-        jobs.clear()
-        super.onViewUnattaching()
+        }
     }
 
     private fun navigateToNextScreen() {
@@ -171,15 +133,6 @@ open class SplashPresenter(
             settings.bisqApiUrl.isNotEmpty() && hasProfile -> navigateToCreateProfile()
             else -> navigateToHome() // TODO: Ideally this shouldn't happen here
         }
-//        when {
-//            settings.bisqApiUrl.isEmpty() -> {
-//                navigateTo(Routes.TrustedNodeSetup.name) {
-//                    popUpTo(Routes.Splash.name) { inclusive = true }
-//                }
-//            }
-////            settings.firstLaunch -> navigateToCreateProfile()
-//            else -> navigateToHome()
-//        }
         return true
     }
 }

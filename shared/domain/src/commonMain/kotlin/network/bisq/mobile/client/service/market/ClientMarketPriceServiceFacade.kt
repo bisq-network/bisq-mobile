@@ -1,10 +1,7 @@
 package network.bisq.mobile.client.service.market
 
-import io.ktor.util.collections.ConcurrentMap
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
@@ -17,7 +14,7 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 
 class ClientMarketPriceServiceFacade(
     private val apiGateway: MarketPriceApiGateway,
-    private val json: Json
+    private val json: kotlinx.serialization.json.Json
 ) : ServiceFacade(), MarketPriceServiceFacade {
 
     // Properties
@@ -28,14 +25,15 @@ class ClientMarketPriceServiceFacade(
     override val selectedFormattedMarketPrice: StateFlow<String> = _selectedFormattedMarketPrice
 
     // Misc
-    private var selectedMarket: MarketVO = MarketVOFactory.USD// todo use persisted or user default
-    private val quotes = ConcurrentMap<String, PriceQuoteVO>()
+    private val quotes: MutableMap<String, PriceQuoteVO> = mutableMapOf()
+    private var selectedMarket: MarketVO? = null
 
     // Life cycle
     override fun activate() {
         super<ServiceFacade>.activate()
 
-        serviceScope.launch {
+        // Use the jobsManager to launch a coroutine instead of serviceScope directly
+        launchIO {
             val observer = apiGateway.subscribeMarketPrice()
             observer.webSocketEvent.collect { webSocketEvent ->
                 try {
@@ -52,10 +50,6 @@ class ClientMarketPriceServiceFacade(
                 }
             }
         }
-    }
-
-    override fun deactivate() {
-        super<ServiceFacade>.deactivate()
     }
 
     // API
@@ -81,13 +75,15 @@ class ClientMarketPriceServiceFacade(
     }
 
     private fun updateMarketPriceItem() {
-        val quoteCurrencyCode: String = selectedMarket.quoteCurrencyCode
-        quotes[quoteCurrencyCode]?.let { priceQuote ->
-            val formattedPrice = MarketPriceFormatter.format(priceQuote.value, selectedMarket)
-            val marketPriceItem = MarketPriceItem(selectedMarket, priceQuote, formattedPrice)
-            _selectedMarketPriceItem.value = marketPriceItem
-            _selectedFormattedMarketPrice.value = formattedPrice
-            log.i { "upDateMarketPriceItem: code=$quoteCurrencyCode; priceQuote =$priceQuote; formattedPrice =$formattedPrice" }
+        selectedMarket?.let {
+            val quoteCurrencyCode: String = it.quoteCurrencyCode
+            quotes[quoteCurrencyCode]?.let { priceQuote ->
+                val formattedPrice = MarketPriceFormatter.format(priceQuote.value, it)
+                val marketPriceItem = MarketPriceItem(it, priceQuote, formattedPrice)
+                _selectedMarketPriceItem.value = marketPriceItem
+                _selectedFormattedMarketPrice.value = formattedPrice
+                log.i { "upDateMarketPriceItem: code=$quoteCurrencyCode; priceQuote =$priceQuote; formattedPrice =$formattedPrice" }
+            }
         }
     }
 }

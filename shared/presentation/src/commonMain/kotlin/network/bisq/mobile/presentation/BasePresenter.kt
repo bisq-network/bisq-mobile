@@ -6,21 +6,28 @@ import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.getPlatformInfo
+import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import org.koin.core.component.KoinComponent
+import org.koin.core.component.inject
 
 /**
  * Presenter methods accesible by all views. Views should extend this interface when defining the behaviour expected for their presenter.
@@ -105,7 +112,7 @@ interface ViewPresenter {
  * Base class allows to have a tree hierarchy of presenters. If the rootPresenter is null, this presenter acts as root
  * if root present is passed, this present attach itself to the root to get updates (consequently its dependants will be always empty
  */
-abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPresenter, Logging {
+abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPresenter, KoinComponent, Logging {
     companion object {
         const val DEFAULT_DELAY = 250L
         const val EXIT_WARNING_TIMEOUT = 3000L
@@ -114,11 +121,15 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     protected var view: Any? = null
 
-    // Coroutine scope for the presenter / UI.
-    protected var presenterScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-
-    // For network access, persistence or file IO
-    protected var ioScope = CoroutineScope(IODispatcher + SupervisorJob())
+    // we use KoinComponent to avoid having to pass the manager as parameter on efery single presenter
+    protected val jobsManager: CoroutineJobsManager by inject()
+    
+    // For backward compatibility - these will delegate to the jobsManager
+    protected val presenterScope: CoroutineScope
+        get() = jobsManager.getUIScope()
+    
+    protected val ioScope: CoroutineScope
+        get() = jobsManager.getIOScope()
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
 
@@ -340,6 +351,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     @CallSuper
     override fun onViewUnattaching() {
+        // Presenter level support for auto disposal
+        runBlocking { jobsManager.dispose() }
     }
 
     @CallSuper
@@ -394,7 +407,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     }
 
     fun detachView() {
-        resetPresenterScope()
         onViewUnattaching()
         this.view = null
         log.i { "Lifecycle: View Dettached from Presenter" }
@@ -445,8 +457,9 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     private fun cleanup() {
         try {
-            resetPresenterScope()
-            resetIOScope()
+            runBlocking {
+                jobsManager.dispose()
+            }
             // copy to avoid concurrency exception - no problem with multiple on destroy calls
             dependants?.toList()?.forEach { it.onDestroy() }
         } catch (e: Exception) {
@@ -477,13 +490,20 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     override fun isDemo(): Boolean = rootPresenter?.isDemo() ?: false
 
-    private fun resetPresenterScope() {
-        this.presenterScope.cancel()
-        this.presenterScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    // Presenter-level helper methods for launching coroutines with the jobsManager
+    protected fun launchUI(block: suspend CoroutineScope.() -> Unit): Job {
+        return jobsManager.launchUI(block)
     }
-
-    private fun resetIOScope() {
-        this.ioScope.cancel()
-        this.ioScope = CoroutineScope(IODispatcher + SupervisorJob())
+    
+    protected fun launchIO(block: suspend CoroutineScope.() -> Unit): Job {
+        return jobsManager.launchIO(block)
+    }
+    
+    protected fun <T> collectUI(flow: Flow<T>, collector: suspend (T) -> Unit): Job {
+        return jobsManager.collectUI(flow, collector)
+    }
+    
+    protected fun <T> collectIO(flow: Flow<T>, collector: suspend (T) -> Unit): Job {
+        return jobsManager.collectIO(flow, collector)
     }
 }

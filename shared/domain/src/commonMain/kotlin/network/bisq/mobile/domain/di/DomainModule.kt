@@ -11,6 +11,8 @@ import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.getPlatformSettings
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
+import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import org.koin.dsl.module
 
 val domainModule = module {
@@ -35,4 +37,6 @@ val domainModule = module {
 
     // Services
     single<OpenTradesNotificationService> { OpenTradesNotificationService(get(), get()) }
+
+    factory<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
 }
