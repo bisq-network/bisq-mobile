@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.Settings
@@ -20,6 +22,10 @@ class TrustedNodeSetupPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider
 ) : BasePresenter(mainPresenter), ITrustedNodeSetupPresenter {
+
+    companion object {
+        const val SAFEGUARD_TEST_TIMEOUT = 20000L
+    }
 
     private val _isBisqApiUrlValid = MutableStateFlow(true)
     override val isBisqApiUrlValid: StateFlow<Boolean> = _isBisqApiUrlValid
@@ -85,37 +91,63 @@ class TrustedNodeSetupPresenter(
         _isLoading.value = true
         log.d { "Test: ${_bisqApiUrl.value} isWorkflow $isWorkflow" }
         val connectionSettings = WebSocketClientProvider.parseUri(_bisqApiUrl.value)
-        presenterScope.launch {
-            val success = withContext(IODispatcher) {
-                return@withContext webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)
-            }
-
-            if (success) {
-                val isCompatibleVersion = withContext(IODispatcher) {
-                    updateTrustedNodeSettings()
-                    delay(250L)
-                    webSocketClientProvider.get().await()
-                    validateVersion()
-                }
-                if (isCompatibleVersion) {
-                    log.d { "Connected successfully to ${_bisqApiUrl.value} is workflow: $isWorkflow" }
-                    showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
-                    if (!isWorkflow) {
-                        _isLoading.value = false
-                        navigateBack()
+        
+        // Create a job that we can cancel if needed
+        val connectionJob = presenterScope.launch {
+            try {
+                // Add a timeout to prevent indefinite waiting
+                val success = withTimeout(15000) { // 15 second timeout
+                    withContext(IODispatcher) {
+                        return@withContext webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)
                     }
-                    _isConnected.value = true
+                }
+
+                if (success) {
+                    val isCompatibleVersion = withContext(IODispatcher) {
+                        updateTrustedNodeSettings()
+                        delay(DEFAULT_DELAY)
+                        webSocketClientProvider.get().await()
+                        validateVersion()
+                    }
+                    if (isCompatibleVersion) {
+                        log.d { "Connected successfully to ${_bisqApiUrl.value} is workflow: $isWorkflow" }
+                        showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
+                        if (!isWorkflow) {
+                            _isLoading.value = false
+                            navigateBack()
+                        }
+                        _isConnected.value = true
+                    } else {
+                        webSocketClientProvider.get().disconnect(isTest = true)
+                        log.d { "Invalid version cannot connect" }
+                        showSnackbar("Trusted node incompatible version, cannot connect")
+                        _isConnected.value = false
+                    }
                 } else {
-                    webSocketClientProvider.get().disconnect(isTest = true)
-                    log.d { "Invalid version cannot connect" }
-                    showSnackbar("Trusted node incompatible version, cannot connect")
+                    showSnackbar("Could not connect to given url ${_bisqApiUrl.value}, please try again with another setup")
                     _isConnected.value = false
                 }
-                _isLoading.value = false
-            } else {
-                showSnackbar("Could not connect to given url ${_bisqApiUrl.value}, please try again with another setup")
+            } catch (e: TimeoutCancellationException) {
+                log.e(e) { "Connection test timed out after 15 seconds" }
+                showSnackbar("Connection timed out. Please check if the trusted node is running and accessible.")
                 _isConnected.value = false
+            } catch (e: Exception) {
+                log.e(e) { "Error testing connection: ${e.message}" }
+                showSnackbar("Error connecting: ${e.message ?: "Unknown error"}")
+                _isConnected.value = false
+            } finally {
                 _isLoading.value = false
+            }
+        }
+        
+        // Optional: Add a safety timeout at the presenter level
+        presenterScope.launch {
+            delay(SAFEGUARD_TEST_TIMEOUT) // 20 seconds as a fallback
+            if (_isLoading.value) {
+                log.w { "Force stopping connection test after 20 seconds" }
+                connectionJob.cancel()
+                _isLoading.value = false
+                showSnackbar("Connection test took too long. Please try again.")
             }
         }
     }

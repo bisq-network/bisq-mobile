@@ -107,6 +107,7 @@ interface ViewPresenter {
  */
 abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPresenter, Logging {
     companion object {
+        const val DEFAULT_DELAY = 250L
         const val EXIT_WARNING_TIMEOUT = 3000L
         var isDemo = false
     }
