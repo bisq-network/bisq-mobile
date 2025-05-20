@@ -46,7 +46,7 @@ class TabContainerPresenter(
             createOfferPresenter.onStartCreateOffer()
             navigateTo(Routes.CreateOfferDirection)
         } catch (e: Exception) {
-            log.e(e) { "Failed to create offer" }
+            log.e(e) { "Failed to create offer: ${e.message}" }
         }
     }
 
