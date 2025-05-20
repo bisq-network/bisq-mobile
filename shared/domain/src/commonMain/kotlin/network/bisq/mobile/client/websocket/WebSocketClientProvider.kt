@@ -62,10 +62,12 @@ class WebSocketClientProvider(
         return clientFactory(host, port)
     }
 
+    // UI usages of this call will have the currentClient avail so
+    // no need to make it suspend as its used from IO curroutines
     fun get(): WebSocketClient {
         if (currentClient == null) {
             runBlocking {
-                lunchObserveSettingsChange()
+                launchObserveSettingsChange()
                 settingsRepository.fetch()
                 connectionReady.await()
             }
@@ -73,9 +75,9 @@ class WebSocketClientProvider(
         return currentClient!!
     }
 
-    private fun lunchObserveSettingsChange() {
+    private fun launchObserveSettingsChange() {
         // Listen to changes in WebSocket configuration and update the client
-        if (observeSettingsJob != null) {
+        if (observeSettingsJob?.isActive == true) {
             log.w { "already observing settings changes" }
             return
         }
@@ -87,7 +89,7 @@ class WebSocketClientProvider(
                         var port = defaultPort
                         newSettings?.bisqApiUrl?.takeIf { it.isNotBlank() }?.let { url ->
                             parseUri(url).apply {
-                                if (nodeAddressChanged(first, second)) {
+                                if (isDifferentFromCurrentClient(first, second)) {
                                     log.d { "new bisq url detected $url" }
                                 }
                                 host = first
@@ -95,7 +97,7 @@ class WebSocketClientProvider(
                             }
                         }
                         // only update if there was actually a change
-                        if (nodeAddressChanged(host, port)) {
+                        if (isDifferentFromCurrentClient(host, port)) {
                             if (currentClient != null) {
                                 log.d { "trusted node changing from ${currentClient!!.host}:${currentClient!!.port} to $host:$port" }
                             }
@@ -118,6 +120,6 @@ class WebSocketClientProvider(
         }
     }
 
-    private fun nodeAddressChanged(host: String, port: Int) =
+    private fun isDifferentFromCurrentClient(host: String, port: Int) =
         currentClient == null || currentClient!!.host != host || currentClient!!.port != port
 }

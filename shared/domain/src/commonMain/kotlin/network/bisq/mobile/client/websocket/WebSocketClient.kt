@@ -61,9 +61,10 @@ class WebSocketClient(
 ) : Logging {
 
     companion object {
+        // TODO we might want to make this configurable
+        const val CONNECT_TIMEOUT = 10000L
         const val DEMO_URL = "ws://demo.bisq:21"
         const val DELAY_TO_RECONNECT = 3000L
-        const val CONNECT_TIMEOUT = 10000L
         const val MAX_RECONNECT_ATTEMPTS = 5
         const val MAX_RECONNECT_DELAY = 30000L // 30 seconds max delay
     }
@@ -99,11 +100,13 @@ class WebSocketClient(
     fun isDemo(): Boolean = webSocketUrl.startsWith(DEMO_URL)
 
     suspend fun connect(isTest: Boolean = false) {
+        var needReconnect = false
         connectionMutex.withLock {
             try {
                 if (webSocketClientStatus.value == WebSocketClientStatus.CONNECTED) {
                     throw IllegalStateException("Cannot connect an already connected client, please call disconnect first")
                 }
+                connectionReady = CompletableDeferred()
                 log.d { "WS connecting.." }
                 _webSocketClientStatus.value = WebSocketClientStatus.CONNECTING
                 val newSession = withTimeout(CONNECT_TIMEOUT) {
@@ -131,12 +134,12 @@ class WebSocketClient(
             } catch (e: Exception) {
                 log.e("Connecting websocket failed $webSocketUrl: ${e.message}", e)
                 _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
+                needReconnect = !isTest
                 if (isTest) {
                     throw e
-                } else {
-                    reconnect()
                 }
             }
+            if (needReconnect) reconnect()
         }
     }
 
@@ -153,7 +156,6 @@ class WebSocketClient(
             }
             listenerJob?.cancel()
             listenerJob = null
-            connectionReady = CompletableDeferred<Boolean>()
             requestResponseHandlersMutex.withLock {
                 requestResponseHandlers.values.forEach { it.dispose() }
                 requestResponseHandlers.clear()
