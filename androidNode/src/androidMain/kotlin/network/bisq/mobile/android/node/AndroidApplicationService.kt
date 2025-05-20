@@ -206,7 +206,9 @@ class AndroidApplicationService(
             bondedRolesService
         )
 
+
         tradeService = TradeService(
+            TradeService.Config.from(getConfig("trade")),
             networkService,
             identityService,
             persistenceService,
