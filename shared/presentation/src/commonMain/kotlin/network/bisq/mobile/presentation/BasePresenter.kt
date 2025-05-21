@@ -352,7 +352,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     @CallSuper
     override fun onViewUnattaching() {
         // Presenter level support for auto disposal
-        runBlocking { jobsManager.dispose() }
+        CoroutineScope(IODispatcher).launch { jobsManager.dispose() }
     }
 
     @CallSuper

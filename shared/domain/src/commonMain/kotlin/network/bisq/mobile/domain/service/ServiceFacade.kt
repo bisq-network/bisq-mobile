@@ -4,6 +4,7 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
 import network.bisq.mobile.domain.LifeCycleAware
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import org.koin.core.component.KoinComponent
@@ -45,7 +46,7 @@ abstract class ServiceFacade : LifeCycleAware, KoinComponent, Logging {
             log.i { "Deactivating service ${this::class.simpleName}" }
             
             // Clean up all jobs managed by the jobsManager
-            runBlocking {
+            CoroutineScope(IODispatcher).launch {
                 jobsManager.dispose()
             }
         }

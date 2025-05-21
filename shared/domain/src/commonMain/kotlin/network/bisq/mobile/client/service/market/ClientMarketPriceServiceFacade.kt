@@ -2,6 +2,9 @@ package network.bisq.mobile.client.service.market
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
@@ -26,6 +29,7 @@ class ClientMarketPriceServiceFacade(
 
     // Misc
     private val quotes: MutableMap<String, PriceQuoteVO> = mutableMapOf()
+    private val quotesMutex = Mutex()
     private var selectedMarket: MarketVO? = null
 
     // Life cycle
@@ -43,7 +47,9 @@ class ClientMarketPriceServiceFacade(
                     val webSocketEventPayload: WebSocketEventPayload<Map<String, PriceQuoteVO>> =
                         WebSocketEventPayload.from(json, webSocketEvent)
                     val marketPriceMap = webSocketEventPayload.payload
-                    quotes.putAll(marketPriceMap)
+                    quotesMutex.withLock {
+                        quotes.putAll(marketPriceMap)
+                    }
                     updateMarketPriceItem()
                 } catch (e: Exception) {
                     log.e(e.toString(), e)
@@ -60,9 +66,13 @@ class ClientMarketPriceServiceFacade(
 
     override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? {
         val quoteCurrencyCode: String = marketVO.quoteCurrencyCode
-        return quotes[quoteCurrencyCode]?.let { priceQuoteVO ->
-            val formattedPrice = MarketPriceFormatter.format(priceQuoteVO.value, marketVO)
-            MarketPriceItem(marketVO, priceQuoteVO, formattedPrice)
+        return runBlocking {
+            quotesMutex.withLock {
+                quotes[quoteCurrencyCode]?.let { priceQuoteVO ->
+                    val formattedPrice = MarketPriceFormatter.format(priceQuoteVO.value, marketVO)
+                    MarketPriceItem(marketVO, priceQuoteVO, formattedPrice)
+                }
+            }
         }
     }
 
@@ -75,14 +85,19 @@ class ClientMarketPriceServiceFacade(
     }
 
     private fun updateMarketPriceItem() {
-        selectedMarket?.let {
-            val quoteCurrencyCode: String = it.quoteCurrencyCode
-            quotes[quoteCurrencyCode]?.let { priceQuote ->
-                val formattedPrice = MarketPriceFormatter.format(priceQuote.value, it)
-                val marketPriceItem = MarketPriceItem(it, priceQuote, formattedPrice)
-                _selectedMarketPriceItem.value = marketPriceItem
-                _selectedFormattedMarketPrice.value = formattedPrice
-                log.i { "upDateMarketPriceItem: code=$quoteCurrencyCode; priceQuote =$priceQuote; formattedPrice =$formattedPrice" }
+        selectedMarket?.let { market ->
+            val quoteCurrencyCode: String = market.quoteCurrencyCode
+            // Use runBlocking for synchronous access
+            runBlocking {
+                quotesMutex.withLock {
+                    quotes[quoteCurrencyCode]?.let { priceQuote ->
+                        val formattedPrice = MarketPriceFormatter.format(priceQuote.value, market)
+                        val marketPriceItem = MarketPriceItem(market, priceQuote, formattedPrice)
+                        _selectedMarketPriceItem.value = marketPriceItem
+                        _selectedFormattedMarketPrice.value = formattedPrice
+                        log.i { "upDateMarketPriceItem: code=$quoteCurrencyCode; priceQuote=$priceQuote; formattedPrice=$formattedPrice" }
+                    }
+                }
             }
         }
     }

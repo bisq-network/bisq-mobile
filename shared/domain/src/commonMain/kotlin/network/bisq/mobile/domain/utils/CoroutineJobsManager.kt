@@ -1,11 +1,7 @@
 package network.bisq.mobile.domain.utils
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.domain.data.IODispatcher
@@ -78,17 +74,14 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
     private var ioScope = CoroutineScope(IODispatcher + SupervisorJob())
     
     override fun addJob(job: Job): Job {
-        ioScope.launch {
-            jobsMutex.withLock {
-                jobs.add(job)
-            }
+        // direct, lock-protected mutation – no extra coroutines
+        runBlocking {           // cheap; single quick critical section
+            jobsMutex.withLock { jobs.add(job) }
         }
-        
+
         job.invokeOnCompletion {
-            ioScope.launch {
-                jobsMutex.withLock {
-                    jobs.remove(job)
-                }
+            runBlocking {
+                jobsMutex.withLock { jobs.remove(job) }
             }
         }
         return job
