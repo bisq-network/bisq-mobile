@@ -10,6 +10,9 @@ import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 
+/**
+ * Main presenter for the display when landing the user on the app ready to be used.
+ */
 class TabContainerPresenter(
     private val mainPresenter: MainPresenter,
     private val createOfferPresenter: CreateOfferPresenter,
@@ -19,30 +22,24 @@ class TabContainerPresenter(
     private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
     override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> = _tradesWithUnreadMessages
     override val showAnimation: StateFlow<Boolean> get() = settingsServiceFacade.useAnimations
-
-    private var job: Job? = null
+    private var foceServicesReactivation = false
 
     override fun onViewAttached() {
         super.onViewAttached()
 
-        job = presenterScope.launch {
+        onceOffReactivateServices()
+        launchUI {
             mainPresenter.tradesWithUnreadMessages.collect{ _tradesWithUnreadMessages.value = it }
         }
     }
 
     override fun onViewUnattaching() {
-        job?.cancel()
-        job = null
         _tradesWithUnreadMessages.value = emptyMap()
         super.onViewUnattaching()
     }
 
     override fun createOffer() {
         try {
-//            if (isDemo()) {
-//                showSnackbar("Create offer is disabled in demo mode")
-//                return
-//            }
             createOfferPresenter.onStartCreateOffer()
             navigateTo(Routes.CreateOfferDirection)
         } catch (e: Exception) {
@@ -50,4 +47,13 @@ class TabContainerPresenter(
         }
     }
 
+    private fun onceOffReactivateServices() {
+        if (!foceServicesReactivation) {
+            log.d { "User landed on home, reactivating services.." }
+            launchIO {
+                mainPresenter.reactivateServices()
+                foceServicesReactivation = true
+            }
+        }
+    }
 }

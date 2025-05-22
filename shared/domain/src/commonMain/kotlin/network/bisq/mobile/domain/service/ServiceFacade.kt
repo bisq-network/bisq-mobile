@@ -45,11 +45,16 @@ abstract class ServiceFacade : LifeCycleAware, KoinComponent, Logging {
         if (isActivated.compareAndSet(expect = true, update = false)) {
             log.i { "Deactivating service ${this::class.simpleName}" }
             
-            // Clean up all jobs managed by the jobsManager
+            // Clean up all jobs managed by the jobsManager in a new scope because this will be killed
             CoroutineScope(IODispatcher).launch {
                 jobsManager.dispose()
             }
         }
+    }
+
+    protected fun reactivate() {
+        deactivate()
+        activate()
     }
     
     // Helper methods for launching coroutines with the jobsManager

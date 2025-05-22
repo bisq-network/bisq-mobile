@@ -105,8 +105,11 @@ open class CreateProfilePresenter(
                     /* navigateTo(Routes.TrustedNodeSetup) {
                          it.popUpTo(Routes.CreateProfile.name) { inclusive = true }
                      }  */
+                    
+                    // Navigate to TabContainer and completely clear the back stack
+                    // This ensures the user can never navigate back to onboarding screens
                     navigateTo(Routes.TabContainer) {
-                        it.popUpTo(Routes.Onboarding.name) { inclusive = true }
+                        it.popUpTo(Routes.Splash.name) { inclusive = true }
                     }
                     enableInteractive()
                 }.onFailure { e ->

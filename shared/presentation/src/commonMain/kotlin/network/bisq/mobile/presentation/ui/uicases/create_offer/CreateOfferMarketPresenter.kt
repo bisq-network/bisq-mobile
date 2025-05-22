@@ -87,8 +87,12 @@ class CreateOfferMarketPresenter(
 
     private fun commitToModel() {
         if (isValid()) {
-            createOfferPresenter.commitMarket(market!!)
-            offersServiceFacade.selectOfferbookMarket(marketListItem!!)
+            runCatching {
+                createOfferPresenter.commitMarket(market!!)
+                offersServiceFacade.selectOfferbookMarket(marketListItem!!)
+            }.onFailure {
+                log.e(it) { "Failed to comit to model ${it.message}" }
+            }
         }
     }
 

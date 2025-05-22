@@ -42,30 +42,17 @@ class ClientOffersServiceFacade(
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
     private var offersSequenceNumber = atomic(-1)
     private var hasSubscribedToOffers = atomic(false)
-    private var observeMarketPriceJob: Job? = null
 
 
     // Life cycle
     override fun activate() {
         super<ServiceFacade>.activate()
 
-        observeMarketPriceJob = observeMarketPrice()
-
-        serviceScope.launch {
-            val result = apiGateway.getMarkets()
-            if (result.isFailure) {
-                result.exceptionOrNull()?.let { log.e { "GetMarkets request failed with exception $it" } }
-                return@launch
-            }
-
-            val markets = result.getOrThrow()
-            fillMarketListItems(markets)
-            subscribeNumOffers()
-        }
+        observeMarketPrice()
+        observeAvailableMarkets()
     }
 
     override fun deactivate() {
-        cancelObserveMarketPriceJob()
         _offerbookMarketItems.value = emptyList()
         hasSubscribedToOffers.value = false
         super<ServiceFacade>.deactivate()
@@ -81,9 +68,6 @@ class ClientOffersServiceFacade(
         } else {
             applyOffersToSelectedMarket()
         }
-
-        cancelObserveMarketPriceJob()
-        observeMarketPriceJob = observeMarketPrice()
     }
 
     override suspend fun deleteOffer(offerId: String): Result<Boolean> {
@@ -120,10 +104,23 @@ class ClientOffersServiceFacade(
         }
     }
 
+    private fun observeAvailableMarkets() {
+        launchIO {
+            val result = apiGateway.getMarkets()
+            if (result.isFailure) {
+                result.exceptionOrNull()
+                    ?.let { log.e { "GetMarkets request failed with exception $it" } }
+                return@launchIO
+            }
 
-    // Private
-    private fun observeMarketPrice(): Job {
-        return serviceScope.launch(Dispatchers.Default) {
+            val markets = result.getOrThrow()
+            fillMarketListItems(markets)
+            subscribeNumOffers()
+        }
+    }
+
+    private fun observeMarketPrice() {
+        launchIO {
             runCatching {
                 marketPriceServiceFacade.selectedMarketPriceItem.collectLatest { marketPriceItem ->
                     if (marketPriceItem != null) {
@@ -202,11 +199,6 @@ class ClientOffersServiceFacade(
     private fun applyOffersToSelectedMarket() {
         val list = offerbookListItemsByMarket[selectedOfferbookMarket.value.market.quoteCurrencyCode]?.values?.toList()
         _offerbookListItems.value = list ?: emptyList()
-    }
-
-    private fun cancelObserveMarketPriceJob() {
-        observeMarketPriceJob?.cancel()
-        observeMarketPriceJob = null
     }
 
     private fun fillMarketListItems(markets: List<MarketVO>) {

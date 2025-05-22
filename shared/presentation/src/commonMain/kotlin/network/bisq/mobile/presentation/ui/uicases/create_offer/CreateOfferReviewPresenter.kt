@@ -123,15 +123,7 @@ class CreateOfferReviewPresenter(
     }
 
     private fun onGoToOfferList() {
-        this.presenterScope.launch {
-            // FIXME without clearing the backstack it does not work
-            val rootNavController = getRootNavController()
-            var currentBackStack = rootNavController.currentBackStack.value
-            while (currentBackStack.size > 2) {
-                rootNavController.popBackStack()
-                currentBackStack = rootNavController.currentBackStack.value
-            }
-            navigateToTab(Routes.TabOfferbook)
-        }
+        navigateBackTo(Routes.TabContainer)
+        navigateToTab(Routes.TabOfferbook)
     }
 }

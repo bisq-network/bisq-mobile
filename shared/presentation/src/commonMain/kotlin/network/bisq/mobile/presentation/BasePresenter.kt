@@ -7,8 +7,6 @@ import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,12 +20,13 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * Presenter methods accesible by all views. Views should extend this interface when defining the behaviour expected for their presenter.
@@ -143,13 +142,13 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     }
 
     override fun showSnackbar(message: String, isError: Boolean) {
-        this.presenterScope.launch(Dispatchers.Main) {
+        launchUI(Dispatchers.Main) {
             snackbarHostState.showSnackbar(message, withDismissAction = true)
         }
     }
 
     override fun dismissSnackbar() {
-        this.presenterScope.launch(Dispatchers.Main) {
+        launchUI(Dispatchers.Main) {
             snackbarHostState.currentSnackbarData?.dismiss()
         }
     }
@@ -175,7 +174,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     }
 
     protected fun enableInteractive() {
-        presenterScope.launch {
+        launchUI {
             delay(250L)
             _isInteractive.value = true
         }
@@ -232,7 +231,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
      */
     protected fun navigateTo(destination: Routes, customSetup: (NavOptionsBuilder) -> Unit = {}) {
         disableInteractive()
-        this.presenterScope.launch(Dispatchers.Main) {
+        launchUI(Dispatchers.Main) {
             try {
                 rootNavigator.navigate(destination.name) {
                     customSetup(this)
@@ -254,7 +253,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
      * Back navigation popping back stack
      */
     protected fun navigateBackTo(destination: Routes, shouldInclusive: Boolean = false, shouldSaveState: Boolean = false) {
-        this.presenterScope.launch(Dispatchers.Main) {
+        launchUI(Dispatchers.Main) {
             rootNavigator.popBackStack(destination.name, inclusive = shouldInclusive, saveState = shouldSaveState)
         }
     }
@@ -269,7 +268,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         shouldRestoreState: Boolean
     ) {
         log.d { "Navigating to tab ${destination.name} " }
-        this.presenterScope.launch(Dispatchers.Main) {
+        launchUI {
             getRootTabNavController().navigate(destination.name) {
                 getRootTabNavController().graph.startDestinationRoute?.let { route ->
                     popUpTo(route) {
@@ -297,7 +296,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
                     exitWarningShown = true
 
                     // Set a timer to reset the warning state after a few seconds
-                    presenterScope.launch {
+                    launchUI {
                         delay(EXIT_WARNING_TIMEOUT) // 3 seconds timeout for exit warning
                         exitWarningShown = false
                     }
@@ -321,7 +320,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     override fun goBack(): Boolean {
         disableInteractive()
         var wentBack = false
-        this.presenterScope.launch(Dispatchers.Main) {
+        launchUI(Dispatchers.Main) {
             try {
                 log.i { "goBack default implementation" }
                 if (isIOS()) {
@@ -491,8 +490,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     override fun isDemo(): Boolean = rootPresenter?.isDemo() ?: false
 
     // Presenter-level helper methods for launching coroutines with the jobsManager
-    protected fun launchUI(block: suspend CoroutineScope.() -> Unit): Job {
-        return jobsManager.launchUI(block)
+    protected fun launchUI(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job {
+        return jobsManager.launchUI(context, block)
     }
     
     protected fun launchIO(block: suspend CoroutineScope.() -> Unit): Job {

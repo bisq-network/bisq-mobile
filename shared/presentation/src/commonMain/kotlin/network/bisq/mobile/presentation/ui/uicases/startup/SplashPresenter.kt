@@ -15,6 +15,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import kotlin.coroutines.cancellation.CancellationException
 
 open class SplashPresenter(
     mainPresenter: MainPresenter,
@@ -49,7 +50,7 @@ open class SplashPresenter(
 
     private fun navigateToNextScreen() {
         log.d { "Navigating to next screen" }
-        presenterScope.launch {
+        launchUI {
             if (!hasConnectivity()) {
                 navigateToTrustedNodeSetup()
             }
@@ -85,6 +86,7 @@ open class SplashPresenter(
                     }
                 }
             }.onFailure {
+                if (it is CancellationException) return@launchUI
                 log.e(it) { "Failed to navigate out of splash" }
             }
         }

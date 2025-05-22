@@ -12,6 +12,7 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
@@ -132,6 +133,9 @@ class WebSocketApiClient(
                     return Result.failure(WebSocketRestApiException(response.httpStatusCode, body))
                 }
             }
+        } catch (e: CancellationException) {
+            // no log on cancellation
+            return Result.failure(e)
         } catch (e: Exception) {
             log.e(e) { "Failed to get WS request result: ${e.message}" }
             return Result.failure(e)

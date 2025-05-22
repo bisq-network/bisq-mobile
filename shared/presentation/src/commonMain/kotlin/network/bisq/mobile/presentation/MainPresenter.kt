@@ -51,8 +51,6 @@ open class MainPresenter(
     private val _readMessageCountsByTrade = MutableStateFlow(emptyMap<String, Int>())
     override val readMessageCountsByTrade: StateFlow<Map<String, Int>> = _readMessageCountsByTrade
 
-    private var job: Job? = null
-
     init {
         val localeCode = getDeviceLanguageCode()
         val screenWidth = getScreenWidthDp()
@@ -72,7 +70,7 @@ open class MainPresenter(
             }
         }
 
-        job = ioScope.launch {
+        launchIO {
             combine(
                 tradesServiceFacade.openTradeItems,
                 tradesServiceFacade.selectedTrade,
@@ -124,10 +122,13 @@ open class MainPresenter(
 
     @CallSuper
     override fun onDestroying() {
-        job?.cancel()
         // to stop notification service and fully kill app (no zombie mode)
         stopOpenTradeNotificationsService()
         super.onDestroying()
+    }
+
+    open fun reactivateServices() {
+        // default do nth
     }
 
     protected open fun onResumeServices() {

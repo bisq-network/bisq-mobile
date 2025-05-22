@@ -1,7 +1,5 @@
 package network.bisq.mobile.client
 
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
@@ -49,8 +47,6 @@ open class ClientMainPresenter(
 ) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, tradeReadStateRepository, urlLauncher) {
 
     private var lastConnectedStatus: Boolean? = null
-    private var websocketStatusJob: Job? = null
-    private var validateVersionJob: Job? = null
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -62,21 +58,17 @@ open class ClientMainPresenter(
     override fun onViewUnattaching() {
         // For Tor we might want to leave it running while in background to avoid delay of re-connect
         // when going into foreground again.
-        websocketStatusJob?.cancel()
-        websocketStatusJob = null
-        validateVersionJob?.cancel()
-        validateVersionJob = null
         deactivateServices()
         super.onViewUnattaching()
     }
 
     private fun listenForConnectivity() {
         connectivityService.startMonitoring()
-        websocketStatusJob = presenterScope.launch {
+        launchUI {
             webSocketClientProvider.get().webSocketClientStatus.collect {
                 if (webSocketClientProvider.get().isConnected() && lastConnectedStatus != true) {
                     log.d { "connectivity status changed to $it - reconnecting services" }
-                    reactiveServices()
+                    reactivateServices()
                     lastConnectedStatus = true
                 } else {
                     lastConnectedStatus = false
@@ -86,7 +78,7 @@ open class ClientMainPresenter(
     }
 
     private fun validateVersion() {
-        validateVersionJob = presenterScope.launch {
+        launchUI {
             val isApiCompatible = withContext(IODispatcher) { settingsServiceFacade.isApiCompatible() }
             if (!isApiCompatible) {
                 log.w { "configured trusted node doesn't have a compatible api version" }
@@ -102,7 +94,7 @@ open class ClientMainPresenter(
         }
     }
 
-    private fun reactiveServices() {
+    override fun reactivateServices() {
         deactivateServices()
         activateServices()
     }

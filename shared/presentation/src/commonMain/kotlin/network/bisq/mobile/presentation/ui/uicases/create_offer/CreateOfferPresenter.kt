@@ -74,7 +74,9 @@ class CreateOfferPresenter(
         createOfferModel = CreateOfferModel()
 
         createOfferModel.apply {
-            priceQuote = marketPriceServiceFacade.selectedMarketPriceItem.value!!.priceQuote
+            marketPriceServiceFacade.selectedMarketPriceItem.value?.let {
+                priceQuote = it.priceQuote
+            }
         }
     }
 
