@@ -67,6 +67,7 @@ class WebSocketClientProvider(
 
     // UI usages of this call will have the currentClient avail so
     // no need to make it suspend as its used from IO curroutines
+    // to be safe never call this method from UI thread
     fun get(): WebSocketClient {
         if (currentClient == null) {
             runBlocking {
@@ -105,16 +106,16 @@ class WebSocketClientProvider(
 
                 currentClient = createClient(host, port)
                 log.d { "Websocket client initialized with url $host:$port" }
-                
-                try {
-                    currentClient?.connect()
-                    log.d { "Connected to trusted node at $host:$port" }
+
+                val connected = try {
+                   currentClient?.connect()
+                   true
                 } catch (e: Exception) {
-                    log.e(e) { "Failed to connect to trusted node at $host:$port" }
-                    // We don't complete connectionReady here as we'll let the observer handle it
+                   log.e(e) { "Failed to connect to trusted node at $host:$port" }
+                   false
                 }
 
-                if (!connectionReady.isCompleted) {
+                if (connected && !connectionReady.isCompleted) {
                     connectionReady.complete(true)
                 }
             }

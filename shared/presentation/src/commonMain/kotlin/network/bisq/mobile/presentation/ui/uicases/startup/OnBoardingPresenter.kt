@@ -4,7 +4,8 @@ import androidx.compose.foundation.pager.PagerState
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.*
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -19,7 +20,16 @@ open class OnBoardingPresenter(
     private val userProfileService: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter), IOnboardingPresenter {
 
+    companion object {
+        // TODO i18n
+        const val CREATE_PROFILE_TEXT = "Create Profile"
+        const val SETUP_CONNECTION_TEXT = "Setup Connection"
+    }
+
     override val indexesToShow = listOf(0)
+
+    private val _buttonText = MutableStateFlow(CREATE_PROFILE_TEXT)
+    override val buttonText: StateFlow<String> = _buttonText
 
     // TODO: Ideally slide content for xClients should only be here.
     // Android node content (along with resources), should be moved to `androidNode`
@@ -42,11 +52,22 @@ open class OnBoardingPresenter(
         )
     )
 
-    override fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState) {
-        coroutineScope.launch {
-
+    override fun onViewAttached() {
+        super.onViewAttached()
+        launchIO {
             settingsRepository.fetch()
-            val settings: Settings? = settingsRepository.data.value
+            val deviceSettings: Settings? = settingsRepository.data.value
+            _buttonText.value = if (deviceSettings?.bisqApiUrl?.isNotEmpty() == true)
+                CREATE_PROFILE_TEXT
+            else
+                SETUP_CONNECTION_TEXT
+        }
+    }
+
+    override fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState) {
+        launchIO {
+            settingsRepository.fetch()
+            val deviceSettings: Settings? = settingsRepository.data.value
 
             val hasProfile: Boolean = userProfileService.hasUserProfile()
 
@@ -54,13 +75,13 @@ open class OnBoardingPresenter(
 
                 // to ensure event propagation, probably need to change settings equals definition to avoid this
                 val updatedSettings = Settings().apply {
-                    bisqApiUrl = settings?.bisqApiUrl ?: ""
+                    bisqApiUrl = deviceSettings?.bisqApiUrl ?: ""
                     firstLaunch = false
                 }
 
                 settingsRepository.update(updatedSettings)
 
-                val remoteBisqUrl = settings?.bisqApiUrl ?: ""
+                val remoteBisqUrl = deviceSettings?.bisqApiUrl ?: ""
                 doCustomNavigationLogic(remoteBisqUrl.isNotEmpty(), hasProfile)
 
             } else {

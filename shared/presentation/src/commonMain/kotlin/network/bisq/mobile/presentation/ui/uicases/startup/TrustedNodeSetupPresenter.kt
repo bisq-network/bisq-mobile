@@ -53,7 +53,7 @@ class TrustedNodeSetupPresenter(
     private fun initialize() {
         log.i { "View attached to Trusted node presenter" }
 
-        presenterScope.launch {
+        launchUI {
             try {
                 val data = withContext(IODispatcher) {
                     settingsRepository.fetch()
@@ -96,9 +96,8 @@ class TrustedNodeSetupPresenter(
         _isLoading.value = true
         log.d { "Test: ${_bisqApiUrl.value} isWorkflow $isWorkflow" }
         val connectionSettings = WebSocketClientProvider.parseUri(_bisqApiUrl.value)
-        
-        // Create a job that we can cancel if needed
-        val connectionJob = presenterScope.launch {
+
+        val connectionJob = launchUI {
             try {
                 // Add a timeout to prevent indefinite waiting
                 val success = withTimeout(15000) { // 15 second timeout
@@ -144,9 +143,8 @@ class TrustedNodeSetupPresenter(
                 _isLoading.value = false
             }
         }
-        
-        // Optional: Add a safety timeout at the presenter level
-        presenterScope.launch {
+
+        launchUI {
             delay(SAFEGUARD_TEST_TIMEOUT) // 20 seconds as a fallback
             if (_isLoading.value) {
                 log.w { "Force stopping connection test after 20 seconds" }
@@ -167,7 +165,8 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun navigateToNextScreen() {
-        navigateTo(Routes.CreateProfile)
+        // access to profile setup should be handled by splash
+        goBackToSetupScreen()
     }
 
     override fun goBackToSetupScreen() {
