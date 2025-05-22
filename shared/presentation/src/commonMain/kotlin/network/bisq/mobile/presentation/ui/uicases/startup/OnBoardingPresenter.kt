@@ -60,11 +60,15 @@ open class OnBoardingPresenter(
         launchIO {
             settingsRepository.fetch()
             val deviceSettings: Settings? = settingsRepository.data.value
-            _buttonText.value = if (deviceSettings?.bisqApiUrl?.isNotEmpty() == true)
-                CREATE_PROFILE_TEXT
-            else
-                SETUP_CONNECTION_TEXT
+            _buttonText.value = mainButtonText(deviceSettings)
         }
+    }
+
+    protected open fun mainButtonText(deviceSettings: Settings?): String {
+        return if (deviceSettings?.bisqApiUrl?.isNotEmpty() == true)
+            CREATE_PROFILE_TEXT
+        else
+            SETUP_CONNECTION_TEXT
     }
 
     override fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState) {
