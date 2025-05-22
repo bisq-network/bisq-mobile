@@ -53,7 +53,7 @@ interface ITrustedNodeSetupPresenter : ViewPresenter {
      */
     fun validateWsUrl(url: String): String?
 
-    fun testConnection(isWorkflow: Boolean = true)
+    fun testConnection(isWorkflow: Boolean)
 
     fun navigateToNextScreen()
 
@@ -178,7 +178,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             BisqButton(
                 text = "Test Connection", // TODO:i18n
                 onClick = {
-                    presenter.testConnection()
+                    presenter.testConnection(isWorkflow)
                 },
                 padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                 disabled = !presenter.isBisqApiUrlValid.collectAsState().value,
@@ -196,7 +196,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     BisqButton(
                         text = "Test Connection", // TODO:i18n
                         color = if (bisqApiUrl.isEmpty()) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
-                        onClick = { presenter.testConnection() },
+                        onClick = { presenter.testConnection(isWorkflow) },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )
                 }

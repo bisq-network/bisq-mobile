@@ -38,6 +38,9 @@ class WebSocketClientProvider(
     private var currentClient: WebSocketClient? = null
     private var connectionReady = CompletableDeferred<Boolean>()
 
+    /**
+     * Test connection to a new host/port
+     */
     suspend fun testClient(host: String, port: Int): Boolean {
         val client = createClient(host, port)
         // not including path websocket will get connection refused
@@ -67,16 +70,61 @@ class WebSocketClientProvider(
     fun get(): WebSocketClient {
         if (currentClient == null) {
             runBlocking {
+                initializeWithSavedSettings()
                 launchObserveSettingsChange()
-                settingsRepository.fetch()
                 connectionReady.await()
             }
         }
         return currentClient!!
     }
+    
+    /**
+     * Initialize the client with saved settings if available, otherwise use defaults
+     */
+    private suspend fun initializeWithSavedSettings() {
+        mutex.withLock {
+            if (currentClient == null) {
+                // Fetch settings first
+                val settings = settingsRepository.fetch()
+                
+                // Determine host and port from settings or defaults
+                var host = defaultHost
+                var port = defaultPort
+                
+                settings?.bisqApiUrl?.takeIf { it.isNotBlank() }?.let { url ->
+                    try {
+                        parseUri(url).apply {
+                            host = first
+                            port = second
+                            log.d { "Using saved settings for trusted node: $host:$port" }
+                        }
+                    } catch (e: Exception) {
+                        log.e(e) { "Error parsing saved URL $url, falling back to defaults" }
+                    }
+                }
 
+                currentClient = createClient(host, port)
+                log.d { "Websocket client initialized with url $host:$port" }
+                
+                try {
+                    currentClient?.connect()
+                    log.d { "Connected to trusted node at $host:$port" }
+                } catch (e: Exception) {
+                    log.e(e) { "Failed to connect to trusted node at $host:$port" }
+                    // We don't complete connectionReady here as we'll let the observer handle it
+                }
+
+                if (!connectionReady.isCompleted) {
+                    connectionReady.complete(true)
+                }
+            }
+        }
+    }
+
+    /**
+     * Launches a coroutine to observe settings changes and update the WebSocket client accordingly.
+     */
     private fun launchObserveSettingsChange() {
-        // Listen to changes in WebSocket configuration and update the client
         if (observeSettingsJob?.isActive == true) {
             log.w { "already observing settings changes" }
             return
@@ -85,31 +133,29 @@ class WebSocketClientProvider(
             try {
                 settingsRepository.data.collect { newSettings ->
                     mutex.withLock {
-                        var host = defaultHost
-                        var port = defaultPort
                         newSettings?.bisqApiUrl?.takeIf { it.isNotBlank() }?.let { url ->
-                            parseUri(url).apply {
-                                if (isDifferentFromCurrentClient(first, second)) {
-                                    log.d { "new bisq url detected $url" }
+                            try {
+                                val (newHost, newPort) = parseUri(url)
+
+                                if (isDifferentFromCurrentClient(newHost, newPort)) {
+                                    if (currentClient != null) {
+                                        log.d { "trusted node changing from ${currentClient!!.host}:${currentClient!!.port} to $newHost:$newPort" }
+                                    }
+                                    if (currentClient?.isConnected() == true) {
+                                        currentClient?.disconnect()
+                                    }
+                                    currentClient = createClient(newHost, newPort)
+                                    log.d { "Websocket client updated with url $newHost:$newPort" }
+                                    log.d { "Websocket client - connecting" }
+                                    currentClient?.connect()
+                                    if (!connectionReady.isCompleted) {
+                                        connectionReady.complete(true)
+                                    }
+                                } else {
+                                    log.v { "skip url update, no change"}
                                 }
-                                host = first
-                                port = second
-                            }
-                        }
-                        // only update if there was actually a change
-                        if (isDifferentFromCurrentClient(host, port)) {
-                            if (currentClient != null) {
-                                log.d { "trusted node changing from ${currentClient!!.host}:${currentClient!!.port} to $host:$port" }
-                            }
-                            if (currentClient?.isConnected() == true) {
-                                currentClient?.disconnect()
-                            }
-                            currentClient = createClient(host, port)
-                            log.d { "Websocket client updated with url $host:$port" }
-                            log.d { "Websocket client - connecting" }
-                            currentClient?.connect()
-                            if (!connectionReady.isCompleted) {
-                                connectionReady.complete(true)
+                            } catch (e: Exception) {
+                                log.e(e) { "Error parsing or connecting to new URL $url" }
                             }
                         }
                     }

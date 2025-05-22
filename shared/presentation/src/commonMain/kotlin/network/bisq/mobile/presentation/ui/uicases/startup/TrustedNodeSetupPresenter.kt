@@ -88,6 +88,11 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun testConnection(isWorkflow: Boolean) {
+        if (!isWorkflow) {
+            // FIXME temporary solution to avoid changing node without the corresponding profile reset
+            showSnackbar("If you want to use a different node, you need to remove the app storage or uninstall/reinstall")
+            return
+        }
         _isLoading.value = true
         log.d { "Test: ${_bisqApiUrl.value} isWorkflow $isWorkflow" }
         val connectionSettings = WebSocketClientProvider.parseUri(_bisqApiUrl.value)
