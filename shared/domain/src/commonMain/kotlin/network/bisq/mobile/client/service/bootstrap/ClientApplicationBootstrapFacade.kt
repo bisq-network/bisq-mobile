@@ -37,6 +37,10 @@ class ClientApplicationBootstrapFacade(
             if (trustedNodeService.isConnected) {
                 setState("bootstrap.connectedToTrustedNode".i18n())
                 setProgress(1.0f)
+            } else if (url == null) {
+                // fresh install escenario, let it proceed to onboarding
+                setState("bootstrap.connectedToTrustedNode".i18n())
+                setProgress(1.0f)
             } else {
                 try {
                     if (!trustedNodeService.isDemo()) {

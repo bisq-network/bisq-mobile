@@ -171,14 +171,11 @@ class WebSocketClient(
     }
 
     private fun reconnect() {
-        // Cancel any existing reconnect job
-        reconnectJob?.cancel()
-        
-        // Only proceed if we're not already reconnecting
         if (isReconnecting) {
             log.d { "Reconnect already in progress, skipping" }
             return
         }
+        reconnectJob?.cancel()
         
         reconnectJob = ioScope.launch {
             isReconnecting = true

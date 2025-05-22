@@ -126,17 +126,22 @@ open class MainPresenter(
     override fun onDestroying() {
         job?.cancel()
         // to stop notification service and fully kill app (no zombie mode)
-        onResumeServices()
+        stopOpenTradeNotificationsService()
         super.onDestroying()
     }
 
     protected open fun onResumeServices() {
-        openTradesNotificationService.stopNotificationService()
+        stopOpenTradeNotificationsService()
+        connectivityService.startMonitoring()
     }
 
     protected open fun onPauseServices() {
         connectivityService.stopMonitoring()
         openTradesNotificationService.launchNotificationService()
+    }
+
+    private fun stopOpenTradeNotificationsService() {
+        openTradesNotificationService.stopNotificationService()
     }
 
     // Toggle action
