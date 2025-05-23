@@ -7,6 +7,7 @@ import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -122,13 +123,13 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     // we use KoinComponent to avoid having to pass the manager as parameter on efery single presenter
     protected val jobsManager: CoroutineJobsManager by inject()
-    
-    // For backward compatibility - these will delegate to the jobsManager
-    protected val presenterScope: CoroutineScope
-        get() = jobsManager.getUIScope()
-    
-    protected val ioScope: CoroutineScope
-        get() = jobsManager.getIOScope()
+
+    // For presenters we need a fresh ui scope each as otherwise navigation brings conflicts
+    protected val presenterScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    // TODO we can't delegate until all the existing presenters use the new launching coroutine methods
+//    protected val ioScope: CoroutineScope
+//        get() = jobsManager.getIOScope()
+    protected val ioScope: CoroutineScope = CoroutineScope(SupervisorJob() + IODispatcher)
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
 
