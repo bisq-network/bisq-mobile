@@ -95,6 +95,7 @@ open class ClientMainPresenter(
     }
 
     override fun reactivateServices() {
+        log.d { "Reactivating services" }
         deactivateServices()
         activateServices()
     }

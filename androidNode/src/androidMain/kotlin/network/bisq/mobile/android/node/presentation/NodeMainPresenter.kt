@@ -54,70 +54,56 @@ class NodeMainPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        runCatching {
-            if (applicationServiceCreated) {
-                log.d { "Application service already created, ensuring its activated" }
-                settingsServiceFacade.activate()
-                offersServiceFacade.activate()
-                marketPriceServiceFacade.activate()
-                tradesServiceFacade.activate()
-                tradeChatMessagesServiceFacade.activate()
-                languageServiceFacade.activate()
+        initNodeServices()
+    }
 
-                accountsServiceFacade.activate()
-                explorerServiceFacade.activate()
-                mediationServiceFacade.activate()
-                reputationServiceFacade.activate()
-                userProfileServiceFacade.activate()
-            } else {
-                log.d { "Application service not created, creating.." }
-                val filesDirsPath = (view as Activity).filesDir.toPath()
-                val applicationContext = (view as Activity).applicationContext
-                val applicationService =
-                    AndroidApplicationService(
-                        androidMemoryReportService,
-                        applicationContext,
-                        filesDirsPath
-                    )
-                provider.applicationService = applicationService
+    private fun initNodeServices() {
+        launchIO {
+            runCatching {
+                if (applicationServiceCreated) {
+                    log.d { "Application service already created, ensuring its activated" }
+                    activateServices()
+                } else {
+                    log.d { "Application service not created, creating.." }
+                    val filesDirsPath = (view as Activity).filesDir.toPath()
+                    val applicationContext = (view as Activity).applicationContext
+                    val applicationService =
+                        AndroidApplicationService(
+                            androidMemoryReportService,
+                            applicationContext,
+                            filesDirsPath
+                        )
+                    provider.applicationService = applicationService
 
-                applicationBootstrapFacade.activate()
-                settingsServiceFacade.activate()
-                log.i { "Start initializing applicationService" }
-                applicationService.initialize()
-                    .whenComplete { _: Boolean?, throwable: Throwable? ->
-                        if (throwable == null) {
-                            log.i { "ApplicationService initialization completed" }
-                            applicationBootstrapFacade.deactivate()
-
-                            offersServiceFacade.activate()
-                            marketPriceServiceFacade.activate()
-                            tradesServiceFacade.activate()
-                            tradeChatMessagesServiceFacade.activate()
-                            languageServiceFacade.activate()
-
-                            accountsServiceFacade.activate()
-                            explorerServiceFacade.activate()
-                            mediationServiceFacade.activate()
-                            reputationServiceFacade.activate()
-                            userProfileServiceFacade.activate()
-                        } else {
-                            log.e("Initializing applicationService failed", throwable)
+                    applicationBootstrapFacade.activate()
+                    settingsServiceFacade.activate()
+                    log.i { "Start initializing applicationService" }
+                    applicationService.initialize()
+                        .whenComplete { _: Boolean?, throwable: Throwable? ->
+                            if (throwable == null) {
+                                log.i { "ApplicationService initialization completed" }
+                                applicationBootstrapFacade.deactivate()
+                                activateServices(skipSettings = true)
+                            } else {
+                                log.e("Initializing applicationService failed", throwable)
+                            }
                         }
-                    }
-                applicationServiceCreated = true
-                connectivityService.startMonitoring()
-                log.d { "Application service created, monitoring connectivity.." }
+                    applicationServiceCreated = true
+                    connectivityService.startMonitoring()
+                    log.d { "Application service created, monitoring connectivity.." }
+                }
+            }.onFailure { e ->
+                // TODO give user feedback (we could have a general error screen covering usual
+                //  issues like connection issues and potential solutions)
+                log.e("Error at onViewAttached", e)
             }
-        }.onFailure { e ->
-            // TODO give user feedback (we could have a general error screen covering usual
-            //  issues like connection issues and potential solutions)
-            log.e("Error at onViewAttached", e)
         }
     }
 
     override fun onViewUnattaching() {
-        deactivateServices()
+        launchIO {
+            deactivateServices()
+        }
         super.onViewUnattaching()
     }
 
@@ -158,13 +144,28 @@ class NodeMainPresenter(
         }
     }
 
+    private fun activateServices(skipSettings: Boolean = false) {
+        if (!skipSettings) {
+            settingsServiceFacade.activate()
+        }
+        offersServiceFacade.activate()
+        marketPriceServiceFacade.activate()
+        tradesServiceFacade.activate()
+        tradeChatMessagesServiceFacade.activate()
+        languageServiceFacade.activate()
+
+        accountsServiceFacade.activate()
+        explorerServiceFacade.activate()
+        mediationServiceFacade.activate()
+        reputationServiceFacade.activate()
+        userProfileServiceFacade.activate()
+    }
+
     private fun deactivateServices() {
         applicationBootstrapFacade.deactivate()
         settingsServiceFacade.deactivate()
         offersServiceFacade.deactivate()
         marketPriceServiceFacade.deactivate()
-//        TODO for notifications to work even if the app gets killed this needs to be commented out
-//        but it can't be done yet because of lack of support in bisq2 jars
         tradesServiceFacade.deactivate()
         tradeChatMessagesServiceFacade.deactivate()
         languageServiceFacade.deactivate()

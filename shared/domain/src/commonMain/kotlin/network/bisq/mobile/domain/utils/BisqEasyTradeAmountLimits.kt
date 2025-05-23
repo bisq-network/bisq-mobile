@@ -79,23 +79,31 @@ object BisqEasyTradeAmountLimits {
         }
 
         val logger = getLogger("BisqEasyTradeAmountLimits")
-        val requiredReputationScoreForMinOrFixed =
-            findRequiredReputationScoreForMinOrFixedAmount(marketPriceServiceFacade, bisqEasyOffer)
-                ?: run {
-                    logger.e { "requiredReputationScoreForMinAmount is null" }
-                    return false
-                }
+        
+        // Safely get required reputation score, return false if null
+        val requiredReputationScoreForMinOrFixed = findRequiredReputationScoreForMinOrFixedAmount(
+            marketPriceServiceFacade, 
+            bisqEasyOffer
+        ) ?: run {
+            logger.e { "requiredReputationScoreForMinAmount is null" }
+            return false
+        }
 
         val userProfileId = bisqEasyOffer.makerNetworkId.pubKey.id
-        val sellersScore: Long = run {
-            val reputationScoreResult: Result<ReputationScoreVO> = withContext(IODispatcher) {
+        
+        // Safely get seller's reputation score with proper error handling
+        val sellersScore: Long = runCatching {
+            withContext(IODispatcher) {
                 reputationServiceFacade.getReputation(userProfileId)
-            }
-            reputationScoreResult.exceptionOrNull()?.let { exception ->
-                logger.e("Exception at reputationServiceFacade.getReputation", exception)
-            }
-            reputationScoreResult.getOrNull()?.totalScore ?: 0
-        }
+            }.fold(
+                onSuccess = { it.totalScore },
+                onFailure = { exception ->
+                    logger.e("Exception at reputationServiceFacade.getReputation", exception)
+                    0L // Default to zero score on failure
+                }
+            )
+        }.getOrDefault(0L)
+
         val isInvalid = sellersScore < requiredReputationScoreForMinOrFixed
         if (isInvalid) {
             addInvalidSellOffer(offerId) // We also add it if cache is false

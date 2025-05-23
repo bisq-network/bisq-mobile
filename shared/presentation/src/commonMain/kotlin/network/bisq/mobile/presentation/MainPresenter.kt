@@ -128,7 +128,7 @@ open class MainPresenter(
     }
 
     open fun reactivateServices() {
-        // default do nth
+        log.d { "Reactivating services default: skip" }
     }
 
     protected open fun onResumeServices() {
