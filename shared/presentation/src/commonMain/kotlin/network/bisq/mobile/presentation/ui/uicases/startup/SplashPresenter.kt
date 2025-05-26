@@ -50,8 +50,11 @@ open class SplashPresenter(
     private fun navigateToNextScreen() {
         log.d { "Navigating to next screen" }
         launchUI {
+            // Check connectivity first
             if (!hasConnectivity()) {
+                log.d { "No connectivity detected, navigating to trusted node setup" }
                 navigateToTrustedNodeSetup()
+                return@launchUI
             }
 
             if (webSocketClientProvider?.get()?.isDemo() == true) {

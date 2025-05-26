@@ -2,11 +2,14 @@ package network.bisq.mobile.domain.service.network
 
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.ServiceFacade
@@ -47,19 +50,12 @@ abstract class ConnectivityService : ServiceFacade() {
         CONNECTED
     }
 
-    private val ioScope = CoroutineScope(IODispatcher)
+    private val pendingConnectivityBlocks = mutableListOf<suspend () -> Unit>()
+    private val mutex = Mutex()
+
     private var job: Job? = null
     private val _status = MutableStateFlow(ConnectivityStatus.DISCONNECTED)
     val status: StateFlow<ConnectivityStatus> = _status
-
-
-    override fun activate() {
-        super.activate()
-    }
-
-    override fun deactivate() {
-        super.deactivate()
-    }
 
     /**
      * Starts monitoring connectivity every given period (ms). Default is 10 seconds.
@@ -67,7 +63,7 @@ abstract class ConnectivityService : ServiceFacade() {
     fun startMonitoring(period: Long = PERIOD) {
         onStart()
         job?.cancel()
-        job = ioScope.launch(IODispatcher) {
+        job = launchIO {
             while (true) {
                 checkConnectivity()
                 delay(period)
@@ -78,16 +74,18 @@ abstract class ConnectivityService : ServiceFacade() {
 
     private suspend fun checkConnectivity() {
         try {
-//            log.d { "Checking connectivity whilst ${_status.value}" }
             withTimeout(TIMEOUT) {
-                val currentStatus = _status.value
-                when {
-                    !isConnected() -> _status.value = ConnectivityStatus.DISCONNECTED
-                    isSlow() -> _status.value = ConnectivityStatus.SLOW
-                    else -> _status.value = ConnectivityStatus.CONNECTED
+                val previousStatus = _status.value
+                _status.value = when {
+                    !isConnected() -> ConnectivityStatus.DISCONNECTED
+                    isSlow() -> ConnectivityStatus.SLOW
+                    else -> ConnectivityStatus.CONNECTED
                 }
-                if (currentStatus != _status.value) {
-                    log.d { "Connectivity transition from $currentStatus to ${_status.value}" }
+                if (previousStatus != _status.value) {
+                    log.d { "Connectivity transition from $previousStatus to ${_status.value}" }
+                    if (previousStatus == ConnectivityStatus.DISCONNECTED) {
+                        runPendingBlocks()
+                    }
                 }
             }
         } catch (e: TimeoutCancellationException) {
@@ -96,6 +94,29 @@ abstract class ConnectivityService : ServiceFacade() {
         } catch (e: Exception) {
             log.e(e) { "Failed checking connectivity, assuming no connection" }
             _status.value = ConnectivityStatus.DISCONNECTED
+        }
+    }
+
+    private fun runPendingBlocks() {
+        launchIO {
+            mutex.withLock {
+                val blocksToExecute = pendingConnectivityBlocks.let {
+                    val blocks = it.toList()
+                    pendingConnectivityBlocks.clear()
+                    blocks
+                }
+
+                if (blocksToExecute.isNotEmpty()) {
+                    log.d { "Executing ${blocksToExecute.size} pending connectivity blocks" }
+
+                    blocksToExecute.forEach { block ->
+                        // fire&forget: Create a fresh scope for each block
+                        CoroutineScope(IODispatcher + SupervisorJob()).launch {
+                            block()
+                        }
+                    }
+                }
+            }
         }
     }
 
@@ -114,7 +135,7 @@ abstract class ConnectivityService : ServiceFacade() {
         // default nth
     }
 
-    protected abstract fun isConnected(): Boolean
+    abstract fun isConnected(): Boolean
 
     /**
      * Default implementation uses round trip average measuring.
@@ -127,5 +148,26 @@ abstract class ConnectivityService : ServiceFacade() {
             return averageTripTime > ROUND_TRIP_SLOW_THRESHOLD
         }
         return false // assume is not slow on non mature connections
+    }
+
+    /**
+     * Executes the given block when connectivity is available.
+     * If connectivity is already available, executes immediately.
+     * Otherwise, schedules execution for when connectivity is restored.
+     * 
+     * @param block The code to execute when connectivity is available
+     * @return A job that can be cancelled if needed
+     */
+    fun runWhenConnected(block: suspend () -> Unit): Job {
+        return serviceScope.launch {
+            if (isConnected()) {
+                launchIO { block() }
+            } else {
+                mutex.withLock {
+                    pendingConnectivityBlocks.add(block)
+                    log.d { "Added block to be run when connectivity restarts" }
+                }
+            }
+        }
     }
 }

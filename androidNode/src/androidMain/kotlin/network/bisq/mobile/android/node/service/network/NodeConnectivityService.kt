@@ -20,7 +20,7 @@ class NodeConnectivityService(private val applicationService: AndroidApplication
 
     override fun isConnected(): Boolean {
         val connections = currentConnections()
-        log.d { "Connected peers = $connections" }
+        log.v { "Connected peers = $connections" }
         return connections > 0
     }
 

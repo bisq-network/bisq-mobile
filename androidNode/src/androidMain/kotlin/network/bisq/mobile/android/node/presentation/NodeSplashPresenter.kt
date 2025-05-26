@@ -11,7 +11,7 @@ import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 
 class NodeSplashPresenter(
-    mainPresenter: MainPresenter,
+    private val mainPresenter: MainPresenter,
     applicationBootstrapFacade: ApplicationBootstrapFacade,
     userProfileService: UserProfileServiceFacade,
     userRepository: UserRepository,
@@ -36,7 +36,7 @@ class NodeSplashPresenter(
     }
 
     override suspend fun hasConnectivity(): Boolean {
-        // TODO implement for node
-        return true
+        // Use the NodeConnectivityService to check actual peer connections
+        return mainPresenter.isConnected()
     }
 }

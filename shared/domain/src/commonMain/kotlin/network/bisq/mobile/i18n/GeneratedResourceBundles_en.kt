@@ -1566,6 +1566,7 @@ object GeneratedResourceBundles_en {
             "max" to "Max",
             "error.exception" to "Exception",
             "genericError.errorMessage" to "Error message:",
+            "bootstrap.noConnectivity" to "No Connectivity: Waiting to retry",
             "mobile.openTrades.inMediation.banner" to "A mediator has joined the trade chat.\nPlease use the trade chat to get assistance from the mediator.",
             "mobile.tradeState.info.buyer.phase2a.reasonForPaymentInfo" to "Use the trade ID {0} for the ''Reason for payment'' field",
             "min" to "Min",

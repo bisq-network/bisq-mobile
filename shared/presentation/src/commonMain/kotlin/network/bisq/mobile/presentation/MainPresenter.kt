@@ -127,6 +127,10 @@ open class MainPresenter(
         super.onDestroying()
     }
 
+    fun isConnected(): Boolean {
+        return connectivityService.isConnected()
+    }
+
     open fun reactivateServices() {
         log.d { "Reactivating services default: skip" }
     }

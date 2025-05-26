@@ -659,7 +659,7 @@ object GeneratedResourceBundles_es {
             "bisqEasy.tradeWizard.progress.amountAndPrice.selectOffer" to "Cantidad",
             "bisqEasy.offerDetails.makersTradeTerms" to "Términos comerciales del creador",
             "bisqEasy.openTrades.chat.attach.tooltip" to "Restaurar chat de nuevo en la ventana principal",
-            "bisqEasy.tradeWizard.amount.seller.limitInfo" to "Tu cantidad máxima de venta es {0}.",
+            "bootstrap.noConnectivity" to "Sin conectividad: Por favor, compruebe su conexión a internet y reinicie",
             "bisqEasy.privateChats.table.myUser" to "Mi perfil",
             "bisqEasy.tradeState.info.phase4.exportTrade" to "Exportar datos de la operación",
             "bisqEasy.tradeWizard.selectOffer.subHeadline" to "Se recomienda intercambiar con usuarios con alta reputación.",
@@ -1548,9 +1548,11 @@ object GeneratedResourceBundles_es {
             "mobile.tradeState.info.buyer.phase2a.reasonForPaymentInfo" to "Use the trade ID {0} for the ''Reason for payment'' field",
             "min" to "Min",
             "bootstrap.connectedToTrustedNode" to "Connected to trusted node",
+            "bootstrap.noConnectivity" to "No Connectivity: Waiting to retry",
             "confirmation.areYouSure" to "Are you sure?",
             "genericError.headline" to "An error occurred",
             "mobile.reputation.learnMore" to "Learn more about the reputation system at the Bisq Wiki.",
         ),
     )
 }
+
