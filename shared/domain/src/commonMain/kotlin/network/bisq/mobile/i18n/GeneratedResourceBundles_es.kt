@@ -1548,7 +1548,7 @@ object GeneratedResourceBundles_es {
             "mobile.tradeState.info.buyer.phase2a.reasonForPaymentInfo" to "Use the trade ID {0} for the ''Reason for payment'' field",
             "min" to "Min",
             "bootstrap.connectedToTrustedNode" to "Connected to trusted node",
-            "bootstrap.noConnectivity" to "No Connectivity: Waiting to retry",
+            "bootstrap.noConnectivity" to "Sin conectividad: Esperando conexión para reintentar",
             "confirmation.areYouSure" to "Are you sure?",
             "genericError.headline" to "An error occurred",
             "mobile.reputation.learnMore" to "Learn more about the reputation system at the Bisq Wiki.",

@@ -36,7 +36,6 @@ class NodeSplashPresenter(
     }
 
     override suspend fun hasConnectivity(): Boolean {
-        // Use the NodeConnectivityService to check actual peer connections
         return mainPresenter.isConnected()
     }
 }
