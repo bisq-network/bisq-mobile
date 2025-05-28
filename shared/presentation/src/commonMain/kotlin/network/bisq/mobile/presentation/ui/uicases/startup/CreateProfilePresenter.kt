@@ -1,11 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
@@ -48,6 +45,9 @@ open class CreateProfilePresenter(
         _nickName.value = value
     }
 
+    private val _nickNameValid = MutableStateFlow(false)
+    val nickNameValid: StateFlow<Boolean> get() = _nickNameValid
+
     private val _generateKeyPairInProgress = MutableStateFlow(false)
     val generateKeyPairInProgress: StateFlow<Boolean> get() = _generateKeyPairInProgress
 
@@ -59,6 +59,7 @@ open class CreateProfilePresenter(
 
     // Lifecycle
     override fun onViewAttached() {
+        super.onViewAttached()
         generateKeyPair()
     }
 
@@ -75,11 +76,16 @@ open class CreateProfilePresenter(
     }
 
     fun validateNickname(nickname: String): String? {
-        return when {
+        val result = when {
             nickname.length < 3 -> "Min length: 3 characters"
-            nickname.length > 256 -> "Max length: 256 characters"
+            nickname.length > 100 -> "Max length: 100 characters"
             else -> null
         }
+        _nickNameValid.value = if (result == null)
+            true
+        else
+            false
+        return result
     }
 
     // UI handlers
@@ -151,6 +157,8 @@ open class CreateProfilePresenter(
                         lastActivity = Clock.System.now().toEpochMilliseconds()
                     })
                 }
+
+                delay(1000L)
 
                 _generateKeyPairInProgress.value = false
                 log.i { "Hide busy animation for generateKeyPair" }
