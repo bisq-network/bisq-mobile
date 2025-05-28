@@ -61,6 +61,7 @@ fun TopBar(
     backConfirmation: Boolean = false,
     backBehavior: (() -> Unit)? = null,
     isFlowScreen: Boolean = false,
+    showUserAvatar: Boolean = true,
     stepText: String = "",
 ) {
     val presenter: ITopBarPresenter = koinInject()
@@ -73,8 +74,8 @@ fun TopBar(
     val currentTab = tabNavController.currentBackStackEntryAsState().value?.destination?.route
 
     val showBackButton = (customBackButton == null &&
-                          navController.previousBackStackEntry != null &&
-                          !presenter.isAtHome())
+            navController.previousBackStackEntry != null &&
+            !presenter.isAtHome())
 
     val connectivityStatus = presenter.connectivityStatus.collectAsState().value
 
@@ -135,32 +136,36 @@ fun TopBar(
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                val userIconModifier = Modifier
-                    .size(30.dp)
-                    .alpha(if (presenter.avatarEnabled(currentTab)) 1.0f else 0.5f)
-                    .clickable {
-                        if (presenter.avatarEnabled(currentTab)) {
-                            presenter.navigateToUserProfile()
-                        }
-                    }
-
 //                TODO implement full feature after MVP
 //                BellIcon()
-                Spacer(modifier = Modifier.width(12.dp))
-                if (showAnimation && connectivityStatus != ConnectivityService.ConnectivityStatus.DISCONNECTED) {
-                    ShineOverlay {
+
+                if (showUserAvatar) {
+
+                    val userIconModifier = Modifier
+                        .size(30.dp)
+                        .alpha(if (presenter.avatarEnabled(currentTab)) 1.0f else 0.5f)
+                        .clickable {
+                            if (presenter.avatarEnabled(currentTab)) {
+                                presenter.navigateToUserProfile()
+                            }
+                        }
+
+                    BisqGap.H1()
+                    if (showAnimation && connectivityStatus != ConnectivityService.ConnectivityStatus.DISCONNECTED) {
+                        ShineOverlay {
+                            UserIcon(
+                                presenter.uniqueAvatar.value,
+                                modifier = userIconModifier,
+                                connectivityStatus = connectivityStatus
+                            )
+                        }
+                    } else {
                         UserIcon(
                             presenter.uniqueAvatar.value,
                             modifier = userIconModifier,
                             connectivityStatus = connectivityStatus
                         )
                     }
-                } else {
-                    UserIcon(
-                        presenter.uniqueAvatar.value,
-                        modifier = userIconModifier,
-                        connectivityStatus = connectivityStatus
-                    )
                 }
             }
         },

@@ -38,7 +38,7 @@ fun AgreementScreen() {
 
     // TODO: Enhancement phase: To add a language dropdown, so as to render the agreement in supported languages
     BisqScrollScaffold(
-        topBar = { TopBar("tac.headline".i18n()) },
+        topBar = { TopBar("tac.headline".i18n(), showUserAvatar = false) },
         bottomBar = {
             Column(
                 modifier = Modifier.padding(all = BisqUIConstants.ScreenPaddingHalf),

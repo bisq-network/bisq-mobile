@@ -85,7 +85,7 @@ fun UserProfileSettingsScreen() {
     })
 
     BisqScrollScaffold(
-        topBar = { TopBar("user.userProfile".i18n()) },
+        topBar = { TopBar("user.userProfile".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         isInteractive = presenter.isInteractive.collectAsState().value,
