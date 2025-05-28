@@ -14,7 +14,7 @@ fun WarningConfirmationDialog(
     message: String = "",
     confirmButtonText: String = "confirmation.ok".i18n(),
     dismissButtonText: String = "action.cancel".i18n(),
-    marginTop: Dp = BisqUIConstants.ScreenPadding5X,
+    marginTop: Dp = BisqUIConstants.ScreenPadding8X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalButtonPlacement: Boolean = false,
     onConfirm: () -> Unit,

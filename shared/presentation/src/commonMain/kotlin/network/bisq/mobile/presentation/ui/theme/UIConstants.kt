@@ -12,7 +12,10 @@ object BisqUIConstants {
     val ScreenPadding2X = 24.dp
     val ScreenPadding3X = 36.dp
     val ScreenPadding4X = 48.dp
-    val ScreenPadding5X = 96.dp
+    val ScreenPadding5X = 60.dp
+    val ScreenPadding6X = 72.dp
+    val ScreenPadding7X = 84.dp
+    val ScreenPadding8X = 96.dp
 
     val StaticTopPadding = 36.dp
     val ScrollTopPadding = 24.dp

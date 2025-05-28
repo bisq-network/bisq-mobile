@@ -25,7 +25,7 @@ fun BisqDialog(
     onDismissRequest: () -> Unit = {},
     dismissOnClickOutside: Boolean = true,
     padding: Dp = BisqUIConstants.ScreenPadding2X,
-    marginTop: Dp = BisqUIConstants.ScreenPadding5X,
+    marginTop: Dp = BisqUIConstants.ScreenPadding8X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     content: @Composable ColumnScope.() -> Unit = {}
 ) {

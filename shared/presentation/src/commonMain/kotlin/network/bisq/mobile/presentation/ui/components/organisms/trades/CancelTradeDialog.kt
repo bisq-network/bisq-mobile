@@ -29,7 +29,7 @@ fun CancelTradeDialog(
         message = warningText1,
         horizontalAlignment = Alignment.Start,
         marginTop = if (isRejection)
-            BisqUIConstants.ScreenPadding5X
+            BisqUIConstants.ScreenPadding8X
         else
             BisqUIConstants.ScreenPaddingHalf,
         onDismiss = onDismiss,

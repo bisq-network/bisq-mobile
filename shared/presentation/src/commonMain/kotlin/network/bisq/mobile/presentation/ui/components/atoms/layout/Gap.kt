@@ -46,7 +46,7 @@ object BisqGap {
 
     @Composable
     fun V5() {
-        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding5X))
+        Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding8X))
     }
 
     @Composable

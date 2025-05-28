@@ -24,12 +24,12 @@ fun TakeOfferProgressDialog() {
         Box {
             RotatingImage(
                 painterResource(Res.drawable.bisq_easy_circle),
-                modifier = Modifier.size(BisqUIConstants.ScreenPadding5X)
+                modifier = Modifier.size(BisqUIConstants.ScreenPadding8X)
             )
             Image(
                 painterResource(Res.drawable.bisq_easy),
                 "",
-                modifier = Modifier.size(BisqUIConstants.ScreenPadding5X)
+                modifier = Modifier.size(BisqUIConstants.ScreenPadding8X)
             )
         }
         BisqText.h4Regular(
