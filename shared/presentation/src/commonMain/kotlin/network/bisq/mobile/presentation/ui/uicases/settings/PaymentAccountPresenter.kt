@@ -21,55 +21,73 @@ open class PaymentAccountPresenter(
 
 
     override fun selectAccount(account: UserDefinedFiatAccountVO) {
+        disableInteractive()
         presenterScope.launch {
-            withContext(IODispatcher) {
-                accountsServiceFacade.setSelectedAccount(account)
+            try {
+                withContext(IODispatcher) {
+                    accountsServiceFacade.setSelectedAccount(account)
+                }
+            } finally {
+                enableInteractive()
             }
         }
     }
 
     override fun addAccount(newName: String, newDescription: String) {
+        disableInteractive()
 
-        if (accounts.value.find{ it.accountName == newName} != null) {
+        if (accounts.value.find { it.accountName == newName } != null) {
             showSnackbar("Account name exists") // TODO:i18n
+            enableInteractive()
             return
         }
 
         ioScope.launch {
-            val newAccount = UserDefinedFiatAccountVO(
-                accountName = newName,
-                UserDefinedFiatAccountPayloadVO(
-                    accountData = newDescription
-                )
-            )
-
-            accountsServiceFacade.addAccount(newAccount)
-            showSnackbar("Account created") // TODO:i18n
-        }
-    }
-
-    override fun saveAccount(newName: String, newDescription: String) {
-
-        if (selectedAccount.value?.accountName != newName && accounts.value.find{ it.accountName == newName} != null) {
-            showSnackbar("Account name exists") // TODO:i18n
-            return
-        }
-
-        if (selectedAccount.value != null) {
-            ioScope.launch {
+            try {
                 val newAccount = UserDefinedFiatAccountVO(
                     accountName = newName,
                     UserDefinedFiatAccountPayloadVO(
                         accountData = newDescription
                     )
                 )
-                accountsServiceFacade.saveAccount(newAccount)
-                showSnackbar("Account updated") // TODO:i18n
+                accountsServiceFacade.addAccount(newAccount)
+                showSnackbar("Account created") // TODO:i18n
+            } finally {
+                enableInteractive()
             }
         }
     }
 
+    override fun saveAccount(newName: String, newDescription: String) {
+        disableInteractive()
+        if (selectedAccount.value?.accountName != newName && accounts.value.find { it.accountName == newName } != null) {
+            showSnackbar("Account name exists") // TODO:i18n
+            enableInteractive()
+            return
+        }
+
+        if (selectedAccount.value != null) {
+            ioScope.launch {
+                try {
+                    val newAccount = UserDefinedFiatAccountVO(
+                        accountName = newName,
+                        UserDefinedFiatAccountPayloadVO(
+                            accountData = newDescription
+                        )
+                    )
+                    accountsServiceFacade.saveAccount(newAccount)
+                    showSnackbar("Account updated") // TODO:i18n
+                } finally {
+                    enableInteractive()
+                }
+            }
+        } else {
+            enableInteractive()
+        }
+    }
+
     override fun deleteCurrentAccount() {
+        disableInteractive()
         if (selectedAccount.value != null) {
             ioScope.launch {
                 runCatching {
@@ -81,6 +99,7 @@ open class PaymentAccountPresenter(
                 }
             }
         }
+        enableInteractive()
     }
 
     override fun onViewAttached() {

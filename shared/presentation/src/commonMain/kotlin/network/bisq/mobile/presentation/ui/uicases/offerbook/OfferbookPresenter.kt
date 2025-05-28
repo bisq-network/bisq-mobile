@@ -319,6 +319,7 @@ class OfferbookPresenter(
     }
 
     fun createOffer() {
+        disableInteractive()
         try {
             val market = offersServiceFacade.selectedOfferbookMarket.value.market
             createOfferPresenter.onStartCreateOffer()
@@ -330,5 +331,6 @@ class OfferbookPresenter(
                 if (isDemo()) "Create offer is disabled in demo mode" else "Cannot create offer at this time, please try again later"
             )
         }
+        enableInteractive()
     }
 }

@@ -10,7 +10,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -24,6 +23,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.Bis
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFilter
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFilters
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 @Composable
@@ -36,7 +36,11 @@ fun OfferbookMarketScreen() {
 
     RememberPresenterLifecycle(presenter)
 
-    BisqStaticLayout(padding = PaddingValues(all = 0.dp), verticalArrangement = Arrangement.Top) {
+    BisqStaticLayout(
+        padding = PaddingValues(all = BisqUIConstants.Zero),
+        verticalArrangement = Arrangement.Top,
+        isInteractive = presenter.isInteractive.collectAsState().value,
+    ) {
 
         BisqSearchField(
             value = presenter.searchText.collectAsState().value,

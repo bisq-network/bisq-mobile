@@ -37,11 +37,15 @@ class TabContainerPresenter(
     }
 
     override fun createOffer() {
+        if (!isInteractive.value) return // This isInteractive blocked doesn't apply to FAB buttons
+        disableInteractive()
         try {
             createOfferPresenter.onStartCreateOffer()
             navigateTo(Routes.CreateOfferDirection)
         } catch (e: Exception) {
             log.e(e) { "Failed to create offer: ${e.message}" }
+        } finally {
+            enableInteractive()
         }
     }
 

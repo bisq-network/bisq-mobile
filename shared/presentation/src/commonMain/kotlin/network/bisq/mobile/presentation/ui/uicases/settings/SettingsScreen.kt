@@ -45,6 +45,7 @@ fun SettingsScreen(isTabSelected: Boolean) {
     BisqStaticLayout(
         padding = PaddingValues(all = BisqUIConstants.Zero),
         verticalArrangement = Arrangement.SpaceBetween,
+        isInteractive = presenter.isInteractive.collectAsState().value,
     ) {
         Column{
             BreadcrumbNavigation(path = menuPath) { index ->

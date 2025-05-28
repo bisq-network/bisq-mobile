@@ -37,7 +37,6 @@ interface IPaymentAccountSettingsPresenter : ViewPresenter {
     fun deleteCurrentAccount()
 }
 
-// TODO: Toast messages
 @Composable
 fun PaymentAccountSettingsScreen() {
 
@@ -71,6 +70,7 @@ fun PaymentAccountSettingsScreen() {
         topBar = { TopBar("user.paymentAccounts".i18n()) },
         verticalArrangement = if (accounts.isEmpty()) Arrangement.Center else Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         snackbarHostState = presenter.getSnackState(),
+        isInteractive = presenter.isInteractive.collectAsState().value,
         shouldBlurBg = showConfirmationDialog,
     ) {
         if (accounts.isNotEmpty()) {

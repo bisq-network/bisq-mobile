@@ -112,11 +112,14 @@ class OfferbookMarketPresenter(
     }
 
     fun onSelectMarket(marketListItem: MarketListItem) {
+        disableInteractive()
         offersServiceFacade.selectOfferbookMarket(marketListItem)
         navigateTo(Routes.OffersByMarket)
+        enableInteractive()
     }
 
     override fun onViewAttached() {
+        super.onViewAttached()
         startUpdatingMarketPrices()
     }
 

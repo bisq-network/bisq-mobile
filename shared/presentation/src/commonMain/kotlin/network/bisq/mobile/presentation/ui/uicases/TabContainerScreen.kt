@@ -83,10 +83,11 @@ fun TabContainerScreen() {
         floatingButton = {
             if (currentRoute == Routes.TabOfferbook.name) {
                 BisqFABAddButton(
-                    onClick = { presenter.createOffer() },
+                    onClick = presenter::createOffer,
                 )
             }
         },
+        isInteractive = presenter.isInteractive.collectAsState().value,
         snackbarHostState = presenter.getSnackState(),
         content = { TabNavGraph() }
 

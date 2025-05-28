@@ -2,14 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,15 +18,16 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.fiat_btc
 import bisqapps.shared.presentation.generated.resources.reputation
 import bisqapps.shared.presentation.generated.resources.thumbs_up
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
+import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.InformationConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
@@ -66,62 +60,68 @@ fun OpenTradeListScreen() {
         )
     }
 
-    if (presenter.openTradeItems.collectAsState().value.isEmpty()) {
-        NoTradesSection(presenter)
-    } else if (!presenter.tradeRulesConfirmed.collectAsState().value) {
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = if (presenter.tradeGuideVisible.value) Modifier.fillMaxSize()
-                .blur(8.dp) else Modifier.fillMaxSize()
-        ) {
-            item {
-                Column(
-                    modifier = Modifier.clip(shape = RoundedCornerShape(12.dp))
-                        .background(color = BisqTheme.colors.dark_grey30)
-                        .padding(12.dp),
-                ) {
-                    WelcomeToFirstTradePane(presenter)
+    BisqStaticLayout(
+        padding = PaddingValues(all = BisqUIConstants.Zero),
+        isInteractive = presenter.isInteractive.collectAsState().value
+    ) {
+
+        if (presenter.openTradeItems.collectAsState().value.isEmpty()) {
+            NoTradesSection(presenter)
+        } else if (!presenter.tradeRulesConfirmed.collectAsState().value) {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = if (presenter.tradeGuideVisible.value) Modifier.fillMaxSize()
+                    .blur(8.dp) else Modifier.fillMaxSize()
+            ) {
+                item {
+                    Column(
+                        modifier = Modifier.clip(shape = RoundedCornerShape(12.dp))
+                            .background(color = BisqTheme.colors.dark_grey30)
+                            .padding(12.dp),
+                        ) {
+                        WelcomeToFirstTradePane(presenter)
+                    }
                 }
-            }
-            item {
-                Column(
-                    modifier = Modifier.clip(shape = RoundedCornerShape(8.dp))
-                        // .background(color = BisqTheme.colors.dark3)
-                        .padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    BisqText.h5Light("bisqEasy.openTrades.table.headline".i18n()) // My open trades
-                    HorizontalDivider(
-                        modifier = Modifier,
-                        thickness = 0.5.dp,
-                        color = BisqTheme.colors.mid_grey30
+                item {
+                    Column(
+                        modifier = Modifier.clip(shape = RoundedCornerShape(8.dp))
+                            // .background(color = BisqTheme.colors.dark3)
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        BisqText.h5Light("bisqEasy.openTrades.table.headline".i18n()) // My open trades
+                        HorizontalDivider(
+                            modifier = Modifier,
+                            thickness = 0.5.dp,
+                            color = BisqTheme.colors.mid_grey30
+                        )
+                    }
+                }
+                items(sortedList) { trade ->
+                    val isUnread = isTradeUnread(trade.tradeId)
+                    OpenTradeListItem(
+                        trade,
+                        isUnread = isUnread,
+                        { presenter.onSelect(trade) }
                     )
                 }
             }
-            items(sortedList) { trade ->
-                val isUnread = isTradeUnread(trade.tradeId)
-                OpenTradeListItem(
-                    trade,
-                    isUnread = isUnread,
-                  { presenter.onSelect(trade) }
-                )
-            }
-        }
         //}
-    } else {
-        LazyColumn(
-            // modifier = Modifier.padding(top = 48.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            items(sortedList) { trade ->
-                val isUnread = isTradeUnread(trade.tradeId)
-                OpenTradeListItem(
-                    trade,
-                    isUnread = isUnread,
-                    { presenter.onSelect(trade) }
-                )
+        } else {
+            LazyColumn(
+                // modifier = Modifier.padding(top = 48.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                items(sortedList) { trade ->
+                    val isUnread = isTradeUnread(trade.tradeId)
+                    OpenTradeListItem(
+                        trade,
+                        isUnread = isUnread,
+                        { presenter.onSelect(trade) }
+                    )
+                }
             }
         }
     }

@@ -81,6 +81,7 @@ fun GeneralSettingsScreen() {
         topBar = { TopBar("General Settings") }, // TODO:i18n
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+        isInteractive = presenter.isInteractive.collectAsState().value,
     ) {
         BreadcrumbNavigation(path = menuPath) { index ->
             if (index == 0) settingsPresenter.settingsNavigateBack()

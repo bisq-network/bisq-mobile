@@ -42,7 +42,9 @@ open class SettingsPresenter(
     }
 
     override fun navigate(route: Routes) {
+        disableInteractive()
         navigateTo(route)
+        enableInteractive()
     }
 
     override fun settingsNavigateBack() {

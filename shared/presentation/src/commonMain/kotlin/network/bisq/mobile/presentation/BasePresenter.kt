@@ -347,6 +347,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     @CallSuper
     override fun onViewAttached() {
         log.i { "Lifecycle: View ${if (view != null) view!!::class.simpleName else ""} attached to presenter ${this::class.simpleName}" }
+        enableInteractive()
     }
 
     @CallSuper

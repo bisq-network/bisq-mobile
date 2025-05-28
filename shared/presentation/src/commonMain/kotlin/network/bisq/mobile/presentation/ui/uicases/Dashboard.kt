@@ -74,7 +74,7 @@ fun DashboardScreen() {
                 }
             }
         }
-        BisqButton("bisqEasy.tradeGuide.tabs.headline".i18n(), onClick = { presenter.navigateToGuide() })
+        // BisqButton("bisqEasy.tradeGuide.tabs.headline".i18n(), onClick = { presenter.navigateToGuide() })
         WelcomeCard(
             presenter = presenter,
             title = presenter.title,

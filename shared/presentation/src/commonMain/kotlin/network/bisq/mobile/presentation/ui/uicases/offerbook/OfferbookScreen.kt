@@ -43,15 +43,14 @@ fun OfferbookScreen() {
     val showNotEnoughReputationDialog by presenter.showNotEnoughReputationDialog.collectAsState()
 
     BisqStaticScaffold(
-        topBar = {
-            TopBar(title = "offers".i18n())
-        },
+        topBar = { TopBar(title = "offers".i18n()) },
         floatingButton = {
             BisqFABAddButton(
                 onClick = { presenter.createOffer() },
                 enabled = !presenter.isDemo()
             )
         },
+        isInteractive = presenter.isInteractive.collectAsState().value,
         shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog
     ) {
         DirectionToggle(
