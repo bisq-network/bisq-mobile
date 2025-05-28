@@ -71,6 +71,9 @@ fun CurrencyCard(
                 onClick = onClick
             )
     ) {
+        if (isSelected) {
+            BisqGap.H1()
+        }
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(3.0f)) {
             // If the image is not available we get an exception here and we cannot use try/catch
             // Is DynamicImage needed? If so we can pass it as
@@ -96,6 +99,9 @@ fun CurrencyCard(
             textAlign = TextAlign.End,
             modifier = Modifier.weight(1.0f),
         )
+        if (isSelected) {
+            BisqGap.H1()
+        }
     }
 }
 
