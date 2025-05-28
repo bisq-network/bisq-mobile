@@ -20,23 +20,34 @@ class TakeOfferPaymentMethodPresenter(
 
     private lateinit var takeOfferModel: TakeOfferPresenter.TakeOfferModel
 
-    override fun onViewAttached() {
-        quoteSidePaymentMethod = null
-        baseSidePaymentMethod = null
+    init {
         takeOfferModel = takeOfferPresenter.takeOfferModel
         hasMultipleQuoteSidePaymentMethods = takeOfferModel.hasMultipleQuoteSidePaymentMethods
         hasMultipleBaseSidePaymentMethods = takeOfferModel.hasMultipleBaseSidePaymentMethods
 
         val offerListItem = takeOfferModel.offerItemPresentationVO
         quoteSidePaymentMethods = offerListItem.quoteSidePaymentMethods
-        baseSidePaymentMethods = offerListItem.baseSidePaymentMethods
-        if (quoteSidePaymentMethods.size == 1) {
-            quoteSidePaymentMethod = quoteSidePaymentMethods[0]
+        if (takeOfferModel.quoteSidePaymentMethod.isNotEmpty()) {
+            quoteSidePaymentMethod = takeOfferModel.quoteSidePaymentMethod
+        } else {
+            if (quoteSidePaymentMethods.size == 1) {
+                quoteSidePaymentMethod = quoteSidePaymentMethods[0]
+            }
         }
-        if (offerListItem.baseSidePaymentMethods.size == 1) {
-            baseSidePaymentMethod = offerListItem.baseSidePaymentMethods[0]
+
+        baseSidePaymentMethods = offerListItem.baseSidePaymentMethods
+        if (takeOfferModel.baseSidePaymentMethod.isNotEmpty()) {
+            baseSidePaymentMethod = takeOfferModel.baseSidePaymentMethod
+        } else {
+            if (offerListItem.baseSidePaymentMethods.size == 1) {
+                baseSidePaymentMethod = offerListItem.baseSidePaymentMethods[0]
+            }
         }
         quoteCurrencyCode = offerListItem.bisqEasyOffer.market.quoteCurrencyCode
+    }
+
+    override fun onViewAttached() {
+        super.onViewAttached()
     }
 
     override fun onViewUnattaching() {
@@ -63,9 +74,9 @@ class TakeOfferPaymentMethodPresenter(
             navigateTo(Routes.TakeOfferReviewTrade)
         } else {
             if (quoteSidePaymentMethod == null) {
-                showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noFiatPaymentMethodSelected".i18n())
+                showSnackbar("bisqEasy.tradeWizard.review.paymentMethodDescriptions.fiat.taker".i18n())
             } else if (baseSidePaymentMethod == null) {
-                showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noBtcSettlementMethodSelected".i18n())
+                showSnackbar("bisqEasy.tradeWizard.review.paymentMethodDescriptions.btc.taker".i18n())
             }
             // Note the data is set at the service layer, so if there is only one payment method we
             // have it set at the service. We do not need to check here if we have the multiple options.

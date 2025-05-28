@@ -48,8 +48,7 @@ class TakeOfferAmountPresenter(
     private var _amountValid: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val amountValid: StateFlow<Boolean> = _amountValid
 
-    override fun onViewAttached() {
-        super.onViewAttached()
+    init {
         runCatching {
             takeOfferModel = takeOfferPresenter.takeOfferModel
             val offerListItem = takeOfferModel.offerItemPresentationVO
@@ -76,8 +75,12 @@ class TakeOfferAmountPresenter(
             _sliderPosition.value = 0.5f
             applySliderValue(sliderPosition.value)
         }.onFailure { e ->
-            log.e(e) { "Failed to present view" }
+            log.e(e) { "Failed to init" }
         }
+    }
+
+    override fun onViewAttached() {
+        super.onViewAttached()
     }
 
     fun onSliderValueChanged(sliderPosition: Float) {
@@ -88,7 +91,6 @@ class TakeOfferAmountPresenter(
         val _value = textInput.toDoubleOrNullLocaleAware()
         if (_value != null) {
             val valueInFraction = getFractionForFiat(_value)
-            _amountValid.value = valueInFraction in 0f..1f
             onSliderValueChanged(valueInFraction)
         } else {
             _formattedQuoteAmount.value = ""
@@ -123,6 +125,7 @@ class TakeOfferAmountPresenter(
 
     private fun applySliderValue(sliderPosition: Float) {
         try {
+            _amountValid.value = sliderPosition in 0f..1f
             _sliderPosition.value = sliderPosition
             val range = maxAmount - minAmount
             val value: Float = minAmount + (sliderPosition * range)
