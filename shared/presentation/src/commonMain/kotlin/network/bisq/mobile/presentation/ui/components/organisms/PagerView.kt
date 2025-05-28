@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.composeModels.PagerViewItem
 import network.bisq.mobile.presentation.ui.theme.*
 import org.jetbrains.compose.resources.DrawableResource
@@ -39,7 +40,7 @@ fun BisqPagerView(pagerState: PagerState, pageItems: List<PagerViewItem>) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(36.dp, Alignment.CenterVertically),
-            ) {
+        ) {
             HorizontalPager(
                 pageSpacing = 56.dp,
                 contentPadding = PaddingValues(horizontal = 36.dp),
@@ -55,10 +56,10 @@ fun BisqPagerView(pagerState: PagerState, pageItems: List<PagerViewItem>) {
                         title = item.title,
                         desc = item.desc,
                         index = index,
-                        )
+                    )
                 }
             }
-                PagerLineIndicator(pagerState = pagerState)
+            PagerLineIndicator(pagerState = pagerState)
         }
     }
 
@@ -72,32 +73,26 @@ fun PagerSingleItem(
     desc: String,
     index: Int
 ) {
-    Box(
+    Column(
+        verticalArrangement = Arrangement.SpaceBetween,
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .clip(RoundedCornerShape(18.dp)),
-        contentAlignment = Alignment.Center,
+            .fillMaxWidth()
+            .height(420.dp)
+            .clip(RoundedCornerShape(18.dp))
+            .background(color = BisqTheme.colors.dark_grey30)
+            .padding(vertical = 56.dp)
     ) {
-        Column(
-            verticalArrangement = Arrangement.SpaceBetween,
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier
-                .fillMaxWidth()
-                .background(color = BisqTheme.colors.dark_grey30)
-                .padding(vertical = 56.dp)
-        ) {
-            Image(painterResource(image), title, modifier = Modifier.size(120.dp),)
-            Spacer(modifier = Modifier.height(if (index == 1) 48.dp else 70.dp))
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                BisqText.h4Regular(title)
-                Spacer(modifier = Modifier.height(24.dp))
-                BisqText.largeRegularGrey(
-                    text = desc,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    textAlign = TextAlign.Center,
-                )
-            }
+        Image(painterResource(image), title, modifier = Modifier.size(120.dp))
+        BisqGap.V4()
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            BisqText.h4Regular(title)
+            BisqGap.V2()
+            BisqText.largeRegularGrey(
+                text = desc,
+                modifier = Modifier.padding(horizontal = 16.dp),
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }

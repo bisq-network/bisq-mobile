@@ -7,7 +7,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqProgressBar
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
@@ -16,8 +15,7 @@ import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
-fun SplashScreen(
-) {
+fun SplashScreen() {
     val presenter: SplashPresenter = koinInject()
 
     RememberPresenterLifecycle(presenter)
@@ -27,9 +25,6 @@ fun SplashScreen(
 
         Column {
             BisqProgressBar(presenter.progress.collectAsState().value)
-
-            // TODO: Get this from presenter
-            val networkType = "splash.bootstrapState.network.TOR".i18n()
 
             BisqText.baseRegularGrey(
                 text = presenter.state.collectAsState().value,
