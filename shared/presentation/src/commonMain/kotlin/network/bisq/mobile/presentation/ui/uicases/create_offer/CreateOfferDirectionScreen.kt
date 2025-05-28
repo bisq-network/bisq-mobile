@@ -32,8 +32,7 @@ fun CreateOfferDirectionScreen() {
         stepIndex = 1,
         stepsLength = 6,
         horizontalAlignment = Alignment.Start,
-        prevOnClick = { presenter.onBack() },
-        nextOnClick = { presenter.onNext() },
+        showNextPrevButtons = false,
         shouldBlurBg = showSellerReputationWarning
     ) {
         BisqText.h3Regular(presenter.headline)

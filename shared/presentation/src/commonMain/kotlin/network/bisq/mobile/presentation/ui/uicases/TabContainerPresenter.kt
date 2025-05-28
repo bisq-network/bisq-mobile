@@ -41,6 +41,7 @@ class TabContainerPresenter(
         disableInteractive()
         try {
             createOfferPresenter.onStartCreateOffer()
+            createOfferPresenter.skipCurrency = false
             navigateTo(Routes.CreateOfferDirection)
         } catch (e: Exception) {
             log.e(e) { "Failed to create offer: ${e.message}" }

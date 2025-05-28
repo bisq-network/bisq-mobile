@@ -27,6 +27,7 @@ fun MultiScreenWizardScaffold(
     nextOnClick: (() -> Unit)? = null,
     prevDisabled: Boolean = false,
     nextDisabled: Boolean = false,
+    showNextPrevButtons: Boolean = true,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     useStaticScaffold: Boolean = false,
     snackbarHostState: SnackbarHostState? = null,
@@ -86,49 +87,49 @@ fun MultiScreenWizardScaffold(
             }
         },
         {
-            // TODO: This takes up too much height
-            BottomAppBar(
-                containerColor = BisqTheme.colors.backgroundColor,
-                contentPadding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding2X, vertical = 0.dp),
-                windowInsets = WindowInsets(top = 0.dp, bottom = 0.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
+            if (showNextPrevButtons) {
+                BottomAppBar(
+                    containerColor = BisqTheme.colors.backgroundColor,
+                    contentPadding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding2X, vertical = 0.dp),
+                    windowInsets = WindowInsets(top = 0.dp, bottom = 0.dp)
                 ) {
-                    BisqButton(
-                        text = prevButtonText,
-                        type = BisqButtonType.Grey,
-                        onClick = {
-                            if (prevOnClick != null) {
-                                prevOnClick()
-                            }
-                        },
-                        padding = PaddingValues(
-                            horizontal = BisqUIConstants.ScreenPaddingHalf,
-                            vertical = BisqUIConstants.ScreenPaddingHalf
-                        ),
-                        disabled = prevOnClick == null || prevDisabled,
-                        modifier = Modifier.weight(1.0F)
-                    )
-                    BisqGap.H1()
-                    BisqButton(
-                        text = nextButtonText,
-                        onClick = {
-                            if (nextOnClick != null) {
-                                nextOnClick()
-                            }
-                        },
-                        padding = PaddingValues(
-                            horizontal = BisqUIConstants.ScreenPaddingHalf,
-                            vertical = BisqUIConstants.ScreenPaddingHalf
-                        ),
-                        disabled = nextOnClick == null || nextDisabled,
-                        modifier = Modifier.weight(1.0F)
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        BisqButton(
+                            text = prevButtonText,
+                            type = BisqButtonType.Grey,
+                            onClick = {
+                                if (prevOnClick != null) {
+                                    prevOnClick()
+                                }
+                                      },
+                            padding = PaddingValues(
+                                horizontal = BisqUIConstants.ScreenPaddingHalf,
+                                vertical = BisqUIConstants.ScreenPaddingHalf
+                            ),
+                            disabled = prevOnClick == null || prevDisabled,
+                            modifier = Modifier.weight(1.0F)
+                        )
+                        BisqGap.H1()
+                        BisqButton(
+                            text = nextButtonText,
+                            onClick = {
+                                if (nextOnClick != null) {
+                                    nextOnClick()
+                                }
+                                      },
+                            padding = PaddingValues(
+                                horizontal = BisqUIConstants.ScreenPaddingHalf,
+                                vertical = BisqUIConstants.ScreenPaddingHalf
+                            ),
+                            disabled = nextOnClick == null || nextDisabled,
+                            modifier = Modifier.weight(1.0F)
+                        )
+                    }
                 }
             }
-
         },
         horizontalAlignment,
         Arrangement.Top,

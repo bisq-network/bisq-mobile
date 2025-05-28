@@ -334,6 +334,7 @@ class OfferbookPresenter(
             val market = offersServiceFacade.selectedOfferbookMarket.value.market
             createOfferPresenter.onStartCreateOffer()
             createOfferPresenter.commitMarket(market)
+            createOfferPresenter.skipCurrency = true
             enableInteractive()
             navigateTo(Routes.CreateOfferDirection)
         } catch (e: Exception) {

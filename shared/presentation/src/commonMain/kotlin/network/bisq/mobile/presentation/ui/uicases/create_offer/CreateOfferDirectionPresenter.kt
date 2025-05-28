@@ -61,15 +61,6 @@ class CreateOfferDirectionPresenter(
         }
     }
 
-    fun onBack() {
-        commitToModel()
-        navigateBack()
-    }
-
-    fun onNext() {
-        navigateNext()
-    }
-
     fun showLearnReputation() {
         setShowSellerReputationWarning(false)
         disableInteractive()
@@ -83,10 +74,10 @@ class CreateOfferDirectionPresenter(
 
     private fun navigateNext() {
         commitToModel()
-        if (createOfferPresenter.createOfferModel.market == null)
-            navigateTo(Routes.CreateOfferMarket)
-        else
+        if (createOfferPresenter.skipCurrency)
             navigateTo(Routes.CreateOfferAmount)
+        else
+            navigateTo(Routes.CreateOfferMarket)
     }
 
     private fun commitToModel() {

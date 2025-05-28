@@ -70,6 +70,8 @@ class CreateOfferPresenter(
 
     lateinit var createOfferModel: CreateOfferModel
 
+    var skipCurrency: Boolean = false
+
     fun onStartCreateOffer() {
         createOfferModel = CreateOfferModel()
 
