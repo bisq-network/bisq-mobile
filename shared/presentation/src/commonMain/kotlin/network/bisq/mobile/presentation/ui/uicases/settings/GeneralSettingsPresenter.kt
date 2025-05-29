@@ -30,20 +30,23 @@ open class GeneralSettingsPresenter(
     override fun setLanguageCode(langCode: String) {
         disableInteractive()
         ioScope.launch {
-            println("i18n :: GeneralSettingsPresenter :: setLanguageCode :: $langCode")
-            setDefaultLocale(langCode) // update lang in app's context
-            settingsServiceFacade.setLanguageCode(langCode) // Update lang in bisq2 lib / WS
-            // Doing this to reload all bundles of the newly selected language,
-            // all String.i18n() across the app gets the text of selected language
-            I18nSupport.initialize(langCode) // update lang for mobile's i18n libs
-            _languageCode.value = langCode
+            try {
+                println("i18n :: GeneralSettingsPresenter :: setLanguageCode :: $langCode")
+                setDefaultLocale(langCode) // update lang in app's context
+                settingsServiceFacade.setLanguageCode(langCode) // Update lang in bisq2 lib / WS
+                // Doing this to reload all bundles of the newly selected language,
+                // all String.i18n() across the app gets the text of selected language
+                I18nSupport.initialize(langCode) // update lang for mobile's i18n libs
+                _languageCode.value = langCode
 
-            // As per chat with @Henrik Feb 4, it's okay not to translate `supported languages` lists into selected languages, for now.
-            // To update display values in i18Pairs, allLanguagePairs with the new language
-            // languageServiceFacade.setDefaultLanguage(langCode)
-            // languageServiceFacade.sync()
+                // As per chat with @Henrik Feb 4, it's okay not to translate `supported languages` lists into selected languages, for now.
+                // To update display values in i18Pairs, allLanguagePairs with the new language
+                // languageServiceFacade.setDefaultLanguage(langCode)
+                // languageServiceFacade.sync()
+            } finally {
+                enableInteractive()
+            }
         }
-        enableInteractive()
     }
 
     private val _supportedLanguageCodes: MutableStateFlow<Set<String>> = MutableStateFlow(setOf("en"))
@@ -51,10 +54,13 @@ open class GeneralSettingsPresenter(
     override fun setSupportedLanguageCodes(langCodes: Set<String>) {
         disableInteractive()
         ioScope.launch {
-            _supportedLanguageCodes.value = langCodes
-            settingsServiceFacade.setSupportedLanguageCodes(langCodes)
+            try {
+                _supportedLanguageCodes.value = langCodes
+                settingsServiceFacade.setSupportedLanguageCodes(langCodes)
+            } finally {
+                enableInteractive()
+            }
         }
-        enableInteractive()
     }
 
     private val _chatNotification: MutableStateFlow<String> =
@@ -63,10 +69,13 @@ open class GeneralSettingsPresenter(
     override fun setChatNotification(value: String) {
         disableInteractive()
         ioScope.launch {
-            _chatNotification.value = value
-            // settingsServiceFacade.setChatNotificationType(value)
+            try {
+                _chatNotification.value = value
+                // settingsServiceFacade.setChatNotificationType(value)
+            } finally {
+                enableInteractive()
+            }
         }
-        enableInteractive()
     }
 
     private val _closeOfferWhenTradeTaken: MutableStateFlow<Boolean> = MutableStateFlow(true)
@@ -74,10 +83,13 @@ open class GeneralSettingsPresenter(
     override fun setCloseOfferWhenTradeTaken(value: Boolean) {
         disableInteractive()
         ioScope.launch {
-            _closeOfferWhenTradeTaken.value = value
-            settingsServiceFacade.setCloseMyOfferWhenTaken(value)
+            try {
+                _closeOfferWhenTradeTaken.value = value
+                settingsServiceFacade.setCloseMyOfferWhenTaken(value)
+            } finally {
+                enableInteractive()
+            }
         }
-        enableInteractive()
     }
 
     // This is internally represented as ratio. So 100% is saved as 1.0, 5% as 0.05.
@@ -87,15 +99,18 @@ open class GeneralSettingsPresenter(
     override fun setTradePriceTolerance(value: String, isValid: Boolean) {
         disableInteractive()
         ioScope.launch {
-            _tradePriceTolerance.value = value
-            if (isValid) {
-                val _value = value.toDoubleOrNullLocaleAware()
-                if (_value != null) {
-                    settingsServiceFacade.setMaxTradePriceDeviation(_value/100)
+            try {
+                _tradePriceTolerance.value = value
+                if (isValid) {
+                    val _value = value.toDoubleOrNullLocaleAware()
+                    if (_value != null) {
+                        settingsServiceFacade.setMaxTradePriceDeviation(_value / 100)
+                    }
                 }
+            } finally {
+                enableInteractive()
             }
         }
-        enableInteractive()
     }
 
     private val _numDaysAfterRedactingTradeData = MutableStateFlow("90")
@@ -103,15 +118,18 @@ open class GeneralSettingsPresenter(
     override fun setNumDaysAfterRedactingTradeData(value: String, isValid: Boolean) {
         disableInteractive()
         ioScope.launch {
-            _numDaysAfterRedactingTradeData.value = value
-            if (isValid) {
-                val _value = value.toIntOrNull()
-                if (_value != null) {
-                    settingsServiceFacade.setNumDaysAfterRedactingTradeData(_value)
+            try {
+                _numDaysAfterRedactingTradeData.value = value
+                if (isValid) {
+                    val _value = value.toIntOrNull()
+                    if (_value != null) {
+                        settingsServiceFacade.setNumDaysAfterRedactingTradeData(_value)
+                    }
                 }
+            } finally {
+                enableInteractive()
             }
         }
-        enableInteractive()
     }
 
     private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
@@ -119,10 +137,13 @@ open class GeneralSettingsPresenter(
     override fun setUseAnimations(value: Boolean) {
         disableInteractive()
         ioScope.launch {
-            _useAnimations.value = value
-            settingsServiceFacade.setUseAnimations(value)
+            try {
+                _useAnimations.value = value
+                settingsServiceFacade.setUseAnimations(value)
+            } finally {
+                enableInteractive()
+            }
         }
-        enableInteractive()
     }
 
     private val _powFactor: MutableStateFlow<String> = MutableStateFlow("1")
@@ -130,13 +151,16 @@ open class GeneralSettingsPresenter(
     override fun setPowFactor(value: String, isValid: Boolean) {
         disableInteractive()
         ioScope.launch {
-            _powFactor.value = value
-            if (isValid) {
-                val _value = value.toDoubleOrNullLocaleAware()
-                settingsServiceFacade.setDifficultyAdjustmentFactor(_value ?: 0.0)
+            try {
+                _powFactor.value = value
+                if (isValid) {
+                    val _value = value.toDoubleOrNullLocaleAware()
+                    settingsServiceFacade.setDifficultyAdjustmentFactor(_value ?: 0.0)
+                }
+            } finally {
+                enableInteractive()
             }
         }
-        enableInteractive()
     }
 
     private val _ignorePow: MutableStateFlow<Boolean> = MutableStateFlow(false)
@@ -144,10 +168,13 @@ open class GeneralSettingsPresenter(
     override fun setIgnorePow(value: Boolean) {
         disableInteractive()
         ioScope.launch {
-            _ignorePow.value = value
-            settingsServiceFacade.setIgnoreDiffAdjustmentFromSecManager(value)
+            try {
+                _ignorePow.value = value
+                settingsServiceFacade.setIgnoreDiffAdjustmentFromSecManager(value)
+            } finally {
+                enableInteractive()
+            }
         }
-        enableInteractive()
     }
 
     override val shouldShowPoWAdjustmentFactor: StateFlow<Boolean> = MutableStateFlow(false)

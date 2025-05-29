@@ -78,7 +78,6 @@ class OpenTradeListPresenter(
     }
 
     fun onSelect(openTradeItem: TradeItemPresentationModel) {
-        disableInteractive()
         if (tradeRulesConfirmed.value) {
             tradesServiceFacade.selectOpenTrade(openTradeItem.tradeId)
             navigateTo(Routes.OpenTrade)
@@ -86,12 +85,9 @@ class OpenTradeListPresenter(
             log.w { "User hasn't accepted trade rules yet, showing dialog" }
             _tradeGuideVisible.value = true
         }
-        enableInteractive()
     }
 
     fun onNavigateToOfferbook() {
-        disableInteractive()
         navigateToTab(Routes.TabOfferbook)
-        enableInteractive()
     }
 }

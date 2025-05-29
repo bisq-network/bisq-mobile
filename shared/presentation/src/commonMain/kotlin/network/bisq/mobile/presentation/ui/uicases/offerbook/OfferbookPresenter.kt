@@ -324,13 +324,14 @@ class OfferbookPresenter(
             val market = offersServiceFacade.selectedOfferbookMarket.value.market
             createOfferPresenter.onStartCreateOffer()
             createOfferPresenter.commitMarket(market)
+            enableInteractive()
             navigateTo(Routes.CreateOfferDirection)
         } catch (e: Exception) {
+            enableInteractive()
             log.e(e) { "Failed to create offer" }
             showSnackbar(
                 if (isDemo()) "Create offer is disabled in demo mode" else "Cannot create offer at this time, please try again later"
             )
         }
-        enableInteractive()
     }
 }

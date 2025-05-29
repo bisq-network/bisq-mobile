@@ -90,16 +90,17 @@ open class PaymentAccountPresenter(
         disableInteractive()
         if (selectedAccount.value != null) {
             ioScope.launch {
-                runCatching {
+                try {
                     accountsServiceFacade.removeAccount(selectedAccount.value!!)
                     showSnackbar("Account deleted") // TODO:i18n
-                }.onFailure {
-                    log.e(it) { "Couldn't remove account ${selectedAccount.value?.accountName}" }
+                } catch (e: Exception) {
+                    log.e { "Couldn't remove account ${selectedAccount.value?.accountName}" }
                     showSnackbar("Unable to delete account: ${selectedAccount.value?.accountName} - Please try again")
+                } finally {
+                    enableInteractive()
                 }
             }
         }
-        enableInteractive()
     }
 
     override fun onViewAttached() {
