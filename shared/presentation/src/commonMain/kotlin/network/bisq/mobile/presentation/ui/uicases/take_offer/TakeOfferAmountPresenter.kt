@@ -7,6 +7,7 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
+import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVOExtensions.asDouble
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
@@ -72,15 +73,15 @@ class TakeOfferAmountPresenter(
             _formattedQuoteAmount.value = offerListItem.formattedQuoteAmount
             _formattedBaseAmount.value = offerListItem.formattedBaseAmount.value
 
-            _sliderPosition.value = 0.5f
+            val valueInFraction = if (takeOfferModel.quoteAmount.value == 0L)
+                0.5F
+            else
+                getFractionForFiat(takeOfferModel.quoteAmount.asDouble())
+            _sliderPosition.value = valueInFraction
             applySliderValue(sliderPosition.value)
         }.onFailure { e ->
             log.e(e) { "Failed to init" }
         }
-    }
-
-    override fun onViewAttached() {
-        super.onViewAttached()
     }
 
     fun onSliderValueChanged(sliderPosition: Float) {

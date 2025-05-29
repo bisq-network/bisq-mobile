@@ -22,10 +22,7 @@ class CreateOfferPaymentMethodPresenter(
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
 
-    override fun onViewAttached() {
-        selectedBaseSidePaymentMethods.value = emptySet()
-        selectedQuoteSidePaymentMethods.value = emptySet()
-
+    init {
         createOfferModel = createOfferPresenter.createOfferModel
 
         val quoteCurrencyCode = createOfferModel.market!!.quoteCurrencyCode
@@ -43,6 +40,9 @@ class CreateOfferPaymentMethodPresenter(
         // availableQuoteSidePaymentMethods = createOfferModel.availableQuoteSidePaymentMethods.subList(0, 3)  // for dev testing to avoid scroll
         availableQuoteSidePaymentMethods = createOfferModel.availableQuoteSidePaymentMethods
         availableBaseSidePaymentMethods = createOfferModel.availableBaseSidePaymentMethods
+
+        selectedQuoteSidePaymentMethods.value = createOfferModel.selectedQuoteSidePaymentMethods.toMutableSet()
+        selectedBaseSidePaymentMethods.value = createOfferModel.selectedBaseSidePaymentMethods.toMutableSet()
     }
 
     override fun onViewUnattaching() {

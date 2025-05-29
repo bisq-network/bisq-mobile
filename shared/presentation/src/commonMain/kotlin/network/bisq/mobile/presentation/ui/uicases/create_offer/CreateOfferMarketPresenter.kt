@@ -38,7 +38,7 @@ class CreateOfferMarketPresenter(
         } else {
             marketList.filter {
                 it.market.quoteCurrencyCode.contains(searchText, ignoreCase = true) ||
-                it.market.quoteCurrencyName.contains(searchText, ignoreCase = true)
+                        it.market.quoteCurrencyName.contains(searchText, ignoreCase = true)
             }
         }
     }.stateIn(
@@ -47,8 +47,7 @@ class CreateOfferMarketPresenter(
         emptyList()
     )
 
-    override fun onViewAttached() {
-        super.onViewAttached()
+    init {
         val createOfferModel = createOfferPresenter.createOfferModel
         market = createOfferModel.market
 

@@ -57,8 +57,7 @@ class CreateOfferPricePresenter(
         _showWhyPopup.value = newValue
     }
 
-    override fun onViewAttached() {
-        super.onViewAttached()
+    init {
         createOfferModel = createOfferPresenter.createOfferModel
 
         _priceType.value = createOfferModel.priceType

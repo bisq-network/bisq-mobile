@@ -36,7 +36,6 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.AmountType
 import kotlin.math.roundToLong
 
-
 class CreateOfferAmountPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -122,8 +121,7 @@ class CreateOfferAmountPresenter(
     val amountValid: StateFlow<Boolean> = _amountValid
 
     // Life cycle
-    override fun onViewAttached() {
-        super.onViewAttached()
+    init {
         createOfferModel = createOfferPresenter.createOfferModel
         quoteCurrencyCode = createOfferModel.market!!.quoteCurrencyCode
         _amountType.value = createOfferModel.amountType
@@ -142,13 +140,34 @@ class CreateOfferAmountPresenter(
         formattedMaxAmountWithCode =
             AmountFormatter.formatAmount(FiatVOFactory.from(maxAmount, quoteCurrencyCode), true, true)
 
-        _fixedAmountSliderPosition.value = createOfferModel.fixedAmountSliderPosition
+        var valueInFraction = if (createOfferModel.quoteSideFixedAmount != null) {
+            quoteSideFixedAmount = createOfferModel.quoteSideFixedAmount!!
+            getFractionForFiat(quoteSideFixedAmount.asDouble())
+        } else {
+            createOfferModel.fixedAmountSliderPosition
+        }
+        _fixedAmountSliderPosition.value = valueInFraction
         applyFixedAmountSliderValue(fixedAmountSliderPosition.value)
 
         rangeSliderPosition = createOfferModel.rangeSliderPosition
         applyRangeAmountSliderValue(rangeSliderPosition)
-        _minRangeSliderValue.value = rangeSliderPosition.start
         _maxRangeSliderValue.value = rangeSliderPosition.endInclusive
+
+        valueInFraction = if (createOfferModel.quoteSideMinRangeAmount != null) {
+            quoteSideMinRangeAmount = createOfferModel.quoteSideMinRangeAmount!!
+            getFractionForFiat(quoteSideMinRangeAmount.asDouble())
+        } else {
+            createOfferModel.rangeSliderPosition.start
+        }
+        _minRangeSliderValue.value = valueInFraction
+        valueInFraction = if (createOfferModel.quoteSideMaxRangeAmount != null) {
+            quoteSideMaxRangeAmount = createOfferModel.quoteSideMaxRangeAmount!!
+            getFractionForFiat(quoteSideMaxRangeAmount.asDouble())
+        } else {
+            createOfferModel.rangeSliderPosition.endInclusive
+        }
+        _maxRangeSliderValue.value = valueInFraction
+        applyRangeAmountSliderValue(_minRangeSliderValue.value.._maxRangeSliderValue.value)
 
         _isBuy.value = createOfferModel.direction.isBuy
 
