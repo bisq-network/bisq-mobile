@@ -6,8 +6,8 @@ import android.os.Process
 import bisq.common.facades.FacadeProvider
 import bisq.common.facades.android.AndroidGuavaFacade
 import bisq.common.facades.android.AndroidJdkFacade
-import bisq.common.network.ClearNetAndroidEmulatorLocalAddressFacade
-import bisq.common.network.ClearNetLANLocalAddressFacade
+import bisq.common.network.clear_net_address_types.LANAddressTypeFacade
+import bisq.common.network.clear_net_address_types.AndroidEmulatorAddressTypeFacade
 import network.bisq.mobile.android.node.di.androidNodeModule
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.di.serviceModule
@@ -42,11 +42,11 @@ class MainApplication : Application(), Logging {
     private fun setupBisqCoreStatics() {
         val isEmulator = isEmulator()
         val clearNetFacade = if (isEmulator) {
-            ClearNetAndroidEmulatorLocalAddressFacade()
+            AndroidEmulatorAddressTypeFacade()
         } else {
-            ClearNetLANLocalAddressFacade()
+            LANAddressTypeFacade()
         }
-        FacadeProvider.setLocalhostFacade(clearNetFacade)
+        FacadeProvider.setClearNetAddressTypeFacade(clearNetFacade)
         FacadeProvider.setJdkFacade(AndroidJdkFacade(Process.myPid()))
         FacadeProvider.setGuavaFacade(AndroidGuavaFacade())
 
