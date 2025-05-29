@@ -1,6 +1,10 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.datetime.Clock
@@ -76,16 +80,13 @@ open class CreateProfilePresenter(
     }
 
     fun validateNickname(nickname: String): String? {
-        val result = when {
+        return when {
             nickname.length < 3 -> "Min length: 3 characters"
             nickname.length > 100 -> "Max length: 100 characters"
             else -> null
+        }.also {
+            _nickNameValid.value = it == null
         }
-        _nickNameValid.value = if (result == null)
-            true
-        else
-            false
-        return result
     }
 
     // UI handlers

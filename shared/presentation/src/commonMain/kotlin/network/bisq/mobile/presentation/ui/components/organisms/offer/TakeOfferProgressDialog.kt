@@ -21,15 +21,16 @@ import org.jetbrains.compose.resources.painterResource
 fun TakeOfferProgressDialog() {
 
     BisqDialog(dismissOnClickOutside = false) {
+        val imageSize = BisqUIConstants.ScreenPadding8X
         Box {
             RotatingImage(
                 painterResource(Res.drawable.bisq_easy_circle),
-                modifier = Modifier.size(BisqUIConstants.ScreenPadding8X)
+                modifier = Modifier.size(imageSize)
             )
             Image(
                 painterResource(Res.drawable.bisq_easy),
-                "",
-                modifier = Modifier.size(BisqUIConstants.ScreenPadding8X)
+                contentDescription = "",
+                modifier = Modifier.size(imageSize)
             )
         }
         BisqText.h4Regular(
