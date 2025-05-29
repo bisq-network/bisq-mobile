@@ -31,8 +31,13 @@ class NodeConnectivityService(private val applicationService: AndroidApplication
     }
 
     private fun currentConnections(): Int {
-        return applicationService.networkService.get()
-            .serviceNodesByTransport.allServiceNodes
-            .sumOf { it.defaultNode?.numConnections ?: 0 }
+        try {
+            return applicationService.networkService.get()
+                .serviceNodesByTransport.allServiceNodes
+                .sumOf { it.defaultNode?.numConnections ?: 0 }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to check current connections, assuming none: ${e.message}" }
+            return 0
+        }
     }
 }

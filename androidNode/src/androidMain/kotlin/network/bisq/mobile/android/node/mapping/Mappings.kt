@@ -1223,7 +1223,7 @@ class Mappings {
                 settingsService.supportedLanguageCodes,
                 settingsService.maxTradePriceDeviation.get(),
                 settingsService.useAnimations.get(),
-                MarketMapping.fromBisq2Model(settingsService.selectedMarket.get()),
+                MarketMapping.fromBisq2Model(settingsService.selectedMuSigMarket.get()),
                 settingsService.numDaysAfterRedactingTradeData.get()
             )
         }

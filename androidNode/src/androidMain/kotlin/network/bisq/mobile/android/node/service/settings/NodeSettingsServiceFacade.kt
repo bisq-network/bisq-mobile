@@ -150,6 +150,10 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
 
     // API
     override suspend fun getSettings(): Result<SettingsVO> {
-        return Result.success(Mappings.SettingsMapping.from(settingsService))
+        return try {
+            Result.success(Mappings.SettingsMapping.from(settingsService))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }
