@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
@@ -53,34 +52,18 @@ open class DashboardPresenter(
         enableInteractive()
     }
 
-    fun navigateToGuide() {
-        navigateTo(Routes.TradeGuideOverview)
-    }
-
     private fun refresh() {
         disableInteractive()
-        job = presenterScope.launch {
-            val bisqStats = withContext(IODispatcher) {
-                bisqStatsRepository.fetch()
-            }
-            _publishedProfiles.value = bisqStats?.publishedProfiles ?: 0
-
-            launch {
-                offersServiceFacade.offerbookMarketItems.collect {
-                    _offersOnline.value = 0
-                    it.map { item ->
-                        _offersOnline.value += item.numOffers.value
-                    }
+        job?.cancel()
+        job = launchUI {
+            try {
+                val bisqStats = withContext(IODispatcher) {
+                    bisqStatsRepository.fetch()
                 }
+                _publishedProfiles.value = bisqStats?.publishedProfiles ?: 0
+            } finally {
+                enableInteractive()
             }
-
-            launch {
-                mainPresenter.languageCode.collect {
-                    marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
-                }
-            }
-
-            enableInteractive()
         }
     }
 
@@ -92,11 +75,14 @@ open class DashboardPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         refresh()
+
+        collectUI(offersServiceFacade.offerbookMarketItems) { items ->
+            _offersOnline.value = items.sumOf { it.numOffers.value }
+        }
+
+        collectUI(mainPresenter.languageCode) {
+            marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
+        }
     }
 
-    override fun onViewUnattaching() {
-        super.onViewUnattaching()
-        job?.cancel()
-        job = null
-    }
 }

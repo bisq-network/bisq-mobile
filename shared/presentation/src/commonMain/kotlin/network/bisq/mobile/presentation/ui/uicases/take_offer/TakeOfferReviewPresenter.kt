@@ -4,7 +4,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
@@ -65,19 +64,16 @@ class TakeOfferReviewPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        presenterScope.launch {
-            takeOfferStatus.collect { value ->
-                log.i { "takeOfferStatus: $value" }
-                //todo show state
+        collectUI(takeOfferStatus) {
+            log.i { "takeOfferStatus: $it" }
+            if (it == TakeOfferStatus.SUCCESS) {
+                setShowTakeOfferSuccessDialog(true)
             }
         }
-        presenterScope.launch {
-            takeOfferErrorMessage
-                .drop(1) // To ignore the first init message
-                .collect { message ->
-                    log.e { "takeOfferErrorMessage: $message" }
-                    showSnackbar(message ?: "Unexpected error occurred, please try again", true)
-                }
+        // To ignore the first init message
+        collectUI(takeOfferErrorMessage.drop(1)) {
+            log.e { "takeOfferErrorMessage: $it" }
+            showSnackbar(it ?: "Unexpected error occurred, please try again", true)
         }
 
         takeOfferModel = takeOfferPresenter.takeOfferModel
@@ -110,8 +106,6 @@ class TakeOfferReviewPresenter(
     }
 
     override fun onViewUnattaching() {
-        jobs.forEach { it.cancel() }
-        jobs.clear()
         super.onViewUnattaching()
     }
 
@@ -123,29 +117,24 @@ class TakeOfferReviewPresenter(
         setShowTakeOfferProgressDialog(true)
         disableInteractive()
 
-        jobs.forEach { it.cancel() }
-        jobs.clear()
-        jobs.add(presenterScope.launch {
+        launchUI {
             try {
                 // takeOffer use withContext(IODispatcher) for calling the service
                 val (statusFlow, errorFlow) = takeOfferPresenter.takeOffer()
 
                 // The stateFlow objects are set in the ioScope in the service. Thus we need to map them to the presenterScope.
-                jobs.add(launch {
-                    statusFlow.collect { takeOfferStatus.value = it }
-                })
-                jobs.add(launch {
-                    errorFlow.collect { takeOfferErrorMessage.value = it }
-                })
-                setShowTakeOfferSuccessDialog(true)
+                // Is this right? collectUI inside launchUI
+                collectUI(statusFlow) { takeOfferStatus.value = it }
+                collectUI(errorFlow) { takeOfferErrorMessage.value = it }
             } catch (e: Exception) {
                 log.e("Take offer failed", e)
-                takeOfferErrorMessage.value = e.message ?: ("Take offer failed with exception: " + e.toString().truncate(50))
+                takeOfferErrorMessage.value =
+                    e.message ?: ("Take offer failed with exception: " + e.toString().truncate(50))
             } finally {
                 setShowTakeOfferProgressDialog(false)
                 enableInteractive()
             }
-        })
+        }
     }
 
     fun onGoToOpenTrades() {

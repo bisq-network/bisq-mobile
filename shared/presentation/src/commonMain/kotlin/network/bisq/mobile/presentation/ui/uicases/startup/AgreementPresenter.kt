@@ -24,7 +24,7 @@ open class AgreementPresenter(
     }
 
     override fun onAcceptClick() {
-        CoroutineScope(Dispatchers.Main).launch {
+        launchUI {
             try {
                 settingsServiceFacade.confirmTacAccepted(true)
                 navigateToOnboarding()

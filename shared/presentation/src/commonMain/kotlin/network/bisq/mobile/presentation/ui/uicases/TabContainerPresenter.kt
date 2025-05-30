@@ -37,7 +37,7 @@ class TabContainerPresenter(
     }
 
     override fun createOffer() {
-        if (!isInteractive.value) return // This isInteractive blocked doesn't apply to FAB buttons
+        if (!isInteractive.value) return // This isInteractive UI blocker doesn't apply to FAB buttons
         disableInteractive()
         try {
             createOfferPresenter.onStartCreateOffer()

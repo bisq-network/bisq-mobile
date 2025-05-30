@@ -2,11 +2,9 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
@@ -74,7 +72,7 @@ open class CreateProfilePresenter(
 
     init {
         // if this presenter gets to work, it means there is no profile saved
-        ioScope.launch {
+        launchIO {
             userRepository.create(User())
         }
     }
@@ -98,7 +96,7 @@ open class CreateProfilePresenter(
         if (nickName.value.isNotEmpty()) {
             // We would never call generateKeyPair while generateKeyPair is not
             // completed, thus we can assign to same job reference
-            job = presenterScope.launch {
+            job = launchUI {
                 disableInteractive()
                 log.i { "Show busy animation for createAndPublishInProgress" }
                 _createAndPublishInProgress.value = true
@@ -137,7 +135,7 @@ open class CreateProfilePresenter(
         log.i { "Show busy animation for generateKeyPair" }
 
         runCatching {
-            job = presenterScope.launch {
+            job = launchUI {
                 withContext(Dispatchers.Default) {
                     // takes 200 -1000 ms
                     runCatching {
@@ -158,8 +156,6 @@ open class CreateProfilePresenter(
                         lastActivity = Clock.System.now().toEpochMilliseconds()
                     })
                 }
-
-                delay(1000L)
 
                 _generateKeyPairInProgress.value = false
                 log.i { "Hide busy animation for generateKeyPair" }
