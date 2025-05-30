@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
@@ -113,7 +112,7 @@ class CreateOfferReviewPresenter(
     fun onCreateOffer() {
         disableInteractive()
 
-        presenterScope.launch {
+        launchUI {
             // We use withContext(IODispatcher) for the service call, thus we switch context and block
             createOfferPresenter.createOffer()
             // After createOffer is completed  we are back on presenterScope

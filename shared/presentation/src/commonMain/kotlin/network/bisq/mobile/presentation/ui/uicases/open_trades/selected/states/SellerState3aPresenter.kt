@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -40,8 +39,6 @@ class SellerState3aPresenter(
     private var _isLightning: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isLightning: StateFlow<Boolean> get() = _isLightning
 
-    private var job: Job? = null
-
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -56,8 +53,6 @@ class SellerState3aPresenter(
     }
 
     override fun onViewUnattaching() {
-        job?.cancel()
-        job = null
         _paymentProof.value = null
         super.onViewUnattaching()
     }
@@ -84,7 +79,7 @@ class SellerState3aPresenter(
                 return
             }
 
-            job = presenterScope.launch {
+            launchUI {
                 withContext(IODispatcher) {
                     tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
                 }

@@ -48,7 +48,7 @@ class OpenTradePresenter(
 
     init {
         _selectedTrade.value = tradesServiceFacade.selectedTrade.value
-        languageJob = presenterScope.launch {
+        launchUI {
             mainPresenter.languageCode
                 .flatMapLatest { tradesServiceFacade.selectedTrade }
                 .filterNotNull()
@@ -63,20 +63,17 @@ class OpenTradePresenter(
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
 
-        tradeStateJob = this.presenterScope.launch {
-            openTradeItemModel.bisqEasyTradeModel.tradeState.collect { tradeState ->
-                val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
-                readState[openTradeItemModel.tradeId] = openTradeItemModel.bisqEasyOpenTradeChannelModel.chatMessages.value.size
-                tradeReadStateRepository.update(TradeReadState().apply { map = readState })
+        collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) { tradeState ->
+            val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
+            readState[openTradeItemModel.tradeId] =
+                openTradeItemModel.bisqEasyOpenTradeChannelModel.chatMessages.value.size
+            tradeReadStateRepository.update(TradeReadState().apply { map = readState })
 
-                tradeStateChanged(tradeState)
-            }
+            tradeStateChanged(tradeState)
         }
 
-        mediationJob = this.presenterScope.launch {
-            openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect { isInMediation ->
-                _isInMediation.value = isInMediation
-            }
+        collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation) {
+            _isInMediation.value = it
         }
     }
 

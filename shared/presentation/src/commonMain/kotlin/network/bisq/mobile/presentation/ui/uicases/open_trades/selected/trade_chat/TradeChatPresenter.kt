@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_c
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.TradeReadState
@@ -27,7 +26,6 @@ class TradeChatPresenter(
     private val settingsRepository: SettingsRepository,
     private val tradeReadStateRepository: TradeReadStateRepository,
 ) : BasePresenter(mainPresenter), Logging {
-    private var jobs: MutableSet<Job> = mutableSetOf()
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
 
@@ -45,7 +43,7 @@ class TradeChatPresenter(
         require(tradesServiceFacade.selectedTrade.value != null)
         val selectedTrade = tradesServiceFacade.selectedTrade.value!!
 
-        jobs.add(this.presenterScope.launch {
+        launchUI {
             val settings = withContext(IODispatcher) { settingsRepository.fetch() }
             settings?.let { _showChatRulesWarnBox.value = it.showChatRulesWarnBox }
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
@@ -59,12 +57,10 @@ class TradeChatPresenter(
                     tradeReadStateRepository.update(TradeReadState().apply { map = readState })
                 }
             }
-        })
+        }
     }
 
     override fun onViewUnattaching() {
-        jobs.forEach { it.cancel() }
-        jobs.clear()
         super.onViewUnattaching()
     }
 
@@ -78,24 +74,24 @@ class TradeChatPresenter(
                 )
             }
         }
-        jobs.add(presenterScope.launch {
+            launchUI {
             withContext(IODispatcher) {
                 tradeChatMessagesServiceFacade.sendChatMessage(text, citation)
             }
             _quotedMessage.value = null
-        })
+        }
     }
 
     fun onAddReaction(message: BisqEasyOpenTradeMessageModel, reaction: ReactionEnum) {
-        jobs.add(ioScope.launch {
+        launchIO {
             tradeChatMessagesServiceFacade.addChatMessageReaction(message.id, reaction)
-        })
+        }
     }
 
     fun onRemoveReaction(message: BisqEasyOpenTradeMessageModel, reaction: BisqEasyOpenTradeMessageReactionVO) {
-        jobs.add(ioScope.launch {
+        launchIO {
             tradeChatMessagesServiceFacade.removeChatMessageReaction(message.id, reaction)
-        })
+        }
     }
 
     fun onReply(quotedMessage: BisqEasyOpenTradeMessageModel?) {
@@ -111,7 +107,7 @@ class TradeChatPresenter(
     fun onDontShowAgainChatRulesWarningBox() {
         _showChatRulesWarnBox.value = false
 
-        jobs.add(presenterScope.launch {
+        launchUI {
             val settings = withContext(IODispatcher) {
                 settingsRepository.fetch()
             }
@@ -120,7 +116,7 @@ class TradeChatPresenter(
                 it.showChatRulesWarnBox = false
                 settingsRepository.update(it)
             }
-        })
+        }
     }
 }
 

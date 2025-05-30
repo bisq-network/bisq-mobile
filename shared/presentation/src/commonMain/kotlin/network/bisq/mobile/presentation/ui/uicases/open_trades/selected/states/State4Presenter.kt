@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -21,15 +20,8 @@ abstract class State4Presenter(
     private val _showCloseTradeDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showCloseTradeDialog: StateFlow<Boolean> = _showCloseTradeDialog
 
-    private var jobs: MutableSet<Job> = mutableSetOf()
-
-    override fun onViewAttached() {
-    }
-
     override fun onViewUnattaching() {
         _showCloseTradeDialog.value = false
-        jobs.forEach { it.cancel() }
-        jobs.clear()
         super.onViewUnattaching()
     }
 
@@ -42,7 +34,7 @@ abstract class State4Presenter(
     }
 
     fun onConfirmCloseTrade() {
-        jobs.add(presenterScope.launch {
+        launchUI {
             val result = withContext(IODispatcher) { tradesServiceFacade.closeTrade() }
 
             when {
@@ -57,13 +49,13 @@ abstract class State4Presenter(
                     navigateBack()
                 }
             }
-        })
+        }
     }
 
     fun onExportTradeDate() {
-        jobs.add(ioScope.launch {
+            launchIO {
             tradesServiceFacade.exportTradeDate()
-        })
+        }
     }
 
     abstract fun getMyDirectionString(): String

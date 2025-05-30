@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
@@ -65,7 +64,7 @@ class UserProfileSettingsPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
-        presenterScope.launch {
+        launchUI {
             val reputationScore: ReputationScoreVO? = withContext(IODispatcher) {
                 userProfileServiceFacade.getSelectedUserProfile()?.let {
                     // _reputation.value = it.reputation // TODO reputation?
@@ -134,7 +133,7 @@ class UserProfileSettingsPresenter(
     override fun onSave() {
         disableInteractive()
         setShowLoading(true)
-        presenterScope.launch {
+        launchUI {
             try {
                 withContext(IODispatcher) {
                     userRepository.fetch()?.let { user ->
@@ -164,7 +163,7 @@ class UserProfileSettingsPresenter(
     }
 
     private fun setShowLoading(show: Boolean = true) {
-        presenterScope.launch {
+        launchUI {
             _showLoading.value = show
         }
     }

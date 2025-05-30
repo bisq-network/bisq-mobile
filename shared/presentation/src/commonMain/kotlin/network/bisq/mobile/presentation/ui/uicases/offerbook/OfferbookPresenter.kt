@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
@@ -55,7 +54,11 @@ class OfferbookPresenter(
         MutableStateFlow { _: OfferItemPresentationModel -> true }
 
     val sortedFilteredOffers: StateFlow<List<OfferItemPresentationModel>> =
-        combine(offersServiceFacade.offerbookListItems, selectedDirection, includeOfferPredicate) { offers, direction, predicate ->
+        combine(
+            offersServiceFacade.offerbookListItems,
+            selectedDirection,
+            includeOfferPredicate
+        ) { offers, direction, predicate ->
             offers.filter { it.bisqEasyOffer.direction.mirror == direction } // Use mirrored direction as we are in potential taker role
                 .filter(predicate)
                 .sortedWith(compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }
@@ -78,28 +81,28 @@ class OfferbookPresenter(
     private var selectedOffer: OfferItemPresentationModel? = null
 
     init {
-        presenterScope.launch {
-            mainPresenter.languageCode.collect {
-                _offerbookListItems.value = offersServiceFacade.offerbookListItems.value.map {
-                    it.apply {
-                        formattedQuoteAmount = when (it.bisqEasyOffer.amountSpec) {
-                            is FixedAmountSpecVO -> {
-                                val amountSpec: FixedAmountSpecVO = it.bisqEasyOffer.amountSpec as FixedAmountSpecVO
-                                val fiatVO =
-                                    FiatVOFactory.from(amountSpec.amount, it.bisqEasyOffer.market.quoteCurrencyCode)
-                                AmountFormatter.formatAmount(fiatVO, true, true)
-                            }
-
-                            is RangeAmountSpecVO -> {
-                                val amountSpec: RangeAmountSpecVO = it.bisqEasyOffer.amountSpec as RangeAmountSpecVO
-                                val minFiatVO = FiatVOFactory.from(amountSpec.minAmount, it.bisqEasyOffer.market.quoteCurrencyCode)
-                                val maxFiatVO = FiatVOFactory.from(amountSpec.maxAmount, it.bisqEasyOffer.market.quoteCurrencyCode)
-                                AmountFormatter.formatRangeAmount(minFiatVO, maxFiatVO, true, true)
-                            }
-
+        collectUI(mainPresenter.languageCode) {
+            _offerbookListItems.value = offersServiceFacade.offerbookListItems.value.map {
+                it.apply {
+                    formattedQuoteAmount = when (it.bisqEasyOffer.amountSpec) {
+                        is FixedAmountSpecVO -> {
+                            val amountSpec: FixedAmountSpecVO = it.bisqEasyOffer.amountSpec as FixedAmountSpecVO
+                            val fiatVO =
+                                FiatVOFactory.from(amountSpec.amount, it.bisqEasyOffer.market.quoteCurrencyCode)
+                            AmountFormatter.formatAmount(fiatVO, true, true)
                         }
-                        formattedPriceSpec = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec)
+
+                        is RangeAmountSpecVO -> {
+                            val amountSpec: RangeAmountSpecVO = it.bisqEasyOffer.amountSpec as RangeAmountSpecVO
+                            val minFiatVO =
+                                FiatVOFactory.from(amountSpec.minAmount, it.bisqEasyOffer.market.quoteCurrencyCode)
+                            val maxFiatVO =
+                                FiatVOFactory.from(amountSpec.maxAmount, it.bisqEasyOffer.market.quoteCurrencyCode)
+                            AmountFormatter.formatRangeAmount(minFiatVO, maxFiatVO, true, true)
+                        }
+
                     }
+                    formattedPriceSpec = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec)
                 }
             }
         }
@@ -111,7 +114,7 @@ class OfferbookPresenter(
         selectedOffer = null
         includeOfferPredicate.value = { _ -> true } // Reset to trigger update at screen change
 
-        presenterScope.launch {
+        launchUI {
             combine(
                 offersServiceFacade.offerbookListItems,
                 selectedDirection
@@ -138,7 +141,7 @@ class OfferbookPresenter(
         runCatching {
             selectedOffer?.let { item ->
                 require(item.isMyOffer)
-                presenterScope.launch {
+                launchUI {
                     withContext(IODispatcher) {
                         val result = offersServiceFacade.deleteOffer(item.offerId).getOrDefault(false)
                         log.d { "delete offer success $result" }
@@ -168,7 +171,7 @@ class OfferbookPresenter(
     }
 
     private fun updateIncludeOfferPredicate() {
-        ioScope.launch {
+        launchIO {
             val invalidSellOfferIds = coroutineScope {
                 sortedFilteredOffers.value
                     .filter { it.bisqEasyOffer.direction == DirectionEnum.SELL }
@@ -201,7 +204,7 @@ class OfferbookPresenter(
         runCatching {
             selectedOffer?.let { item ->
                 require(!item.isMyOffer)
-                presenterScope.launch {
+                launchUI {
                     try {
                         if (canTakeOffer(item)) {
                             takeOfferPresenter.selectOfferToTake(item)
@@ -243,10 +246,16 @@ class OfferbookPresenter(
         val selectedUserProfile = userProfileServiceFacade.getSelectedUserProfile()
         require(selectedUserProfile != null) { "SelectedUserProfile is null" }
         val requiredReputationScoreForMaxOrFixed =
-            BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(marketPriceServiceFacade, bisqEasyOffer)
+            BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(
+                marketPriceServiceFacade,
+                bisqEasyOffer
+            )
         require(requiredReputationScoreForMaxOrFixed != null) { "requiredReputationScoreForMaxOrFixedAmount is null" }
         val requiredReputationScoreForMinOrFixed =
-            BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(marketPriceServiceFacade, bisqEasyOffer)
+            BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
+                marketPriceServiceFacade,
+                bisqEasyOffer
+            )
         require(requiredReputationScoreForMinOrFixed != null) { "requiredReputationScoreForMinAmount is null" }
 
         val market = bisqEasyOffer.market
@@ -297,8 +306,9 @@ class OfferbookPresenter(
                 //  I am as taker the seller. We check if my reputation permits to take the offer
                 val learnMore = "mobile.reputation.buildReputation".i18n()
                 notEnoughReputationHeadline = "chat.message.takeOffer.seller.insufficientScore.headline".i18n()
-                val warningKey = if (isAmountRangeOffer) "chat.message.takeOffer.seller.insufficientScore.rangeAmount.warning"
-                else "chat.message.takeOffer.seller.insufficientScore.fixedAmount.warning"
+                val warningKey =
+                    if (isAmountRangeOffer) "chat.message.takeOffer.seller.insufficientScore.rangeAmount.warning"
+                    else "chat.message.takeOffer.seller.insufficientScore.fixedAmount.warning"
                 notEnoughReputationMessage = warningKey.i18n(
                     sellersScore,
                     if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,

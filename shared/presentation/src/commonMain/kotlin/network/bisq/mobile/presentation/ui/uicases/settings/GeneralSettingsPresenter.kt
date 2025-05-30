@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.formatters.NumberFormatter
@@ -29,7 +28,7 @@ open class GeneralSettingsPresenter(
     override val languageCode: MutableStateFlow<String> = _languageCode
     override fun setLanguageCode(langCode: String) {
         disableInteractive()
-        ioScope.launch {
+        launchUI {
             try {
                 println("i18n :: GeneralSettingsPresenter :: setLanguageCode :: $langCode")
                 setDefaultLocale(langCode) // update lang in app's context
@@ -53,7 +52,7 @@ open class GeneralSettingsPresenter(
     override val supportedLanguageCodes: MutableStateFlow<Set<String>> = _supportedLanguageCodes
     override fun setSupportedLanguageCodes(langCodes: Set<String>) {
         disableInteractive()
-        ioScope.launch {
+        launchUI {
             try {
                 _supportedLanguageCodes.value = langCodes
                 settingsServiceFacade.setSupportedLanguageCodes(langCodes)
@@ -68,7 +67,7 @@ open class GeneralSettingsPresenter(
     override val chatNotification: StateFlow<String> = _chatNotification
     override fun setChatNotification(value: String) {
         disableInteractive()
-        ioScope.launch {
+        launchUI {
             try {
                 _chatNotification.value = value
                 // settingsServiceFacade.setChatNotificationType(value)
@@ -82,7 +81,7 @@ open class GeneralSettingsPresenter(
     override val closeOfferWhenTradeTaken: StateFlow<Boolean> = _closeOfferWhenTradeTaken
     override fun setCloseOfferWhenTradeTaken(value: Boolean) {
         disableInteractive()
-        ioScope.launch {
+        launchUI {
             try {
                 _closeOfferWhenTradeTaken.value = value
                 settingsServiceFacade.setCloseMyOfferWhenTaken(value)
@@ -98,7 +97,7 @@ open class GeneralSettingsPresenter(
     override val tradePriceTolerance: StateFlow<String> = _tradePriceTolerance
     override fun setTradePriceTolerance(value: String, isValid: Boolean) {
         disableInteractive()
-        ioScope.launch {
+        launchUI {
             try {
                 _tradePriceTolerance.value = value
                 if (isValid) {
@@ -117,7 +116,7 @@ open class GeneralSettingsPresenter(
     override val numDaysAfterRedactingTradeData: StateFlow<String> = _numDaysAfterRedactingTradeData
     override fun setNumDaysAfterRedactingTradeData(value: String, isValid: Boolean) {
         disableInteractive()
-        ioScope.launch {
+        launchUI {
             try {
                 _numDaysAfterRedactingTradeData.value = value
                 if (isValid) {
@@ -136,7 +135,7 @@ open class GeneralSettingsPresenter(
     override val useAnimations: StateFlow<Boolean> = _useAnimations
     override fun setUseAnimations(value: Boolean) {
         disableInteractive()
-        ioScope.launch {
+        launchUI {
             try {
                 _useAnimations.value = value
                 settingsServiceFacade.setUseAnimations(value)
@@ -150,7 +149,7 @@ open class GeneralSettingsPresenter(
     override val powFactor: StateFlow<String> = _powFactor
     override fun setPowFactor(value: String, isValid: Boolean) {
         disableInteractive()
-        ioScope.launch {
+        launchUI {
             try {
                 _powFactor.value = value
                 if (isValid) {
@@ -167,7 +166,7 @@ open class GeneralSettingsPresenter(
     override val ignorePow: StateFlow<Boolean> = _ignorePow
     override fun setIgnorePow(value: Boolean) {
         disableInteractive()
-        ioScope.launch {
+        launchUI {
             try {
                 _ignorePow.value = value
                 settingsServiceFacade.setIgnoreDiffAdjustmentFromSecManager(value)
@@ -182,18 +181,16 @@ open class GeneralSettingsPresenter(
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     init {
-        presenterScope.launch {
-            mainPresenter.languageCode.drop(1).collect {
-                fetchSettings()
-            }
+        collectUI(mainPresenter.languageCode.drop(1)) {
+            fetchSettings()
         }
     }
 
     override fun onViewAttached() {
         super.onViewAttached()
-        jobs.add(ioScope.launch {
+        launchIO {
             fetchSettings()
-        })
+        }
     }
 
     override fun onViewUnattaching() {

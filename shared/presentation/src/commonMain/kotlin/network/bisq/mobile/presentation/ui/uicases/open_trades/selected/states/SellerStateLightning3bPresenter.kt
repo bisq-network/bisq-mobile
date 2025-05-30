@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -22,13 +21,12 @@ class SellerStateLightning3bPresenter(
         _buyerHasConfirmedBitcoinReceipt.value = value
     }
 
-    private var job: Job? = null
     override fun onViewAttached() {
         super.onViewAttached()
         val selectedTrade = tradesServiceFacade.selectedTrade.value!!
         val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
         val peersUserName = bisqEasyOpenTradeChannelModel.getPeer().userName
-        presenterScope.launch {
+        launchUI {
             bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
                 for (message in messages) {
                     if (message.chatMessageType == ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE && message.textString.isNotEmpty()) {
@@ -52,12 +50,10 @@ class SellerStateLightning3bPresenter(
 
     override fun onViewUnattaching() {
         super.onViewUnattaching()
-        job?.cancel()
-        job = null
     }
 
     fun skipWaiting() {
-        job = ioScope.launch {
+        launchIO {
             tradesServiceFacade.btcConfirmed()
         }
     }

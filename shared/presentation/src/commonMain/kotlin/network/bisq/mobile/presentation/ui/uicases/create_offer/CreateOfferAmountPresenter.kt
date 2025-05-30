@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.data.IODispatcher
@@ -292,7 +291,7 @@ class CreateOfferAmountPresenter(
         ) ?: 0L
         _requiredReputation.value = requiredReputation
 
-        presenterScope.launch {
+        launchUI {
             val peersScoreByUserProfileId = withContext(IODispatcher) {
                 getPeersScoreByUserProfileId()
             }
@@ -331,23 +330,23 @@ class CreateOfferAmountPresenter(
 
     private fun updateSellerAmountLimitInfo(firstLoad: Boolean = false) {
         val range = maxAmount - minAmount
-        presenterScope.launch {
+        launchUI {
             val userProfile: UserProfileVO = withContext(IODispatcher) {
                 userProfileServiceFacade.getSelectedUserProfile()
-            } ?: return@launch
+            } ?: return@launchUI
 
             val reputationScore: ReputationScoreVO = withContext(IODispatcher) {
                 reputationServiceFacade.getReputation(userProfile.id).getOrNull()
-            } ?: return@launch
+            } ?: return@launchUI
 
             _requiredReputation.value = reputationScore.totalScore
-            val market = createOfferModel.market ?: return@launch
+            val market = createOfferModel.market ?: return@launchUI
 
             val amount = getReputationBasedQuoteSideAmount(
                 marketPriceServiceFacade,
                 market,
                 _requiredReputation.value
-            ) ?: return@launch
+            ) ?: return@launchUI
 
             val reputationBasedMaxValue = (amount.value.toFloat() - minAmount) / range
             _reputationBasedMaxSliderValue.value = reputationBasedMaxValue

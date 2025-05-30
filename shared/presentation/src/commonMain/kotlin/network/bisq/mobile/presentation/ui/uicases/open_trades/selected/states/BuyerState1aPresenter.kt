@@ -1,9 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -39,8 +37,6 @@ class BuyerState1aPresenter(
         _showInvalidAddressDialog.value = value
     }
 
-    private var job: Job? = null
-
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -55,8 +51,6 @@ class BuyerState1aPresenter(
     }
 
     override fun onViewUnattaching() {
-        job?.cancel()
-        job = null
         _bitcoinPaymentData.value = ""
         _bitcoinPaymentDataValid.value = false
         super.onViewUnattaching()
@@ -78,7 +72,7 @@ class BuyerState1aPresenter(
     fun onSend() {
         require(bitcoinPaymentData.value.isNotEmpty())
 
-        job = presenterScope.launch {
+        launchUI {
             withContext(IODispatcher) {
                 tradesServiceFacade.buyerSendBitcoinPaymentData(bitcoinPaymentData.value)
             }

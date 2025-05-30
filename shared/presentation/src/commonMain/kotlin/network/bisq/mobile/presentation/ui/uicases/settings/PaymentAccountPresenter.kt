@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountPayloadVO
@@ -22,7 +21,7 @@ open class PaymentAccountPresenter(
 
     override fun selectAccount(account: UserDefinedFiatAccountVO) {
         disableInteractive()
-        presenterScope.launch {
+        launchUI {
             try {
                 withContext(IODispatcher) {
                     accountsServiceFacade.setSelectedAccount(account)
@@ -42,7 +41,7 @@ open class PaymentAccountPresenter(
             return
         }
 
-        ioScope.launch {
+        launchIO {
             try {
                 val newAccount = UserDefinedFiatAccountVO(
                     accountName = newName,
@@ -67,7 +66,7 @@ open class PaymentAccountPresenter(
         }
 
         if (selectedAccount.value != null) {
-            ioScope.launch {
+            launchIO {
                 try {
                     val newAccount = UserDefinedFiatAccountVO(
                         accountName = newName,
@@ -89,7 +88,7 @@ open class PaymentAccountPresenter(
     override fun deleteCurrentAccount() {
         disableInteractive()
         if (selectedAccount.value != null) {
-            ioScope.launch {
+            launchIO {
                 try {
                     accountsServiceFacade.removeAccount(selectedAccount.value!!)
                     showSnackbar("Account deleted") // TODO:i18n
@@ -105,7 +104,7 @@ open class PaymentAccountPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        ioScope.launch {
+        launchIO {
             accountsServiceFacade.getAccounts()
             accountsServiceFacade.getSelectedAccount()
         }

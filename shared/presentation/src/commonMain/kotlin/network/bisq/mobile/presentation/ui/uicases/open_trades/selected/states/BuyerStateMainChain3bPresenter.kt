@@ -4,7 +4,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
@@ -47,8 +46,6 @@ class BuyerStateMainChain3bPresenter(
     private val _skip: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val skip: StateFlow<Boolean> = _skip
 
-    private var jobs: MutableSet<Job> = mutableSetOf()
-
     override fun onViewAttached() {
         super.onViewAttached()
         if (txConfirmationState.value == CONFIRMED) {
@@ -64,9 +61,6 @@ class BuyerStateMainChain3bPresenter(
     }
 
     override fun onViewUnattaching() {
-        jobs.forEach { it.cancel() }
-        jobs.clear()
-
         _buttonText.value = ""
         _txConfirmationState.value = IDLE
         _blockExplorer.value = ""
@@ -76,11 +70,11 @@ class BuyerStateMainChain3bPresenter(
     }
 
     fun onCompleteTrade() {
-        jobs.add(presenterScope.launch {
+        launchUI {
             withContext(IODispatcher) {
                 tradesServiceFacade.btcConfirmed()
             }
-        })
+        }
     }
 
     private fun requestTx() {
@@ -96,7 +90,7 @@ class BuyerStateMainChain3bPresenter(
         }
 
         _blockExplorer.value = ""
-        jobs.add(presenterScope.launch {
+        launchUI {
             val result = withContext(IODispatcher) {
                 explorerServiceFacade.getSelectedBlockExplorer()
             }
@@ -105,7 +99,7 @@ class BuyerStateMainChain3bPresenter(
             } else {
                 _blockExplorer.value = "data.na".i18n()
             }
-        })
+        }
 
         doRequestTx(txId, address, openTradeItemModel)
     }
@@ -119,7 +113,7 @@ class BuyerStateMainChain3bPresenter(
         _txConfirmationState.value = REQUEST_STARTED
         _errorMessage.value = null
         _balanceFromTx.value = ""
-        jobs.add(presenterScope.launch {
+        launchUI {
             val explorerResult = withContext(IODispatcher) {
                 explorerServiceFacade.requestTx(txId, address)
             }
@@ -133,7 +127,7 @@ class BuyerStateMainChain3bPresenter(
 
                     // We request again after 20 seconds.
                     // As its presenterScope it will get canceled when presenter is deactivated.
-                    presenterScope.launch {
+                    launchUI {
                         delay(20_000)
                         requestTx()
                     }
@@ -151,13 +145,15 @@ class BuyerStateMainChain3bPresenter(
 
                     val tradeAmount: Long = openTradeItemModel.bisqEasyTradeModel.contract.baseSideAmount
                     if (outputValue != tradeAmount) {
-                        _errorMessage.value = "bisqEasy.tradeState.info.phase3b.balance.invalid.amountNotMatching".i18n()
+                        _errorMessage.value =
+                            "bisqEasy.tradeState.info.phase3b.balance.invalid.amountNotMatching".i18n()
                     }
                 } else if (outputValues.isEmpty()) {
                     _errorMessage.value = "bisqEasy.tradeState.info.phase3b.balance.invalid.noOutputsForAddress".i18n()
                 } else {
                     // Not expected use case and not further handled. User should look up in explorer to validate tx
-                    _errorMessage.value = "bisqEasy.tradeState.info.phase3b.balance.invalid.multipleOutputsForAddress".i18n()
+                    _errorMessage.value =
+                        "bisqEasy.tradeState.info.phase3b.balance.invalid.multipleOutputsForAddress".i18n()
                 }
 
             } else {
@@ -168,6 +164,6 @@ class BuyerStateMainChain3bPresenter(
                     explorerResult.errorMessage!!
                 )
             }
-        })
+        }
     }
 }

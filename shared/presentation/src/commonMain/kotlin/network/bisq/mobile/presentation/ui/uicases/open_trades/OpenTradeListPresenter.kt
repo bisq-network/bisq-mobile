@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades
 
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
@@ -29,23 +28,19 @@ class OpenTradeListPresenter(
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>> = _tradesWithUnreadMessages
 
     init {
-        presenterScope.launch {
-            mainPresenter.languageCode.collect {
-                _openTradeItems.value = tradesServiceFacade.openTradeItems.value.map {
-                    it.apply {
-                        quoteAmountWithCode =
-                            "${NumberFormatter.format(it.quoteAmount.toDouble() / 10000.0)} ${it.quoteCurrencyCode}"
-                        formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec, true)
-                        formattedBaseAmount = NumberFormatter.btcFormat(it.baseAmount)
-                    }
+        collectUI(mainPresenter.languageCode) {
+            _openTradeItems.value = tradesServiceFacade.openTradeItems.value.map {
+                it.apply {
+                    quoteAmountWithCode =
+                        "${NumberFormatter.format(it.quoteAmount.toDouble() / 10000.0)} ${it.quoteCurrencyCode}"
+                    formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec, true)
+                    formattedBaseAmount = NumberFormatter.btcFormat(it.baseAmount)
                 }
             }
         }
 
-        presenterScope.launch {
-            mainPresenter.tradesWithUnreadMessages.collect {
-                _tradesWithUnreadMessages.value = it
-            }
+        collectUI(mainPresenter.tradesWithUnreadMessages)  {
+            _tradesWithUnreadMessages.value = it
         }
     }
 
@@ -72,7 +67,7 @@ class OpenTradeListPresenter(
 
     fun onConfirmTradeRules(value: Boolean) {
         _tradeGuideVisible.value = false
-        this.presenterScope.launch {
+        launchUI {
             settingsServiceFacade.confirmTradeRules(value)
         }
     }

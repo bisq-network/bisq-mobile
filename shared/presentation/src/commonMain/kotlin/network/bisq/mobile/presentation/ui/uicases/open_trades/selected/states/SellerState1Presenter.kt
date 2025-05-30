@@ -1,9 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
@@ -29,12 +27,10 @@ class SellerState1Presenter(
     private var _paymentAccountName = MutableStateFlow("")
     val paymentAccountName: StateFlow<String> get() = _paymentAccountName
 
-    private var job: Job? = null
-
     override fun onViewAttached() {
         super.onViewAttached()
 
-        presenterScope.launch {
+        launchUI {
             val _accounts = withContext(IODispatcher) {
                 accountsServiceFacade.getAccounts()
             }
@@ -47,8 +43,6 @@ class SellerState1Presenter(
     }
 
     override fun onViewUnattaching() {
-        job?.cancel()
-        job = null
         _paymentAccountData.value = ""
         super.onViewUnattaching()
     }
@@ -64,7 +58,7 @@ class SellerState1Presenter(
 
     fun onSendPaymentData() {
         require(paymentAccountData.value.isNotEmpty())
-        job = ioScope.launch {
+        launchIO {
             tradesServiceFacade.sellerSendsPaymentAccount(paymentAccountData.value)
         }
     }

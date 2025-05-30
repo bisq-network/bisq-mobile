@@ -2,7 +2,6 @@ package network.bisq.mobile.presentation.ui.components.molecules
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
@@ -41,7 +40,7 @@ open class TopBarPresenter(
     }
 
     private fun refresh() {
-        presenterScope.launch {
+        launchUI {
             val uniqueAvatar = withContext(IODispatcher) {
                 userRepository.fetch()?.uniqueAvatar
             }

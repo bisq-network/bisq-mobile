@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -37,8 +36,8 @@ class CreateOfferDirectionPresenter(
         direction = createOfferPresenter.createOfferModel.direction
         headline = "bisqEasy.tradeWizard.directionAndMarket.headline".i18n() //TODO:i18n check
 
-        ioScope.launch {
-            val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launch
+        launchIO {
+            val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launchIO
             val reputation = reputationServiceFacade.getReputation(profile.id).getOrNull()
 
             withContext(Dispatchers.Main) {

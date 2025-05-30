@@ -1,12 +1,10 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
@@ -66,14 +64,10 @@ class TradeDetailsHeaderPresenter(
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> = this._isInMediation
 
-    private var selectedTradeJob: Job? = null
-    private var tradeStateJob: Job? = null
-    private var mediationJob: Job? = null
-
     override fun onViewAttached() {
         super.onViewAttached()
 
-        selectedTradeJob = presenterScope.launch {
+        launchUI {
             mainPresenter.languageCode
                 .flatMapLatest { tradesServiceFacade.selectedTrade }
                 .filterNotNull()
@@ -110,25 +104,14 @@ class TradeDetailsHeaderPresenter(
             rightAmountDescription = "Amount to receive" //"bisqEasy.tradeState.header.receive"
         }
 
-        tradeStateJob = this.presenterScope.launch {
-            try {
-                openTradeItemModel.bisqEasyTradeModel.tradeState.collect { tradeState ->
-                    tradeStateChanged(tradeState)
-                }
-            } catch (e: Exception) {
-                log.e { "Error collecting tradeState $e" }
-            }
+        collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) {
+            tradeStateChanged(it)
         }
 
-        mediationJob = this.presenterScope.launch {
-            try {
-                openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation.collect { isInMediation ->
-                    this@TradeDetailsHeaderPresenter._isInMediation.value = isInMediation
-                }
-            } catch (e: Exception) {
-                log.e { "Error collecting mediationState $e" }
-            }
+        collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation) {
+            this@TradeDetailsHeaderPresenter._isInMediation.value = it
         }
+
     }
 
     override fun onViewUnattaching() {
@@ -266,7 +249,7 @@ class TradeDetailsHeaderPresenter(
     fun onInterruptTrade() {
         require(selectedTrade.value != null)
 
-        presenterScope.launch {
+        launchUI {
             val result: Result<Unit>? = withContext(IODispatcher) {
                 when (tradeCloseType.value) {
                     TradeCloseType.REJECT -> {
@@ -302,18 +285,12 @@ class TradeDetailsHeaderPresenter(
 
     fun onOpenMediation() {
         _showMediationConfirmationDialog.value = false
-        ioScope.launch {
+        launchIO {
             mediationServiceFacade.reportToMediator(selectedTrade.value!!)
         }
     }
 
     private fun reset() {
-        selectedTradeJob?.cancel()
-        tradeStateJob?.cancel()
-        mediationJob?.cancel()
-        selectedTradeJob = null
-        tradeStateJob = null
-        mediationJob = null
 
         direction = ""
         leftAmountDescription = ""
