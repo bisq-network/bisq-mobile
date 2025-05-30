@@ -13,10 +13,6 @@ class BuyerStateLightning3bPresenter(
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
 
-    override fun onViewUnattaching() {
-        super.onViewUnattaching()
-    }
-
     fun onCompleteTrade() {
         launchIO {
             tradesServiceFacade.btcConfirmed()

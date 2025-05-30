@@ -123,7 +123,6 @@ class TakeOfferReviewPresenter(
                 val (statusFlow, errorFlow) = takeOfferPresenter.takeOffer()
 
                 // The stateFlow objects are set in the ioScope in the service. Thus we need to map them to the presenterScope.
-                // Is this right? collectUI inside launchUI
                 collectUI(statusFlow) { takeOfferStatus.value = it }
                 collectUI(errorFlow) { takeOfferErrorMessage.value = it }
             } catch (e: Exception) {

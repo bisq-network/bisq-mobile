@@ -284,9 +284,19 @@ class TradeDetailsHeaderPresenter(
     }
 
     fun onOpenMediation() {
+        if (!isInteractive.value) return
+        disableInteractive()
         _showMediationConfirmationDialog.value = false
         launchIO {
-            mediationServiceFacade.reportToMediator(selectedTrade.value!!)
+            try {
+                mediationServiceFacade.reportToMediator(selectedTrade.value!!)
+            } catch (e: Exception) {
+                // TODO we probably want a UI for this
+                showSnackbar("Mediation reporting failed, please reach out to support") // TODO i18n
+                log.e(e) { "Failed to proceed to report to mediation - ${e.message}" }
+            } finally {
+                enableInteractive()
+            }
         }
     }
 

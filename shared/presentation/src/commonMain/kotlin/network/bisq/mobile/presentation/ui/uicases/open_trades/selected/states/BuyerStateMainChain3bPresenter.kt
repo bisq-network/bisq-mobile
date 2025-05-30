@@ -70,10 +70,8 @@ class BuyerStateMainChain3bPresenter(
     }
 
     fun onCompleteTrade() {
-        launchUI {
-            withContext(IODispatcher) {
-                tradesServiceFacade.btcConfirmed()
-            }
+        launchIO {
+            tradesServiceFacade.btcConfirmed()
         }
     }
 
