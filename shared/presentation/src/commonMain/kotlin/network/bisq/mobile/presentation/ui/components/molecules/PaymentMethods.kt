@@ -1,13 +1,15 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
+import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 // TODO: Get params and render apt
 @Composable
@@ -22,15 +24,27 @@ fun PaymentMethods(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             quoteSidePaymentMethods.forEach { paymentMethod ->
-                DynamicImage(
-                    path = "drawable/payment/fiat/${
-                        paymentMethod
-                            .lowercase()
-                            .replace("-", "_")
-                    }.png",
-                    fallbackPath = "drawable/payment/fiat/custom_payment_${customMethodCounter++}.png",
-                    modifier = Modifier.size(20.dp),
-                )
+                Box {
+                    val (_, missing) = i18NPaymentMethod(paymentMethod)
+                    DynamicImage(
+                        path = "drawable/payment/fiat/${
+                            paymentMethod
+                                .lowercase()
+                                .replace("-", "_")
+                        }.png",
+                        fallbackPath = "drawable/payment/fiat/custom_payment_${customMethodCounter++}.png",
+                        modifier = Modifier.size(20.dp),
+                    )
+                    if (missing) {
+                        val firstChar = paymentMethod[0].toString()
+                        BisqText.baseRegular(
+                            text = firstChar,
+                            textAlign = TextAlign.Center,
+                            color = BisqTheme.colors.dark_grey20,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
             }
         }
         DynamicImage(

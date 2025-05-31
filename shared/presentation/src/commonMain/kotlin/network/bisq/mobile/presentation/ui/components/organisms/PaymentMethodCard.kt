@@ -37,11 +37,16 @@ fun PaymentMethodCard(
             repeat(availablePaymentMethods.size) { index ->
                 val paymentMethod = availablePaymentMethods[index]
                 val isSelected = selectedPaymentMethods.collectAsState().value.contains(paymentMethod)
+
+                val (paymenti18NName, missing) = i18NPaymentMethod(paymentMethod)
+
                 PaymentTypeCard(
                     image = imagePaths[index],
-                    title = i18NPaymentMethod(paymentMethod),
+                    title = paymenti18NName,
                     onClick = { onToggle(paymentMethod) },
-                    isSelected = isSelected
+                    isSelected = isSelected,
+                    index = index + 1,
+                    isCustomPaymentMethod = missing
                 )
             }
         }

@@ -3,17 +3,14 @@ package network.bisq.mobile.presentation.ui.components.molecules
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
@@ -24,7 +21,9 @@ fun PaymentTypeCard(
     image: String,
     title: String,
     onClick: (String) -> Unit,
-    isSelected: Boolean = false
+    isSelected: Boolean = false,
+    index: Int = 1,
+    isCustomPaymentMethod: Boolean = false,
 ) {
     val backgroundColor = if (isSelected) {
         BisqTheme.colors.primaryDim
@@ -45,12 +44,24 @@ fun PaymentTypeCard(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        DynamicImage(
-            path = image,
-            modifier = Modifier.size(20.dp)
-        )
-        BisqText.baseRegular(
-            text = title
-        )
+        Box {
+            DynamicImage(
+                path = image,
+                fallbackPath = "drawable/payment/fiat/custom_payment_${index}.png",
+                modifier = Modifier.size(20.dp)
+            )
+            if (isCustomPaymentMethod) {
+                Box(modifier = Modifier.size(20.dp)) {
+                    val firstChar = title[0].toString()
+                    BisqText.baseRegular(
+                        text = firstChar,
+                        textAlign = TextAlign.Center,
+                        color = BisqTheme.colors.dark_grey20,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+        }
+        BisqText.baseRegular(title)
     }
 }

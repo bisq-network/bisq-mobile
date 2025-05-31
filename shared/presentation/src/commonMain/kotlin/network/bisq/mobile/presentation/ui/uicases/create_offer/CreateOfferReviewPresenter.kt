@@ -41,9 +41,9 @@ class CreateOfferReviewPresenter(
         direction = createOfferModel.direction
 
         quoteSidePaymentMethodDisplayString =
-            createOfferModel.selectedQuoteSidePaymentMethods.joinToString(", ") { i18NPaymentMethod(it) }
+            createOfferModel.selectedQuoteSidePaymentMethods.joinToString(", ") { i18NPaymentMethod(it).first }
         baseSidePaymentMethodDisplayString =
-            createOfferModel.selectedBaseSidePaymentMethods.joinToString(", ") { i18NPaymentMethod(it) }
+            createOfferModel.selectedBaseSidePaymentMethods.joinToString(", ") { i18NPaymentMethod(it).first }
 
         val formattedQuoteAmount: String
         val formattedBaseAmount: String

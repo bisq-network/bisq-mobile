@@ -80,8 +80,8 @@ class TakeOfferReviewPresenter(
         val offerListItem = takeOfferModel.offerItemPresentationVO
         takersDirection = offerListItem.bisqEasyOffer.direction.mirror
 
-        quoteSidePaymentMethodDisplayString = i18NPaymentMethod(takeOfferModel.quoteSidePaymentMethod)
-        baseSidePaymentMethodDisplayString = i18NPaymentMethod(takeOfferModel.baseSidePaymentMethod)
+        quoteSidePaymentMethodDisplayString = i18NPaymentMethod(takeOfferModel.quoteSidePaymentMethod).first
+        baseSidePaymentMethodDisplayString = i18NPaymentMethod(takeOfferModel.baseSidePaymentMethod).first
 
         val formattedQuoteAmount = AmountFormatter.formatAmount(takeOfferModel.quoteAmount, true, true)
         val formattedBaseAmount = AmountFormatter.formatAmount(takeOfferModel.baseAmount, false, false)
