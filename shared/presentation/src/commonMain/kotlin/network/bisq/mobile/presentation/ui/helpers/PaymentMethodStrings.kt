@@ -8,7 +8,7 @@ fun i18NPaymentMethod(paymentMethod: String, useShort: Boolean = false): Pair<St
     val shortVersion = "${paymentMethod}_SHORT"
     val value: String = if (useShort) shortVersion else paymentMethod
     val translated = value.i18n()
-    // Todo: Better way to find customd method name?
+    // Todo: Better way to find custom method name?
     return if (translated.startsWith("MISSING: [")) {
         Pair(value, true)
     } else {

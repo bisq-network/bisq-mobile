@@ -123,7 +123,9 @@ class CreateOfferAmountPresenter(
     // Life cycle
     init {
         createOfferModel = createOfferPresenter.createOfferModel
-        quoteCurrencyCode = createOfferModel.market!!.quoteCurrencyCode
+        quoteCurrencyCode = createOfferModel.market?.quoteCurrencyCode
+            ?: throw IllegalStateException("Market must be initialized before creating amount presenter")
+
         _amountType.value = createOfferModel.amountType
 
         headline = if (createOfferModel.direction.isBuy)

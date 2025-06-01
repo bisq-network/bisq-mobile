@@ -24,24 +24,27 @@ fun PaymentMethods(
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             quoteSidePaymentMethods.forEach { paymentMethod ->
-                Box {
+                Box(contentAlignment = Alignment.Center) {
                     val (_, missing) = i18NPaymentMethod(paymentMethod)
+                    val fallbackPath = "drawable/payment/fiat/custom_payment_${customMethodCounter}.png"
                     DynamicImage(
                         path = "drawable/payment/fiat/${
                             paymentMethod
                                 .lowercase()
                                 .replace("-", "_")
                         }.png",
-                        fallbackPath = "drawable/payment/fiat/custom_payment_${customMethodCounter++}.png",
+                        contentDescription =  if (missing) "Custom payment method: $paymentMethod" else paymentMethod,
+                        fallbackPath = fallbackPath,
+                        onImageLoadError = { customMethodCounter++ },
                         modifier = Modifier.size(20.dp),
                     )
                     if (missing) {
-                        val firstChar = paymentMethod[0].toString()
+                        val firstChar = if (paymentMethod.isNotEmpty()) paymentMethod[0].toString() else "?"
                         BisqText.baseRegular(
                             text = firstChar,
                             textAlign = TextAlign.Center,
                             color = BisqTheme.colors.dark_grey20,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(20.dp).wrapContentSize(Alignment.Center)
                         )
                     }
                 }

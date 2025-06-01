@@ -25,7 +25,9 @@ class CreateOfferPaymentMethodPresenter(
     init {
         createOfferModel = createOfferPresenter.createOfferModel
 
-        val quoteCurrencyCode = createOfferModel.market!!.quoteCurrencyCode
+        val quoteCurrencyCode = createOfferModel.market?.quoteCurrencyCode
+            ?: throw IllegalStateException("Market must be initialized before creating payment method presenter")
+
         val isBuy = createOfferModel.direction.isBuy
         quoteSideHeadline = if (isBuy)
             "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.buyer".i18n(quoteCurrencyCode)

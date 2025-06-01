@@ -60,10 +60,7 @@ class TakeOfferReviewPresenter(
         _showTakeOfferSuccessDialog.value = value
     }
 
-    private var jobs: MutableSet<Job> = mutableSetOf()
-
-    override fun onViewAttached() {
-        super.onViewAttached()
+    init {
         collectUI(takeOfferStatus) {
             log.i { "takeOfferStatus: $it" }
             if (it == TakeOfferStatus.SUCCESS) {

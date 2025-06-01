@@ -48,16 +48,17 @@ fun PaymentTypeCard(
             DynamicImage(
                 path = image,
                 fallbackPath = "drawable/payment/fiat/custom_payment_${index}.png",
+                contentDescription =  if (isCustomPaymentMethod) "Custom payment method: $title" else title,
                 modifier = Modifier.size(20.dp)
             )
             if (isCustomPaymentMethod) {
-                Box(modifier = Modifier.size(20.dp)) {
+                Box(modifier = Modifier.size(20.dp), contentAlignment = Alignment.Center) {
                     val firstChar = title[0].toString()
                     BisqText.baseRegular(
                         text = firstChar,
                         textAlign = TextAlign.Center,
                         color = BisqTheme.colors.dark_grey20,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier.size(20.dp).wrapContentSize()
                     )
                 }
             }

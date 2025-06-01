@@ -19,19 +19,17 @@ fun TakeOfferPaymentMethodScreen() {
 
     LaunchedEffect(Unit) {
         presenter.baseSidePaymentMethod.collect { value ->
-            baseSidePaymentMethod.value = setOf(value ?: "")
+            baseSidePaymentMethod.value = value?.let { setOf(it) } ?: emptySet()
         }
     }
 
     LaunchedEffect(Unit) {
         presenter.quoteSidePaymentMethod.collect { value ->
-            quoteSidePaymentMethod.value = setOf(value ?: "")
+            quoteSidePaymentMethod.value = value?.let { setOf(it) } ?: emptySet()
         }
     }
 
     RememberPresenterLifecycle(presenter)
-
-    var customMethodCounter = 1
 
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.progress.method".i18n(),
