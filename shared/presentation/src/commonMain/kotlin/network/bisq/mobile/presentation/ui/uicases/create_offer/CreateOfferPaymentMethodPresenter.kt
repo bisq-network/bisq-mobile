@@ -62,7 +62,11 @@ class CreateOfferPaymentMethodPresenter(
         if (selectedQuoteSidePaymentMethods.value.contains(value)) {
             selectedQuoteSidePaymentMethods.update { it - value }
         } else {
-            selectedQuoteSidePaymentMethods.update { it + value }
+            if (selectedQuoteSidePaymentMethods.value.size == 4) {
+                showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.maxMethodsReached".i18n())
+            } else {
+                selectedQuoteSidePaymentMethods.update { it + value }
+            }
         }
     }
 
