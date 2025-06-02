@@ -60,27 +60,31 @@ If you are a mobile enthusiast and feel driven by Bisq goals, please reach out!
 
  - Java: 17.0.12.fx-zulu JDK (sdkman env file is avail in project root)
  - Ruby: v3+ (for iOS Cocoapods 1.15+)
- - IDE: We use and recommend Fleet, but you may as well use the IDE of your preference. For iOS testing you will need XCode.
-
-**note**: at the time of writing Fleet is in preview, it can get unstable so it's recommended to switch to Android Studio / Xcode as needed. For example, the first time you try to run the iosClient most probably you will need to do it from Xcode.
+ - IDE: We recommend using Android Studio with the Kotlin Multiplatform Mobile (KMP) plugin. For iOS testing you will need XCode.
 
 ### Getting started
 
  1. Get [sdkman](https://sdkman.io/) installed since the project uses JDK 
- 2. Open [Fleet IDE](https://www.jetbrains.com/help/fleet/getting-started.html), IntelliJ IDEA, or Android Studio and open the project root folder.
- 3. Wait for the smart mode to run the `Pre-flight` or `Gradle` to download the dependencies. This will let you know what's missing in your machine to run the project. 
+ 2. Open Android Studio with the Kotlin Multiplatform Mobile plugin installed and open the project root folder.
+ 3. Wait for the Gradle sync to complete and download the dependencies. This will let you know what's missing in your machine to run the project. 
     1. If you are on a MacOS computer building the iOS app you can go ahead and run `setup_ios.sh` script and build the project and run it in your device or emulator.
     2. For Android it can run on any machine, just run the preconfigured configurations `androidClient` and/or `androidNode`
 
-Alternatively, you could run `./gradlew clean build` (1) first from terminal and then open with your IDE of preference.
+Alternatively, you could run `./gradlew clean build` first from terminal and then open with Android Studio.
 
 ### `Getting started for Android Node`
 
-Addicionally, for the `androidNode` module to build you need to have its dependent Bisq2 jars in your local maven2 repository ('~/.m2/repository`). Here are the steps to do that
+For the `androidNode` module to build, you need the Bisq2 dependencies. There are two ways to get them:
 
-1. download [Bisq2](https://github.com/bisq-network/bisq2) if you don't have it already
-2. follow Bisq2 root `README.md` steps to build the project
-3. run `./gradlew publishAll` // this will install all the jars you need in your m2 repo
+#### Option 1: For developers (using local Maven repository)
+
+1. Download [Bisq2](https://github.com/bisq-network/bisq2) if you don't have it already
+2. Follow Bisq2 root `README.md` steps to build the project
+3. Run `./gradlew publishAll` // this will install all the jars you need in your m2 repo
+
+#### Option 2: For CI (using remote Maven repository)
+
+The CI environment automatically uses our remote Maven repository to get the Bisq2 dependencies. No additional setup is required.
 
 Done! Alternatively if you are interested only in contributing for the `xClients` you can just build them individually instead of building the whole project.
 
@@ -122,7 +126,7 @@ Please refer to [this README](shared/presentation/src/commonMain/kotlin/network/
 
  - Some Apple M chips have trouble with cocoapods, follow [this guide](https://stackoverflow.com/questions/64901180/how-to-run-cocoapods-on-apple-silicon-m1/66556339#66556339) to fix it
  - On MacOS: non-homebrew versions of Ruby will cause problems
- - On MacOS: If Fleet Pre-flight gives error "Gradle not found" and running the (1) terminal command doesn't even run, you need to install gradle with `homebrew` and then run `gradle wrapper` on the root. Then reopen Fleet and try the Pre-flight again.
+ - On MacOS: If Gradle sync fails with "Gradle not found" error, you may need to install gradle with `homebrew` and then run `gradle wrapper` on the root. Then reopen Android Studio and try syncing again.
 
 ### Initial Project Structure
 
