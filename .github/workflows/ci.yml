@@ -81,7 +81,7 @@ jobs:
         run: ./gradlew clean assembleDebug -x androidNode:assembleDebug --info
 
       - name: Run all project tests
-        run: ./gradlew test -x androidNode:test
+        run: ./gradlew test
 
       - name: Run androidClient Tests
         run: ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
