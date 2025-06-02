@@ -13,6 +13,7 @@ androidx-core-ktx = "1.13.1"
 androidx-espresso-core = "3.6.1"
 androidx-material = "1.12.0"
 
+desugar_jdk_libs = "2.1.5"
 roboelectric = "4.10.3"
 androidx-test = "1.6.1"
 androidx-test-junit = "1.2.1"
@@ -77,6 +78,7 @@ multiplatform-settings = "1.2.0"
 [libraries]
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coilCompose" }
+desugar_jdk_libs = { module = "com.android.tools:desugar_jdk_libs", version.ref = "desugar_jdk_libs" }
 jetbrains-kotlin-reflect = { module = "org.jetbrains.kotlin:kotlin-reflect", version.ref = "kotlinReflect" }
 kotlin-test = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlin-test-junit-v180 = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlinTestJunit" }
