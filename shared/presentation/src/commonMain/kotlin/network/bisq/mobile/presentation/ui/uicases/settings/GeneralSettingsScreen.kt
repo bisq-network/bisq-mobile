@@ -111,7 +111,6 @@ fun GeneralSettingsScreen() {
             },
             searchable = true,
             chipMultiSelect = true,
-            // chipShowOnlyKey = true
         )
 
         BisqHDivider()
@@ -159,7 +158,7 @@ fun GeneralSettingsScreen() {
                     return@BisqTextField "Value cannot be empty"
                 }
                 if (parsedValue < 1 || parsedValue > 10) {
-                    return@BisqTextField "settings.trade.maxTradePriceDeviation.invalid".i18n(10)
+                    return@BisqTextField "settings.trade.maxTradePriceDeviation.invalid".i18n(1, 10)
                 }
                 return@BisqTextField null
             }
@@ -218,10 +217,6 @@ fun GeneralSettingsScreen() {
                     return@BisqTextField null
                 }
             )
-
-            BisqHDivider()
-
-            BisqText.h4Regular("settings.display.headline".i18n())
 
             BisqGap.V1()
 

@@ -47,10 +47,6 @@ class TakeOfferPaymentMethodPresenter(
         quoteCurrencyCode = offerListItem.bisqEasyOffer.market.quoteCurrencyCode
     }
 
-    override fun onViewAttached() {
-        super.onViewAttached()
-    }
-
     override fun onViewUnattaching() {
         dismissSnackbar()
         super.onViewUnattaching()

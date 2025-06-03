@@ -15,6 +15,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @Composable
 fun BisqChip(
     label: String = "",
+    showRemove: Boolean = true,
     onClick: ((String) -> Unit)? = null,
     onRemove: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier,
@@ -27,10 +28,12 @@ fun BisqChip(
         label = { BisqText.baseRegular(label, modifier = Modifier.padding(top= 12.dp)) },
         selected = false,
         trailingIcon = {
-            IconButton(
-                onClick = { onRemove?.invoke(label) }
-            ) {
-                CloseIcon(modifier = Modifier.size(InputChipDefaults.AvatarSize))
+            if (showRemove) {
+                IconButton(
+                    onClick = { onRemove?.invoke(label) }
+                ) {
+                    CloseIcon(modifier = Modifier.size(InputChipDefaults.AvatarSize))
+                }
             }
         },
         modifier = modifier,

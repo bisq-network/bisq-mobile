@@ -108,12 +108,14 @@ fun BisqDropDown(
             ) {
                 selected.forEach { pair ->
                     BisqChip(
-                        if (chipShowOnlyKey) pair.first else pair.second,
+                        label = if (chipShowOnlyKey) pair.first else pair.second,
+                        showRemove = selected.size != 1,
                         onRemove = {
                             selected = selected - pair
                             onSetChanged?.invoke(selected)
                             searchText = ""
-                        })
+                        }
+                    )
                 }
             }
         }
