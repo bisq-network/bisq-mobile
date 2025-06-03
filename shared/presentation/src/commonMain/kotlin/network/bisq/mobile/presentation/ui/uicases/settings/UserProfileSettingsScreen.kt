@@ -88,6 +88,7 @@ fun UserProfileSettingsScreen() {
         topBar = { TopBar("user.userProfile".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
+        snackbarHostState = presenter.getSnackState(),
         isInteractive = presenter.isInteractive.collectAsState().value,
         shouldBlurBg = showDeleteConfirmation,
     ) {

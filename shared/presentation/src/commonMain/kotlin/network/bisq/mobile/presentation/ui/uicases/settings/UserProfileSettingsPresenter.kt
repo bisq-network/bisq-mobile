@@ -144,8 +144,10 @@ class UserProfileSettingsPresenter(
                         // avoid flicker
                         delay(500L)
                     }
+                    showSnackbar("Save success") // TODO: i18n
                 }
             } catch (e: Exception) {
+                showSnackbar("Save failure") // TODO: i18n
                 log.e(e) { "Failed to save user profile settings" }
             } finally {
                 setShowLoading(false)
