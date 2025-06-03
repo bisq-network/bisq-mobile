@@ -5,6 +5,75 @@
 ### protobuf deps
 -dontwarn java.lang.MatchException
 
+# Keep gRPC and Netty classes
+-keep class io.grpc.** { *; }
+-keep class io.netty.** { *; }
+-keep class io.grpc.netty.shaded.io.netty.** { *; }
+
+# Keep all the missing classes that are referenced but not directly used
+-dontwarn com.aayushatharva.brotli4j.**
+-dontwarn com.github.luben.zstd.**
+-dontwarn com.google.protobuf.nano.**
+-dontwarn com.jcraft.jzlib.**
+-dontwarn com.ning.compress.**
+-dontwarn com.oracle.svm.core.**
+-dontwarn lzma.sdk.**
+-dontwarn net.jpountz.lz4.**
+-dontwarn net.jpountz.xxhash.**
+-dontwarn org.apache.logging.log4j.**
+-dontwarn org.bouncycastle.openssl.**
+-dontwarn org.bouncycastle.operator.**
+-dontwarn org.bouncycastle.pkcs.**
+-dontwarn org.conscrypt.**
+-dontwarn org.eclipse.jetty.alpn.**
+-dontwarn org.eclipse.jetty.npn.**
+-dontwarn org.jboss.marshalling.**
+-dontwarn reactor.blockhound.**
+-dontwarn sun.security.x509.**
+
+# Don't shrink/obfuscate build-time plugins
+-dontwarn com.android.build.**
+-dontwarn com.google.protobuf.gradle.**
+-dontwarn org.codehaus.groovy.**
+-dontwarn javax.inject.**
+-dontwarn org.gradle.**
+-dontwarn org.bouncycastle.**
+-dontwarn javassist.**
+-dontwarn org.apache.maven.**
+-dontwarn kr.motd.maven.**
+-dontwarn org.eclipse.**
+
+# Optional: keep core Gradle plugin APIs if somehow referenced
+-keep class com.android.** { *; }
+-keep class org.gradle.** { *; }
+
+# Keep any native methods
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# Keep all classes that might be used via reflection
+-keep class * implements java.io.Serializable { *; }
+
+# Keep all enum values
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+# Keep all Bisq2 core classes
+-keep class bisq.** { *; }
+-keep class network.bisq.** { *; }
+
+# Keep all Protobuf-related classes
+-keep class com.google.protobuf.** { *; }
+
+# Keep all Bouncy Castle classes
+-keep class org.bouncycastle.** { *; }
+
+# Keep all Tor-related classes
+-keep class org.torproject.** { *; }
+
 -dontwarn com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector
 -dontwarn com.sun.jdi.VirtualMachine
 -dontwarn com.sun.jdi.event.Event
