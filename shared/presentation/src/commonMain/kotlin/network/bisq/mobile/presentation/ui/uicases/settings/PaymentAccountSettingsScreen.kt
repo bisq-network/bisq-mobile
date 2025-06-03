@@ -6,7 +6,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
@@ -68,7 +67,7 @@ fun PaymentAccountSettingsScreen() {
 
     BisqScrollScaffold(
         topBar = { TopBar("user.paymentAccounts".i18n()) },
-        verticalArrangement = if (accounts.isEmpty()) Arrangement.Center else Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         snackbarHostState = presenter.getSnackState(),
         isInteractive = presenter.isInteractive.collectAsState().value,
         shouldBlurBg = showConfirmationDialog,
@@ -95,9 +94,19 @@ fun PaymentAccountSettingsScreen() {
         if (accounts.isEmpty()) {
             Column(
                 modifier = Modifier.fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
+                verticalArrangement = Arrangement.Top,
             ) {
+
+                BisqText.baseLightGrey("user.paymentAccounts.noAccounts.info".i18n())
+                BisqGap.V2()
+                BisqText.h2Regular("user.paymentAccounts.noAccounts.whySetup".i18n())
+                BisqGap.V1()
+                BisqText.baseRegular("user.paymentAccounts.noAccounts.whySetup.info".i18n())
+                BisqGap.V2()
+                BisqText.baseLightGrey("user.paymentAccounts.noAccounts.whySetup.note".i18n())
+
+                BisqGap.V2()
+
                 BisqButton(
                     text = "user.paymentAccounts.createAccount".i18n(),
                     onClick = { showBottomSheet = !showBottomSheet },
