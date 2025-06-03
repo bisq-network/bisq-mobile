@@ -22,10 +22,11 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // always, for faster builds
+        mavenLocal()
         
         // Check if we're running in CI environment
         val isCi = System.getenv("CI") == "true"
-        
         if (isCi) {
             // Use the remote Maven repository for CI builds
             maven {
@@ -36,11 +37,8 @@ dependencyResolutionManagement {
                     password = System.getenv("MAVEN_PASSWORD") ?: "bisq-mobile-ci-21!"
                 }
             }
-        } else {
-            // Use mavenLocal for developer builds
-            mavenLocal()
         }
-        
+
         maven {
             url = uri("https://jitpack.io")
         }

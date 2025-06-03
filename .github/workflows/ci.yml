@@ -75,30 +75,22 @@ jobs:
           echo "CLI_KEY_ALIAS=yourCliKeyAlias" >> local.properties
           echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
           echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
-                                                                        
-      - name: Build project
-        env:
-          CI: true
-        run: ./gradlew clean assembleDebug --info
 
-      - name: Run all project tests
+      # CI:true is costly so we sum all tasks in one instruction                                   #
+      - name: Build project and do node specific tasks
         env:
           CI: true
-        run: ./gradlew test
+        run: |
+          ./gradlew clean assembleDebug --info
+          ./gradlew test
+          ./gradlew androidNode:testDebugUnitTest androidNode:connectedDebugAndroidTest
 
       - name: Run androidClient Tests
         env:
           CI: true
         run: ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
 
-      - name: Run androidNode Tests
-        env:
-          CI: true
-        run: ./gradlew androidNode:testDebugUnitTest androidNode:connectedDebugAndroidTest
-
       # TODO ios specific and run on emulator if needed
       - name: Run iOS Tests
         if: startsWith(matrix.os, 'macos')
-        env:
-          CI: true
         run: ./gradlew shared:presentation:iosSimulatorArm64Test
