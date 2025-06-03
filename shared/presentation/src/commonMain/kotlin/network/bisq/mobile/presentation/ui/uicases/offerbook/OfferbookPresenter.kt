@@ -194,8 +194,10 @@ class OfferbookPresenter(
                     .filterNotNull()
                     .toSet()
             }
-            includeOfferPredicate.value = { item ->
-                item.bisqEasyOffer.id !in invalidSellOfferIds
+            if (!isDevMode()) {
+                includeOfferPredicate.value = { item ->
+                    item.bisqEasyOffer.id !in invalidSellOfferIds
+                }
             }
         }
     }

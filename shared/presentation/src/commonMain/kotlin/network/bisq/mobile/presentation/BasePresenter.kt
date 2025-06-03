@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.getPlatformInfo
@@ -487,6 +488,10 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         disableInteractive()
         navigateToUrl("https://github.com/bisq-network/bisq-mobile/issues")
         enableInteractive()
+    }
+
+    protected open fun isDevMode(): Boolean {
+        return rootPresenter?.isDevMode() ?: false
     }
 
     override fun isDemo(): Boolean = rootPresenter?.isDemo() ?: false
