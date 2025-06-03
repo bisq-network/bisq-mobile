@@ -139,10 +139,15 @@ fun TradeDetailsHeader() {
                     if (isSell) {
                         InfoBox(
                             label = presenter.rightAmountDescription,
-                            value = "$rightAmount $rightCode"
+                            value = "$rightAmount $rightCode",
+                            rightAlign = true
                         )
                     } else {
-                        InfoBoxSats(label = presenter.rightAmountDescription, value = rightAmount)
+                        InfoBoxSats(
+                            label = presenter.rightAmountDescription,
+                            value = rightAmount,
+                            rightAlign = true
+                        )
                     }
                 }
             }

@@ -30,7 +30,6 @@ class WalletGuidePresenter(
 
     fun receivingNextClick() {
         navigateBackTo(Routes.WalletGuideIntro, true, false)
-        navigateBack()
     }
 
     fun navigateToBlueWallet() {

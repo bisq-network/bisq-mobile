@@ -64,10 +64,10 @@ class SellerState3aPresenter(
     }
 
     fun onConfirmedBtcSent() {
-        if (!paymentProofValid.value) {
-            _showInvalidAddressDialog.value = true
-        } else {
+        if (paymentProof.value.isNullOrEmpty() || paymentProofValid.value) {
             confirmSend()
+        } else {
+            _showInvalidAddressDialog.value = true
         }
     }
 

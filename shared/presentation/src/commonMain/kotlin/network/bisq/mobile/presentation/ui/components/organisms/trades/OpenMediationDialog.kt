@@ -18,6 +18,7 @@ fun OpenMediationDialog(
         confirmButtonText = "bisqEasy.mediation.request.confirm.openMediation".i18n(),
         horizontalAlignment = Alignment.Start,
         marginTop = BisqUIConstants.ScreenPaddingHalf,
+        verticalButtonPlacement = true,
         onDismiss = onDismiss,
         onConfirm = onCancelConfirm
     )

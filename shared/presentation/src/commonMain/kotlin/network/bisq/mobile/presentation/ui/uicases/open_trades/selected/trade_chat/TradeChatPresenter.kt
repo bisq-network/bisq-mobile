@@ -1,9 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat
 
-import kotlinx.coroutines.Job
+import androidx.compose.foundation.lazy.LazyListState
+import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
@@ -64,7 +64,7 @@ class TradeChatPresenter(
         super.onViewUnattaching()
     }
 
-    fun sendChatMessage(text: String) {
+    fun sendChatMessage(text: String, scope: CoroutineScope, scrollState: LazyListState) {
         val citation = quotedMessage.value?.let { quotedMessage ->
             quotedMessage.text?.let { text ->
                 CitationVO(
@@ -74,10 +74,11 @@ class TradeChatPresenter(
                 )
             }
         }
-            launchUI {
+        launchUI {
             withContext(IODispatcher) {
                 tradeChatMessagesServiceFacade.sendChatMessage(text, citation)
             }
+            scope.launch { scrollState.animateScrollToItem(Int.MAX_VALUE) }
             _quotedMessage.value = null
         }
     }

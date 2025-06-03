@@ -25,7 +25,6 @@ fun TradeChatScreen() {
     val presenter: TradeChatPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    var chatText by remember { mutableStateOf("") }
     val scrollState = rememberLazyListState()
     val scope = rememberCoroutineScope() // TODO: How scopes are to be used?
     val selectedTrade by presenter.selectedTrade.collectAsState()
@@ -42,6 +41,7 @@ fun TradeChatScreen() {
     BisqStaticScaffold(
         topBar = { TopBar(title = "Chat - " + selectedTrade?.shortTradeId) },
     ) {
+
         ChatMessageList(
             messages = sortedChatMessages,
             presenter = presenter,
@@ -55,14 +55,10 @@ fun TradeChatScreen() {
             onReportUser = { message -> presenter.onReportUser(message) },
         )
         ChatInputField(
-            //value = chatText,
             quotedMessage = quotedMessage,
             placeholder = "chat.message.input.prompt".i18n(),
-            // onValueChanged = { chatText = it },
             onMessageSent = { text ->
-                chatText = ""
-                presenter.sendChatMessage(text)
-                scope.launch { scrollState.animateScrollToItem(Int.MAX_VALUE) }
+                presenter.sendChatMessage(text, scope, scrollState)
             },
             onCloseReply = { presenter.onReply(null) }
         )
