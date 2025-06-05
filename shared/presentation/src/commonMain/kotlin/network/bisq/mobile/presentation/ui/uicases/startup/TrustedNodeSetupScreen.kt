@@ -7,9 +7,13 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +35,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.QuestionIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
 import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -45,6 +50,7 @@ interface ITrustedNodeSetupPresenter : ViewPresenter {
     val trustedNodeVersion: StateFlow<String>
     val isConnected: StateFlow<Boolean>
     val isLoading: StateFlow<Boolean>
+    val isChangingTrustedNode: StateFlow<Boolean>
 
     fun updateBisqApiUrl(newUrl: String, isValid: Boolean)
 
@@ -55,7 +61,7 @@ interface ITrustedNodeSetupPresenter : ViewPresenter {
 
     fun testConnection(isWorkflow: Boolean)
 
-    fun navigateToNextScreen()
+    fun navigateToNextScreen(isWorkflow: Boolean)
 
     fun goBackToSetupScreen()
 
@@ -72,7 +78,57 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val isVersionValid = presenter.isBisqApiVersionValid.collectAsState().value
     val isLoading = presenter.isLoading.collectAsState().value
     val trustedNodeVersion = presenter.trustedNodeVersion.collectAsState().value
+    val isChangingTrustedNode = presenter.isChangingTrustedNode.collectAsState().value
     val clipboardManager = LocalClipboardManager.current
+    
+    // Add state for dialog
+    val showConfirmDialog = remember { mutableStateOf(false) }
+
+    // Add dialog component
+    if (showConfirmDialog.value) {
+        BisqDialog(
+            onDismissRequest = { showConfirmDialog.value = false }
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Warning,
+                        contentDescription = "Warning",
+                        tint = BisqTheme.colors.danger
+                    )
+                    BisqGap.H1()
+                    BisqText.largeRegular("Warning") // TODO:i18n
+                }
+                
+                BisqGap.V2()
+                
+                BisqText.baseRegular(
+                    "Changing your trusted node will require setting up your profile again. All your current profile data will be lost.\n\nDo you want to continue?" // TODO:i18n
+                )
+                
+                BisqGap.V2()
+                
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    BisqButton(
+                        text = "Cancel", // TODO:i18n
+                        type = BisqButtonType.Grey,
+                        onClick = { showConfirmDialog.value = false }
+                    )
+                    
+                    BisqButton(
+                        text = "Continue", // TODO:i18n
+                        onClick = { 
+                            showConfirmDialog.value = false
+                            presenter.testConnection(isWorkflow)
+                        }
+                    )
+                }
+            }
+        }
+    }
 
     val menuTree: MenuItem = settingsPresenter.menuTree()
     val menuPath = remember { mutableStateListOf(menuTree) }
@@ -114,7 +170,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     BisqButton(
                         iconOnly = { QuestionIcon() },
                         backgroundColor = BisqTheme.colors.backgroundColor,
-                        onClick = { /* presenter.navigateToNextScreen() */ },
+                        onClick = { /* presenter.navigateToNextScreen(isWorkflow) */ },
                         disabled = isLoading,
                     )
                 },
@@ -178,7 +234,11 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             BisqButton(
                 text = "Test Connection", // TODO:i18n
                 onClick = {
-                    presenter.testConnection(isWorkflow)
+                    if (isChangingTrustedNode) {
+                        showConfirmDialog.value = true
+                    } else {
+                        presenter.testConnection(isWorkflow)
+                    }
                 },
                 padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                 disabled = !presenter.isBisqApiUrlValid.collectAsState().value,
@@ -207,7 +267,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     BisqButton(
                         text = if (isWorkflow) "action.next".i18n() else "action.save".i18n(),
                         color = BisqTheme.colors.light_grey10,
-                        onClick = { if (isWorkflow) presenter.navigateToNextScreen() else presenter.testConnection(false) },
+                        onClick = { presenter.navigateToNextScreen(isWorkflow) },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )
                 }

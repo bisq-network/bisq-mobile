@@ -10,6 +10,7 @@ import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -17,6 +18,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class TrustedNodeSetupPresenter(
     mainPresenter: MainPresenter,
+    private val userRepository: UserRepository,
     private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider
@@ -44,6 +46,9 @@ class TrustedNodeSetupPresenter(
     private val _isLoading = MutableStateFlow(false)
     override val isLoading: StateFlow<Boolean> = _isLoading
 
+    private val _isChangingTrustedNode = MutableStateFlow(false)
+    override val isChangingTrustedNode: StateFlow<Boolean> = _isChangingTrustedNode
+
     override fun onViewAttached() {
         super.onViewAttached()
         initialize()
@@ -68,10 +73,14 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun updateBisqApiUrl(newUrl: String, isValid: Boolean) {
-        // log.w { "$newUrl: $isValid" }
-        _isBisqApiUrlValid.value = isValid
+        val previousUrl = _bisqApiUrl.value
         _bisqApiUrl.value = newUrl
-        _isConnected.value = false
+        _isBisqApiUrlValid.value = isValid
+        
+        // Check if this is a change from a previously valid URL
+        if (previousUrl.isNotEmpty() && previousUrl != newUrl && _isConnected.value) {
+            _isChangingTrustedNode.value = true
+        }
     }
 
     override fun validateWsUrl(url: String): String? {
@@ -112,14 +121,28 @@ class TrustedNodeSetupPresenter(
                         webSocketClientProvider.get().await()
                         validateVersion()
                     }
+                    
                     if (isCompatibleVersion) {
-                        log.d { "Connected successfully to ${_bisqApiUrl.value} is workflow: $isWorkflow" }
-                        showSnackbar("Connected successfully to ${_bisqApiUrl.value}, settings updated")
-                        if (!isWorkflow) {
-                            _isLoading.value = false
+                        _isConnected.value = true
+                        
+                        // If we're changing trusted nodes, reset profile and redirect
+                        if (_isChangingTrustedNode.value) {
+                            withContext(IODispatcher) {
+                                userRepository.fetch()?.let {
+                                    userRepository.delete(it)
+                                }
+                            }
+                            
+                            showSnackbar("Trusted node changed. You'll need to set up your profile again.")
+                            _isChangingTrustedNode.value = false
+                            
+                            // Navigate to onboarding
+                            if (!isWorkflow) {
+                                navigateTo(Routes.Onboarding)
+                            }
+                        } else if (!isWorkflow) {
                             navigateBack()
                         }
-                        _isConnected.value = true
                     } else {
                         webSocketClientProvider.get().disconnect(isTest = true)
                         log.d { "Invalid version cannot connect" }
@@ -163,9 +186,14 @@ class TrustedNodeSetupPresenter(
         settingsRepository.update(updatedSettings)
     }
 
-    override fun navigateToNextScreen() {
+    override fun navigateToNextScreen(isWorkflow: Boolean) {
         // access to profile setup should be handled by splash
-        goBackToSetupScreen()
+        log.d { "Navigating to next screen (Workflow: ${isWorkflow}" }
+        if (isWorkflow) {
+            navigateTo(Routes.Onboarding)
+        } else {
+            navigateTo(Routes.TabContainer)
+        }
     }
 
     override fun goBackToSetupScreen() {
