@@ -194,10 +194,12 @@ class OfferbookPresenter(
                     .filterNotNull()
                     .toSet()
             }
-            if (!isDevMode()) {
-                includeOfferPredicate.value = { item ->
-                    item.bisqEasyOffer.id !in invalidSellOfferIds
+
+            _offerbookListItems.value = offerbookListItems.value.map { item ->
+                if (item.bisqEasyOffer.id in invalidSellOfferIds) {
+                    item.isInvalidDueToReputation = true
                 }
+                item
             }
         }
     }
@@ -218,7 +220,7 @@ class OfferbookPresenter(
                                 navigateTo(Routes.TakeOfferReviewTrade)
                             }
                         } else {
-                            _showNotEnoughReputationDialog.value = true
+                            showReputationRequirementInfo(item)
                         }
                     } catch (e: Exception) {
                         log.e("canTakeOffer call failed", e)
@@ -345,6 +347,91 @@ class OfferbookPresenter(
             showSnackbar(
                 if (isDemo()) "Create offer is disabled in demo mode" else "Cannot create offer at this time, please try again later"
             )
+        }
+    }
+
+    fun showReputationRequirementInfo(item: OfferItemPresentationModel) {
+        launchUI {
+            try {
+                // Reuse the same logic from canTakeOffer but just to show info
+                val bisqEasyOffer = item.bisqEasyOffer
+                val selectedUserProfile = userProfileServiceFacade.getSelectedUserProfile()
+                require(selectedUserProfile != null) { "SelectedUserProfile is null" }
+                setupReputationDialogContent(item)
+                // Show the dialog
+                _showNotEnoughReputationDialog.value = true
+            } catch (e: Exception) {
+                log.e("showReputationRequirementInfo call failed", e)
+            }
+        }
+    }
+
+    private suspend fun setupReputationDialogContent(item: OfferItemPresentationModel) {
+        val bisqEasyOffer = item.bisqEasyOffer
+        
+        // Get required reputation scores
+        val requiredReputationScoreForMaxOrFixed =
+            BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(
+                marketPriceServiceFacade,
+                bisqEasyOffer
+            ) ?: 0L
+        
+        val requiredReputationScoreForMinOrFixed =
+            BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
+                marketPriceServiceFacade,
+                bisqEasyOffer
+            ) ?: 0L
+        
+        // Format amounts for display
+        val market = bisqEasyOffer.market
+        val quoteCurrencyCode = market.quoteCurrencyCode
+        val minFiatAmount = AmountFormatter.formatAmount(
+            FiatVOFactory.from(bisqEasyOffer.getFixedOrMinAmount(), quoteCurrencyCode),
+            useLowPrecision = true,
+            withCode = true
+        )
+        val maxFiatAmount = AmountFormatter.formatAmount(
+            FiatVOFactory.from(bisqEasyOffer.getFixedOrMaxAmount(), quoteCurrencyCode),
+            useLowPrecision = true,
+            withCode = true
+        )
+        
+        // Get user's reputation score
+        val selectedUserProfile = userProfileServiceFacade.getSelectedUserProfile()
+        val userProfileId = selectedUserProfile?.id ?: ""
+        val userScore = withContext(IODispatcher) {
+            reputationServiceFacade.getReputation(userProfileId).getOrNull()?.totalScore ?: 0L
+        }
+        
+        val isAmountRangeOffer = bisqEasyOffer.amountSpec is RangeAmountSpecVO
+        val link = "hyperlinks.openInBrowser.attention".i18n("https://bisq.wiki/Reputation#How_to_build_reputation")
+        
+        // I am as taker the buyer if the offer direction is SELL
+        if (bisqEasyOffer.direction == DirectionEnum.SELL) {
+            // This shouldn't happen as we're showing the dialog for invalid offers
+            // But keeping the logic for completeness
+            notEnoughReputationHeadline = "chat.message.takeOffer.buyer.invalidOffer.headline".i18n()
+            val warningKey = if (isAmountRangeOffer) 
+                "chat.message.takeOffer.buyer.invalidOffer.rangeAmount.text"
+            else 
+                "chat.message.takeOffer.buyer.invalidOffer.fixedAmount.text"
+            notEnoughReputationMessage = warningKey.i18n(
+                userScore,
+                if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,
+                if (isAmountRangeOffer) minFiatAmount else maxFiatAmount
+            ) + "\n\n" + "mobile.reputation.learnMore".i18n() + "\n\n\n" + link
+        } else {
+            // I am as taker the seller
+            notEnoughReputationHeadline = "chat.message.takeOffer.seller.insufficientScore.headline".i18n()
+            val warningKey = if (isAmountRangeOffer) 
+                "chat.message.takeOffer.seller.insufficientScore.rangeAmount.warning"
+            else 
+                "chat.message.takeOffer.seller.insufficientScore.fixedAmount.warning"
+            notEnoughReputationMessage = warningKey.i18n(
+                userScore,
+                if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,
+                if (isAmountRangeOffer) minFiatAmount else maxFiatAmount
+            ) + "\n\n" + "mobile.reputation.buildReputation".i18n() + "\n\n\n" + link
         }
     }
 }

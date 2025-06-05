@@ -73,7 +73,13 @@ fun OfferbookScreen() {
             items(sortedFilteredOffers) { item ->
                 OfferCard(
                     item,
-                    onSelectOffer = { presenter.onOfferSelected(item) },
+                    onSelectOffer = { 
+                        if (item.isInvalidDueToReputation) {
+                            presenter.showReputationRequirementInfo(item)
+                        } else {
+                            presenter.onOfferSelected(item)
+                        }
+                    },
                 )
             }
         }

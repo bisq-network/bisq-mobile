@@ -26,8 +26,6 @@ class NumOffersObserver(
     }
 
     private fun updateNumOffers() {
-        // TODO offer amount per market needs to be filtered with same logic
-        // that filters the offerbook list otherwise users will see "lost" offers
         setNumOffers(bisqEasyOfferbookMessageService.getOffers(channel).count().toInt())
     }
 }

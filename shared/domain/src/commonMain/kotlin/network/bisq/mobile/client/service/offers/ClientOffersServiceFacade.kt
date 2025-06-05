@@ -143,8 +143,6 @@ class ClientOffersServiceFacade(
             val webSocketEventPayload: WebSocketEventPayload<Map<String, Int>> =
                 WebSocketEventPayload.from(json, webSocketEvent)
             val numOffersByMarketCode = webSocketEventPayload.payload
-            // TODO offer amount per market needs to be filtered with same logic
-            // that filters the offerbook list otherwise users will see "lost" offers
             offerbookMarketItems.value.map { marketListItem ->
                 val numOffers = numOffersByMarketCode[marketListItem.market.quoteCurrencyCode] ?: 0
                 marketListItem.setNumOffers(numOffers)

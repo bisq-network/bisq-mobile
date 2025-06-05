@@ -53,6 +53,8 @@ class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentation
     private val _makersReputationScore = MutableStateFlow(offerItemPresentationDto.reputationScore)
     val makersReputationScore: StateFlow<ReputationScoreVO> get() = _makersReputationScore
 
+    var isInvalidDueToReputation: Boolean = false
+
     // TODO
     fun setFormattedPrice(value: String) {
         _formattedPrice.value = value
