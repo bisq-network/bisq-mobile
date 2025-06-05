@@ -44,6 +44,10 @@ class OfferbookPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade
 ) : BasePresenter(mainPresenter) {
+    companion object {
+        const val REPUTATION_WIKI_URL = "https://bisq.wiki/Reputation#How_to_build_reputation"
+    }
+
     private val _offerbookListItems: MutableStateFlow<List<OfferItemPresentationModel>> = MutableStateFlow(emptyList())
     val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = _offerbookListItems
 
@@ -286,7 +290,7 @@ class OfferbookPresenter(
 
         val canBuyerTakeOffer = sellersScore >= requiredReputationScoreForMinOrFixed
         if (!canBuyerTakeOffer) {
-            val link = "hyperlinks.openInBrowser.attention".i18n("https://bisq.wiki/Reputation#How_to_build_reputation")
+            val link = "hyperlinks.openInBrowser.attention".i18n(REPUTATION_WIKI_URL)
             if (bisqEasyOffer.direction == DirectionEnum.SELL) {
                 // I am as taker the buyer. We check if seller has the required reputation
                 val learnMore = "mobile.reputation.learnMore".i18n()
@@ -362,21 +366,10 @@ class OfferbookPresenter(
 
     fun onLearnHowToBuildReputation() {
         _showNotEnoughReputationDialog.value = false
-        navigateToUrl("https://bisq.wiki/Reputation#How_to_build_reputation")
+        navigateToUrl(REPUTATION_WIKI_URL)
     }
 
     private suspend fun setupReputationDialogContent(item: OfferItemPresentationModel) {
-        val bisqEasyOffer = item.bisqEasyOffer
-        
-        // Get user's reputation score
-        val selectedUserProfile = userProfileServiceFacade.getSelectedUserProfile()
-        val userProfileId = selectedUserProfile?.id ?: ""
-        val userScore = withContext(IODispatcher) {
-            reputationServiceFacade.getReputation(userProfileId).getOrNull()?.totalScore ?: 0L
-        }
-        
-        // Simple message for now
-        notEnoughReputationHeadline = "Insufficient Reputation"
-        notEnoughReputationMessage = "Your current reputation score ($userScore) is not high enough to take this offer. Build more reputation to access this offer."
+        canTakeOffer(item)
     }
 }

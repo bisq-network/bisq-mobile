@@ -137,6 +137,7 @@ fun OfferCard(
             if (isInvalidDueToReputation) {
                 BisqGap.V1()
                 BisqText.smallRegular(
+                    // TODO i18n
                     text = "Insufficient reputation to take this offer",
                     color = BisqTheme.colors.warning
                 )
