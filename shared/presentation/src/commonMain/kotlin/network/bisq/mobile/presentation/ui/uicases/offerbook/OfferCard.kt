@@ -78,16 +78,10 @@ fun OfferCard(
             .background(color = backgroundColor)
             .height(height)
             .padding(BisqUIConstants.ScreenPadding)
-            .then(
-                if (isInvalidDueToReputation) {
-                    Modifier
-                } else {
-                    Modifier.clickable(
-                        interactionSource = remember { MutableInteractionSource() },
-                        indication = null,
-                        onClick = onSelectOffer
-                    )
-                }
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onSelectOffer
             ),
         verticalAlignment = Alignment.Top,
         horizontalArrangement = Arrangement.Start
