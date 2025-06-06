@@ -75,6 +75,8 @@ fun CreateOfferTradePriceSelectorScreen() {
                         value = formattedPercentagePrice,
                         keyboardType = KeyboardType.Decimal,
                         onValueChange = { it, isValid -> presenter.onPercentagePriceChanged(it, isValid) },
+                        numberWithTwoDecimals = true,
+                        valueSuffix = "%",
                         validation = {
                             val parsedValue = it.toDoubleOrNullLocaleAware()
                             if (parsedValue == null) {
@@ -114,7 +116,8 @@ fun CreateOfferTradePriceSelectorScreen() {
                         label = "bisqEasy.price.percentage.inputBoxText".i18n(),
                         value = formattedPercentagePrice,
                         onValueChange = { it, isValid -> },// Deactivated
-                        indicatorColor = BisqTheme.colors.mid_grey10
+                        indicatorColor = BisqTheme.colors.mid_grey10,
+                        valueSuffix = "%",
                     )
                 }
             }
