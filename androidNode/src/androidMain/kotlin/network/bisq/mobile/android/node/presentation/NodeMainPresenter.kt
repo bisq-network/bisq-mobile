@@ -2,6 +2,7 @@ package network.bisq.mobile.android.node.presentation
 
 import android.app.Activity
 import network.bisq.mobile.android.node.AndroidApplicationService
+import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.android.node.MainActivity
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.domain.UrlLauncher
@@ -55,6 +56,10 @@ class NodeMainPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         initNodeServices()
+    }
+
+    override fun isDevMode(): Boolean {
+        return isDemo() || BuildNodeConfig.DEBUG
     }
 
     private fun initNodeServices() {

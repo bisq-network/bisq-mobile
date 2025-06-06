@@ -100,6 +100,10 @@ open class ClientMainPresenter(
         activateServices()
     }
 
+    override fun isDevMode(): Boolean {
+        return isDemo() || BuildConfig.DEBUG
+    }
+
     private fun activateServices() {
         runCatching {
             applicationBootstrapFacade.activate()

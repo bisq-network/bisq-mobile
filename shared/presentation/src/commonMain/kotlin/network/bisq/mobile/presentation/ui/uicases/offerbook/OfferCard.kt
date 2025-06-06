@@ -37,14 +37,17 @@ fun OfferCard(
     onSelectOffer: () -> Unit,
 ) {
     val userName = item.userName.collectAsState().value
-    val sellColor = BisqTheme.colors.danger.copy(alpha = 0.8f) //todo add sell color
+    val sellColor = BisqTheme.colors.danger.copy(alpha = 0.8f)
     val buyColor = BisqTheme.colors.primary.copy(alpha = 0.8f)
     val myOfferColor = BisqTheme.colors.mid_grey20
     val isMyOffer = item.isMyOffer
+    val isInvalidDueToReputation = item.isInvalidDueToReputation
+    
     val directionalLabel: String
     val directionalLabelColor: Color
     val makersDirection = item.bisqEasyOffer.direction
     val takersDirection = makersDirection.mirror
+    
     if (isMyOffer) {
         directionalLabel = "My offer to ${makersDirection.displayString} Bitcoin"
         directionalLabelColor = myOfferColor
@@ -59,7 +62,13 @@ fun OfferCard(
     }
 
     val myOfferBackgroundColor = BisqTheme.colors.primary.copy(alpha = 0.15f)
-    val backgroundColor = if (isMyOffer) myOfferBackgroundColor else BisqTheme.colors.dark_grey40
+    val invalidOfferBackgroundColor = BisqTheme.colors.dark_grey40.copy(alpha = 0.5f)
+    val backgroundColor = when {
+        isMyOffer -> myOfferBackgroundColor
+        isInvalidDueToReputation -> invalidOfferBackgroundColor
+        else -> BisqTheme.colors.dark_grey40
+    }
+    
     val height = 140.dp
 
     Row(
@@ -78,11 +87,11 @@ fun OfferCard(
         horizontalArrangement = Arrangement.Start
     ) {
         UserProfile(
-            item.makersUserProfile,
-            item.makersReputationScore,
-            item.bisqEasyOffer.supportedLanguageCodes,
-            false,
-            Modifier.weight(1.0F)
+            user = item.makersUserProfile,
+            reputation = item.makersReputationScore,
+            supportedLanguageCodes = item.bisqEasyOffer.supportedLanguageCodes,
+            showUserName = false,
+            modifier = Modifier.weight(1.0F)
         )
 
         BisqGap.H1()
@@ -124,7 +133,15 @@ fun OfferCard(
             BisqGap.V1()
 
             PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
+            
+            if (isInvalidDueToReputation) {
+                BisqGap.V1()
+                BisqText.smallRegular(
+                    // TODO i18n
+                    text = "Insufficient reputation to take this offer",
+                    color = BisqTheme.colors.warning
+                )
+            }
         }
-
     }
 }

@@ -44,6 +44,10 @@ class OfferbookPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade
 ) : BasePresenter(mainPresenter) {
+    companion object {
+        const val REPUTATION_WIKI_URL = "https://bisq.wiki/Reputation#How_to_build_reputation"
+    }
+
     private val _offerbookListItems: MutableStateFlow<List<OfferItemPresentationModel>> = MutableStateFlow(emptyList())
     val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> = _offerbookListItems
 
@@ -194,8 +198,12 @@ class OfferbookPresenter(
                     .filterNotNull()
                     .toSet()
             }
-            includeOfferPredicate.value = { item ->
-                item.bisqEasyOffer.id !in invalidSellOfferIds
+
+            _offerbookListItems.value = offerbookListItems.value.map { item ->
+                if (item.bisqEasyOffer.id in invalidSellOfferIds) {
+                    item.isInvalidDueToReputation = true
+                }
+                item
             }
         }
     }
@@ -216,7 +224,7 @@ class OfferbookPresenter(
                                 navigateTo(Routes.TakeOfferReviewTrade)
                             }
                         } else {
-                            _showNotEnoughReputationDialog.value = true
+                            showReputationRequirementInfo(item)
                         }
                     } catch (e: Exception) {
                         log.e("canTakeOffer call failed", e)
@@ -231,14 +239,6 @@ class OfferbookPresenter(
             )
             deselectOffer()
         }
-    }
-
-    fun onLearnHowToBuildReputation() {
-        _showNotEnoughReputationDialog.value = false
-    }
-
-    fun onDismissNotEnoughReputationDialog() {
-        _showNotEnoughReputationDialog.value = false
     }
 
     private suspend fun canTakeOffer(item: OfferItemPresentationModel): Boolean {
@@ -290,7 +290,7 @@ class OfferbookPresenter(
 
         val canBuyerTakeOffer = sellersScore >= requiredReputationScoreForMinOrFixed
         if (!canBuyerTakeOffer) {
-            val link = "hyperlinks.openInBrowser.attention".i18n("https://bisq.wiki/Reputation#How_to_build_reputation")
+            val link = "hyperlinks.openInBrowser.attention".i18n(REPUTATION_WIKI_URL)
             if (bisqEasyOffer.direction == DirectionEnum.SELL) {
                 // I am as taker the buyer. We check if seller has the required reputation
                 val learnMore = "mobile.reputation.learnMore".i18n()
@@ -344,5 +344,32 @@ class OfferbookPresenter(
                 if (isDemo()) "Create offer is disabled in demo mode" else "Cannot create offer at this time, please try again later"
             )
         }
+    }
+
+    fun showReputationRequirementInfo(item: OfferItemPresentationModel) {
+        launchUI {
+            try {
+                // Set up the dialog content
+                setupReputationDialogContent(item)
+                
+                // Show the dialog
+                _showNotEnoughReputationDialog.value = true
+            } catch (e: Exception) {
+                log.e("showReputationRequirementInfo call failed", e)
+            }
+        }
+    }
+
+    fun onDismissNotEnoughReputationDialog() {
+        _showNotEnoughReputationDialog.value = false
+    }
+
+    fun onLearnHowToBuildReputation() {
+        _showNotEnoughReputationDialog.value = false
+        navigateToUrl(REPUTATION_WIKI_URL)
+    }
+
+    private suspend fun setupReputationDialogContent(item: OfferItemPresentationModel) {
+        canTakeOffer(item)
     }
 }
