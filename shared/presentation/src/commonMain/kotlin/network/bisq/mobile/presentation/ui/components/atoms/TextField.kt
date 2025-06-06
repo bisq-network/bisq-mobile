@@ -120,9 +120,19 @@ fun BisqTextField(
     val finalLabelColor by remember(disabled) {
         mutableStateOf(
             if (disabled) {
-                grey2Color
+                BisqTheme.colors.dark_grey50
             } else {
                 whiteColor
+            }
+        )
+    }
+
+    val finalTextStyle by remember(disabled) {
+        mutableStateOf(
+            if(disabled) {
+                textStyle.copy(color = BisqTheme.colors.mid_grey10)
+            } else {
+                textStyle
             }
         )
     }
@@ -140,6 +150,16 @@ fun BisqTextField(
     // change in other parameters like BitcoinLnAddressField::type
     LaunchedEffect(validation) {
         validationError = validation?.invoke(value)
+    }
+
+    val finalBorderRadius by remember(isFocused) {
+        mutableStateOf(
+            if(isFocused) {
+                0.dp
+            } else {
+                6.dp
+            }
+        )
     }
 
     Column(
@@ -166,7 +186,7 @@ fun BisqTextField(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(shape = RoundedCornerShape(6.dp))
+                .clip(shape = RoundedCornerShape(topStart = finalBorderRadius, topEnd = finalBorderRadius))
                 .background(color = finalBackgroundColor)
                 .drawBehind {
                     if (!isSearch) {
@@ -242,7 +262,7 @@ fun BisqTextField(
                 ),
                 cursorBrush = SolidColor(BisqTheme.colors.primary),
                 enabled = !disabled,
-                textStyle = textStyle,
+                textStyle = finalTextStyle,
                 decorationBox = { innerTextField ->
 
                     Row(

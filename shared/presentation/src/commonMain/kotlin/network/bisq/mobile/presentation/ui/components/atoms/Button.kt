@@ -69,7 +69,7 @@ fun BisqButton(
     val grey2 = BisqTheme.colors.mid_grey20
 
     val finalBackgroundColor = when (type) {
-        BisqButtonType.Default -> if (disabled) backgroundColor.copy(alpha = 0.75F) else backgroundColor
+        BisqButtonType.Default -> if (disabled) BisqTheme.colors.dark_grey50.copy(alpha = 0.75F) else backgroundColor
         BisqButtonType.Grey -> if (disabled) BisqTheme.colors.dark_grey50.copy(alpha = 0.75F) else BisqTheme.colors.dark_grey50
         BisqButtonType.Danger -> if (disabled) BisqTheme.colors.danger.copy(alpha = 0.75F) else BisqTheme.colors.danger
         BisqButtonType.Outline -> Color.Transparent
