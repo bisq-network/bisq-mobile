@@ -153,7 +153,18 @@ class WebSocketClientProvider(
                                         connectionReady.complete(true)
                                     }
                                 } else {
-                                    log.v { "skip url update, no change"}
+                                    if (currentClient?.isConnected() == true) {
+                                        log.v { "skip url update, no change"}
+                                    } else {
+                                        log.v { "url update: no change but found client disconnected"}
+                                        currentClient?.let {
+                                            log.v { "url update: connecting with existing setup client"}
+                                            it.connect()
+                                            if (!connectionReady.isCompleted) {
+                                                connectionReady.complete(true)
+                                            }
+                                        }
+                                    }
                                 }
                             } catch (e: Exception) {
                                 log.e(e) { "Error parsing or connecting to new URL $url" }

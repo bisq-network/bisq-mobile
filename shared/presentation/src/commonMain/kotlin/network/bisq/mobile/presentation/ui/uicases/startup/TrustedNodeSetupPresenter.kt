@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.Settings
@@ -190,7 +191,12 @@ class TrustedNodeSetupPresenter(
         // access to profile setup should be handled by splash
         log.d { "Navigating to next screen (Workflow: ${isWorkflow}" }
         if (isWorkflow) {
-            navigateTo(Routes.Onboarding)
+            val user = runBlocking { return@runBlocking userRepository.fetch() }
+            if (user == null) {
+                navigateTo(Routes.Onboarding)
+            } else {
+                navigateTo(Routes.TabContainer)
+            }
         } else {
             navigateTo(Routes.TabContainer)
         }
