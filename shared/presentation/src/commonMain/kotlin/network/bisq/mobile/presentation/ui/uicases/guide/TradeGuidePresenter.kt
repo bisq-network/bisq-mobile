@@ -42,9 +42,7 @@ class TradeGuidePresenter(
     }
 
     fun navigateSecurityLearnMore() {
-        disableInteractive()
         navigateToUrl("https://bisq.wiki/Bisq_Easy")
-        enableInteractive()
     }
 
 }

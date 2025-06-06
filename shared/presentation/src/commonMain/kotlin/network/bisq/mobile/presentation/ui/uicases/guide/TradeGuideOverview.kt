@@ -24,6 +24,7 @@ fun TradeGuideOverview() {
         prevOnClick = presenter::prevClick,
         nextOnClick = presenter::overviewNextClick,
         horizontalAlignment = Alignment.Start,
+        isInteractive = true,
     ) {
         BisqText.h3Regular("bisqEasy.tradeGuide.welcome.headline".i18n())
 

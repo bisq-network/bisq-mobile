@@ -26,7 +26,7 @@ fun TradeGuideSecurity() {
         prevOnClick = presenter::prevClick,
         nextOnClick = presenter::securityNextClick,
         horizontalAlignment = Alignment.Start,
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = true,
     ) {
         BisqText.h3Regular("bisqEasy.tradeGuide.security.headline".i18n())
 

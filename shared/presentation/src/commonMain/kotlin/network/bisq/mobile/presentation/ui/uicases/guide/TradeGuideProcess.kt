@@ -26,7 +26,7 @@ fun TradeGuideProcess() {
         prevOnClick = presenter::prevClick,
         nextOnClick = presenter::processNextClick,
         horizontalAlignment = Alignment.Start,
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = true,
     ) {
         BisqText.h3Regular("bisqEasy.tradeGuide.process.headline".i18n())
 

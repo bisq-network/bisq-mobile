@@ -31,7 +31,7 @@ fun TradeGuideTradeRules() {
         nextOnClick = presenter::tradeRulesNextClick,
         nextDisabled = !_userAgreed,
         horizontalAlignment = Alignment.Start,
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = true,
         showJumpToBottom = true
     ) {
         BisqText.h3Regular("bisqEasy.tradeGuide.rules.headline".i18n())
