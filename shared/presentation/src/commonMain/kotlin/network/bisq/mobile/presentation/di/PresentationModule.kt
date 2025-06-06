@@ -112,7 +112,7 @@ val presentationModule = module {
         )
     }
 
-    single {
+    factory {
         TrustedNodeSetupPresenter(
             get(),
             get(),

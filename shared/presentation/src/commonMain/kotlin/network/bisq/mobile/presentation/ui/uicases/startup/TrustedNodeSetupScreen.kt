@@ -51,6 +51,8 @@ interface ITrustedNodeSetupPresenter : ViewPresenter {
     val isConnected: StateFlow<Boolean>
     val isLoading: StateFlow<Boolean>
 
+    fun isNewTrustedNodeUrl(): Boolean
+
     fun updateBisqApiUrl(newUrl: String, isValid: Boolean)
 
     /**
@@ -228,11 +230,16 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
         BisqGap.V4()
 
+        // TODO lots of code repetition for small changes here needs a refactor
         if (!isConnected || (isConnected && !isVersionValid)) {
             BisqButton(
                 text = "Test Connection", // TODO:i18n
                 onClick = {
-                    presenter.testConnection(isWorkflow)
+                    if (presenter.isNewTrustedNodeUrl()) {
+                        showConfirmDialog.value = true
+                    } else {
+                        presenter.testConnection(isWorkflow)
+                    }
                 },
                 padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                 disabled = !presenter.isBisqApiUrlValid.collectAsState().value,
@@ -250,7 +257,13 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     BisqButton(
                         text = "Test Connection", // TODO:i18n
                         color = if (bisqApiUrl.isEmpty()) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
-                        onClick = { presenter.testConnection(isWorkflow) },
+                        onClick = {
+                            if (presenter.isNewTrustedNodeUrl()) {
+                                showConfirmDialog.value = true
+                            } else {
+                                presenter.testConnection(isWorkflow)
+                            }
+                        },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )
                 }

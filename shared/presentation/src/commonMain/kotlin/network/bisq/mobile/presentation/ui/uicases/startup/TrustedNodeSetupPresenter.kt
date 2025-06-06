@@ -76,6 +76,18 @@ class TrustedNodeSetupPresenter(
         _isBisqApiUrlValid.value = isValid
     }
 
+    override fun isNewTrustedNodeUrl(): Boolean {
+        return runBlocking {
+            var isNewTrustedNode = false
+            settingsRepository.fetch()?.let {
+                if (it.bisqApiUrl.isNotBlank() && it.bisqApiUrl != _bisqApiUrl.value) {
+                    isNewTrustedNode = true
+                }
+            }
+            return@runBlocking isNewTrustedNode
+        }
+    }
+
     override fun validateWsUrl(url: String): String? {
         val wsUrlPattern =
             """^(ws|wss):\/\/(([a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|localhost)|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))(:\d{1,5})$""".toRegex()
@@ -126,13 +138,7 @@ class TrustedNodeSetupPresenter(
                                     userRepository.delete(it)
                                 }
                             }
-                            
-                            showSnackbar("Trusted node changed. You'll need to set up your profile again.")
-
-                            // Navigate to onboarding
-                            if (!isWorkflow) {
-                                navigateTo(Routes.Onboarding)
-                            }
+                            navigateToNextScreen(isWorkflow)
                         } else if (!isWorkflow) {
                             navigateBack()
                         }
@@ -181,9 +187,10 @@ class TrustedNodeSetupPresenter(
 
     override fun navigateToNextScreen(isWorkflow: Boolean) {
         // access to profile setup should be handled by splash
-        log.d { "Navigating to next screen (Workflow: ${isWorkflow}" }
+        log.d { "Navigating to next screen (Workflow: $isWorkflow" }
+        // TODO handle also user scheduled to be deleted when we implement settings change trusted node
+        val user = runBlocking { return@runBlocking userRepository.fetch() }
         if (isWorkflow) {
-            val user = runBlocking { return@runBlocking userRepository.fetch() }
             if (user == null) {
                 navigateTo(Routes.Onboarding)
             } else {
