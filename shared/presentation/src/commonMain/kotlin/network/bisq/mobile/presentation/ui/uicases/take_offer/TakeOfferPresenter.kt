@@ -35,6 +35,7 @@ class TakeOfferPresenter(
         var hasMultipleQuoteSidePaymentMethods: Boolean = false
         var hasMultipleBaseSidePaymentMethods: Boolean = false
         var hasAmountRange: Boolean = false
+        lateinit var originalPriceQuote: PriceQuoteVO
         lateinit var priceQuote: PriceQuoteVO
         lateinit var quoteAmount: FiatVO
         lateinit var baseAmount: CoinVO
@@ -57,6 +58,10 @@ class TakeOfferPresenter(
         val amountSpec = bisqEasyOffer.amountSpec
         takeOfferModel.hasAmountRange =
             amountSpec is network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
+
+        val marketVO = takeOfferModel.offerItemPresentationVO.bisqEasyOffer.market
+        val marketPriceItem: MarketPriceItem? = marketPriceServiceFacade.findMarketPriceItem(marketVO)
+        takeOfferModel.originalPriceQuote = marketPriceItem!!.priceQuote
 
         val priceQuote: PriceQuoteVO = getMostRecentPriceQuote()
         takeOfferModel.priceQuote = priceQuote

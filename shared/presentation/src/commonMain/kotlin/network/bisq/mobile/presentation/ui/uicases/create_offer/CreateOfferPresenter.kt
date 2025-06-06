@@ -60,6 +60,7 @@ class CreateOfferPresenter(
 
         var priceType: PriceType = PriceType.PERCENTAGE
         var percentagePriceValue: Double = 0.0
+        lateinit var originalPriceQuote: PriceQuoteVO
         lateinit var priceQuote: PriceQuoteVO
 
         lateinit var availableQuoteSidePaymentMethods: List<String>
@@ -77,6 +78,7 @@ class CreateOfferPresenter(
 
         createOfferModel.apply {
             marketPriceServiceFacade.selectedMarketPriceItem.value?.let {
+                originalPriceQuote = it.priceQuote
                 priceQuote = it.priceQuote
             }
         }

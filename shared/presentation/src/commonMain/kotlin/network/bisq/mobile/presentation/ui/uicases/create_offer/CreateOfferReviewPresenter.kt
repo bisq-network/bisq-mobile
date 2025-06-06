@@ -90,7 +90,7 @@ class CreateOfferReviewPresenter(
         if (percentagePriceValue == 0.0) {
             priceDetails = "bisqEasy.tradeWizard.review.priceDetails".i18n()
         } else {
-            val priceWithCode = PriceQuoteFormatter.format(createOfferModel.priceQuote, true, true)
+            val priceWithCode = PriceQuoteFormatter.format(createOfferModel.originalPriceQuote, true, true)
             val percentagePrice = PercentageFormatter.format(percentagePriceValue, true)
             val aboveOrBelow: String = if (percentagePriceValue > 0) "above" else "below" //todo
             priceDetails = if (createOfferModel.priceType == CreateOfferPresenter.PriceType.PERCENTAGE) {
