@@ -71,7 +71,6 @@ class TrustedNodeSetupPresenter(
     }
 
     override fun updateBisqApiUrl(newUrl: String, isValid: Boolean) {
-        val previousUrl = _bisqApiUrl.value
         _bisqApiUrl.value = newUrl
         _isBisqApiUrlValid.value = isValid
     }
@@ -102,7 +101,9 @@ class TrustedNodeSetupPresenter(
 
     override fun testConnection(isWorkflow: Boolean) {
         if (!isWorkflow) {
-            // FIXME temporary solution to avoid changing node without the corresponding profile reset
+            // TODO implement feature to allow changing from settings
+            // this is not trivial from UI perspective, its making NavGraph related code to crash when
+            // landing back in the TabContainer Home.
             showSnackbar("If you want to use a different node, you need to remove the app storage or uninstall/reinstall")
             return
         }
@@ -189,15 +190,17 @@ class TrustedNodeSetupPresenter(
         // access to profile setup should be handled by splash
         log.d { "Navigating to next screen (Workflow: $isWorkflow" }
         // TODO handle also user scheduled to be deleted when we implement settings change trusted node
-        val user = runBlocking { return@runBlocking userRepository.fetch() }
-        if (isWorkflow) {
-            if (user == null) {
-                navigateTo(Routes.Onboarding)
+        launchUI {
+            val user = withContext(IODispatcher) { userRepository.fetch() }
+            if (isWorkflow) {
+                if (user == null) {
+                    navigateTo(Routes.Onboarding)
+                } else {
+                    navigateTo(Routes.TabContainer)
+                }
             } else {
                 navigateTo(Routes.TabContainer)
             }
-        } else {
-            navigateTo(Routes.TabContainer)
         }
     }
 
