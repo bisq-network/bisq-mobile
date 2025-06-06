@@ -47,9 +47,6 @@ class TrustedNodeSetupPresenter(
     private val _isLoading = MutableStateFlow(false)
     override val isLoading: StateFlow<Boolean> = _isLoading
 
-    private val _isChangingTrustedNode = MutableStateFlow(false)
-    override val isChangingTrustedNode: StateFlow<Boolean> = _isChangingTrustedNode
-
     override fun onViewAttached() {
         super.onViewAttached()
         initialize()
@@ -77,11 +74,6 @@ class TrustedNodeSetupPresenter(
         val previousUrl = _bisqApiUrl.value
         _bisqApiUrl.value = newUrl
         _isBisqApiUrlValid.value = isValid
-        
-        // Check if this is a change from a previously valid URL
-        if (previousUrl.isNotEmpty() && previousUrl != newUrl && _isConnected.value) {
-            _isChangingTrustedNode.value = true
-        }
     }
 
     override fun validateWsUrl(url: String): String? {
@@ -116,6 +108,7 @@ class TrustedNodeSetupPresenter(
                 }
 
                 if (success) {
+                    val previousUrl = settingsRepository.fetch()?.bisqApiUrl
                     val isCompatibleVersion = withContext(IODispatcher) {
                         updateTrustedNodeSettings()
                         delay(DEFAULT_DELAY)
@@ -125,9 +118,9 @@ class TrustedNodeSetupPresenter(
                     
                     if (isCompatibleVersion) {
                         _isConnected.value = true
-                        
-                        // If we're changing trusted nodes, reset profile and redirect
-                        if (_isChangingTrustedNode.value) {
+
+                        if (previousUrl != _bisqApiUrl.value) {
+                            log.d { "user setup a new trusted node ${_bisqApiUrl.value}" }
                             withContext(IODispatcher) {
                                 userRepository.fetch()?.let {
                                     userRepository.delete(it)
@@ -135,8 +128,7 @@ class TrustedNodeSetupPresenter(
                             }
                             
                             showSnackbar("Trusted node changed. You'll need to set up your profile again.")
-                            _isChangingTrustedNode.value = false
-                            
+
                             // Navigate to onboarding
                             if (!isWorkflow) {
                                 navigateTo(Routes.Onboarding)

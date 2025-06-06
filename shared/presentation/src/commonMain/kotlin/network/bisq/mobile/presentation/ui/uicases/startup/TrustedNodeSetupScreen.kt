@@ -50,7 +50,6 @@ interface ITrustedNodeSetupPresenter : ViewPresenter {
     val trustedNodeVersion: StateFlow<String>
     val isConnected: StateFlow<Boolean>
     val isLoading: StateFlow<Boolean>
-    val isChangingTrustedNode: StateFlow<Boolean>
 
     fun updateBisqApiUrl(newUrl: String, isValid: Boolean)
 
@@ -78,7 +77,6 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val isVersionValid = presenter.isBisqApiVersionValid.collectAsState().value
     val isLoading = presenter.isLoading.collectAsState().value
     val trustedNodeVersion = presenter.trustedNodeVersion.collectAsState().value
-    val isChangingTrustedNode = presenter.isChangingTrustedNode.collectAsState().value
     val clipboardManager = LocalClipboardManager.current
     
     // Add state for dialog
@@ -234,11 +232,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             BisqButton(
                 text = "Test Connection", // TODO:i18n
                 onClick = {
-                    if (isChangingTrustedNode) {
-                        showConfirmDialog.value = true
-                    } else {
-                        presenter.testConnection(isWorkflow)
-                    }
+                    presenter.testConnection(isWorkflow)
                 },
                 padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                 disabled = !presenter.isBisqApiUrlValid.collectAsState().value,
