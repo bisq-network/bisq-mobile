@@ -1,7 +1,10 @@
 package network.bisq.mobile.presentation.ui
 
 import ErrorOverlay
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.flow.StateFlow
@@ -56,12 +59,16 @@ fun App() {
         isNavControllerSet = true
     })
 
-    BisqTheme(darkTheme = true) {
-        if (isNavControllerSet) {
-            SwipeBackIOSNavigationHandler(rootNavController) {
-                RootNavGraph(rootNavController)
+    Surface(
+        modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars).windowInsetsPadding(WindowInsets.navigationBars).windowInsetsPadding(WindowInsets.displayCutout)
+    ) {
+        BisqTheme(darkTheme = true) {
+            if (isNavControllerSet) {
+                SwipeBackIOSNavigationHandler(rootNavController) {
+                    RootNavGraph(rootNavController)
+                }
             }
+            ErrorOverlay()
         }
-        ErrorOverlay()
     }
 }

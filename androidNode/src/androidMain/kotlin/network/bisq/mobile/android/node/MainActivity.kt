@@ -6,21 +6,22 @@ import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.android.ext.android.inject
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
 
 class MainActivity : ComponentActivity() {
     private val presenter : MainPresenter by inject()
@@ -45,6 +46,14 @@ class MainActivity : ComponentActivity() {
         cleanupKoin()
 
         presenter.attachView(this)
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(
+                BisqTheme.colors.backgroundColor.toArgb(),
+            ),
+            navigationBarStyle = SystemBarStyle.dark(
+                BisqTheme.colors.backgroundColor.toArgb(),
+             )
+        )
 
         setContent {
             App()

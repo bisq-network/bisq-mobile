@@ -2,7 +2,6 @@ package network.bisq.mobile.client
 
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
 import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
@@ -14,12 +13,14 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
@@ -44,8 +45,16 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         MainApplication.setupKoinDI(applicationContext)
 
+
         presenter.attachView(this)
-        enableEdgeToEdge(SystemBarStyle.dark(Color.TRANSPARENT), SystemBarStyle.dark(Color.TRANSPARENT))
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(
+                BisqTheme.colors.backgroundColor.toArgb(),
+            ),
+            navigationBarStyle = SystemBarStyle.dark(
+                BisqTheme.colors.backgroundColor.toArgb(),
+             )
+        )
 
         setContent {
             App()
