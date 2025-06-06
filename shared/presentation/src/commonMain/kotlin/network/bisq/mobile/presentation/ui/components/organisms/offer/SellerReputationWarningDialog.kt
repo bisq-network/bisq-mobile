@@ -24,6 +24,7 @@ fun SellerReputationWarningDialog(
         horizontalAlignment = Alignment.Start,
         marginTop = BisqUIConstants.ScreenPadding,
         padding = BisqUIConstants.ScreenPadding,
+        onDismissRequest = onDismiss,
     ) {
         BisqText.h6Light(
             text = "bisqEasy.tradeWizard.directionAndMarket.feedback.headline".i18n(),

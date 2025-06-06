@@ -13,7 +13,10 @@ fun WhyHighPricePopup(
     onDismiss: () -> Unit,
 ) {
 
-    BisqDialog(horizontalAlignment = Alignment.Start) {
+    BisqDialog(
+        horizontalAlignment = Alignment.Start,
+        onDismissRequest = onDismiss,
+    ) {
 
         BisqText.h6Medium("bisqEasy.price.feedback.learnWhySection.title".i18n())
 

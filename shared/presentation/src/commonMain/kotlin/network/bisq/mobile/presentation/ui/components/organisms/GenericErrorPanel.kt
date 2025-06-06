@@ -21,11 +21,13 @@ fun GenericErrorPanel(
     errorMessage: String,
     onClose: () -> Unit,
 ) {
-    BisqDialog {
+    BisqDialog(
+        onDismissRequest = onClose,
+    ) {
         Column(
             modifier = Modifier.padding(12.dp).fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
 
                 BisqText.h4Regular(

@@ -19,7 +19,9 @@ fun MediationRequestDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    BisqDialog {
+    BisqDialog(
+        onDismissRequest = onDismiss,
+    ) {
         Row {
             InfoIcon()
             BisqGap.H1()

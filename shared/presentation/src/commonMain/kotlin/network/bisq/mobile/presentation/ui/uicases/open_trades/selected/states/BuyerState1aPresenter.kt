@@ -71,7 +71,7 @@ class BuyerState1aPresenter(
 
     fun onSend() {
         require(bitcoinPaymentData.value.isNotEmpty())
-        _showInvalidAddressDialog.value = false
+        setShowInvalidAddressDialog(false)
 
         launchUI {
             withContext(IODispatcher) {

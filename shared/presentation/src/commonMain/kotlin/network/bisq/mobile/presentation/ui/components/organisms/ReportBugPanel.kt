@@ -34,7 +34,10 @@ fun ReportBugPanel(
     val clipboardManager = LocalClipboardManager.current
     val scrollState = rememberScrollState()
 
-    BisqDialog(horizontalAlignment = Alignment.Start) {
+    BisqDialog(
+        horizontalAlignment = Alignment.Start,
+        onDismissRequest = onClose,
+    ) {
         Row(
             verticalAlignment = Alignment.CenterVertically
         ) {
