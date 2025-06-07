@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.ui.helpers
 
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
-import kotlin.text.Regex
 
 // Ref: bisq2:common/src/main/java/bisq/common/validation/LightningInvoiceValidation.java
 object LightningInvoiceValidation {
@@ -14,8 +13,10 @@ object LightningInvoiceValidation {
 
 // Ref: bisq2:common/src/main/java/bisq/common/validation/BitcoinAddressValidation.java
 object BitcoinAddressValidation {
-    private val BASE_58_PATTERN = Regex("^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$")
-    private val BECH32_PATTERN = Regex("^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,60}$")
+    const val MIN_LENGTH: Int = 25
+    const val MAX_LENGTH: Int = 62
+    private val BASE_58_PATTERN = Regex("^[13][a-km-zA-HJ-NP-Z1-9]{$MIN_LENGTH,34}$")
+    private val BECH32_PATTERN = Regex("^(bc1|[13])[a-zA-HJ-NP-Z0-9]{$MIN_LENGTH,$MAX_LENGTH}$")
 
     fun validateAddress(address: String): Boolean {
         return BASE_58_PATTERN.matches(address) || BECH32_PATTERN.matches(address)
