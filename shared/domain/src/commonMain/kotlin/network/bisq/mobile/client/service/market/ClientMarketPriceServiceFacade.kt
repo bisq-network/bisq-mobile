@@ -30,6 +30,7 @@ class ClientMarketPriceServiceFacade(
 
         restoreSelectedMarketFromSettings {
             selectedMarket = it
+            updateMarketPriceItem()
         }
 
         // Use the jobsManager to launch a coroutine instead of serviceScope directly

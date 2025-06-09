@@ -26,7 +26,13 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
         launchIO {
             try {
                 val settings = settingsRepository.fetch() ?: Settings()
-                val marketCode = marketListItem.market.baseCurrencyCode + "/" + marketListItem.market.quoteCurrencyCode
+                val baseCurrencyCode = marketListItem.market.baseCurrencyCode
+                val quoteCurrencyCode = marketListItem.market.quoteCurrencyCode
+                if (baseCurrencyCode.isBlank() || quoteCurrencyCode.isBlank()) {
+                    log.w("Invalid currency codes: base='$baseCurrencyCode', quote='$quoteCurrencyCode'")
+                    return@launchIO
+                }
+                val marketCode = "$baseCurrencyCode/$quoteCurrencyCode"
                 val updatedSettings = settings.copy(selectedMarketCode = marketCode)
                 settingsRepository.update(updatedSettings)
             } catch (e: Exception) {
@@ -46,7 +52,10 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
                         val baseCurrency = parts[0]
                         val quoteCurrency = parts[1]
                         val marketVO = MarketVO(baseCurrency, quoteCurrency)
-                        onMarketRestored(marketVO)
+                        runCatching { onMarketRestored(marketVO) }.onFailure {
+                            log.e(it) { "Failed callback on restore selected market" }
+                        }
+
                     }
                 }
             } catch (e: Exception) {
