@@ -7,17 +7,21 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.data.model.MarketPriceItem
+import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.formatters.MarketPriceFormatter
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 
 class ClientMarketPriceServiceFacade(
     private val apiGateway: MarketPriceApiGateway,
-    private val json: kotlinx.serialization.json.Json
+    private val json: kotlinx.serialization.json.Json,
+    private val settingsRepository: SettingsRepository
 ) : ServiceFacade(), MarketPriceServiceFacade {
 
     // Properties
@@ -35,6 +39,8 @@ class ClientMarketPriceServiceFacade(
     // Life cycle
     override fun activate() {
         super<ServiceFacade>.activate()
+
+        restoreSelectedMarketFromSettings()
 
         // Use the jobsManager to launch a coroutine instead of serviceScope directly
         launchIO {
@@ -62,6 +68,43 @@ class ClientMarketPriceServiceFacade(
     override fun selectMarket(marketListItem: MarketListItem) {
         selectedMarket = marketListItem.market
         updateMarketPriceItem()
+
+        persistSelectedMarketToSettings(marketListItem)
+    }
+
+    private fun restoreSelectedMarketFromSettings() {
+        launchIO {
+            try {
+                val settings = settingsRepository.fetch()
+                settings?.selectedMarketCode?.let { marketCode ->
+                    // Parse the market code to get base and quote currency
+                    val parts = marketCode.split("/")
+                    if (parts.size == 2) {
+                        val baseCurrency = parts[0]
+                        val quoteCurrency = parts[1]
+                        val marketVO = MarketVO(baseCurrency, quoteCurrency)
+                        selectedMarket = marketVO
+                        updateMarketPriceItem()
+                    }
+                }
+            } catch (e: Exception) {
+                log.e("Failed to restore selected market", e)
+            }
+        }
+    }
+
+    private fun persistSelectedMarketToSettings(marketListItem: MarketListItem) {
+        launchIO {
+            try {
+                val settings = settingsRepository.fetch() ?: Settings()
+                val updatedSettings = settings.copy(
+                    selectedMarketCode = marketListItem.market.marketCodes
+                )
+                settingsRepository.update(updatedSettings)
+            } catch (e: Exception) {
+                log.e("Failed to save selected market", e)
+            }
+        }
     }
 
     override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? {
