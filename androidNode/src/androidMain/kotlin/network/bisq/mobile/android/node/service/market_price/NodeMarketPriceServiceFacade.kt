@@ -30,8 +30,9 @@ class NodeMarketPriceServiceFacade(
     override fun activate() {
         super.activate()
 
-        restoreSelectedMarketFromSettings {
-            // do nth
+        restoreSelectedMarketFromSettings { marketVO ->
+            val market = MarketMapping.toBisq2Model(marketVO)
+            marketPriceService.setSelectedMarket(market)
         }
 
         observeSelectedMarket()
