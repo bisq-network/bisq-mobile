@@ -64,7 +64,7 @@ val androidNodeModule = module {
 
     single<ApplicationBootstrapFacade> { NodeApplicationBootstrapFacade(get(), get()) }
 
-    single<MarketPriceServiceFacade> { NodeMarketPriceServiceFacade(get()) }
+    single<MarketPriceServiceFacade> { NodeMarketPriceServiceFacade(get(), get()) }
 
     single<UserProfileServiceFacade> { NodeUserProfileServiceFacade(get()) }
 

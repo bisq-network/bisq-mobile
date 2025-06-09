@@ -3,8 +3,6 @@ package network.bisq.mobile.android.node.service.market_price
 import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.common.observable.Pin
 import bisq.presentation.formatters.PriceFormatter
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.Mappings.MarketMapping
@@ -12,22 +10,17 @@ import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
+import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.formatters.MarketPriceFormatter
-import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 
-class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplicationService.Provider) :
-    ServiceFacade(), MarketPriceServiceFacade {
+class NodeMarketPriceServiceFacade(
+    private val applicationService: AndroidApplicationService.Provider,
+    settingsRepository: SettingsRepository
+) : MarketPriceServiceFacade(settingsRepository) {
 
     // Dependencies
     private val marketPriceService: MarketPriceService by lazy { applicationService.bondedRolesService.get().marketPriceService }
-
-    // Properties
-    private val _selectedMarketPriceItem: MutableStateFlow<MarketPriceItem?> = MutableStateFlow(null)
-    override val selectedMarketPriceItem: StateFlow<MarketPriceItem?> get() = _selectedMarketPriceItem
-
-    private val _selectedFormattedMarketPrice = MutableStateFlow("N/A")
-    override val selectedFormattedMarketPrice: StateFlow<String> = _selectedFormattedMarketPrice
 
     // Misc
     private var selectedMarketPin: Pin? = null
@@ -35,7 +28,11 @@ class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplic
 
     // Life cycle
     override fun activate() {
-        super<ServiceFacade>.activate()
+        super.activate()
+
+        restoreSelectedMarketFromSettings {
+            // do nth
+        }
 
         observeSelectedMarket()
         observeMarketPrice()
@@ -47,13 +44,14 @@ class NodeMarketPriceServiceFacade(private val applicationService: AndroidApplic
         marketPricePin?.unbind()
         marketPricePin = null
 
-        super<ServiceFacade>.deactivate()
+        super.deactivate()
     }
 
     // API
     override fun selectMarket(marketListItem: MarketListItem) {
         val market = MarketMapping.toBisq2Model(marketListItem.market)
         marketPriceService.setSelectedMarket(market)
+        persistSelectedMarketToSettings(marketListItem)
     }
 
     override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? {
