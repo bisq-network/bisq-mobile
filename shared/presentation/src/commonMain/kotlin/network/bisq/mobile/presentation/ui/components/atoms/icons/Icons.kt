@@ -54,12 +54,12 @@ import org.jetbrains.compose.resources.painterResource
 expect fun rememberPlatformImagePainter(platformImage: PlatformImage): Painter
 
 @Composable
-fun CloseIcon(modifier: Modifier = Modifier.size(24.dp)) {
+fun CloseIcon(modifier: Modifier = Modifier.size(24.dp), color: Color = Color.White) {
     Icon(
         Icons.Filled.Close,
         "close",
         modifier = modifier,
-        tint = Color.White
+        tint = color
     )
 //    Icon(
 //        Icons.Default.Close,
