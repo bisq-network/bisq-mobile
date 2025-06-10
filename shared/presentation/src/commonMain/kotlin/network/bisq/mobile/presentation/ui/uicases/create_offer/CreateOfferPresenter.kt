@@ -90,7 +90,9 @@ class CreateOfferPresenter(
 
     fun commitMarket(value: MarketVO) {
         createOfferModel.market = value
-        createOfferModel.priceQuote = getMostRecentPriceQuote(value)
+        val latestQuote = getMostRecentPriceQuote(value)
+        createOfferModel.priceQuote = latestQuote
+        createOfferModel.originalPriceQuote = latestQuote
         createOfferModel.availableQuoteSidePaymentMethods = FiatPaymentRailUtil.getPaymentRailNames(value.quoteCurrencyCode)
     }
 

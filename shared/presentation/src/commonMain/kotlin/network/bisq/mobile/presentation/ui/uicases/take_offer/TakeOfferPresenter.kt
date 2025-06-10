@@ -61,7 +61,7 @@ class TakeOfferPresenter(
 
         val marketVO = takeOfferModel.offerItemPresentationVO.bisqEasyOffer.market
         val marketPriceItem: MarketPriceItem? = marketPriceServiceFacade.findMarketPriceItem(marketVO)
-        takeOfferModel.originalPriceQuote = marketPriceItem!!.priceQuote
+        takeOfferModel.originalPriceQuote = marketPriceItem?.priceQuote ?: getMostRecentPriceQuote()
 
         val priceQuote: PriceQuoteVO = getMostRecentPriceQuote()
         takeOfferModel.priceQuote = priceQuote
