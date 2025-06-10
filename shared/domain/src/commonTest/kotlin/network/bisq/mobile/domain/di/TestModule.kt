@@ -8,6 +8,8 @@ import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.data.model.Trade
 import network.bisq.mobile.domain.data.persistance.KeyValueStorage
 import network.bisq.mobile.domain.data.persistance.PersistenceSource
+import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import org.koin.dsl.module
 import org.koin.core.qualifier.named
 
@@ -42,4 +44,6 @@ val testModule = module {
             deserializer = { Json.decodeFromString<network.bisq.mobile.domain.data.model.Settings>(it) }
         )
     }
+
+    factory<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
 }
