@@ -86,14 +86,17 @@ class NodeOffersServiceFacade(
 
     // Life cycle
     override fun activate() {
+        log.d { "Activating NodeOffersServiceFacade" }
         super<ServiceFacade>.activate()
 
         observeSelectedChannel()
         observeMarketPrice()
         numOffersObservers.forEach { it.resume() }
+        log.d { "NodeOffersServiceFacade activated, numOffersObservers: ${numOffersObservers.size}" }
     }
 
     override fun deactivate() {
+        log.d { "Deactivating NodeOffersServiceFacade" }
         chatMessagesPin?.unbind()
         chatMessagesPin = null
         selectedChannelPin?.unbind()
@@ -101,17 +104,26 @@ class NodeOffersServiceFacade(
         marketPricePin?.unbind()
         marketPricePin = null
         numOffersObservers.forEach { it.dispose() }
+        log.d { "NodeOffersServiceFacade deactivated" }
 
         super<ServiceFacade>.deactivate()
     }
 
     // API
     override fun selectOfferbookMarket(marketListItem: MarketListItem) {
+        log.d { "Selecting offerbook market: ${marketListItem.market.quoteCurrencyCode}, current offers count: ${_offerbookListItems.value.size}" }
         val market = Mappings.MarketMapping.toBisq2Model(marketListItem.market)
-        bisqEasyOfferbookChannelService.findChannel(market).ifPresent {
-            bisqEasyOfferbookChannelSelectionService.selectChannel(it)
+        val channelOptional = bisqEasyOfferbookChannelService.findChannel(market)
+        
+        if (!channelOptional.isPresent) {
+            log.e { "No channel found for market ${market.marketCodes}" }
+            return
         }
-        //todo marketPriceServiceFacade should not be managed here but on a higher level or from the presenter
+        
+        val channel = channelOptional.get()
+        log.d { "Found channel for market ${market.marketCodes}, chat messages count: ${channel.chatMessages.size}" }
+        
+        bisqEasyOfferbookChannelSelectionService.selectChannel(channel)
         marketPriceServiceFacade.selectMarket(marketListItem)
     }
 
@@ -212,19 +224,35 @@ class NodeOffersServiceFacade(
 
 
     private fun observeSelectedChannel() {
+        log.d { "Setting up selected channel observer" }
+        selectedChannelPin?.unbind()
+        log.d { "Previous selectedChannelPin unbound: $selectedChannelPin" }
+        
         selectedChannelPin = bisqEasyOfferbookChannelSelectionService.selectedChannel.addObserver { channel ->
             if (channel == null) {
+                log.d { "Selected channel is null" }
                 selectedChannel = channel
+                log.d { "After null channel selection, offers count: ${_offerbookListItems.value.size}" }
             } else if (channel is BisqEasyOfferbookChannel) {
+                log.d { "Selected channel changed to: ${channel.id}, market: ${channel.market.marketCodes}, chat messages: ${channel.chatMessages.size}" }
                 selectedChannel = channel
                 marketPriceService.setSelectedMarket(channel.market)
                 val marketVO = Mappings.MarketMapping.fromBisq2Model(channel.market)
                 _selectedOfferbookMarket.value = OfferbookMarket(marketVO)
                 updateMarketPrice()
 
-                addChatMessagesObservers(channel)
+                // Clear the map synchronously before adding observers
+                serviceScope.launch(Dispatchers.Default) {
+                    clearOfferMessages()
+                    addChatMessagesObservers(channel)
+                }
+                
+                log.d { "After channel selection, offers count: ${_offerbookListItems.value.size}" }
+            } else {
+                log.w { "Selected channel is not a BisqEasyOfferbookChannel: ${channel::class.simpleName}" }
             }
         }
+        log.d { "Selected channel observer set up, pin: $selectedChannelPin" }
     }
 
     private fun createOfferListItem(bisqEasyOfferbookMessage: BisqEasyOfferbookMessage): OfferItemPresentationDto {
@@ -238,50 +266,69 @@ class NodeOffersServiceFacade(
     }
 
     private fun addChatMessagesObservers(channel: BisqEasyOfferbookChannel) {
+        log.d { "Adding chat message observers for channel: ${channel.id}, market: ${channel.market.marketCodes}" }
         chatMessagesPin?.unbind()
+        log.d { "Previous chatMessagesPin unbound" }
+        
+        // Only clear the list, not the map (map is cleared before this method is called)
         _offerbookListItems.value = emptyList()
 
         val chatMessages: ObservableSet<BisqEasyOfferbookMessage> = channel.chatMessages
+        log.d { "Initial chat messages count for ${channel.market.marketCodes}: ${chatMessages.size}" }
+        
+        if (chatMessages.isEmpty()) {
+            log.w { "Channel ${channel.market.marketCodes} has no chat messages/offers" }
+        }
+        
         chatMessagesPin =
             chatMessages.addObserver(object : CollectionObserver<BisqEasyOfferbookMessage> {
                 override fun add(message: BisqEasyOfferbookMessage) {
                     if (!message.bisqEasyOffer.isPresent) {
+                        log.d { "Ignoring message without offer in ${channel.market.marketCodes}" }
                         return
                     }
                     serviceScope.launch(Dispatchers.Default) {
                         val offerId = message.bisqEasyOffer.get().id
+                        log.d { "Processing offer message: $offerId in ${channel.market.marketCodes}" }
                         if (!offerMessagesContainsKey(offerId) && bisqEasyOfferbookMessageService.isValid(message)) {
                             val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
                             val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
                             _offerbookListItems.update { it + offerItemPresentationModel }
                             putOfferMessage(offerId, message)
-                            log.i { "add offer $offerItemPresentationModel" }
+                            log.i { "Added offer $offerId to list for ${channel.market.marketCodes}, total offers: ${_offerbookListItems.value.size}" }
+                        } else {
+                            log.d { "Skipped offer $offerId in ${channel.market.marketCodes} - already exists: ${offerMessagesContainsKey(offerId)}, valid: ${bisqEasyOfferbookMessageService.isValid(message)}" }
                         }
                     }
                 }
 
                 override fun remove(message: Any) {
                     if (message is BisqEasyOfferbookMessage && message.bisqEasyOffer.isPresent) {
+                        val offerId = message.bisqEasyOffer.get().id
+                        log.d { "Removing offer message: $offerId" }
                         val item = _offerbookListItems.value.firstOrNull {
                             it.bisqEasyOffer.id == message.bisqEasyOffer.map { offer -> offer.id }.orElse(null)
                         }
-                        val offerId = message.bisqEasyOffer.get().id
                         item?.let { model ->
                             _offerbookListItems.update { it - model }
                             serviceScope.launch(Dispatchers.Default) { removeOfferMessage(offerId) }
-                            log.i { "Removed offer: $model" }
+                            log.i { "Removed offer: $offerId, remaining offers: ${_offerbookListItems.value.size}" }
                         }
                     }
                 }
 
                 override fun clear() {
+                    log.d { "Clearing all offer messages" }
                     _offerbookListItems.value = emptyList()
                     serviceScope.launch(Dispatchers.Default) { clearOfferMessages() }
                 }
             })
+        
+        log.d { "Chat messages observer added for ${channel.market.marketCodes}, pin: $chatMessagesPin" }
     }
 
     private fun fillMarketListItems(): MutableList<MarketListItem> {
+        log.d { "Filling market list items" }
         numOffersObservers.forEach { it.dispose() }
         numOffersObservers.clear()
 
@@ -309,8 +356,12 @@ class NodeOffersServiceFacade(
                         offerbookMarketItem::setNumOffers
                     )
                     numOffersObservers.add(numOffersObserver)
+                    log.d { "Added market ${market.marketCodes} with initial offers count: ${channel.chatMessages.size}" }
+                } else {
+                    log.d { "Skipped market ${market.marketCodes} - not in marketPriceByCurrencyMap" }
                 }
             }
+        log.d { "Filled market list items, count: ${offerbookMarketItems.size}" }
         return offerbookMarketItems
     }
 
@@ -346,6 +397,7 @@ class NodeOffersServiceFacade(
 
     private suspend fun clearOfferMessages() {
         offerMapMutex.withLock {
+            log.d { "Clearing offer messages map, current size: ${bisqEasyOfferbookMessageByOfferId.size}" }
             bisqEasyOfferbookMessageByOfferId.clear()
         }
     }
@@ -358,7 +410,9 @@ class NodeOffersServiceFacade(
 
     private suspend fun offerMessagesContainsKey(offerId: String): Boolean {
         return offerMapMutex.withLock {
-            bisqEasyOfferbookMessageByOfferId.containsKey(offerId)
+            val contains = bisqEasyOfferbookMessageByOfferId.containsKey(offerId)
+            log.d { "Checking if offer $offerId exists in map: $contains, map size: ${bisqEasyOfferbookMessageByOfferId.size}" }
+            contains
         }
     }
 }
