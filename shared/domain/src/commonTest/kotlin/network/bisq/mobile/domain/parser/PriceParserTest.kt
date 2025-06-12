@@ -37,20 +37,34 @@ class PriceParserTest {
 
     @Test
     fun `parse should throw NumberFormatException for clearly invalid input`() {
-        // Test that parse throws exceptions for clearly invalid input
-        // The exact behavior may depend on locale implementation
-        try {
+        assertFailsWith<NumberFormatException> {
             PriceParser.parse("abc")
-            // If no exception is thrown, that's also acceptable for some locales
-        } catch (e: NumberFormatException) {
-            // This is the expected behavior
         }
+    }
 
-        try {
-            PriceParser.parse("12a34")
-            // If no exception is thrown, that's also acceptable for some locales
-        } catch (e: NumberFormatException) {
-            // This is the expected behavior
+    @Test
+    fun `parse should handle mixed alphanumeric input consistently`() {
+        // Note: The behavior of "12a34" depends on the platform's locale-aware parsing implementation.
+        // - Android (Java NumberFormat): May parse partial numbers (e.g., "12" from "12a34")
+        // - iOS (NSNumberFormatter): Typically more strict, returns null for invalid input
+        val result = PriceParser.parseOrNull("12a34")
+
+        // The result should either be null (if parsing fails) or a valid number (if partially parsed)
+        if (result != null) {
+            assertTrue(result.isFinite(), "If parsing succeeds, result should be finite")
+            assertTrue(result >= 0, "Partial parsing should yield a positive number")
+        }
+        // If result is null, that's also acceptable - it means parsing failed as expected
+    }
+
+    @Test
+    fun `parse should throw NumberFormatException for mixed input when platform parsing fails`() {
+        // This test verifies that if the platform's toDoubleOrNullLocaleAware returns null,
+        // then PriceParser.parse should throw NumberFormatException
+        val testInput = "xyz123"  // Clearly invalid input that should fail on all platforms
+
+        assertFailsWith<NumberFormatException> {
+            PriceParser.parse(testInput)
         }
     }
 
@@ -64,13 +78,10 @@ class PriceParserTest {
     fun `parseOrNull should not crash on invalid input`() {
         // The main goal is crash prevention, not specific return values
         // Different locales may handle these differently
-        val result1 = PriceParser.parseOrNull("abc")
-        val result2 = PriceParser.parseOrNull("12a34")
-        val result3 = PriceParser.parseOrNull("invalid")
-
-        // We don't assert specific values since behavior may vary by locale
-        // The important thing is that these calls don't crash
-        assertTrue(true, "parseOrNull should not crash on invalid input")
+        PriceParser.parseOrNull("abc")
+        PriceParser.parseOrNull("12a34")
+        PriceParser.parseOrNull("invalid")
+        // If an exception is thrown the test will fail automatically
     }
 
     @Test

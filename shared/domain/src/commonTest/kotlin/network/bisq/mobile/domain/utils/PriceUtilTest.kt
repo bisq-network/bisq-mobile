@@ -145,20 +145,35 @@ class PriceUtilTest {
     }
 
     @Test
-    fun `getPercentageToMarketPrice should throw exception for infinite market price`() {
-        // This test simulates what would happen if conversion to double results in infinity
+    fun `getPercentageToMarketPrice should return finite result when Long MAX_VALUE converts to finite double`() {
         val marketPrice = createTestPriceQuote(Long.MAX_VALUE)
         val priceQuote = createTestPriceQuote(50000)
-        
-        // The actual behavior depends on how Long.MAX_VALUE converts to Double
-        // If it results in infinity, it should throw an exception
-        try {
-            val result = PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
-            // If no exception is thrown, the result should be finite
-            assertTrue(result.isFinite(), "Result should be finite")
-        } catch (e: IllegalArgumentException) {
-            // This is also acceptable if the conversion results in infinity
-            assertTrue(e.message?.contains("Invalid") == true)
+
+        // Only run this test if Long.MAX_VALUE.toDouble() is finite
+        val marketPriceDouble = Long.MAX_VALUE.toDouble()
+        if (!marketPriceDouble.isFinite()) {
+            // Skip this test if Long.MAX_VALUE converts to infinite double
+            return
+        }
+
+        val result = PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
+        assertTrue(result.isFinite(), "Result should be finite when market price is finite")
+    }
+
+    @Test
+    fun `getPercentageToMarketPrice should throw exception when Long MAX_VALUE converts to infinite double`() {
+        val marketPrice = createTestPriceQuote(Long.MAX_VALUE)
+        val priceQuote = createTestPriceQuote(50000)
+
+        // Only run this test if Long.MAX_VALUE.toDouble() is infinite
+        val marketPriceDouble = Long.MAX_VALUE.toDouble()
+        if (marketPriceDouble.isFinite()) {
+            // Skip this test if Long.MAX_VALUE converts to finite double
+            return
+        }
+
+        assertFailsWith<IllegalArgumentException> {
+            PriceUtil.getPercentageToMarketPrice(marketPrice, priceQuote)
         }
     }
 
