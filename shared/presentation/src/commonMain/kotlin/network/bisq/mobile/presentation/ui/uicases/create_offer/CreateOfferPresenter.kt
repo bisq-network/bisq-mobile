@@ -96,7 +96,8 @@ class CreateOfferPresenter(
         val latestQuote = getMostRecentPriceQuote(value)
         createOfferModel.priceQuote = latestQuote
         createOfferModel.originalPriceQuote = latestQuote
-        createOfferModel.availableQuoteSidePaymentMethods = FiatPaymentRailUtil.getPaymentRailNames(value.quoteCurrencyCode)
+        createOfferModel.availableQuoteSidePaymentMethods =
+            FiatPaymentRailUtil.getPaymentRailNames(value.quoteCurrencyCode)
     }
 
     fun commitAmount(
@@ -156,8 +157,12 @@ class CreateOfferPresenter(
             else FloatPriceSpecVO(createOfferModel.percentagePriceValue)
         }
 
-        val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
-        val supportedLanguageCodes: Set<String> = settings.supportedLanguageCodes
+        val supportedLanguageCodes = runCatching {
+            settingsServiceFacade.getSettings().getOrThrow().supportedLanguageCodes
+        }.getOrElse {
+            log.w(it) { "Failed to fetch settings, defaulting to English" }
+            setOf("en")
+        }
 
         withContext(IODispatcher) {
             offersServiceFacade.createOffer(

@@ -27,19 +27,6 @@ class OpenTradeListPresenter(
     private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>> = _tradesWithUnreadMessages
 
-    init {
-        collectUI(mainPresenter.languageCode) {
-            _openTradeItems.value = tradesServiceFacade.openTradeItems.value.map {
-                it.apply {
-                    quoteAmountWithCode =
-                        "${NumberFormatter.format(it.quoteAmount.toDouble() / 10000.0)} ${it.quoteCurrencyCode}"
-                    formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec, true)
-                    formattedBaseAmount = NumberFormatter.btcFormat(it.baseAmount)
-                }
-            }
-        }
-    }
-
     override fun onViewAttached() {
         super.onViewAttached()
         tradesServiceFacade.resetSelectedTradeToNull()
@@ -47,12 +34,20 @@ class OpenTradeListPresenter(
         launchUI {
             combine(
                 mainPresenter.tradesWithUnreadMessages,
-                tradesServiceFacade.openTradeItems
-            ) { unreadMessages, openTrades ->
+                tradesServiceFacade.openTradeItems,
+                mainPresenter.languageCode
+            ) { unreadMessages, openTrades, _ ->
                 Pair(unreadMessages, openTrades)
             }.collect { (unreadMessages, openTrades) ->
                 _tradesWithUnreadMessages.value = unreadMessages
-                _openTradeItems.value = openTrades
+                _openTradeItems.value = openTrades.map {
+                    it.apply {
+                        quoteAmountWithCode =
+                            "${NumberFormatter.format(it.quoteAmount.toDouble() / 10000.0)} ${it.quoteCurrencyCode}"
+                        formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec, true)
+                        formattedBaseAmount = NumberFormatter.btcFormat(it.baseAmount)
+                    }
+                }
             }
         }
     }
