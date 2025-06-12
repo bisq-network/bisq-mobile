@@ -59,7 +59,7 @@ class NodeMainPresenter(
     }
 
     override fun isDevMode(): Boolean {
-        return isDemo() || BuildNodeConfig.DEBUG
+        return isDemo() || BuildNodeConfig.IS_DEBUG
     }
 
     private fun initNodeServices() {

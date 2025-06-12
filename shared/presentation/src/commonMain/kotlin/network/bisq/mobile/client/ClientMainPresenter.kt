@@ -101,7 +101,7 @@ open class ClientMainPresenter(
     }
 
     override fun isDevMode(): Boolean {
-        return isDemo() || BuildConfig.DEBUG
+        return isDemo() || BuildConfig.IS_DEBUG
     }
 
     private fun activateServices() {
