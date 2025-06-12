@@ -348,7 +348,7 @@ class OfferbookPresenter(
             try {
                 // Set up the dialog content
                 setupReputationDialogContent(item)
-                
+
                 // Show the dialog
                 _showNotEnoughReputationDialog.value = true
             } catch (e: Exception) {

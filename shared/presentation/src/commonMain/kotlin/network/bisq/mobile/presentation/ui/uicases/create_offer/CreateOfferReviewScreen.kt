@@ -111,7 +111,7 @@ fun CreateOfferReviewOfferScreen() {
                         )
                         InfoBox(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
-                            value = presenter.amountToPay,
+                            value = presenter.amountToReceive,
                         )
                     }
                 }
