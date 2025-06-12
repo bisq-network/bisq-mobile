@@ -38,15 +38,28 @@ class OpenTradeListPresenter(
                 }
             }
         }
-
-        collectUI(mainPresenter.tradesWithUnreadMessages)  {
-            _tradesWithUnreadMessages.value = it
-        }
     }
 
     override fun onViewAttached() {
         super.onViewAttached()
         tradesServiceFacade.resetSelectedTradeToNull()
+
+        launchUI {
+            combine(
+                mainPresenter.tradesWithUnreadMessages,
+                tradesServiceFacade.openTradeItems
+            ) { unreadMessages, openTrades ->
+                Pair(unreadMessages, openTrades)
+            }.collect { (unreadMessages, openTrades) ->
+                _tradesWithUnreadMessages.value = unreadMessages
+                _openTradeItems.value = openTrades
+            }
+        }
+    }
+
+    override fun onViewUnattaching() {
+        _tradesWithUnreadMessages.value = emptyMap()
+        super.onViewUnattaching()
     }
 
     fun isRead(trade: TradeItemPresentationModel): Boolean {
