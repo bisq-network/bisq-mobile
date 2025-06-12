@@ -183,14 +183,7 @@ class CreateOfferPresenter(
             val marketPriceItem: MarketPriceItem? = marketPriceServiceFacade.findMarketPriceItem(market)
             if (marketPriceItem == null) {
                 log.e { "Market price item not found for market: $market" }
-                // Return a fallback price quote to prevent crashes
-                return PriceQuoteVO(
-                    1, // Minimal valid value to prevent division by zero
-                    4, 2,
-                    market,
-                    CoinVO("BTC", 1, "BTC", 8, 4),
-                    FiatVO(market.quoteCurrencyCode, 1, market.quoteCurrencyCode, 4, 2),
-                )
+                throw IllegalStateException("Market price not available for $market")
             }
             return MarketPriceSpecVO().getPriceQuoteVO(marketPriceItem)
         }
