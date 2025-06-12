@@ -25,8 +25,8 @@ import kotlin.math.roundToLong
 
 
 object BisqEasyTradeAmountLimits {
-    private val invalidSellOffers: MutableSet<String> = mutableSetOf()
-    private val invalidSellOffersMutex = Mutex()
+    private val invalidBuyOffers: MutableSet<String> = mutableSetOf()
+    private val invalidBuyOffersMutex = Mutex()
 
     fun getMinAmountValue(marketPriceServiceFacade: MarketPriceServiceFacade, quoteCurrencyCode: String): Long {
         val minFiatAmount = fromUsd(
@@ -64,17 +64,18 @@ object BisqEasyTradeAmountLimits {
             }
     }
 
-    suspend fun isSellOfferInvalid(
+    suspend fun isBuyOfferInvalid(
         item: OfferItemPresentationModel,
         useCache: Boolean = true,
         marketPriceServiceFacade: MarketPriceServiceFacade,
-        reputationServiceFacade: ReputationServiceFacade
+        reputationServiceFacade: ReputationServiceFacade,
+        userProfileId: String,
     ): Boolean {
         val bisqEasyOffer = item.bisqEasyOffer
-        require(bisqEasyOffer.direction == DirectionEnum.SELL)
+        require(bisqEasyOffer.direction == DirectionEnum.BUY)
 
         val offerId = bisqEasyOffer.id
-        if (useCache && isInvalidSellOffer(offerId)) {
+        if (useCache && isInvalidBuyOffer(offerId)) {
             return true
         }
 
@@ -89,10 +90,8 @@ object BisqEasyTradeAmountLimits {
             return false
         }
 
-        val userProfileId = bisqEasyOffer.makerNetworkId.pubKey.id
-        
         // Safely get seller's reputation score with proper error handling
-        val sellersScore: Long = runCatching {
+        val myScore: Long = runCatching {
             withContext(IODispatcher) {
                 reputationServiceFacade.getReputation(userProfileId)
             }.fold(
@@ -104,9 +103,9 @@ object BisqEasyTradeAmountLimits {
             )
         }.getOrDefault(0L)
 
-        val isInvalid = sellersScore < requiredReputationScoreForMinOrFixed
+        val isInvalid = myScore < requiredReputationScoreForMinOrFixed
         if (isInvalid) {
-            addInvalidSellOffer(offerId) // We also add it if cache is false
+            addInvalidBuyOffer(offerId) // We also add it if cache is false
         }
         return isInvalid
     }
@@ -201,15 +200,15 @@ object BisqEasyTradeAmountLimits {
         return (makersReputationScore * (1 + TOLERANCE)).toLong();
     }
 
-    suspend fun addInvalidSellOffer(id: String) {
-        invalidSellOffersMutex.withLock {
-            invalidSellOffers.add(id)
+    suspend fun addInvalidBuyOffer(id: String) {
+        invalidBuyOffersMutex.withLock {
+            invalidBuyOffers.add(id)
         }
     }
 
-    suspend fun isInvalidSellOffer(id: String): Boolean {
-        return invalidSellOffersMutex.withLock {
-            id in invalidSellOffers
+    suspend fun isInvalidBuyOffer(id: String): Boolean {
+        return invalidBuyOffersMutex.withLock {
+            id in invalidBuyOffers
         }
     }
 }
