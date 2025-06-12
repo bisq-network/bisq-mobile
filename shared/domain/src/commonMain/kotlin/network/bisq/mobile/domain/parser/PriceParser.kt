@@ -3,7 +3,7 @@ package network.bisq.mobile.domain.parser
 object PriceParser {
     fun parse(value: String): Double {
         try {
-            val trimmed = value.replace(",", ".")
+            val trimmed = value.replace(",", "")
                 .replace("%", "")
                 .trim()
             if (trimmed.isEmpty()) {
@@ -20,7 +20,7 @@ object PriceParser {
      */
     fun parseOrNull(value: String): Double? {
         return try {
-            val trimmed = value.replace(",", ".")
+            val trimmed = value.replace(",", "")
                 .replace("%", "")
                 .trim()
             if (trimmed.isEmpty()) {
