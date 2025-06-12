@@ -111,37 +111,121 @@ class CreateOfferPricePresenter(
     }
 
     fun onFixPriceChanged(value: String, isValid: Boolean) {
-        val valueAsDouble = PriceParser.parse(value)
-        priceQuote = PriceQuoteVOFactory.fromPrice(valueAsDouble, createOfferModel.market!!)
-        _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
-        val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
-        percentagePriceValue = PriceUtil.getPercentageToMarketPrice(marketPriceQuote, priceQuote)
-        _formattedPercentagePrice.value = PercentageFormatter.format(percentagePriceValue, false)
+        try {
+            // Validate input and market
+            if (value.isBlank()) {
+                log.w { "Empty value provided to onFixPriceChanged" }
+                _formattedPercentagePriceValid.value = false
+                _formattedPriceValid.value = false
+                return
+            }
 
-        _formattedPercentagePriceValid.value = isValid
-        _formattedPriceValid.value = isValid
+            val market = createOfferModel.market
+            if (market == null) {
+                log.e { "Market is null in onFixPriceChanged" }
+                _formattedPercentagePriceValid.value = false
+                _formattedPriceValid.value = false
+                return
+            }
 
-        if (isBuy.value) {
-            val percentageValue = PriceUtil.findPercentFromMarketPrice(
-                marketPriceServiceFacade,
-                FixPriceSpecVO(priceQuote),
-                createOfferModel.market!!,
-            )
+            // Use safe parsing
+            val valueAsDouble = PriceParser.parseOrNull(value)
+            if (valueAsDouble == null) {
+                log.w { "Invalid price format: $value" }
+                _formattedPercentagePriceValid.value = false
+                _formattedPriceValid.value = false
+                return
+            }
 
-            updateHintText(percentageValue)
+            if (valueAsDouble <= 0.0 || !valueAsDouble.isFinite()) {
+                log.w { "Invalid price value: $valueAsDouble" }
+                _formattedPercentagePriceValid.value = false
+                _formattedPriceValid.value = false
+                return
+            }
+
+            // Create price quote and calculate percentage
+            priceQuote = PriceQuoteVOFactory.fromPrice(valueAsDouble, market)
+            _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
+
+            val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(market)
+            if (marketPriceQuote.value <= 0) {
+                log.e { "Invalid market price: ${marketPriceQuote.value}" }
+                _formattedPercentagePriceValid.value = false
+                _formattedPriceValid.value = false
+                return
+            }
+
+            percentagePriceValue = PriceUtil.getPercentageToMarketPrice(marketPriceQuote, priceQuote)
+            if (!percentagePriceValue.isFinite()) {
+                log.e { "Invalid percentage calculation result: $percentagePriceValue" }
+                _formattedPercentagePriceValid.value = false
+                _formattedPriceValid.value = false
+                return
+            }
+
+            _formattedPercentagePrice.value = PercentageFormatter.format(percentagePriceValue, false)
+            _formattedPercentagePriceValid.value = isValid
+            _formattedPriceValid.value = isValid
+
+            if (isBuy.value) {
+                val percentageValue = PriceUtil.findPercentFromMarketPrice(
+                    marketPriceServiceFacade,
+                    FixPriceSpecVO(priceQuote),
+                    market,
+                )
+
+                updateHintText(percentageValue)
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to process fixed price change: ${e.message}" }
+            _formattedPercentagePriceValid.value = false
+            _formattedPriceValid.value = false
         }
-
     }
 
     fun calculatePercentageForFixedValue(value: String): Double {
-        val valueAsDouble = PriceParser.parse(value)
-        priceQuote = PriceQuoteVOFactory.fromPrice(valueAsDouble, createOfferModel.market!!)
-        val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
-        percentagePriceValue = PriceUtil.getPercentageToMarketPrice(marketPriceQuote, priceQuote)
-        return percentagePriceValue * 100
+        try {
+            if (value.isBlank()) {
+                log.w { "Empty value provided to calculatePercentageForFixedValue" }
+                return 0.0
+            }
+            val market = createOfferModel.market
+            if (market == null) {
+                log.e { "Market is null in calculatePercentageForFixedValue" }
+                return 0.0
+            }
+            val valueAsDouble = PriceParser.parseOrNull(value)
+            if (valueAsDouble == null) {
+                log.w { "Invalid price format: $value" }
+                return 0.0
+            }
+            if (valueAsDouble <= 0.0 || !valueAsDouble.isFinite()) {
+                log.w { "Invalid price value: $valueAsDouble" }
+                return 0.0
+            }
+
+            priceQuote = PriceQuoteVOFactory.fromPrice(valueAsDouble, market)
+            val marketPriceQuote = createOfferPresenter.getMostRecentPriceQuote(market)
+            if (marketPriceQuote.value <= 0) {
+                log.e { "Invalid market price: ${marketPriceQuote.value}" }
+                return 0.0
+            }
+
+            percentagePriceValue = PriceUtil.getPercentageToMarketPrice(marketPriceQuote, priceQuote)
+            if (!percentagePriceValue.isFinite()) {
+                log.e { "Invalid percentage calculation result: $percentagePriceValue" }
+                return 0.0
+            }
+
+            return percentagePriceValue * 100
+        } catch (e: Exception) {
+            log.e(e) { "Failed to calculate percentage for fixed value: ${e.message}" }
+            return 0.0
+        }
     }
 
-    fun updateHintText(percentageValue: Double) {
+    private fun updateHintText(percentageValue: Double) {
 
         val feedbackRating = if (percentageValue < -0.05) {
             "bisqEasy.price.feedback.sentence.veryLow".i18n()

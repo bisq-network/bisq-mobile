@@ -36,10 +36,27 @@ object PriceUtil {
      */
     fun getPercentageToMarketPrice(marketPrice: PriceQuoteVO, priceQuote: PriceQuoteVO): Double {
         require(marketPrice.value > 0) { "marketQuote must be positive" }
-        val res = priceQuote.value / marketPrice.value.toDouble() - 1
-        return res.roundTo(4)
+        require(priceQuote.value >= 0) { "priceQuote must be non-negative" }
 
-        //return MathUtils.roundDouble(priceQuote.getValue() / marketPrice.getValue() as Double - 1, 4)
+        // Additional safety check for iOS compatibility
+        val marketPriceDouble = marketPrice.value.toDouble()
+        if (marketPriceDouble == 0.0 || !marketPriceDouble.isFinite()) {
+            throw IllegalArgumentException("Invalid market price value: $marketPriceDouble")
+        }
+
+        val priceQuoteDouble = priceQuote.value.toDouble()
+        if (!priceQuoteDouble.isFinite()) {
+            throw IllegalArgumentException("Invalid price quote value: $priceQuoteDouble")
+        }
+
+        val res = priceQuoteDouble / marketPriceDouble - 1
+
+        // Ensure result is finite before rounding
+        if (!res.isFinite()) {
+            throw IllegalArgumentException("Calculation resulted in non-finite value: $res")
+        }
+
+        return res.roundTo(4)
     }
 
     fun findPercentFromMarketPrice(

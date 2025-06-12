@@ -110,16 +110,19 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
     }
     
     override suspend fun dispose() {
-        log.d { "Disposing coroutine jobs" }
+        runCatching {
+            log.d { "Disposing coroutine jobs" }
+            jobsMutex.withLock {
+                log.d { "Disposing ${jobs.size} coroutine jobs" }
+                jobs.forEach { it.cancel() }
+                jobs.clear()
+            }
 
-        jobsMutex.withLock {
-            log.d { "Disposing ${jobs.size} coroutine jobs" }
-            jobs.forEach { it.cancel() }
-            jobs.clear()
+            uiScope.cancel()
+            ioScope.cancel()
+        }.onFailure {
+            log.e(it) { "Failed to dispose coroutine jobs" }
         }
-
-        uiScope.cancel()
-        ioScope.cancel()
         uiScope = CoroutineScope(kotlinx.coroutines.Dispatchers.Main + SupervisorJob())
         ioScope = CoroutineScope(IODispatcher + SupervisorJob())
     }
