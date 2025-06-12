@@ -18,15 +18,15 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMaxAmount
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMinAmount
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
-import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
+import kotlin.concurrent.Volatile
 import kotlin.math.roundToLong
 
 
 object BisqEasyTradeAmountLimits {
-    private val invalidBuyOffers: MutableSet<String> = mutableSetOf()
-    private val invalidBuyOffersMutex = Mutex()
+    @Volatile
+    private var invalidBuyOffers: Set<String> = mutableSetOf()
 
     fun getMinAmountValue(marketPriceServiceFacade: MarketPriceServiceFacade, quoteCurrencyCode: String): Long {
         val minFiatAmount = fromUsd(
@@ -201,14 +201,10 @@ object BisqEasyTradeAmountLimits {
     }
 
     suspend fun addInvalidBuyOffer(id: String) {
-        invalidBuyOffersMutex.withLock {
-            invalidBuyOffers.add(id)
-        }
+        invalidBuyOffers = invalidBuyOffers + id
     }
 
     suspend fun isInvalidBuyOffer(id: String): Boolean {
-        return invalidBuyOffersMutex.withLock {
-            id in invalidBuyOffers
-        }
+        return id in invalidBuyOffers
     }
 }

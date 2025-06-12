@@ -41,7 +41,7 @@ class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentation
     private val _formattedPrice = MutableStateFlow(offerItemPresentationDto.formattedPrice)
     val formattedPrice: StateFlow<String> get() = _formattedPrice
 
-    private val _formattedBaseAmount = MutableStateFlow(offerItemPresentationDto.formattedQuoteAmount)
+    private val _formattedBaseAmount = MutableStateFlow(offerItemPresentationDto.formattedBaseAmount)
     val formattedBaseAmount: StateFlow<String> get() = _formattedBaseAmount
 
     // The user name is the nickname and the nym in case there are multiple nicknames in the network.
@@ -54,35 +54,5 @@ class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentation
     val makersReputationScore: StateFlow<ReputationScoreVO> get() = _makersReputationScore
 
     var isInvalidDueToReputation: Boolean = false
-
-    fun copyWith(
-        formattedQuoteAmount: String = this.formattedQuoteAmount,
-        formattedPriceSpec: String = this.formattedPriceSpec,
-        isInvalidDueToReputation: Boolean = this.isInvalidDueToReputation,
-        formattedBaseAmount: String = this.formattedBaseAmount.value,
-        formattedPrice: String = this.formattedPrice.value,
-        userName: String = this.userName.value,
-        makersReputationScore: ReputationScoreVO = this.makersReputationScore.value
-    ): OfferItemPresentationModel {
-        val dto = OfferItemPresentationDto(
-            bisqEasyOffer = this.bisqEasyOffer,
-            isMyOffer = this.isMyOffer,
-            userProfile = this.makersUserProfile.copy(userName = userName),
-            formattedDate = this.formattedDate,
-            formattedQuoteAmount = formattedQuoteAmount,
-            formattedPriceSpec = formattedPriceSpec,
-            quoteSidePaymentMethods = this.quoteSidePaymentMethods,
-            baseSidePaymentMethods = this.baseSidePaymentMethods,
-            formattedPrice = formattedPrice,
-            reputationScore = makersReputationScore,
-            formattedBaseAmount = formattedBaseAmount,
-        )
-        return OfferItemPresentationModel(dto).also {
-            it.formattedQuoteAmount = formattedQuoteAmount
-            it.formattedPriceSpec = formattedPriceSpec
-            it.isInvalidDueToReputation = isInvalidDueToReputation
-        }
-    }
-
 
 }

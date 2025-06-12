@@ -68,7 +68,11 @@ class OfferbookPresenter(
         selectedOffer = null
 
         launchUI {
-            selectedUserProfile = userProfileServiceFacade.getSelectedUserProfile()!!
+            userProfileServiceFacade.getSelectedUserProfile()?.let { selectedUserProfile = it }
+                ?: run {
+                    log.w { "No selected user profile; offer list skipped" }
+                    return@launchUI
+                }
 
             combine(
                 offersServiceFacade.offerbookListItems,
@@ -88,12 +92,8 @@ class OfferbookPresenter(
 
     private suspend fun processAllOffers(
         offers: List<OfferItemPresentationModel>
-    ): List<OfferItemPresentationModel> = coroutineScope {
-        offers.map { offer ->
-            async {
-                processOffer(offer)
-            }
-        }.awaitAll()
+    ): List<OfferItemPresentationModel> = withContext(IODispatcher) {
+        offers.map { offer -> processOffer(offer) }
     }
 
     private suspend fun processOffer(item: OfferItemPresentationModel): OfferItemPresentationModel {
@@ -119,19 +119,22 @@ class OfferbookPresenter(
 
         val isInvalid = if (offer.direction == DirectionEnum.BUY) {
             BisqEasyTradeAmountLimits.isBuyOfferInvalid(
-                item,
-                true,
-                marketPriceServiceFacade,
-                reputationServiceFacade,
-                selectedUserProfile.id
+                item = item,
+                useCache = true,
+                marketPriceServiceFacade = marketPriceServiceFacade,
+                reputationServiceFacade = reputationServiceFacade,
+                userProfileId = selectedUserProfile.id
             )
         } else false
 
-        return item.copyWith(
-            formattedQuoteAmount = formattedQuoteAmount,
-            formattedPriceSpec = formattedPrice,
-            isInvalidDueToReputation = isInvalid
-        )
+        // Not doing copyWith of item to assign these properties.
+        // Because `OfferItemPresentationModel` class has StateFlow props
+        // and so creating a new object of it, breaks the flow listeners
+        item.formattedQuoteAmount = formattedQuoteAmount
+        item.formattedPriceSpec = formattedPrice
+        item.isInvalidDueToReputation = isInvalid
+
+        return item
     }
 
     fun onOfferSelected(item: OfferItemPresentationModel) {
@@ -211,8 +214,6 @@ class OfferbookPresenter(
 
     private suspend fun canTakeOffer(item: OfferItemPresentationModel): Boolean {
         val bisqEasyOffer = item.bisqEasyOffer
-        val selectedUserProfile = userProfileServiceFacade.getSelectedUserProfile()
-        require(selectedUserProfile != null) { "SelectedUserProfile is null" }
         val requiredReputationScoreForMaxOrFixed =
             BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(
                 marketPriceServiceFacade,
