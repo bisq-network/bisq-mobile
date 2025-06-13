@@ -1,5 +1,6 @@
 package network.bisq.mobile.domain.parser
 
+import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
@@ -150,4 +151,38 @@ class PriceParserTest {
             "Locale-aware parsing should handle at least one common format or reject both"
         )
     }
+
+    @Test
+    fun `parse should handle US number format with thousands separators`() {
+        assertEquals(6345343.04, PriceParser.parse("6,345,343.04"))
+        assertEquals(1234.56, PriceParser.parse("1,234.56"))
+        assertEquals(1000.0, PriceParser.parse("1,000"))
+        assertEquals(1000000.0, PriceParser.parse("1,000,000"))
+    }
+
+    @Test
+    fun `parse should handle European number format with thousands separators`() {
+        assertEquals(6345343.04, PriceParser.parse("6.345.343,04"))
+        assertEquals(1234.56, PriceParser.parse("1.234,56"))
+        assertEquals(1000.0, PriceParser.parse("1.000"))
+        assertEquals(1000000.0, PriceParser.parse("1.000.000"))
+    }
+
+    @Test
+    fun `parse should handle mixed format edge cases`() {
+        assertEquals(123.45, PriceParser.parse("123,45"))  // European decimal
+        assertEquals(123.45, PriceParser.parse("123.45"))  // US decimal
+        assertEquals(1234.0, PriceParser.parse("1,234"))   // Thousands separator
+        assertEquals(1234.0, PriceParser.parse("1.234"))   // European thousands or US decimal > 1000
+    }
+
+    @Test
+    fun `parse should handle numbers with spaces`() {
+        assertEquals(1234567.89, PriceParser.parse("1 234 567.89"))
+        assertEquals(1234567.89, PriceParser.parse("1 234 567,89"))
+    }
+
+
+
+
 }
