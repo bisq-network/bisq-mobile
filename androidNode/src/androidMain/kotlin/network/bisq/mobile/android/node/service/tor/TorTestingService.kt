@@ -146,6 +146,29 @@ class TorTestingService(
     }
 
     /**
+     * Debug Tor status - call this to see what's happening
+     */
+    fun debugTorStatus() {
+        log.i { "🔍 Debugging Tor status..." }
+
+        // Get the TorService from TorIntegrationService and call debug
+        try {
+            // We need to access the torService from torIntegrationService
+            // For now, let's add some debug info here
+            log.i { "Current Tor state: ${torIntegrationService.torState.value}" }
+            log.i { "SOCKS port: ${torIntegrationService.socksPort.value}" }
+            log.i { "Control port: ${torIntegrationService.controlPort.value}" }
+            log.i { "Is Tor ready: ${torIntegrationService.isTorReady()}" }
+
+            val status = torIntegrationService.getTorStatus()
+            log.i { "Full status: $status" }
+
+        } catch (e: Exception) {
+            log.e(e) { "Failed to debug Tor status" }
+        }
+    }
+
+    /**
      * Stop testing and cleanup
      */
     fun stopTesting() {
