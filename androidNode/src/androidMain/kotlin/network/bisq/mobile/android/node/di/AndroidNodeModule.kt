@@ -22,6 +22,8 @@ import network.bisq.mobile.android.node.service.reputation.NodeReputationService
 import network.bisq.mobile.android.node.service.settings.NodeSettingsServiceFacade
 import network.bisq.mobile.android.node.service.trades.NodeTradesServiceFacade
 import network.bisq.mobile.android.node.service.user_profile.NodeUserProfileServiceFacade
+import network.bisq.mobile.android.node.service.tor.TorIntegrationService
+import network.bisq.mobile.android.node.service.tor.BisqTorNetworkBridge
 import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -87,6 +89,13 @@ val androidNodeModule = module {
     single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
 
     single { NodeConnectivityService(get()) } bind ConnectivityService::class
+
+    single<TorIntegrationService> {
+        TorIntegrationService(androidContext(), androidContext().filesDir)
+    }
+    single<BisqTorNetworkBridge> {
+        BisqTorNetworkBridge(androidContext(), androidContext().filesDir, get())
+    }
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 

@@ -155,6 +155,8 @@ android {
             // Required for kmp-tor exec resources
             useLegacyPackaging = true
         }
+        // Required for kmp-tor exec resources
+        jniLibs.useLegacyPackaging = true
     }
     buildTypes {
         getByName("release") {
