@@ -34,22 +34,67 @@ class TorIntegrationService(
      */
     fun initialize() {
         log.i { "Initializing Tor integration service..." }
-        
+
         try {
             // Initialize Tor configuration
             setupTorConfiguration()
-            
+
             // Initialize Tor service
             torService.initialize()
-            
+
             // Set up state monitoring
             setupStateMonitoring()
-            
+
             log.i { "Tor integration service initialized successfully" }
-            
+
         } catch (e: Exception) {
             log.e(e) { "Failed to initialize Tor integration service" }
             throw e
+        }
+    }
+
+    /**
+     * Initialize and start Tor integration for production use
+     * This method includes retry logic and error handling suitable for production
+     */
+    fun initializeAndStart(
+        maxRetries: Int = 3,
+        retryDelayMs: Long = 5000
+    ) {
+        log.i { "🚀 Starting production Tor integration (max retries: $maxRetries)..." }
+
+        serviceScope.launch {
+            var attempt = 0
+            var lastException: Exception? = null
+
+            while (attempt < maxRetries) {
+                try {
+                    attempt++
+                    log.i { "Tor initialization attempt $attempt/$maxRetries" }
+
+                    // Initialize Tor integration
+                    initialize()
+
+                    // Start Tor daemon
+                    startTorIntegration()
+
+                    log.i { "✅ Tor integration started successfully on attempt $attempt" }
+                    return@launch
+
+                } catch (e: Exception) {
+                    lastException = e
+                    log.w(e) { "Tor initialization attempt $attempt failed" }
+
+                    if (attempt < maxRetries) {
+                        log.i { "⏳ Retrying in ${retryDelayMs}ms..." }
+                        kotlinx.coroutines.delay(retryDelayMs)
+                    }
+                }
+            }
+
+            // All attempts failed
+            log.e(lastException) { "❌ Failed to initialize Tor after $maxRetries attempts" }
+            log.w { "⚠️ App will continue without Tor - users can retry from settings" }
         }
     }
 
@@ -144,6 +189,23 @@ class TorIntegrationService(
      */
     fun isTorReady(): Boolean {
         return torState.value == TorService.TorState.READY && socksPort.value != null
+    }
+
+    /**
+     * Debug Tor status and attempt to fix common issues
+     */
+    fun debugAndFixTorStatus() {
+        log.i { "🔧 Debugging and fixing Tor status..." }
+        log.i { "Current state: ${torState.value}" }
+        log.i { "SOCKS port: ${socksPort.value}" }
+        log.i { "Control port: ${controlPort.value}" }
+        log.i { "Is ready: ${isTorReady()}" }
+
+        // Call the TorService debug method
+        torService.debugTorStatus()
+
+        // Log the status after debug
+        log.i { "🔧 After debug - State: ${torState.value}, Port: ${socksPort.value}, Ready: ${isTorReady()}" }
     }
 
     /**

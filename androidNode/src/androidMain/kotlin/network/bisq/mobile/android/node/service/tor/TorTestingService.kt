@@ -11,6 +11,21 @@ import java.io.File
 
 /**
  * Testing service to validate Tor integration without full Bisq networking
+ *
+ * ⚠️ FOR TESTING AND VERIFICATION PURPOSES ONLY ⚠️
+ *
+ * This service is used to manually test and verify that the Tor daemon integration
+ * is working correctly. It provides methods to:
+ * - Test Tor configuration generation and validation
+ * - Test Tor daemon startup and bootstrap process
+ * - Test SOCKS proxy connectivity
+ * - Test hidden service functionality
+ * - Debug Tor status and troubleshoot issues
+ *
+ * This service should NOT be used in production. For production Tor integration,
+ * use TorIntegrationService directly from MainApplication::onCreate().
+ *
+ * Usage: Call methods manually for testing/debugging purposes only.
  */
 class TorTestingService(
     private val context: Context,
