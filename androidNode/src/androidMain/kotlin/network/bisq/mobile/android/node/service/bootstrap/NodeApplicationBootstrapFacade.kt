@@ -19,6 +19,11 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.i18n.i18n
 
+interface ApplicationServiceInitializationCallback {
+    fun onApplicationServiceInitialized()
+    fun onApplicationServiceInitializationFailed(throwable: Throwable)
+}
+
 class NodeApplicationBootstrapFacade(
     private val applicationService: AndroidApplicationService.Provider,
     private val connectivityService: ConnectivityService,
@@ -32,6 +37,11 @@ class NodeApplicationBootstrapFacade(
     private var applicationServiceStatePin: Pin? = null
     private var torBootstrapComplete = CompletableDeferred<Boolean>()
     private var bootstrapSuccessful = false
+    private var initializationCallback: ApplicationServiceInitializationCallback? = null
+
+    fun setInitializationCallback(callback: ApplicationServiceInitializationCallback) {
+        this.initializationCallback = callback
+    }
 
     override fun activate() {
         // Check if already active to prevent duplicate activation
@@ -73,7 +83,6 @@ class NodeApplicationBootstrapFacade(
         setState("Initializing Tor daemon...")
         setProgress(0.05f) // Very small progress to show we've started
 
-        // Set up Tor state observer to watch for READY state
         setupTorStateObserver()
 
         torMonitoringJob = torBootstrapScope.launch {
@@ -277,9 +286,16 @@ class NodeApplicationBootstrapFacade(
 
         // Reset progress and state for application bootstrap
         onInitializeAppState()
+        setupApplicationStateObserver()
 
-        // NOW set up the application service state observer
+        // Now that Tor is ready, we can safely initialize the application service
+        triggerApplicationServiceInitialization()
+    }
+
+    private fun setupApplicationStateObserver() {
+        log.i { "📱 Bootstrap: Setting up application state observer..." }
         applicationServiceStatePin = applicationServiceState.addObserver { state: State ->
+            log.i { "📱 Bootstrap: Application state changed to: $state" }
             when (state) {
                 State.INITIALIZE_APP -> {
                     onInitializeAppState()
@@ -340,6 +356,68 @@ class NodeApplicationBootstrapFacade(
             }
         }
     }
+
+    /**
+     * Trigger the actual application service initialization after Tor is ready
+     */
+    private fun triggerApplicationServiceInitialization() {
+        launchIO {
+            try {
+                log.i { "🚀 Bootstrap: Triggering application service initialization (Tor is ready)..." }
+
+                // Get the application service and check its current state
+                val appService = applicationService.applicationService
+                val currentState = appService.state.get()
+
+                log.i { "📱 Bootstrap: Current application service state: $currentState" }
+
+                // Check if the service is already initialized
+                when (currentState) {
+                    State.APP_INITIALIZED -> {
+                        log.i { "✅ Bootstrap: Application service already initialized - notifying callback" }
+                        initializationCallback?.onApplicationServiceInitialized()
+                        return@launchIO
+                    }
+                    State.FAILED -> {
+                        log.w { "⚠️ Bootstrap: Application service is in FAILED state - retrying initialization" }
+                    }
+                    else -> {
+                        log.i { "📱 Bootstrap: Application service in state $currentState - proceeding with initialization" }
+                    }
+                }
+
+                // Call initialize() which will trigger the state changes we're observing
+                appService.initialize()
+                    .whenComplete { result: Boolean?, throwable: Throwable? ->
+                        if (throwable == null) {
+                            if (result == true) {
+                                log.i { "✅ Bootstrap: Application service initialization completed successfully" }
+                                initializationCallback?.onApplicationServiceInitialized()
+                            } else {
+                                log.e { "❌ Bootstrap: Application service initialization failed with result=false" }
+                                setState("splash.applicationServiceState.FAILED".i18n())
+                                setProgress(0f)
+                                initializationCallback?.onApplicationServiceInitializationFailed(
+                                    RuntimeException("Application service initialization returned false")
+                                )
+                            }
+                        } else {
+                            log.e(throwable) { "❌ Bootstrap: Application service initialization failed with exception" }
+                            setState("splash.applicationServiceState.FAILED".i18n())
+                            setProgress(0f)
+                            initializationCallback?.onApplicationServiceInitializationFailed(throwable)
+                        }
+                    }
+
+            } catch (e: Exception) {
+                log.e(e) { "❌ Bootstrap: Failed to trigger application service initialization" }
+                setState("splash.applicationServiceState.FAILED".i18n())
+                setProgress(0f)
+                initializationCallback?.onApplicationServiceInitializationFailed(e)
+            }
+        }
+    }
+
 
     override fun deactivate() {
         connectivityJob?.cancel()
