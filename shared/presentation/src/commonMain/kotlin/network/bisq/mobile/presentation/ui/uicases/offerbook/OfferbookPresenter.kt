@@ -141,6 +141,8 @@ class OfferbookPresenter(
         selectedOffer = item
         if (item.isMyOffer) {
             _showDeleteConfirmation.value = true
+        } else if (item.isInvalidDueToReputation) {
+            showReputationRequirementInfo(item)
         } else {
             takeOffer()
         }
@@ -266,8 +268,8 @@ class OfferbookPresenter(
         val canBuyerTakeOffer = isReputationNotCached || sellersScore >= requiredReputationScoreForMinOrFixed
         if (!canBuyerTakeOffer) {
             val link = "hyperlinks.openInBrowser.attention".i18n(REPUTATION_WIKI_URL)
-            if (bisqEasyOffer.direction == DirectionEnum.BUY) {
-                // BUY offer: Maker wants to sell Bitcoin, so they are the seller
+            if (bisqEasyOffer.direction == DirectionEnum.SELL) {
+                // SELL offer: Maker wants to sell Bitcoin, so they are the seller
                 // Taker (me) wants to buy Bitcoin - checking if seller has enough reputation
                 val learnMore = "mobile.reputation.learnMore".i18n()
                 notEnoughReputationHeadline = "chat.message.takeOffer.buyer.invalidOffer.headline".i18n()
@@ -279,7 +281,7 @@ class OfferbookPresenter(
                     if (isAmountRangeOffer) minFiatAmount else maxFiatAmount
                 ) + "\n\n" + learnMore + "\n\n\n" + link
             } else {
-                // SELL offer: Maker wants to buy Bitcoin, so taker becomes the seller
+                // BUY offer: Maker wants to buy Bitcoin, so taker becomes the seller
                 // Taker (me) wants to sell Bitcoin - checking if I have enough reputation
                 val learnMore = "mobile.reputation.buildReputation".i18n()
                 notEnoughReputationHeadline = "chat.message.takeOffer.seller.insufficientScore.headline".i18n()
