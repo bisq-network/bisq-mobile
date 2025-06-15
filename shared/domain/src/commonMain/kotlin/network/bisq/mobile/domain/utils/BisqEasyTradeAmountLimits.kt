@@ -1,7 +1,5 @@
 package network.bisq.mobile.domain.utils
 
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -18,15 +16,15 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMaxAmount
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMinAmount
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
-import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
+import kotlin.concurrent.Volatile
 import kotlin.math.roundToLong
 
 
 object BisqEasyTradeAmountLimits {
-    private val invalidSellOffers: MutableSet<String> = mutableSetOf()
-    private val invalidSellOffersMutex = Mutex()
+    @Volatile
+    private var invalidBuyOffers: Set<String> = mutableSetOf()
 
     fun getMinAmountValue(marketPriceServiceFacade: MarketPriceServiceFacade, quoteCurrencyCode: String): Long {
         val minFiatAmount = fromUsd(
@@ -64,17 +62,18 @@ object BisqEasyTradeAmountLimits {
             }
     }
 
-    suspend fun isSellOfferInvalid(
+    suspend fun isBuyOfferInvalid(
         item: OfferItemPresentationModel,
         useCache: Boolean = true,
         marketPriceServiceFacade: MarketPriceServiceFacade,
-        reputationServiceFacade: ReputationServiceFacade
+        reputationServiceFacade: ReputationServiceFacade,
+        userProfileId: String,
     ): Boolean {
         val bisqEasyOffer = item.bisqEasyOffer
-        require(bisqEasyOffer.direction == DirectionEnum.SELL)
+        require(bisqEasyOffer.direction == DirectionEnum.BUY)
 
         val offerId = bisqEasyOffer.id
-        if (useCache && isInvalidSellOffer(offerId)) {
+        if (useCache && isInvalidBuyOffer(offerId)) {
             return true
         }
 
@@ -89,10 +88,8 @@ object BisqEasyTradeAmountLimits {
             return false
         }
 
-        val userProfileId = bisqEasyOffer.makerNetworkId.pubKey.id
-        
         // Safely get seller's reputation score with proper error handling
-        val sellersScore: Long = runCatching {
+        val myScore: Long = runCatching {
             withContext(IODispatcher) {
                 reputationServiceFacade.getReputation(userProfileId)
             }.fold(
@@ -104,9 +101,9 @@ object BisqEasyTradeAmountLimits {
             )
         }.getOrDefault(0L)
 
-        val isInvalid = sellersScore < requiredReputationScoreForMinOrFixed
+        val isInvalid = myScore < requiredReputationScoreForMinOrFixed
         if (isInvalid) {
-            addInvalidSellOffer(offerId) // We also add it if cache is false
+            addInvalidBuyOffer(offerId) // We also add it if cache is false
         }
         return isInvalid
     }
@@ -201,15 +198,11 @@ object BisqEasyTradeAmountLimits {
         return (makersReputationScore * (1 + TOLERANCE)).toLong();
     }
 
-    suspend fun addInvalidSellOffer(id: String) {
-        invalidSellOffersMutex.withLock {
-            invalidSellOffers.add(id)
-        }
+    suspend fun addInvalidBuyOffer(id: String) {
+        invalidBuyOffers = invalidBuyOffers + id
     }
 
-    suspend fun isInvalidSellOffer(id: String): Boolean {
-        return invalidSellOffersMutex.withLock {
-            id in invalidSellOffers
-        }
+    suspend fun isInvalidBuyOffer(id: String): Boolean {
+        return id in invalidBuyOffers
     }
 }

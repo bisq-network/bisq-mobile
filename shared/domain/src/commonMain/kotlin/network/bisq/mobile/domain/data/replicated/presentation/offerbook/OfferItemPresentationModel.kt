@@ -41,7 +41,7 @@ class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentation
     private val _formattedPrice = MutableStateFlow(offerItemPresentationDto.formattedPrice)
     val formattedPrice: StateFlow<String> get() = _formattedPrice
 
-    private val _formattedBaseAmount = MutableStateFlow(offerItemPresentationDto.formattedQuoteAmount)
+    private val _formattedBaseAmount = MutableStateFlow(offerItemPresentationDto.formattedBaseAmount)
     val formattedBaseAmount: StateFlow<String> get() = _formattedBaseAmount
 
     // The user name is the nickname and the nym in case there are multiple nicknames in the network.
@@ -54,4 +54,5 @@ class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentation
     val makersReputationScore: StateFlow<ReputationScoreVO> get() = _makersReputationScore
 
     var isInvalidDueToReputation: Boolean = false
+
 }
