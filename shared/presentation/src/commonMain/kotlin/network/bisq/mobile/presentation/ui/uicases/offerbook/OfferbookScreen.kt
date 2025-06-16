@@ -70,7 +70,7 @@ fun OfferbookScreen() {
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            items(sortedFilteredOffers) { item ->
+            items(items = sortedFilteredOffers, key = { it.offerId }) { item ->
                 OfferCard(
                     item,
                     onSelectOffer = {
