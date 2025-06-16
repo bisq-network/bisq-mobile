@@ -67,11 +67,11 @@ class OfferbookPresenter(
 
         selectedOffer = null
 
-        launchUI {
+        launchIO {
             userProfileServiceFacade.getSelectedUserProfile()?.let { selectedUserProfile = it }
                 ?: run {
                     log.w { "No selected user profile; offer list skipped" }
-                    return@launchUI
+                    return@launchIO
                 }
 
             combine(
@@ -92,7 +92,7 @@ class OfferbookPresenter(
 
     private suspend fun processAllOffers(
         offers: List<OfferItemPresentationModel>
-    ): List<OfferItemPresentationModel> = withContext(IODispatcher) {
+    ): List<OfferItemPresentationModel> = withContext(Dispatchers.Main) {
         offers.map { offer -> processOffer(offer) }
     }
 
