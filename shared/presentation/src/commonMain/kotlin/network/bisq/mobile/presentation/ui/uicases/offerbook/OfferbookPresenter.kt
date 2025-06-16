@@ -92,7 +92,7 @@ class OfferbookPresenter(
 
     private suspend fun processAllOffers(
         offers: List<OfferItemPresentationModel>
-    ): List<OfferItemPresentationModel> = withContext(Dispatchers.Main) {
+    ): List<OfferItemPresentationModel> = withContext(IODispatcher) {
         offers.map { offer -> processOffer(offer) }
     }
 
@@ -130,9 +130,11 @@ class OfferbookPresenter(
         // Not doing copyWith of item to assign these properties.
         // Because `OfferItemPresentationModel` class has StateFlow props
         // and so creating a new object of it, breaks the flow listeners
-        item.formattedQuoteAmount = formattedQuoteAmount
-        item.formattedPriceSpec = formattedPrice
-        item.isInvalidDueToReputation = isInvalid
+        withContext(Dispatchers.Main) {
+            item.formattedQuoteAmount = formattedQuoteAmount
+            item.formattedPriceSpec = formattedPrice
+            item.isInvalidDueToReputation = isInvalid
+        }
 
         return item
     }
