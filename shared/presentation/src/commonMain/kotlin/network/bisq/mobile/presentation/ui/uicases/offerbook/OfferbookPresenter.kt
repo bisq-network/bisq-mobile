@@ -242,9 +242,9 @@ class OfferbookPresenter(
             withCode = true
         )
 
-        // For BUY offers: The maker wants to sell Bitcoin, so they are the seller
-        // For SELL offers: The maker wants to buy Bitcoin, so the taker becomes the seller
-        val userProfileId = if (bisqEasyOffer.direction == DirectionEnum.BUY)
+        // For BUY offers: The maker wants to buy Bitcoin, so the taker (me) becomes the seller
+        // For SELL offers: The maker wants to sell Bitcoin, so the maker becomes the seller
+        val userProfileId = if (bisqEasyOffer.direction == DirectionEnum.SELL)
             bisqEasyOffer.makerNetworkId.pubKey.id // Offer maker is seller (wants to sell Bitcoin)
         else
             selectedUserProfile.id // I am seller (taker selling to maker who wants to buy)
@@ -265,7 +265,8 @@ class OfferbookPresenter(
 
         val isAmountRangeOffer = bisqEasyOffer.amountSpec is RangeAmountSpecVO
 
-        val canBuyerTakeOffer = isReputationNotCached || sellersScore >= requiredReputationScoreForMinOrFixed
+        // val canBuyerTakeOffer = isReputationNotCached || sellersScore >= requiredReputationScoreForMinOrFixed
+        val canBuyerTakeOffer = sellersScore >= requiredReputationScoreForMinOrFixed
         if (!canBuyerTakeOffer) {
             val link = "hyperlinks.openInBrowser.attention".i18n(REPUTATION_WIKI_URL)
             if (bisqEasyOffer.direction == DirectionEnum.SELL) {
