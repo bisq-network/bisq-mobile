@@ -1,5 +1,7 @@
 package network.bisq.mobile.domain.utils
 
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -18,15 +20,17 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
-import kotlin.concurrent.Volatile
 import kotlin.math.roundToLong
 
 
 object BisqEasyTradeAmountLimits {
-    @Volatile
-    private var invalidBuyOffers: Set<String> = mutableSetOf()
+    private val invalidBuyOffers: MutableSet<String> = mutableSetOf()
+    private val invalidBuyOffersMutex = Mutex()
 
-    fun getMinAmountValue(marketPriceServiceFacade: MarketPriceServiceFacade, quoteCurrencyCode: String): Long {
+    fun getMinAmountValue(
+        marketPriceServiceFacade: MarketPriceServiceFacade,
+        quoteCurrencyCode: String
+    ): Long {
         val minFiatAmount = fromUsd(
             marketPriceServiceFacade,
             MarketVO("BTC", quoteCurrencyCode),
@@ -35,7 +39,10 @@ object BisqEasyTradeAmountLimits {
         return ((minFiatAmount?.value?.toDouble() ?: 0.0) / 10000).roundToLong() * 10000
     }
 
-    fun getMaxAmountValue(marketPriceServiceFacade: MarketPriceServiceFacade, quoteCurrencyCode: String): Long {
+    fun getMaxAmountValue(
+        marketPriceServiceFacade: MarketPriceServiceFacade,
+        quoteCurrencyCode: String
+    ): Long {
         val maxFiatAmount = fromUsd(
             marketPriceServiceFacade,
             MarketVO("BTC", quoteCurrencyCode),
@@ -78,10 +85,10 @@ object BisqEasyTradeAmountLimits {
         }
 
         val logger = getLogger("BisqEasyTradeAmountLimits")
-        
+
         // Safely get required reputation score, return false if null
         val requiredReputationScoreForMinOrFixed = findRequiredReputationScoreForMinOrFixedAmount(
-            marketPriceServiceFacade, 
+            marketPriceServiceFacade,
             bisqEasyOffer
         ) ?: run {
             logger.e { "requiredReputationScoreForMinAmount is null" }
@@ -177,7 +184,8 @@ object BisqEasyTradeAmountLimits {
     ): MonetaryVO? {
         val maxUsdTradeAmount: FiatVO = getMaxUsdTradeAmount(myReputationScore)
         val usdMarketPriceItem = marketPriceServiceFacade.findUSDMarketPriceItem() ?: return null
-        val defaultMaxBtcTradeAmount = usdMarketPriceItem.priceQuote.toBaseSideMonetary(maxUsdTradeAmount)
+        val defaultMaxBtcTradeAmount =
+            usdMarketPriceItem.priceQuote.toBaseSideMonetary(maxUsdTradeAmount)
         val marketPriceItem = marketPriceServiceFacade.findMarketPriceItem(market)
         val finalValue = marketPriceItem?.priceQuote?.toQuoteSideMonetary(defaultMaxBtcTradeAmount)
         return finalValue
@@ -185,7 +193,8 @@ object BisqEasyTradeAmountLimits {
 
     fun getMaxUsdTradeAmount(totalScore: Long): FiatVO {
         val maxAmountAllowedByReputation = getUsdAmountFromReputationScore(totalScore);
-        val value: Double = minOf(MAX_USD_TRADE_AMOUNT.value, maxAmountAllowedByReputation.value).toDouble();
+        val value: Double =
+            minOf(MAX_USD_TRADE_AMOUNT.value, maxAmountAllowedByReputation.value).toDouble();
         return FiatVOFactory.from(value.toLong(), "USD");
     }
 
@@ -199,10 +208,14 @@ object BisqEasyTradeAmountLimits {
     }
 
     suspend fun addInvalidBuyOffer(id: String) {
-        invalidBuyOffers = invalidBuyOffers + id
+        invalidBuyOffersMutex.withLock {
+            invalidBuyOffers.add(id)
+        }
     }
 
     suspend fun isInvalidBuyOffer(id: String): Boolean {
-        return id in invalidBuyOffers
+        return invalidBuyOffersMutex.withLock {
+            id in invalidBuyOffers
+        }
     }
 }
