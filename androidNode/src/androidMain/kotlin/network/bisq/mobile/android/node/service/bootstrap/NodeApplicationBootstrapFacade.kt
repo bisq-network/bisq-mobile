@@ -267,6 +267,11 @@ class NodeApplicationBootstrapFacade(
 
         if (torState == TorService.TorState.READY && socksPort != null) {
             log.i { "🚀 Bootstrap: Tor fully ready with SOCKS port: $socksPort" }
+
+            // CRITICAL: Configure Bisq for external Tor IMMEDIATELY when Tor becomes ready
+            // This must happen BEFORE any Bisq services are initialized
+            configureBisqForExternalTorEarly(socksPort)
+
             // Complete the deferred to signal Tor is ready
             if (!torBootstrapComplete.isCompleted) {
                 torBootstrapComplete.complete(true)
@@ -283,6 +288,9 @@ class NodeApplicationBootstrapFacade(
      */
     private fun proceedWithApplicationBootstrap() {
         log.i { "📱 Bootstrap: Starting Bisq application services..." }
+
+        // Note: Tor configuration was already set in checkTorReadiness()
+        // This ensures system properties are set BEFORE any Bisq services initialize
 
         // Reset progress and state for application bootstrap
         onInitializeAppState()
@@ -354,6 +362,69 @@ class NodeApplicationBootstrapFacade(
                     setProgress(0f)
                 }
             }
+        }
+    }
+
+    /**
+     * Configure Bisq to use our embedded Tor as external Tor - EARLY VERSION
+     * This is called immediately when Tor becomes ready, before any Bisq services initialize
+     * Updates the SOCKS port that was set in MainApplication.onCreate()
+     */
+    private fun configureBisqForExternalTorEarly(socksPort: Int) {
+        try {
+            log.i { "🔧 EARLY: Updating SOCKS port for external Tor configuration" }
+            log.i { "   SOCKS proxy: 127.0.0.1:$socksPort (updating from placeholder)" }
+
+            // Update the SOCKS port properties with the actual port from our Tor daemon
+            // The basic external Tor properties were already set in MainApplication.onCreate()
+            System.setProperty("bisq.torSocksPort", socksPort.toString())
+            System.setProperty("socksProxyPort", socksPort.toString())
+            System.setProperty("tor.socks.port", socksPort.toString())
+
+            log.i { "✅ EARLY: SOCKS port updated to $socksPort for external Tor" }
+
+        } catch (e: Exception) {
+            log.e(e) { "❌ EARLY: Failed to update SOCKS port for external Tor" }
+        }
+    }
+
+    /**
+     * Configure Bisq to use our embedded Tor as external Tor
+     */
+    private fun configureBisqForExternalTor() {
+        try {
+            val socksPort = torIntegrationService.socksPort.value
+            if (socksPort == null) {
+                log.e { "❌ Cannot configure Bisq for external Tor - SOCKS port not available" }
+                return
+            }
+
+            log.i { "🔧 Configuring Bisq to use external Tor (our embedded Tor)" }
+            log.i { "   SOCKS proxy: 127.0.0.1:$socksPort" }
+
+            // Set system properties that Bisq uses for external Tor configuration
+            System.setProperty("bisq.useExternalTor", "true")
+            System.setProperty("bisq.torSocksHost", "127.0.0.1")
+            System.setProperty("bisq.torSocksPort", socksPort.toString())
+
+            // Also set standard SOCKS proxy properties that Java networking might use
+            System.setProperty("socksProxyHost", "127.0.0.1")
+            System.setProperty("socksProxyPort", socksPort.toString())
+            System.setProperty("socksProxyVersion", "5")
+
+            // Additional Tor configuration properties
+            System.setProperty("bisq.torExternalControl", "true")
+            System.setProperty("bisq.torControlHost", "127.0.0.1")
+            System.setProperty("bisq.torControlPort", "0") // We don't expose control port
+
+            // Network transport configuration
+            System.setProperty("bisq.network.transport", "TOR")
+            System.setProperty("bisq.network.useExternalTor", "true")
+
+            log.i { "✅ Bisq configured to use external Tor at 127.0.0.1:$socksPort" }
+
+        } catch (e: Exception) {
+            log.e(e) { "❌ Failed to configure Bisq for external Tor" }
         }
     }
 
