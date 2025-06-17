@@ -100,6 +100,17 @@ class WebSocketClient(
     fun isDemo(): Boolean = webSocketUrl.startsWith(DEMO_URL)
 
     suspend fun connect(isTest: Boolean = false) {
+        // Skip actual connection in demo mode
+        if (isDemo()) {
+            log.d { "Demo mode detected - skipping actual WebSocket connection" }
+            connectionReady = CompletableDeferred()
+            _webSocketClientStatus.value = WebSocketClientStatus.CONNECTED
+            if (!connectionReady.isCompleted) {
+                connectionReady.complete(true)
+            }
+            return
+        }
+
         var needReconnect = false
         connectionMutex.withLock {
             try {
@@ -148,6 +159,13 @@ class WebSocketClient(
      * @param isReconnect true if this was called from a reconnect method
      */
     suspend fun disconnect(isTest: Boolean = false, isReconnect: Boolean = false) {
+        // In demo mode, just update status without actual disconnection
+        if (isDemo()) {
+            log.d { "Demo mode - simulating disconnect" }
+            _webSocketClientStatus.value = WebSocketClientStatus.DISCONNECTED
+            return
+        }
+
         connectionMutex.withLock {
             log.d { "disconnecting socket isTest $isTest isReconnected $isReconnect" }
             if (!isReconnect) {
@@ -171,27 +189,33 @@ class WebSocketClient(
     }
 
     private fun reconnect() {
+        // Skip reconnection in demo mode
+        if (isDemo()) {
+            log.d { "Demo mode - skipping reconnect" }
+            return
+        }
+
         if (isReconnecting) {
             log.d { "Reconnect already in progress, skipping" }
             return
         }
         reconnectJob?.cancel()
-        
+
         reconnectJob = ioScope.launch {
             isReconnecting = true
             log.d { "Launching reconnect attempt #${reconnectAttempts + 1}" }
-            
+
             try {
                 // Implement exponential backoff
                 val delayMillis = minOf(
                     DELAY_TO_RECONNECT * (1 shl minOf(reconnectAttempts, 4)), // Exponential backoff
                     MAX_RECONNECT_DELAY
                 )
-                
+
                 log.d { "Waiting ${delayMillis}ms before reconnect attempt" }
                 disconnect(false, true)
                 delay(delayMillis)
-                
+
                 // Check if we've exceeded max attempts
                 if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
                     log.w { "Maximum reconnect attempts ($MAX_RECONNECT_ATTEMPTS) reached" }
@@ -200,7 +224,7 @@ class WebSocketClient(
                     reconnectAttempts = 0
                     return@launch
                 }
-                
+
                 reconnectAttempts++
                 connect()
             } finally {
