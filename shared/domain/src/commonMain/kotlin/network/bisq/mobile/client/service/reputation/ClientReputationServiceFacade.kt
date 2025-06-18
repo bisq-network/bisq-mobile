@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
@@ -42,10 +43,47 @@ class ClientReputationServiceFacade(
     // API
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
         val reputation = reputationByUserProfileId.value[userProfileId]
-        return if (reputation == null) {
-            Result.failure(IllegalStateException("Reputation for userId=$userProfileId not cached yet"))
-        } else {
-            Result.success(reputation)
+        return when {
+            BuildNodeConfig.IS_DEBUG -> reputationDevStub(userProfileId)
+            reputation == null -> Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not cached yet"))
+            else -> Result.success(reputation)
+        }
+    }
+
+    private fun reputationDevStub(userProfileId: String): Result<ReputationScoreVO> {
+        val reputation = reputationByUserProfileId.value[userProfileId]
+        // Hardcoded rep for dev/testing
+        // val myId = "f346be"
+        val myId = "7730e" // replace with mobile User's ID
+        val bobId = "e35fe38" // replace with bisq2 user's ID
+        return when {
+            userProfileId.startsWith(myId) -> {
+                Result.success(
+                    ReputationScoreVO(
+                        totalScore = 7000,  // Default value will be 0, as bisq-mobile user wont have any rep to start with
+                        // Try with different values: 0, <1200, 1200, 1200+
+                        fiveSystemScore = 3.5, ranking = 10
+                    )
+                )
+            }
+
+            userProfileId.startsWith(bobId) -> {
+                Result.success(
+                    ReputationScoreVO(
+                        totalScore = 10000, // Default value is 0, as devModeReputationScore set is bisq2, is not propagating to mobile.
+                        fiveSystemScore = 4.2, ranking = 3
+                    )
+                )
+            }
+
+            reputation == null -> {
+                Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not cached yet"))
+            }
+
+            else -> {
+                log.w { "Dev stuff for $userProfileId not setup, returning current network reputation" }
+                Result.success(reputation)
+            }
         }
     }
 
@@ -58,8 +96,7 @@ class ClientReputationServiceFacade(
             }
             if (reputationSequenceNumber.value >= webSocketEvent.sequenceNumber) {
                 log.w {
-                    "Sequence number is larger or equal than the one we " +
-                            "received from the backend. We ignore that event."
+                    "Sequence number is larger or equal than the one we " + "received from the backend. We ignore that event."
                 }
                 return@collect
             }

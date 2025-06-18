@@ -14,6 +14,7 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExte
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.hexToByteArray
+import okio.ByteString.Companion.decodeBase64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.max
 import kotlin.math.min
@@ -139,7 +140,21 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
-        // TODO: Actual implementation
-        return PlatformImage.deserialize(byteArrayOf())
+        if (avatarMap[userProfile.nym] == null) {
+            avatarMap[userProfile.nym] = try {
+                val pubKeyHash = userProfile.networkId.pubKey.hash.decodeBase64()!!.toByteArray()
+                val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()!!.toByteArray()
+
+                clientCatHashService.getImage(
+                    pubKeyHash,
+                    powSolution,
+                    userProfile.avatarVersion,
+                    120
+                )
+            } catch(e: Exception) {
+                null
+            }
+        }
+        return avatarMap[userProfile.nym]
     }
 }
