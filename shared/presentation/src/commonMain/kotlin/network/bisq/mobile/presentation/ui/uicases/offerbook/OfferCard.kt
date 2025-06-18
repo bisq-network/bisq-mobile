@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.displayString
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
@@ -34,6 +35,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun OfferCard(
     item: OfferItemPresentationModel,
+    userAvatar: PlatformImage? = null,
     onSelectOffer: () -> Unit,
 ) {
     val userName = item.userName.collectAsState().value
@@ -88,6 +90,7 @@ fun OfferCard(
     ) {
         UserProfile(
             user = item.makersUserProfile,
+            userAvatar = userAvatar,
             reputation = item.makersReputationScore,
             supportedLanguageCodes = item.bisqEasyOffer.supportedLanguageCodes,
             showUserName = false,

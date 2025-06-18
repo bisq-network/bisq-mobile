@@ -21,6 +21,7 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExte
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import java.security.KeyPair
+import java.util.Base64
 import java.util.Random
 import kotlin.math.max
 import kotlin.math.min
@@ -31,8 +32,8 @@ import kotlin.math.min
  * It uses in a in-memory model for the relevant data required for the presenter to reflect the domains state.
  * Persistence is done inside the Bisq 2 libraries.
  */
-class NodeUserProfileServiceFacade(private val applicationService: AndroidApplicationService.Provider) : ServiceFacade(),
-    UserProfileServiceFacade {
+class NodeUserProfileServiceFacade(private val applicationService: AndroidApplicationService.Provider) :
+    ServiceFacade(), UserProfileServiceFacade {
 
     companion object {
         private const val AVATAR_VERSION = 0
@@ -85,23 +86,14 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         val solution = proofOfWork!!.solution
         val nym = NymIdGenerator.generate(pubKeyHash, solution)
         val profileIcon: PlatformImage = catHashService.getImage(
-            pubKeyHash,
-            solution,
-            0,
-            120.0
+            pubKeyHash, solution, 0, 120.0
         )
         result(id!!, nym!!, profileIcon)
     }
 
     override suspend fun createAndPublishNewUserProfile(nickName: String) {
         userService.userIdentityService.createAndPublishNewUserProfile(
-            nickName,
-            keyPair,
-            pubKeyHash,
-            proofOfWork,
-            AVATAR_VERSION,
-            "",
-            ""
+            nickName, keyPair, pubKeyHash, proofOfWork, AVATAR_VERSION, "", ""
         ).join()
 
         pubKeyHash = null
@@ -138,6 +130,15 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
         return idList
 
+    }
+
+    override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage {
+        return catHashService.getImage(
+            Base64.getDecoder().decode(userProfile.networkId.pubKey.hash),
+            Base64.getDecoder().decode(userProfile.proofOfWork.solutionEncoded),
+            userProfile.avatarVersion,
+            120.0
+        )
     }
 
     // Private

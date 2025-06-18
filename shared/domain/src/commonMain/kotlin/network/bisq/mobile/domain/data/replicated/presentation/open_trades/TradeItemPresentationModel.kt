@@ -1,5 +1,6 @@
 package network.bisq.mobile.domain.data.replicated.presentation.open_trades
 
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeDto
@@ -39,6 +40,7 @@ class TradeItemPresentationModel(tradeItemPresentationDto: TradeItemPresentation
     val myUserProfile = if (bisqEasyTradeModel.isMaker) makerUserProfile else takerUserProfile
     val myUserName = myUserProfile.userName
     val peersUserProfile = if (bisqEasyTradeModel.isMaker) takerUserProfile else makerUserProfile
+    var peersUserAvatar: PlatformImage? = null
     val peersReputationScore = tradeItemPresentationDto.peersReputationScore
     val peersUserName = peersUserProfile.userName
     val mediator = bisqEasyTradeModel.contract.mediator
@@ -53,12 +55,14 @@ class TradeItemPresentationModel(tradeItemPresentationDto: TradeItemPresentation
     var quoteAmountWithCode = "$formattedQuoteAmount $quoteCurrencyCode"
     val baseAmountWithCode = "$formattedBaseAmount $baseCurrencyCode"
 
+    fun setPeersUserAvatarImage(avatar: PlatformImage?) {
+        peersUserAvatar = avatar
+    }
+
     fun reformat(): TradeItemPresentationModel {
         return apply {
-            quoteAmountWithCode =
-                "${NumberFormatter.format(quoteAmount.toDouble() / 10000.0)} $quoteCurrencyCode"
-            formattedPrice =
-                PriceSpecFormatter.getFormattedPriceSpec(bisqEasyOffer.priceSpec, true)
+            quoteAmountWithCode = "${NumberFormatter.format(quoteAmount.toDouble() / 10000.0)} $quoteCurrencyCode"
+            formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(bisqEasyOffer.priceSpec, true)
             formattedBaseAmount = NumberFormatter.btcFormat(baseAmount)
             formattedQuoteAmount = NumberFormatter.format(quoteAmount.toDouble() / 10000.0)
         }

@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
@@ -16,10 +17,12 @@ class BisqEasyOpenTradeMessageModel(
     myUserProfile: UserProfileVO,
     chatReactions: List<BisqEasyOpenTradeMessageReactionVO>
 ) {
-    private val senderUserProfile: UserProfileVO = bisqEasyOpenTradeMessage.senderUserProfile
+    val senderUserProfile: UserProfileVO = bisqEasyOpenTradeMessage.senderUserProfile
     private val myUserProfileId = myUserProfile.id
 
-    private val _chatReactions: MutableStateFlow<List<BisqEasyOpenTradeMessageReactionVO>> = MutableStateFlow(chatReactions)
+    private val _chatReactions: MutableStateFlow<List<BisqEasyOpenTradeMessageReactionVO>> = MutableStateFlow(
+        chatReactions
+    )
     val chatReactions: StateFlow<List<BisqEasyOpenTradeMessageReactionVO>> = _chatReactions
 
     // Delegates of BisqEasyOpenTradeMessageDto
@@ -34,6 +37,7 @@ class BisqEasyOpenTradeMessageModel(
     val citationAuthorUserName = bisqEasyOpenTradeMessage.citationAuthorUserProfile?.userName
 
     val textString: String = text ?: ""
+
     // Used for protocol log message
     var decodedText: String = text?.let { I18nSupport.decode(it) } ?: ""
 
@@ -43,10 +47,17 @@ class BisqEasyOpenTradeMessageModel(
     val citationString: String = citation?.text ?: ""
     val isMyMessage: Boolean = senderUserProfileId == myUserProfileId
 
+    var senderAvatar: PlatformImage? = null
+
     fun isMyChatReaction(reaction: BisqEasyOpenTradeMessageReactionVO): Boolean {
         return myUserProfileId == reaction.senderUserProfile.id
     }
+
     fun setReactions(chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO>) {
         _chatReactions.value = chatMessageReactions
+    }
+
+    fun setSenderAvatarImage(avatar: PlatformImage?) {
+        senderAvatar = avatar
     }
 }

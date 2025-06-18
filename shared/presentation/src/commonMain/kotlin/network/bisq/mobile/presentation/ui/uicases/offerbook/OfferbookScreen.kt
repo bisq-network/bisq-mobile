@@ -41,6 +41,7 @@ fun OfferbookScreen() {
     val selectedDirection by presenter.selectedDirection.collectAsState()
     val showDeleteConfirmation by presenter.showDeleteConfirmation.collectAsState()
     val showNotEnoughReputationDialog by presenter.showNotEnoughReputationDialog.collectAsState()
+    val userAvatarMap by presenter.avatarMap.collectAsState()
 
     BisqStaticScaffold(
         topBar = { TopBar(title = "offers".i18n()) },
@@ -76,6 +77,7 @@ fun OfferbookScreen() {
                     onSelectOffer = {
                         presenter.onOfferSelected(item)
                     },
+                    userAvatar = userAvatarMap.get(item.makersUserProfile.nym),
                 )
             }
         }
@@ -112,7 +114,7 @@ fun NoOffersSection(presenter: OfferbookPresenter) {
         verticalArrangement = Arrangement.Center
     ) {
         BisqText.h4LightGrey(
-            text = "There are no offers", //TODO: i18n
+            text = "mobile.offerBookScreen.noOffersSection.thereAreNoOffers".i18n(),
             textAlign = TextAlign.Center
         )
         BisqGap.V4()

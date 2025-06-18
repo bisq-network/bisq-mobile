@@ -102,7 +102,8 @@ fun TradeDetailsHeader() {
                     UserProfileRow(
                         item.peersUserProfile,
                         item.peersReputationScore,
-                        true
+                        true,
+                        userAvatar = item.peersUserAvatar,
                     )
                 }
             }

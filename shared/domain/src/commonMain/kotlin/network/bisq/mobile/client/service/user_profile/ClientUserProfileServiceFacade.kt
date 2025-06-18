@@ -135,4 +135,9 @@ class ClientUserProfileServiceFacade(
         val delayDuration = min(1000.0, max(200.0, (200 + random - requestDuration).toDouble())).toLong()
         delay(delayDuration)
     }
+
+    override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage {
+        // TODO: Actual implementation
+        return PlatformImage.deserialize(byteArrayOf())
+    }
 }

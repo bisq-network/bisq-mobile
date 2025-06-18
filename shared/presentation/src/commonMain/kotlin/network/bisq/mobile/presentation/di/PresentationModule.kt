@@ -166,13 +166,13 @@ val presentationModule = module {
 
     // Trade General process
     factory { TradeStatesProvider(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
-    factory { OpenTradeListPresenter(get(), get(), get()) }
+    factory { OpenTradeListPresenter(get(), get(), get(), get()) }
     single { TradeDetailsHeaderPresenter(get(), get(), get()) }
     factory { InterruptedTradePresenter(get(), get(), get()) }
     factory { TradeFlowPresenter(get(), get(), get()) }
     factory { OpenTradePresenter(get(), get(), get(), get()) }
 
-    factory { TradeChatPresenter(get(), get(), get(), get(), get()) }
+    factory { TradeChatPresenter(get(), get(), get(), get(), get(), get()) }
 
     single { TradeGuidePresenter(get(), get()) } bind TradeGuidePresenter::class
     single { WalletGuidePresenter(get()) } bind WalletGuidePresenter::class

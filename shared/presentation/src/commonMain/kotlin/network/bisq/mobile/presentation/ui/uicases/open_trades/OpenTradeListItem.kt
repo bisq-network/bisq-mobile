@@ -55,7 +55,8 @@ fun OpenTradeListItem(
                     UserProfileRow(
                         item.peersUserProfile,
                         item.peersReputationScore,
-                        true
+                        true,
+                        userAvatar = item.peersUserAvatar,
                     )
                 }
                 BisqText.smallLightGrey("${item.formattedDate} ${item.formattedTime}")

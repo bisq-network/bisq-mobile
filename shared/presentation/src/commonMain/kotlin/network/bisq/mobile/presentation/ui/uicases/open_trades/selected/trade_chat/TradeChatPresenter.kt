@@ -15,6 +15,7 @@ import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -25,6 +26,7 @@ class TradeChatPresenter(
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
     private val settingsRepository: SettingsRepository,
     private val tradeReadStateRepository: TradeReadStateRepository,
+    private val userProfileServiceFacade: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter), Logging {
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
@@ -50,6 +52,10 @@ class TradeChatPresenter(
 
             bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
                 _chatMessages.value = messages.toList()
+
+                messages.toList().forEach { message ->
+                    message.setSenderAvatarImage(userProfileServiceFacade.getUserAvatar(message.senderUserProfile))
+                }
 
                 withContext(IODispatcher) {
                     val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()

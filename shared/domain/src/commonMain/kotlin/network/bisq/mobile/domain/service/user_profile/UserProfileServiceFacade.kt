@@ -60,4 +60,9 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * @return UserIdentity if exists, null otherwise
      */
     suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO>
+
+    /**
+     * @return Get avatar of the user
+     */
+    suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage
 }

@@ -6,6 +6,7 @@ import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -14,6 +15,7 @@ class OpenTradeListPresenter(
     private val mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
+    private val userProfileServiceFacade: UserProfileServiceFacade
 ) : BasePresenter(mainPresenter) {
 
     private val _openTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
@@ -48,6 +50,12 @@ class OpenTradeListPresenter(
                         formattedBaseAmount = NumberFormatter.btcFormat(it.baseAmount)
                     }
                 }
+            }
+        }
+
+        launchUI {
+            tradesServiceFacade.openTradeItems.value.forEach { tradeItem ->
+                tradeItem.setPeersUserAvatarImage(userProfileServiceFacade.getUserAvatar(tradeItem.peersUserProfile))
             }
         }
     }
