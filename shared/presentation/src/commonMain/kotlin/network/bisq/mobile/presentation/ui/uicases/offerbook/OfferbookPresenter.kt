@@ -148,7 +148,7 @@ class OfferbookPresenter(
             item.isInvalidDueToReputation = isInvalid
         }
 
-        launchIO {
+        withContext(IODispatcher) {
             val userProfile = item.makersUserProfile
             if (_avatarMap.value[userProfile.nym] == null) {
                 val image = userProfileServiceFacade.getUserAvatar(

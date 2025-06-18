@@ -59,7 +59,7 @@ class TradeChatPresenter(
                 _chatMessages.value = messages.toList()
 
                 messages.toList().forEach { message ->
-                    launchIO {
+                    withContext(IODispatcher) {
                         val userProfile = message.senderUserProfile
                         if (_avatarMap.value[userProfile.nym] == null) {
                             val image = userProfileServiceFacade.getUserAvatar(

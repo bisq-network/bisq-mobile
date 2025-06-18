@@ -122,7 +122,7 @@ fun OpenTradeListScreen() {
                     OpenTradeListItem(
                         trade,
                         isUnread = isUnread,
-                        userAvatar = userAvatarMap.get(trade.peersUserProfile.nym),
+                        userAvatar = userAvatarMap[trade.peersUserProfile.nym],
                         onSelect = { presenter.onSelect(trade) }
                     )
                 }
