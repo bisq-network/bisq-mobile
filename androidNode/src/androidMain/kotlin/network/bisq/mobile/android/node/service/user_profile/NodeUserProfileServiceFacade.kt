@@ -48,6 +48,8 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> = _selectedUserProfile
 
+    // TODO: Performance test for 100s of users and 1000s of offers
+    override val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf<String, PlatformImage?>()
 
     // Misc
     private var pubKeyHash: ByteArray? = null
@@ -132,13 +134,20 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     }
 
-    override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage {
-        return catHashService.getImage(
-            Base64.getDecoder().decode(userProfile.networkId.pubKey.hash),
-            Base64.getDecoder().decode(userProfile.proofOfWork.solutionEncoded),
-            userProfile.avatarVersion,
-            120.0
-        )
+    override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
+        if (avatarMap[userProfile.nym] == null) {
+            avatarMap[userProfile.nym] = try {
+                catHashService.getImage(
+                    Base64.getDecoder().decode(userProfile.networkId.pubKey.hash),
+                    Base64.getDecoder().decode(userProfile.proofOfWork.solutionEncoded),
+                    userProfile.avatarVersion,
+                    120.0
+                )
+            } catch(e: Exception) {
+                null
+            }
+        }
+        return avatarMap[userProfile.nym]
     }
 
     // Private

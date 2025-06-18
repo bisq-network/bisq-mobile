@@ -16,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
@@ -33,6 +34,7 @@ fun ChatMessageList(
     messages: List<BisqEasyOpenTradeMessageModel>,
     presenter: TradeChatPresenter,
     scrollState: LazyListState,
+    avatarMap: Map<String, PlatformImage?>,
     modifier: Modifier = Modifier,
     onAddReaction: (BisqEasyOpenTradeMessageModel, ReactionEnum) -> Unit = { message: BisqEasyOpenTradeMessageModel, reaction: ReactionEnum -> },
     onRemoveReaction: (BisqEasyOpenTradeMessageModel, BisqEasyOpenTradeMessageReactionVO) -> Unit = { message: BisqEasyOpenTradeMessageModel, reaction: BisqEasyOpenTradeMessageReactionVO -> },
@@ -65,6 +67,7 @@ fun ChatMessageList(
                     } else {
                         TextMessageBox(
                             message = message,
+                            userAvatar = avatarMap.get(message.senderUserProfile.nym),
                             onScrollToMessage = { id ->
                                 val index = messages.indexOfFirst { it.id == id }
                                 if (index >= 0) {

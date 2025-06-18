@@ -41,6 +41,8 @@ fun OpenTradeListScreen() {
     val sortedList =
         presenter.openTradeItems.collectAsState().value.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
 
+    val userAvatarMap by presenter.avatarMap.collectAsState()
+
     RememberPresenterLifecycle(presenter)
 
     fun isTradeUnread(tradeId: String): Boolean {
@@ -103,7 +105,8 @@ fun OpenTradeListScreen() {
                     OpenTradeListItem(
                         trade,
                         isUnread = isUnread,
-                        { presenter.onSelect(trade) }
+                        userAvatar = userAvatarMap.get(trade.peersUserProfile.nym),
+                        onSelect = { presenter.onSelect(trade) }
                     )
                 }
             }
@@ -119,7 +122,8 @@ fun OpenTradeListScreen() {
                     OpenTradeListItem(
                         trade,
                         isUnread = isUnread,
-                        { presenter.onSelect(trade) }
+                        userAvatar = userAvatarMap.get(trade.peersUserProfile.nym),
+                        onSelect = { presenter.onSelect(trade) }
                     )
                 }
             }

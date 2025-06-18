@@ -20,15 +20,14 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun ProfileIconAndText(
-    message: BisqEasyOpenTradeMessageModel
+    message: BisqEasyOpenTradeMessageModel,
+    userAvatar: PlatformImage? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(
             vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding
         ), horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
     ) {
-        var userAvatar: PlatformImage? = message.senderAvatar
-
         var painter: Painter = if (userAvatar == null) {
             painterResource(Res.drawable.img_bot_image)
         } else {

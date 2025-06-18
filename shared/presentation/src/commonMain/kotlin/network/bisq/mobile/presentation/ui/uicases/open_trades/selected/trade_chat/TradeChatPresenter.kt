@@ -4,6 +4,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
@@ -40,6 +41,9 @@ class TradeChatPresenter(
     private val _showChatRulesWarnBox: MutableStateFlow<Boolean> = MutableStateFlow(true)
     val showChatRulesWarnBox: StateFlow<Boolean> = _showChatRulesWarnBox
 
+    private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
+    val avatarMap: StateFlow<Map<String, PlatformImage?>> = _avatarMap
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -54,7 +58,14 @@ class TradeChatPresenter(
                 _chatMessages.value = messages.toList()
 
                 messages.toList().forEach { message ->
-                    message.setSenderAvatarImage(userProfileServiceFacade.getUserAvatar(message.senderUserProfile))
+                    val userProfile = message.senderUserProfile
+                    if (_avatarMap.value[userProfile.nym] == null) {
+                        val currentAvatarMap = _avatarMap.value.toMutableMap()
+                        currentAvatarMap[userProfile.nym] = userProfileServiceFacade.getUserAvatar(
+                            userProfile
+                        )
+                        _avatarMap.value = currentAvatarMap
+                    }
                 }
 
                 withContext(IODispatcher) {

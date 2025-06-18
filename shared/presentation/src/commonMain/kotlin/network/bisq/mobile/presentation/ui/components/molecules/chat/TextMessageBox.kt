@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
@@ -25,6 +26,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun TextMessageBox(
     message: BisqEasyOpenTradeMessageModel,
+    userAvatar: PlatformImage? = null,
     onScrollToMessage: (String) -> Unit = {},
     onAddReaction: (ReactionEnum) -> Unit,
     onRemoveReaction: (BisqEasyOpenTradeMessageReactionVO) -> Unit,
@@ -66,7 +68,7 @@ fun TextMessageBox(
                         }
                     }) {
                 }
-                ProfileIconAndText(message)
+                ProfileIconAndText(message, userAvatar)
             }
         }
         val messageBox = @Composable {
@@ -84,7 +86,7 @@ fun TextMessageBox(
                     if (message.citation != null) {
                         quoteAndProfileIconAndText()
                     } else {
-                        ProfileIconAndText(message)
+                        ProfileIconAndText(message, userAvatar)
                     }
                 }
             }

@@ -30,6 +30,8 @@ class ClientUserProfileServiceFacade(
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> = _selectedUserProfile
 
+    override val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf<String, PlatformImage?>()
+
     // Misc
     override fun activate() {
         super<ServiceFacade>.activate()
@@ -136,7 +138,7 @@ class ClientUserProfileServiceFacade(
         delay(delayDuration)
     }
 
-    override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage {
+    override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
         // TODO: Actual implementation
         return PlatformImage.deserialize(byteArrayOf())
     }

@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -24,6 +25,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @Composable
 fun OpenTradeListItem(
     item: TradeItemPresentationModel,
+    userAvatar: PlatformImage? = null,
     isUnread: Boolean,
     onSelect: () -> Unit,
 ) {
@@ -56,7 +58,7 @@ fun OpenTradeListItem(
                         item.peersUserProfile,
                         item.peersReputationScore,
                         true,
-                        userAvatar = item.peersUserAvatar,
+                        userAvatar = userAvatar,
                     )
                 }
                 BisqText.smallLightGrey("${item.formattedDate} ${item.formattedTime}")

@@ -4,14 +4,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
-import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -31,6 +27,7 @@ fun TradeChatScreen() {
     val chatMessages by presenter.chatMessages.collectAsState()
     val quotedMessage by presenter.quotedMessage.collectAsState()
     val sortedChatMessages = chatMessages.sortedBy { it.date }
+    val userAvatarMap by presenter.avatarMap.collectAsState()
 
     /*   var quotedMessage by remember {
            mutableStateOf<BisqEasyOpenTradeMessageModel?>(null)
@@ -47,6 +44,7 @@ fun TradeChatScreen() {
             presenter = presenter,
             modifier = Modifier.weight(1f),
             scrollState = scrollState,
+            avatarMap = userAvatarMap,
             onAddReaction = { message, reaction -> presenter.onAddReaction(message, reaction) },
             onRemoveReaction = { message, reaction -> presenter.onRemoveReaction(message, reaction) },
             onReply = { message -> presenter.onReply(message) },

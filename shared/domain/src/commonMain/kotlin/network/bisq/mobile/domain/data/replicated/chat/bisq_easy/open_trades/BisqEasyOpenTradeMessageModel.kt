@@ -2,7 +2,6 @@ package network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
@@ -47,17 +46,11 @@ class BisqEasyOpenTradeMessageModel(
     val citationString: String = citation?.text ?: ""
     val isMyMessage: Boolean = senderUserProfileId == myUserProfileId
 
-    var senderAvatar: PlatformImage? = null
-
     fun isMyChatReaction(reaction: BisqEasyOpenTradeMessageReactionVO): Boolean {
         return myUserProfileId == reaction.senderUserProfile.id
     }
 
     fun setReactions(chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO>) {
         _chatReactions.value = chatMessageReactions
-    }
-
-    fun setSenderAvatarImage(avatar: PlatformImage?) {
-        senderAvatar = avatar
     }
 }

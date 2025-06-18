@@ -42,6 +42,7 @@ fun TradeDetailsHeader() {
     val leftCode by presenter.leftCode.collectAsState()
     val rightAmount by presenter.rightAmount.collectAsState()
     val rightCode by presenter.rightCode.collectAsState()
+    val peerAvatar by presenter.peerAvatar.collectAsState()
 
     val enterTransition = remember {
         expandVertically(
@@ -103,7 +104,7 @@ fun TradeDetailsHeader() {
                         item.peersUserProfile,
                         item.peersReputationScore,
                         true,
-                        userAvatar = item.peersUserAvatar,
+                        userAvatar = peerAvatar,
                     )
                 }
             }

@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades
 
 import kotlinx.coroutines.flow.*
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
@@ -29,6 +30,9 @@ class OpenTradeListPresenter(
     private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>> = _tradesWithUnreadMessages
 
+    private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
+    val avatarMap: StateFlow<Map<String, PlatformImage?>> = _avatarMap
+
     override fun onViewAttached() {
         super.onViewAttached()
         tradesServiceFacade.resetSelectedTradeToNull()
@@ -55,7 +59,14 @@ class OpenTradeListPresenter(
 
         launchUI {
             tradesServiceFacade.openTradeItems.value.forEach { tradeItem ->
-                tradeItem.setPeersUserAvatarImage(userProfileServiceFacade.getUserAvatar(tradeItem.peersUserProfile))
+                val userProfile = tradeItem.peersUserProfile
+                if (_avatarMap.value[userProfile.nym] == null) {
+                    val currentAvatarMap = _avatarMap.value.toMutableMap()
+                    currentAvatarMap[userProfile.nym] = userProfileServiceFacade.getUserAvatar(
+                        userProfile
+                    )
+                    _avatarMap.value = currentAvatarMap
+                }
             }
         }
     }

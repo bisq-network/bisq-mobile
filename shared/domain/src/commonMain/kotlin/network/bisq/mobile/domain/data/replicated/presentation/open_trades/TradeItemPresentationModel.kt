@@ -40,7 +40,6 @@ class TradeItemPresentationModel(tradeItemPresentationDto: TradeItemPresentation
     val myUserProfile = if (bisqEasyTradeModel.isMaker) makerUserProfile else takerUserProfile
     val myUserName = myUserProfile.userName
     val peersUserProfile = if (bisqEasyTradeModel.isMaker) takerUserProfile else makerUserProfile
-    var peersUserAvatar: PlatformImage? = null
     val peersReputationScore = tradeItemPresentationDto.peersReputationScore
     val peersUserName = peersUserProfile.userName
     val mediator = bisqEasyTradeModel.contract.mediator
@@ -54,10 +53,6 @@ class TradeItemPresentationModel(tradeItemPresentationDto: TradeItemPresentation
     val quoteCurrencyCode: String = bisqEasyOffer.market.quoteCurrencyCode
     var quoteAmountWithCode = "$formattedQuoteAmount $quoteCurrencyCode"
     val baseAmountWithCode = "$formattedBaseAmount $baseCurrencyCode"
-
-    fun setPeersUserAvatarImage(avatar: PlatformImage?) {
-        peersUserAvatar = avatar
-    }
 
     fun reformat(): TradeItemPresentationModel {
         return apply {

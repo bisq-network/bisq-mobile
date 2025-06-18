@@ -6,12 +6,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -21,6 +23,7 @@ class TradeDetailsHeaderPresenter(
     private val mainPresenter: MainPresenter,
     var tradesServiceFacade: TradesServiceFacade,
     var mediationServiceFacade: MediationServiceFacade,
+    val userProfileServiceFacade: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
     enum class TradeCloseType {
@@ -63,6 +66,9 @@ class TradeDetailsHeaderPresenter(
 
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> = this._isInMediation
+
+    private val _peerAvatar: MutableStateFlow<PlatformImage?> = MutableStateFlow(null)
+    val peerAvatar: StateFlow<PlatformImage?> = _peerAvatar
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -110,6 +116,10 @@ class TradeDetailsHeaderPresenter(
 
         collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation) {
             this@TradeDetailsHeaderPresenter._isInMediation.value = it
+        }
+
+        launchUI {
+            _peerAvatar.value = userProfileServiceFacade.getUserAvatar(openTradeItemModel.peersUserProfile)
         }
 
     }

@@ -66,8 +66,10 @@ class OfferbookPresenter(
 
     lateinit var selectedUserProfile: UserProfileVO
 
-    private val _avatarMap: MutableStateFlow<Map<String, PlatformImage>> = MutableStateFlow(emptyMap())
-    val avatarMap: StateFlow<Map<String, PlatformImage>> = _avatarMap
+    private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(
+        emptyMap()
+    )
+    val avatarMap: StateFlow<Map<String, PlatformImage?>> = _avatarMap
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -145,10 +147,11 @@ class OfferbookPresenter(
         }
 
         launchUI {
-            val currentAvatarMap = _avatarMap.value.toMutableMap()
-            if (currentAvatarMap[item.makersUserProfile.nym] == null) {
-                currentAvatarMap[item.makersUserProfile.nym] = userProfileServiceFacade.getUserAvatar(
-                    item.makersUserProfile
+            val userProfile = item.makersUserProfile
+            if (_avatarMap.value[userProfile.nym] == null) {
+                val currentAvatarMap = _avatarMap.value.toMutableMap()
+                currentAvatarMap[userProfile.nym] = userProfileServiceFacade.getUserAvatar(
+                    userProfile
                 )
                 _avatarMap.value = currentAvatarMap
             }
