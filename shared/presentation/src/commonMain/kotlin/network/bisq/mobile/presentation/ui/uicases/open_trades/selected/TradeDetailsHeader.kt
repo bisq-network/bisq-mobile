@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isSell
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.i18n.i18n
@@ -42,7 +43,7 @@ fun TradeDetailsHeader() {
     val leftCode by presenter.leftCode.collectAsState()
     val rightAmount by presenter.rightAmount.collectAsState()
     val rightCode by presenter.rightCode.collectAsState()
-    val peerAvatar by presenter.peerAvatar.collectAsState()
+    val peerAvatar: PlatformImage? by presenter.peerAvatar.collectAsState()
 
     val enterTransition = remember {
         expandVertically(
@@ -101,9 +102,9 @@ fun TradeDetailsHeader() {
                     BisqGap.H1()
 
                     UserProfileRow(
-                        item.peersUserProfile,
-                        item.peersReputationScore,
-                        true,
+                        user = item.peersUserProfile,
+                        reputation = item.peersReputationScore,
+                        showUserName = true,
                         userAvatar = peerAvatar,
                     )
                 }

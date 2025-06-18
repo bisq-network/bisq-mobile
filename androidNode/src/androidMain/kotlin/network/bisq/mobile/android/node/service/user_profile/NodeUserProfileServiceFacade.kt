@@ -11,6 +11,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
@@ -49,7 +51,8 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     override val selectedUserProfile: StateFlow<UserProfileVO?> = _selectedUserProfile
 
     // TODO: Performance test for 100s of users and 1000s of offers
-    override val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf<String, PlatformImage?>()
+    private val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf<String, PlatformImage?>()
+    private val avatarMapMutex = Mutex()
 
     // Misc
     private var pubKeyHash: ByteArray? = null
@@ -135,19 +138,23 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
-        if (avatarMap[userProfile.nym] == null) {
-            avatarMap[userProfile.nym] = try {
-                catHashService.getImage(
-                    Base64.getDecoder().decode(userProfile.networkId.pubKey.hash),
-                    Base64.getDecoder().decode(userProfile.proofOfWork.solutionEncoded),
-                    userProfile.avatarVersion,
-                    120.0
-                )
-            } catch(e: Exception) {
-                null
+        return avatarMapMutex.withLock {
+            if (avatarMap[userProfile.nym] == null) {
+                val avatar = try {
+                    catHashService.getImage(
+                        Base64.getDecoder().decode(userProfile.networkId.pubKey.hash),
+                        Base64.getDecoder().decode(userProfile.proofOfWork.solutionEncoded),
+                        userProfile.avatarVersion,
+                        120.0
+                    )
+                } catch (e: Exception) {
+                    log.e {"Avatar generation failed for ${userProfile.nym}"}
+                    null
+                }
+                avatarMap[userProfile.nym] = avatar
             }
+            return avatarMap[userProfile.nym]
         }
-        return avatarMap[userProfile.nym]
     }
 
     // Private

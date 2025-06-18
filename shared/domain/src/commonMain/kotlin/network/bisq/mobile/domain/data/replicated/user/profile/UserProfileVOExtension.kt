@@ -10,8 +10,4 @@ object UserProfileVOExtension {
     val UserProfileVO.id get() = networkId.pubKey.id
 
     val UserProfileVO.pubKeyHashAsByteArray: ByteArray get() = networkId.pubKey.hash.hexToByteArray()
-
-    suspend fun UserProfileVO.getAvatarImage(userProfileServiceFacade: UserProfileServiceFacade): PlatformImage? {
-        return userProfileServiceFacade.getUserAvatar(this)
-    }
 }

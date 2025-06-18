@@ -57,15 +57,17 @@ class OpenTradeListPresenter(
             }
         }
 
-        launchUI {
-            tradesServiceFacade.openTradeItems.value.forEach { tradeItem ->
-                val userProfile = tradeItem.peersUserProfile
-                if (_avatarMap.value[userProfile.nym] == null) {
-                    val currentAvatarMap = _avatarMap.value.toMutableMap()
-                    currentAvatarMap[userProfile.nym] = userProfileServiceFacade.getUserAvatar(
-                        userProfile
-                    )
-                    _avatarMap.value = currentAvatarMap
+        launchIO {
+            tradesServiceFacade.openTradeItems.collect { trades ->
+                trades.forEach { trade ->
+                    val userProfile = trade.peersUserProfile
+                    if (_avatarMap.value[userProfile.nym] == null) {
+                        val currentAvatarMap = _avatarMap.value.toMutableMap()
+                        currentAvatarMap[userProfile.nym] = userProfileServiceFacade.getUserAvatar(
+                            userProfile
+                        )
+                        _avatarMap.value = currentAvatarMap
+                    }
                 }
             }
         }

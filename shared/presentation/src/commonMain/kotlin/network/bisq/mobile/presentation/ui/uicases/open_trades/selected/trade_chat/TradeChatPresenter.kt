@@ -4,6 +4,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.TradeReadState
@@ -58,13 +59,14 @@ class TradeChatPresenter(
                 _chatMessages.value = messages.toList()
 
                 messages.toList().forEach { message ->
-                    val userProfile = message.senderUserProfile
-                    if (_avatarMap.value[userProfile.nym] == null) {
-                        val currentAvatarMap = _avatarMap.value.toMutableMap()
-                        currentAvatarMap[userProfile.nym] = userProfileServiceFacade.getUserAvatar(
-                            userProfile
-                        )
-                        _avatarMap.value = currentAvatarMap
+                    launchIO {
+                        val userProfile = message.senderUserProfile
+                        if (_avatarMap.value[userProfile.nym] == null) {
+                            val image = userProfileServiceFacade.getUserAvatar(
+                                userProfile
+                            )
+                            _avatarMap.update { it + (userProfile.nym to image) }
+                        }
                     }
                 }
 

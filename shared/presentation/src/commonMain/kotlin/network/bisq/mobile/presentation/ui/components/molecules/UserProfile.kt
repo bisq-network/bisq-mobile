@@ -34,7 +34,7 @@ fun UserProfile(
 ) {
     val fiveSystemScore: Double = reputation.collectAsState().value.fiveSystemScore
 
-    var painter: Painter = if (userAvatar == null) {
+    val painter: Painter = if (userAvatar == null) {
         painterResource(Res.drawable.img_bot_image)
     } else {
         rememberPlatformImagePainter(userAvatar)

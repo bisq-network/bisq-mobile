@@ -77,7 +77,7 @@ fun OfferbookScreen() {
                     onSelectOffer = {
                         presenter.onOfferSelected(item)
                     },
-                    userAvatar = userAvatarMap.get(item.makersUserProfile.nym),
+                    userAvatar = userAvatarMap[item.makersUserProfile.nym]
                 )
             }
         }

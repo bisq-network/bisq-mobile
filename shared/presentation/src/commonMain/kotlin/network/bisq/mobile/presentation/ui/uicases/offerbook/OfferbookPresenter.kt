@@ -1,10 +1,12 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
@@ -146,14 +148,13 @@ class OfferbookPresenter(
             item.isInvalidDueToReputation = isInvalid
         }
 
-        launchUI {
+        launchIO {
             val userProfile = item.makersUserProfile
             if (_avatarMap.value[userProfile.nym] == null) {
-                val currentAvatarMap = _avatarMap.value.toMutableMap()
-                currentAvatarMap[userProfile.nym] = userProfileServiceFacade.getUserAvatar(
+                val image = userProfileServiceFacade.getUserAvatar(
                     userProfile
                 )
-                _avatarMap.value = currentAvatarMap
+                _avatarMap.update { it + (userProfile.nym to image) }
             }
         }
 

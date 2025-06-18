@@ -1,6 +1,5 @@
 package network.bisq.mobile.domain.data.replicated.presentation.open_trades
 
-import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeDto

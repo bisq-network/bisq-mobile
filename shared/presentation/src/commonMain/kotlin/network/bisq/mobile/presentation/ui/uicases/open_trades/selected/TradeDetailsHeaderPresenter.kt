@@ -118,7 +118,7 @@ class TradeDetailsHeaderPresenter(
             this@TradeDetailsHeaderPresenter._isInMediation.value = it
         }
 
-        launchUI {
+        launchIO {
             _peerAvatar.value = userProfileServiceFacade.getUserAvatar(openTradeItemModel.peersUserProfile)
         }
 

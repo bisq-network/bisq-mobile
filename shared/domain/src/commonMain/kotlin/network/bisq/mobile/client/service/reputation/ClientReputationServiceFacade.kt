@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.android.node.BuildNodeConfig
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
@@ -44,7 +44,7 @@ class ClientReputationServiceFacade(
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
         val reputation = reputationByUserProfileId.value[userProfileId]
         return when {
-            BuildNodeConfig.IS_DEBUG -> reputationDevStub(userProfileId)
+            BuildConfig.IS_DEBUG -> reputationDevStub(userProfileId)
             reputation == null -> Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not cached yet"))
             else -> Result.success(reputation)
         }

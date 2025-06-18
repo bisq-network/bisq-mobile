@@ -10,8 +10,6 @@ interface UserProfileServiceFacade : LifeCycleAware {
 
     val selectedUserProfile: StateFlow<UserProfileVO?>
 
-    val avatarMap: MutableMap<String, PlatformImage?>
-
     /**
      * Returns true if there is a user identity already created.
      * This should be used to detect a first time user who has no identity created yet and where
@@ -65,6 +63,8 @@ interface UserProfileServiceFacade : LifeCycleAware {
 
     /**
      * @return Get avatar of the user
+     * This function may perform CPU-intensive work such as Base64 decoding and image generation.
+     * It is recommended to call this from a background (non-main) dispatcher.
      */
     suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage?
 }

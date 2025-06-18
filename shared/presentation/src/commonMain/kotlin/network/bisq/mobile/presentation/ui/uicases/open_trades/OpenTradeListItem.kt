@@ -55,9 +55,9 @@ fun OpenTradeListItem(
                 )
                 Row(modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)) {
                     UserProfileRow(
-                        item.peersUserProfile,
-                        item.peersReputationScore,
-                        true,
+                        user =  item.peersUserProfile,
+                        reputation =  item.peersReputationScore,
+                        showUserName =  true,
                         userAvatar = userAvatar,
                     )
                 }

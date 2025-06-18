@@ -34,7 +34,7 @@ fun ChatMessageList(
     messages: List<BisqEasyOpenTradeMessageModel>,
     presenter: TradeChatPresenter,
     scrollState: LazyListState,
-    avatarMap: Map<String, PlatformImage?>,
+    avatarMap: Map<String, PlatformImage?> = emptyMap(),
     modifier: Modifier = Modifier,
     onAddReaction: (BisqEasyOpenTradeMessageModel, ReactionEnum) -> Unit = { message: BisqEasyOpenTradeMessageModel, reaction: ReactionEnum -> },
     onRemoveReaction: (BisqEasyOpenTradeMessageModel, BisqEasyOpenTradeMessageReactionVO) -> Unit = { message: BisqEasyOpenTradeMessageModel, reaction: BisqEasyOpenTradeMessageReactionVO -> },

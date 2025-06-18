@@ -28,7 +28,7 @@ fun ProfileIconAndText(
             vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding
         ), horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
     ) {
-        var painter: Painter = if (userAvatar == null) {
+        val painter: Painter = if (userAvatar == null) {
             painterResource(Res.drawable.img_bot_image)
         } else {
             rememberPlatformImagePainter(userAvatar)

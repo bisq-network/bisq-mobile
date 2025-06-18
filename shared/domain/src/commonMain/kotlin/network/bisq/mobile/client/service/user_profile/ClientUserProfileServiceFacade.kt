@@ -6,6 +6,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
@@ -31,7 +33,8 @@ class ClientUserProfileServiceFacade(
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> = _selectedUserProfile
 
-    override val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf<String, PlatformImage?>()
+    private val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf<String, PlatformImage?>()
+    private val avatarMapMutex = Mutex()
 
     // Misc
     override fun activate() {
@@ -140,21 +143,19 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
-        if (avatarMap[userProfile.nym] == null) {
-            avatarMap[userProfile.nym] = try {
-                val pubKeyHash = userProfile.networkId.pubKey.hash.decodeBase64()!!.toByteArray()
-                val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()!!.toByteArray()
-
-                clientCatHashService.getImage(
-                    pubKeyHash,
-                    powSolution,
-                    userProfile.avatarVersion,
-                    120
-                )
-            } catch(e: Exception) {
-                null
+        return avatarMapMutex.withLock {
+            if (avatarMap[userProfile.nym] == null) {
+                val avatar = try {
+                    val pubKeyHash = userProfile.networkId.pubKey.hash.decodeBase64()!!.toByteArray()
+                    val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()!!.toByteArray()
+                    clientCatHashService.getImage(pubKeyHash, powSolution, userProfile.avatarVersion, 120)
+                } catch (e: Exception) {
+                    log.e {"Avatar generation failed for ${userProfile.nym}"}
+                    null
+                }
+                avatarMap[userProfile.nym] = avatar
             }
+            return avatarMap[userProfile.nym]
         }
-        return avatarMap[userProfile.nym]
     }
 }
