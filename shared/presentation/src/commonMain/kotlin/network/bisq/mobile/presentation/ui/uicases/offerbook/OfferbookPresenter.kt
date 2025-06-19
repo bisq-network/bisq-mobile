@@ -98,6 +98,11 @@ class OfferbookPresenter(
         }
     }
 
+    override fun onViewUnattaching() {
+        _avatarMap.update { emptyMap() }
+        super.onViewUnattaching()
+    }
+
     private suspend fun processAllOffers(
         offers: List<OfferItemPresentationModel>
     ): List<OfferItemPresentationModel> = withContext(IODispatcher) {
@@ -148,15 +153,7 @@ class OfferbookPresenter(
             item.isInvalidDueToReputation = isInvalid
         }
 
-        withContext(IODispatcher) {
-            val userProfile = item.makersUserProfile
-            if (_avatarMap.value[userProfile.nym] == null) {
-                val image = userProfileServiceFacade.getUserAvatar(
-                    userProfile
-                )
-                _avatarMap.update { it + (userProfile.nym to image) }
-            }
-        }
+        ensureAvatarLoaded(item.makersUserProfile)
 
         return item
     }
@@ -205,6 +202,14 @@ class OfferbookPresenter(
     fun onDismissDeleteOffer() {
         _showDeleteConfirmation.value = false
         deselectOffer()
+    }
+
+    private suspend fun ensureAvatarLoaded(userProfile: UserProfileVO) = withContext(IODispatcher) {
+        val nym = userProfile.nym
+        if (_avatarMap.value[nym] == null) {
+            val image = userProfileServiceFacade.getUserAvatar(userProfile)
+            _avatarMap.update { it + (nym to image) }
+        }
     }
 
     private fun takeOffer() {

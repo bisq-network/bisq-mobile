@@ -140,18 +140,17 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
         return avatarMapMutex.withLock {
             if (avatarMap[userProfile.nym] == null) {
-                val avatar = try {
-                    catHashService.getImage(
+                try {
+                    val avatar = catHashService.getImage(
                         Base64.getDecoder().decode(userProfile.networkId.pubKey.hash),
                         Base64.getDecoder().decode(userProfile.proofOfWork.solutionEncoded),
                         userProfile.avatarVersion,
                         120.0
                     )
+                    avatarMap[userProfile.nym] = avatar
                 } catch (e: Exception) {
                     log.e {"Avatar generation failed for ${userProfile.nym}"}
-                    null
                 }
-                avatarMap[userProfile.nym] = avatar
             }
             return avatarMap[userProfile.nym]
         }

@@ -39,17 +39,14 @@ class OpenTradeListPresenter(
 
         launchUI {
             combine(
-                mainPresenter.tradesWithUnreadMessages,
-                tradesServiceFacade.openTradeItems,
-                mainPresenter.languageCode
+                mainPresenter.tradesWithUnreadMessages, tradesServiceFacade.openTradeItems, mainPresenter.languageCode
             ) { unreadMessages, openTrades, _ ->
                 Pair(unreadMessages, openTrades)
             }.collect { (unreadMessages, openTrades) ->
                 _tradesWithUnreadMessages.value = unreadMessages
                 _openTradeItems.value = openTrades.map {
                     it.apply {
-                        quoteAmountWithCode =
-                            "${NumberFormatter.format(it.quoteAmount.toDouble() / 10000.0)} ${it.quoteCurrencyCode}"
+                        quoteAmountWithCode = "${NumberFormatter.format(it.quoteAmount.toDouble() / 10000.0)} ${it.quoteCurrencyCode}"
                         formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec, true)
                         formattedBaseAmount = NumberFormatter.btcFormat(it.baseAmount)
                     }
@@ -57,24 +54,12 @@ class OpenTradeListPresenter(
             }
         }
 
-        launchIO {
-            tradesServiceFacade.openTradeItems.collect { trades ->
-                trades.forEach { trade ->
-                    val userProfile = trade.peersUserProfile
-                    if (_avatarMap.value[userProfile.nym] == null) {
-                        val currentAvatarMap = _avatarMap.value.toMutableMap()
-                        currentAvatarMap[userProfile.nym] = userProfileServiceFacade.getUserAvatar(
-                            userProfile
-                        )
-                        _avatarMap.value = currentAvatarMap
-                    }
-                }
-            }
-        }
+        launchAvatarLoaderJob()
     }
 
     override fun onViewUnattaching() {
         _tradesWithUnreadMessages.value = emptyMap()
+        _avatarMap.update { emptyMap() }
         super.onViewUnattaching()
     }
 
@@ -113,5 +98,22 @@ class OpenTradeListPresenter(
 
     fun onNavigateToOfferbook() {
         navigateToTab(Routes.TabOfferbook)
+    }
+
+    fun launchAvatarLoaderJob() {
+        launchIO {
+            tradesServiceFacade.openTradeItems.collect { trades ->
+                trades.forEach { trade ->
+                    val userProfile = trade.peersUserProfile
+                    if (_avatarMap.value[userProfile.nym] == null) {
+                        val currentAvatarMap = _avatarMap.value.toMutableMap()
+                        currentAvatarMap[userProfile.nym] = userProfileServiceFacade.getUserAvatar(
+                            userProfile
+                        )
+                        _avatarMap.value = currentAvatarMap
+                    }
+                }
+            }
+        }
     }
 }

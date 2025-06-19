@@ -80,6 +80,7 @@ class TradeChatPresenter(
     }
 
     override fun onViewUnattaching() {
+        _avatarMap.update { emptyMap() }
         super.onViewUnattaching()
     }
 
