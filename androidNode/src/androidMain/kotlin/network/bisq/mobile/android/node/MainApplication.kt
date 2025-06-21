@@ -72,6 +72,10 @@ class MainApplication : Application(), Logging {
         System.setProperty("bisq.network.useExternalTor", "true")
         System.setProperty("tor.external", "true")
 
+        // CRITICAL: Skip Bisq2's internal Tor launch since we manage our own embedded Tor
+        System.setProperty("TOR_SKIP_LAUNCH", "1")
+        System.setProperty("bisq.tor.skipLaunch", "true")
+
         // Set default SOCKS proxy properties (will be updated with actual port later)
         // Using default Tor SOCKS port as placeholder
         System.setProperty("bisq.torSocksHost", "127.0.0.1")
@@ -96,6 +100,8 @@ class MainApplication : Application(), Logging {
         log.i { "   bisq.useExternalTor = ${System.getProperty("bisq.useExternalTor")}" }
         log.i { "   bisq.network.useExternalTor = ${System.getProperty("bisq.network.useExternalTor")}" }
         log.i { "   tor.external = ${System.getProperty("tor.external")}" }
+        log.i { "   TOR_SKIP_LAUNCH = ${System.getProperty("TOR_SKIP_LAUNCH")}" }
+        log.i { "   bisq.tor.skipLaunch = ${System.getProperty("bisq.tor.skipLaunch")}" }
         log.i { "   bisq.torSocksHost = ${System.getProperty("bisq.torSocksHost")}" }
         log.i { "   bisq.torSocksPort = ${System.getProperty("bisq.torSocksPort")}" }
         log.i { "   bisq.network.transport = ${System.getProperty("bisq.network.transport")}" }

@@ -141,11 +141,17 @@ class AndroidApplicationService(
     val securityService =
         SecurityService(persistenceService, SecurityService.Config.from(getConfig("security")))
 
+//    val networkServiceConfig = NetworkServiceConfig.from(
+//        config.baseDir,
+//        getConfig("network")
+//    )
+    val networkServiceConfig = MobileNetworkServiceConfig.from(
+        config.baseDir,
+        getConfig("network")
+    )
+
     val networkService = NetworkService(
-        NetworkServiceConfig.from(
-            config.baseDir,
-            getConfig("network")
-        ),
+        networkServiceConfig,
         persistenceService,
         securityService.keyBundleService,
         securityService.hashCashProofOfWorkService,
