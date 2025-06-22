@@ -7,12 +7,15 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun AnimatedBadge(
     showAnimation: Boolean,
+    xOffet: Dp = 8.dp,
+    yOffet: Dp = (-8).dp,
     content: @Composable RowScope.() -> Unit
 ) {
 
@@ -57,7 +60,7 @@ fun AnimatedBadge(
         containerColor = BisqTheme.colors.warningHover,
         contentColor = BisqTheme.colors.dark_grey20,
         modifier = Modifier
-            .offset(x = 8.dp, y = (-8).dp)
+            .offset(x = xOffet, y = yOffet)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale

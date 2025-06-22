@@ -8,11 +8,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.BadgedBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.animations.AnimatedBadge
 import network.bisq.mobile.presentation.ui.components.atoms.button.FloatingButton
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -21,6 +25,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
 import network.bisq.mobile.presentation.ui.components.organisms.trades.*
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.*
 import org.koin.compose.koinInject
 
@@ -45,6 +50,7 @@ fun OpenTradeScreen() {
     val tradeCloseType by headerPresenter.tradeCloseType.collectAsState()
     val showInterruptionConfirmationDialog by headerPresenter.showInterruptionConfirmationDialog.collectAsState()
     val showMediationConfirmationDialog by headerPresenter.showMediationConfirmationDialog.collectAsState()
+    val newMsgCount by presenter.newMsgCount.collectAsState()
 
     val buyerState1aAddressFieldType by buyerState1aPresenter.bitcoinLnAddressFieldType.collectAsState()
     val buyerState1aShowInvalidAddressDialog by buyerState1aPresenter.showInvalidAddressDialog.collectAsState()
@@ -72,10 +78,27 @@ fun OpenTradeScreen() {
     BisqStaticScaffold(
         topBar = { TopBar("Trade ID: ${presenter.selectedTrade.value?.shortTradeId}") },
         floatingButton = {
-            FloatingButton(
-                onClick = { presenter.onOpenChat() },
-            ) {
-                ChatIcon(modifier = Modifier.size(34.dp))
+            val icon = @Composable {
+                FloatingButton(
+                    onClick = { presenter.onOpenChat() },
+                ) {
+                    ChatIcon(modifier = Modifier.size(34.dp))
+                }
+            }
+
+            if (newMsgCount == 0) {
+                icon()
+            } else {
+                BadgedBox(badge = {
+                    AnimatedBadge(showAnimation = true, xOffet = (-4).dp) {
+                        BisqText.xsmallLight(
+                            newMsgCount.toString(),
+                            textAlign = TextAlign.Center, color = BisqTheme.colors.dark_grey20
+                        )
+                    }
+                }) {
+                    icon()
+                }
             }
         },
         shouldBlurBg = shouldBlurBg,
