@@ -15,7 +15,7 @@ import org.koin.compose.koinInject
 
 @Composable
 fun TradeGuideTradeRules() {
-    val presenter: TradeGuidePresenter = koinInject()
+    val presenter: TradeGuideTradeRulesPresenter = koinInject()
     val userAgreed by presenter.tradeRulesConfirmed.collectAsState()
     var _userAgreed by remember { mutableStateOf(userAgreed) }
 

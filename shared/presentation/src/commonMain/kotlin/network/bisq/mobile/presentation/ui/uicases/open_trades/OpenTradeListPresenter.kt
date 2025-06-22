@@ -70,9 +70,7 @@ class OpenTradeListPresenter(
     }
 
     fun onOpenTradeGuide() {
-        disableInteractive()
         navigateTo(Routes.TradeGuideOverview)
-        enableInteractive()
     }
 
     fun onCloseTradeGuideConfirmation() {

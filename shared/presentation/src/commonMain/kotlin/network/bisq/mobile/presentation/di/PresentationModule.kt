@@ -18,6 +18,7 @@ import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPrese
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPricePresenter
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferReviewPresenter
 import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuidePresenter
+import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideTradeRulesPresenter
 import network.bisq.mobile.presentation.ui.uicases.guide.WalletGuidePresenter
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookMarketPresenter
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookPresenter
@@ -174,7 +175,8 @@ val presentationModule = module {
 
     factory { TradeChatPresenter(get(), get(), get(), get(), get(), get()) }
 
-    single { TradeGuidePresenter(get(), get()) } bind TradeGuidePresenter::class
+    single { TradeGuidePresenter(get()) } bind TradeGuidePresenter::class
+    single { TradeGuideTradeRulesPresenter(get(), get()) } bind TradeGuideTradeRulesPresenter::class
     single { WalletGuidePresenter(get()) } bind WalletGuidePresenter::class
 
     factory<TimeProvider> { getPlatformCurrentTimeProvider() }
