@@ -4,19 +4,24 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
+import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.replicated.contract.RoleEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
+import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import kotlin.collections.orEmpty
+import kotlin.collections.toMutableMap
 
 class InterruptedTradePresenter(
     mainPresenter: MainPresenter,
     private var tradesServiceFacade: TradesServiceFacade,
-    private var mediationServiceFacade: MediationServiceFacade
+    private var mediationServiceFacade: MediationServiceFacade,
+    private val tradeReadStateRepository: TradeReadStateRepository,
 ) : BasePresenter(mainPresenter) {
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
@@ -145,6 +150,9 @@ class InterruptedTradePresenter(
     fun onCloseTrade() {
         if (selectedTrade.value != null) {
             launchUI {
+                val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
+                readState.remove(selectedTrade.value!!.tradeId)
+                tradeReadStateRepository.update(TradeReadState().apply { map = readState })
                 withContext(IODispatcher) {
                     tradesServiceFacade.closeTrade()
                 }

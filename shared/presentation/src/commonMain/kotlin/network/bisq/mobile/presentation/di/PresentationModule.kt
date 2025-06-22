@@ -152,7 +152,7 @@ val presentationModule = module {
     single { SellerState3aPresenter(get(), get()) }
     factory { SellerStateMainChain3bPresenter(get(), get(), get()) }
     factory { SellerStateLightning3bPresenter(get(), get()) }
-    single { SellerState4Presenter(get(), get()) }
+    single { SellerState4Presenter(get(), get(), get()) }
 
     // Trade Buyer
     single { BuyerState1aPresenter(get(), get()) }
@@ -162,13 +162,13 @@ val presentationModule = module {
     factory { BuyerState3aPresenter(get(), get()) }
     factory { BuyerStateMainChain3bPresenter(get(), get(), get()) }
     factory { BuyerStateLightning3bPresenter(get(), get()) }
-    single { BuyerState4Presenter(get(), get()) }
+    single { BuyerState4Presenter(get(), get(), get()) }
 
     // Trade General process
     factory { TradeStatesProvider(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) }
     factory { OpenTradeListPresenter(get(), get(), get(), get()) }
     single { TradeDetailsHeaderPresenter(get(), get(), get(), get()) }
-    factory { InterruptedTradePresenter(get(), get(), get()) }
+    factory { InterruptedTradePresenter(get(), get(), get(), get()) }
     factory { TradeFlowPresenter(get(), get(), get()) }
     factory { OpenTradePresenter(get(), get(), get(), get()) }
 
