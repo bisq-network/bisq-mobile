@@ -39,7 +39,8 @@ class OpenTradePresenter(
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> = _isInMediation
 
-    private val _newMsgCount: MutableStateFlow<Int> = MutableStateFlow(2)
+    // New chat count to display over Chat FAB
+    private val _newMsgCount: MutableStateFlow<Int> = MutableStateFlow(0)
     val newMsgCount: StateFlow<Int> = _newMsgCount
 
     private var _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
