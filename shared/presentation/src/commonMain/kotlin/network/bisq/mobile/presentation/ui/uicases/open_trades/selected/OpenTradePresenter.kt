@@ -64,12 +64,14 @@ class OpenTradePresenter(
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
 
         collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) { tradeState ->
-            val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
-            readState[openTradeItemModel.tradeId] =
-                openTradeItemModel.bisqEasyOpenTradeChannelModel.chatMessages.value.size
-            tradeReadStateRepository.update(TradeReadState().apply { map = readState })
 
             tradeStateChanged(tradeState)
+        }
+
+        collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.chatMessages) {
+            val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
+            readState[openTradeItemModel.tradeId] = it.size
+            tradeReadStateRepository.update(TradeReadState().apply { map = readState })
         }
 
         collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation) {

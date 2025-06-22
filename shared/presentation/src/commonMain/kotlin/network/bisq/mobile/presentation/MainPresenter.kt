@@ -2,10 +2,8 @@ package network.bisq.mobile.presentation
 
 import androidx.annotation.CallSuper
 import androidx.navigation.NavHostController
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
@@ -18,12 +16,12 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.presentation.ui.AppPresenter
-import network.bisq.mobile.presentation.ui.BisqConfig
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 /**
  * Main Presenter as an example of implementation for now.
  */
+@OptIn(ExperimentalCoroutinesApi::class)
 open class MainPresenter(
     private val connectivityService: ConnectivityService,
     private val openTradesNotificationService: OpenTradesNotificationService,
@@ -63,50 +61,19 @@ open class MainPresenter(
         log.i { "Screen width: $screenWidth" }
         log.i { "Small screen: ${_isSmallScreen.value}" }
 
-        val notificationTimerFlow = flow {
-            while (true) {
-                emit(Unit)
-                delay(BisqConfig.NOTIFICATION_SYNC_INTERVAL)
-            }
-        }
-
-        launchIO {
-            combine(
-                tradesServiceFacade.openTradeItems,
-                tradesServiceFacade.selectedTrade,
-                notificationTimerFlow.onStart { emit(Unit) }
-            ) { tradeList, selectedTrade, _ ->
-                tradeList
-            }.collect {
-                val readState = tradeReadStateRepository.fetch() ?: TradeReadState()
-                _readMessageCountsByTrade.value = readState.map
-                _tradesWithUnreadMessages.value = it.map { trade ->
-                    val chatSize = trade.bisqEasyOpenTradeChannelModel.chatMessages.value.size
-                    return@map trade.tradeId to chatSize
-                }.filter { idSizePair ->
-                    val recordedSize = readState.map[idSizePair.first]
-                    if (recordedSize != null && recordedSize >= idSizePair.second) {
-                        return@filter false
-                    }
-                    return@filter true
-                }.toMap()
-            }
-        }
+        observeNotifications()
     }
+
 
     @CallSuper
     override fun onViewAttached() {
         super.onViewAttached()
 
-        languageCode
-            .filter { it.isNotEmpty() }
-            .onEach {
-                // I18nSupport.initialize(it) // Done in App.kt, before view initializes
-                setDefaultLocale(it)
-                settingsService.setLanguageCode(it)
-            }
-            .take(1)
-            .launchIn(presenterScope)
+        languageCode.filter { it.isNotEmpty() }.onEach {
+            // I18nSupport.initialize(it) // Done in App.kt, before view initializes
+            setDefaultLocale(it)
+            settingsService.setLanguageCode(it)
+        }.take(1).launchIn(presenterScope)
 
     }
 
@@ -172,5 +139,35 @@ open class MainPresenter(
     }
 
     override fun isDemo(): Boolean = false
+
+    private fun observeNotifications() {
+        launchIO {
+            tradesServiceFacade.openTradeItems.flatMapLatest { tradeList ->
+                // Combine all chatMessages StateFlows from each trade
+                val combinedChatMessages = combine(tradeList.map { trade ->
+                    trade.bisqEasyOpenTradeChannelModel.chatMessages.map { messages -> trade.tradeId to messages.size }
+                }) { tradeIdSizePairs ->
+                    tradeIdSizePairs.toMap() // Map<tradeId, chatSize>
+                }.onStart { emit(emptyMap()) }
+
+                // Combine chatMessages
+                //  + currently selectedTrade (to capture update of TradeReadState in OpenTradePresenter)
+                combine(
+                    combinedChatMessages, tradesServiceFacade.selectedTrade
+                ) { chatSizes, selectedTrade -> Triple(tradeList, chatSizes, selectedTrade) }
+            }.collect { (tradeList, chatSizes, _) ->
+                val readState = tradeReadStateRepository.fetch() ?: TradeReadState()
+
+                _readMessageCountsByTrade.value = readState.map
+                _tradesWithUnreadMessages.value = tradeList.map { trade ->
+                    val chatSize = chatSizes[trade.tradeId] ?: 0
+                    trade.tradeId to chatSize
+                }.filter { (tradeId, chatSize) ->
+                    val recordedSize = readState.map[tradeId]
+                    recordedSize == null || recordedSize < chatSize
+                }.toMap()
+            }
+        }
+    }
 
 }
