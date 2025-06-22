@@ -13,7 +13,7 @@ import org.koin.compose.koinInject
 
 @Composable
 fun TradeGuideSecurity() {
-    val presenter: TradeGuidePresenter = koinInject()
+    val presenter: TradeGuideSecurityPresenter = koinInject()
 
     RememberPresenterLifecycle(presenter)
 

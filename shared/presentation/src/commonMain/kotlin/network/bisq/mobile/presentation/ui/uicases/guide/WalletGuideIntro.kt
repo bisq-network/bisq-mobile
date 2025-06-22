@@ -11,7 +11,7 @@ import org.koin.compose.koinInject
 
 @Composable
 fun WalletGuideIntro() {
-    val presenter: WalletGuidePresenter = koinInject()
+    val presenter: WalletGuideIntroPresenter = koinInject()
 
     RememberPresenterLifecycle(presenter)
 
