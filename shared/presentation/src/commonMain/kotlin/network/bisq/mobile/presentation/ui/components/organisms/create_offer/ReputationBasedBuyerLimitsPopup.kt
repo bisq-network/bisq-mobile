@@ -6,6 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.BisqConfig
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText
 import network.bisq.mobile.presentation.ui.components.atoms.button.GreyCloseButton
@@ -35,7 +36,7 @@ fun ReputationBasedBuyerLimitsPopup(
 
         NoteText(
             "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.linkToWikiText".i18n(),
-            linkText = "https://bisq.wiki/Reputation",
+            linkText = BisqConfig.REPUTATION_BUILD_WIKI_URL,
             openConfirmation = true,
             onLinkClick = onRepLinkClick
         )

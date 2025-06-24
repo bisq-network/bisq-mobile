@@ -23,6 +23,7 @@ import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.presentation.ui.BisqConfig
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import org.koin.core.component.KoinComponent
@@ -477,7 +478,9 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         }
     }
     open fun navigateToUrl(url: String) {
+        disableInteractive()
         rootPresenter?.navigateToUrl(url)
+        enableInteractive()
     }
 
     override fun onCloseGenericErrorPanel() {
@@ -485,9 +488,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     }
 
     override fun navigateToReportError() {
-        disableInteractive()
-        navigateToUrl("https://github.com/bisq-network/bisq-mobile/issues")
-        enableInteractive()
+        navigateToUrl(BisqConfig.BISQ_MOBILE_GH_ISSUES)
     }
 
     protected open fun isDevMode(): Boolean {

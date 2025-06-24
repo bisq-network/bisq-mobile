@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.BisqConfig
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.button.BisqFABAddButton
@@ -93,7 +94,7 @@ fun OfferbookScreen() {
 
     if (showNotEnoughReputationDialog) {
         WebLinkConfirmationDialog(
-            link = "https://bisq.wiki/Reputation#How_to_build_reputation",
+            link = BisqConfig.REPUTATION_BUILD_WIKI_URL,
             headline = presenter.notEnoughReputationHeadline,
             message = presenter.notEnoughReputationMessage,
             confirmButtonText = "confirmation.yes".i18n(),

@@ -12,6 +12,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.BisqConfig
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class CreateOfferDirectionPresenter(
@@ -63,9 +64,7 @@ class CreateOfferDirectionPresenter(
 
     fun showLearnReputation() {
         setShowSellerReputationWarning(false)
-        disableInteractive()
-        navigateToUrl("https://bisq.wiki/Reputation#How_to_build_reputation")
-        enableInteractive()
+        navigateToUrl(BisqConfig.REPUTATION_BUILD_WIKI_URL)
     }
 
     fun onDismissSellerReputationWarning() {

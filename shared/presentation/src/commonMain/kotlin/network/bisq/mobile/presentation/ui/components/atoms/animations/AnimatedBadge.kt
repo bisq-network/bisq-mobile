@@ -14,8 +14,8 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @Composable
 fun AnimatedBadge(
     showAnimation: Boolean,
-    xOffet: Dp = 8.dp,
-    yOffet: Dp = (-8).dp,
+    xOffset: Dp = 8.dp,
+    yOffset: Dp = (-8).dp,
     content: @Composable RowScope.() -> Unit
 ) {
 
@@ -60,7 +60,7 @@ fun AnimatedBadge(
         containerColor = BisqTheme.colors.warningHover,
         contentColor = BisqTheme.colors.dark_grey20,
         modifier = Modifier
-            .offset(x = xOffet, y = yOffet)
+            .offset(x = xOffset, y = yOffset)
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale

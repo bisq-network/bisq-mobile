@@ -90,7 +90,7 @@ fun OpenTradeScreen() {
                 icon()
             } else {
                 BadgedBox(badge = {
-                    AnimatedBadge(showAnimation = true, xOffet = (-4).dp) {
+                    AnimatedBadge(showAnimation = true, xOffset = (-4).dp) {
                         BisqText.xsmallLight(
                             newMsgCount.toString(),
                             textAlign = TextAlign.Center, color = BisqTheme.colors.dark_grey20

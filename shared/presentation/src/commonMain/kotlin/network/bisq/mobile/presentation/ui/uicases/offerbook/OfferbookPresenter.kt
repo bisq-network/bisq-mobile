@@ -31,6 +31,7 @@ import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.BisqConfig
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
@@ -44,9 +45,6 @@ class OfferbookPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade
 ) : BasePresenter(mainPresenter) {
-    companion object {
-        const val REPUTATION_WIKI_URL = "https://bisq.wiki/Reputation#How_to_build_reputation"
-    }
 
     //todo for dev testing its more convenient
     private val _selectedDirection = MutableStateFlow(DirectionEnum.SELL)
@@ -295,7 +293,7 @@ class OfferbookPresenter(
         // val canBuyerTakeOffer = isReputationNotCached || sellersScore >= requiredReputationScoreForMinOrFixed
         val canBuyerTakeOffer = sellersScore >= requiredReputationScoreForMinOrFixed
         if (!canBuyerTakeOffer) {
-            val link = "hyperlinks.openInBrowser.attention".i18n(REPUTATION_WIKI_URL)
+            val link = "hyperlinks.openInBrowser.attention".i18n(BisqConfig.REPUTATION_BUILD_WIKI_URL)
             if (bisqEasyOffer.direction == DirectionEnum.SELL) {
                 // SELL offer: Maker wants to sell Bitcoin, so they are the seller
                 // Taker (me) wants to buy Bitcoin - checking if seller has enough reputation
@@ -370,7 +368,7 @@ class OfferbookPresenter(
 
     fun onLearnHowToBuildReputation() {
         _showNotEnoughReputationDialog.value = false
-        navigateToUrl(REPUTATION_WIKI_URL)
+        navigateToUrl(BisqConfig.REPUTATION_BUILD_WIKI_URL)
     }
 
     private suspend fun setupReputationDialogContent(item: OfferItemPresentationModel) {

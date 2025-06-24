@@ -5,6 +5,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.BisqConfig
 import network.bisq.mobile.presentation.ui.components.atoms.BisqCheckbox
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
@@ -44,7 +45,7 @@ fun TradeGuideTradeRules() {
 
         LinkButton(
             "action.learnMore".i18n(),
-            link = "https://bisq.wiki/Bisq_Easy",
+            link = BisqConfig.BISQ_EASY_WIKI_URL,
             onClick = { presenter.navigateSecurityLearnMore() }
         )
 

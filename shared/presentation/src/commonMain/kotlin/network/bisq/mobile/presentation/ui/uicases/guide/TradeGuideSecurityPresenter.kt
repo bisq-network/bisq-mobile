@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.guide
 
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.BisqConfig
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class TradeGuideSecurityPresenter(
@@ -17,7 +18,7 @@ class TradeGuideSecurityPresenter(
     }
 
     fun navigateSecurityLearnMore() {
-        navigateToUrl("https://bisq.wiki/Bisq_Easy")
+        navigateToUrl(BisqConfig.BISQ_EASY_WIKI_URL)
     }
 
 }

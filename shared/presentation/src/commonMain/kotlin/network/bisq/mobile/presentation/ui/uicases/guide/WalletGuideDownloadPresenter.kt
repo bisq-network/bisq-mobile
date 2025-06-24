@@ -19,9 +19,7 @@ class WalletGuideDownloadPresenter(
     }
 
     fun navigateToBlueWallet() {
-        disableInteractive()
         navigateToUrl(blueWalletLink)
-        enableInteractive()
     }
 
 }

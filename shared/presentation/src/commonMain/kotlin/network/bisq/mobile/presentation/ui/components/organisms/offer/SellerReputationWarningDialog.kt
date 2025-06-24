@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.BisqConfig
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -53,7 +54,7 @@ fun SellerReputationWarningDialog(
 
         LinkButton(
             text = "bisqEasy.tradeWizard.directionAndMarket.feedback.gainReputation".i18n(),
-            link = "https://bisq.wiki/Reputation#How_to_build_reputation",
+            link = BisqConfig.REPUTATION_BUILD_WIKI_URL,
             type = BisqButtonType.Default,
             color = BisqTheme.colors.white,
             onClick = onLearnReputation,
