@@ -39,13 +39,18 @@ abstract class State4Presenter(
 
     fun onConfirmCloseTrade() {
         launchUI {
-            val tradeId = selectedTrade.value!!.tradeId
+            val tradeId = selectedTrade.value?.tradeId ?: run {
+                _showCloseTradeDialog.value = false
+                GenericErrorHandler.handleGenericError("No trade selected for closure")
+                return@launchUI
+            }
             val result = withContext(IODispatcher) { tradesServiceFacade.closeTrade() }
 
             when {
                 result.isFailure -> {
                     _showCloseTradeDialog.value = false
-                    result.exceptionOrNull()?.let { exception -> GenericErrorHandler.handleGenericError(exception.message) }
+                    result.exceptionOrNull()
+                        ?.let { exception -> GenericErrorHandler.handleGenericError(exception.message) }
                         ?: GenericErrorHandler.handleGenericError("No Exception is set in result failure")
                 }
 
@@ -61,7 +66,7 @@ abstract class State4Presenter(
     }
 
     fun onExportTradeDate() {
-            launchIO {
+        launchIO {
             tradesServiceFacade.exportTradeDate()
         }
     }

@@ -142,31 +142,38 @@ open class MainPresenter(
 
     private fun observeNotifications() {
         launchIO {
-            tradesServiceFacade.openTradeItems.flatMapLatest { tradeList ->
+            combine(
+                tradesServiceFacade.openTradeItems, tradesServiceFacade.selectedTrade
+            ) { tradeList, selectedTrade ->
                 // Combine all chatMessages StateFlows from each trade
-                val combinedChatMessages = combine(tradeList.map { trade ->
-                    trade.bisqEasyOpenTradeChannelModel.chatMessages.map { messages -> trade.tradeId to messages.size }
-                }) { tradeIdSizePairs ->
-                    tradeIdSizePairs.toMap() // Map<tradeId, chatSize>
-                }.onStart { emit(emptyMap()) }
+                val combinedChatMessages = if (tradeList.isNotEmpty()) {
+                    combine(tradeList.map { trade ->
+                        trade.bisqEasyOpenTradeChannelModel.chatMessages.map { messages ->
+                            trade.tradeId to messages.size
+                        }
+                    }) { tradeIdSizePairs ->
+                        tradeIdSizePairs.toMap()
+                    }
+                } else {
+                    flowOf(emptyMap<String, Int>())
+                }
 
-                // Combine chatMessages
-                //  + currently selectedTrade (to capture update of TradeReadState in OpenTradePresenter)
-                combine(
-                    combinedChatMessages, tradesServiceFacade.selectedTrade
-                ) { chatSizes, selectedTrade -> Triple(tradeList, chatSizes, selectedTrade) }
-            }.collect { (tradeList, chatSizes, _) ->
+                combinedChatMessages.map { chatSizes ->
+                    Triple(tradeList, chatSizes, selectedTrade)
+                }
+            }.flatMapLatest { it }.collect { (tradeList, chatSizes, _) ->
                 val readState = tradeReadStateRepository.fetch() ?: TradeReadState()
-
                 _readMessageCountsByTrade.value = readState.map
-                _tradesWithUnreadMessages.value = tradeList.map { trade ->
+                _tradesWithUnreadMessages.value = tradeList.associate { trade ->
                     val chatSize = chatSizes[trade.tradeId] ?: 0
                     trade.tradeId to chatSize
                 }.filter { (tradeId, chatSize) ->
                     val recordedSize = readState.map[tradeId]
                     recordedSize == null || recordedSize < chatSize
-                }.toMap()
+                }
+
             }
+
         }
     }
 

@@ -66,7 +66,7 @@ class OpenTradePresenter(
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
-        var initMsgCount : Int? = null
+        var initReadCount : Int? = null
 
         collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) { tradeState ->
             tradeStateChanged(tradeState)
@@ -76,10 +76,10 @@ class OpenTradePresenter(
             val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
             readState[openTradeItemModel.tradeId] = it.size
             tradeReadStateRepository.update(TradeReadState().apply { map = readState })
-            if (initMsgCount == null) {
-                initMsgCount = readState[openTradeItemModel.tradeId]
+            if (initReadCount == null) {
+                initReadCount = readState[openTradeItemModel.tradeId]
             }
-            _newMsgCount.update { _ -> it.size - initMsgCount!! }
+            _newMsgCount.update { _ -> it.size - initReadCount!! }
         }
 
         collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation) {
