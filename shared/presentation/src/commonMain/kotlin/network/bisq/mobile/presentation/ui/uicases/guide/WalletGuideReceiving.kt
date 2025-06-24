@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.delay
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.BisqConfig
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
@@ -55,13 +56,13 @@ fun WalletGuideReceiving() {
 
         LinkButton(
             "bisqEasy.walletGuide.receive.link1".i18n(),
-            link = presenter.tutorial1Link,
+            link = BisqConfig.BLUE_WALLET_TUTORIAL_1_URL,
             onClick = { presenter.navigateToBlueWalletTutorial1() }
         )
 
         LinkButton(
             "bisqEasy.walletGuide.receive.link2".i18n(),
-            link = presenter.tutorial2Link,
+            link = BisqConfig.BLUE_WALLET_TUTORIAL_2_URL,
             onClick = { presenter.navigateToBlueWalletTutorial2() }
         )
 
