@@ -9,9 +9,6 @@ class WalletGuideReceivingPresenter(
     mainPresenter: MainPresenter,
 ) : BasePresenter(mainPresenter) {
 
-    val tutorial1Link = "https://www.youtube.com/watch?v=NqY3wBhloH4"
-    val tutorial2Link = "https://www.youtube.com/watch?v=imMX7i4qpmg"
-
     fun prevClick() {
         navigateBack()
     }
