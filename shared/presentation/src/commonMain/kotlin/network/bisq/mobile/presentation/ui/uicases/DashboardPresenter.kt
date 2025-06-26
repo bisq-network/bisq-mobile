@@ -10,7 +10,7 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.BisqConfig
+import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class DashboardPresenter(
@@ -48,7 +48,7 @@ open class DashboardPresenter(
     }
 
     override fun navigateLearnMore() {
-        navigateToUrl(BisqConfig.BISQ_EASY_WIKI_URL)
+        navigateToUrl(BisqLinks.BISQ_EASY_WIKI_URL)
     }
 
     private fun refresh() {

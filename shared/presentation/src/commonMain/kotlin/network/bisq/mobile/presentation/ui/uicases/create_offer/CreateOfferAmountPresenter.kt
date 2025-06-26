@@ -31,7 +31,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.BisqConfig
+import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.helpers.AmountValidator
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.AmountType
@@ -242,11 +242,11 @@ class CreateOfferAmountPresenter(
     }
 
     fun navigateToReputation() {
-        navigateToUrl(BisqConfig.REPUTATION_BASE_WIKI_URL)
+        navigateToUrl(BisqLinks.REPUTATION_BASE_WIKI_URL)
     }
 
     fun navigateToBuildReputation() {
-        navigateToUrl(BisqConfig.REPUTATION_BUILD_WIKI_URL)
+        navigateToUrl(BisqLinks.REPUTATION_BUILD_WIKI_URL)
     }
 
     fun validateTextField(value: String): String? {

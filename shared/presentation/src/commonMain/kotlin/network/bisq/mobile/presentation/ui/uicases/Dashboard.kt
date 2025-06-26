@@ -17,7 +17,7 @@ import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
-import network.bisq.mobile.presentation.ui.BisqConfig
+import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -125,7 +125,7 @@ fun WelcomeCard(
         // Footer Link
         LinkButton(
             footerLink,
-            link = BisqConfig.BISQ_EASY_WIKI_URL,
+            link = BisqLinks.BISQ_EASY_WIKI_URL,
             onClick = { presenter.navigateLearnMore() }
         )
     }

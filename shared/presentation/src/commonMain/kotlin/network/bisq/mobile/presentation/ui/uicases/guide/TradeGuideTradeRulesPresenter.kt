@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.first
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.BisqConfig
+import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class TradeGuideTradeRulesPresenter(
@@ -31,7 +31,7 @@ class TradeGuideTradeRulesPresenter(
     }
 
     fun navigateSecurityLearnMore() {
-        navigateToUrl(BisqConfig.BISQ_EASY_WIKI_URL)
+        navigateToUrl(BisqLinks.BISQ_EASY_WIKI_URL)
     }
 
 }

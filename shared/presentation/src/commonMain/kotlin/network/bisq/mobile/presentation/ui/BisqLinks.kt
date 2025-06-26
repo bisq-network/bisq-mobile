@@ -1,6 +1,6 @@
 package network.bisq.mobile.presentation.ui
 
-object BisqConfig {
+object BisqLinks {
     const val BISQ_EASY_WIKI_URL = "https://bisq.wiki/Bisq_Easy"
     const val REPUTATION_BASE_WIKI_URL = "https://bisq.wiki/Reputation"
     const val REPUTATION_BUILD_WIKI_URL = "https://bisq.wiki/Reputation#How_to_build_reputation"
