@@ -96,20 +96,19 @@ open class CreateProfilePresenter(
         if (nickName.value.isNotEmpty()) {
             // We would never call generateKeyPair while generateKeyPair is not
             // completed, thus we can assign to same job reference
-            job = launchUI {
-                disableInteractive()
+            job = launchIO {
+                withContext(Dispatchers.Main) {
+                    disableInteractive()
+                    _createAndPublishInProgress.value = true
+                }
                 log.i { "Show busy animation for createAndPublishInProgress" }
-                _createAndPublishInProgress.value = true
                 runCatching {
                     userProfileService.createAndPublishNewUserProfile(nickName.value)
 
                     log.i { "Hide busy animation for createAndPublishInProgress" }
-                    _createAndPublishInProgress.value = false
-
-                    // Skip for now the TrustedNodeSetup until its fully implemented with persisting the api URL.
-                    /* navigateTo(Routes.TrustedNodeSetup) {
-                         it.popUpTo(Routes.CreateProfile.name) { inclusive = true }
-                     }  */
+                    withContext(Dispatchers.Main) {
+                        _createAndPublishInProgress.value = false
+                    }
                     
                     // Navigate to TabContainer and completely clear the back stack
                     // This ensures the user can never navigate back to onboarding screens
