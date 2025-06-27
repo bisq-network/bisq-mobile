@@ -591,6 +591,14 @@ class TorService(
     }
 
     /**
+     * Set the control port manually (for external mock control servers)
+     */
+    fun setControlPort(port: Int) {
+        _controlPort.value = port
+        log.i { "✅ Control port set manually: $port" }
+    }
+
+    /**
      * Cleanup resources
      */
     fun cleanup() {

@@ -214,6 +214,14 @@ class TorIntegrationService(
     }
 
     /**
+     * Set the control port manually (for external mock control servers)
+     */
+    fun setControlPort(port: Int) {
+        torService.setControlPort(port)
+        log.i { "✅ TorIntegrationService: Control port set to $port" }
+    }
+
+    /**
      * Get Tor status information
      */
     fun getTorStatus(): TorStatus {
