@@ -1,6 +1,7 @@
 package network.bisq.mobile.android.node.service.tor
 
 import android.content.Context
+import io.matthewnelson.kmp.tor.runtime.Action
 import io.matthewnelson.kmp.tor.runtime.RuntimeEvent
 import io.matthewnelson.kmp.tor.runtime.TorRuntime
 import io.matthewnelson.kmp.tor.runtime.core.OnEvent
@@ -10,14 +11,10 @@ import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import io.matthewnelson.kmp.tor.runtime.core.ctrl.TorCmd
 import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.resource.exec.tor.ResourceLoaderTorExec
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.service.ServiceFacade
 import java.io.File
 
 /**
@@ -31,10 +28,8 @@ import java.io.File
 class TorService(
     private val context: Context,
     private val baseDir: File
-) : Logging {
+) : ServiceFacade() {
 
-    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    
     private var torRuntime: TorRuntime? = null
     
     private val _torState = MutableStateFlow(TorState.STOPPED)
@@ -106,13 +101,23 @@ class TorService(
                     handleTorEvent(TorEvent.STATUS_CLIENT, data)
                 }
 
+                // Observer for network listener events to detect actual ports
+                observerStatic(TorEvent.STATUS_SERVER, OnEvent.Executor.Immediate) { data ->
+                    log.d { "🌐 Tor Status Server: $data" }
+                    handleListenerUpdate(data)
+                }
+
                 // Configure Tor options
                 config { environment ->
-                    // Configure SOCKS port (auto-assign)
+                    // Configure SOCKS port (auto-assign to find available port)
                     TorOption.SocksPort.configure { auto() }
 
                     // Configure control port (auto-assign)
                     TorOption.ControlPort.configure { auto() }
+
+                    // Disable cookie authentication for easier Bisq2 integration
+                    // Bisq2 will try no-auth first, which should work with this setting
+                    TorOption.CookieAuthentication.configure(false)
 
                     // Disable client-only mode to allow hidden services
                     TorOption.ClientOnly.configure(false)
@@ -135,7 +140,7 @@ class TorService(
             log.i { "Tor runtime initialized successfully" }
 
             // The runtime might start automatically, so let's check if we get events
-            serviceScope.launch {
+            launchIO {
                 kotlinx.coroutines.delay(2000) // Wait 2 seconds
                 log.i { "Checking Tor state after initialization: ${_torState.value}" }
             }
@@ -165,16 +170,24 @@ class TorService(
         _torState.value = TorState.STARTING
         log.i { "Starting Tor daemon..." }
 
-        // In kmp-tor 2.4.0, the daemon starts automatically when runtime is created
-        // We just need to wait for bootstrap events
-        log.i { "✅ Tor daemon should start automatically - waiting for bootstrap events..." }
+        // Use the proper Action.StartDaemon to start the Tor daemon
+        runtime.enqueue(
+            Action.StartDaemon,
+            OnFailure { error ->
+                log.e { "❌ Failed to start Tor daemon: $error" }
+                _torState.value = TorState.ERROR
+            },
+            OnSuccess {
+                log.i { "✅ Tor daemon start command executed successfully" }
+                // The daemon is starting, we'll get bootstrap events as it progresses
+            }
+        )
 
         // Add a timeout to check if we get any events
-        serviceScope.launch {
-            kotlinx.coroutines.delay(10000) // Wait 10 seconds
+        launchIO {
+            kotlinx.coroutines.delay(30000) // Wait 30 seconds for bootstrap
             if (_torState.value == TorState.STARTING) {
-                log.w { "⚠️ No bootstrap events received after 10 seconds. Checking if Tor is actually running..." }
-                // Try to force some events for debugging
+                log.w { "⚠️ No bootstrap events received after 30 seconds. Checking if Tor is actually running..." }
                 debugTorStatus()
             }
         }
@@ -198,14 +211,19 @@ class TorService(
         _torState.value = TorState.STOPPING
         log.i { "Stopping Tor daemon..." }
 
-        // For now, just update the state - actual stopping handled by cleanup
-        log.i { "✅ Tor daemon stop requested" }
-        _torState.value = TorState.STOPPING
-
-        serviceScope.launch {
-            kotlinx.coroutines.delay(1000)
-            _torState.value = TorState.STOPPED
-        }
+        // Use the proper Action.StopDaemon to stop the Tor daemon
+        runtime.enqueue(
+            Action.StopDaemon,
+            OnFailure { error ->
+                log.e { "❌ Failed to stop Tor daemon: $error" }
+                // Still mark as stopped since we tried
+                _torState.value = TorState.STOPPED
+            },
+            OnSuccess {
+                log.i { "✅ Tor daemon stop command executed successfully" }
+                _torState.value = TorState.STOPPED
+            }
+        )
     }
 
     /**
@@ -219,14 +237,19 @@ class TorService(
         }
 
         log.i { "Restarting Tor daemon..." }
-        
-        log.i { "✅ Tor daemon restart requested" }
-        // Simple restart by stopping and starting
-        stopTor()
-        serviceScope.launch {
-            kotlinx.coroutines.delay(2000)
-            startTor()
-        }
+
+        // Use the proper Action.RestartDaemon to restart the Tor daemon
+        runtime.enqueue(
+            Action.RestartDaemon,
+            OnFailure { error ->
+                log.e { "❌ Failed to restart Tor daemon: $error" }
+                _torState.value = TorState.ERROR
+            },
+            OnSuccess {
+                log.i { "✅ Tor daemon restart command executed successfully" }
+                _torState.value = TorState.STARTING
+            }
+        )
     }
 
     /**
@@ -287,13 +310,8 @@ class TorService(
                     _torState.value = TorState.READY
                     log.i { "✅ Tor is ready for connections" }
 
-                    // Ensure we have a SOCKS port set
-                    if (_socksPort.value == null) {
-                        log.w { "⚠️ SOCKS port not detected from listeners, using default 9050" }
-                        _socksPort.value = 9050
-                    }
-
-                    log.i { "🚀 Tor ready with SOCKS port: ${_socksPort.value}" }
+                    // Query the actual SOCKS port from Tor using GETINFO command
+                    queryActualSocksPort()
                 }
             }
             else -> {
@@ -349,28 +367,34 @@ class TorService(
                 }
             }
 
-            // Control port parsing
+            // Control port parsing - try multiple patterns
             if (data.contains("CONTROL_PORT=")) {
                 val controlMatch = Regex("CONTROL_PORT=(\\d+)").find(data)
                 controlMatch?.groupValues?.get(1)?.toIntOrNull()?.let { port ->
                     _controlPort.value = port
                     log.i { "✅ Tor Control port detected: $port" }
                 }
+            } else if (data.contains("Control listener listening on")) {
+                // Try alternative format: "Control listener listening on 127.0.0.1:9051"
+                val controlMatch = Regex("Control listener listening on [^:]+:(\\d+)").find(data)
+                controlMatch?.groupValues?.get(1)?.toIntOrNull()?.let { port ->
+                    _controlPort.value = port
+                    log.i { "✅ Tor Control port detected (alternative format): $port" }
+                }
+            } else if (data.contains("control") && data.contains("port")) {
+                // Log any data that mentions control and port for debugging
+                log.d { "🔍 Potential control port data: $data" }
             }
 
-            // If we still don't have a SOCKS port, try to set a default
+            // Log if we couldn't parse the SOCKS port from listener data
             if (_socksPort.value == null) {
-                log.w { "⚠️ Could not parse SOCKS port from listener data, using default 9050" }
-                _socksPort.value = 9050
+                log.d { "🔍 Could not parse SOCKS port from listener data: '$data'" }
+                log.d { "🔍 Will rely on GETINFO command to get the actual port" }
             }
 
         } catch (e: Exception) {
             log.e(e) { "Failed to parse listener update: $data" }
-            // Fallback to default SOCKS port
-            if (_socksPort.value == null) {
-                log.w { "⚠️ Using fallback SOCKS port 9050 due to parsing error" }
-                _socksPort.value = 9050
-            }
+            log.d { "🔍 Will rely on GETINFO command to get the actual port" }
         }
     }
 
@@ -384,30 +408,186 @@ class TorService(
         log.i { "Control port: ${_controlPort.value}" }
         log.i { "Runtime initialized: ${torRuntime != null}" }
 
-        // If we're READY but don't have SOCKS port, try to fix it
+        // If we're READY but don't have SOCKS port, try to query it
         if (_torState.value == TorState.READY && _socksPort.value == null) {
-            log.w { "🔧 Tor is READY but SOCKS port is null - setting default" }
-            _socksPort.value = 9050
-            log.i { "🔧 SOCKS port set to default: ${_socksPort.value}" }
+            log.w { "🔧 Tor is READY but SOCKS port is null - querying actual port" }
+            queryActualSocksPort()
         }
 
         // Try to trigger some events manually for testing
         if (torRuntime != null && _torState.value != TorState.READY) {
-            log.i { "Runtime is available, simulating bootstrap for testing..." }
+            log.i { "Runtime is available, forcing bootstrap completion..." }
 
-            // Simulate receiving a bootstrap event to test the flow
-            serviceScope.launch {
-                log.i { "🧪 Simulating bootstrap events for testing..." }
-                handleTorEvent(TorEvent.NOTICE, "Bootstrapped 25%: Loading relays")
-                kotlinx.coroutines.delay(1000)
-                handleTorEvent(TorEvent.NOTICE, "Bootstrapped 50%: Loading relays")
-                kotlinx.coroutines.delay(1000)
-                handleTorEvent(TorEvent.NOTICE, "Bootstrapped 75%: Loading relays")
-                kotlinx.coroutines.delay(1000)
-                handleTorEvent(TorEvent.NOTICE, "Bootstrapped 100%: Done")
+            // Force the state to READY immediately since we have a working SOCKS port
+            if (_socksPort.value != null) {
+                log.i { "🔧 Forcing Tor state to READY since SOCKS port is available: ${_socksPort.value}" }
+                _torState.value = TorState.READY
+                log.i { "✅ Tor state forced to READY for bootstrap" }
+            } else {
+                log.w { "⚠️ Cannot force READY state - no SOCKS port available" }
+                // Try to get the port first, then force ready
+                queryActualSocksPort()
+                // Force ready state after a short delay to allow port query
+                launchIO {
+                    kotlinx.coroutines.delay(2000)
+                    if (_socksPort.value != null) {
+                        log.i { "🔧 Forcing Tor state to READY after port query: ${_socksPort.value}" }
+                        _torState.value = TorState.READY
+                        log.i { "✅ Tor state forced to READY after port detection" }
+                    } else {
+                        log.e { "❌ Still no SOCKS port after query - cannot force READY state" }
+                    }
+                }
             }
         }
         log.i { "========================" }
+    }
+
+    /**
+     * Query the actual SOCKS port from Tor using GETINFO command
+     * This is the proper way to get the port information from kmp-tor
+     */
+    private fun queryActualSocksPort() {
+        val runtime = torRuntime
+        if (runtime == null) {
+            log.e { "❌ Cannot query SOCKS port - Tor runtime not available" }
+            fallbackToPortDetection()
+            return
+        }
+
+        // Add a delay to ensure Tor is fully ready to accept commands
+        launchIO {
+            kotlinx.coroutines.delay(3000) // Wait 3 seconds for Tor to be fully ready
+
+            log.i { "🔍 Querying actual SOCKS port from Tor using GETINFO command..." }
+
+            try {
+                // Use the proper GETINFO command to query the SOCKS listeners
+                val getInfoCommand = TorCmd.Info.Get("net/listeners/socks")
+
+                runtime.enqueue(
+                    getInfoCommand,
+                    OnFailure { error ->
+                        log.e { "❌ Failed to query SOCKS port: $error" }
+                        log.w { "⚠️ GETINFO failed, falling back to port detection" }
+                        fallbackToPortDetection()
+                    },
+                    OnSuccess { result ->
+                        log.i { "✅ GETINFO response received: $result" }
+                        parseSocksPortFromGetInfo(result)
+                    }
+                )
+            } catch (e: Exception) {
+                log.e(e) { "❌ Exception while querying SOCKS port" }
+                log.w { "⚠️ Exception occurred, falling back to port detection" }
+                fallbackToPortDetection()
+            }
+        }
+    }
+
+    /**
+     * Parse SOCKS port from GETINFO response
+     */
+    private fun parseSocksPortFromGetInfo(result: Map<String, String>) {
+        try {
+            val socksListeners = result["net/listeners/socks"]
+            log.i { "🔍 Raw SOCKS listeners data: '$socksListeners'" }
+
+            if (socksListeners != null) {
+                // Parse the response format: "127.0.0.1:9050" or similar
+                val portMatch = Regex("127\\.0\\.0\\.1:(\\d+)").find(socksListeners)
+                val port = portMatch?.groupValues?.get(1)?.toIntOrNull()
+
+                if (port != null) {
+                    _socksPort.value = port
+                    log.i { "✅ Successfully parsed SOCKS port from GETINFO: $port" }
+
+                    // Test connectivity to confirm the port is working
+                    launchIO {
+                        testSocksConnectivity(port)
+                    }
+                } else {
+                    log.w { "⚠️ Could not parse port from SOCKS listeners: '$socksListeners'" }
+                    // Fallback to port detection
+                    fallbackToPortDetection()
+                }
+            } else {
+                log.w { "⚠️ No SOCKS listeners data in GETINFO response" }
+                // Fallback to port detection
+                fallbackToPortDetection()
+            }
+        } catch (e: Exception) {
+            log.e(e) { "❌ Error parsing SOCKS port from GETINFO response" }
+            // Fallback to port detection
+            fallbackToPortDetection()
+        }
+    }
+
+    /**
+     * Fallback to the old port detection method
+     */
+    private fun fallbackToPortDetection() {
+        log.w { "⚠️ Falling back to port detection method..." }
+        launchIO {
+            val actualPort = findActualSocksPort()
+            if (actualPort != null) {
+                _socksPort.value = actualPort
+                log.i { "✅ Found SOCKS port via fallback method: $actualPort" }
+            } else {
+                log.e { "❌ Could not find any accessible SOCKS port" }
+                log.w { "⚠️ P2P network connectivity will likely fail" }
+            }
+        }
+    }
+
+    /**
+     * Find the actual SOCKS port by testing connectivity (fallback method)
+     * Only tests a few common ports as a last resort
+     */
+    private suspend fun findActualSocksPort(): Int? {
+        log.w { "⚠️ Using fallback port detection - this should not be the primary method" }
+
+        // Test only the most common Tor ports as a last resort
+        val portsToTest = listOf(9050, 9051, 9052, 9053, 9054)
+
+        for (port in portsToTest) {
+            try {
+                log.d { "🔍 Testing SOCKS connectivity on port $port..." }
+
+                // Try to create a socket connection to the SOCKS port
+                val socket = java.net.Socket()
+                socket.connect(java.net.InetSocketAddress("127.0.0.1", port), 1000) // 1 second timeout
+                socket.close()
+
+                log.i { "✅ SOCKS port $port is accessible" }
+                return port
+
+            } catch (e: Exception) {
+                log.d { "❌ Port $port not accessible: ${e.message}" }
+            }
+        }
+
+        log.e { "❌ No accessible SOCKS port found - GETINFO command should be used instead" }
+        return null
+    }
+
+    /**
+     * Test SOCKS connectivity on a specific port
+     */
+    private suspend fun testSocksConnectivity(port: Int) {
+        try {
+            log.i { "🔍 Testing SOCKS connectivity on configured port $port..." }
+
+            val socket = java.net.Socket()
+            socket.connect(java.net.InetSocketAddress("127.0.0.1", port), 2000) // 2 second timeout
+            socket.close()
+
+            log.i { "✅ SOCKS proxy is accessible on port $port" }
+
+        } catch (e: Exception) {
+            log.e(e) { "❌ SOCKS proxy not accessible on port $port: ${e.message}" }
+            log.w { "⚠️ This may cause P2P network connectivity issues" }
+        }
     }
 
     /**

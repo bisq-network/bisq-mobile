@@ -142,22 +142,22 @@ class TorConfigurationManager(
 
     /**
      * Update Bisq configuration to use Tor
+     * Note: With Bisq2, the main configuration is done via external_tor.config file
      */
     fun updateBisqConfigForTor(socksPort: Int, enableTor: Boolean = true) {
         log.i { "Updating Bisq configuration for Tor - SOCKS port: $socksPort, enabled: $enableTor" }
-        
-        // This would integrate with Bisq's configuration system
-        // For now, we'll log the configuration that should be applied
-        
+
         if (enableTor) {
-            log.i { "Bisq should be configured with:" }
+            log.i { "Bisq2 should be configured with:" }
             log.i { "  - Transport type: TOR" }
             log.i { "  - SOCKS proxy: 127.0.0.1:$socksPort" }
-            log.i { "  - useExternalTor: false" }
+            log.i { "  - External Tor: enabled via external_tor.config file" }
+            log.i { "  - Configuration method: external_tor.config with UseExternalTor 1" }
         } else {
-            log.i { "Bisq should be configured with:" }
+            log.i { "Bisq2 should be configured with:" }
             log.i { "  - Transport type: CLEAR" }
             log.i { "  - No SOCKS proxy" }
+            log.i { "  - External Tor: disabled" }
         }
     }
 

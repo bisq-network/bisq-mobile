@@ -30,6 +30,11 @@ class TorIntegrationService(
     val controlPort: StateFlow<Int?> = torService.controlPort
 
     /**
+     * Get the Android context for file operations
+     */
+    fun getContext(): Context = context
+
+    /**
      * Initialize the Tor integration service
      */
     fun initialize() {
