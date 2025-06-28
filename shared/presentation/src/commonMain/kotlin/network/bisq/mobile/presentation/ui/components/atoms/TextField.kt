@@ -120,7 +120,7 @@ fun BisqTextField(
     val finalLabelColor by remember(disabled) {
         mutableStateOf(
             if (disabled) {
-                BisqTheme.colors.dark_grey50
+                BisqTheme.colors.mid_grey20
             } else {
                 whiteColor
             }
@@ -130,7 +130,7 @@ fun BisqTextField(
     val finalTextStyle by remember(disabled) {
         mutableStateOf(
             if(disabled) {
-                textStyle.copy(color = BisqTheme.colors.mid_grey10)
+                textStyle.copy(color = BisqTheme.colors.mid_grey20)
             } else {
                 textStyle
             }
