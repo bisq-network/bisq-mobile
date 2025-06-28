@@ -3,6 +3,7 @@ package network.bisq.mobile.android.node.service.bootstrap
 import bisq.application.State
 import bisq.common.observable.Observable
 import bisq.common.observable.Pin
+import bisq.common.network.TransportType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -55,11 +56,19 @@ class NodeApplicationBootstrapFacade(
 
         super.activate()
 
-        // STEP 1: Initialize Tor as the very first step and WAIT for it to be ready
-        initializeAndWaitForTor()
-
-        // Note: Application service state observer will be set up AFTER Tor is ready
-        // This prevents the bootstrap from proceeding until Tor is fully initialized
+        // Check if Tor is supported in the configuration
+        if (isTorSupported()) {
+            log.i { "🔧 Bootstrap: Tor is supported in configuration - initializing Tor integration" }
+            // STEP 1: Initialize Tor as the very first step and WAIT for it to be ready
+            initializeAndWaitForTor()
+            // Note: Application service state observer will be set up AFTER Tor is ready
+        } else {
+            log.i { "🔧 Bootstrap: Tor not supported in configuration (CLEARNET only) - skipping Tor initialization" }
+            // Skip Tor initialization and proceed directly to application service setup
+            onInitializeAppState()
+            setupApplicationStateObserver()
+            triggerApplicationServiceInitialization()
+        }
     }
 
     private fun onInitialized() {
@@ -939,6 +948,25 @@ class NodeApplicationBootstrapFacade(
             log.e(e) { "🎭 Mock control: PRODUCTION: Failed to use Bisq2's TorKeyGeneration" }
             log.e { "🎭 Mock control: This will cause profile creation to fail" }
             throw RuntimeException("Failed to derive onion address using Bisq2's algorithm", e)
+        }
+    }
+
+    /**
+     * Check if Tor is supported in the network configuration
+     */
+    private fun isTorSupported(): Boolean {
+        return try {
+            val applicationServiceInstance = applicationService.applicationService
+            val networkService = applicationServiceInstance.networkService
+            val supportedTransportTypes = networkService.supportedTransportTypes
+            val torSupported = supportedTransportTypes.contains(TransportType.TOR)
+            log.i { "🔍 Bootstrap: Checking Tor support in configuration" }
+            log.i { "   Supported transport types: $supportedTransportTypes" }
+            log.i { "   Tor supported: $torSupported" }
+            torSupported
+        } catch (e: Exception) {
+            log.w(e) { "⚠️ Bootstrap: Could not check Tor support, defaulting to true" }
+            true // Default to true to maintain existing behavior if check fails
         }
     }
 

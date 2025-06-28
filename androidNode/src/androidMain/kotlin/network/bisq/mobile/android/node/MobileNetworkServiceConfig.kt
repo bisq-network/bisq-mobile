@@ -15,6 +15,7 @@ import bisq.network.p2p.services.peer_group.keep_alive.KeepAliveService
 import bisq.network.p2p.node.transport.ClearNetTransportService
 import bisq.network.p2p.node.transport.I2PTransportService
 import com.typesafe.config.Config
+import com.typesafe.config.ConfigValueType
 import java.nio.file.Path
 import java.util.*
 import java.util.stream.Collectors
@@ -209,18 +210,34 @@ object MobileNetworkServiceConfig {
             }
 
             TransportType.CLEAR -> {
-                // Handle similar structure for CLEAR if it exists
+                // Handle CLEAR addresses - they can be either simple string arrays or nested structures
                 if (config.hasPath("clear")) {
                     val clearList = config.getList("clear")
                     if (clearList.isNotEmpty()) {
-                        val firstEntry = clearList[0] as com.typesafe.config.ConfigObject
-                        val clearConfig = firstEntry.toConfig()
-                        if (clearConfig.hasPath("external")) {
-                            clearConfig.getStringList("external").stream()
+                        val firstEntry = clearList[0]
+
+                        // Check if it's a simple string (direct address format)
+                        if (firstEntry is com.typesafe.config.ConfigValue && firstEntry.valueType() == com.typesafe.config.ConfigValueType.STRING) {
+                            // Simple string array format: ["10.0.2.2:8000", "10.0.2.2:8001"]
+                            config.getStringList("clear").stream()
                                 .map { Address.fromFullAddress(it) }
                                 .collect(Collectors.toSet())
                         } else {
-                            emptySet()
+                            // Complex nested format: [{ external: [...] }]
+                            try {
+                                val firstEntryObj = firstEntry as com.typesafe.config.ConfigObject
+                                val clearConfig = firstEntryObj.toConfig()
+                                if (clearConfig.hasPath("external")) {
+                                    clearConfig.getStringList("external").stream()
+                                        .map { Address.fromFullAddress(it) }
+                                        .collect(Collectors.toSet())
+                                } else {
+                                    emptySet()
+                                }
+                            } catch (e: ClassCastException) {
+                                // Fallback: treat as empty if we can't parse
+                                emptySet()
+                            }
                         }
                     } else {
                         emptySet()
