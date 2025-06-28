@@ -36,7 +36,7 @@ fun TradeChatScreen() {
     val clipboard = LocalClipboardManager.current
 
     BisqStaticScaffold(
-        topBar = { TopBar(title = "Chat - " + selectedTrade?.shortTradeId) },
+        topBar = { TopBar(title = "mobile.tradeChat.title".i18n(selectedTrade?.shortTradeId ?: ""))},
     ) {
 
         ChatMessageList(

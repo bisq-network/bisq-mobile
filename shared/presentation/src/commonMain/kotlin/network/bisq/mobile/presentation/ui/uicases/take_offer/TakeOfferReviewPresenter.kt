@@ -70,7 +70,7 @@ class TakeOfferReviewPresenter(
         // To ignore the first init message
         collectUI(takeOfferErrorMessage.drop(1)) {
             log.e { "takeOfferErrorMessage: $it" }
-            showSnackbar(it ?: "Unexpected error occurred, please try again", true)
+            showSnackbar(it ?: "mobile.takeOffer.unexpectedError".i18n(), true)
         }
 
         takeOfferModel = takeOfferPresenter.takeOfferModel
@@ -129,7 +129,7 @@ class TakeOfferReviewPresenter(
             } catch (e: Exception) {
                 log.e("Take offer failed", e)
                 takeOfferErrorMessage.value =
-                    e.message ?: ("Take offer failed with exception: " + e.toString().truncate(50))
+                    e.message ?: ("mobile.takeOffer.failedWithException".i18n(e.toString().truncate(50)))
             } finally {
                 setShowTakeOfferProgressDialog(false)
                 enableInteractive()

@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.i18n
 
 /**
  * Implements foreground service (api >= 26) or background service accordingly
@@ -66,8 +67,8 @@ open class BisqForegroundService : Service(), Logging {
 //                PendingIntent.FLAG_UPDATE_CURRENT // This flag updates the existing PendingIntent if it's already created
 //            )
             val updatedNotification: Notification = NotificationCompat.Builder(this@BisqForegroundService, CHANNEL_ID)
-                .setContentTitle("Bisq Service Is Running")
-                .setContentText("It will notify you when any of your open trades have new activity")
+                .setContentTitle("mobile.bisqService.title".i18n())
+                .setContentText("mobile.bisqService.subTitle".i18n())
                 .setSmallIcon(android.R.drawable.ic_notification_overlay)
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setOngoing(true)  // Keeps the notification active

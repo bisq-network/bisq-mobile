@@ -80,7 +80,7 @@ fun DashboardScreen() {
             presenter = presenter,
             title = presenter.title,
             bulletPoints = presenter.bulletPoints,
-            primaryButtonText = "Start Trading", //todo
+            primaryButtonText = "mobile.dashboard.startTrading".i18n(),
             footerLink = "action.learnMore".i18n()
         )
     }

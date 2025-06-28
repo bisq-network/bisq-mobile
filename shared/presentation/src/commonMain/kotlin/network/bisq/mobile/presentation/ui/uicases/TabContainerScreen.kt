@@ -9,6 +9,7 @@ import bisqapps.shared.presentation.generated.resources.icon_market
 import bisqapps.shared.presentation.generated.resources.icon_settings
 import bisqapps.shared.presentation.generated.resources.icon_trades
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.button.BisqFABAddButton
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
@@ -21,10 +22,10 @@ import network.bisq.mobile.presentation.ui.navigation.graph.TabNavGraph
 import org.koin.compose.koinInject
 
 val navigationListItem = listOf(
-    BottomNavigationItem("Home", Routes.TabHome.name, Res.drawable.icon_home),
-    BottomNavigationItem("Offerbook", Routes.TabOfferbook.name, Res.drawable.icon_market),
-    BottomNavigationItem("My Trades", Routes.TabOpenTradeList.name, Res.drawable.icon_trades),
-    BottomNavigationItem("Settings", Routes.TabSettings.name, Res.drawable.icon_settings),
+    BottomNavigationItem("mobile.bottomNavigation.home".i18n(), Routes.TabHome.name, Res.drawable.icon_home),
+    BottomNavigationItem("mobile.bottomNavigation.offerbook".i18n(), Routes.TabOfferbook.name, Res.drawable.icon_market),
+    BottomNavigationItem("mobile.bottomNavigation.myTrades".i18n(), Routes.TabOpenTradeList.name, Res.drawable.icon_trades),
+    BottomNavigationItem("mobile.bottomNavigation.settings".i18n(), Routes.TabSettings.name, Res.drawable.icon_settings),
 )
 
 interface ITabContainerPresenter : ViewPresenter {
@@ -58,11 +59,11 @@ fun TabContainerScreen() {
             TopBar(
                 isHome = currentRoute == Routes.TabHome.name,
                 title = when (currentRoute) {
-                    Routes.TabHome.name -> "Home"
-                    Routes.TabOfferbook.name -> "Offerbook"
-                    Routes.TabOpenTradeList.name -> "My Open Trades"
-                    Routes.TabSettings.name -> "Settings"
-                    else -> "App"
+                    Routes.TabHome.name -> "mobile.bottomNavigation.home".i18n()
+                    Routes.TabOfferbook.name -> "mobile.bottomNavigation.offerbook".i18n()
+                    Routes.TabOpenTradeList.name -> "mobile.bottomNavigation.myOpenTrades".i18n()
+                    Routes.TabSettings.name -> "mobile.bottomNavigation.settings".i18n()
+                    else -> "mobile.bottomNavigation.app".i18n()
                 },
                 backBehavior = {
                     presenter.onMainBackNavigation()

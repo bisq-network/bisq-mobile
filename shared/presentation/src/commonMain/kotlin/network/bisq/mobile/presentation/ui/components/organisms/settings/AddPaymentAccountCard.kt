@@ -57,16 +57,16 @@ fun AppPaymentAccountCard(
                 accountNameValid = isValid
             },
             placeholder = "user.paymentAccounts.createAccount.accountName.prompt".i18n(),
-            label = "Payment account", //TODO:i18n
+            label = "user.paymentAccounts.createAccount.accountName".i18n(),
             validation = {
                 if (it.isEmpty()) {
-                    return@BisqTextField "Name is mandatory"
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.isMandatory".i18n()
                 }
                 if (it.length < 3) {
-                    return@BisqTextField "Min length: 3 characters"
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.minLength=".i18n()
                 }
                 if (it.length > 256) {
-                    return@BisqTextField "Max length: 256 characters"
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.maxLength".i18n()
                 }
                 return@BisqTextField null
             }
@@ -82,13 +82,13 @@ fun AppPaymentAccountCard(
             isTextArea = true,
             validation = {
                 if (it.isEmpty()) {
-                    return@BisqTextField "Account data is mandatory"
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.accountData.isMandatory".i18n()
                 }
                 if (it.length < 3) {
-                    return@BisqTextField "Min length: 3 characters"
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.accountData.minLength".i18n()
                 }
                 if (it.length > 256) {
-                    return@BisqTextField "Max length: 1024 characters"
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.accountData.maxLength".i18n()
                 }
                 return@BisqTextField null
             }

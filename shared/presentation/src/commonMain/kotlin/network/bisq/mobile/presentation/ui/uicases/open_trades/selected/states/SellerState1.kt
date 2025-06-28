@@ -55,11 +55,11 @@ fun SellerState1(
                 // Same validation as PaymentAccountSettingsScreen.accountData field validation
 
                 if (it.length < 3) {
-                    return@BisqTextField "Min length: 3 characters"
+                    return@BisqTextField "mobile.bisqEasy.tradeState.info.seller.phase1.accountData.validations.minLength".i18n()
                 }
 
                 if (it.length > 1024) {
-                    return@BisqTextField "Max length: 1024 characters"
+                    return@BisqTextField "mobile.bisqEasy.tradeState.info.seller.phase1.accountData.validations.maxLength".i18n()
                 }
 
                 return@BisqTextField null

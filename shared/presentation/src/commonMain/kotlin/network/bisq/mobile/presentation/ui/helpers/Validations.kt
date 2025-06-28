@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.helpers
 
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
+import network.bisq.mobile.i18n.i18n
 
 // Ref: bisq2:common/src/main/java/bisq/common/validation/LightningInvoiceValidation.java
 object LightningInvoiceValidation {
@@ -46,9 +47,9 @@ object AmountValidator {
         val _value = value.toDoubleOrNullLocaleAware()
 
         return when {
-            _value == null -> "Invalid number" // TODO:i18n
-            _value * 10000 < min-> "Should be greater than ${min/ 10000.0}" // TODO:i18n
-            _value * 10000 > max-> "Should be less than ${max/ 10000.0}" // TODO:i18n
+            _value == null -> "mobile.validations.amountValidator.invalidNumber".i18n()
+            _value * 10000 < min-> "mobile.validations.amountValidator.shouldBeGreaterThan".i18n() + " ${min/ 10000.0}"
+            _value * 10000 > max-> "mobile.validations.amountValidator.shouldBeLessThan".i18n() + " ${max/ 10000.0}"
             else -> null
         }
     }

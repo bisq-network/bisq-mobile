@@ -6,6 +6,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -73,7 +74,7 @@ fun BisqDropDown(
                 BisqTextField(
                     value = searchText,
                     onValueChange = { it, isValid -> searchText = it },
-                    placeholder = "Search...",
+                    placeholder = "mobile.components.dropdown.searchPlaceholder".i18n(),
                     modifier = Modifier.fillMaxWidth()
                 )
             }

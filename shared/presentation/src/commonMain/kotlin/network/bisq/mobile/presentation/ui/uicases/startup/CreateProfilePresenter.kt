@@ -11,6 +11,7 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
@@ -79,8 +80,8 @@ open class CreateProfilePresenter(
 
     fun validateNickname(nickname: String): String? {
         return when {
-            nickname.length < 1 -> "Min length: 1 characters"
-            nickname.length > 100 -> "Max length: 100 characters"
+            nickname.length < 1 -> "mobile.createProfile.nickname.minLength".i18n()
+            nickname.length > 100 -> "mobile.createProfile.nickname.maxLength".i18n()
             else -> null
         }.also {
             _nickNameValid.value = it == null
@@ -145,7 +146,7 @@ open class CreateProfilePresenter(
                         }
                     }.onFailure {
                         disableInteractive()
-                        showSnackbar("Generating the key pair failed. Profile generation won't work")
+                        showSnackbar("mobile.profile.generatingKeyPairFailed".i18n())
                     }
                 }
 

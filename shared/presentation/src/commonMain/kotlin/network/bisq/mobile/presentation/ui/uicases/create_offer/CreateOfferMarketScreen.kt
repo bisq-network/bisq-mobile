@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -26,7 +27,7 @@ fun CreateOfferCurrencySelectorScreen() {
     val filteredMarketList = presenter.marketListItemWithNumOffers.collectAsState().value
 
     MultiScreenWizardScaffold(
-        "Currency", //TODO:i18n
+        "mobile.bisqEasy.tradeWizard.market.title".i18n(),
         stepIndex = 2,
         stepsLength = 6,
         prevOnClick = { presenter.onBack() },
@@ -38,8 +39,7 @@ fun CreateOfferCurrencySelectorScreen() {
         BisqText.h3Regular(presenter.headline)
         BisqGap.V1()
 
-        // TODO:i18n "bisqEasy.tradeWizard.market.subTitle".i18n()
-        BisqText.largeLightGrey("Choose your trade currency")
+        BisqText.largeLightGrey("mobile.bisqEasy.tradeWizard.market.subTitle".i18n())
 
         BisqGap.V2()
 

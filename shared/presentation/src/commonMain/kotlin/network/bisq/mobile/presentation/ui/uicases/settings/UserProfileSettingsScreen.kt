@@ -99,46 +99,46 @@ fun UserProfileSettingsScreen() {
         
         UserProfileScreenHeader(presenter)
 
-        SettingsTextField(label = "Nickname", value = nickname, editable = false)
+        SettingsTextField(label = "mobile.settings.userProfile.labels.nickname".i18n(), value = nickname, editable = false)
 
         BisqGap.V1()
 
         // Bot ID with copy functionality
         SettingsTextField(
-            label = "Bot ID", 
-            value = botId, 
+            label = "user.userProfile.nymId".i18n(),
+            value = botId,
             editable = false,
-            trailingIcon = { CopyIconButton(value = botId) }
+                    trailingIcon = { CopyIconButton(value = botId) }
         )
 
         BisqGap.V1()
 
         // Profile ID with copy functionality
         SettingsTextField(
-            label = "Profile ID", 
-            value = profileId, 
+            label = "user.userProfile.profileId".i18n(),
+            value = profileId,
             editable = false,
             trailingIcon = { CopyIconButton(value = profileId) }
         )
 
         BisqGap.V1()
 
-        SettingsTextField(label = "Profile age", value = profileAge, editable = false)
+        SettingsTextField(label = "user.profileCard.details.profileAge".i18n(), value = profileAge, editable = false)
 
         BisqGap.V1()
 
-        SettingsTextField(label = "Last user activity", value = lastUserActivity, editable = false)
+        SettingsTextField(label = "user.userProfile.livenessState.description".i18n(), value = lastUserActivity, editable = false)
 
         BisqGap.V1()
 
         // Reputation
-        SettingsTextField(label = "Reputation", value = reputation, editable = false)
+        SettingsTextField(label = "user.userProfile.reputation".i18n(), value = reputation, editable = false)
 
         BisqGap.V1()
 
         // Statement
         SettingsTextField(
-            label = "Statement",
+            label = "user.userProfile.statement".i18n(),
             value = statement,
             isTextArea = true,
             onValueChange = { newValue, isValid -> presenter.updateStatement(newValue) }
@@ -148,7 +148,7 @@ fun UserProfileSettingsScreen() {
 
         // Trade Terms
         SettingsTextField(
-            label = "Trade terms",
+            label = "user.userProfile.terms".i18n(),
             value = tradeTerms,
             isTextArea = true,
             onValueChange = { newValue, isValid -> presenter.updateTradeTerms(newValue) }
@@ -159,7 +159,7 @@ fun UserProfileSettingsScreen() {
 
     if (showDeleteConfirmation) {
         ConfirmationDialog(
-            headline = "Are you sure want to delete your profile",
+            headline = "mobile.settings.userProfile.deleteConfirmationDialog.headling".i18n(),
             onConfirm = presenter::onDelete,
             onDismiss = { presenter.setShowDeleteProfileConfirmation(false) }
         )
@@ -214,7 +214,7 @@ private fun UserProfileScreenFooter(presenter: IUserProfileSettingsPresenter, sh
 //        )
 //        BisqGap.H1()
         BisqButton(
-            "Save",
+            "mobile.settings.userProfile.labels.save".i18n(),
             onClick = presenter::onSave,
             isLoading = isLoading,
             modifier = Modifier.weight(1.0F),

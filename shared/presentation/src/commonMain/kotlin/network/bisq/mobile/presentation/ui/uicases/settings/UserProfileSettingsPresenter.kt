@@ -14,6 +14,7 @@ import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.DateUtils
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 
@@ -144,12 +145,11 @@ class UserProfileSettingsPresenter(
                     userProfileServiceFacade.updateAndPublishUserProfile(statement.value, tradeTerms.value)
                 }
                 if (result.isSuccess) {
-                    showSnackbar("Save success") // TODO: i18n
+                    showSnackbar("mobile.settings.userProfile.saveSucess".i18n())
                 } else {
-                    showSnackbar("Save failure") // TODO: i18n
+                    showSnackbar("mobile.settings.userProfile.saveFailure".i18n())
                 }
             } catch (e: Exception) {
-                showSnackbar("Save failure") // TODO: i18n
                 log.e(e) { "Failed to save user profile settings" }
             } finally {
                 setShowLoading(false)

@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
@@ -19,9 +20,9 @@ open class SettingsPresenter(
 
     final override fun menuTree(): MenuItem {
         val defaultList: MutableList<MenuItem> = mutableListOf(
-            MenuItem.Leaf(label = "General", route = Routes.GeneralSettings),
-            MenuItem.Leaf(label = "User Profile", route = Routes.UserProfileSettings),
-            MenuItem.Leaf(label = "Payment Accounts", route = Routes.PaymentAccountSettings),
+            MenuItem.Leaf(label = "mobile.settings.general".i18n(), route = Routes.GeneralSettings),
+            MenuItem.Leaf(label = "user.userProfile".i18n(), route = Routes.UserProfileSettings),
+            MenuItem.Leaf(label = "user.paymentAccounts".i18n(), route = Routes.PaymentAccountSettings),
         )
         return MenuItem.Parent(
             label = "Bisq",
@@ -37,7 +38,7 @@ open class SettingsPresenter(
     }
 
     protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
-        menuItems.add(MenuItem.Leaf("Trusted Node", Routes.TrustedNodeSettings))
+        menuItems.add(MenuItem.Leaf("mobile.settings.trustedNode".i18n(), Routes.TrustedNodeSettings))
         return menuItems.toList()
     }
 

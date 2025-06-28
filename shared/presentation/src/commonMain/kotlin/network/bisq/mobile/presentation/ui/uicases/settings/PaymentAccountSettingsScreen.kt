@@ -127,7 +127,7 @@ fun PaymentAccountSettingsScreen() {
         BisqEditableDropDown(
             value = accountName,
             items = accounts.map { it.accountName },
-            label = "Payment account", //TODO:i18n
+            label = "mobile.user.paymentAccounts.createAccount.paymentAccount.label".i18n(),
             onValueChanged = { name, isValid ->
                 var account = accounts.firstOrNull { it.accountName == name }
                 if (account == null) {
@@ -141,11 +141,11 @@ fun PaymentAccountSettingsScreen() {
             },
             validation = {
                 if (it.length < 3) {
-                    return@BisqEditableDropDown "Min length: 3 characters"
+                    return@BisqEditableDropDown "mobile.user.paymentAccounts.createAccount.paymentAccount.validations.minLength".i18n()
                 }
 
                 if (it.length > 1024) {
-                    return@BisqEditableDropDown "Max length: 1024 characters"
+                    return@BisqEditableDropDown "mobile.user.paymentAccounts.createAccount.paymentAccount.validations.maxLength".i18n()
                 }
 
                 return@BisqEditableDropDown null
@@ -165,11 +165,11 @@ fun PaymentAccountSettingsScreen() {
             validation = {
 
                 if (it.length < 3) {
-                    return@BisqTextField "Min length: 3 characters"
+                    return@BisqTextField "mobile.user.paymentAccounts.accountData.paymentAccount.validations.minLength".i18n()
                 }
 
                 if (it.length > 1024) {
-                    return@BisqTextField "Max length: 1024 characters"
+                    return@BisqTextField "mobile.user.paymentAccounts.accountData.paymentAccount.validations.maxLength".i18n()
                 }
 
                 return@BisqTextField null
@@ -183,7 +183,7 @@ fun PaymentAccountSettingsScreen() {
             modifier = Modifier.fillMaxWidth()
         ) {
             BisqButton(
-                text = "Delete account", //TODO:i18n
+                text = "mobile.user.paymentAccounts.deleteAccount".i18n(),
                 type = BisqButtonType.Grey,
                 onClick = { showConfirmationDialog = true },
                 disabled = selectedAccount == null

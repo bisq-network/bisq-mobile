@@ -5,6 +5,7 @@ import network.bisq.mobile.domain.service.notifications.controller.NotificationS
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.i18n
 
 class OpenTradesNotificationService(
     val notificationServiceController: NotificationServiceController,
@@ -42,13 +43,13 @@ class OpenTradesNotificationService(
             if (OffersServiceFacade.isTerminalState(it)) {
                 notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.tradeState)
                 notificationServiceController.pushNotification(
-                    "Trade [${trade.shortTradeId}] completed",
-                    "Your trade with ${trade.peersUserName} has finished as $it"
+                    "mobile.openTradeNotifications.tradeCompleted.title".i18n(trade.shortTradeId),
+                    "mobile.openTradeNotifications.tradeCompleted.message".i18n(trade.peersUserName, it)
                 )
             } else {
                 notificationServiceController.pushNotification(
-                    "Trade [${trade.shortTradeId}] activity",
-                    "Your trade with ${trade.peersUserName} needs your attention"
+                    "mobile.openTradeNotifications.needsAttention.title".i18n(trade.shortTradeId),
+                    "mobile.openTradeNotifications.needsAttention.message".i18n(trade.peersUserName)
                 )
             }
 

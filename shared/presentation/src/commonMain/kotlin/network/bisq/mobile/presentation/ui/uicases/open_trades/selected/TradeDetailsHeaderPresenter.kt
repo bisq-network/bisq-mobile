@@ -103,14 +103,14 @@ class TradeDetailsHeaderPresenter(
 
         if (openTradeItemModel.bisqEasyTradeModel.isSeller) {
             directionEnum = DirectionEnum.SELL
-            direction = "SELL" //"offer.sell"
-            leftAmountDescription = "Amount to send" //"bisqEasy.tradeState.header.send"
-            rightAmountDescription = "Amount to receive" // "bisqEasy.tradeState.header.receive"
+            direction = "offer.sell".i18n().uppercase()
+            leftAmountDescription = "bisqEasy.tradeState.header.send".i18n()
+            rightAmountDescription = "bisqEasy.tradeState.header.receive".i18n()
         } else {
             directionEnum = DirectionEnum.BUY
-            direction = "BUY" //"offer.sell"
-            leftAmountDescription = "Amount to pay" //"bisqEasy.tradeState.header.pay"
-            rightAmountDescription = "Amount to receive" //"bisqEasy.tradeState.header.receive"
+            direction = "offer.sell".i18n().uppercase()
+            leftAmountDescription = "bisqEasy.tradeState.header.pay".i18n()
+            rightAmountDescription = "bisqEasy.tradeState.header.receive".i18n()
         }
 
         collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) {
@@ -305,7 +305,7 @@ class TradeDetailsHeaderPresenter(
                 mediationServiceFacade.reportToMediator(selectedTrade.value!!)
             } catch (e: Exception) {
                 // TODO we probably want a UI for this
-                showSnackbar("Mediation reporting failed, please reach out to support") // TODO i18n
+                showSnackbar("mobile.bisqEasy.tradeState.mediationFailed".i18n())
                 log.e(e) { "Failed to proceed to report to mediation - ${e.message}" }
             } finally {
                 enableInteractive()

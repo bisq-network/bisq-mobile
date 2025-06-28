@@ -22,6 +22,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
@@ -73,7 +74,7 @@ fun ChatInputField(
             rightSuffixModifier = Modifier.width(BisqUIConstants.ScreenPadding2X),
             validation = {
                 if (it.length > 10000) {
-                    return@BisqTextField "Max length: 10,000 characters" //TODO:i18n
+                    return@BisqTextField "mobile.tradeChat.chatInput.maxLength".i18n()
                 }
                 return@BisqTextField null
             }

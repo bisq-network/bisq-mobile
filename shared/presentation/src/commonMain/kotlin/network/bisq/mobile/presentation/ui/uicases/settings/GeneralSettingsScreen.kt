@@ -78,7 +78,7 @@ fun GeneralSettingsScreen() {
     })
 
     BisqScrollScaffold(
-        topBar = { TopBar("General Settings") }, // TODO:i18n
+        topBar = { TopBar("mobile.settings.title".i18n()) },
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         isInteractive = presenter.isInteractive.collectAsState().value,
@@ -120,7 +120,7 @@ fun GeneralSettingsScreen() {
         BisqGap.V1()
 
         BisqSegmentButton(
-            label = "Chat Notification (TODO)", // TODO:i18n
+            label = "mobile.settings.chatNotification.label".i18n(),
             items = listOf(
                 Pair("all", "chat.notificationsSettingsMenu.all".i18n()),
                 Pair("mention", "chat.notificationsSettingsMenu.mention".i18n()),
@@ -155,7 +155,7 @@ fun GeneralSettingsScreen() {
             validation = {
                 val parsedValue = it.toDoubleOrNullLocaleAware()
                 if (parsedValue == null) {
-                    return@BisqTextField "Value cannot be empty"
+                    return@BisqTextField "mobile.settings.trade.maxTradePriceDeviation.validation.cannotBeEmpty".i18n()
                 }
                 if (parsedValue < 1 || parsedValue > 10) {
                     return@BisqTextField "settings.trade.maxTradePriceDeviation.invalid".i18n(1, 10)
@@ -185,7 +185,7 @@ fun GeneralSettingsScreen() {
             onValueChange = { it, isValid -> presenter.setNumDaysAfterRedactingTradeData(it, isValid) },
             helperText = "settings.trade.numDaysAfterRedactingTradeData.help".i18n(),
             validation = {
-                val parsedValue = it.toDoubleOrNullLocaleAware() ?: return@BisqTextField "Value cannot be empty"
+                val parsedValue = it.toDoubleOrNullLocaleAware() ?: return@BisqTextField "mobile.settings.trade.numDaysAfterRedactingTradeData.validation.cannotBeEmpty".i18n()
                 if (parsedValue < 30 || parsedValue > 365) {
                     return@BisqTextField "settings.trade.numDaysAfterRedactingTradeData.invalid".i18n(30, 365)
                 }

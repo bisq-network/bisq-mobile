@@ -50,7 +50,7 @@ fun CreateOfferDirectionScreen() {
             textComponent = { BisqText.h3Medium("bisqEasy.tradeWizard.directionAndMarket.buy".i18n()) }
         )
         BisqGap.VHalf()
-        BisqText.largeLightGrey("The easiest way to get your first Bitcoin") //TODO:i18n
+        BisqText.largeLightGrey("mobile.bisqEasy.tradeWizard.direction.buy.helpText".i18n())
 
         BisqGap.V2()
 
@@ -65,7 +65,7 @@ fun CreateOfferDirectionScreen() {
             textComponent = { BisqText.h3Medium("bisqEasy.tradeWizard.directionAndMarket.sell".i18n()) }
         )
         BisqGap.VHalf()
-        BisqText.largeLightGrey("Experienced Bisq users with reputation can act as seller") //TODO:i18n
+        BisqText.largeLightGrey("mobile.bisqEasy.tradeWizard.direction.sell.helpText".i18n())
     }
 
     if (showSellerReputationWarning) {

@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -43,8 +44,7 @@ fun JumpToBottomFloatingButton(
                     contentDescription = null
                 )
             },
-            // TODO:i18n
-            text = { BisqText.baseRegular("Jump to bottom", color = BisqTheme.colors.dark_grey10) },
+            text = { BisqText.baseRegular("mobile.tradeChat.jumpToBottom".i18n(), color = BisqTheme.colors.dark_grey10) },
             onClick = onClicked,
             containerColor = BisqTheme.colors.light_grey10,
             contentColor = BisqTheme.colors.dark_grey10,

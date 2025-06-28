@@ -31,6 +31,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.BackHandler
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -119,7 +120,7 @@ fun TopBar(
                 if (isFlowScreen) {
                     Column {
                         BisqText.smallRegularGrey(
-                            text = "Step $stepText",
+                            text = "mobile.components.topBar.step".i18n(stepText),
                             modifier = Modifier.offset(y = 2.dp)
                         )
                         BisqGap.VHalf()
@@ -184,8 +185,8 @@ fun TopBar(
 
     if (showBackConfirmationDialog) {
         ConfirmationDialog(
-            headline = "Are you sure want to exit the Trade?",
-            message = "You can resume later",
+            headline = "mobile.components.topBar.confirmationDialog.headline".i18n(),
+            message = "mobile.components.topBar.confirmationDialog.message".i18n(),
             onConfirm = {
                 showBackConfirmationDialog = false
                 presenter.goBack()

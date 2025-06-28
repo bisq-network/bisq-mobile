@@ -134,14 +134,14 @@ class InterruptedTradePresenter(
             BisqEasyTradeStateEnum.FAILED -> {
                 _reportToMediatorButtonVisible.value = false
                 errorMessage =
-                    "The trade failed with error message: ${selectedTrade.value?.bisqEasyTradeModel?.errorMessage?.value}" // bisqEasy.openTrades.failed
+                    "mobile.bisqEasy.openTrades.failed".i18n(selectedTrade.value?.bisqEasyTradeModel?.errorMessage?.value ?: "")
                 _errorMessageVisible.value = true
             }
 
             BisqEasyTradeStateEnum.FAILED_AT_PEER -> {
                 _reportToMediatorButtonVisible.value = false
                 errorMessage =
-                    "The peer's trade failed with an error caused by: ${selectedTrade.value?.bisqEasyTradeModel?.peersErrorMessage?.value}" // bisqEasy.openTrades.failedAtPeer
+                    "mobile.bisqEasy.openTrades.failedAtPeer".i18n(selectedTrade.value?.bisqEasyTradeModel?.peersErrorMessage?.value ?: "")
                 _errorMessageVisible.value = true
             }
         }

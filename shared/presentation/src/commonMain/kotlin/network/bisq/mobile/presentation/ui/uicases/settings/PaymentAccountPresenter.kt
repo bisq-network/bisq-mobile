@@ -6,6 +6,7 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountPayloadVO
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 
@@ -36,7 +37,7 @@ open class PaymentAccountPresenter(
         disableInteractive()
 
         if (accounts.value.find { it.accountName == newName } != null) {
-            showSnackbar("Account name exists") // TODO:i18n
+            showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n())
             enableInteractive()
             return
         }
@@ -50,7 +51,7 @@ open class PaymentAccountPresenter(
                     )
                 )
                 accountsServiceFacade.addAccount(newAccount)
-                showSnackbar("Account created") // TODO:i18n
+                showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountCreated".i18n())
             } finally {
                 enableInteractive()
             }
@@ -60,7 +61,7 @@ open class PaymentAccountPresenter(
     override fun saveAccount(newName: String, newDescription: String) {
         disableInteractive()
         if (selectedAccount.value?.accountName != newName && accounts.value.find { it.accountName == newName } != null) {
-            showSnackbar("Account name exists") // TODO:i18n
+            showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n())
             enableInteractive()
             return
         }
@@ -75,7 +76,7 @@ open class PaymentAccountPresenter(
                         )
                     )
                     accountsServiceFacade.saveAccount(newAccount)
-                    showSnackbar("Account updated") // TODO:i18n
+                    showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n())
                 } finally {
                     enableInteractive()
                 }
@@ -91,10 +92,11 @@ open class PaymentAccountPresenter(
             launchIO {
                 try {
                     accountsServiceFacade.removeAccount(selectedAccount.value!!)
-                    showSnackbar("Account deleted") // TODO:i18n
+                    showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountDeleted".i18n())
                 } catch (e: Exception) {
                     log.e { "Couldn't remove account ${selectedAccount.value?.accountName}" }
-                    showSnackbar("Unable to delete account: ${selectedAccount.value?.accountName} - Please try again")
+                    showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(selectedAccount.value?.accountName ?: ""))
+
                 } finally {
                     enableInteractive()
                 }

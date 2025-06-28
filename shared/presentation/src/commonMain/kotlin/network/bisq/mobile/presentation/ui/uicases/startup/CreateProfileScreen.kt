@@ -78,7 +78,7 @@ fun CreateProfileScreen(
                     onClick = { presenter.onGenerateKeyPair() }) {
                     Image(
                         painter = painter,
-                        contentDescription = "User profile icon generated from the hash of the public key",
+                        contentDescription = "mobile.createProfile.iconGenerated".i18n(),
                         modifier = Modifier.size(botSize)
                     )
                 }

@@ -234,7 +234,7 @@ class CreateOfferAmountPresenter(
 
     fun onNext() {
         if (amountType.value == AmountType.RANGE_AMOUNT && quoteSideMaxRangeAmount.asDouble() < quoteSideMinRangeAmount.asDouble()) {
-            showSnackbar("Min should be lesser than Max") // TODO:i18n
+            showSnackbar("mobile.bisqEasy.tradeWizard.amount.range.validation.minShouldBeLessThanMax".i18n())
             return
         }
         commitToModel()

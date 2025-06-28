@@ -13,6 +13,7 @@ import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -91,10 +92,10 @@ class TrustedNodeSetupPresenter(
         val wsUrlPattern =
             """^(ws|wss):\/\/(([a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|localhost)|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))(:\d{1,5})$""".toRegex()
         if (url.isEmpty()) {
-            return "URL cannot be empty" //TODO:i18n
+            return "mobile.trustedNodeSetup.wsURL.cannotBeEmpty".i18n()
         }
         if (!wsUrlPattern.matches(url)) {
-            return "Invalid WebSocket URL. Must be ws:// or wss:// followed by a domain/IP and port" //TODO:i18n
+            return "mobile.trustedNodeSetup.wsURL.invalid".i18n()
         }
         return null
     }
@@ -104,7 +105,7 @@ class TrustedNodeSetupPresenter(
             // TODO implement feature to allow changing from settings
             // this is not trivial from UI perspective, its making NavGraph related code to crash when
             // landing back in the TabContainer Home.
-            showSnackbar("If you want to use a different node, you need to remove the app storage or uninstall/reinstall")
+            showSnackbar("mobile.trustedNodeSetup.testConnection.message".i18n())
             return
         }
         _isLoading.value = true
@@ -146,20 +147,25 @@ class TrustedNodeSetupPresenter(
                     } else {
                         webSocketClientProvider.get().disconnect(isTest = true)
                         log.d { "Invalid version cannot connect" }
-                        showSnackbar("Trusted node incompatible version, cannot connect")
+                        showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.incompatible".i18n())
                         _isConnected.value = false
                     }
                 } else {
-                    showSnackbar("Could not connect to given url ${_bisqApiUrl.value}, please try again with another setup")
+                    showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.couldNotConnect".i18n(_bisqApiUrl.value))
                     _isConnected.value = false
                 }
             } catch (e: TimeoutCancellationException) {
                 log.e(e) { "Connection test timed out after 15 seconds" }
-                showSnackbar("Connection timed out. Please check if the trusted node is running and accessible.")
+                showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionTimedOut".i18n())
                 _isConnected.value = false
             } catch (e: Exception) {
                 log.e(e) { "Error testing connection: ${e.message}" }
-                showSnackbar("Error connecting: ${e.message ?: "Unknown error"}")
+                if(e.message != null) {
+                    showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(e.message!!))
+                } else {
+                    showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.unknownError".i18n())
+                }
+
                 _isConnected.value = false
             } finally {
                 _isLoading.value = false
@@ -172,7 +178,7 @@ class TrustedNodeSetupPresenter(
                 log.w { "Force stopping connection test after 20 seconds" }
                 connectionJob.cancel()
                 _isLoading.value = false
-                showSnackbar("Connection test took too long. Please try again.")
+                showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionTookTooLong".i18n())
             }
         }
     }
