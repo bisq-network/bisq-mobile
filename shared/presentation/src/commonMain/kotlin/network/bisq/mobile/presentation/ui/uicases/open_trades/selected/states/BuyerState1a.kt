@@ -58,6 +58,7 @@ fun BuyerState1a(
             )
             BisqButton(
                 text = "bisqEasy.tradeState.info.buyer.phase1a.walletHelpButton".i18n(), // Open wallet guide
+                disabled = !presenter.isInteractive.collectAsState().value,
                 onClick = { presenter.onOpenWalletGuide() },
                 type = BisqButtonType.Outline,
                 padding = PaddingValues(

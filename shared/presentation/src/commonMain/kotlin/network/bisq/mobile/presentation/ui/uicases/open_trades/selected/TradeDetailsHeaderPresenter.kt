@@ -70,6 +70,9 @@ class TradeDetailsHeaderPresenter(
     private val _peerAvatar: MutableStateFlow<PlatformImage?> = MutableStateFlow(null)
     val peerAvatar: StateFlow<PlatformImage?> = _peerAvatar
 
+    private val _isShowDetails: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isShowDetails: StateFlow<Boolean> = this._isShowDetails
+
     override fun onViewAttached() {
         super.onViewAttached()
 
@@ -308,6 +311,12 @@ class TradeDetailsHeaderPresenter(
                 enableInteractive()
             }
         }
+    }
+
+    fun onToggleHeader() {
+        disableInteractive()
+        this._isShowDetails.value = !this._isShowDetails.value
+        enableInteractive()
     }
 
     private fun reset() {

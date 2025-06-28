@@ -80,6 +80,7 @@ fun OpenTradeScreen() {
         floatingButton = {
             val icon = @Composable {
                 FloatingButton(
+                    enabled = presenter.isInteractive.collectAsState().value,
                     onClick = { presenter.onOpenChat() },
                 ) {
                     ChatIcon(modifier = Modifier.size(34.dp))
