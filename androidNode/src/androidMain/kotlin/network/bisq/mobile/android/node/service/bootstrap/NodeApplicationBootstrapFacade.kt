@@ -196,7 +196,7 @@ class NodeApplicationBootstrapFacade(
     private fun setupTorStateObserver() {
         // Launch a coroutine to collect from the StateFlow
         // Use a separate job that completes once Tor is ready
-        val stateObserverJob = torBootstrapScope.launch {
+        jobsManager.addJob(torBootstrapScope.launch {
             try {
                 var shouldContinue = true
 
@@ -244,10 +244,10 @@ class NodeApplicationBootstrapFacade(
                     }
                 }
             }
-        }
+        })
 
         // Also monitor SOCKS port separately to handle cases where port is available after READY state
-        val portObserverJob = torBootstrapScope.launch {
+        jobsManager.addJob(torBootstrapScope.launch {
             try {
                 torIntegrationService.socksPort.collect { socksPort ->
                     log.i { "🔍 Bootstrap: SOCKS port changed to: $socksPort" }
@@ -264,7 +264,7 @@ class NodeApplicationBootstrapFacade(
                     log.e(e) { "❌ Bootstrap: Error in SOCKS port observer" }
                 }
             }
-        }
+        })
     }
 
     /**
@@ -642,10 +642,6 @@ class NodeApplicationBootstrapFacade(
         }
     }
 
-
-
-
-
     /**
      * Trigger the actual application service initialization after Tor is ready
      */
@@ -746,29 +742,6 @@ class NodeApplicationBootstrapFacade(
     private var capturedNetworkIdAddress: String? = null
 
     /**
-     * PRODUCTION SOLUTION: Extract the NetworkId address from the "Publish onion service" log
-     * This is called when we see the log: "Publish onion service for onion address xxx.onion:port"
-     */
-    private fun captureNetworkIdAddressFromLog(logMessage: String) {
-        try {
-            if (logMessage.contains("Publish onion service for onion address") && capturedNetworkIdAddress == null) {
-                // Extract the onion address from the log message
-                val regex = Regex("onion address ([a-z0-9]{56})\\.onion")
-                val match = regex.find(logMessage)
-                if (match != null) {
-                    capturedNetworkIdAddress = match.groupValues[1]
-                    log.i { "🎭 Mock control: ✅ CAPTURED NetworkId address from log: $capturedNetworkIdAddress" }
-                    log.i { "🎭 Mock control: This will be used for HS_DESC events to match PublishOnionAddressService" }
-                } else {
-                    log.w { "🎭 Mock control: Could not extract onion address from log: $logMessage" }
-                }
-            }
-        } catch (e: Exception) {
-            log.e(e) { "🎭 Mock control: Error capturing NetworkId address from log" }
-        }
-    }
-
-    /**
      * Extract onion address from ADD_ONION command for HS_DESC event simulation
      * PRODUCTION SOLUTION: Derive the correct onion address from the ED25519-V3 private key
      */
@@ -850,64 +823,6 @@ class NodeApplicationBootstrapFacade(
     }
 
     /**
-     * Derive onion address from ED25519-V3 private key
-     * This is a simplified implementation for testing purposes
-     */
-    private fun deriveOnionAddressSimple(base64PrivateKey: String): String {
-        return try {
-            // Decode the base64 private key
-            val privateKeyBytes = java.util.Base64.getDecoder().decode(base64PrivateKey)
-
-            // For Ed25519, the public key is derived from the private key
-            // This is a simplified approach - real implementation would use proper Ed25519 crypto
-            val hash = java.security.MessageDigest.getInstance("SHA-256")
-            val publicKeyHash = hash.digest(privateKeyBytes)
-
-            // Take first 32 bytes and encode to base32 (simplified)
-            val addressBytes = publicKeyHash.sliceArray(0..31)
-            val base32Address = encodeBase32(addressBytes)
-
-            // Onion v3 addresses are 56 characters + ".onion"
-            val onionAddress = base32Address.take(56).lowercase()
-
-            log.i { "🎭 Mock control: Derived onion address: $onionAddress" }
-            onionAddress
-
-        } catch (e: Exception) {
-            log.e(e) { "🎭 Mock control: Failed to derive onion address, using fallback" }
-            // Fallback to a deterministic address based on key hash
-            val hash = base64PrivateKey.hashCode().toString()
-            "test${hash.takeLast(52)}".lowercase()
-        }
-    }
-
-    /**
-     * Simple base32 encoding for onion address generation
-     */
-    private fun encodeBase32(bytes: ByteArray): String {
-        val alphabet = "abcdefghijklmnopqrstuvwxyz234567"
-        val result = StringBuilder()
-
-        // Simple base32 encoding (not RFC compliant, but good enough for testing)
-        for (i in bytes.indices step 5) {
-            val chunk = bytes.sliceArray(i until minOf(i + 5, bytes.size))
-            var value = 0L
-            for (b in chunk) {
-                value = (value shl 8) or (b.toInt() and 0xFF).toLong()
-            }
-
-            repeat(8) {
-                if (result.length < 56) {
-                    result.append(alphabet[(value and 0x1F).toInt()])
-                    value = value shr 5
-                }
-            }
-        }
-
-        return result.toString()
-    }
-
-    /**
      * PRODUCTION: Simulate HS_DESC events for onion service descriptor upload
      * Sends both UPLOAD and UPLOADED events to fully satisfy PublishOnionAddressService
      */
@@ -929,7 +844,7 @@ class NodeApplicationBootstrapFacade(
             log.i { "🎭 Mock control: PRODUCTION: ✅ Sent HS_DESC UPLOAD event for $baseAddress" }
 
             // Wait for upload processing
-            kotlinx.coroutines.delay(1000)
+            delay(1000)
 
             // Phase 2: Send UPLOADED event (successful upload confirmation)
             val uploadedEvent = "650 HS_DESC UPLOADED $baseAddress UNKNOWN \$HSDIR1\r\n"
@@ -940,141 +855,6 @@ class NodeApplicationBootstrapFacade(
 
         } catch (e: Exception) {
             log.e(e) { "🎭 Mock control: PRODUCTION: Error simulating HS_DESC events" }
-        }
-    }
-
-    /**
-     * DEPRECATED: Complex HS_DESC event simulation - replaced by simplified production version
-     */
-    private suspend fun simulateHsDescEvents(output: java.io.BufferedWriter, onionAddress: String) {
-        try {
-            hsDescEventCount++
-            log.i { "🎭 Mock control: Starting HS_DESC event simulation #$hsDescEventCount for $onionAddress" }
-
-            // Generate realistic descriptor IDs (32 hex characters)
-            val descriptorId1 = generateDescriptorId()
-            val descriptorId2 = generateDescriptorId()
-
-            // Generate realistic HSDir names
-            val hsDirs = listOf(
-                "\$7BE683E65D48141321C5ED92F075C55364B23EE6",
-                "\$8B8B3F8F4F4F4F4F4F4F4F4F4F4F4F4F4F4F4F4F",
-                "\$9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C9C"
-            )
-
-            // Wait a bit to ensure PublishOnionAddressService listener is set up
-            // The listener is added AFTER the ADD_ONION command is sent, so we need to wait
-            log.i { "🎭 Mock control: Waiting for PublishOnionAddressService to set up event listener..." }
-            kotlinx.coroutines.delay(2000) // Increased delay to ensure listener is ready
-
-            // Phase 1: Send HS_DESC UPLOAD events (descriptor upload initiation)
-            // ⚠️ CRITICAL: PublishOnionAddressService is waiting for these UPLOAD events!
-            log.i { "🎭 Mock control: ⚠️ SENDING FIRST UPLOAD EVENT - This should unblock PublishOnionAddressService!" }
-
-            // Send the first UPLOAD event - this should trigger countDownLatch.countDown()
-            val firstHsDir = hsDirs[0]
-            val firstUploadEvent = "650 HS_DESC UPLOAD $onionAddress UNKNOWN $firstHsDir $descriptorId1 HSDIR_INDEX=0\r\n"
-            output.write(firstUploadEvent)
-            output.flush()
-            log.i { "🎭 Mock control: ✅ Sent FIRST HS_DESC UPLOAD event to $firstHsDir" }
-            log.i { "🎭 Mock control: Event: ${firstUploadEvent.trim()}" }
-            log.i { "🎭 Mock control: ⚠️ PublishOnionAddressService should call countDownLatch.countDown() NOW!" }
-
-            // Wait a bit to let the first event be processed
-            kotlinx.coroutines.delay(1000)
-
-            // Send remaining UPLOAD events
-            log.i { "🎭 Mock control: Sending remaining UPLOAD events..." }
-            for (i in 1..2) {
-                val hsDir = hsDirs[i]
-                val uploadEvent = "650 HS_DESC UPLOAD $onionAddress UNKNOWN $hsDir $descriptorId1 HSDIR_INDEX=$i\r\n"
-                output.write(uploadEvent)
-                output.flush()
-                log.i { "🎭 Mock control: Sent HS_DESC UPLOAD event to $hsDir" }
-                kotlinx.coroutines.delay(300)
-            }
-            log.i { "🎭 Mock control: ✅ All UPLOAD events sent!" }
-
-            // Wait for upload processing
-            kotlinx.coroutines.delay(1000)
-
-            // Phase 2: Send HS_DESC UPLOADED events (successful uploads)
-            for (i in 0..2) {
-                val hsDir = hsDirs[i]
-                val uploadedEvent = "650 HS_DESC UPLOADED $onionAddress UNKNOWN $hsDir\r\n"
-                output.write(uploadedEvent)
-                output.flush()
-                log.i { "🎭 Mock control: Sent HS_DESC UPLOADED event from $hsDir" }
-                kotlinx.coroutines.delay(400)
-            }
-
-            // Wait for propagation
-            kotlinx.coroutines.delay(800)
-
-            // Phase 3: Send HS_DESC CREATED event (descriptor creation complete)
-            val createdEvent = "650 HS_DESC CREATED $onionAddress UNKNOWN UNKNOWN $descriptorId1\r\n"
-            output.write(createdEvent)
-            output.flush()
-            log.i { "🎭 Mock control: Sent HS_DESC CREATED event (descriptor created)" }
-
-            kotlinx.coroutines.delay(500)
-
-            // Phase 4: Send HS_DESC RECEIVED events (descriptor retrieval confirmation)
-            for (i in 0..1) {
-                val hsDir = hsDirs[i]
-                val receivedEvent = "650 HS_DESC RECEIVED $onionAddress NO_AUTH $hsDir $descriptorId2\r\n"
-                output.write(receivedEvent)
-                output.flush()
-                log.i { "🎭 Mock control: Sent HS_DESC RECEIVED event from $hsDir" }
-                kotlinx.coroutines.delay(300)
-            }
-
-            log.i { "🎭 Mock control: HS_DESC event simulation completed for $onionAddress" }
-            log.i { "🎭 Mock control: Sent UPLOAD->UPLOADED->CREATED->RECEIVED sequence successfully" }
-            log.i { "🎭 Mock control: Total events sent: ${3 + 3 + 1 + 2} (3 UPLOAD + 3 UPLOADED + 1 CREATED + 2 RECEIVED)" }
-
-        } catch (e: Exception) {
-            log.e(e) { "🎭 Mock control: Error simulating HS_DESC events" }
-        }
-    }
-
-    /**
-     * Derive onion address using Bisq2's own TorKeyGeneration class
-     * PRODUCTION VERSION: Robust error handling and proper key derivation
-     */
-    private fun deriveOnionAddressUsingBisq2(base64Key: String): String {
-        return try {
-            log.i { "🎭 Mock control: PRODUCTION: Using Bisq2's TorKeyGeneration for key derivation" }
-
-            // Decode the base64 secret scalar (64 bytes)
-            val secretScalar = android.util.Base64.decode(base64Key, android.util.Base64.DEFAULT)
-            log.d { "🎭 Mock control: Decoded secret scalar: ${secretScalar.size} bytes" }
-
-            if (secretScalar.size != 64) {
-                log.e { "🎭 Mock control: Invalid secret scalar size: ${secretScalar.size}, expected 64" }
-                throw IllegalArgumentException("Secret scalar must be 64 bytes, got ${secretScalar.size}")
-            }
-
-            // Extract the raw private key (first 32 bytes of the secret scalar)
-            val rawPrivateKey = secretScalar.sliceArray(0..31)
-            log.d { "🎭 Mock control: Extracted raw private key: ${rawPrivateKey.size} bytes" }
-
-            // Use Bisq2's TorKeyGeneration to create a TorKeyPair and get the onion address
-            val torKeyPair = bisq.security.keys.TorKeyGeneration.generateKeyPair(rawPrivateKey)
-            val onionAddress = torKeyPair.onionAddress
-
-            log.i { "🎭 Mock control: ✅ PRODUCTION: Bisq2 TorKeyGeneration produced: $onionAddress" }
-            log.i { "🎭 Mock control: This address should match what PublishOnionAddressService expects" }
-
-            // Remove .onion suffix to match what we need to return
-            val result = onionAddress.replace(".onion", "")
-            log.i { "🎭 Mock control: ✅ PRODUCTION: Final address (without .onion): $result" }
-            result
-
-        } catch (e: Exception) {
-            log.e(e) { "🎭 Mock control: PRODUCTION: Failed to use Bisq2's TorKeyGeneration" }
-            log.e { "🎭 Mock control: This will cause profile creation to fail" }
-            throw RuntimeException("Failed to derive onion address using Bisq2's algorithm", e)
         }
     }
 
@@ -1095,13 +875,5 @@ class NodeApplicationBootstrapFacade(
             log.w(e) { "⚠️ Bootstrap: Could not check Tor support, defaulting to true" }
             true // Default to true to maintain existing behavior if check fails
         }
-    }
-
-    /**
-     * Generate a realistic descriptor ID (32 hex characters)
-     */
-    private fun generateDescriptorId(): String {
-        val chars = "0123456789ABCDEF"
-        return (1..32).map { chars.random() }.joinToString("")
     }
 }
