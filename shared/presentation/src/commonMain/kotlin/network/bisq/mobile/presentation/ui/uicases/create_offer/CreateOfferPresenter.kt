@@ -9,7 +9,10 @@ import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.marketListDemoObj
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
@@ -17,7 +20,6 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecV
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVOExtensions.getPriceQuoteVO
-import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -31,13 +33,11 @@ class CreateOfferPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
 ) : BasePresenter(mainPresenter) {
     enum class PriceType {
-        PERCENTAGE,
-        FIXED,
+        PERCENTAGE, FIXED,
     }
 
     enum class AmountType {
-        FIXED_AMOUNT,
-        RANGE_AMOUNT,
+        FIXED_AMOUNT, RANGE_AMOUNT,
     }
 
     class CreateOfferModel {
@@ -96,8 +96,7 @@ class CreateOfferPresenter(
         val latestQuote = getMostRecentPriceQuote(value)
         createOfferModel.priceQuote = latestQuote
         createOfferModel.originalPriceQuote = latestQuote
-        createOfferModel.availableQuoteSidePaymentMethods =
-            FiatPaymentRailUtil.getPaymentRailNames(value.quoteCurrencyCode)
+        createOfferModel.availableQuoteSidePaymentMethods = FiatPaymentRailUtil.getPaymentRailNames(value.quoteCurrencyCode)
     }
 
     fun commitAmount(
@@ -124,6 +123,40 @@ class CreateOfferPresenter(
         createOfferModel.priceType = priceType
         createOfferModel.percentagePriceValue = percentagePrice
         createOfferModel.priceQuote = priceQuote
+
+        val quoteAmount = createOfferModel.quoteSideFixedAmount?.value
+        val quoteCode = createOfferModel.quoteSideFixedAmount?.code
+
+        if (quoteAmount != null && quoteCode != null && createOfferModel.baseSideFixedAmount != null) {
+            createOfferModel.baseSideFixedAmount = priceQuote.toBaseSideMonetary(
+                FiatVOFactory.from(
+                    quoteAmount,
+                    quoteCode
+                )
+            ) as CoinVO
+        }
+
+        val quoteMinRangeAmount = createOfferModel.quoteSideMinRangeAmount?.value
+
+        if (quoteMinRangeAmount != null && quoteCode != null && createOfferModel.baseSideMinRangeAmount != null) {
+            createOfferModel.baseSideMinRangeAmount = priceQuote.toBaseSideMonetary(
+                FiatVOFactory.from(
+                    quoteMinRangeAmount,
+                    quoteCode
+                )
+            ) as CoinVO
+        }
+
+        val quoteMaxRangeAmount = createOfferModel.quoteSideMaxRangeAmount?.value
+
+        if (quoteMaxRangeAmount != null && quoteCode != null && createOfferModel.baseSideMaxRangeAmount != null) {
+            createOfferModel.baseSideMaxRangeAmount = priceQuote.toBaseSideMonetary(
+                FiatVOFactory.from(
+                    quoteMaxRangeAmount,
+                    quoteCode
+                )
+            ) as CoinVO
+        }
     }
 
     fun commitPaymentMethod(selectedQuoteSidePaymentMethods: Set<String>, selectedBaseSidePaymentMethods: Set<String>) {
@@ -146,8 +179,7 @@ class CreateOfferPresenter(
             QuoteSideFixedAmountSpecVO(createOfferModel.quoteSideFixedAmount!!.value)
         } else {
             QuoteSideRangeAmountSpecVO(
-                createOfferModel.quoteSideMinRangeAmount!!.value,
-                createOfferModel.quoteSideMaxRangeAmount!!.value
+                createOfferModel.quoteSideMinRangeAmount!!.value, createOfferModel.quoteSideMaxRangeAmount!!.value
             )
         }
         val priceSpec = if (createOfferModel.priceType == PriceType.FIXED) {
@@ -179,8 +211,7 @@ class CreateOfferPresenter(
 
     fun getMostRecentPriceQuote(market: MarketVO): PriceQuoteVO {
         if (isDemo()) {
-            val marketVO =
-                marketListDemoObj.find { market.baseCurrencyCode == it.baseCurrencyCode && market.quoteCurrencyCode == market.quoteCurrencyCode }
+            val marketVO = marketListDemoObj.find { market.baseCurrencyCode == it.baseCurrencyCode && market.quoteCurrencyCode == market.quoteCurrencyCode }
             return PriceQuoteVO(
                 100,
                 4, 2,
