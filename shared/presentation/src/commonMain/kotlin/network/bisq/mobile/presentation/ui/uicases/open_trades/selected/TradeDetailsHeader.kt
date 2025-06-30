@@ -77,6 +77,7 @@ fun TradeDetailsHeader() {
     }
 
     val isSell = presenter.directionEnum.isSell
+    val isInteractive = presenter.isInteractive.collectAsState().value
 
     Row(modifier = Modifier.clip(shape = RoundedCornerShape(12.dp))) {
         Column(
@@ -236,7 +237,7 @@ fun TradeDetailsHeader() {
             ) {
                 IconButton(
                     onClick = { presenter.onToggleHeader() },
-                    enabled = presenter.isInteractive.collectAsState().value,
+                    enabled = isInteractive,
                 ) {
                     UpIcon(
                         modifier = Modifier
