@@ -49,12 +49,11 @@ fun CreateOfferTradePriceSelectorScreen() {
         shouldBlurBg = showWhyPopup,
     ) {
         BisqText.h3Regular(
-            text = "What is your trade price?", // TODO:i18n "bisqEasy.price.headline".i18n(),
+            text = "mobile.bisqEasy.tradeWizard.price.title".i18n(),
             modifier = Modifier.align(Alignment.Start)
         )
         BisqGap.V1()
-        // TODO:i18n "bisqEasy.tradeWizard.price.subtitle".i18n())
-        BisqText.largeLightGrey("This can be defined as a percentage price which floats with the market price or fixed price.")
+        BisqText.largeLightGrey("mobile.bisqEasy.tradeWizard.price.title".i18n())
         Column(
             modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding2X),
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
@@ -80,11 +79,11 @@ fun CreateOfferTradePriceSelectorScreen() {
                         validation = {
                             val parsedValue = it.toDoubleOrNullLocaleAware()
                             if (parsedValue == null) {
-                                return@BisqTextField "Value cannot be empty"
+                                return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.cannotBeEmpty".i18n()
                             } else if (parsedValue < -10) {
-                                return@BisqTextField "Min: -10%"
+                                return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeGreaterThanMarketPrice".i18n()
                             } else if (parsedValue > 50) {
-                                return@BisqTextField "Max: 50%"
+                                return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeLessThanMarketPrice".i18n()
                             }
                             return@BisqTextField null
                         }
@@ -102,12 +101,12 @@ fun CreateOfferTradePriceSelectorScreen() {
                         keyboardType = KeyboardType.Decimal,
                         onValueChange = { it, isValid -> presenter.onFixPriceChanged(it, isValid) },
                         validation = {
-                            val parsedValue = it.toDoubleOrNullLocaleAware() ?: return@BisqTextField "Value cannot be empty"
+                            val parsedValue = it.toDoubleOrNullLocaleAware() ?: return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.cannotBeEmpty".i18n()
                             val parsedPercent = presenter.calculatePercentageForFixedValue(it)
                             if (parsedPercent < -10) {
-                                return@BisqTextField "Trade price should be greater than -10% of market price"
+                                return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeGreaterThanMarketPrice".i18n()
                             } else if (parsedPercent > 50) {
-                                return@BisqTextField "Trade price should be lesser than 50% of market price"
+                                return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeLessThanMarketPrice".i18n()
                             }
                             return@BisqTextField null
                         }

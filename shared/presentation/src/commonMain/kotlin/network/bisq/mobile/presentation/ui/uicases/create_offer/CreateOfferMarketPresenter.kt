@@ -7,6 +7,7 @@ import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -52,9 +53,9 @@ class CreateOfferMarketPresenter(
         market = createOfferModel.market
 
         headline = if (createOfferModel.direction.isBuy)
-            "In which currency do you want to pay" // TODO:i18n "bisqEasy.tradeWizard.market.headline.buyer".i18n()
+            "mobile.bisqEasy.tradeWizard.market.headline.buyer".i18n()
         else
-            "In which currency do you want to get paid?" // TODO:i18n "bisqEasy.tradeWizard.market.headline.seller".i18n()
+            "mobile.bisqEasy.tradeWizard.market.headline.seller".i18n()
 
         //todo for dev testing
         /* if (market == null) {

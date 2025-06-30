@@ -23,6 +23,7 @@ import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.ui.BisqLinks
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import org.koin.core.component.KoinComponent
@@ -294,7 +295,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
                     exitWarningShown = false // Reset after action
                 } else {
                     // Show warning first time
-                    showSnackbar("Press/Swipe back again to exit")
+                    showSnackbar("mobile.base.swipeBackToExit".i18n())
                     exitWarningShown = true
 
                     // Set a timer to reset the warning state after a few seconds

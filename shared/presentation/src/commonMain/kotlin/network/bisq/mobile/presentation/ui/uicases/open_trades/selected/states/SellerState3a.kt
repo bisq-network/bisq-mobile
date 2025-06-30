@@ -67,10 +67,10 @@ fun SellerState3a(
         // Send {0} to the buyer
         // BisqText.h5Light("bisqEasy.tradeState.info.seller.phase3a.sendBtc".i18n(baseAmount))
         Row {
-            BisqText.h5Light("Send ") // TODO:i18n
+            BisqText.h5Light("mobile.bisqEasy.tradeState.info.seller.phase3a.send".i18n() + " ")
             BtcSatsText(baseAmount, fontSize = FontSize.H5)
         }
-        BisqText.h5Light("to the buyer") // TODO:i18n
+        BisqText.h5Light("mobile.bisqEasy.tradeState.info.seller.phase3a.toTheBuyer".i18n())
 
         BisqGap.VHalf()
         BisqTextField(

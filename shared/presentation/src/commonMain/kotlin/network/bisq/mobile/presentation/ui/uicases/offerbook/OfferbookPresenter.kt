@@ -181,9 +181,7 @@ class OfferbookPresenter(
                             deselectOffer()
                         } else {
                             log.w { "Failed to delete offer ${item.offerId}" }
-                            showSnackbar(
-                                "Failed to delete offer ${item.offerId}, please try again", true
-                            )
+                            showSnackbar("mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(item.offerId), true)
                         }
                     }
                 }
@@ -191,7 +189,8 @@ class OfferbookPresenter(
         }.onFailure {
             log.e(it) { "Failed to delete offer ${selectedOffer?.offerId}" }
             showSnackbar(
-                "Unable to delete offer ${selectedOffer?.offerId}", true
+                "mobile.bisqEasy.offerbook.unableToDeleteOffer".i18n(selectedOffer?.offerId ?: ""),
+                true
             )
             deselectOffer()
         }
@@ -236,7 +235,8 @@ class OfferbookPresenter(
         }.onFailure {
             log.e(it) { "Failed to take offer ${selectedOffer?.offerId}" }
             showSnackbar(
-                "Unable to take offer ${selectedOffer?.offerId}", true
+                "mobile.bisqEasy.offerbook.unableToTakeOffer".i18n(selectedOffer?.offerId ?: ""),
+                true
             )
             deselectOffer()
         }
@@ -344,7 +344,9 @@ class OfferbookPresenter(
         } catch (e: Exception) {
             enableInteractive()
             log.e(e) { "Failed to create offer" }
-            showSnackbar(if (isDemo()) "Create offer is disabled in demo mode" else "Cannot create offer at this time, please try again later")
+            showSnackbar(
+                if (isDemo()) "mobile.bisqEasy.offerbook.createOfferDisabledInDemoMode".i18n() else "mobile.bisqEasy.offerbook.cannotCreateOffer".i18n()
+            )
         }
     }
 

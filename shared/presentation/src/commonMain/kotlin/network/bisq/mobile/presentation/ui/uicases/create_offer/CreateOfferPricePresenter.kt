@@ -66,9 +66,9 @@ class CreateOfferPricePresenter(
         _formattedPercentagePrice.value = PercentageFormatter.format(percentagePriceValue, false)
         _formattedPrice.value = PriceQuoteFormatter.format(priceQuote)
         priceTypeTitle = if (priceType.value == PriceType.PERCENTAGE)
-            "Percentage" //TODO:i18n
+            "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage".i18n()
         else
-            "Fixed" //TODO:i18n
+            "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed".i18n()
 
         fixPriceDescription = "bisqEasy.price.tradePrice.inputBoxText".i18n(createOfferModel.market!!.marketCodes)
 
@@ -82,9 +82,9 @@ class CreateOfferPricePresenter(
 
     fun getPriceTypeDisplayString(priceType: PriceType): String {
         return if (priceType == PriceType.PERCENTAGE)
-            "Percentage" //TODO:i18n
+            "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage".i18n()
         else
-            "Fixed" //TODO:i18n
+            "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed".i18n()
     }
 
     fun onSelectPriceType(value: PriceType) {

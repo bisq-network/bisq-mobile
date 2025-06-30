@@ -8,6 +8,7 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
@@ -19,12 +20,12 @@ open class DashboardPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val offersServiceFacade: OffersServiceFacade
 ) : BasePresenter(mainPresenter), IGettingStarted {
-    override val title: String = "Bisq Easy Client"
+    override val title: String = "mobile.dashboard.title".i18n()
 
     override val bulletPoints: List<String> = listOf(
-        "Experience Bisq with the guidance of a trusted friend or connect remotely to your own full node.",
-        "Connect to Trusted Nodes: Start trading with confidence by connecting to a trusted Bisq node hosted by someone you trust.",
-        "Remote Management for Experts: Manage your trades on the go by connecting securely to your own desktop-based Bisq node, no matter where you are."
+        "mobile.dashboard.bulletPoint1".i18n(),
+        "mobile.dashboard.bulletPoint2".i18n(),
+        "mobile.dashboard.bulletPoint3".i18n(),
     )
 
     private val _offersOnline = MutableStateFlow(0)

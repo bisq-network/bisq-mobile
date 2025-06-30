@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -113,7 +114,7 @@ fun BisqButton(
         modifier = if (fullWidth) modifier.fillMaxWidth() else modifier
     ) {
         if (iconOnly == null && text == null && textComponent == null) {
-            BisqText.baseMedium("Error: Pass either text or customText or icon")
+            BisqText.baseMedium("mobile.components.button.passEitherTextOrCustomTextorIcon".i18n())
         }
 
         if (iconOnly != null) {

@@ -3,6 +3,7 @@ package network.bisq.mobile.android.node.presentation
 import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
 
@@ -12,11 +13,11 @@ class NodeDashboardPresenter(
     marketPriceServiceFacade: MarketPriceServiceFacade,
     offersServiceFacade: OffersServiceFacade
 ) : DashboardPresenter(mainPresenter, bisqStatsRepository, marketPriceServiceFacade, offersServiceFacade) {
-    override val title: String = "Bisq Easy Node"
+    override val title: String = "mobile.nodeDashboard.title".i18n()
     override val bulletPoints: List<String> = listOf(
-        "Take control of your trading experience with the full power of Bisq, now on your mobile.",
-        "Your Node, Your Privacy: Operate a fully-featured P2P Bisq Node directly from your mobile. No compromises on privacy & security - just like running Bisq on your desktop.",
-        "Click on Start Trading button to browse available offers from other Bisq users or create your own. Request mediation if needed.",
-        "Bisq Easy protocol uses seller's reputation which is visible on each offer."
+        "mobile.nodeDashboard.bulletPoint1".i18n(),
+        "mobile.nodeDashboard.bulletPoint2".i18n(),
+        "mobile.nodeDashboard.bulletPoint3".i18n(),
+        "mobile.nodeDashboard.bulletPoint4".i18n(),
     )
 }

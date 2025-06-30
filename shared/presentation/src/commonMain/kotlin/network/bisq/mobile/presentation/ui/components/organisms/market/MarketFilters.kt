@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqSegmentButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -31,7 +32,7 @@ fun MarketFilters() {
     Column(modifier = Modifier.padding(all = BisqUIConstants.ScreenPadding2X)) {
 
         BisqSegmentButton(
-            label = "Sort by",
+            label = "mobile.components.marketFilter.sortBy".i18n(),
             value = presenter.sortBy.collectAsState().value.name,
             items = MarketSortBy.entries.map { it.name to it.displayName },
             onValueChange = {
@@ -47,7 +48,7 @@ fun MarketFilters() {
         BisqGap.V2()
 
         BisqSegmentButton(
-            label = "Show markets",
+            label = "mobile.components.marketFilter.showMarkets".i18n(),
             items = MarketFilter.entries.map { it.name to it.displayName },
             value = presenter.filter.collectAsState().value.name,
             onValueChange = {

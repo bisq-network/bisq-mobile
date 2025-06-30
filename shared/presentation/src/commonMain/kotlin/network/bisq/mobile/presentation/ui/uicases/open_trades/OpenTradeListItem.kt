@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
@@ -62,7 +63,7 @@ fun OpenTradeListItem(
                     )
                 }
                 BisqText.smallLightGrey("${item.formattedDate} ${item.formattedTime}")
-                BisqText.smallLightGrey("Trade ID: ${item.shortTradeId}")
+                BisqText.smallLightGrey("mobile.bisqEasy.openTrades.title".i18n(item.shortTradeId))
             }
             Column(
                 horizontalAlignment = Alignment.End,

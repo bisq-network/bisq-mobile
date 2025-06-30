@@ -39,7 +39,7 @@ fun TrustedNodeAPIIncompatiblePopup(
         BisqGap.V1()
 
         BisqButton(
-            text = "Fix trusted node", // TODO:i18n
+            text = "mobile.organisms.trustednodeApiIncompatiblePopup.fixTrustedNode".i18n(),
             onClick = onFix,
             type = BisqButtonType.Grey,
             fullWidth = true,

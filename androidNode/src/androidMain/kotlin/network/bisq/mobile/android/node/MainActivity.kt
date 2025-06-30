@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
@@ -100,7 +101,7 @@ class MainActivity : ComponentActivity() {
                 // Permission granted, proceed with posting notifications
             } else {
                 // Permission denied, show a message to the user
-                Toast.makeText(this, "Permission denied. Notifications won't be sent.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "mobile.main.permissionDenied".i18n(), Toast.LENGTH_SHORT).show()
             }
         }
 

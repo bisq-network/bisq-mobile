@@ -4,6 +4,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
 import org.koin.compose.koinInject
@@ -16,7 +17,7 @@ fun CopyIconButton(value: String, showToast: Boolean = true) {
         onClick = {
             clipboardManager.setText(buildAnnotatedString { append(value) })
             if (showToast) {
-                presenter.showSnackbar("Text copied")
+                presenter.showSnackbar("mobile.components.copyIconButton.copied".i18n())
             }
         }
     ) {

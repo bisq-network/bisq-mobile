@@ -24,6 +24,7 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.utils.StringUtils.truncate
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqVDivider
@@ -51,14 +52,14 @@ fun OfferCard(
     val takersDirection = makersDirection.mirror
     
     if (isMyOffer) {
-        directionalLabel = "My offer to ${makersDirection.displayString} Bitcoin"
+        directionalLabel = "mobile.bisqEasy.offerbook.offerCard.offerToBTC".i18n(makersDirection.displayString)
         directionalLabelColor = myOfferColor
     } else {
         if (takersDirection.isBuy) {
-            directionalLabel = "${takersDirection.displayString} Bitcoin from"
+            directionalLabel = "mobile.bisqEasy.offerbook.offerCard.BuyBitcoinFrom".i18n(takersDirection.displayString)
             directionalLabelColor = buyColor
         } else {
-            directionalLabel = "${takersDirection.displayString} Bitcoin to"
+            directionalLabel = "mobile.bisqEasy.offerbook.offerCard.SellBitcoinTo".i18n(takersDirection.displayString)
             directionalLabelColor = sellColor
         }
     }
@@ -140,8 +141,7 @@ fun OfferCard(
             if (isInvalidDueToReputation) {
                 BisqGap.V1()
                 BisqText.smallRegular(
-                    // TODO i18n
-                    text = "Insufficient reputation to take this offer",
+                    text = "mobile.bisqEasy.offerbook.insufficientReputation".i18n(),
                     color = BisqTheme.colors.warning
                 )
             }

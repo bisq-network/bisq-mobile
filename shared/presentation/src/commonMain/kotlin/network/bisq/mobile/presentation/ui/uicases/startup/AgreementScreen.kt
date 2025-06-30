@@ -47,10 +47,10 @@ fun AgreementScreen() {
                 BisqCheckbox(
                     checked = isAccepted,
                     onCheckedChange = { presenter.onAccept(it) },
-                    label = "I have read and understood",
+                    label = "tac.confirm".i18n(),
                 )
                 BisqButton(
-                    "Accept user agreement",
+                    "tac.accept".i18n(),
                     disabled = !isAccepted,
                     fullWidth = true,
                     onClick = { presenter.onAcceptClick() }

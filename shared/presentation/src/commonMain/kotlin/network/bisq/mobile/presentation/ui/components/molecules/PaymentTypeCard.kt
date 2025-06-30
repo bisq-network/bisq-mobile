@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -48,7 +49,7 @@ fun PaymentTypeCard(
             DynamicImage(
                 path = image,
                 fallbackPath = "drawable/payment/fiat/custom_payment_${index}.png",
-                contentDescription =  if (isCustomPaymentMethod) "Custom payment method: $title" else title,
+                contentDescription =  if (isCustomPaymentMethod) "mobile.components.paymentTypeCard.customPaymentMethod".i18n(title) else title,
                 modifier = Modifier.size(20.dp)
             )
             if (isCustomPaymentMethod) {

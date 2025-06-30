@@ -93,17 +93,17 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(
                         imageVector = Icons.Default.Warning,
-                        contentDescription = "Warning",
+                        contentDescription = "mobile.trustedNodeSetup.warning".i18n(),
                         tint = BisqTheme.colors.danger
                     )
                     BisqGap.H1()
-                    BisqText.largeRegular("Warning") // TODO:i18n
+                    BisqText.largeRegular("mobile.trustedNodeSetup.warning".i18n())
                 }
                 
                 BisqGap.V2()
                 
                 BisqText.baseRegular(
-                    "Changing your trusted node will require setting up your profile again. All your current profile data will be lost.\n\nDo you want to continue?" // TODO:i18n
+                    "mobile.trustedNodeSetup.changeWarning".i18n()
                 )
                 
                 BisqGap.V2()
@@ -113,13 +113,13 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     BisqButton(
-                        text = "Cancel", // TODO:i18n
+                        text = "mobile.trustedNodeSetup.cancel".i18n(),
                         type = BisqButtonType.Grey,
                         onClick = { showConfirmDialog.value = false }
                     )
                     
                     BisqButton(
-                        text = "Continue", // TODO:i18n
+                        text = "mobile.trustedNodeSetup.continue".i18n(),
                         onClick = { 
                             showConfirmDialog.value = false
                             presenter.testConnection(isWorkflow)
@@ -140,7 +140,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     })
 
     BisqScrollScaffold(
-        topBar = { TopBar("Trusted node") }, // TODO:i18n
+        topBar = { TopBar("mobile.trustedNodeSetup.title".i18n()) },
         snackbarHostState = presenter.getSnackState()
     ) {
         if (isWorkflow) {
@@ -152,7 +152,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             }
         }
         BisqText.largeRegular(
-            text = "To use Bisq through your trusted node, please enter the URL to connect to. E.g. ws://10.0.2.2:8090", // TODO:i18n
+            text = "mobile.trustedNodeSetup.subTitle".i18n(),
         )
         BisqGap.V2()
         Column(
@@ -160,7 +160,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             modifier = Modifier.fillMaxSize().padding(horizontal = 0.dp)
         ) {
             BisqTextField(
-                label = "Trusted Bisq Node URL", // TODO:i18n
+                label = "mobile.trustedNodeSetup.trustedBisqNodeURL.label".i18n(),
                 onValueChange = { url, isValid -> presenter.updateBisqApiUrl(url, isValid) },
                 value = bisqApiUrl,
                 placeholder = "ws://10.0.2.2:8090",
@@ -184,7 +184,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 BisqButton(
-                    text = "Paste", // TODO:i18n
+                    text = "mobile.trustedNodeSetup.paste".i18n(),
                     type = BisqButtonType.Grey,
                     onClick = {
                         val annotatedString = clipboardManager.getText()
@@ -204,13 +204,13 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 //                )
             }
             BisqGap.V3()
-            BisqText.baseRegularGrey("STATUS") // TODO:i18n
+            BisqText.baseRegularGrey("mobile.trustedNodeSetup.status".i18n())
             BisqGap.V1()
             Row(verticalAlignment = Alignment.CenterVertically) {
                 val statusText = if (isConnected)
-                        if (isVersionValid) "Connected" else "Connected - Invalid version" // TODO:i18n
+                        if (isVersionValid) "mobile.trustedNodeSetup.status.connected".i18n() else "mobile.trustedNodeSetup.status.connectedInvalidVersion".i18n()
                     else
-                        "Not Connected" // TODO:i18n
+                        "mobile.trustedNodeSetup.status.notConnected".i18n()
                 BisqText.largeRegular(statusText)
                 BisqGap.H1()
                 BisqText.baseRegular(
@@ -223,8 +223,8 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             }
             BisqGap.V3()
             if (isConnected && !isVersionValid) {
-                BisqText.baseRegular("Expected API version: ${BuildConfig.BISQ_API_VERSION}") // TODO:i18n
-                BisqText.baseRegular("Node API version: $trustedNodeVersion") // TODO:i18n
+                BisqText.baseRegular("mobile.trustedNodeSetup.version.expectedAPI".i18n(BuildConfig.BISQ_API_VERSION))
+                BisqText.baseRegular("mobile.trustedNodeSetup.version.nodeAPI".i18n(trustedNodeVersion))
             }
         }
 
@@ -233,7 +233,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
         // TODO lots of code repetition for small changes here needs a refactor
         if (!isConnected || (isConnected && !isVersionValid)) {
             BisqButton(
-                text = "Test Connection", // TODO:i18n
+                text = "mobile.trustedNodeSetup.testConnection".i18n(),
                 onClick = {
                     if (presenter.isNewTrustedNodeUrl()) {
                         showConfirmDialog.value = true
@@ -255,7 +255,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     enter = slideInHorizontally(initialOffsetX = { it }, animationSpec = tween(700)),
                 ) {
                     BisqButton(
-                        text = "Test Connection", // TODO:i18n
+                        text = "mobile.trustedNodeSetup.testConnection".i18n(),
                         color = if (bisqApiUrl.isEmpty()) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
                         onClick = {
                             if (presenter.isNewTrustedNodeUrl()) {

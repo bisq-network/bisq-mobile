@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.helpers
 
-import kotlin.test.Ignore
+import network.bisq.mobile.i18n.I18nSupport
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -8,6 +9,11 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ValidationsTest {
+
+    @BeforeTest
+    fun setupI18n() {
+        I18nSupport.initialize()
+    }
 
     @Test
     fun testLightningInvoiceValidation() {

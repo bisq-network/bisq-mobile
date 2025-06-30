@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.animations.AnimatedBadge
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.button.FloatingButton
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -76,7 +77,7 @@ fun OpenTradeScreen() {
     })
 
     BisqStaticScaffold(
-        topBar = { TopBar("Trade ID: ${presenter.selectedTrade.value?.shortTradeId}") },
+        topBar = { TopBar("mobile.bisqEasy.openTrades.title".i18n(presenter.selectedTrade.value?.shortTradeId ?: "")) },
         floatingButton = {
             val icon = @Composable {
                 FloatingButton(

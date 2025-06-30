@@ -6,6 +6,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
@@ -33,7 +34,7 @@ fun PaymentMethods(
                                 .lowercase()
                                 .replace("-", "_")
                         }.png",
-                        contentDescription =  if (missing) "Custom payment method: $paymentMethod" else paymentMethod,
+                        contentDescription =  if (missing) "mobile.components.paymentMethods.customPaymentMethod".i18n(paymentMethod) else paymentMethod,
                         fallbackPath = fallbackPath,
                         onImageLoadError = { customMethodCounter++ },
                         modifier = Modifier.size(20.dp),

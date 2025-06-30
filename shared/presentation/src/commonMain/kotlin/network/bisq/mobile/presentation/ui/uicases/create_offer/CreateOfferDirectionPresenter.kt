@@ -35,7 +35,7 @@ class CreateOfferDirectionPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         direction = createOfferPresenter.createOfferModel.direction
-        headline = "bisqEasy.tradeWizard.directionAndMarket.headline".i18n() //TODO:i18n check
+        headline = "bisqEasy.tradeWizard.directionAndMarket.headline".i18n()
 
         launchIO {
             val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launchIO
