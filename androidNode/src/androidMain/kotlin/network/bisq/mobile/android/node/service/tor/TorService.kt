@@ -325,8 +325,14 @@ class TorService(
      */
     private fun handleBootstrapStatus(data: String) {
         if (data.contains("BOOTSTRAP")) {
-            _torState.value = TorState.BOOTSTRAPPING
-            log.d { "Tor bootstrapping: $data" }
+            // Only set to BOOTSTRAPPING if we're not already READY
+            // This prevents overriding the READY state with late bootstrap events
+            if (_torState.value != TorState.READY) {
+                _torState.value = TorState.BOOTSTRAPPING
+                log.d { "Tor bootstrapping: $data" }
+            } else {
+                log.d { "Tor bootstrap event received but already READY: $data" }
+            }
         }
     }
 
