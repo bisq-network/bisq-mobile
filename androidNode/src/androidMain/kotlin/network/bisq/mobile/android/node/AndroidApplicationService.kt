@@ -49,6 +49,7 @@ import lombok.Setter
 import lombok.extern.slf4j.Slf4j
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
+import network.bisq.mobile.android.node.service.MobileBondedRolesService
 import network.bisq.mobile.domain.utils.Logging
 import java.nio.file.Path
 import java.util.Optional
@@ -163,7 +164,9 @@ class AndroidApplicationService(
         securityService.keyBundleService,
         networkService
     )
-    val bondedRolesService = BondedRolesService(
+    // Mobile app uses a minimal bonded roles service that doesn't process authorized data
+    // This prevents infinite authorization loops while still providing necessary interfaces
+    val bondedRolesService = MobileBondedRolesService(
         BondedRolesService.Config.from(getConfig("bondedRoles")),
         getPersistenceService(),
         networkService
