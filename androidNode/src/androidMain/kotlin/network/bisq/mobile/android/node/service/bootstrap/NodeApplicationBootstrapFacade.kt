@@ -43,6 +43,13 @@ class NodeApplicationBootstrapFacade(
     private var initializationCallback: ApplicationServiceInitializationCallback? = null
     private lateinit var serverSocket: ServerSocket
 
+    // Track pending onion services to handle SETEVENTS clearing
+    private val pendingOnionServices = mutableMapOf<String, Long>()
+
+    // Track the most recent onion service for recovery (handles multiple attempts)
+    private var lastOnionServiceAddress: String? = null
+    private var lastOnionServiceTime: Long = 0
+
     fun setInitializationCallback(callback: ApplicationServiceInitializationCallback) {
         this.initializationCallback = callback
     }
@@ -519,6 +526,42 @@ class NodeApplicationBootstrapFacade(
                         output.write("250 OK\r\n")
                         output.flush()
                         log.i { "🎭 Mock control: Events cleared" }
+
+                        // CRITICAL FIX: If we have pending onion services, re-send UPLOAD events
+                        // This handles the case where SETEVENTS clears events during profile creation
+                        val servicesToRecover = mutableSetOf<String>()
+
+                        // Add pending onion services
+                        servicesToRecover.addAll(pendingOnionServices.keys)
+
+                        // ENHANCED FIX: Also recover recent onion service (handles multiple profile attempts)
+                        lastOnionServiceAddress?.let { address ->
+                            val timeSinceLastService = System.currentTimeMillis() - lastOnionServiceTime
+                            if (timeSinceLastService < 300_000) { // Within 5 minutes
+                                servicesToRecover.add(address)
+                                log.i { "🎭 Mock control: RECOVERY: Adding recent onion service for recovery: $address (${timeSinceLastService}ms ago)" }
+                            }
+                        }
+
+                        if (servicesToRecover.isNotEmpty()) {
+                            log.i { "🎭 Mock control: RECOVERY: Found ${servicesToRecover.size} onion services to recover, re-sending UPLOAD events" }
+                            servicesToRecover.forEach { address ->
+                                torBootstrapScope.launch {
+                                    // CRITICAL FIX: Send events immediately to beat the 120-second timeout
+                                    val uploadEvent = "650 HS_DESC UPLOAD $address UNKNOWN HSDIR1 descriptor1 HSDIR_INDEX=0\r\n"
+                                    output.write(uploadEvent)
+                                    output.flush()
+                                    log.i { "🎭 Mock control: RECOVERY: ⚡ IMMEDIATE re-sent UPLOAD event after SETEVENTS clear: $address" }
+
+                                    // Also send UPLOADED event for completeness
+                                    delay(50)
+                                    val uploadedEvent = "650 HS_DESC UPLOADED $address UNKNOWN HSDIR1\r\n"
+                                    output.write(uploadedEvent)
+                                    output.flush()
+                                    log.i { "🎭 Mock control: RECOVERY: ⚡ IMMEDIATE re-sent UPLOADED event: $address" }
+                                }
+                            }
+                        }
                     }
                     command.startsWith("ADD_ONION") -> {
                         log.i { "🎭 Mock control: Processing ADD_ONION command: ${command.take(80)}..." }
@@ -542,25 +585,56 @@ class NodeApplicationBootstrapFacade(
                                 // This gets the exact address that PublishOnionAddressService is filtering for
                                 log.i { "🎭 Mock control: PRODUCTION: 🔧 FINAL FIX: Querying actual onion address from Bisq2..." }
 
-                                val expectedOnionAddress = queryOnionAddressFromBisq2()
-                                if (expectedOnionAddress != null) {
-                                    val expectedAddress = expectedOnionAddress.replace(".onion", "")
-                                    log.i { "🎭 Mock control: PRODUCTION: ✅ Found expected address from Bisq2: $expectedAddress" }
-
-                                    // Send HS_DESC UPLOAD event with the ACTUAL expected address
-                                    val uploadEvent = "650 HS_DESC UPLOAD $expectedAddress UNKNOWN HSDIR1 descriptor1 HSDIR_INDEX=0\r\n"
-                                    output.write(uploadEvent)
-                                    output.flush()
-                                    log.i { "🎭 Mock control: PRODUCTION: ✅ Sent UPLOAD event with ACTUAL expected address: $expectedAddress" }
-                                    log.i { "🎭 Mock control: PRODUCTION: 🔍 This should match PublishOnionAddressService filter and complete bootstrap!" }
+                                // SMART SOLUTION: Use the derived address for profile creation, but query for bootstrap
+                                // The ADD_ONION command tells us exactly which TorKeyPair PublishOnionAddressService is using
+                                val isBootstrapContext = checkIfBootstrapContext()
+                                val expectedAddress = if (isBootstrapContext) {
+                                    // For bootstrap: use the queried default NetworkId to maintain compatibility
+                                    val queriedAddress = queryOnionAddressFromBisq2()
+                                    if (queriedAddress != null) {
+                                        log.i { "🎭 Mock control: BOOTSTRAP: Using queried address: ${queriedAddress.replace(".onion", "")}" }
+                                        queriedAddress.replace(".onion", "")
+                                    } else {
+                                        log.w { "🎭 Mock control: BOOTSTRAP: Query failed, using derived address as fallback" }
+                                        onionAddress.replace(".onion", "")
+                                    }
                                 } else {
-                                    log.w { "🎭 Mock control: ⚠️ Could not query expected onion address from Bisq2, using derived address as fallback" }
-                                    val baseAddress = onionAddress.replace(".onion", "")
-                                    val uploadEvent = "650 HS_DESC UPLOAD $baseAddress UNKNOWN HSDIR1 descriptor1 HSDIR_INDEX=0\r\n"
-                                    output.write(uploadEvent)
-                                    output.flush()
-                                    log.i { "🎭 Mock control: PRODUCTION: ✅ Sent UPLOAD event with fallback address: $baseAddress" }
+                                    // For profile creation: use the derived address that matches the TorKeyPair
+                                    log.i { "🎭 Mock control: PROFILE: Using derived address that matches TorKeyPair: ${onionAddress.replace(".onion", "")}" }
+                                    onionAddress.replace(".onion", "")
                                 }
+                                log.i { "🎭 Mock control: PRODUCTION: ✅ Selected address for events: $expectedAddress" }
+
+                                // Add to pending onion services to handle SETEVENTS clearing
+                                val currentTime = System.currentTimeMillis()
+                                pendingOnionServices[expectedAddress] = currentTime
+                                lastOnionServiceAddress = expectedAddress
+                                lastOnionServiceTime = currentTime
+                                log.i { "🎭 Mock control: TRACKING: Added $expectedAddress to pending onion services (total: ${pendingOnionServices.size})" }
+
+                                    // Send HS_DESC UPLOAD event - this is what PublishOnionAddressService is waiting for!
+                                    torBootstrapScope.launch {
+                                        delay(100) // Small delay to simulate real Tor behavior
+
+                                        // PublishOnionAddressService filters for UPLOAD events (not UPLOADED!)
+                                        // Format: 650 HS_DESC UPLOAD <onion_address> UNKNOWN <hs_dir> <descriptor_id> HSDIR_INDEX=<index>
+                                        val uploadEvent = "650 HS_DESC UPLOAD $expectedAddress UNKNOWN HSDIR1 descriptor1 HSDIR_INDEX=0\r\n"
+                                        output.write(uploadEvent)
+                                        output.flush()
+                                        log.i { "🎭 Mock control: PRODUCTION: ✅ Sent UPLOAD event (this completes PublishOnionAddressService): $expectedAddress" }
+                                        log.i { "🎭 Mock control: PRODUCTION: 🔍 Event format: '${uploadEvent.trim()}'" }
+
+                                        // Optional: Also send UPLOADED for completeness (though not required by PublishOnionAddressService)
+                                        delay(200)
+                                        val uploadedEvent = "650 HS_DESC UPLOADED $expectedAddress UNKNOWN HSDIR1\r\n"
+                                        output.write(uploadedEvent)
+                                        output.flush()
+                                        log.i { "🎭 Mock control: PRODUCTION: ✅ Sent UPLOADED event for completeness: $expectedAddress" }
+
+                                        // Remove from pending onion services after successful completion
+                                        pendingOnionServices.remove(expectedAddress)
+                                        log.i { "🎭 Mock control: TRACKING: Removed $expectedAddress from pending onion services (remaining: ${pendingOnionServices.size})" }
+                                    }
                             } else {
                                 log.w { "🎭 Mock control: ⚠️ Could not extract onion address from ED25519-V3 command" }
                                 output.write("250 OK\r\n")
@@ -574,11 +648,21 @@ class NodeApplicationBootstrapFacade(
                             output.flush()
                             log.i { "🎭 Mock control: PRODUCTION: Sent ADD_ONION response with random ServiceID: $randomOnionAddress" }
 
+                            // Add to pending onion services
+                            val baseAddress = randomOnionAddress.replace(".onion", "")
+                            pendingOnionServices[baseAddress] = System.currentTimeMillis()
+                            log.i { "🎭 Mock control: TRACKING: Added $baseAddress to pending onion services (total: ${pendingOnionServices.size})" }
+
                             // Send HS_DESC events for the random address
                             torBootstrapScope.launch {
                                 delay(100)
                                 log.i { "🎭 Mock control: PRODUCTION: Sending HS_DESC events for random onion service: $randomOnionAddress" }
                                 simulateHsDescEventsProduction(output, randomOnionAddress)
+
+                                // Remove from pending after completion
+                                delay(500) // Wait for events to complete
+                                pendingOnionServices.remove(baseAddress)
+                                log.i { "🎭 Mock control: TRACKING: Removed $baseAddress from pending onion services (remaining: ${pendingOnionServices.size})" }
                             }
                         }
                     }
@@ -875,6 +959,26 @@ class NodeApplicationBootstrapFacade(
     }
 
     /**
+     * Check if we're in bootstrap context vs profile creation context
+     * Bootstrap happens early in app lifecycle, profile creation happens after user interaction
+     */
+    private fun checkIfBootstrapContext(): Boolean {
+        return try {
+            // Check if the application is still in bootstrap/initialization phase
+            val appState = applicationService.applicationService.state.get()
+            val isBootstrap = appState == State.INITIALIZE_NETWORK ||
+                             appState == State.INITIALIZE_SERVICES ||
+                             appState == State.INITIALIZE_APP ||
+                             appState == State.INITIALIZE_WALLET
+            log.i { "🎭 Mock control: App state: $appState, isBootstrap: $isBootstrap" }
+            isBootstrap
+        } catch (e: Exception) {
+            log.w { "🎭 Mock control: Could not determine context, assuming profile creation: ${e.message}" }
+            false // Default to profile creation context
+        }
+    }
+
+    /**
      * PRODUCTION SOLUTION: Query the onion address directly from Bisq2 components
      * This accesses the actual TorTransportService to get the real onion address
      */
@@ -900,9 +1004,28 @@ class NodeApplicationBootstrapFacade(
             if (transportService is bisq.network.p2p.node.transport.TorTransportService) {
                 log.i { "🎭 Mock control: ✅ Found TorTransportService" }
 
-                // Get the default NetworkId to find the onion address
-                val defaultNetworkId = networkService.networkIdService.orCreateDefaultNetworkId
-                val addressByTransportTypeMap = defaultNetworkId.addressByTransportTypeMap
+                // Try to get the active NetworkId being published, not just the default one
+                val networkIdService = networkService.networkIdService
+
+                // First try to get the active NetworkId from the TorTransportService
+                val activeNetworkId = try {
+                    // Get the current NetworkId that's being used for publishing
+                    val serviceNode = networkService.findServiceNode(bisq.common.network.TransportType.TOR).orElse(null)
+                    serviceNode?.let { node ->
+                        // Try to get the NetworkId from the node's current state
+                        val nodeField = node.javaClass.getDeclaredField("networkId")
+                        nodeField.isAccessible = true
+                        nodeField.get(node) as? bisq.network.identity.NetworkId
+                    }
+                } catch (e: Exception) {
+                    log.w { "🎭 Mock control: Could not get active NetworkId, falling back to default: ${e.message}" }
+                    null
+                }
+
+                val networkIdToUse = activeNetworkId ?: networkIdService.orCreateDefaultNetworkId
+                log.i { "🎭 Mock control: Using NetworkId: ${if (activeNetworkId != null) "active" else "default"}" }
+
+                val addressByTransportTypeMap = networkIdToUse.addressByTransportTypeMap
                 val torAddress = addressByTransportTypeMap.get(bisq.common.network.TransportType.TOR)
 
                 if (torAddress != null) {
@@ -944,10 +1067,11 @@ class NodeApplicationBootstrapFacade(
             log.i { "🎭 Mock control: PRODUCTION: Using base address for events: $baseAddress" }
 
             // Phase 1: Send UPLOAD event (descriptor upload initiation)
-            val uploadEvent = "650 HS_DESC UPLOAD $baseAddress UNKNOWN \$HSDIR1 descriptor1 HSDIR_INDEX=0\r\n"
+            // This is what PublishOnionAddressService is waiting for!
+            val uploadEvent = "650 HS_DESC UPLOAD $baseAddress UNKNOWN HSDIR1 descriptor1 HSDIR_INDEX=0\r\n"
             output.write(uploadEvent)
             output.flush()
-            log.i { "🎭 Mock control: PRODUCTION: ✅ Sent HS_DESC UPLOAD event for $baseAddress" }
+            log.i { "🎭 Mock control: PRODUCTION: ✅ Sent HS_DESC UPLOAD event (this completes PublishOnionAddressService): $baseAddress" }
             log.i { "🎭 Mock control: PRODUCTION: 🔍 Full UPLOAD event: '${uploadEvent.trim()}'" }
             val eventParts = uploadEvent.trim().split(" ")
             log.i { "🎭 Mock control: PRODUCTION: 🔍 Event parts: $eventParts" }
@@ -959,7 +1083,8 @@ class NodeApplicationBootstrapFacade(
             delay(1000)
 
             // Phase 2: Send UPLOADED event (successful upload confirmation)
-            val uploadedEvent = "650 HS_DESC UPLOADED $baseAddress UNKNOWN \$HSDIR1\r\n"
+            // Format: 650 HS_DESC UPLOADED <onion_address> UNKNOWN <hs_dir>
+            val uploadedEvent = "650 HS_DESC UPLOADED $baseAddress UNKNOWN HSDIR1\r\n"
             output.write(uploadedEvent)
             output.flush()
             log.i { "🎭 Mock control: PRODUCTION: ✅ Sent HS_DESC UPLOADED event for $baseAddress" }
