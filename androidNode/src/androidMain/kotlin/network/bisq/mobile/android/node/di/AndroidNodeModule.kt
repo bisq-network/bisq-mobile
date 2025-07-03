@@ -24,6 +24,7 @@ import network.bisq.mobile.android.node.service.trades.NodeTradesServiceFacade
 import network.bisq.mobile.android.node.service.user_profile.NodeUserProfileServiceFacade
 import network.bisq.mobile.android.node.service.tor.TorIntegrationService
 import network.bisq.mobile.android.node.service.tor.BisqTorNetworkBridge
+import network.bisq.mobile.android.node.service.tor.TorBootstrapOrchestrator
 import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -64,7 +65,7 @@ val androidNodeModule = module {
 
     single { AndroidApplicationService.Provider() }
 
-    single<ApplicationBootstrapFacade> { NodeApplicationBootstrapFacade(get(), get(), get()) }
+    single<ApplicationBootstrapFacade> { NodeApplicationBootstrapFacade(get(), get(), get(), get()) }
 
     single<MarketPriceServiceFacade> { NodeMarketPriceServiceFacade(get(), get()) }
 
@@ -95,6 +96,9 @@ val androidNodeModule = module {
     }
     single<BisqTorNetworkBridge> {
         BisqTorNetworkBridge(androidContext(), androidContext().filesDir, get())
+    }
+    single<TorBootstrapOrchestrator> {
+        TorBootstrapOrchestrator(get())
     }
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
