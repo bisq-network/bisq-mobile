@@ -22,10 +22,10 @@ import network.bisq.mobile.android.node.service.reputation.NodeReputationService
 import network.bisq.mobile.android.node.service.settings.NodeSettingsServiceFacade
 import network.bisq.mobile.android.node.service.trades.NodeTradesServiceFacade
 import network.bisq.mobile.android.node.service.user_profile.NodeUserProfileServiceFacade
-import network.bisq.mobile.android.node.service.tor.TorIntegrationService
-import network.bisq.mobile.android.node.service.tor.BisqTorNetworkBridge
-import network.bisq.mobile.android.node.service.tor.TorBootstrapOrchestrator
-import network.bisq.mobile.android.node.service.tor.TorBisqBridge
+import network.bisq.mobile.android.node.service.network.tor.TorIntegrationService
+import network.bisq.mobile.android.node.service.network.tor.BisqTorNetworkBridge
+import network.bisq.mobile.android.node.service.network.tor.TorBootstrapOrchestrator
+import network.bisq.mobile.android.node.service.network.tor.TorBisqBridge
 import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade

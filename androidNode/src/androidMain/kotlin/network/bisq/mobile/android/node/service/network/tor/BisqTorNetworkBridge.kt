@@ -1,4 +1,4 @@
-package network.bisq.mobile.android.node.service.tor
+package network.bisq.mobile.android.node.service.network.tor
 
 import android.content.Context
 import bisq.network.NetworkService

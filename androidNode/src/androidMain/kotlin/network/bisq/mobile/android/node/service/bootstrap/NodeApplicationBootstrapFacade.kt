@@ -10,9 +10,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.service.tor.TorIntegrationService
-import network.bisq.mobile.android.node.service.tor.TorBootstrapOrchestrator
-import network.bisq.mobile.android.node.service.tor.TorBisqBridge
+import network.bisq.mobile.android.node.service.network.tor.TorIntegrationService
+import network.bisq.mobile.android.node.service.network.tor.TorBootstrapOrchestrator
+import network.bisq.mobile.android.node.service.network.tor.TorBisqBridge
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.i18n.i18n
