@@ -34,8 +34,6 @@ class NodeApplicationBootstrapFacade(
 ) : ApplicationBootstrapFacade() {
 
     private val applicationServiceState: Observable<State> by lazy { applicationService.state.get() }
-    private val torBootstrapScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private var connectivityJob: Job? = null
     private var torMonitoringJob: Job? = null
     private var applicationServiceStatePin: Pin? = null
     private var torBootstrapComplete = CompletableDeferred<Boolean>()
@@ -43,33 +41,26 @@ class NodeApplicationBootstrapFacade(
     private var initializationCallback: ApplicationServiceInitializationCallback? = null
     private lateinit var serverSocket: ServerSocket
 
+    private val torBootstrapScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
     // Track pending onion services to handle SETEVENTS clearing
     private val pendingOnionServices = mutableMapOf<String, Long>()
-
-    // Track the most recent onion service for recovery (handles multiple attempts)
-    private var lastOnionServiceAddress: String? = null
-    private var lastOnionServiceTime: Long = 0
 
     fun setInitializationCallback(callback: ApplicationServiceInitializationCallback) {
         this.initializationCallback = callback
     }
 
     override fun activate() {
-        // Check if already active to prevent duplicate activation
         if (isActive) {
             log.d { "Bootstrap already active, forcing reset" }
-            // Force reset of bootstrap state to ensure it runs again
             deactivate()
         }
 
         super.activate()
 
-        // Check if Tor is supported in the configuration
         if (isTorSupported()) {
-            log.i { "🔧 Bootstrap: Tor is supported in configuration - initializing Tor integration" }
-            // STEP 1: Initialize Tor as the very first step and WAIT for it to be ready
+            log.i { "🔧 Bootstrap: Tor is supported in configuration - initializing Tor integration and waiting.." }
             initializeAndWaitForTor()
-            // Note: Application service state observer will be set up AFTER Tor is ready
         } else {
             log.i { "🔧 Bootstrap: Tor not supported in configuration (CLEARNET only) - skipping Tor initialization" }
             // Skip Tor initialization and proceed directly to application service setup
@@ -98,7 +89,7 @@ class NodeApplicationBootstrapFacade(
     private fun initializeAndWaitForTor() {
         log.i { "🚀 Bootstrap: Initializing embedded Tor daemon and waiting for ready state..." }
 
-        // Update bootstrap state to show Tor initialization
+        // TODO i18n
         setState("Initializing Tor daemon...")
         setProgress(0.05f) // Very small progress to show we've started
 
@@ -358,8 +349,7 @@ class NodeApplicationBootstrapFacade(
                         setState("bootstrap.noConnectivity".i18n())
                         setProgress(0.95f) // Not fully complete
 
-                        // Set up connectivity monitoring with timeout fallback
-                        connectivityJob = connectivityService.runWhenConnected {
+                        val connectivityJob = connectivityService.runWhenConnected {
                             log.i { "🌐 Bootstrap: Connectivity restored, completing initialization" }
                             onInitialized()
                         }
@@ -369,7 +359,7 @@ class NodeApplicationBootstrapFacade(
                             delay(15000) // 15 second timeout for connectivity
                             if (!isActive) { // If bootstrap hasn't completed yet
                                 log.w { "⚠️ Bootstrap: Connectivity timeout - proceeding anyway" }
-                                connectivityJob?.cancel()
+                                connectivityJob.cancel()
                                 onInitialized()
                             }
                         }
@@ -597,7 +587,7 @@ class NodeApplicationBootstrapFacade(
      * Handle a connection to our bridge control port
      * This forwards supported commands to real kmp-tor and handles hidden services internally
      */
-    private suspend fun handleBridgeControlConnection(socket: java.net.Socket) {
+    private fun handleBridgeControlConnection(socket: java.net.Socket) {
         // Declare real control connection variables outside try block for proper cleanup
         var realControlSocket: java.net.Socket? = null
         var realControlInput: java.io.BufferedReader? = null
@@ -1036,9 +1026,6 @@ class NodeApplicationBootstrapFacade(
 
 
     override fun deactivate() {
-        connectivityJob?.cancel()
-        connectivityJob = null
-
         if (torBootstrapComplete.isCompleted) {
             // Only cancel Tor monitoring if bootstrap was not successful
             // If bootstrap was successful, let Tor continue running
@@ -1064,379 +1051,6 @@ class NodeApplicationBootstrapFacade(
 
         isActive = false
         super.deactivate()
-    }
-
-    // Store the actual NetworkId address captured from Bisq2 logs
-    private var capturedNetworkIdAddress: String? = null
-
-    /**
-     * Generate a random onion address for NEW key ADD_ONION commands
-     */
-    private fun generateRandomOnionAddress(): String {
-        // Generate a random 56-character base32 string (like real v3 onion addresses)
-        val chars = "abcdefghijklmnopqrstuvwxyz234567"
-        val random = kotlin.random.Random.Default
-        val randomPart = (1..56).map { chars[random.nextInt(chars.length)] }.joinToString("")
-        return "$randomPart.onion"
-    }
-
-    /**
-     * Derive onion address from ED25519-V3 secret scalar using Bisq2's official TorKeyGeneration APIs
-     * This handles the 64-byte secret scalar format that Bisq2 sends to the Tor control protocol
-     */
-    private fun deriveOnionAddressFromPrivateKey(base64SecretScalar: String): String? {
-        return try {
-            log.i { "🎭 Mock control: PRODUCTION: Starting onion address derivation using Bisq2 APIs..." }
-
-            // Decode the Base64 secret scalar
-            val secretScalarBytes = android.util.Base64.decode(base64SecretScalar, android.util.Base64.DEFAULT)
-            log.i { "🎭 Mock control: ✅ Decoded secret scalar: ${secretScalarBytes.size} bytes" }
-
-            if (secretScalarBytes.size == 64) {
-                // This is a 64-byte secret scalar - derive public key from it
-                log.i { "🎭 Mock control: ✅ Processing 64-byte secret scalar (Tor format)" }
-
-                // Generate public key from the secret scalar using Ed25519
-                val publicKeyBytes = ByteArray(32)
-                org.bouncycastle.math.ec.rfc8032.Ed25519.generatePublicKey(secretScalarBytes, 0, publicKeyBytes, 0)
-                log.i { "🎭 Mock control: ✅ Generated public key from secret scalar: ${publicKeyBytes.size} bytes" }
-
-                // Use Bisq2's official API to derive onion address from public key
-                val onionAddress = bisq.security.keys.TorKeyGeneration.getOnionAddressFromPublicKey(publicKeyBytes)
-                log.i { "🎭 Mock control: ✅ Successfully derived onion address using Bisq2: $onionAddress" }
-
-                return onionAddress
-
-            } else if (secretScalarBytes.size == 32) {
-                // This is a 32-byte private key - use it directly
-                log.i { "🎭 Mock control: ✅ Processing 32-byte private key (direct format)" }
-
-                val torKeyPair = bisq.security.keys.TorKeyGeneration.generateKeyPair(secretScalarBytes)
-                log.i { "🎭 Mock control: ✅ Generated TorKeyPair using Bisq2 APIs" }
-
-                val onionAddress = torKeyPair.onionAddress
-                log.i { "🎭 Mock control: ✅ Successfully derived onion address using Bisq2: $onionAddress" }
-
-                return onionAddress
-
-            } else {
-                log.w { "🎭 Mock control: ⚠️ Invalid key size: ${secretScalarBytes.size}, expected 32 or 64 bytes" }
-                return null
-            }
-
-        } catch (e: Exception) {
-            log.e(e) { "🎭 Mock control: ❌ Failed to derive onion address using Bisq2 APIs: ${e.message}" }
-            null
-        }
-    }
-
-    /**
-     * Extract onion address from ADD_ONION command for HS_DESC event simulation
-     * PRODUCTION SOLUTION: Derive the correct onion address from the ED25519-V3 private key
-     */
-    private fun extractOnionAddressFromCommand(command: String): String? {
-        return try {
-            log.i { "🎭 Mock control: PRODUCTION: Extracting onion address from command: ${command.take(100)}..." }
-
-            // Parse the ED25519-V3 private key from the command
-            val keyMatch = Regex("ED25519-V3:([A-Za-z0-9+/=]+)").find(command)
-            if (keyMatch != null) {
-                val base64PrivateKey = keyMatch.groupValues[1]
-                log.i { "🎭 Mock control: PRODUCTION: Found ED25519-V3 key: ${base64PrivateKey.take(20)}..." }
-
-                // Derive the onion address from the private key
-                val onionAddress = deriveOnionAddressFromPrivateKey(base64PrivateKey)
-                if (onionAddress != null) {
-                    log.i { "🎭 Mock control: ✅ PRODUCTION: Derived onion address: $onionAddress" }
-                    return onionAddress
-                } else {
-                    log.w { "🎭 Mock control: ⚠️ PRODUCTION: Failed to derive onion address from private key" }
-                }
-            } else {
-                log.w { "🎭 Mock control: ⚠️ PRODUCTION: No ED25519-V3 key found in command" }
-            }
-
-            log.w { "🎭 Mock control: ⚠️ PRODUCTION: Could not extract onion address from command" }
-            return null
-
-        } catch (e: Exception) {
-            log.e(e) { "🎭 Mock control: Failed to extract onion address from command" }
-            null
-        }
-    }
-
-    /**
-     * Check if we're in bootstrap context vs profile creation context
-     * Bootstrap happens early in app lifecycle, profile creation happens after user interaction
-     */
-    private fun checkIfBootstrapContext(): Boolean {
-        return try {
-            // Check if the application is still in bootstrap/initialization phase
-            val appState = applicationService.applicationService.state.get()
-            val isBootstrap = appState == State.INITIALIZE_NETWORK ||
-                             appState == State.INITIALIZE_SERVICES ||
-                             appState == State.INITIALIZE_APP ||
-                             appState == State.INITIALIZE_WALLET
-            log.i { "🎭 Mock control: App state: $appState, isBootstrap: $isBootstrap" }
-            isBootstrap
-        } catch (e: Exception) {
-            log.w { "🎭 Mock control: Could not determine context, assuming profile creation: ${e.message}" }
-            false // Default to profile creation context
-        }
-    }
-
-    /**
-     * PRODUCTION SOLUTION: Query the onion address directly from Bisq2 components
-     * This accesses the actual TorTransportService to get the real onion address
-     */
-    private fun queryOnionAddressFromBisq2(): String? {
-        return try {
-            log.i { "🎭 Mock control: PRODUCTION: Querying onion address from Bisq2 components..." }
-
-            // Get the application service instance
-            val applicationServiceInstance = applicationService.applicationService
-            val networkService = applicationServiceInstance.networkService
-
-            // Find the TOR service node
-            val torServiceNodeOpt = networkService.findServiceNode(bisq.common.network.TransportType.TOR)
-            if (!torServiceNodeOpt.isPresent) {
-                log.w { "🎭 Mock control: ⚠️ TOR ServiceNode not found" }
-                return null
-            }
-
-            val torServiceNode = torServiceNodeOpt.get()
-            val transportService = torServiceNode.transportService
-
-            // Cast to TorTransportService to access TOR-specific functionality
-            if (transportService is bisq.network.p2p.node.transport.TorTransportService) {
-                log.i { "🎭 Mock control: ✅ Found TorTransportService" }
-
-                // Try to get the active NetworkId being published, not just the default one
-                val networkIdService = networkService.networkIdService
-
-                // First try to get the active NetworkId from the TorTransportService
-                val activeNetworkId = try {
-                    // Get the current NetworkId that's being used for publishing
-                    val serviceNode = networkService.findServiceNode(bisq.common.network.TransportType.TOR).orElse(null)
-                    serviceNode?.let { node ->
-                        // Try to get the NetworkId from the node's current state
-                        val nodeField = node.javaClass.getDeclaredField("networkId")
-                        nodeField.isAccessible = true
-                        nodeField.get(node) as? bisq.network.identity.NetworkId
-                    }
-                } catch (e: Exception) {
-                    log.w { "🎭 Mock control: Could not get active NetworkId, falling back to default: ${e.message}" }
-                    null
-                }
-
-                val networkIdToUse = activeNetworkId ?: networkIdService.orCreateDefaultNetworkId
-                log.i { "🎭 Mock control: Using NetworkId: ${if (activeNetworkId != null) "active" else "default"}" }
-
-                val addressByTransportTypeMap = networkIdToUse.addressByTransportTypeMap
-                val torAddress = addressByTransportTypeMap.get(bisq.common.network.TransportType.TOR)
-
-                if (torAddress != null) {
-                    val onionAddress = torAddress.host // This should be the .onion address without port
-                    log.i { "🎭 Mock control: ✅ PRODUCTION: Found onion address: $onionAddress" }
-                    return onionAddress
-                } else {
-                    log.w { "🎭 Mock control: ⚠️ TOR address not found in NetworkId" }
-                }
-            } else {
-                log.w { "🎭 Mock control: ⚠️ TransportService is not TorTransportService: ${transportService.javaClass.simpleName}" }
-            }
-
-            return null
-
-        } catch (e: Exception) {
-            log.e(e) { "🎭 Mock control: Error querying onion address from Bisq2" }
-            return null
-        }
-    }
-
-    /**
-     * PRODUCTION: Simulate HS_DESC events for onion service descriptor upload
-     * Sends both UPLOAD and UPLOADED events to fully satisfy PublishOnionAddressService
-     */
-    private suspend fun simulateHsDescEventsProduction(output: java.io.BufferedWriter, onionAddress: String) {
-        try {
-            log.i { "🎭 Mock control: PRODUCTION: Starting HS_DESC event simulation for $onionAddress" }
-
-            // Wait for PublishOnionAddressService to set up its event listener
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 Waiting for PublishOnionAddressService listener registration..." }
-            kotlinx.coroutines.delay(2000)  // Increased delay to ensure listener registration
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 Proceeding with HS_DESC event simulation..." }
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 DEBUG: Socket connected: ${serverSocket.isClosed == false}" }
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 DEBUG: Output stream available: ${output != null}" }
-
-            // Extract the base address without .onion suffix for HS_DESC events
-            val baseAddress = onionAddress.replace(".onion", "")
-            log.i { "🎭 Mock control: PRODUCTION: Using base address for events: $baseAddress" }
-
-            // Phase 1: Send UPLOAD event (descriptor upload initiation)
-            // This is what PublishOnionAddressService is waiting for!
-            val uploadEvent = "650 HS_DESC UPLOAD $baseAddress UNKNOWN HSDIR1 descriptor1 HSDIR_INDEX=0\r\n"
-            output.write(uploadEvent)
-            output.flush()
-            log.i { "🎭 Mock control: PRODUCTION: ✅ Sent HS_DESC UPLOAD event (this completes PublishOnionAddressService): $baseAddress" }
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 Full UPLOAD event: '${uploadEvent.trim()}'" }
-            val eventParts = uploadEvent.trim().split(" ")
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 Event parts: $eventParts" }
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 Event validation: parts[2]='${eventParts[2]}', length=${eventParts.size}" }
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 Expected for UPLOAD: parts[2]='UPLOAD', length=8" }
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 Address match check: hsAddress='${eventParts[3]}' vs serviceId='$baseAddress'" }
-
-            // Wait for upload processing
-            delay(1000)
-
-            // Phase 2: Send UPLOADED event (successful upload confirmation)
-            // Format: 650 HS_DESC UPLOADED <onion_address> UNKNOWN <hs_dir>
-            val uploadedEvent = "650 HS_DESC UPLOADED $baseAddress UNKNOWN HSDIR1\r\n"
-            output.write(uploadedEvent)
-            output.flush()
-            log.i { "🎭 Mock control: PRODUCTION: ✅ Sent HS_DESC UPLOADED event for $baseAddress" }
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 Full UPLOADED event: '${uploadedEvent.trim()}'" }
-            val uploadedEventParts = uploadedEvent.trim().split(" ")
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 Event parts: $uploadedEventParts" }
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 Event validation: parts[2]='${uploadedEventParts[2]}', length=${uploadedEventParts.size}" }
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 Expected for UPLOADED: parts[2]='UPLOADED', length=6" }
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 Address match check: hsAddress='${uploadedEventParts[3]}' vs serviceId='$baseAddress'" }
-            log.i { "🎭 Mock control: This should complete PublishOnionAddressService and allow profile creation" }
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 If no 'Received HsDescEvent' logs appear, the listener registration failed" }
-            log.i { "🎭 Mock control: PRODUCTION: 🔍 If no 'Publishing of onion address completed' logs appear, the event filtering failed" }
-
-        } catch (e: Exception) {
-            log.e(e) { "🎭 Mock control: PRODUCTION: Error simulating HS_DESC events" }
-        }
-    }
-
-    /**
-     * Handle ADD_ONION command via kmp-tor's hidden service configuration API
-     * This creates hidden services using kmp-tor's TorOption.HiddenService* configuration
-     */
-    private suspend fun handleAddOnionViaKmpTor(command: String, output: java.io.BufferedWriter) {
-        try {
-            log.i { "🌉 KMP: Processing ADD_ONION via kmp-tor hidden service API..." }
-
-            // Parse the ADD_ONION command to extract key and port information
-            val onionAddress = if (command.contains("ED25519-V3:")) {
-                // Extract existing key and derive onion address
-                extractOnionAddressFromCommand(command)
-            } else {
-                // Generate new onion address for NEW key commands
-                generateRandomOnionAddress()
-            }
-
-            if (onionAddress != null) {
-                log.i { "🌉 KMP: Creating hidden service for onion address: $onionAddress" }
-
-                // Create hidden service via kmp-tor configuration
-                val success = createHiddenServiceViaKmpTor(onionAddress, command)
-
-                if (success) {
-                    // Send proper ADD_ONION response
-                    output.write("250-ServiceID=$onionAddress\r\n")
-                    output.write("250 OK\r\n")
-                    output.flush()
-                    log.i { "🌉 KMP: ✅ ADD_ONION success response sent for: $onionAddress" }
-
-                    // Add to pending onion services for event tracking
-                    val baseAddress = onionAddress.replace(".onion", "")
-                    pendingOnionServices[baseAddress] = System.currentTimeMillis()
-                    log.i { "🌉 KMP: Added $baseAddress to pending onion services (total: ${pendingOnionServices.size})" }
-
-                    // Send HS_DESC events to complete the process
-                    sendHiddenServiceEvents(baseAddress, output)
-
-                } else {
-                    log.w { "⚠️ KMP: Failed to create hidden service via kmp-tor" }
-                    output.write("550 Hidden service creation failed\r\n")
-                    output.flush()
-                }
-            } else {
-                log.w { "⚠️ KMP: Could not parse onion address from ADD_ONION command" }
-                output.write("550 Invalid ADD_ONION command\r\n")
-                output.flush()
-            }
-
-        } catch (e: Exception) {
-            log.e(e) { "❌ KMP: Error handling ADD_ONION via kmp-tor: ${e.message}" }
-            output.write("550 Internal error\r\n")
-            output.flush()
-        }
-    }
-
-    /**
-     * Create hidden service via kmp-tor's configuration API
-     * This uses TorOption.HiddenService* configuration instead of control port commands
-     */
-    private suspend fun createHiddenServiceViaKmpTor(onionAddress: String, command: String): Boolean {
-        return try {
-            log.i { "🌉 KMP: Creating hidden service via kmp-tor configuration for: $onionAddress" }
-
-            // Parse port information from ADD_ONION command
-            // Format: ADD_ONION NEW:ED25519-V3 Port=80,127.0.0.1:8080
-            val portMatch = Regex("Port=(\\d+),([^\\s]+)").find(command)
-            val virtualPort = portMatch?.groupValues?.get(1)?.toIntOrNull() ?: 80
-            val targetAddress = portMatch?.groupValues?.get(2) ?: "127.0.0.1:8080"
-
-            log.i { "🌉 KMP: Hidden service config - Virtual port: $virtualPort, Target: $targetAddress" }
-
-            // For now, we'll simulate the hidden service creation
-            // In a full implementation, this would involve:
-            // 1. Creating TorOption.HiddenServiceDir configuration
-            // 2. Creating TorOption.HiddenServicePort configuration
-            // 3. Restarting Tor runtime with new configuration (if needed)
-            // 4. Or using dynamic hidden service creation if available
-
-            // Simulate successful creation
-            kotlinx.coroutines.delay(100) // Simulate processing time
-
-            log.i { "🌉 KMP: ✅ Hidden service created successfully via kmp-tor configuration" }
-            log.i { "🌉 KMP: Virtual port $virtualPort -> $targetAddress for $onionAddress" }
-
-            true
-
-        } catch (e: Exception) {
-            log.e(e) { "❌ KMP: Failed to create hidden service via kmp-tor: ${e.message}" }
-            false
-        }
-    }
-
-    /**
-     * Send HS_DESC events for the created hidden service
-     */
-    private suspend fun sendHiddenServiceEvents(baseAddress: String, output: java.io.BufferedWriter) {
-        try {
-            log.i { "🌉 KMP: BOOTSTRAP: Sending HS_DESC events for: $baseAddress" }
-            log.i { "🌉 KMP: BOOTSTRAP: This is critical for P2P network bootstrap" }
-
-            torBootstrapScope.launch {
-                delay(100) // Small delay to simulate real Tor behavior
-
-                // Send UPLOAD event (what PublishOnionAddressService waits for)
-                val uploadEvent = "650 HS_DESC UPLOAD $baseAddress UNKNOWN HSDIR1 descriptor1 HSDIR_INDEX=0\r\n"
-                output.write(uploadEvent)
-                output.flush()
-                log.i { "🌉 KMP: BOOTSTRAP: ✅ Sent HS_DESC UPLOAD event: $baseAddress" }
-                log.i { "🌉 KMP: BOOTSTRAP: This should complete PublishOnionAddressService for P2P bootstrap" }
-
-                // Send UPLOADED event for completeness
-                delay(200)
-                val uploadedEvent = "650 HS_DESC UPLOADED $baseAddress UNKNOWN HSDIR1\r\n"
-                output.write(uploadedEvent)
-                output.flush()
-                log.i { "🌉 KMP: BOOTSTRAP: ✅ Sent HS_DESC UPLOADED event: $baseAddress" }
-
-                // Remove from pending onion services
-                pendingOnionServices.remove(baseAddress)
-                log.i { "🌉 KMP: BOOTSTRAP: Removed $baseAddress from pending onion services (remaining: ${pendingOnionServices.size})" }
-                log.i { "🌉 KMP: BOOTSTRAP: Hidden service events completed - P2P bootstrap should proceed" }
-            }
-
-        } catch (e: Exception) {
-            log.e(e) { "❌ KMP: BOOTSTRAP: Error sending HS_DESC events: ${e.message}" }
-        }
     }
 
     /**
