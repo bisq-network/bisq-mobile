@@ -597,6 +597,77 @@ class TorService(
     }
 
     /**
+     * Query the actual control port from Tor using GETINFO command
+     * This is the proper way to get the control port information from kmp-tor
+     */
+    fun queryActualControlPort(callback: (Int?) -> Unit) {
+        val runtime = torRuntime
+        if (runtime == null) {
+            log.e { "❌ Cannot query control port - Tor runtime not available" }
+            callback(null)
+            return
+        }
+
+        launchIO {
+            log.i { "🔍 Querying actual control port from Tor using GETINFO command..." }
+
+            try {
+                // Use the proper GETINFO command to query the control listeners
+                val getInfoCommand = TorCmd.Info.Get("net/listeners/control")
+
+                runtime.enqueue(
+                    getInfoCommand,
+                    OnFailure { error ->
+                        log.e { "❌ Failed to query control port: $error" }
+                        callback(null)
+                    },
+                    OnSuccess { result ->
+                        log.i { "✅ GETINFO control port response received: $result" }
+                        val controlPort = parseControlPortFromGetInfo(result)
+                        if (controlPort != null) {
+                            _controlPort.value = controlPort
+                            log.i { "✅ Successfully parsed control port from GETINFO: $controlPort" }
+                        }
+                        callback(controlPort)
+                    }
+                )
+            } catch (e: Exception) {
+                log.e(e) { "❌ Exception while querying control port" }
+                callback(null)
+            }
+        }
+    }
+
+    /**
+     * Parse control port from GETINFO response
+     */
+    private fun parseControlPortFromGetInfo(result: Map<String, String>): Int? {
+        return try {
+            val controlListeners = result["net/listeners/control"]
+            log.i { "🔍 Raw control listeners data: '$controlListeners'" }
+
+            if (controlListeners != null) {
+                // Parse the response format: "127.0.0.1:9051" or similar
+                val portMatch = Regex("127\\.0\\.0\\.1:(\\d+)").find(controlListeners)
+                val port = portMatch?.groupValues?.get(1)?.toIntOrNull()
+
+                if (port != null) {
+                    log.i { "✅ Successfully parsed control port from GETINFO: $port" }
+                    return port
+                } else {
+                    log.w { "⚠️ Could not parse port from control listeners: '$controlListeners'" }
+                }
+            } else {
+                log.w { "⚠️ No control listeners data in GETINFO response" }
+            }
+            null
+        } catch (e: Exception) {
+            log.e(e) { "❌ Error parsing control port from GETINFO response" }
+            null
+        }
+    }
+
+    /**
      * Set the control port manually (for external mock control servers)
      */
     fun setControlPort(port: Int) {

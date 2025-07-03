@@ -214,6 +214,22 @@ class TorIntegrationService(
     }
 
     /**
+     * Query the actual control port from Tor using GETINFO command
+     * This is the proper way to get the control port information from kmp-tor
+     */
+    fun queryActualControlPort(callback: (Int?) -> Unit) {
+        log.i { "🔍 TorIntegrationService: Querying actual control port from kmp-tor..." }
+        torService.queryActualControlPort { controlPort ->
+            if (controlPort != null) {
+                log.i { "✅ TorIntegrationService: Real control port detected: $controlPort" }
+            } else {
+                log.w { "⚠️ TorIntegrationService: Could not detect real control port" }
+            }
+            callback(controlPort)
+        }
+    }
+
+    /**
      * Set the control port manually (for external mock control servers)
      */
     fun setControlPort(port: Int) {
