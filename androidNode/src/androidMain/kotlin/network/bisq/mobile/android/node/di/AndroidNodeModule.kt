@@ -70,7 +70,6 @@ val androidNodeModule = module {
         NodeApplicationBootstrapFacade(
             get<AndroidApplicationService.Provider>(),
             get<ConnectivityService>(),
-            get<TorIntegrationService>(),
             get<TorBootstrapOrchestrator>(),
             get<TorBisqBridge>()
         )

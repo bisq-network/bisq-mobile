@@ -25,7 +25,6 @@ interface ApplicationServiceInitializationCallback {
 class NodeApplicationBootstrapFacade(
     private val applicationService: AndroidApplicationService.Provider,
     private val connectivityService: ConnectivityService,
-    private val torIntegrationService: TorIntegrationService,
     private val torBootstrapOrchestrator: TorBootstrapOrchestrator,
     private val torBisqBridge: TorBisqBridge
 ) : ApplicationBootstrapFacade(), TorBootstrapOrchestrator.TorBootstrapCallback {
