@@ -11,7 +11,6 @@ import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.di.serviceModule
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.di.presentationModule
-import java.io.File
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
