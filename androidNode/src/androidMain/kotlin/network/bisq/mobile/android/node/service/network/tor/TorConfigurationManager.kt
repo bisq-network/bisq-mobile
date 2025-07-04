@@ -1,7 +1,6 @@
 package network.bisq.mobile.android.node.service.network.tor
 
 import android.content.Context
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.utils.Logging
 import java.io.File
 
@@ -23,9 +22,6 @@ class TorConfigurationManager(
     private val torConfigDir = File(baseDir, "tor")
     private val torConfigFile = File(torConfigDir, TOR_CONFIG_FILE)
 
-    /**
-     * Generate Tor configuration based on Bisq settings
-     */
     fun generateTorConfig(
         socksPort: Int = DEFAULT_SOCKS_PORT,
         controlPort: Int = DEFAULT_CONTROL_PORT,
@@ -34,34 +30,28 @@ class TorConfigurationManager(
     ): String {
         val config = StringBuilder()
 
-        // Basic Tor configuration
         config.appendLine("# Bisq Mobile Tor Configuration")
         config.appendLine("# Generated automatically - do not edit manually")
         config.appendLine()
 
-        // Data directory
         config.appendLine("DataDirectory ${torConfigDir.absolutePath}")
         config.appendLine()
 
-        // SOCKS proxy configuration
         config.appendLine("# SOCKS proxy configuration")
         config.appendLine("SocksPort $socksPort")
         config.appendLine("SocksPolicy accept *")
         config.appendLine()
 
-        // Control port configuration
         config.appendLine("# Control port configuration")
         config.appendLine("ControlPort $controlPort")
         config.appendLine("CookieAuthentication 1")
         config.appendLine()
 
-        // Logging configuration
         config.appendLine("# Logging configuration")
         config.appendLine("Log notice file ${File(torConfigDir, "tor.log").absolutePath}")
         config.appendLine("Log notice stdout")
         config.appendLine()
 
-        // Mobile optimizations
         config.appendLine("# Mobile optimizations")
         config.appendLine("ConnLimit 1000")
         config.appendLine("MaxMemInQueues 512 MB")
@@ -85,10 +75,9 @@ class TorConfigurationManager(
 
         config.appendLine("# Security settings")
         config.appendLine("AvoidDiskWrites 0")
-        config.appendLine("ClientOnly 0")  // Allow hidden services
+        config.appendLine("ClientOnly 0")
         config.appendLine()
 
-        // Network settings
         config.appendLine("# Network settings")
         config.appendLine("EnforceDistinctSubnets 1")
         config.appendLine("StrictNodes 0")
@@ -97,9 +86,6 @@ class TorConfigurationManager(
         return config.toString()
     }
 
-    /**
-     * Write Tor configuration to file
-     */
     fun writeTorConfig(config: String) {
         try {
             torConfigDir.mkdirs()
@@ -111,19 +97,10 @@ class TorConfigurationManager(
         }
     }
 
-    /**
-     * Get the path to the Tor configuration file
-     */
     fun getTorConfigPath(): String = torConfigFile.absolutePath
 
-    /**
-     * Check if Tor configuration exists
-     */
     fun hasTorConfig(): Boolean = torConfigFile.exists()
 
-    /**
-     * Read existing Tor configuration
-     */
     fun readTorConfig(): String? {
         return try {
             if (torConfigFile.exists()) {
@@ -137,10 +114,6 @@ class TorConfigurationManager(
         }
     }
 
-    /**
-     * Update Bisq configuration to use Tor
-     * Note: With Bisq2, the main configuration is done via external_tor.config file
-     */
     fun updateBisqConfigForTor(socksPort: Int, enableTor: Boolean = true) {
         log.i { "Updating Bisq configuration for Tor - SOCKS port: $socksPort, enabled: $enableTor" }
 
@@ -158,13 +131,10 @@ class TorConfigurationManager(
         }
     }
 
-    /**
-     * Get hidden service hostname if available
-     */
     fun getHiddenServiceHostname(): String? {
         val hiddenServiceDir = File(torConfigDir, "hidden_service")
         val hostnameFile = File(hiddenServiceDir, "hostname")
-        
+
         return try {
             if (hostnameFile.exists()) {
                 hostnameFile.readText().trim()
@@ -177,13 +147,10 @@ class TorConfigurationManager(
         }
     }
 
-    /**
-     * Get hidden service private key if available
-     */
     fun getHiddenServicePrivateKey(): String? {
         val hiddenServiceDir = File(torConfigDir, "hidden_service")
         val privateKeyFile = File(hiddenServiceDir, "hs_ed25519_secret_key")
-        
+
         return try {
             if (privateKeyFile.exists()) {
                 privateKeyFile.readText()
@@ -196,9 +163,6 @@ class TorConfigurationManager(
         }
     }
 
-    /**
-     * Clean up Tor configuration and data
-     */
     fun cleanup() {
         try {
             if (torConfigDir.exists()) {
@@ -210,23 +174,18 @@ class TorConfigurationManager(
         }
     }
 
-    /**
-     * Validate Tor configuration
-     */
     fun validateTorConfig(config: String): Boolean {
         return try {
-            // Basic validation - check for required directives
             val requiredDirectives = listOf("DataDirectory", "SocksPort", "ControlPort")
             val hasAllRequired = requiredDirectives.all { directive ->
                 config.contains(directive)
             }
-            
+
             if (!hasAllRequired) {
                 log.w { "Tor configuration missing required directives" }
                 return false
             }
-            
-            // Additional validation could be added here
+
             true
         } catch (e: Exception) {
             log.e(e) { "Failed to validate Tor configuration" }
@@ -234,9 +193,6 @@ class TorConfigurationManager(
         }
     }
 
-    /**
-     * Get default Tor configuration for Bisq Mobile
-     */
     fun getDefaultTorConfig(): String {
         return generateTorConfig(
             socksPort = DEFAULT_SOCKS_PORT,

@@ -46,6 +46,7 @@ class MainApplication : Application(), Logging {
     private fun setupBisqCoreStatics() {
         val isEmulator = isEmulator()
 //        TODO this is part of Bisq v2.1.8, uncomment when developing against latest snapshot
+//        FIXME clearnet on LAN won't work anymore till this is addressed
 //        val clearNetFacade = if (isEmulator) {
 //            AndroidEmulatorAddressTypeFacade()
 //        } else {

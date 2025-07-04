@@ -51,8 +51,8 @@ class KmpTorControlPortTest {
         println("3. The test runs automatically, OR")
         println("4. Call: bootstrapFacade.testKmpTorControlPort() manually")
         println("5. Look for test results in logs:")
-        println("   - Search for: '🧪 KMP-TOR CONTROL PORT TEST RESULT'")
-        println("   - Look for: '✅ RESULT: SUCCESS' or '❌ RESULT: FAILED'")
+        println("   - Search for: 'TOR CONTROL PORT TEST RESULT'")
+        println("   - Look for: 'RESULT: SUCCESS' or 'RESULT: FAILED'")
         println("=========================")
 
         // Simple assertion to make the test pass

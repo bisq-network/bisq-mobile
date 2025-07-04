@@ -13,24 +13,18 @@ class TorBridgeCommandHandler(
     private val torIntegrationService: TorIntegrationService
 ) : Logging {
 
-    /**
-     * Handle commands from Bisq2 and forward to real kmp-tor control port
-     */
     fun handleCommands(
         input: java.io.BufferedReader,
         output: java.io.BufferedWriter,
         socket: java.net.Socket
     ) {
         while (!socket.isClosed && socket.isConnected) {
-            log.d { "🌉 KMP: Bridge control: Waiting for command..." }
             val command = input.readLine()
             if (command == null) {
-                log.d { "🌉 KMP: Bridge control: Client closed connection (readLine returned null)" }
                 break
             }
-            log.i { "🌉 KMP: Bridge control received command: '$command'" }
+            log.i { "Bridge control received command: '$command'" }
 
-            // Enhanced logging for bootstrap debugging
             logBootstrapCommand(command)
 
             when {
@@ -53,48 +47,40 @@ class TorBridgeCommandHandler(
     private fun logBootstrapCommand(command: String) {
         when {
             command.startsWith("ADD_ONION") -> {
-                log.i { "🌉 KMP: BOOTSTRAP: ADD_ONION command during P2P bootstrap phase" }
+                log.i { "BOOTSTRAP: ADD_ONION command during P2P bootstrap phase" }
             }
             command.startsWith("SETEVENTS") -> {
-                log.i { "🌉 KMP: BOOTSTRAP: SETEVENTS command during P2P bootstrap phase" }
+                log.i { "BOOTSTRAP: SETEVENTS command during P2P bootstrap phase" }
             }
             command.startsWith("GETINFO") -> {
-                log.i { "🌉 KMP: BOOTSTRAP: GETINFO command during P2P bootstrap phase: ${command.take(50)}" }
+                log.i { "BOOTSTRAP: GETINFO command during P2P bootstrap phase: ${command.take(50)}" }
             }
         }
     }
 
     private fun handleAuthenticate(output: java.io.BufferedWriter) {
-        // Send proper authentication success response
         output.write("250 OK\r\n")
         output.flush()
-        log.i { "🌉 KMP: Bridge control: ✅ AUTHENTICATE command successful - sent 250 OK response" }
+        log.i { "Bridge control: AUTHENTICATE command successful - sent 250 OK response" }
     }
 
     private fun handleGetInfo(command: String, output: java.io.BufferedWriter) {
-        // Forward GETINFO commands to real control port if available
         if (realControlOutput != null && realControlInput != null) {
             try {
-                log.d { "🌉 KMP: Bridge: Forwarding GETINFO to real control port: $command" }
                 realControlOutput.write("$command\r\n")
                 realControlOutput.flush()
 
-                // Read complete multiline response from real control port
                 val responses = readMultilineResponse(realControlInput)
                 if (responses.isNotEmpty()) {
-                    // Forward all response lines to Bisq2
                     responses.forEach { responseLine ->
                         output.write("$responseLine\r\n")
                         output.flush()
                     }
-                    log.d { "🌉 KMP: Bridge: Forwarded ${responses.size} response lines from real control port" }
-                    log.d { "🌉 KMP: Bridge: First line: ${responses.first()}" }
-                    log.d { "🌉 KMP: Bridge: Last line: ${responses.last()}" }
                 } else {
                     throw Exception("No response from real control port")
                 }
             } catch (e: Exception) {
-                log.w(e) { "⚠️ KMP: Bridge: Failed to forward GETINFO, using fallback" }
+                log.w(e) { "Bridge: Failed to forward GETINFO, using fallback" }
                 handleGetInfoFallback(command, output)
             }
         } else {
@@ -108,7 +94,7 @@ class TorBridgeCommandHandler(
             val response = "250 net/listeners/socks=\"127.0.0.1:$socksPort\"\r\n"
             output.write(response)
             output.flush()
-            log.d { "🌉 KMP: Bridge: Sent fallback SOCKS response: ${response.trim()}" }
+            log.d { "Bridge: Sent fallback SOCKS response: ${response.trim()}" }
         } else {
             output.write("250 OK\r\n")
             output.flush()
@@ -116,26 +102,22 @@ class TorBridgeCommandHandler(
     }
 
     private fun handleSetEvents(command: String, output: java.io.BufferedWriter) {
-        // CRITICAL: Handle SETEVENTS clearing to prevent premature event listener shutdown
         if (command.trim() == "SETEVENTS" && bridge.getPendingOnionServicesCount() > 0) {
-            log.i { "🌉 KMP: BOOTSTRAP: ⚠️ CRITICAL: Bisq2 trying to clear SETEVENTS but we have ${bridge.getPendingOnionServicesCount()} pending onion services!" }
-            log.i { "🌉 KMP: BOOTSTRAP: 🔧 BLOCKING SETEVENTS clear to keep Bisq2 listening for real UPLOADED events" }
-            log.i { "🌉 KMP: BOOTSTRAP: 🔧 This prevents premature PublishOnionAddressService completion" }
+            log.i { "BOOTSTRAP: CRITICAL: Bisq2 trying to clear SETEVENTS but we have ${bridge.getPendingOnionServicesCount()} pending onion services!" }
+            log.i { "BOOTSTRAP: BLOCKING SETEVENTS clear to keep Bisq2 listening for real UPLOADED events" }
+            log.i { "BOOTSTRAP: This prevents premature PublishOnionAddressService completion" }
 
-            // DON'T forward SETEVENTS clear to real kmp-tor - keep receiving real events
-            // But tell Bisq2 it succeeded so it thinks events are cleared
             output.write("250 OK\r\n")
             output.flush()
 
             bridge.getPendingOnionServicesAddresses().forEach { address ->
-                log.i { "🌉 KMP: BOOTSTRAP: 📋 Keeping event listeners active for: $address" }
+                log.i { "BOOTSTRAP: Keeping event listeners active for: $address" }
             }
 
-            log.i { "🌉 KMP: BOOTSTRAP: 🔧 Real kmp-tor will continue generating UPLOADED events" }
-            log.i { "🌉 KMP: BOOTSTRAP: 🔧 Bisq2 will receive them and complete PublishOnionAddressService properly" }
+            log.i { "BOOTSTRAP: Real kmp-tor will continue generating UPLOADED events" }
+            log.i { "BOOTSTRAP: Bisq2 will receive them and complete PublishOnionAddressService properly" }
 
         } else {
-            // Normal SETEVENTS command (registration, not clearing) - forward to real control port
             forwardSetEventsToRealControl(command, output)
         }
     }
@@ -143,7 +125,7 @@ class TorBridgeCommandHandler(
     private fun forwardSetEventsToRealControl(command: String, output: java.io.BufferedWriter) {
         if (realControlOutput != null && realControlInput != null) {
             try {
-                log.d { "🌉 KMP: Bridge: Forwarding SETEVENTS to real control port: ${command.take(50)}..." }
+
                 realControlOutput.write("$command\r\n")
                 realControlOutput.flush()
 
@@ -155,12 +137,12 @@ class TorBridgeCommandHandler(
                         output.write("$responseLine\r\n")
                         output.flush()
                     }
-                    log.d { "🌉 KMP: Bridge: Forwarded ${responses.size} SETEVENTS response lines" }
+
                 } else {
                     throw Exception("No response from real control port")
                 }
             } catch (e: Exception) {
-                log.w(e) { "⚠️ KMP: Bridge: Failed to forward SETEVENTS, using fallback" }
+                log.w(e) { "Bridge: Failed to forward SETEVENTS, using fallback" }
                 output.write("250 OK\r\n")
                 output.flush()
             }
@@ -170,50 +152,42 @@ class TorBridgeCommandHandler(
     }
 
     private fun handleSetEventsFallback(command: String, output: java.io.BufferedWriter) {
-        log.d { "🌉 KMP: Bridge: SETEVENTS fallback: ${command.take(50)}..." }
         if (command.contains("HS_DESC")) {
-            log.i { "🌉 KMP: Bridge: HS_DESC events registered - ready for onion service operations" }
+            log.i { "Bridge: HS_DESC events registered - ready for onion service operations" }
         } else if (command.trim() == "SETEVENTS") {
-            log.i { "🌉 KMP: Bridge: Events cleared" }
+            log.i { "Bridge: Events cleared" }
         }
         output.write("250 OK\r\n")
         output.flush()
     }
 
     private fun handleAddOnion(command: String, output: java.io.BufferedWriter) {
-        // Forward ADD_ONION commands to real control port - NO FALLBACK
         if (realControlOutput != null && realControlInput != null) {
             try {
-                log.i { "🌉 KMP: Bridge: Forwarding ADD_ONION to real kmp-tor control port: ${command.take(80)}..." }
+                log.i { "Bridge: Forwarding ADD_ONION to real kmp-tor control port: ${command.take(80)}..." }
                 realControlOutput.write("$command\r\n")
                 realControlOutput.flush()
 
-                // Read complete multiline response from real control port
                 val responses = readMultilineResponse(realControlInput)
                 if (responses.isNotEmpty()) {
-                    // Forward all response lines to Bisq2
                     responses.forEach { responseLine ->
                         output.write("$responseLine\r\n")
                         output.flush()
                     }
-                    log.i { "🌉 KMP: Bridge: ✅ Real kmp-tor ADD_ONION response (${responses.size} lines)" }
-                    log.i { "🌉 KMP: Bridge: First line: ${responses.first().take(80)}..." }
-                    if (responses.size > 1) {
-                        log.i { "🌉 KMP: Bridge: Last line: ${responses.last()}" }
-                    }
+                    log.i { "Bridge: Real kmp-tor ADD_ONION response (${responses.size} lines)" }
                 } else {
-                    log.e { "❌ KMP: Bridge: No response from real kmp-tor control port for ADD_ONION" }
+                    log.e { "Bridge: No response from real kmp-tor control port for ADD_ONION" }
                     output.write("550 No response from Tor control port\r\n")
                     output.flush()
                 }
             } catch (e: Exception) {
-                log.e(e) { "❌ KMP: Bridge: FAILED to forward ADD_ONION to real kmp-tor: ${e.message}" }
+                log.e(e) { "Bridge: FAILED to forward ADD_ONION to real kmp-tor: ${e.message}" }
                 output.write("550 Failed to forward ADD_ONION command\r\n")
                 output.flush()
             }
         } else {
-            log.e { "❌ KMP: Bridge: CANNOT forward ADD_ONION - no real control port connection!" }
-            log.e { "❌ KMP: Bridge: realControlOutput = $realControlOutput, realControlInput = $realControlInput" }
+            log.e { "Bridge: CANNOT forward ADD_ONION - no real control port connection!" }
+            log.e { "Bridge: realControlOutput = $realControlOutput, realControlInput = $realControlInput" }
             output.write("550 No connection to Tor control port\r\n")
             output.flush()
         }
@@ -230,7 +204,6 @@ class TorBridgeCommandHandler(
     private fun forwardSimpleCommand(commandType: String, command: String, output: java.io.BufferedWriter) {
         if (realControlOutput != null && realControlInput != null) {
             try {
-                log.d { "🌉 KMP: Bridge: Forwarding $commandType to real control port: ${command.take(50)}..." }
                 realControlOutput.write("$command\r\n")
                 realControlOutput.flush()
 
@@ -238,17 +211,15 @@ class TorBridgeCommandHandler(
                 if (response != null) {
                     output.write("$response\r\n")
                     output.flush()
-                    log.d { "🌉 KMP: Bridge: Forwarded real $commandType response: $response" }
                 } else {
                     throw Exception("No response from real control port")
                 }
             } catch (e: Exception) {
-                log.w(e) { "⚠️ KMP: Bridge: Failed to forward $commandType, using fallback" }
+                log.w(e) { "Bridge: Failed to forward $commandType, using fallback" }
                 output.write("250 OK\r\n")
                 output.flush()
             }
         } else {
-            log.d { "🌉 KMP: Bridge: $commandType fallback: ${command.take(50)}..." }
             output.write("250 OK\r\n")
             output.flush()
         }
@@ -260,9 +231,6 @@ class TorBridgeCommandHandler(
         output.flush()
     }
 
-    /**
-     * Read a complete multiline response from Tor control port
-     */
     private fun readMultilineResponse(input: java.io.BufferedReader): List<String> {
         val responses = mutableListOf<String>()
 
@@ -271,13 +239,12 @@ class TorBridgeCommandHandler(
                 val line = input.readLine() ?: break
                 responses.add(line)
 
-                // Check if this is the final line of a multiline response
                 if (line.startsWith("250 ") || (!line.startsWith("250-") && !line.startsWith("250+"))) {
                     break
                 }
             }
         } catch (e: Exception) {
-            log.e(e) { "❌ KMP: Bridge: Error reading multiline response" }
+            log.e(e) { "Bridge: Error reading multiline response" }
         }
 
         return responses

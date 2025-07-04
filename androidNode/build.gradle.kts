@@ -124,6 +124,13 @@ android {
         }
     }
 
+    // doesn't work - disable splits for apk (since tor was added it makes release task get stucked)
+//    splits {
+//        abi {
+//            isEnable = false
+//        }
+//    }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
