@@ -34,9 +34,6 @@ class TorIntegrationService(
      */
     fun getContext(): Context = context
 
-    /**
-     * Initialize the Tor integration service
-     */
     fun initialize() {
         log.i { "Initializing Tor integration service..." }
 
@@ -58,10 +55,6 @@ class TorIntegrationService(
         }
     }
 
-    /**
-     * Initialize and start Tor integration for production use
-     * This method includes retry logic and error handling suitable for production
-     */
     fun initializeAndStart(
         maxRetries: Int = 3,
         retryDelayMs: Long = 5000

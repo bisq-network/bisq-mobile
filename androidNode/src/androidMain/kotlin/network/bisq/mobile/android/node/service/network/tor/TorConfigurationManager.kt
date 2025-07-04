@@ -69,14 +69,12 @@ class TorConfigurationManager(
         config.appendLine("DisableNetwork 0")
         config.appendLine()
 
-        // Circuit building optimizations
         config.appendLine("# Circuit building optimizations")
         config.appendLine("CircuitBuildTimeout 30")
         config.appendLine("LearnCircuitBuildTimeout 0")
         config.appendLine("MaxCircuitDirtiness 600")
         config.appendLine()
 
-        // Hidden service configuration for Bisq node
         if (enableHiddenService) {
             config.appendLine("# Hidden service for Bisq node")
             val hiddenServiceDir = File(torConfigDir, "hidden_service")
@@ -85,7 +83,6 @@ class TorConfigurationManager(
             config.appendLine()
         }
 
-        // Security settings
         config.appendLine("# Security settings")
         config.appendLine("AvoidDiskWrites 0")
         config.appendLine("ClientOnly 0")  // Allow hidden services

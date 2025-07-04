@@ -32,15 +32,11 @@ class TorBisqBridge(
      */
     fun configureBisqForExternalTor(socksPort: Int) {
         try {
-            log.i { "🌉 KMP: Setting up bridge control port for kmp-tor integration" }
-            log.i { "   SOCKS proxy: 127.0.0.1:$socksPort" }
-            log.i { "   Strategy: Bridge to real kmp-tor control port + hidden service management" }
-
-            // Query the real kmp-tor control port using GETINFO command
-            log.i { "🔍 KMP: Querying real kmp-tor control port using GETINFO..." }
+            log.i { "Setting up bridge control port for kmp-tor integration" }
+            log.i { "SOCKS proxy: 127.0.0.1:$socksPort" }
             torIntegrationService.queryActualControlPort { realControlPort ->
                 if (realControlPort != null) {
-                    log.i { "✅ KMP: Real kmp-tor control port detected: $realControlPort" }
+                    log.i { "Real kmp-tor control port detected: $realControlPort" }
 
                     // Start a bridge control port that forwards to real kmp-tor
                     val bridgeControlPort = startBridgeControlPort(realControlPort)
@@ -54,10 +50,8 @@ class TorBisqBridge(
                     // Update SOCKS proxy properties
                     updateSocksProxyProperties(socksPort)
 
-                    log.i { "✅ KMP: Bridge control port and external Tor config created" }
-                    log.i { "   Bridge control port: 127.0.0.1:$bridgeControlPort" }
-                    log.i { "   Real kmp-tor control port: $realControlPort" }
-                    log.i { "   Bisq2 will connect to bridge, which forwards to real kmp-tor" }
+                    log.i { "Bridge control port and external Tor config created" }
+                    log.i { "Bridge control port: 127.0.0.1:$bridgeControlPort" }
 
                     log.i { "✅ KMP: Bridge control port setup complete - Bridge: $bridgeControlPort -> Real: $realControlPort" }
                 } else {

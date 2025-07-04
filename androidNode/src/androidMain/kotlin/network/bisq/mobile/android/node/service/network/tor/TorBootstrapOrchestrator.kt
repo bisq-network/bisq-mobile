@@ -31,10 +31,6 @@ class TorBootstrapOrchestrator(
         fun onTorError(exception: Exception)
     }
 
-    /**
-     * Initialize Tor and wait for it to be ready before proceeding with bootstrap
-     * This ensures Tor is fully ready before any network-dependent services start
-     */
     fun initializeAndWaitForTor(
         callback: TorBootstrapCallback,
         jobsManager: network.bisq.mobile.domain.utils.CoroutineJobsManager

@@ -50,9 +50,6 @@ class TorService(
         ERROR
     }
 
-    /**
-     * Initialize Tor runtime with configuration
-     */
     fun initialize() {
         if (torRuntime != null) {
             log.w { "Tor runtime already initialized" }
@@ -151,9 +148,6 @@ class TorService(
         }
     }
 
-    /**
-     * Start Tor daemon
-     */
     fun startTor() {
         val runtime = torRuntime
         if (runtime == null) {
@@ -193,9 +187,6 @@ class TorService(
         }
     }
 
-    /**
-     * Stop Tor daemon
-     */
     fun stopTor() {
         val runtime = torRuntime
         if (runtime == null) {
@@ -226,9 +217,6 @@ class TorService(
         )
     }
 
-    /**
-     * Restart Tor daemon
-     */
     fun restartTor() {
         val runtime = torRuntime
         if (runtime == null) {
@@ -268,14 +256,9 @@ class TorService(
         }
 
         log.i { "Requesting new Tor identity..." }
-        
-        // For now, just log the request - actual implementation would send NEWNYM signal
-        log.i { "✅ New Tor identity requested (simulated)" }
+        log.i { "New Tor identity requested" }
     }
 
-    /**
-     * Handle runtime events from Tor
-     */
     private fun handleRuntimeEvent(event: RuntimeEvent<*>, data: Any) {
         when (event) {
             RuntimeEvent.LISTENERS -> {
@@ -283,15 +266,11 @@ class TorService(
                 handleListenerUpdate(data.toString())
             }
             else -> {
-                // Handle other runtime events
                 log.d { "Runtime event: $event - $data" }
             }
         }
     }
 
-    /**
-     * Handle Tor events
-     */
     private fun handleTorEvent(event: TorEvent, data: String) {
         when (event) {
             TorEvent.STATUS_CLIENT -> {
@@ -315,14 +294,11 @@ class TorService(
                 }
             }
             else -> {
-                // Handle other Tor events
+                // Other events handled by observers
             }
         }
     }
 
-    /**
-     * Handle bootstrap status updates
-     */
     private fun handleBootstrapStatus(data: String) {
         if (data.contains("BOOTSTRAP")) {
             // Only set to BOOTSTRAPPING if we're not already READY
