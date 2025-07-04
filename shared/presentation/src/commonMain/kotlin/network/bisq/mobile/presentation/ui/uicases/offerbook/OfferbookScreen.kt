@@ -86,7 +86,7 @@ fun OfferbookScreen() {
 
     if (showDeleteConfirmation) {
         ConfirmationDialog(
-            headline = "bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n(),
+            headline = if (presenter.isDemo()) "Delete disabled on demo mode" else "bisqEasy.offerbook.chatMessage.deleteOffer.confirmation".i18n(),
             onConfirm = { presenter.onConfirmedDeleteOffer() },
             onDismiss = { presenter.onDismissDeleteOffer() }
         )

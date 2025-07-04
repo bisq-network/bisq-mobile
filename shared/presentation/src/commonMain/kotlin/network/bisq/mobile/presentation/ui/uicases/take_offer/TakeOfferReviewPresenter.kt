@@ -116,12 +116,16 @@ class TakeOfferReviewPresenter(
 
         launchUI {
             try {
-                // takeOffer use withContext(IODispatcher) for calling the service
-                val (statusFlow, errorFlow) = takeOfferPresenter.takeOffer()
+                if (isDemo()) {
+                    showSnackbar("Take offer is disabled in demo mode")
+                } else {
+                    // takeOffer use withContext(IODispatcher) for calling the service
+                    val (statusFlow, errorFlow) = takeOfferPresenter.takeOffer()
 
-                // The stateFlow objects are set in the ioScope in the service. Thus we need to map them to the presenterScope.
-                collectUI(statusFlow) { takeOfferStatus.value = it }
-                collectUI(errorFlow) { takeOfferErrorMessage.value = it }
+                    // The stateFlow objects are set in the ioScope in the service. Thus we need to map them to the presenterScope.
+                    collectUI(statusFlow) { takeOfferStatus.value = it }
+                    collectUI(errorFlow) { takeOfferErrorMessage.value = it }
+                }
             } catch (e: Exception) {
                 log.e("Take offer failed", e)
                 takeOfferErrorMessage.value =

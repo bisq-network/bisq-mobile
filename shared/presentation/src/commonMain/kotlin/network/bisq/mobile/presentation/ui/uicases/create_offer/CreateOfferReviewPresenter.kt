@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
+import kotlinx.coroutines.delay
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy

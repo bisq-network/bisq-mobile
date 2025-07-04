@@ -388,11 +388,11 @@ class WebSocketClient(
     // Define fake data for each topic
     private fun getFakePayloadForTopic(topic: Topic): String? {
         return when (topic) {
-            Topic.MARKET_PRICE -> Json.encodeToString(FakeSubscriptionData.marketPrice)
-            Topic.NUM_OFFERS -> Json.encodeToString(FakeSubscriptionData.numOffers)
-            Topic.OFFERS -> Json.encodeToString(FakeSubscriptionData.offers)
-//            Topic.TRADES -> Json.encodeToString(FakeData.trades)
-//            Topic.TRADE_PROPERTIES -> Json.encodeToString(FakeData.tradeProps)
+            Topic.MARKET_PRICE -> json.encodeToString(FakeSubscriptionData.marketPrice)
+            Topic.NUM_OFFERS -> json.encodeToString(FakeSubscriptionData.numOffers)
+            Topic.OFFERS -> json.encodeToString(FakeSubscriptionData.offers)
+//            Topic.TRADES -> json.encodeToString(FakeData.trades)
+//            Topic.TRADE_PROPERTIES -> json.encodeToString(FakeData.tradeProps)
             else -> null // Default empty response
         }
     }

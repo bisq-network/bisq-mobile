@@ -68,8 +68,9 @@ object PriceUtil {
         if (priceSpec is FixPriceSpecVO) {
             val fixPrice: PriceQuoteVO = priceSpec.priceQuote
             val marketPriceItem = marketPriceService.findMarketPriceItem(market)
-            val marketPrice = marketPriceItem!!.priceQuote
-            percentage = getPercentageToMarketPrice(marketPrice, fixPrice)
+            val marketPrice = marketPriceItem?.priceQuote
+            // for demo mode
+            percentage = if (marketPrice == null) 0.0 else getPercentageToMarketPrice(marketPrice, fixPrice)
         } else if (priceSpec is MarketPriceSpecVO) {
             percentage = 0.0
         } else if (priceSpec is FloatPriceSpecVO) {
