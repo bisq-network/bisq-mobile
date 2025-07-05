@@ -18,6 +18,9 @@ replay_pid*
 xcuserdata
 local.properties
 
+# bisq2 sym link
+bisq2
+
 # for release
 credentials
 

@@ -1,12 +1,12 @@
 package network.bisq.mobile.android.node.service.offers
 
-import bisq.bisq_easy.BisqEasyOfferbookMessageService
+
 import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannel
 import bisq.common.observable.Pin
 import network.bisq.mobile.domain.utils.Logging
 
 class NumOffersObserver(
-    private val bisqEasyOfferbookMessageService: BisqEasyOfferbookMessageService,
+    // TODO restore usage of bisqEasyOfferbookMessageService for v2.1.8
     private val channel: BisqEasyOfferbookChannel,
     val setNumOffers: (Int) -> Unit
 ) : Logging {
@@ -33,7 +33,11 @@ class NumOffersObserver(
     }
 
     private fun updateNumOffers() {
-        val count = bisqEasyOfferbookMessageService.getOffers(channel).count().toInt()
+//        TODO restore for core version v2.1.8
+//        val count = bisqEasyOfferbookMessageService.getOffers(channel).count().toInt()
+        val count = channel.chatMessages.stream()
+            .filter { it.hasBisqEasyOffer() }
+            .count().toInt()
         log.d { "Updated num offers for ${channel.market.marketCodes}: $count" }
         setNumOffers(count)
     }

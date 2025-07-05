@@ -31,7 +31,6 @@ import bisq.common.util.ExceptionUtil
 import bisq.contract.ContractService
 import bisq.identity.IdentityService
 import bisq.network.NetworkService
-import bisq.network.NetworkServiceConfig
 import bisq.network.p2p.ServiceNode
 import bisq.offer.OfferService
 import bisq.presentation.notifications.SystemNotificationService
@@ -141,11 +140,17 @@ class AndroidApplicationService(
     val securityService =
         SecurityService(persistenceService, SecurityService.Config.from(getConfig("security")))
 
+//    val networkServiceConfig = NetworkServiceConfig.from(
+//        config.baseDir,
+//        getConfig("network")
+//    )
+    val networkServiceConfig = MobileNetworkServiceConfig.from(
+        config.baseDir,
+        getConfig("network")
+    )
+
     val networkService = NetworkService(
-        NetworkServiceConfig.from(
-            config.baseDir,
-            getConfig("network")
-        ),
+        networkServiceConfig,
         persistenceService,
         securityService.keyBundleService,
         securityService.hashCashProofOfWorkService,
@@ -189,6 +194,15 @@ class AndroidApplicationService(
     val languageRepository: LanguageRepository
 
     init {
+        // Log system properties for Tor configuration debugging
+        log.i { "🔍 AndroidApplicationService: Checking system properties for Tor configuration:" }
+        log.i { "   bisq.useExternalTor = ${System.getProperty("bisq.useExternalTor")}" }
+        log.i { "   bisq.network.useExternalTor = ${System.getProperty("bisq.network.useExternalTor")}" }
+        log.i { "   tor.external = ${System.getProperty("tor.external")}" }
+        log.i { "   bisq.torSocksHost = ${System.getProperty("bisq.torSocksHost")}" }
+        log.i { "   bisq.torSocksPort = ${System.getProperty("bisq.torSocksPort")}" }
+        log.i { "   bisq.network.transport = ${System.getProperty("bisq.network.transport")}" }
+
         chatService = ChatService(
             persistenceService,
             networkService,
@@ -208,7 +222,8 @@ class AndroidApplicationService(
 
 
         tradeService = TradeService(
-            TradeService.Config.from(getConfig("trade")),
+//            TODO: this is part of Bisq 2.1.8
+//            TradeService.Config.from(getConfig("trade")),
             networkService,
             identityService,
             persistenceService,

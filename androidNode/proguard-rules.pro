@@ -74,6 +74,21 @@
 # Keep all Tor-related classes
 -keep class org.torproject.** { *; }
 
+# Preserve all classes and methods in the kmp-tor package
+#-keep class io.matthewnelson.kmp.tor.** { *; }
+
+# Preserve classes with JNI annotations
+#-keepclasseswithmembers class * {
+#    @android.annotation.Keep *;
+#}
+#
+## Keep kmp-tor resource loading
+#-keep class io.matthewnelson.kmp.tor.resource.exec.** { *; }
+#-keep class io.matthewnelson.kmp.tor.resource.noexec.** { *; }
+#
+## Prevent obfuscation of kmp-tor internal classes
+#-dontwarn io.matthewnelson.kmp.tor.**
+
 -dontwarn com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector
 -dontwarn com.sun.jdi.VirtualMachine
 -dontwarn com.sun.jdi.event.Event
@@ -194,6 +209,8 @@
 -dontwarn org.apache.log4j.Level
 -dontwarn org.apache.log4j.Logger
 -dontwarn org.apache.log4j.Priority
+-dontwarn org.apache.commons.logging.impl.Log4JLogger
+-keep class org.apache.commons.logging.impl.Log4JLogger { *; }
 -dontwarn org.apache.maven.AbstractMavenLifecycleParticipant
 -dontwarn org.apache.maven.plugin.AbstractMojo
 -dontwarn org.apache.maven.plugins.annotations.LifecyclePhase
@@ -277,8 +294,8 @@
     @androidx.compose.runtime.Composable *;
 }
 
-# Keep Compose compiler metadata
--keepattributes *Annotation*
+# Preserve classes used in reflection (Compose & tor)
+-keepattributes *Annotation*, InnerClasses, Signature
 
 # Keep Jetpack Compose runtime classes
 -keep class androidx.compose.** { *; }

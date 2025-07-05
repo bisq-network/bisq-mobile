@@ -22,6 +22,10 @@ import network.bisq.mobile.android.node.service.reputation.NodeReputationService
 import network.bisq.mobile.android.node.service.settings.NodeSettingsServiceFacade
 import network.bisq.mobile.android.node.service.trades.NodeTradesServiceFacade
 import network.bisq.mobile.android.node.service.user_profile.NodeUserProfileServiceFacade
+import network.bisq.mobile.android.node.service.network.tor.TorIntegrationService
+import network.bisq.mobile.android.node.service.network.tor.BisqTorNetworkBridge
+import network.bisq.mobile.android.node.service.network.tor.TorBootstrapOrchestrator
+import network.bisq.mobile.android.node.service.network.tor.TorBisqBridge
 import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -62,7 +66,14 @@ val androidNodeModule = module {
 
     single { AndroidApplicationService.Provider() }
 
-    single<ApplicationBootstrapFacade> { NodeApplicationBootstrapFacade(get(), get()) }
+    single<ApplicationBootstrapFacade> {
+        NodeApplicationBootstrapFacade(
+            get<AndroidApplicationService.Provider>(),
+            get<ConnectivityService>(),
+            get<TorBootstrapOrchestrator>(),
+            get<TorBisqBridge>()
+        )
+    }
 
     single<MarketPriceServiceFacade> { NodeMarketPriceServiceFacade(get(), get()) }
 
@@ -87,6 +98,19 @@ val androidNodeModule = module {
     single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
 
     single { NodeConnectivityService(get()) } bind ConnectivityService::class
+
+    single<TorIntegrationService> {
+        TorIntegrationService(androidContext(), androidContext().filesDir)
+    }
+    single<BisqTorNetworkBridge> {
+        BisqTorNetworkBridge(get(), get())
+    }
+    single<TorBootstrapOrchestrator> {
+        TorBootstrapOrchestrator(get())
+    }
+    single<TorBisqBridge> {
+        TorBisqBridge(get())
+    }
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 

@@ -1,5 +1,6 @@
 package network.bisq.mobile.android.node.service.reputation
 
+import bisq.common.network.TransportType
 import bisq.common.observable.Pin
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,7 +44,7 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
         val reputation = reputationByUserProfileId.value[userProfileId]
         return when {
-            BuildNodeConfig.IS_DEBUG -> reputationDevStub(userProfileId)
+            BuildNodeConfig.IS_DEBUG && !isExclusivelyTorNetwork() -> reputationDevStub(userProfileId)
             reputation == null -> Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not cached yet"))
             else -> Result.success(reputation)
         }
@@ -82,6 +83,26 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
                 log.w { "Dev stuff for $userProfileId not setup, returning current network reputation" }
                 Result.success(reputation)
             }
+        }
+    }
+
+    /**
+     * Check if the current network is using Tor transport
+     * TODO this could be uplifted to the ServiceFacade base class
+     */
+    private fun isExclusivelyTorNetwork(): Boolean {
+        return try {
+            val applicationServiceInstance = applicationService.applicationService
+            val networkService = applicationServiceInstance.networkService
+            val supportedTransportTypes = networkService.supportedTransportTypes
+            val torSupported = supportedTransportTypes.size == 1 && supportedTransportTypes.contains(TransportType.TOR)
+            log.d { "🔍 Reputation: Checking if network is Tor" }
+            log.d { "   Supported transport types: $supportedTransportTypes" }
+            log.d { "   Tor network: $torSupported" }
+            torSupported
+        } catch (e: Exception) {
+            log.w(e) { "⚠️ Reputation: Could not check Tor network status, defaulting to false" }
+            false // Default to false (non-Tor) to allow dev stub if check fails
         }
     }
 

@@ -1,4 +1,10 @@
 [versions]
+
+bisq-core = "2.1.7"
+bisq-core-commit = "d73864d095f6c1f143c853905d45bb7d297278c1"
+# API version is usually same as bisq-cor but for more control we keep it separated
+#bisq-api = "2.1.7"
+
 agp = "8.5.0"
 android-compileSdk = "34"
 android-targetSdk = "34"
@@ -24,9 +30,6 @@ androidx-test-compose-ver = "1.6.8"
 androidx-multidex = "2.0.1"
 atomicfu = "0.26.1"
 bignum-lib= "0.3.10"
-bisq-core = "2.1.7"
-# API version is usually same as bisq-cor but for more control we keep it separated
-bisq-api = "2.1.7"
 coilCompose = "3.0.3"
 compose-plugin = "1.7.0"
 junit = "4.13.2"
@@ -74,6 +77,10 @@ lombok-lib = { strictly = '1.18.34' }
 typesafe-config-lib = { strictly = '1.4.3' }
 
 multiplatform-settings = "1.2.0"
+
+# kmp-tor for embedded Tor support
+kmp-tor = "2.4.0"
+kmp-tor-resource = "408.16.4"
 
 [libraries]
 atomicfu = { module = "org.jetbrains.kotlinx:atomicfu", version.ref = "atomicfu" }
@@ -200,6 +207,14 @@ koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
 # mp-settings
 multiplatform-settings = { module = "com.russhwolf:multiplatform-settings-no-arg", version.ref = "multiplatform-settings" }
 multiplatform-settings-test = { module = "com.russhwolf:multiplatform-settings-test", version.ref = "multiplatform-settings" }
+
+# kmp-tor
+kmp-tor-runtime = { module = "io.matthewnelson.kmp-tor:runtime", version.ref = "kmp-tor" }
+kmp-tor-resource-exec = { module = "io.matthewnelson.kmp-tor:resource-exec-tor", version.ref = "kmp-tor-resource" }
+kmp-tor-resource-noexec = { module = "io.matthewnelson.kmp-tor:resource-noexec-tor", version.ref = "kmp-tor-resource" }
+# Android Native compilation dependencies
+kmp-tor-resource-compilation-exec = { module = "io.matthewnelson.kmp-tor:resource-compilation-exec-tor", version.ref = "kmp-tor-resource" }
+kmp-tor-resource-compilation-lib = { module = "io.matthewnelson.kmp-tor:resource-compilation-lib-tor", version.ref = "kmp-tor-resource" }
 
 [bundles]
 #glassfish-jersey = ['glassfish-jersey-jdk-http', 'glassfish-jersey-json-jackson', 'glassfish-jersey-inject-hk2', 'glassfish-jaxb-runtime']

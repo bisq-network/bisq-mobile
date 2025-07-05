@@ -5,6 +5,8 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.android.node.MainActivity
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
+import network.bisq.mobile.android.node.service.bootstrap.ApplicationServiceInitializationCallback
+import network.bisq.mobile.android.node.service.bootstrap.NodeApplicationBootstrapFacade
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -45,7 +47,7 @@ class NodeMainPresenter(
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
-) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, tradeReadStateRepository, urlLauncher) {
+) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, tradeReadStateRepository, urlLauncher), ApplicationServiceInitializationCallback {
 
     private var applicationServiceCreated = false
 
@@ -63,6 +65,7 @@ class NodeMainPresenter(
     }
 
     private fun initNodeServices() {
+        val nodePresenter = this
         launchIO {
             runCatching {
                 if (applicationServiceCreated) {
@@ -80,19 +83,16 @@ class NodeMainPresenter(
                         )
                     provider.applicationService = applicationService
 
+                    // Set up the callback before activating the bootstrap facade
+                    (applicationBootstrapFacade as NodeApplicationBootstrapFacade).setInitializationCallback(nodePresenter)
+
                     applicationBootstrapFacade.activate()
                     settingsServiceFacade.activate()
-                    log.i { "Start initializing applicationService" }
-                    applicationService.initialize()
-                        .whenComplete { _: Boolean?, throwable: Throwable? ->
-                            if (throwable == null) {
-                                log.i { "ApplicationService initialization completed" }
-                                applicationBootstrapFacade.deactivate()
-                                activateServices(skipSettings = true)
-                            } else {
-                                log.e("Initializing applicationService failed", throwable)
-                            }
-                        }
+                    log.i { "Bootstrap facade activated - it will handle application service initialization after Tor is ready" }
+
+                    // Note: applicationService.initialize() is now called by the bootstrap facade
+                    // after Tor is properly configured. The bootstrap facade will handle the
+                    // completion and call activateServices when ready.
                     applicationServiceCreated = true
                     connectivityService.startMonitoring()
                     log.d { "Application service created, monitoring connectivity.." }
@@ -147,6 +147,23 @@ class NodeMainPresenter(
         } catch (e: Exception) {
             log.e("Error stopping persistent services", e)
         }
+    }
+
+    /**
+     * Called by the bootstrap facade when application service initialization is complete
+     */
+    override fun onApplicationServiceInitialized() {
+        log.i { "ApplicationService initialization completed - activating services" }
+        applicationBootstrapFacade.deactivate()
+        activateServices(skipSettings = true)
+    }
+
+    /**
+     * Called by the bootstrap facade when application service initialization fails
+     */
+    override fun onApplicationServiceInitializationFailed(throwable: Throwable) {
+        log.e("Initializing applicationService failed", throwable)
+        // TODO: Show error to user
     }
 
     private fun activateServices(skipSettings: Boolean = false) {
