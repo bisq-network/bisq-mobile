@@ -81,7 +81,8 @@ jobs:
         env:
           CI: true
         run: |
-          ./gradlew clean assembleDebug --info
+#          refresh dependencies is important here because of the jars deps
+          ./gradlew clean packageDebug -x androidNode:packageDebug androidNode:bundleDebug --refresh-dependencies --info
           ./gradlew test
           ./gradlew androidNode:testDebugUnitTest androidNode:connectedDebugAndroidTest
 
