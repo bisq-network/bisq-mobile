@@ -174,7 +174,7 @@ object MobileNetworkServiceConfig: Logging {
                     if (torList.isNotEmpty()) {
                         val firstEntry = torList[0]
                         if (firstEntry !is com.typesafe.config.ConfigObject) {
-                            log.w("Invalid tor config format, expected ConfigObject but got ${firstEntry.javaClass}")
+                            log.w { "Invalid tor config format, expected ConfigObject but got ${firstEntry.javaClass}" }
                             return emptySet()
                         }
                         val torConfig = firstEntry.toConfig()
@@ -198,7 +198,11 @@ object MobileNetworkServiceConfig: Logging {
                 if (config.hasPath("i2p")) {
                     val i2pList = config.getList("i2p")
                     if (i2pList.isNotEmpty()) {
-                        val firstEntry = i2pList[0] as com.typesafe.config.ConfigObject
+                        val firstEntry = i2pList[0]
+                        if (firstEntry !is com.typesafe.config.ConfigObject) {
+                            log.w("Invalid i2p config format, expected ConfigObject but got ${firstEntry.javaClass}")
+                            return emptySet()
+                        }
                         val i2pConfig = firstEntry.toConfig()
                         if (i2pConfig.hasPath("external")) {
                             i2pConfig.getStringList("external").stream()
@@ -241,6 +245,7 @@ object MobileNetworkServiceConfig: Logging {
                                     emptySet()
                                 }
                             } catch (e: ClassCastException) {
+                                log.w(e) { "Failed to parse CLEAR config as ConfigObject, treating as empty" }
                                 // Fallback: treat as empty if we can't parse
                                 emptySet()
                             }

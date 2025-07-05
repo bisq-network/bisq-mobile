@@ -17,6 +17,10 @@ class TorBisqBridge(
     private val torIntegrationService: TorIntegrationService
 ) : Logging {
 
+    companion object {
+        private const val DEFAULT_SOCKET_TIMEOUT = 180000L
+    }
+
     private val torBootstrapScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private lateinit var serverSocket: ServerSocket
 
@@ -241,7 +245,7 @@ class TorBisqBridge(
 
         try {
             log.d { "Bridge control: Starting connection handler for ${socket.remoteSocketAddress}" }
-            socket.soTimeout = 300000
+            socket.soTimeout = DEFAULT_SOCKET_TIMEOUT.toInt()
             socket.keepAlive = true
             val input = socket.getInputStream().bufferedReader()
             val output = socket.getOutputStream().bufferedWriter()

@@ -44,7 +44,7 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
         val reputation = reputationByUserProfileId.value[userProfileId]
         return when {
-            BuildNodeConfig.IS_DEBUG && !isTorNetwork() -> reputationDevStub(userProfileId)
+            BuildNodeConfig.IS_DEBUG && !isExclusivelyTorNetwork() -> reputationDevStub(userProfileId)
             reputation == null -> Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not cached yet"))
             else -> Result.success(reputation)
         }
@@ -90,7 +90,7 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
      * Check if the current network is using Tor transport
      * TODO this could be uplifted to the ServiceFacade base class
      */
-    private fun isTorNetwork(): Boolean {
+    private fun isExclusivelyTorNetwork(): Boolean {
         return try {
             val applicationServiceInstance = applicationService.applicationService
             val networkService = applicationServiceInstance.networkService

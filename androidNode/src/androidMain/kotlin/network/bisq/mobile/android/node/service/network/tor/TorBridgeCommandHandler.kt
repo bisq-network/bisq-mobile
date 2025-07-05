@@ -216,6 +216,7 @@ class TorBridgeCommandHandler(
                 }
             } catch (e: Exception) {
                 log.w(e) { "Bridge: Failed to forward $commandType, using fallback" }
+                log.w { "Bridge: Command was: ${command.take(100)}" }
                 output.write("250 OK\r\n")
                 output.flush()
             }

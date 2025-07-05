@@ -1,22 +1,25 @@
 package network.bisq.mobile.android.node.service.network.tor
 
 import android.content.Context
+import io.matthewnelson.kmp.tor.resource.exec.tor.ResourceLoaderTorExec
 import io.matthewnelson.kmp.tor.runtime.Action
 import io.matthewnelson.kmp.tor.runtime.RuntimeEvent
 import io.matthewnelson.kmp.tor.runtime.TorRuntime
 import io.matthewnelson.kmp.tor.runtime.core.OnEvent
 import io.matthewnelson.kmp.tor.runtime.core.OnFailure
 import io.matthewnelson.kmp.tor.runtime.core.OnSuccess
+import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import io.matthewnelson.kmp.tor.runtime.core.ctrl.TorCmd
-import io.matthewnelson.kmp.tor.runtime.core.TorEvent
-import io.matthewnelson.kmp.tor.resource.exec.tor.ResourceLoaderTorExec
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.service.ServiceFacade
 import java.io.File
+import java.net.InetSocketAddress
 
 /**
  * Service for managing embedded Tor instance in Bisq Mobile Android Node
@@ -33,6 +36,11 @@ class TorService(
 
     companion object {
         private const val DEFAULT_BOOTSTRAP_TIMEOUT = 30000L
+        private const val DEFAULT_DELAY = 2000L
+        private const val PORT_QUERY_DELAY = 3000L
+        private const val SOCKET_CONNECT_TIMEOUT = 1000L
+
+        private val FALLBACK_SOCKS_PORTS = listOf(9050, 9051, 9052, 9053, 9054)
     }
 
     private var torRuntime: TorRuntime? = null
@@ -124,7 +132,7 @@ class TorService(
             log.i { "Tor runtime initialized successfully" }
 
             launchIO {
-                kotlinx.coroutines.delay(2000)
+                delay(DEFAULT_DELAY)
                 log.i { "Checking Tor state after initialization: ${_torState.value}" }
             }
 
@@ -375,7 +383,7 @@ class TorService(
                 log.w { "⚠️ Cannot force READY state - no SOCKS port available" }
                 queryActualSocksPort()
                 launchIO {
-                    delay(2000)
+                    delay(DEFAULT_DELAY)
                     if (_socksPort.value != null) {
                         log.i { "🔧 Forcing Tor state to READY after port query: ${_socksPort.value}" }
                         _torState.value = TorState.READY
@@ -398,7 +406,7 @@ class TorService(
         }
 
         launchIO {
-            kotlinx.coroutines.delay(3000)
+            delay(PORT_QUERY_DELAY)
 
             log.i { "🔍 Querying actual SOCKS port from Tor using GETINFO command..." }
 
@@ -472,14 +480,14 @@ class TorService(
     private suspend fun findActualSocksPort(): Int? {
         log.w { "⚠️ Using fallback port detection - this should not be the primary method" }
 
-        val portsToTest = listOf(9050, 9051, 9052, 9053, 9054)
+        val portsToTest = FALLBACK_SOCKS_PORTS
 
         for (port in portsToTest) {
             try {
                 log.d { "🔍 Testing SOCKS connectivity on port $port..." }
 
                 val socket = java.net.Socket()
-                socket.connect(java.net.InetSocketAddress("127.0.0.1", port), 1000)
+                socket.connect(java.net.InetSocketAddress("127.0.0.1", port), SOCKET_CONNECT_TIMEOUT.toInt())
                 socket.close()
 
                 log.i { "✅ SOCKS port $port is accessible" }
@@ -498,9 +506,12 @@ class TorService(
         try {
             log.i { "🔍 Testing SOCKS connectivity on configured port $port..." }
 
-            val socket = java.net.Socket()
-            socket.connect(java.net.InetSocketAddress("127.0.0.1", port), 2000)
-            socket.close()
+            java.net.Socket().let {
+                withContext(Dispatchers.IO) {
+                    it.connect(InetSocketAddress("127.0.0.1", port), DEFAULT_DELAY.toInt())
+                    it.close()
+                }
+            }
 
             log.i { "✅ SOCKS proxy is accessible on port $port" }
 

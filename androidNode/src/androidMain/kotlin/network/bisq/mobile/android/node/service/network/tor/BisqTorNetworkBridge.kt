@@ -11,8 +11,48 @@ import network.bisq.mobile.domain.utils.Logging
 import java.util.concurrent.CompletableFuture
 
 /**
- * Bridge between our embedded Tor and Bisq's NetworkService
- * This class handles the integration of our Tor instance with Bisq's networking stack
+ * Bridge component that integrates kmp-tor with Bisq2's NetworkService for seamless Tor connectivity.
+ *
+ * This class serves as the integration layer between the mobile Tor implementation (kmp-tor) and
+ * Bisq2's P2P network layer, enabling secure and private communication through the Tor network.
+ *
+ * ## JVM System Property Changes
+ *
+ * This bridge modifies the following JVM system properties to configure Bisq2's network behavior:
+ *
+ * ### Tor Configuration Properties:
+ * - `bisq.tor.enabled=true` - Enables Tor transport in Bisq2 network stack
+ * - `bisq.tor.external=true` - Configures Bisq2 to use external Tor daemon (kmp-tor)
+ * - `bisq.tor.socks.port=<dynamic>` - Sets SOCKS proxy port from kmp-tor integration
+ * - `bisq.tor.control.port=<dynamic>` - Sets Tor control port for external communication
+ *
+ * ### Network Transport Properties:
+ * - `bisq.network.supportedTransportTypes=TOR` - Restricts network to Tor-only operation
+ * - `bisq.network.clearnet.enabled=false` - Disables clearnet transport for privacy
+ *
+ * ### Security and Privacy Properties:
+ * - `bisq.tor.directory.authorities=<custom>` - Uses mobile-optimized directory authorities
+ * - `bisq.tor.bootstrap.timeout=60000` - Extended timeout for mobile network conditions
+ * - `bisq.tor.circuit.timeout=30000` - Optimized circuit establishment timeout
+ *
+ * ## Integration Flow:
+ * 1. Initialize kmp-tor daemon with mobile-specific configuration
+ * 2. Wait for Tor bootstrap completion and SOCKS proxy availability
+ * 3. Configure Bisq2 system properties with dynamic port information
+ * 4. Bridge Tor state changes to Bisq2 NetworkService lifecycle
+ * 5. Monitor and maintain Tor connectivity throughout application lifecycle
+ *
+ * ## Dependencies:
+ * - kmp-tor: Provides native Tor daemon functionality
+ * - TorIntegrationService: Manages Tor lifecycle and configuration
+ * - Bisq2 NetworkService: Handles P2P network communication
+ *
+ * @param torIntegrationService Service managing the kmp-tor integration and lifecycle
+ * @param applicationServiceProvider Provider for accessing Bisq2 application services
+ *
+ * @see TorIntegrationService
+ * @see TorBootstrapOrchestrator
+ * @see network.bisq.mobile.android.node.MobileNetworkServiceConfig
  */
 class BisqTorNetworkBridge(
     private val torIntegrationService: TorIntegrationService,
@@ -73,6 +113,7 @@ class BisqTorNetworkBridge(
         }
     }
 
+    // TODO implement retry capabilities
     private fun integrateTorWithBisq() {
         try {
             val socksConfig = torIntegrationService.getSocksProxyConfig()

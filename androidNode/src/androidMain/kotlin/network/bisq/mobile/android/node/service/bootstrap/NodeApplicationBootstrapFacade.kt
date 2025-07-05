@@ -29,6 +29,10 @@ class NodeApplicationBootstrapFacade(
     private val torBisqBridge: TorBisqBridge
 ) : ApplicationBootstrapFacade(), TorBootstrapOrchestrator.TorBootstrapCallback {
 
+    companion object {
+        private const val DEFAULT_DELAY = 500L
+    }
+
     private val applicationServiceState: Observable<State> by lazy { applicationService.state.get() }
     private var applicationServiceStatePin: Pin? = null
     private var bootstrapSuccessful = false
@@ -57,8 +61,8 @@ class NodeApplicationBootstrapFacade(
         log.w { "Bootstrap: Tor timeout - proceeding with application bootstrap anyway" }
         setState("Tor timeout - Starting Bisq...")
         setProgress(0.25f)
-        jobsManager.launchIO {
-            delay(2000)
+        launchIO {
+            delay(DEFAULT_DELAY)
             proceedWithApplicationBootstrap()
         }
     }
@@ -68,8 +72,8 @@ class NodeApplicationBootstrapFacade(
         log.w { "Bootstrap: Proceeding without Tor - users can enable it in settings" }
         setState("Tor failed - Starting Bisq...")
         setProgress(0.25f)
-        jobsManager.launchIO {
-            delay(2000)
+        launchIO {
+            delay(DEFAULT_DELAY)
             proceedWithApplicationBootstrap()
         }
     }
@@ -114,8 +118,6 @@ class NodeApplicationBootstrapFacade(
         log.i { "Bootstrap: Starting Bisq application services..." }
         onInitializeAppState()
         setupApplicationStateObserver()
-
-
         triggerApplicationServiceInitialization()
     }
 

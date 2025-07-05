@@ -17,75 +17,28 @@ class TorConfigurationManager(
         const val DEFAULT_SOCKS_PORT = 9050
         const val DEFAULT_CONTROL_PORT = 9051
         const val TOR_CONFIG_FILE = "torrc"
+        const val TOR_CIRCUIT_TIMEOUT = 60
     }
 
     private val torConfigDir = File(baseDir, "tor")
     private val torConfigFile = File(torConfigDir, TOR_CONFIG_FILE)
 
-    fun generateTorConfig(
-        socksPort: Int = DEFAULT_SOCKS_PORT,
-        controlPort: Int = DEFAULT_CONTROL_PORT,
-        enableHiddenService: Boolean = true,
-        hiddenServicePort: Int = 8000
-    ): String {
-        val config = StringBuilder()
-
-        config.appendLine("# Bisq Mobile Tor Configuration")
-        config.appendLine("# Generated automatically - do not edit manually")
-        config.appendLine()
-
-        config.appendLine("DataDirectory ${torConfigDir.absolutePath}")
-        config.appendLine()
-
-        config.appendLine("# SOCKS proxy configuration")
-        config.appendLine("SocksPort $socksPort")
-        config.appendLine("SocksPolicy accept *")
-        config.appendLine()
-
-        config.appendLine("# Control port configuration")
-        config.appendLine("ControlPort $controlPort")
-        config.appendLine("CookieAuthentication 1")
-        config.appendLine()
-
-        config.appendLine("# Logging configuration")
-        config.appendLine("Log notice file ${File(torConfigDir, "tor.log").absolutePath}")
-        config.appendLine("Log notice stdout")
-        config.appendLine()
-
-        config.appendLine("# Mobile optimizations")
-        config.appendLine("ConnLimit 1000")
-        config.appendLine("MaxMemInQueues 512 MB")
-        config.appendLine("DormantOnFirstStartup 0")
-        config.appendLine("DisableNetwork 0")
-        config.appendLine()
-
-        config.appendLine("# Circuit building optimizations")
-        config.appendLine("CircuitBuildTimeout 30")
-        config.appendLine("LearnCircuitBuildTimeout 0")
-        config.appendLine("MaxCircuitDirtiness 600")
-        config.appendLine()
-
-        if (enableHiddenService) {
-            config.appendLine("# Hidden service for Bisq node")
-            val hiddenServiceDir = File(torConfigDir, "hidden_service")
-            config.appendLine("HiddenServiceDir ${hiddenServiceDir.absolutePath}")
-            config.appendLine("HiddenServicePort $hiddenServicePort 127.0.0.1:$hiddenServicePort")
-            config.appendLine()
+    fun readTorConfig(): String? {
+        return try {
+            if (torConfigFile.exists()) {
+                torConfigFile.readText()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to read Tor configuration" }
+            null
         }
-
-        config.appendLine("# Security settings")
-        config.appendLine("AvoidDiskWrites 0")
-        config.appendLine("ClientOnly 0")
-        config.appendLine()
-
-        config.appendLine("# Network settings")
-        config.appendLine("EnforceDistinctSubnets 1")
-        config.appendLine("StrictNodes 0")
-        config.appendLine()
-
-        return config.toString()
     }
 
+    /**
+     * @throws Exception if writing fails
+     */
     fun writeTorConfig(config: String) {
         try {
             torConfigDir.mkdirs()
@@ -100,19 +53,6 @@ class TorConfigurationManager(
     fun getTorConfigPath(): String = torConfigFile.absolutePath
 
     fun hasTorConfig(): Boolean = torConfigFile.exists()
-
-    fun readTorConfig(): String? {
-        return try {
-            if (torConfigFile.exists()) {
-                torConfigFile.readText()
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            log.e(e) { "Failed to read Tor configuration" }
-            null
-        }
-    }
 
     fun updateBisqConfigForTor(socksPort: Int, enableTor: Boolean = true) {
         log.i { "Updating Bisq configuration for Tor - SOCKS port: $socksPort, enabled: $enableTor" }
@@ -143,22 +83,6 @@ class TorConfigurationManager(
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to read hidden service hostname" }
-            null
-        }
-    }
-
-    fun getHiddenServicePrivateKey(): String? {
-        val hiddenServiceDir = File(torConfigDir, "hidden_service")
-        val privateKeyFile = File(hiddenServiceDir, "hs_ed25519_secret_key")
-
-        return try {
-            if (privateKeyFile.exists()) {
-                privateKeyFile.readText()
-            } else {
-                null
-            }
-        } catch (e: Exception) {
-            log.e(e) { "Failed to read hidden service private key" }
             null
         }
     }
@@ -200,5 +124,69 @@ class TorConfigurationManager(
             enableHiddenService = true,
             hiddenServicePort = 8000
         )
+    }
+
+    private fun generateTorConfig(
+        socksPort: Int = DEFAULT_SOCKS_PORT,
+        controlPort: Int = DEFAULT_CONTROL_PORT,
+        enableHiddenService: Boolean = true,
+        hiddenServicePort: Int = 8000
+    ): String {
+        val config = StringBuilder()
+
+        config.appendLine("# Bisq Mobile Tor Configuration")
+        config.appendLine("# Generated automatically - do not edit manually")
+        config.appendLine()
+
+        config.appendLine("DataDirectory ${torConfigDir.absolutePath}")
+        config.appendLine()
+
+        config.appendLine("# SOCKS proxy configuration")
+        config.appendLine("SocksPort $socksPort")
+        config.appendLine("SocksPolicy accept *")
+        config.appendLine()
+
+        config.appendLine("# Control port configuration")
+        config.appendLine("ControlPort $controlPort")
+        config.appendLine("CookieAuthentication 1")
+        config.appendLine()
+
+        config.appendLine("# Logging configuration")
+        config.appendLine("Log notice file ${File(torConfigDir, "tor.log").absolutePath}")
+        config.appendLine("Log notice stdout")
+        config.appendLine()
+
+        config.appendLine("# Mobile optimizations")
+        config.appendLine("ConnLimit 1000")
+        config.appendLine("MaxMemInQueues 512 MB")
+        config.appendLine("DormantOnFirstStartup 0")
+        config.appendLine("DisableNetwork 0")
+        config.appendLine()
+
+        config.appendLine("# Circuit building optimizations")
+        config.appendLine("CircuitBuildTimeout $TOR_CIRCUIT_TIMEOUT")
+        config.appendLine("LearnCircuitBuildTimeout 0")
+        config.appendLine("MaxCircuitDirtiness 600")
+        config.appendLine()
+
+        if (enableHiddenService) {
+            config.appendLine("# Hidden service for Bisq node")
+            val hiddenServiceDir = File(torConfigDir, "hidden_service")
+            config.appendLine("HiddenServiceDir ${hiddenServiceDir.absolutePath}")
+            config.appendLine("HiddenServicePort $hiddenServicePort 127.0.0.1:$hiddenServicePort")
+            config.appendLine()
+        }
+
+        config.appendLine("# Security settings")
+        config.appendLine("AvoidDiskWrites 0")
+        config.appendLine("ClientOnly 0")
+        config.appendLine()
+
+        config.appendLine("# Network settings")
+        config.appendLine("EnforceDistinctSubnets 1")
+        config.appendLine("StrictNodes 0")
+        config.appendLine()
+
+        return config.toString()
     }
 }
