@@ -1,6 +1,5 @@
 package network.bisq.mobile.android.node.service.network.tor
 
-import android.content.Context
 import bisq.network.NetworkService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -9,7 +8,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.domain.utils.Logging
-import java.io.File
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -17,13 +15,11 @@ import java.util.concurrent.CompletableFuture
  * This class handles the integration of our Tor instance with Bisq's networking stack
  */
 class BisqTorNetworkBridge(
-    private val context: Context,
-    private val baseDir: File,
+    private val torIntegrationService: TorIntegrationService,
     private val applicationServiceProvider: AndroidApplicationService.Provider
 ) : Logging {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    private val torIntegrationService = TorIntegrationService(context, baseDir)
 
     private var isIntegrated = false
     private var networkService: NetworkService? = null

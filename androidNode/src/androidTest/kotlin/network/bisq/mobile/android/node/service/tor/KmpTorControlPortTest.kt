@@ -27,6 +27,7 @@ class KmpTorControlPortTest {
             // Just test that we can create the service
             val torService = TorService(context, baseDir)
             println("✅ TorService created successfully")
+            Assert.assertNotNull("TorService should not be null", torService)
 
             // Test initialization
             torService.initialize()

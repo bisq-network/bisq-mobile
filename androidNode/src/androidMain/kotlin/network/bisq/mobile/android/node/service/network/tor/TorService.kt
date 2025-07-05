@@ -11,6 +11,7 @@ import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import io.matthewnelson.kmp.tor.runtime.core.ctrl.TorCmd
 import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.resource.exec.tor.ResourceLoaderTorExec
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,6 +30,10 @@ class TorService(
     private val context: Context,
     private val baseDir: File
 ) : ServiceFacade() {
+
+    companion object {
+        private const val DEFAULT_BOOTSTRAP_TIMEOUT = 30000L
+    }
 
     private var torRuntime: TorRuntime? = null
 
@@ -129,7 +134,7 @@ class TorService(
         }
     }
 
-    fun startTor() {
+    fun startTor(bootstrapTimeoutMs: Long = DEFAULT_BOOTSTRAP_TIMEOUT) {
         val runtime = torRuntime
         if (runtime == null) {
             log.e { "Tor runtime not initialized" }
@@ -157,10 +162,10 @@ class TorService(
         )
 
         launchIO {
-            kotlinx.coroutines.delay(30000)
+            delay(bootstrapTimeoutMs)
             if (_torState.value == TorState.STARTING) {
                 log.w { "⚠️ No bootstrap events received after 30 seconds. Checking if Tor is actually running..." }
-                debugTorStatus()
+                debugTorStatusAndEnsureReadiness()
             }
         }
     }
@@ -227,8 +232,11 @@ class TorService(
             return
         }
 
-        log.i { "Requesting new Tor identity..." }
-        log.i { "New Tor identity requested" }
+//        log.i { "Requesting new Tor identity..." }
+//        TODO: Implement actual identity change via SIGNAL NEWNYM command
+        log.w { "New identity request for Tor not yet implemented" }
+//        throw NotImplementedError("New identity functionality not yet implemented")
+//        log.i { "New Tor identity requested" }
     }
 
     private fun handleRuntimeEvent(event: RuntimeEvent<*>, data: Any) {
@@ -338,7 +346,13 @@ class TorService(
         }
     }
 
-    fun debugTorStatus() {
+    /**
+     * Useful debugging status for Tor
+     * If Tor is in READY state but SOCKS port is not detected, we try to query it from Tor
+     * If it's not ready but SOCKS is ready it will force the ready state (unlikely) or otherwise
+     * query the real socks port and setup ready
+     */
+    fun debugTorStatusAndEnsureReadiness() {
         log.i { "=== TOR DEBUG STATUS ===" }
         log.i { "Current state: ${_torState.value}" }
         log.i { "SOCKS port: ${_socksPort.value}" }
@@ -361,7 +375,7 @@ class TorService(
                 log.w { "⚠️ Cannot force READY state - no SOCKS port available" }
                 queryActualSocksPort()
                 launchIO {
-                    kotlinx.coroutines.delay(2000)
+                    delay(2000)
                     if (_socksPort.value != null) {
                         log.i { "🔧 Forcing Tor state to READY after port query: ${_socksPort.value}" }
                         _torState.value = TorState.READY

@@ -103,7 +103,7 @@ val androidNodeModule = module {
         TorIntegrationService(androidContext(), androidContext().filesDir)
     }
     single<BisqTorNetworkBridge> {
-        BisqTorNetworkBridge(androidContext(), androidContext().filesDir, get())
+        BisqTorNetworkBridge(get(), get())
     }
     single<TorBootstrapOrchestrator> {
         TorBootstrapOrchestrator(get())

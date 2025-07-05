@@ -158,7 +158,7 @@ class TorIntegrationService(
         log.i { "Control port: ${controlPort.value}" }
         log.i { "Is ready: ${isTorReady()}" }
 
-        torService.debugTorStatus()
+        torService.debugTorStatusAndEnsureReadiness()
 
         log.i { "🔧 After debug - State: ${torState.value}, Port: ${socksPort.value}, Ready: ${isTorReady()}" }
     }

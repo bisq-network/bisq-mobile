@@ -16,6 +16,7 @@ import bisq.network.p2p.node.transport.ClearNetTransportService
 import bisq.network.p2p.node.transport.I2PTransportService
 import com.typesafe.config.Config
 import com.typesafe.config.ConfigValueType
+import network.bisq.mobile.domain.utils.Logging
 import java.nio.file.Path
 import java.util.*
 import java.util.stream.Collectors
@@ -24,7 +25,7 @@ import java.util.stream.Collectors
  * Mobile-specific NetworkServiceConfig that handles external Tor configuration properly.
  * This bypasses the validation issues in the original NetworkServiceConfig.
  */
-object MobileNetworkServiceConfig {
+object MobileNetworkServiceConfig: Logging {
 
     /**
      * Factory method to create the actual bisq2 TorTransportConfig
@@ -37,6 +38,7 @@ object MobileNetworkServiceConfig {
             val fromMethod = torTransportConfigClass.getMethod("from", Path::class.java, Config::class.java)
             fromMethod.invoke(null, dataDir, config) as TransportConfig
         } catch (e: Exception) {
+            log.w(e) { "Failed to create bisq2 TorTransportConfig via reflection, using fallback" }
             // Fallback to our custom implementation if the bisq2 class is not available
             MobileTorTransportConfig.from(dataDir, config)
         }
@@ -170,7 +172,11 @@ object MobileNetworkServiceConfig {
                 if (config.hasPath("tor")) {
                     val torList = config.getList("tor")
                     if (torList.isNotEmpty()) {
-                        val firstEntry = torList[0] as com.typesafe.config.ConfigObject
+                        val firstEntry = torList[0]
+                        if (firstEntry !is com.typesafe.config.ConfigObject) {
+                            log.w("Invalid tor config format, expected ConfigObject but got ${firstEntry.javaClass}")
+                            return emptySet()
+                        }
                         val torConfig = firstEntry.toConfig()
                         if (torConfig.hasPath("external")) {
                             torConfig.getStringList("external").stream()
