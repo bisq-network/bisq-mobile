@@ -110,9 +110,83 @@ class TorConfigurationManager(
                 return false
             }
 
+            // Validate SOCKS policy security
+            if (!isSocksPolicySecure(config)) {
+                log.w { "Tor configuration has insecure SOCKS policy" }
+                return false
+            }
+
             true
         } catch (e: Exception) {
             log.e(e) { "Failed to validate Tor configuration" }
+            false
+        }
+    }
+
+    /**
+     * Validate that the SOCKS policy is secure (restricted to localhost only)
+     * @param config the Tor configuration string
+     * @return true if the SOCKS policy is secure, false otherwise
+     */
+    private fun isSocksPolicySecure(config: String): Boolean {
+        val lines = config.lines()
+        val socksPolicyLines = lines.filter { it.trim().startsWith("SocksPolicy") }
+        
+        // Check for insecure policies
+        val hasInsecurePolicy = socksPolicyLines.any { line ->
+            line.contains("accept *") || line.contains("accept 0.0.0.0")
+        }
+        
+        if (hasInsecurePolicy) {
+            log.w { "Insecure SOCKS policy detected: accepts all connections" }
+            return false
+        }
+        
+        // Check for secure localhost-only policies
+        val hasLocalhostPolicy = socksPolicyLines.any { line ->
+            line.contains("accept 127.0.0.1") || line.contains("accept ::1")
+        }
+        
+        if (!hasLocalhostPolicy) {
+            log.w { "No localhost SOCKS policy found" }
+            return false
+        }
+        
+        // Check for explicit reject all policy
+        val hasRejectAll = socksPolicyLines.any { line ->
+            line.contains("reject *")
+        }
+        
+        if (!hasRejectAll) {
+            log.w { "No explicit reject all SOCKS policy found" }
+            return false
+        }
+        
+        log.d { "SOCKS policy validation passed - secure localhost-only configuration" }
+        return true
+    }
+
+    /**
+     * Get the current SOCKS policy from the configuration for debugging
+     * @param config the Tor configuration string
+     * @return a list of SOCKS policy lines
+     */
+    fun getSocksPolicy(config: String): List<String> {
+        return config.lines()
+            .filter { it.trim().startsWith("SocksPolicy") }
+            .map { it.trim() }
+    }
+
+    /**
+     * Check if the current SOCKS policy is secure
+     * @return true if the SOCKS policy is secure, false otherwise
+     */
+    fun isCurrentSocksPolicySecure(): Boolean {
+        val config = readTorConfig()
+        return if (config != null) {
+            isSocksPolicySecure(config)
+        } else {
+            log.w { "No Tor configuration found to validate SOCKS policy" }
             false
         }
     }
@@ -143,7 +217,10 @@ class TorConfigurationManager(
 
         config.appendLine("# SOCKS proxy configuration")
         config.appendLine("SocksPort $socksPort")
-        config.appendLine("SocksPolicy accept *")
+        config.appendLine("# Security: Restrict SOCKS access to localhost only for mobile security")
+        config.appendLine("SocksPolicy accept 127.0.0.1/32")
+        config.appendLine("SocksPolicy accept ::1/128")
+        config.appendLine("SocksPolicy reject *")
         config.appendLine()
 
         config.appendLine("# Control port configuration")
