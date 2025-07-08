@@ -13,6 +13,16 @@ class TorBridgeCommandHandler(
     private val torIntegrationService: TorIntegrationService
 ) : Logging {
 
+    companion object {
+        private const val TOR_COMMAND_AUTHENTICATE = "AUTHENTICATE"
+        private const val TOR_COMMAND_GETINFO = "GETINFO"
+        private const val TOR_COMMAND_SETEVENTS = "SETEVENTS"
+        private const val TOR_COMMAND_ADD_ONION = "ADD_ONION"
+        private const val TOR_COMMAND_RESETCONF = "RESETCONF"
+        private const val TOR_COMMAND_SETCONF = "SETCONF"
+        private const val TOR_COMMAND_QUIT = "QUIT"
+    }
+
     fun handleCommands(
         input: java.io.BufferedReader,
         output: java.io.BufferedWriter,
@@ -28,13 +38,13 @@ class TorBridgeCommandHandler(
             logBootstrapCommand(command)
 
             when {
-                command.startsWith("AUTHENTICATE") -> handleAuthenticate(output)
-                command.startsWith("GETINFO") -> handleGetInfo(command, output)
-                command.startsWith("SETEVENTS") -> handleSetEvents(command, output)
-                command.startsWith("ADD_ONION") -> handleAddOnion(command, output)
-                command.startsWith("RESETCONF") -> handleResetConf(command, output)
-                command.startsWith("SETCONF") -> handleSetConf(command, output)
-                command.startsWith("QUIT") -> {
+                command.startsWith(TOR_COMMAND_AUTHENTICATE) -> handleAuthenticate(output)
+                command.startsWith(TOR_COMMAND_GETINFO) -> handleGetInfo(command, output)
+                command.startsWith(TOR_COMMAND_SETEVENTS) -> handleSetEvents(command, output)
+                command.startsWith(TOR_COMMAND_ADD_ONION) -> handleAddOnion(command, output)
+                command.startsWith(TOR_COMMAND_RESETCONF) -> handleResetConf(command, output)
+                command.startsWith(TOR_COMMAND_SETCONF) -> handleSetConf(command, output)
+                command.startsWith(TOR_COMMAND_QUIT) -> {
                     output.write("250 closing connection\r\n")
                     output.flush()
                     break
