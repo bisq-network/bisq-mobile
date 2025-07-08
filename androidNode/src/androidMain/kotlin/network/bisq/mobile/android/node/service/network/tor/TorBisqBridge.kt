@@ -31,30 +31,84 @@ class TorBisqBridge(
 
     fun getPendingOnionServicesAddresses(): Set<String> = pendingOnionServices.keys.toSet()
 
+    /**
+     * @return true if the bridge can handle hidden service creation, false otherwise
+     */
+    fun isBridgeProperlyConfigured(): Boolean {
+        return realKmpTorControlPort != null
+    }
+
+    /**
+     * @return a string describing the bridge configuration status
+     */
+    fun getBridgeConfigurationStatus(): String {
+        return when {
+            realKmpTorControlPort == null -> "Bridge not configured - control port detection failed"
+            serverSocket.isClosed -> "Bridge configured but server socket closed"
+            else -> "Bridge properly configured - control port: $realKmpTorControlPort"
+        }
+    }
+
+    /**
+     * @return a comprehensive status summary for debugging bridge
+     */
+    fun getBridgeStatusSummary(): String {
+        return buildString {
+            appendLine("=== Tor Bridge Status Summary ===")
+            appendLine("Real kmp-tor control port: $realKmpTorControlPort")
+            appendLine("Server socket closed: ${serverSocket.isClosed}")
+            appendLine("Pending onion services: ${pendingOnionServices.size}")
+            if (pendingOnionServices.isNotEmpty()) {
+                appendLine("Pending addresses: ${pendingOnionServices.keys.joinToString(", ")}")
+            }
+            appendLine("Configuration status: ${getBridgeConfigurationStatus()}")
+            appendLine("================================")
+        }
+    }
+
     fun configureBisqForExternalTor(socksPort: Int) {
         try {
             log.i { "Setting up bridge control port for kmp-tor integration" }
             log.i { "SOCKS proxy: 127.0.0.1:$socksPort" }
+            
+            val controlPortDeferred = kotlinx.coroutines.CompletableDeferred<Int>()
+            
             torIntegrationService.queryActualControlPort { realControlPort ->
                 if (realControlPort != null) {
                     log.i { "Real kmp-tor control port detected: $realControlPort" }
-
-                    val bridgeControlPort = startBridgeControlPort(realControlPort)
-                    torIntegrationService.setControlPort(bridgeControlPort)
-                    generateExternalTorConfig(socksPort, bridgeControlPort)
-                    updateSocksProxyProperties(socksPort)
-
-                    log.i { "Bridge control port and external Tor config created" }
-                    log.i { "Bridge control port: 127.0.0.1:$bridgeControlPort" }
-                    log.i { "Bridge control port setup complete - Bridge: $bridgeControlPort -> Real: $realControlPort" }
+                    controlPortDeferred.complete(realControlPort)
                 } else {
                     log.e { "Could not detect real kmp-tor control port!" }
                     log.e { "Bridge setup failed - Bisq2 will not be able to create hidden services" }
+                    controlPortDeferred.completeExceptionally(
+                        IllegalStateException("Failed to detect kmp-tor control port. Hidden service creation will fail.")
+                    )
                 }
             }
 
+            val realControlPort = try {
+                kotlinx.coroutines.runBlocking {
+                    kotlinx.coroutines.withTimeout(10000) { // 10 second timeout
+                        controlPortDeferred.await()
+                    }
+                }
+            } catch (e: kotlinx.coroutines.TimeoutCancellationException) {
+                throw IllegalStateException("Control port detection timed out after 10 seconds", e)
+            }
+
+            val bridgeControlPort = startBridgeControlPort(realControlPort)
+            torIntegrationService.setControlPort(bridgeControlPort)
+            generateExternalTorConfig(socksPort, bridgeControlPort)
+            updateSocksProxyProperties(socksPort)
+
+            log.i { "Bridge control port and external Tor config created" }
+            log.i { "Bridge control port: 127.0.0.1:$bridgeControlPort" }
+            log.i { "Bridge control port setup complete - Bridge: $bridgeControlPort -> Real: $realControlPort" }
+
         } catch (e: Exception) {
             log.e(e) { "Failed to configure bridge control port" }
+            // Re-throw to make the failure explicit to the caller
+            throw e
         }
     }
 

@@ -53,8 +53,16 @@ class NodeApplicationBootstrapFacade(
     override fun onTorReady(socksPort: Int) {
         log.i { "Bootstrap: Tor is ready - proceeding with application bootstrap" }
 
-        torBisqBridge.configureBisqForExternalTor(socksPort)
-        proceedWithApplicationBootstrap()
+        try {
+            torBisqBridge.configureBisqForExternalTor(socksPort)
+            proceedWithApplicationBootstrap()
+        } catch (e: Exception) {
+            log.e(e) { "Bootstrap: Tor bridge configuration failed - control port detection issue" }
+            log.w { "Bootstrap: Proceeding without Tor bridge - hidden services will not work" }
+            // TODO add a try again user/auto-triggered mechanism?
+            setState("Tor bridge failed - Please restart")
+            setProgress(0.95f)
+        }
     }
 
     override fun onTorTimeout() {

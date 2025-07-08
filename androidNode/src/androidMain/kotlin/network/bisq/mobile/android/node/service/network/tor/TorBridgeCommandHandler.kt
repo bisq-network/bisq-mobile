@@ -188,7 +188,9 @@ class TorBridgeCommandHandler(
         } else {
             log.e { "Bridge: CANNOT forward ADD_ONION - no real control port connection!" }
             log.e { "Bridge: realControlOutput = $realControlOutput, realControlInput = $realControlInput" }
-            output.write("550 No connection to Tor control port\r\n")
+            log.e { "Bridge: This failure is likely due to control port detection failure during bridge setup" }
+            log.e { "Bridge: Bridge status: ${bridge.getBridgeConfigurationStatus()}" }
+            output.write("550 No connection to Tor control port - bridge not properly configured\r\n")
             output.flush()
         }
     }
