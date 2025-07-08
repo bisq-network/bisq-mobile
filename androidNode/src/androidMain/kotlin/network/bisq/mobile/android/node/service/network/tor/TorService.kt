@@ -276,8 +276,8 @@ class TorService(
                 if (data.contains("Bootstrapped 100%")) {
                     _torState.value = TorState.READY
                     log.i { "✅ Tor is ready for connections" }
-
-                    queryActualSocksPort()
+                } else if (data.contains("Tor version")) {
+                    log.i { "🔵 Tor Version: $data" }
                 }
             }
             else -> {

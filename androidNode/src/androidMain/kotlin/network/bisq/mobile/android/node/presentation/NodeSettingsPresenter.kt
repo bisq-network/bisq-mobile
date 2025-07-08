@@ -20,6 +20,7 @@ class NodeSettingsPresenter(
     override fun versioning(): Triple<String, String, String> {
         val version = BuildNodeConfig.APP_VERSION
         val bisqCoreVersion = BuildNodeConfig.BISQ_CORE_VERSION
-        return Triple(version, "core", bisqCoreVersion)
+        val torVersion = " | tor: v${BuildNodeConfig.TOR_VERSION}"
+        return Triple(version, "core", bisqCoreVersion + torVersion)
     }
 }
