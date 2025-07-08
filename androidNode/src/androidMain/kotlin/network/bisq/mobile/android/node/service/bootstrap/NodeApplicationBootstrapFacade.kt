@@ -60,6 +60,7 @@ class NodeApplicationBootstrapFacade(
             log.e(e) { "Bootstrap: Tor bridge configuration failed - control port detection issue" }
             log.w { "Bootstrap: Proceeding without Tor bridge - hidden services will not work" }
             // TODO add a try again user/auto-triggered mechanism?
+            // Note it is ok to halt the process as at this stage we are for sure running in production which is tor-only
             setState("Tor bridge failed - Please restart")
             setProgress(0.95f)
         }

@@ -66,6 +66,20 @@ class TorBisqBridge(
         }
     }
 
+    /**
+     * Check if a port is available for binding
+     * @param port the port to check
+     * @return true if the port is available, false otherwise
+     */
+    private fun isPortAvailable(port: Int): Boolean {
+        return try {
+            ServerSocket(port).use { true }
+        } catch (e: Exception) {
+            log.d { "Port $port is not available: ${e.message}" }
+            false
+        }
+    }
+
     fun configureBisqForExternalTor(socksPort: Int) {
         try {
             log.i { "Setting up bridge control port for kmp-tor integration" }
@@ -124,9 +138,11 @@ class TorBisqBridge(
     private fun startBridgeControlPort(realControlPort: Int?): Int {
         realKmpTorControlPort = realControlPort
         return try {
+            log.i { "Bridge control port: Attempting to create server socket on any available port" }
             serverSocket = ServerSocket(0)
             val port = serverSocket.localPort
 
+            log.i { "Bridge control port: Successfully created server socket on port $port" }
             log.i { "Bridge control port: Starting server on 127.0.0.1:$port" }
 
             torBootstrapScope.launch {
@@ -155,10 +171,17 @@ class TorBisqBridge(
             }
 
             Thread.sleep(100)
+            log.i { "Bridge control port: Server socket setup completed successfully on port $port" }
             port
         } catch (e: Exception) {
             log.e(e) { "Failed to start bridge control port" }
-            9051
+            // Don't return a hardcoded port - throw the exception to make the failure explicit
+            val errorMessage = when (e) {
+                is java.net.BindException -> "Failed to bind bridge control port server socket - port may be in use"
+                is java.net.SocketException -> "Socket error while creating bridge control port server"
+                else -> "Failed to start bridge control port server socket"
+            }
+            throw IllegalStateException(errorMessage, e)
         }
     }
 
