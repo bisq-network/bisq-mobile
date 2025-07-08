@@ -50,8 +50,6 @@ class TorConfigurationManager(
         }
     }
 
-    fun getTorConfigPath(): String = torConfigFile.absolutePath
-
     fun hasTorConfig(): Boolean = torConfigFile.exists()
 
     fun updateBisqConfigForTor(socksPort: Int, enableTor: Boolean = true) {
@@ -123,6 +121,68 @@ class TorConfigurationManager(
         }
     }
 
+
+
+    /**
+     * Get device-appropriate connection limit based on available memory
+     * @return recommended connection limit for the device
+     */
+    private fun calculateDeviceAppropriateConnLimit(): Int {
+        val runtime = Runtime.getRuntime()
+        val maxMemoryMB = runtime.maxMemory() / (1024 * 1024)
+
+        return when {
+            maxMemoryMB < 2048 -> 100   // Low-end devices (2GB RAM)
+            maxMemoryMB < 4096 -> 250   // Mid-range devices (4GB RAM)
+            maxMemoryMB < 8192 -> 500   // High-end devices (8GB RAM)
+            else -> 750                  // Premium devices (8GB+ RAM)
+        }
+    }
+
+    /**
+     * Get device-appropriate memory limit for Tor queues
+     * @return recommended memory limit in MB
+     */
+    private fun calculateDeviceAppropriateMemoryLimit(): Int {
+        val runtime = Runtime.getRuntime()
+        val maxMemoryMB = runtime.maxMemory() / (1024 * 1024)
+
+        return when {
+            maxMemoryMB < 2048 -> 64    // Low-end devices (2GB RAM)
+            maxMemoryMB < 4096 -> 128   // Mid-range devices (4GB RAM)
+            maxMemoryMB < 8192 -> 256   // High-end devices (8GB RAM)
+            else -> 512                  // Premium devices (8GB+ RAM)
+        }
+    }
+
+    /**
+     * Log device capabilities and Tor configuration for debugging
+     */
+    private fun logDeviceCapabilities() {
+        val runtime = Runtime.getRuntime()
+        val maxMemoryMB = runtime.maxMemory() / (1024 * 1024)
+        val connLimit = calculateDeviceAppropriateConnLimit()
+        val memLimit = calculateDeviceAppropriateMemoryLimit()
+
+        log.i { "Device Capabilities:" }
+        log.i { "  - Max Memory: ${maxMemoryMB}MB" }
+        log.i { "  - Recommended ConnLimit: $connLimit" }
+        log.i { "  - Recommended MaxMemInQueues: ${memLimit}MB" }
+        log.i { "  - Device Category: ${getDeviceCategory(maxMemoryMB)}" }
+    }
+
+    /**
+     * Get device category based on memory
+     */
+    private fun getDeviceCategory(maxMemoryMB: Long): String {
+        return when {
+            maxMemoryMB < 2048 -> "Low-end (2GB RAM)"
+            maxMemoryMB < 4096 -> "Mid-range (4GB RAM)"
+            maxMemoryMB < 8192 -> "High-end (8GB RAM)"
+            else -> "Premium (8GB+ RAM)"
+        }
+    }
+
     /**
      * Validate that the SOCKS policy is secure (restricted to localhost only)
      * @param config the Tor configuration string
@@ -177,20 +237,6 @@ class TorConfigurationManager(
             .map { it.trim() }
     }
 
-    /**
-     * Check if the current SOCKS policy is secure
-     * @return true if the SOCKS policy is secure, false otherwise
-     */
-    fun isCurrentSocksPolicySecure(): Boolean {
-        val config = readTorConfig()
-        return if (config != null) {
-            isSocksPolicySecure(config)
-        } else {
-            log.w { "No Tor configuration found to validate SOCKS policy" }
-            false
-        }
-    }
-
     fun getDefaultTorConfig(): String {
         return generateTorConfig(
             socksPort = DEFAULT_SOCKS_PORT,
@@ -207,6 +253,8 @@ class TorConfigurationManager(
         hiddenServicePort: Int = 8000
     ): String {
         val config = StringBuilder()
+
+        logDeviceCapabilities()
 
         config.appendLine("# Bisq Mobile Tor Configuration")
         config.appendLine("# Generated automatically - do not edit manually")
@@ -234,8 +282,8 @@ class TorConfigurationManager(
         config.appendLine()
 
         config.appendLine("# Mobile optimizations")
-        config.appendLine("ConnLimit 1000")
-        config.appendLine("MaxMemInQueues 512 MB")
+        config.appendLine("ConnLimit ${calculateDeviceAppropriateConnLimit()}")
+        config.appendLine("MaxMemInQueues ${calculateDeviceAppropriateMemoryLimit()} MB")
         config.appendLine("DormantOnFirstStartup 0")
         config.appendLine("DisableNetwork 0")
         config.appendLine()
