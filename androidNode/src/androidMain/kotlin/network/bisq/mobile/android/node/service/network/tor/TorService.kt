@@ -116,7 +116,7 @@ class TorService(
                 config { environment ->
                     TorOption.SocksPort.configure { auto() }
                     TorOption.ControlPort.configure { auto() }
-                    TorOption.CookieAuthentication.configure(false)
+                    TorOption.CookieAuthentication.configure(true)
                     TorOption.ClientOnly.configure(false)
                     TorOption.DataDirectory.configure(workDir)
                     TorOption.DisableNetwork.configure(false)

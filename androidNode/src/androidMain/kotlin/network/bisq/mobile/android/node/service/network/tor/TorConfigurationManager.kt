@@ -1,5 +1,6 @@
 package network.bisq.mobile.android.node.service.network.tor
 
+import android.annotation.SuppressLint
 import android.content.Context
 import network.bisq.mobile.domain.utils.Logging
 import java.io.File
@@ -139,6 +140,12 @@ class TorConfigurationManager(
         }
     }
 
+    @SuppressLint("SdCardPath")
+    private fun calculateDeviceCookieFile(): String {
+        val appPackage = context.packageName
+        return "/data/data/${appPackage}/files/tor/control_auth_cookie"
+    }
+
     /**
      * Get device-appropriate memory limit for Tor queues
      * @return recommended memory limit in MB
@@ -226,17 +233,6 @@ class TorConfigurationManager(
         return true
     }
 
-    /**
-     * Get the current SOCKS policy from the configuration for debugging
-     * @param config the Tor configuration string
-     * @return a list of SOCKS policy lines
-     */
-    fun getSocksPolicy(config: String): List<String> {
-        return config.lines()
-            .filter { it.trim().startsWith("SocksPolicy") }
-            .map { it.trim() }
-    }
-
     fun getDefaultTorConfig(): String {
         return generateTorConfig(
             socksPort = DEFAULT_SOCKS_PORT,
@@ -271,9 +267,12 @@ class TorConfigurationManager(
         config.appendLine("SocksPolicy reject *")
         config.appendLine()
 
+        val cookiePath = calculateDeviceCookieFile()
+        log.i { "Tor Cookie Path $cookiePath" }
         config.appendLine("# Control port configuration")
         config.appendLine("ControlPort $controlPort")
         config.appendLine("CookieAuthentication 1")
+        config.appendLine("CookieAuthFile $cookiePath")
         config.appendLine()
 
         config.appendLine("# Logging configuration")

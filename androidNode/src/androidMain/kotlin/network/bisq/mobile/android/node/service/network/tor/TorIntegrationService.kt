@@ -16,7 +16,7 @@ import java.io.File
  */
 class TorIntegrationService(
     private val context: Context,
-    private val baseDir: File
+    val baseDir: File
 ) : Logging {
 
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)

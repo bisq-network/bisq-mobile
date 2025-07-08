@@ -8,6 +8,7 @@ import kotlinx.coroutines.delay
 import network.bisq.mobile.domain.utils.Logging
 import java.io.File
 import java.net.ServerSocket
+import java.io.IOException
 
 /**
  * Handles the bridge between kmp-tor and Bisq2 networking
@@ -194,7 +195,7 @@ class TorBisqBridge(
                 appendLine()
                 appendLine("UseExternalTor 1")
                 appendLine("ControlPort 127.0.0.1:$controlPort")
-                appendLine("CookieAuthentication 0")
+                appendLine("CookieAuthentication 1")
                 appendLine("SocksPort 127.0.0.1:$socksPort")
             }
 
@@ -244,6 +245,14 @@ class TorBisqBridge(
         }
 
         return responses
+    }
+
+    /**
+     * Reads the Tor control_auth_cookie file and returns its contents as a hex string
+     */
+    private fun readTorControlCookie(cookieFile: File): String {
+        val bytes = cookieFile.readBytes()
+        return bytes.joinToString("") { "%02X".format(it) }
     }
 
     /**
@@ -337,16 +346,32 @@ class TorBisqBridge(
                     realControlOutput = realControlSocket.getOutputStream().bufferedWriter()
                     log.i { "Bridge: Connected to real kmp-tor control port $realControlPort" }
 
-                    realControlOutput.write("AUTHENTICATE\r\n")
-                    realControlOutput.flush()
-                    val authResponse = realControlInput.readLine()
+                    // Secure Tor control port authentication using the cookie
+                    val torDataDir = File(torIntegrationService.baseDir, "tor")
+                    val cookieFile = File(torDataDir, "control_auth_cookie")
+                    log.i { "Files in Tor data dir: ${torDataDir.listFiles()?.joinToString { it.name } ?: "none"}" }
+                    val cookieHex = try {
+                        readTorControlCookie(cookieFile)
+                    } catch (e: IOException) {
+                        log.e(e) { "Bridge: Failed to read Tor control_auth_cookie for authentication" }
+                        null
+                    }
 
-                    if (authResponse?.startsWith("250") == true) {
-                        log.i { "Bridge: Successfully authenticated with real kmp-tor control port" }
-                        startEventListener(realControlInput, output)
+                    if (cookieHex != null) {
+                        realControlOutput.write("AUTHENTICATE $cookieHex\r\n")
+                        realControlOutput.flush()
+                        val authResponse = realControlInput.readLine()
+
+                        if (authResponse?.startsWith("250") == true) {
+                            log.i { "Bridge: Successfully authenticated with real kmp-tor control port" }
+                            startEventListener(realControlInput, output)
+                        } else {
+                            log.w { "Bridge: Authentication failed with real control port: $authResponse" }
+                            throw Exception("Authentication failed: $authResponse")
+                        }
                     } else {
-                        log.w { "Bridge: Authentication failed with real control port: $authResponse" }
-                        throw Exception("Authentication failed: $authResponse")
+                        log.e { "Bridge: Could not authenticate to Tor control port - missing or unreadable cookie file" }
+                        throw Exception("Could not authenticate to Tor control port - missing or unreadable cookie file")
                     }
 
                 } catch (e: Exception) {
