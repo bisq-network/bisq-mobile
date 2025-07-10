@@ -4,7 +4,6 @@ import bisq.account.payment_method.BitcoinPaymentMethod
 import bisq.account.payment_method.BitcoinPaymentMethodUtil
 import bisq.account.payment_method.FiatPaymentMethod
 import bisq.account.payment_method.FiatPaymentMethodUtil
-import bisq.bisq_easy.BisqEasyOfferbookMessageService
 import bisq.bisq_easy.BisqEasyServiceUtil
 import bisq.bonded_roles.market_price.MarketPriceService
 import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannel
@@ -32,7 +31,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
@@ -62,7 +60,9 @@ class NodeOffersServiceFacade(
     private val userProfileService: UserProfileService by lazy { applicationService.userService.get().userProfileService }
     private val reputationService: ReputationService by lazy { applicationService.userService.get().reputationService }
     private val bisqEasyOfferbookChannelSelectionService: BisqEasyOfferbookSelectionService by lazy { applicationService.chatService.get().bisqEasyOfferbookChannelSelectionService }
-    private val bisqEasyOfferbookMessageService: BisqEasyOfferbookMessageService by lazy { applicationService.bisqEasyService.get().bisqEasyOfferbookMessageService }
+
+//  TODO restore for usage of v2.1.8
+//    private val bisqEasyOfferbookMessageService: BisqEasyOfferbookMessageService by lazy { applicationService.bisqEasyService.get().bisqEasyOfferbookMessageService }
 
     // Properties
     private val _offerbookListItems = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
@@ -202,7 +202,8 @@ class NodeOffersServiceFacade(
             fiatPaymentMethods,
             userProfile.terms,
             supportedLanguageCodes,
-            BuildNodeConfig.TRADE_PROTOCOL_VERSION,
+//            TODO for Bisq v2.1.8
+//            BuildNodeConfig.TRADE_PROTOCOL_VERSION,
         )
 
         val channel: BisqEasyOfferbookChannel = bisqEasyOfferbookChannelService.findChannel(market).get()
@@ -290,14 +291,14 @@ class NodeOffersServiceFacade(
                     serviceScope.launch(Dispatchers.Default) {
                         val offerId = message.bisqEasyOffer.get().id
                         log.d { "Processing offer message: $offerId in ${channel.market.marketCodes}" }
-                        if (!offerMessagesContainsKey(offerId) && bisqEasyOfferbookMessageService.isValid(message)) {
+                        if (!offerMessagesContainsKey(offerId) && isValidOfferMessage(message)) {
                             val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
                             val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
                             _offerbookListItems.update { it + offerItemPresentationModel }
                             putOfferMessage(offerId, message)
                             log.i { "Added offer $offerId to list for ${channel.market.marketCodes}, total offers: ${_offerbookListItems.value.size}" }
                         } else {
-                            log.d { "Skipped offer $offerId in ${channel.market.marketCodes} - already exists: ${offerMessagesContainsKey(offerId)}, valid: ${bisqEasyOfferbookMessageService.isValid(message)}" }
+                            log.d { "Skipped offer $offerId in ${channel.market.marketCodes} - already exists: ${offerMessagesContainsKey(offerId)}, valid: ${isValidOfferMessage(message)}" }
                         }
                     }
                 }
@@ -351,7 +352,6 @@ class NodeOffersServiceFacade(
                 ) {
                     offerbookMarketItems.add(offerbookMarketItem)
                     val numOffersObserver = NumOffersObserver(
-                        bisqEasyOfferbookMessageService,
                         channel,
                         offerbookMarketItem::setNumOffers
                     )
@@ -377,6 +377,35 @@ class NodeOffersServiceFacade(
             val formattedPrice = marketPriceServiceFacade.selectedMarketPriceItem.value!!.formattedPrice
             _selectedOfferbookMarket.value.setFormattedPrice(formattedPrice)
         }
+    }
+
+    private fun isValidOfferMessage(message: BisqEasyOfferbookMessage): Boolean {
+//    TODO restore for usage of core version v2.1.8
+//        return bisqEasyOfferbookMessageService.isValid(message)
+        // Basic validation - message must have an offer
+        if (!message.hasBisqEasyOffer()) {
+            return false
+        }
+
+        val offer = message.bisqEasyOffer.get()
+
+        // Check if the maker's user profile exists and is not banned/ignored
+        val makerUserProfile = userProfileService.findUserProfile(offer.makersUserProfileId)
+        if (makerUserProfile.isEmpty) {
+            return false
+        }
+
+        if (userProfileService.isChatUserIgnored(makerUserProfile.get())) {
+            return false
+        }
+
+        // Don't show our own offers
+//        val myUserIdentityIds = userIdentityService.userIdentities.map { it.userProfile.id }.toSet()
+//        if (myUserIdentityIds.contains(makerUserProfile.get().id)) {
+//            return false
+//        }
+
+        return true
     }
 
     private suspend fun findBisqEasyOfferbookMessage(offerId: String): Optional<BisqEasyOfferbookMessage> {

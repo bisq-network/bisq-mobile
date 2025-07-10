@@ -6,8 +6,6 @@ import android.os.Process
 import bisq.common.facades.FacadeProvider
 import bisq.common.facades.android.AndroidGuavaFacade
 import bisq.common.facades.android.AndroidJdkFacade
-import bisq.common.network.clear_net_address_types.LANAddressTypeFacade
-import bisq.common.network.clear_net_address_types.AndroidEmulatorAddressTypeFacade
 import network.bisq.mobile.android.node.di.androidNodeModule
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.di.serviceModule
@@ -33,20 +31,27 @@ class MainApplication : Application(), Logging {
             }
         }
     }
+
     override fun onCreate() {
         super.onCreate()
+
         setupKoinDI(this)
         setupBisqCoreStatics()
+        // Note: Tor initialization is now handled in NodeApplicationBootstrapFacade
+        // as the very first step of the bootstrap process
+//        setupTorSystemProperties()
+        log.i { "Bisq Node Application Created" }
     }
 
     private fun setupBisqCoreStatics() {
         val isEmulator = isEmulator()
-        val clearNetFacade = if (isEmulator) {
-            AndroidEmulatorAddressTypeFacade()
-        } else {
-            LANAddressTypeFacade()
-        }
-        FacadeProvider.setClearNetAddressTypeFacade(clearNetFacade)
+//        TODO this is part of Bisq v2.1.8, uncomment when developing against latest snapshot
+//        val clearNetFacade = if (isEmulator) {
+//            AndroidEmulatorAddressTypeFacade()
+//        } else {
+//            LANAddressTypeFacade()
+//        }
+//        FacadeProvider.setClearNetAddressTypeFacade(clearNetFacade)
         FacadeProvider.setJdkFacade(AndroidJdkFacade(Process.myPid()))
         FacadeProvider.setGuavaFacade(AndroidGuavaFacade())
 

@@ -206,7 +206,7 @@ class Mappings {
                 ChatChannelDomain.DISCUSSION -> ChatChannelDomainEnum.DISCUSSION
                 ChatChannelDomain.SUPPORT -> ChatChannelDomainEnum.SUPPORT
                 ChatChannelDomain.BISQ_EASY_PRIVATE_CHAT -> ChatChannelDomainEnum.DISCUSSION
-                ChatChannelDomain.MU_SIG_OPEN_TRADES -> ChatChannelDomainEnum.BISQ_EASY_OFFERBOOK // FIXME when musig gets incorporated
+//                ChatChannelDomain.MU_SIG_OPEN_TRADES -> ChatChannelDomainEnum.BISQ_EASY_OFFERBOOK // FIXME when musig gets incorporated
                 ChatChannelDomain.EVENTS -> ChatChannelDomainEnum.DISCUSSION
             }
         }
@@ -908,9 +908,10 @@ class Mappings {
                 value.quoteSidePaymentMethodSpecs.map { FiatPaymentMethodSpecMapping.toBisq2Model(it) }.toList(),
                 value.offerOptions.map { OfferOptionMapping.toBisq2Model(it) }.toList(),
                 value.supportedLanguageCodes,
-                BuildNodeConfig.TRADE_OFFER_VERSION,
-                BuildNodeConfig.TRADE_PROTOCOL_VERSION,
-                BuildNodeConfig.APP_VERSION
+//                TODO part of Bisq v2.1.8
+//                BuildNodeConfig.TRADE_OFFER_VERSION,
+//                BuildNodeConfig.TRADE_PROTOCOL_VERSION,
+//                BuildNodeConfig.APP_VERSION
             )
         }
 
@@ -1223,7 +1224,9 @@ class Mappings {
                 settingsService.supportedLanguageCodes,
                 settingsService.maxTradePriceDeviation.get(),
                 settingsService.useAnimations.get(),
-                MarketMapping.fromBisq2Model(settingsService.selectedMuSigMarket.get()),
+                // TODO for Bisq v2.1.8
+//                MarketMapping.fromBisq2Model(settingsService.selectedMuSigMarket.get()),
+                MarketMapping.fromBisq2Model(settingsService.selectedMarket.get()),
                 settingsService.numDaysAfterRedactingTradeData.get()
             )
         }
