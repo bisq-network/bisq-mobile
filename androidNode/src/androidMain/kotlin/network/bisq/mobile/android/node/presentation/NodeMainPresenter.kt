@@ -5,6 +5,7 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.android.node.MainActivity
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
+import network.bisq.mobile.android.node.service.network.KmpTorService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -45,8 +46,16 @@ class NodeMainPresenter(
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
-) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, tradeReadStateRepository, urlLauncher) {
+) : MainPresenter(
+    connectivityService,
+    openTradesNotificationService,
+    settingsServiceFacade,
+    tradesServiceFacade,
+    tradeReadStateRepository,
+    urlLauncher
+) {
 
+    private var kmpTorService: KmpTorService? = null
     private var applicationServiceCreated = false
 
     init {
@@ -81,6 +90,15 @@ class NodeMainPresenter(
                     provider.applicationService = applicationService
 
                     applicationBootstrapFacade.activate()
+
+                    // todo apply kmp tor startup state to applicationBootstrapFacade
+                    //  or better apply new Bisq 2 bootstrap info...
+                    val baseDir = applicationService.config.baseDir!!
+                    kmpTorService = KmpTorService(baseDir)
+                    kmpTorService!!.startTor().await()
+
+                    // todo handle kmpTorService.startupFailure
+
                     settingsServiceFacade.activate()
                     log.i { "Start initializing applicationService" }
                     applicationService.initialize()
@@ -119,6 +137,7 @@ class NodeMainPresenter(
             try {
                 log.i { "Stopping application service, ensuring persistent services stop" }
                 provider.applicationService.shutdown().join()
+                kmpTorService?.stopTor()
                 stopPersistentServices()
                 applicationServiceCreated = false
                 log.i { "Application service stopped successfully" }
@@ -126,7 +145,7 @@ class NodeMainPresenter(
                 log.e("Error stopping application service", e)
             }
         }
-        
+
         super.onDestroying()
     }
 
@@ -135,14 +154,14 @@ class NodeMainPresenter(
             // Explicitly stop services that might continue running
             val networkService = provider.applicationService.networkService
             networkService.shutdown().join()
-            
+
             // Stop UserIdentityService
             provider.applicationService.identityService.shutdown().join()
             // TODO need to implement ? Stop AuthenticatedDataStorageService (part of persistence service)
 //            provider.applicationService.persistenceService.shutdown().join()
             // Stop PeerExchangeService (part of network service)
             // This is already covered by networkService.shutdown() but we'll be explicit
-            
+
             log.i { "Persistent services stopped successfully" }
         } catch (e: Exception) {
             log.e("Error stopping persistent services", e)

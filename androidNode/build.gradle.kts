@@ -116,6 +116,12 @@ android {
         versionName = project.version.toString()
         buildConfigField("String", "APP_VERSION", "\"${version}\"")
         buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")
+
+        // for apk release build after tor inclusion
+        ndk {
+            //noinspection ChromeOsAbiSupport
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
     }
 
     packaging {
@@ -130,6 +136,24 @@ android {
             excludes.add("META-INF/INDEX.LIST")
             excludes.add("META-INF/NOTICE.markdown")
             pickFirsts.add("**/protobuf/**/*.class")
+            pickFirsts += listOf(
+                "META-INF/LICENSE*",
+                "META-INF/NOTICE*",
+                "META-INF/*.version"
+            )
+        }
+        jniLibs {
+            // for apk release builds after tor inclusion
+            // If multiple .so files exist across dependencies, pick the first and avoid conflicts
+            pickFirsts += listOf(
+                "lib/**/libtor.so",
+                "lib/**/libcrypto.so",
+                "lib/**/libevent*.so",
+                "lib/**/libssl.so",
+                "lib/**/libsqlite*.so"
+            )
+            // Required for kmp-tor exec resources
+            useLegacyPackaging = true
         }
     }
     buildTypes {
@@ -150,6 +174,8 @@ android {
             isDebuggable = true
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
+            // Reduce GC logging noise in debug builds
+            buildConfigField("String", "GC_LOG_LEVEL", "\"WARN\"")
         }
     }
     applicationVariants.all {
@@ -164,6 +190,16 @@ android {
     }
     buildFeatures {
         buildConfig = true
+    }
+
+    // Optional: Configure ABI splits for kmp-tor
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("x86", "armeabi-v7a", "arm64-v8a", "x86_64")
+            isUniversalApk = true
+        }
     }
     compileOptions {
         // for bisq2 jars full compatibility
@@ -243,6 +279,10 @@ dependencies {
     implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.logging.kermit)
+
+    // kmp-tor for embedded Tor support
+    implementation(libs.kmp.tor.runtime)
+    implementation(libs.kmp.tor.resource.exec)
 
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 }

@@ -48,6 +48,8 @@ buildConfig {
         buildConfigField("SHARED_LIBS_VERSION", project.version.toString())
         buildConfigField("BUILD_TS", System.currentTimeMillis())
         buildConfigField("BISQ_CORE_VERSION", bisqCoreVersion)
+        // Note: Update when updating kmp-tor lib
+        buildConfigField("TOR_VERSION", "13.5.2")
         buildConfigField("IS_DEBUG", project.gradle.startParameter.taskNames.any { it.contains("debug", ignoreCase = true) })
 
     }
