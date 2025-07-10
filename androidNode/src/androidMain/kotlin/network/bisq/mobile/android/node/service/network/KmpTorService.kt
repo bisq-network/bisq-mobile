@@ -79,7 +79,10 @@ class KmpTorService(baseDir: Path) : Logging {
     }
 
     fun stopTor() {
-        require(torRuntime != null) { "torRuntime is null. setupTor must be called before stopTor" }
+        if (torRuntime == null) {
+            log.w("Tor runtime is already null, skipping stop")
+            return
+        }
 
         torRuntime!!.enqueue(
             Action.StopDaemon,
@@ -199,21 +202,35 @@ class KmpTorService(baseDir: Path) : Logging {
 
                 var lastModified = 0L
                 var iterations = 0
-                val maxIterations = 100
+                val delay: Long = 100
+                val maxIterations = 30 * 1000 / delay // 30 seconds with 100ms delays
+                val startTime = System.currentTimeMillis()
+                val timeoutMs = 60_000 // 60 second timeout
                 while (!deferred.isCompleted && iterations < maxIterations) {
                     iterations++
+                    if (System.currentTimeMillis() - startTime > timeoutMs) {
+                        deferred.completeExceptionally(
+                            KmpTorException("Timeout waiting for control port file")
+                        )
+                        break
+                    }
                     log.i("readControlPort iterations=$iterations")
                     if (controlPortFile.exists()) {
                         val currentModified = controlPortFile.lastModified()
                         if (currentModified != lastModified) {
                             lastModified = currentModified
-                            log.i("We detected modification change of controlPortFile: $controlPortFile ; iterations=$iterations")
+                            log.i("We detected modification change of controlPortFile: $controlPortFile")
                             readControlPortFile(controlPortFile, deferred)
                         }
                     }
                     if (!deferred.isCompleted) {
-                        delay(100)
+                        delay(delay)
                     }
+                }
+                if (!deferred.isCompleted) {
+                    deferred.completeExceptionally(
+                        KmpTorException("Failed to read control port after $iterations iterations")
+                    )
                 }
             } catch (e: Exception) {
                 handleError("Observing file ${controlPortFile.absolutePath} failed: ${e.message}")
