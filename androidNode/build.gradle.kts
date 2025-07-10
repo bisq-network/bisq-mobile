@@ -120,16 +120,16 @@ android {
         // for apk release build after tor inclusion
         ndk {
             //noinspection ChromeOsAbiSupport
-            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
     }
 
-    // doesn't work - disable splits for apk (since tor was added it makes release task get stucked)
-//    splits {
-//        abi {
-//            isEnable = false
-//        }
-//    }
+    // Disable ABI splits to avoid packaging conflicts with kmp-tor
+    splits {
+        abi {
+            isEnable = false
+        }
+    }
 
     packaging {
         resources {
@@ -159,7 +159,7 @@ android {
                 "lib/**/libssl.so",
                 "lib/**/libsqlite*.so"
             )
-            // Required for kmp-tor exec resources
+            // Required for kmp-tor exec resources - helps prevent EOCD corruption
             useLegacyPackaging = true
         }
     }
@@ -199,15 +199,7 @@ android {
         buildConfig = true
     }
 
-    // Optional: Configure ABI splits for kmp-tor
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("x86", "armeabi-v7a", "arm64-v8a", "x86_64")
-            isUniversalApk = true
-        }
-    }
+    // ABI splits disabled to prevent packaging conflicts with kmp-tor native libraries
     compileOptions {
         // for bisq2 jars full compatibility
         sourceCompatibility = JavaVersion.VERSION_21

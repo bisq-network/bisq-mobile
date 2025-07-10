@@ -82,9 +82,9 @@ jobs:
           CI: true
         run: |
 #          refresh dependencies is important here because of the jars deps
-          ./gradlew clean packageDebug -x androidNode:packageDebug androidNode:bundleDebug --refresh-dependencies --info
+          ./gradlew clean buildDebug --refresh-dependencies --info
           ./gradlew test
-#          TODO failing after tor incorporation
+#          TODO failing after tor incorporation (hangs at 98%)
 #          ./gradlew androidNode:testDebugUnitTest androidNode:connectedDebugAndroidTest
 
       - name: Run androidClient Tests
