@@ -31,6 +31,7 @@ import bisq.common.util.ExceptionUtil
 import bisq.contract.ContractService
 import bisq.identity.IdentityService
 import bisq.network.NetworkService
+import bisq.network.NetworkServiceConfig
 import bisq.network.p2p.ServiceNode
 import bisq.offer.OfferService
 import bisq.presentation.notifications.SystemNotificationService
@@ -140,11 +141,7 @@ class AndroidApplicationService(
     val securityService =
         SecurityService(persistenceService, SecurityService.Config.from(getConfig("security")))
 
-//    val networkServiceConfig = NetworkServiceConfig.from(
-//        config.baseDir,
-//        getConfig("network")
-//    )
-    val networkServiceConfig = MobileNetworkServiceConfig.from(
+    val networkServiceConfig = NetworkServiceConfig.from(
         config.baseDir,
         getConfig("network")
     )
