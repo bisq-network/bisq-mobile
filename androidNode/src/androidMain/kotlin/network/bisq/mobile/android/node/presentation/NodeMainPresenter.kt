@@ -5,9 +5,6 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.android.node.MainActivity
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
-import network.bisq.mobile.android.node.service.bootstrap.ApplicationServiceInitializationCallback
-import network.bisq.mobile.android.node.service.bootstrap.NodeApplicationBootstrapFacade
-import network.bisq.mobile.android.node.service.network.KmpTorService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -55,9 +52,8 @@ class NodeMainPresenter(
     tradesServiceFacade,
     tradeReadStateRepository,
     urlLauncher
-), ApplicationServiceInitializationCallback {
+) {
 
-    private var kmpTorService: KmpTorService? = null
     private var applicationServiceCreated = false
 
     init {
@@ -92,18 +88,10 @@ class NodeMainPresenter(
                         )
                     provider.applicationService = applicationService
 
-                    // Set up the callback before activating the bootstrap facade
-                    (applicationBootstrapFacade as NodeApplicationBootstrapFacade).setInitializationCallback(nodePresenter)
-
+                    // Bootstrap facade now handles Tor initialization when needed
                     applicationBootstrapFacade.activate()
-
-                    // todo apply kmp tor startup state to applicationBootstrapFacade
-                    //  or better apply new Bisq 2 bootstrap info...
-                    val baseDir = applicationService.config.baseDir!!
-                    kmpTorService = KmpTorService(baseDir)
-                    kmpTorService!!.startTor().await()
-
-                    // todo handle kmpTorService.startupFailure
+                    // Wait for Tor to be ready before proceeding (no-op for CLEARNET)
+                    applicationBootstrapFacade.waitForTor()
 
                     settingsServiceFacade.activate()
 
@@ -145,7 +133,6 @@ class NodeMainPresenter(
             try {
                 log.i { "Stopping application service, ensuring persistent services stop" }
                 provider.applicationService.shutdown().join()
-                kmpTorService?.stopTor()
                 stopPersistentServices()
                 applicationServiceCreated = false
                 log.i { "Application service stopped successfully" }
@@ -174,23 +161,6 @@ class NodeMainPresenter(
         } catch (e: Exception) {
             log.e("Error stopping persistent services", e)
         }
-    }
-
-    /**
-     * Called by the bootstrap facade when application service initialization is complete
-     */
-    override fun onApplicationServiceInitialized() {
-        log.i { "ApplicationService initialization completed - activating services" }
-        applicationBootstrapFacade.deactivate()
-        activateServices(skipSettings = true)
-    }
-
-    /**
-     * Called by the bootstrap facade when application service initialization fails
-     */
-    override fun onApplicationServiceInitializationFailed(throwable: Throwable) {
-        log.e("Initializing applicationService failed", throwable)
-        // TODO: Show error to user
     }
 
     private fun activateServices(skipSettings: Boolean = false) {

@@ -632,7 +632,7 @@ object GeneratedResourceBundles_de {
             "bisqEasy.offerbook.dropdownMenu.sortAndFilterMarkets.sortTitle" to "Sortieren nach:",
             "bisqEasy.tradeWizard.review.priceDescription.taker" to "Handelspreis",
             "bisqEasy.takeOffer.review.sendTakeOfferMessageFeedback.subTitle" to "Das Senden der Nachricht zum Akzeptieren des Angebots kann bis zu 2 Minuten dauern",
-            "bootstrap.noConnectivity" to "Keine Verbindung: Bitte überprüfen Sie Ihre Internetverbindung und starten Sie neu",
+            "bisqEasy.walletGuide.receive.headline" to "Bitcoin in deiner Wallet empfangen",
             "bisqEasy.tradeWizard.selectOffer.noMatchingOffers.headline" to "Keine passenden Angebote gefunden",
             "bisqEasy.walletGuide.tabs.headline" to "Wallet-Anleitung",
             "bisqEasy.offerbook.offerList.table.columns.fiatAmount" to "{0} Betrag",
@@ -1548,11 +1548,9 @@ object GeneratedResourceBundles_de {
             "mobile.tradeState.info.buyer.phase2a.reasonForPaymentInfo" to "Use the trade ID {0} for the ''Reason for payment'' field",
             "min" to "Min",
             "bootstrap.connectedToTrustedNode" to "Connected to trusted node",
-            "bootstrap.noConnectivity" to "Keine Verbindung: Warte auf Verbindung für erneuten Versuch",
             "confirmation.areYouSure" to "Are you sure?",
             "genericError.headline" to "An error occurred",
             "mobile.reputation.learnMore" to "Learn more about the reputation system at the Bisq Wiki.",
         ),
     )
 }
-

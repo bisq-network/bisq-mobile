@@ -23,6 +23,9 @@ import org.koin.core.component.inject
  * - Call `activate()` when the service is started (optionally overridden by subclasses)
  * - Launch coroutines via `launchIO()` or `collectIO()`
  * - Call `deactivate()` to cancel all coroutines and release resources
+ *
+ *
+ * TODO refactor to have a BaseService that both ServiceFacade and other services can leverage
  */
 abstract class ServiceFacade : LifeCycleAware, KoinComponent, Logging {
     private var isActivated = atomic(false)

@@ -191,15 +191,6 @@ class AndroidApplicationService(
     val languageRepository: LanguageRepository
 
     init {
-        // Log system properties for Tor configuration debugging
-        log.i { "🔍 AndroidApplicationService: Checking system properties for Tor configuration:" }
-        log.i { "   bisq.useExternalTor = ${System.getProperty("bisq.useExternalTor")}" }
-        log.i { "   bisq.network.useExternalTor = ${System.getProperty("bisq.network.useExternalTor")}" }
-        log.i { "   tor.external = ${System.getProperty("tor.external")}" }
-        log.i { "   bisq.torSocksHost = ${System.getProperty("bisq.torSocksHost")}" }
-        log.i { "   bisq.torSocksPort = ${System.getProperty("bisq.torSocksPort")}" }
-        log.i { "   bisq.network.transport = ${System.getProperty("bisq.network.transport")}" }
-
         chatService = ChatService(
             persistenceService,
             networkService,

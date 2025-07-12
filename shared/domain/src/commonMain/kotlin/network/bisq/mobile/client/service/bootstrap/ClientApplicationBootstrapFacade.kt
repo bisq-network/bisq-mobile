@@ -61,6 +61,11 @@ class ClientApplicationBootstrapFacade(
         log.d { "Running bootstrap finished." }
     }
 
+    override suspend fun waitForTor() {
+        // Client doesn't use Tor, so this returns immediately
+        log.d { "Client bootstrap: waitForTor() - no Tor required atm, returning immediately" }
+    }
+
     override fun deactivate() {
         bootstrapJob?.cancel()
         bootstrapJob = null

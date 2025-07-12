@@ -7,15 +7,13 @@ import io.matthewnelson.kmp.tor.runtime.core.OnEvent
 import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.IODispatcher
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import java.io.File
 import java.io.FileOutputStream
@@ -38,9 +36,9 @@ import kotlin.io.path.absolutePathString
  *    The bisq 2 tor lib will detect the external tor and use that.
  *
  */
-class KmpTorService(baseDir: Path) : Logging {
-    private val torDirPath = Path(baseDir.absolutePathString(), "tor")
-    private val ioScope = CoroutineScope(IODispatcher)
+class KmpTorService : ServiceFacade(), Logging {
+
+    private lateinit var baseDir: Path
     private var torRuntime: TorRuntime? = null
     private var deferredSocksPort = CompletableDeferred<Int>()
     private var torDaemonStarted = CompletableDeferred<Boolean>()
@@ -49,7 +47,8 @@ class KmpTorService(baseDir: Path) : Logging {
     private val _startupFailure: MutableStateFlow<KmpTorException?> = MutableStateFlow(null)
     val startupFailure: StateFlow<KmpTorException?> = _startupFailure.asStateFlow()
 
-    fun startTor(): CompletableDeferred<Boolean> {
+    fun startTor(baseDir: Path): CompletableDeferred<Boolean> {
+        this.baseDir = baseDir
         log.i("Start kmp-tor")
         val torStartupCompleted = CompletableDeferred<Boolean>()
 
@@ -68,7 +67,7 @@ class KmpTorService(baseDir: Path) : Logging {
                 log.i("Tor daemon started")
                 torDaemonStarted.takeIf { !it.isCompleted }?.complete(true)
 
-                ioScope.launch {
+                launchIO {
                     configCompleted.await()
                     log.i("kmp-tor startup completed")
                     torStartupCompleted.takeIf { !it.isCompleted }?.complete(true)
@@ -81,6 +80,11 @@ class KmpTorService(baseDir: Path) : Logging {
     fun stopTor() {
         if (torRuntime == null) {
             log.w("Tor runtime is already null, skipping stop")
+            return
+        }
+
+        if (!torDaemonStarted.isCompleted || !torDaemonStarted.isActive) {
+            log.i("Tor daemon is still starting, waiting for it to complete before stopping")
             return
         }
 
@@ -115,7 +119,7 @@ class KmpTorService(baseDir: Path) : Logging {
                 log.i { "Tor daemon restarted" }
                 torDaemonStarted.takeIf { !it.isCompleted }?.complete(true)
 
-                ioScope.launch {
+                launchIO {
                     configCompleted.await()
                 }
             }
@@ -173,7 +177,7 @@ class KmpTorService(baseDir: Path) : Logging {
 
     private fun configTor(): CompletableDeferred<Boolean> {
         val configCompleted = CompletableDeferred<Boolean>()
-        ioScope.launch {
+        launchIO {
             try {
                 val socksPort = deferredSocksPort.await()
                 val controlPort = readControlPort().await()
@@ -191,7 +195,7 @@ class KmpTorService(baseDir: Path) : Logging {
 
     private fun readControlPort(): Deferred<Int> {
         val deferred = CompletableDeferred<Int>()
-        controlPortFileObserverJob = ioScope.launch {
+        controlPortFileObserverJob = launchIO {
             val controlPortFile = getControlPortFile()
             log.i("Path to controlPortFile: ${controlPortFile.absolutePath}")
             try {
@@ -281,6 +285,7 @@ class KmpTorService(baseDir: Path) : Logging {
     }
 
     private fun getTorDir(): File {
+        val torDirPath = Path(baseDir.absolutePathString(), "tor")
         val torDir = torDirPath.toFile()
         if (!torDir.exists()) {
             torDir.mkdirs()
@@ -289,6 +294,7 @@ class KmpTorService(baseDir: Path) : Logging {
     }
 
     private fun getTorCacheDir(): File {
+        val torDirPath = Path(baseDir.absolutePathString(), "tor")
         val torCacheDir = Path(torDirPath.absolutePathString(), "cache").toFile()
         if (!torCacheDir.exists()) {
             torCacheDir.mkdirs()

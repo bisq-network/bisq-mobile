@@ -31,4 +31,11 @@ abstract class ApplicationBootstrapFacade : ServiceFacade() {
     override fun deactivate() {
         super.deactivate()
     }
+
+    /**
+     * Waits for Tor initialization to complete if Tor is required.
+     * For CLEARNET-only configurations, this returns immediately.
+     * For Tor configurations, this suspends until Tor is fully initialized.
+     */
+    abstract suspend fun waitForTor()
 }
