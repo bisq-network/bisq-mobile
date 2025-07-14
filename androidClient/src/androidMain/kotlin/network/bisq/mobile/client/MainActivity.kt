@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
@@ -43,23 +44,26 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        MainApplication.setupKoinDI(applicationContext)
 
+        // Order matters in the next instructions
+        cleanupKoin()
         presenter.attachView(this)
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(
-                BisqTheme.colors.backgroundColor.toArgb(),
-            ),
-            navigationBarStyle = SystemBarStyle.dark(
-                BisqTheme.colors.backgroundColor.toArgb(),
-             )
-        )
 
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.BLACK),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.BLACK),
+        )
         setContent {
             App()
         }
 
         handleDynamicPermissions()
+    }
+
+    private fun cleanupKoin() {
+        MainApplication.setupKoinDI(applicationContext)
     }
 
     override fun onStart() {

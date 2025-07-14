@@ -13,16 +13,13 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.content.ContextCompat
+import androidx.core.view.WindowCompat
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.theme.adjustGamma
 import org.koin.android.ext.android.inject
 
 class MainActivity : ComponentActivity() {
@@ -45,15 +42,17 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Order matters in the next instructions
         cleanupKoin()
-
         presenter.attachView(this)
-        val bgColor = Color(0xFF1C1C1C).adjustGamma().toArgb()
-        enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(bgColor),
-            navigationBarStyle = SystemBarStyle.dark(bgColor),
-        )
 
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+
+        enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.TRANSPARENT),
+        )
         setContent {
             App()
         }

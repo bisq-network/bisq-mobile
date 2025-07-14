@@ -1,10 +1,14 @@
 package network.bisq.mobile.presentation.ui
 
 import ErrorOverlay
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.flow.StateFlow
@@ -38,6 +42,45 @@ interface AppPresenter : ViewPresenter {
     fun navigateToTrustedNode()
 }
 
+@Composable
+fun WindowInsets.topPaddingDp(): Dp {
+    val density = LocalDensity.current
+    val topPx = getTop(density)
+    return with(density) { topPx.toDp() }
+}
+
+@Composable
+fun WindowInsets.bottomPaddingDp(): Dp {
+    val density = LocalDensity.current
+    val bottomPx = getBottom(density)
+    return with(density) { bottomPx.toDp() }
+}
+
+@Composable
+fun SafeInsetsContainer(
+    content: @Composable () -> Unit
+) {
+    // Outer container consumes insets and paints the background
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .consumeWindowInsets(WindowInsets.systemBars) // Eat insets, so no white stripes
+            .background(Color.Black) // Or your desired background color behind system bars
+    ) {
+        // Inner container adds padding for content
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                    top = WindowInsets.statusBars.topPaddingDp(),
+                    bottom = WindowInsets.navigationBars.bottomPaddingDp()
+                )
+        ) {
+            content()
+        }
+    }
+}
+
 /**
  * Main composable view of the application that platforms use to draw.
  */
@@ -59,9 +102,7 @@ fun App() {
         isNavControllerSet = true
     })
 
-    Surface(
-        modifier = Modifier.windowInsetsPadding(WindowInsets.statusBars).windowInsetsPadding(WindowInsets.navigationBars).windowInsetsPadding(WindowInsets.displayCutout)
-    ) {
+    SafeInsetsContainer {
         BisqTheme(darkTheme = true) {
             if (isNavControllerSet) {
                 SwipeBackIOSNavigationHandler(rootNavController) {
