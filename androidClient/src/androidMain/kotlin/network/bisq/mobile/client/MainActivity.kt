@@ -45,7 +45,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         MainApplication.setupKoinDI(applicationContext)
 
-
         presenter.attachView(this)
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.dark(

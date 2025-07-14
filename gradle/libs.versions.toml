@@ -5,50 +5,53 @@ bisq-core-commit = "d73864d095f6c1f143c853905d45bb7d297278c1"
 # API version is usually same as bisq-cor but for more control we keep it separated
 #bisq-api = "2.1.7"
 
+kotlin = "2.0.21"
+kotlinReflect = "2.0.21"
+kotlinTestJunit = "2.0.21"
+kotlinx = "1.9.0" # latest stable
+kotlinxDatetime = "0.4.0" # latest stable
+kotlinxSerialization = "1.7.3"
+serializationPlugin = "2.0.21"
+ksp = "2.0.21-1.0.27"
+
+#noinspection AndroidGradlePluginVersion - we need to stick to it based on https://developer.android.com/build/kotlin-support
 agp = "8.5.0"
-android-compileSdk = "34"
-android-targetSdk = "34"
+android-compileSdk = "35"
+android-targetSdk = "35"
 android-minSdk = "24"
 android-node-minSdk = "31"
-androidx-activityCompose = "1.9.2"
 
+androidx-core = "1.13.1"
+androidx-activityCompose = "1.9.2"
+androidx-lifecycle = "2.8.2"
+androidx-test-compose-ver = "1.6.8"
+androidx-multidex = "2.0.1"
+androidx-test = "1.6.1"
+androidx-test-junit = "1.2.1"
+androidx-test-espresso= "3.6.1"
 androidx-appcompat = "1.7.0"
 androidx-constraintlayout = "2.1.4"
-androidx-core = "1.13.1"
 androidx-core-ktx = "1.13.1"
 androidx-espresso-core = "3.6.1"
 androidx-material = "1.12.0"
 
 desugar_jdk_libs = "2.1.5"
 roboelectric = "4.10.3"
-androidx-test = "1.6.1"
-androidx-test-junit = "1.2.1"
-androidx-test-espresso= "3.6.1"
-
-androidx-lifecycle = "2.8.2"
-androidx-test-compose-ver = "1.6.8"
-androidx-multidex = "2.0.1"
 atomicfu = "0.26.1"
 bignum-lib= "0.3.10"
 coilCompose = "3.0.3"
 compose-plugin = "1.7.0"
 junit = "4.13.2"
-kotlinReflect = "2.0.21"
-kotlinxDatetime = "0.4.0"
-kotlinxSerialization = "1.7.3"
+
+
 ktorClient = "3.0.1"
 mockio = "1.12.0"
-kotlin = "2.0.20"
-kotlinTestJunit = "2.0.20"
-kotlinx = "1.9.0"
 kermit = "2.0.4"
 buildconfig = "5.5.0"
 navigationCompose = "2.7.0-alpha07"
 okio = "3.9.1"
-serializationPlugin = "2.0.21"
 protobuf = "0.9.4"
 protob = "4.28.2"
-ksp = "2.0.20-1.0.25"
 
 chimp-jsocks-lib = { strictly = '567e1cd6' }
 failsafe-lib = { strictly = '3.2.4' }

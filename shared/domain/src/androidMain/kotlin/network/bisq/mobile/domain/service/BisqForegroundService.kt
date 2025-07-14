@@ -86,6 +86,14 @@ open class BisqForegroundService : Service(), Logging {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // Android API 35
+        if (intent?.action == "DISMISS_NOTIFICATION") {
+            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.cancel(PUSH_NOTIFICATION_ID)
+            log.i { "Notification dismissed by user" }
+            return START_STICKY
+        }
+        
         // Check if notification permission is granted
         if (ContextCompat.checkSelfPermission(
                 this,
