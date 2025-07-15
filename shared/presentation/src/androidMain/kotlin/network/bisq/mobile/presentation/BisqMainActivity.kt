@@ -12,18 +12,25 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.theme.adjustGamma
 import org.koin.android.ext.android.inject
 
 /**
  * Base class for Bisq Android apps Main Activities
  */
 abstract class BisqMainActivity : ComponentActivity() {
-    protected val presenter: MainPresenter by inject()
+    companion object {
+        const val BACKGROUND_COLOR_CODE = 0xFF1C1C1C
+    }
+
+    private val presenter: MainPresenter by inject()
     
     // TODO probably better to handle from presenter once the user reach home?
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
@@ -43,15 +50,16 @@ abstract class BisqMainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Order matters in the next instructions
-        cleanupKoin()
+        // Initialize dependency injection before presenter attachment
+        setupKoinDI()
         presenter.attachView(this)
 
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
+        val bgColor = Color(BACKGROUND_COLOR_CODE).adjustGamma().toArgb()
         enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.dark(android.graphics.Color.BLACK),
-            navigationBarStyle = SystemBarStyle.dark(android.graphics.Color.BLACK),
+            statusBarStyle = SystemBarStyle.dark(bgColor),
+            navigationBarStyle = SystemBarStyle.dark(bgColor),
         )
         setContent {
             App()
@@ -60,7 +68,7 @@ abstract class BisqMainActivity : ComponentActivity() {
         handleDynamicPermissions()
     }
 
-    protected abstract fun cleanupKoin()
+    protected abstract fun setupKoinDI()
 
     override fun onStart() {
         super.onStart()

@@ -7,7 +7,7 @@ import network.bisq.mobile.presentation.BisqMainActivity
  */
 class MainActivity : BisqMainActivity() {
     
-    override fun cleanupKoin() {
+    override fun setupKoinDI() {
         MainApplication.setupKoinDI(applicationContext)
     }
 }
