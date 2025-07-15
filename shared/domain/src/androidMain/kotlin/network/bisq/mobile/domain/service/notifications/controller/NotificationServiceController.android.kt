@@ -23,12 +23,14 @@ import network.bisq.mobile.domain.utils.Logging
  */
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class NotificationServiceController (private val appForegroundController: AppForegroundController): ServiceController, Logging {
+    companion object {
+        const val SERVICE_NAME = "Bisq Service"
+        const val DISMISS_NOTIFICATION_ACTION = "DISMISS_NOTIFICATION"
+        const val DISMISS_PENDING_INTENT_FLAGS = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    }
 
     private val context = appForegroundController.context
 
-    companion object {
-        const val SERVICE_NAME = "Bisq Service"
-    }
 
     private val serviceScope = CoroutineScope(SupervisorJob())
     private val observerJobs = mutableMapOf<StateFlow<*>, Job>()
@@ -124,15 +126,15 @@ actual class NotificationServiceController (private val appForegroundController:
             )
         }
 
-        // as per Android API 35 requirements
+        // Add dismiss action for better UX and notification management (API35+ target)
         val dismissIntent = Intent(context, BisqForegroundService::class.java).apply {
-            action = "DISMISS_NOTIFICATION"
+            action = DISMISS_NOTIFICATION_ACTION
         }
         val dismissPendingIntent = PendingIntent.getService(
             context,
             1,
             dismissIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+            DISMISS_PENDING_INTENT_FLAGS
         )
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

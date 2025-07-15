@@ -21,9 +21,11 @@ android-targetSdk = "35"
 android-minSdk = "24"
 android-node-minSdk = "31"
 
+# AndroidX Core Libraries
 androidx-core = "1.13.1"
 androidx-activityCompose = "1.9.2"
 androidx-lifecycle = "2.8.2"
+# AndroidX Testing Libraries
 androidx-test-compose-ver = "1.6.8"
 androidx-multidex = "2.0.1"
 androidx-test = "1.6.1"
