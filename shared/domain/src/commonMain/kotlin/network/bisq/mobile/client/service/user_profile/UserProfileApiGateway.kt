@@ -30,6 +30,11 @@ class UserProfileApiGateway(
         return webSocketApiClient.post(basePath, createUserIdentityRequest)
     }
 
+    suspend fun updateUserProfile(statement: String, terms: String): Result<CreateUserIdentityResponse> {
+        val request = UpdateUserIdentityRequest(statement, terms)
+        return webSocketApiClient.patch(basePath, request)
+    }
+
     suspend fun getUserIdentityIds(): Result<List<String>> {
         return webSocketApiClient.get("$basePath/ids")
     }
@@ -43,5 +48,4 @@ class UserProfileApiGateway(
         // return webSocketApiClient.get("$basePath/list/${ids.joinToString()}")
         return Result.success(emptyList())
     }
-
 }

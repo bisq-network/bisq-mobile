@@ -108,6 +108,13 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         _selectedUserProfile.value = getSelectedUserProfile()
     }
 
+    override suspend fun updateAndPublishUserProfile(
+        statement: String?,
+        terms: String?
+    ): Result<UserProfileVO> {
+        TODO("Not yet implemented")
+    }
+
     override suspend fun getUserIdentityIds(): List<String> {
         return userService.userIdentityService.userIdentities.map { userIdentity -> userIdentity.id }
     }

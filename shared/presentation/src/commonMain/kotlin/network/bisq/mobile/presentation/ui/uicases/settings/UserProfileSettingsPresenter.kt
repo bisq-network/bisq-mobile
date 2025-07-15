@@ -65,37 +65,42 @@ class UserProfileSettingsPresenter(
         super.onViewAttached()
 
         launchUI {
-            val reputationScore: ReputationScoreVO? = withContext(IODispatcher) {
-                userProfileServiceFacade.getSelectedUserProfile()?.let {
-                    // _reputation.value = it.reputation // TODO reputation?
-                    setProfileAge(it)
-                    setProfileId(it)
-                    setBotId(it)
-                    setNickname(it)
-                }
-                userRepository.fetch()?.let {
-                    // The following should be local to the app
-                    setLastActivity(it)
-                    setTradeTerms(it)
-                    setStatement(it)
-                }
-
-                reputationServiceFacade.getReputation(profileId.value).getOrNull()
-            }
-
-            _reputation.value = reputationScore?.totalScore?.toString() ?: DEFAULT_UNKNOWN_VALUE
-
             val user = withContext(IODispatcher) { userRepository.fetch() }
-            user?.let { _uniqueAvatar.value = it.uniqueAvatar }
+            val userProfile = withContext(IODispatcher) { userProfileServiceFacade.getSelectedUserProfile() }
+            val reputation = withContext(IODispatcher) { reputationServiceFacade.getReputation(profileId.value) }
+            userProfile?.let {
+                setProfileAge(it)
+                setProfileId(it)
+                setBotId(it)
+                setNickname(it)
+                setStatement(it)
+                setTradeTerms(it)
+            }
+            user?.let {
+                setAvatar(it)
+                setLastActivity(it)
+            }
+            reputation.getOrNull()?.let {
+                setReputation(it)
+            }
         }
     }
 
-    private fun setStatement(user: User) {
-        _statement.value = user.statement ?: DEFAULT_UNKNOWN_VALUE
+
+    private fun setAvatar(it: User) {
+        _uniqueAvatar.value = it.uniqueAvatar
     }
 
-    private fun setTradeTerms(user: User) {
-        _tradeTerms.value = user.tradeTerms ?: DEFAULT_UNKNOWN_VALUE
+    private fun setReputation(reputation: ReputationScoreVO) {
+        _reputation.value = reputation?.totalScore?.toString() ?: DEFAULT_UNKNOWN_VALUE
+    }
+
+    private fun setStatement(user: UserProfileVO) {
+        _statement.value = user.statement
+    }
+
+    private fun setTradeTerms(user: UserProfileVO) {
+        _tradeTerms.value = user.terms
     }
 
     private fun setLastActivity(user: User) {
@@ -135,16 +140,13 @@ class UserProfileSettingsPresenter(
         setShowLoading(true)
         launchUI {
             try {
-                withContext(IODispatcher) {
-                    userRepository.fetch()?.let { user ->
-                        user.statement = statement.value
-                        user.tradeTerms = tradeTerms.value
-                        userRepository.update(user)
-
-                        // avoid flicker
-                        delay(500L)
-                    }
+                val result = withContext(IODispatcher) {
+                    userProfileServiceFacade.updateAndPublishUserProfile(statement.value, tradeTerms.value)
+                }
+                if (result.isSuccess) {
                     showSnackbar("Save success") // TODO: i18n
+                } else {
+                    showSnackbar("Save failure") // TODO: i18n
                 }
             } catch (e: Exception) {
                 showSnackbar("Save failure") // TODO: i18n

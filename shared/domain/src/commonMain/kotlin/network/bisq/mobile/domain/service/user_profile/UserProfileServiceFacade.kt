@@ -41,6 +41,13 @@ interface UserProfileServiceFacade : LifeCycleAware {
     suspend fun createAndPublishNewUserProfile(nickName: String)
 
     /**
+     * Updates the user profile and publishes it to the network.
+     * The user identity contains the key pair and is private data. The UserProfile is public data
+     * and shared with the network.
+     */
+    suspend fun updateAndPublishUserProfile(statement: String?, terms: String?): Result<UserProfileVO>
+
+    /**
      * Create UserProfileModels from the userIdentities.
      */
     suspend fun getUserIdentityIds(): List<String>

@@ -94,6 +94,32 @@ class ClientUserProfileServiceFacade(
         _selectedUserProfile.value = response.userProfile
     }
 
+    override suspend fun updateAndPublishUserProfile(
+        statement: String?,
+        terms: String?
+    ): Result<UserProfileVO> {
+        try {
+            // trigger exception if no selected user profile
+            getSelectedUserProfile()
+
+            val apiResult = apiGateway.updateUserProfile(statement ?: "", terms ?: "")
+            if (apiResult.isFailure) {
+                throw apiResult.exceptionOrNull()!!
+            }
+
+            val response: CreateUserIdentityResponse = apiResult.getOrThrow()
+            this.keyMaterialResponse = null
+            log.i { "Call to createAndPublishNewUserProfile successful. new statement = ${response.userProfile.statement}, " +
+                    "new terms = ${response.userProfile.terms}" }
+
+            _selectedUserProfile.value = response.userProfile
+            return Result.success(response.userProfile)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to update and publish user profile: ${e.message}" }
+            return Result.failure(e)
+        }
+    }
+
     override suspend fun getUserIdentityIds(): List<String> {
         val apiResult = apiGateway.getUserIdentityIds()
         if (apiResult.isFailure) {
