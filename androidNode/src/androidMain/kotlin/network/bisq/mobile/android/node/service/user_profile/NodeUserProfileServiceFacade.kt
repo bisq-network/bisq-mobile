@@ -112,7 +112,22 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         statement: String?,
         terms: String?
     ): Result<UserProfileVO> {
-        TODO("Not yet implemented")
+        try {
+            val selectedUserIdentity = userService.userIdentityService.selectedUserIdentity
+            userService.userIdentityService.editUserProfile(
+                selectedUserIdentity, terms ?: "", statement ?: ""
+            ).join()
+
+            pubKeyHash = null
+            keyPair = null
+            proofOfWork = null
+
+            _selectedUserProfile.value = getSelectedUserProfile()
+            return Result.success(_selectedUserProfile.value!!)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to republish user profile: ${e.message}" }
+            return Result.failure(e)
+        }
     }
 
     override suspend fun getUserIdentityIds(): List<String> {
