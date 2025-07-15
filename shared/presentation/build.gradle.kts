@@ -66,6 +66,10 @@ kotlin {
             implementation(libs.bignum)
             implementation(libs.coil.compose)
         }
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
+            implementation(libs.koin.android)
+        }
         androidUnitTest.dependencies {
             implementation(libs.mock.io)
             implementation(libs.kotlin.test.junit.v180)
