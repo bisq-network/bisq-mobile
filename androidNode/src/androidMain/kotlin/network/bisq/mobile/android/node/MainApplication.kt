@@ -1,6 +1,5 @@
 package network.bisq.mobile.android.node
 
-import android.app.Application
 import android.content.Context
 import android.os.Process
 import bisq.common.facades.FacadeProvider
@@ -11,7 +10,7 @@ import bisq.common.network.clear_net_address_types.LANAddressTypeFacade
 import network.bisq.mobile.android.node.di.androidNodeModule
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.di.serviceModule
-import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.presentation.BisqMainApplication
 import network.bisq.mobile.presentation.di.presentationModule
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.koin.android.ext.koin.androidContext
@@ -19,7 +18,11 @@ import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import java.security.Security
 
-class MainApplication : Application(), Logging {
+/**
+ * Bisq Android Node Application definition
+ */
+class MainApplication : BisqMainApplication() {
+    
     companion object {
         private val nodeModules = listOf(domainModule, serviceModule, presentationModule, androidNodeModule)
 
@@ -33,11 +36,12 @@ class MainApplication : Application(), Logging {
             }
         }
     }
-
-    override fun onCreate() {
-        super.onCreate()
-
+    
+    override fun setupKoinDI() {
         setupKoinDI(this)
+    }
+
+    override fun onCreated() {
         setupBisqCoreStatics()
         // Note: Tor initialization is now handled in NodeApplicationBootstrapFacade
         // as the very first step of the bootstrap process
