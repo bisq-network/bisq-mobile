@@ -30,10 +30,6 @@ open class TopBarPresenter(
 
     override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> = connectivityService.status
 
-    init {
-        refresh()
-    }
-
     override fun onViewAttached() {
         super.onViewAttached()
         refresh()
