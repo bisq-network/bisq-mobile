@@ -39,10 +39,9 @@ fun CreateProfileScreen(
     val profileIcon by presenter.profileIcon.collectAsState()
     val nym by presenter.nym.collectAsState()
     val id by presenter.id.collectAsState()
-    val botSize = BisqUIConstants.ScreenPadding5X
+    val botSize = BisqUIConstants.ScreenPadding8X
 
     BisqScrollScaffold {
-        BisqLogo()
         BisqGap.V2()
         BisqText.h1LightGrey("onboarding.createProfile.headline".i18n())
         BisqGap.V1()

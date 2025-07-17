@@ -79,7 +79,7 @@ open class CreateProfilePresenter(
 
     fun validateNickname(nickname: String): String? {
         return when {
-            nickname.length < 3 -> "Min length: 3 characters"
+            nickname.length < 1 -> "Min length: 1 characters"
             nickname.length > 100 -> "Max length: 100 characters"
             else -> null
         }.also {
