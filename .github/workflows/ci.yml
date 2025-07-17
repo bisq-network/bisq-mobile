@@ -76,13 +76,13 @@ jobs:
           echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
           echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
 
-      # CI:true is costly so we sum all tasks in one instruction                                   #
+#      CI:true is costly so we sum all tasks in one instruction
       - name: Build project and do node specific tasks
         env:
           CI: true
         run: |
-#          refresh dependencies is important here because of the jars deps
-          ./gradlew clean buildDebug --refresh-dependencies --info
+          # refresh dependencies is important here because of the jars deps
+          ./gradlew androidNode:clean androidNode:assembleDebug --refresh-dependencies --info
           ./gradlew test
 #          TODO failing after tor incorporation (hangs at 98%)
 #          ./gradlew androidNode:testDebugUnitTest androidNode:connectedDebugAndroidTest
@@ -90,7 +90,9 @@ jobs:
       - name: Run androidClient Tests
         env:
           CI: true
-        run: ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
+        run: |
+          ./gradlew androidClient:clean androidClient:buildDebug
+          ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
 
       # TODO ios specific and run on emulator if needed
       - name: Run iOS Tests
