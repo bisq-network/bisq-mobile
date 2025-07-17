@@ -109,7 +109,7 @@ class ClientUserProfileServiceFacade(
 
             val response: CreateUserIdentityResponse = apiResult.getOrThrow()
             this.keyMaterialResponse = null
-            log.i { "Call to createAndPublishNewUserProfile successful. new statement = ${response.userProfile.statement}, " +
+            log.i { "Call to updateAndPublishUserProfile successful. new statement = ${response.userProfile.statement}, " +
                     "new terms = ${response.userProfile.terms}" }
 
             _selectedUserProfile.value = response.userProfile

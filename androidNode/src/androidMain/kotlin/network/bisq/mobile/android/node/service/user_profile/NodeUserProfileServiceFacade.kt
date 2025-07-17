@@ -122,8 +122,13 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             keyPair = null
             proofOfWork = null
 
-            _selectedUserProfile.value = getSelectedUserProfile()
-            return Result.success(_selectedUserProfile.value!!)
+            val updatedProfile = getSelectedUserProfile()
+            _selectedUserProfile.value = updatedProfile
+            return if (updatedProfile == null) {
+                Result.failure(IllegalStateException("Selected user profile is null after update"))
+            } else {
+                Result.success(updatedProfile)
+            }
         } catch (e: Exception) {
             log.e(e) { "Failed to republish user profile: ${e.message}" }
             return Result.failure(e)

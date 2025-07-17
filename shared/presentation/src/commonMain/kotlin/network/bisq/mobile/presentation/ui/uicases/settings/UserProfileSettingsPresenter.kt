@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.withContext
@@ -67,7 +66,6 @@ class UserProfileSettingsPresenter(
         launchUI {
             val user = withContext(IODispatcher) { userRepository.fetch() }
             val userProfile = withContext(IODispatcher) { userProfileServiceFacade.getSelectedUserProfile() }
-            val reputation = withContext(IODispatcher) { reputationServiceFacade.getReputation(profileId.value) }
             userProfile?.let {
                 setProfileAge(it)
                 setProfileId(it)
@@ -76,7 +74,9 @@ class UserProfileSettingsPresenter(
                 setStatement(it)
                 setTradeTerms(it)
             }
-            user?.let {
+            val reputationProfileId = userProfile?.id ?: DEFAULT_UNKNOWN_VALUE
+            val reputation = withContext(IODispatcher) { reputationServiceFacade.getReputation(reputationProfileId) }
+                user?.let {
                 setAvatar(it)
                 setLastActivity(it)
             }
@@ -92,7 +92,7 @@ class UserProfileSettingsPresenter(
     }
 
     private fun setReputation(reputation: ReputationScoreVO) {
-        _reputation.value = reputation?.totalScore?.toString() ?: DEFAULT_UNKNOWN_VALUE
+        _reputation.value = reputation.totalScore.toString()
     }
 
     private fun setStatement(user: UserProfileVO) {
@@ -108,15 +108,15 @@ class UserProfileSettingsPresenter(
     }
 
     private fun setBotId(userProfile: UserProfileVO) {
-        _botId.value = userProfile.nym ?: DEFAULT_UNKNOWN_VALUE
+        _botId.value = userProfile.nym
     }
 
     private fun setNickname(userProfile: UserProfileVO) {
-        _nickname.value = userProfile.nickName ?: DEFAULT_UNKNOWN_VALUE
+        _nickname.value = userProfile.nickName
     }
 
     private fun setProfileId(userProfile: UserProfileVO) {
-        _profileId.value = userProfile.id ?: DEFAULT_UNKNOWN_VALUE
+        _profileId.value = userProfile.id
     }
 
     private fun setProfileAge(userProfile: UserProfileVO) {
@@ -128,7 +128,7 @@ class UserProfileSettingsPresenter(
                     if (it.third > 0) "${it.third} days" else null
                 ).ifEmpty { listOf("less than a day") }.joinToString(", ")
             }
-        } ?: DEFAULT_UNKNOWN_VALUE
+        }
     }
 
     override fun onDelete() {
