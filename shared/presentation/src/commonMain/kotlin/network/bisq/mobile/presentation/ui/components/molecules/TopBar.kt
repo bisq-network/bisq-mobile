@@ -151,17 +151,18 @@ fun TopBar(
                         }
 
                     BisqGap.H1()
+                    val uniqueAvatar by presenter.uniqueAvatar.collectAsState()
                     if (showAnimation && connectivityStatus != ConnectivityService.ConnectivityStatus.DISCONNECTED) {
                         ShineOverlay {
                             UserIcon(
-                                presenter.uniqueAvatar.value,
+                                uniqueAvatar,
                                 modifier = userIconModifier,
                                 connectivityStatus = connectivityStatus
                             )
                         }
                     } else {
                         UserIcon(
-                            presenter.uniqueAvatar.value,
+                            uniqueAvatar,
                             modifier = userIconModifier,
                             connectivityStatus = connectivityStatus
                         )
