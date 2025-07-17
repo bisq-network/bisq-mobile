@@ -39,8 +39,7 @@ open class DashboardPresenter(
         }
         collectUI(networkStatsServiceFacade.publishedProfilesCount) { count ->
             _publishedProfiles.value = count
-            log.d { "NetworkStats publishedProfilesCount received: $count" }
-
+            log.d { "DashboardPresenter: NetworkStats publishedProfilesCount received: $count" }
         }
         collectUI(mainPresenter.languageCode) {
             marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()

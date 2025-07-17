@@ -34,10 +34,12 @@ class ClientNetworkStatsServiceFacade(
                     if (webSocketEvent?.deferredPayload == null) {
                         return@collect
                     }
-                    val webSocketEventPayload: WebSocketEventPayload<Map<String, NetworkStatsDto>> =
+                    log.d { "Processing network stats event: ${webSocketEvent.deferredPayload}" }
+                    val webSocketEventPayload: WebSocketEventPayload<NetworkStatsDto> =
                         WebSocketEventPayload.from(json, webSocketEvent)
                     val payload = webSocketEventPayload.payload
-                    _publishedProfilesCount.value = payload.values.sumOf { it.publishedProfiles }
+                    log.d { "Updating published profiles count from ${_publishedProfilesCount.value} to ${payload.publishedProfiles}" }
+                    _publishedProfilesCount.value = payload.publishedProfiles
                 }
             } catch (e: Exception) {
                 log.e(e) { "Failed to subscribe to network stats" }
