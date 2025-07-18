@@ -13,11 +13,11 @@ class NodeDashboardPresenter(
     marketPriceServiceFacade: MarketPriceServiceFacade,
     offersServiceFacade: OffersServiceFacade
 ) : DashboardPresenter(mainPresenter, bisqStatsRepository, marketPriceServiceFacade, offersServiceFacade) {
-    override val title: String = "mobile.nodeDashboard.title".i18n()
-    override val bulletPoints: List<String> = listOf(
-        "mobile.nodeDashboard.bulletPoint1".i18n(),
-        "mobile.nodeDashboard.bulletPoint2".i18n(),
-        "mobile.nodeDashboard.bulletPoint3".i18n(),
-        "mobile.nodeDashboard.bulletPoint4".i18n(),
+    override val titleKey: String = "mobile.nodeDashboard.title"
+    override val bulletPointsKey: List<String> = listOf(
+        "mobile.nodeDashboard.bulletPoint1",
+        "mobile.nodeDashboard.bulletPoint2",
+        "mobile.nodeDashboard.bulletPoint3",
+        "mobile.nodeDashboard.bulletPoint4",
     )
 }

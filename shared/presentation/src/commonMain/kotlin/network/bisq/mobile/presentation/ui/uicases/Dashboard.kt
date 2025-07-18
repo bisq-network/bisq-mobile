@@ -30,8 +30,8 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 interface IGettingStarted : ViewPresenter {
-    val title: String
-    val bulletPoints: List<String>
+    val titleKey: String
+    val bulletPointsKey: List<String>
     val offersOnline: StateFlow<Number>
     val publishedProfiles: StateFlow<Number>
 
@@ -78,8 +78,8 @@ fun DashboardScreen() {
         // BisqButton("bisqEasy.tradeGuide.tabs.headline".i18n(), onClick = { presenter.navigateToGuide() })
         WelcomeCard(
             presenter = presenter,
-            title = presenter.title,
-            bulletPoints = presenter.bulletPoints,
+            titleKey = presenter.titleKey,
+            bulletPointsKey = presenter.bulletPointsKey,
             primaryButtonText = "mobile.dashboard.startTrading".i18n(),
             footerLink = "action.learnMore".i18n()
         )
@@ -89,8 +89,8 @@ fun DashboardScreen() {
 @Composable
 fun WelcomeCard(
     presenter: DashboardPresenter,
-    title: String,
-    bulletPoints: List<String>,
+    titleKey: String,
+    bulletPointsKey: List<String>,
     primaryButtonText: String,
     footerLink: String
 ) {
@@ -99,18 +99,18 @@ fun WelcomeCard(
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
     ) {
         // Title
-        BisqText.h4Regular(title)
+        BisqText.h4Regular(titleKey.i18n())
 
         // Bullet Points
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalfQuarter)) {
-            bulletPoints.forEach { point ->
+            bulletPointsKey.forEach { pointKey ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     val whiteColor = BisqTheme.colors.white
                     Canvas(modifier = Modifier.size(BisqUIConstants.ScreenPaddingHalf)) {
                         drawCircle(color = whiteColor)
                     }
                     BisqGap.H1()
-                    BisqText.smallMedium(point)
+                    BisqText.smallMedium(pointKey.i18n())
                 }
             }
         }

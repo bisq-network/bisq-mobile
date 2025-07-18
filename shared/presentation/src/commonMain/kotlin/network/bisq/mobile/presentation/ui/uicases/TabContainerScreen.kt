@@ -22,10 +22,10 @@ import network.bisq.mobile.presentation.ui.navigation.graph.TabNavGraph
 import org.koin.compose.koinInject
 
 val navigationListItem = listOf(
-    BottomNavigationItem("mobile.bottomNavigation.home".i18n(), Routes.TabHome.name, Res.drawable.icon_home),
-    BottomNavigationItem("mobile.bottomNavigation.offerbook".i18n(), Routes.TabOfferbook.name, Res.drawable.icon_market),
-    BottomNavigationItem("mobile.bottomNavigation.myTrades".i18n(), Routes.TabOpenTradeList.name, Res.drawable.icon_trades),
-    BottomNavigationItem("mobile.bottomNavigation.settings".i18n(), Routes.TabSettings.name, Res.drawable.icon_settings),
+    BottomNavigationItem("mobile.bottomNavigation.home", Routes.TabHome.name, Res.drawable.icon_home),
+    BottomNavigationItem("mobile.bottomNavigation.offerbook", Routes.TabOfferbook.name, Res.drawable.icon_market),
+    BottomNavigationItem("mobile.bottomNavigation.myTrades", Routes.TabOpenTradeList.name, Res.drawable.icon_trades),
+    BottomNavigationItem("mobile.bottomNavigation.settings", Routes.TabSettings.name, Res.drawable.icon_settings),
 )
 
 interface ITabContainerPresenter : ViewPresenter {
@@ -59,10 +59,10 @@ fun TabContainerScreen() {
             TopBar(
                 isHome = currentRoute == Routes.TabHome.name,
                 title = when (currentRoute) {
-                    Routes.TabHome.name -> "mobile.bottomNavigation.home".i18n()
-                    Routes.TabOfferbook.name -> "mobile.bottomNavigation.offerbook".i18n()
+                    Routes.TabHome.name -> navigationListItem[0].title.i18n()
+                    Routes.TabOfferbook.name -> navigationListItem[1].title.i18n()
                     Routes.TabOpenTradeList.name -> "mobile.bottomNavigation.myOpenTrades".i18n()
-                    Routes.TabSettings.name -> "mobile.bottomNavigation.settings".i18n()
+                    Routes.TabSettings.name -> navigationListItem[3].title.i18n()
                     else -> "mobile.bottomNavigation.app".i18n()
                 },
                 backBehavior = {

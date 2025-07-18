@@ -20,12 +20,12 @@ open class DashboardPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val offersServiceFacade: OffersServiceFacade
 ) : BasePresenter(mainPresenter), IGettingStarted {
-    override val title: String = "mobile.dashboard.title".i18n()
+    override val titleKey: String = "mobile.dashboard.title"
 
-    override val bulletPoints: List<String> = listOf(
-        "mobile.dashboard.bulletPoint1".i18n(),
-        "mobile.dashboard.bulletPoint2".i18n(),
-        "mobile.dashboard.bulletPoint3".i18n(),
+    override val bulletPointsKey: List<String> = listOf(
+        "mobile.dashboard.bulletPoint1",
+        "mobile.dashboard.bulletPoint2",
+        "mobile.dashboard.bulletPoint3",
     )
 
     private val _offersOnline = MutableStateFlow(0)

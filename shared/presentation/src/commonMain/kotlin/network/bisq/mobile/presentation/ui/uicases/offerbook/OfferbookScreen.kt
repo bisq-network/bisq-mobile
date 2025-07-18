@@ -25,6 +25,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.dialog.Confirmat
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.WebLinkConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 @Composable
@@ -106,7 +107,6 @@ fun OfferbookScreen() {
 
 }
 
-
 @Composable
 fun NoOffersSection(presenter: OfferbookPresenter) {
     Column(
@@ -115,7 +115,7 @@ fun NoOffersSection(presenter: OfferbookPresenter) {
         verticalArrangement = Arrangement.Center
     ) {
         BisqText.h4LightGrey(
-            text = "mobile.offerBookScreen.noOffersSection.thereAreNoOffers".i18n(),
+            text = "mobile.offerBookScreen.noOffersSection.thereAreNoOffers".i18n(), // There are no offers
             textAlign = TextAlign.Center
         )
         BisqGap.V4()

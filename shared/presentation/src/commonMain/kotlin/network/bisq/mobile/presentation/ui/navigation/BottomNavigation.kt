@@ -11,6 +11,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.animations.AnimatedBadge
 import network.bisq.mobile.presentation.ui.composeModels.BottomNavigationItem
@@ -78,7 +79,7 @@ fun BottomNavigation(
                 },
                 label = {
                     BisqText.baseRegular(
-                        text = navigationItem.title,
+                        text = navigationItem.title.i18n(),
                         color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else BisqTheme.colors.white,
                     )
                 }
