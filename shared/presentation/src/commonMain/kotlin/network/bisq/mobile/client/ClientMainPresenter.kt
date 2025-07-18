@@ -14,6 +14,7 @@ import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.network_stats.ProfileStatsServiceFacade
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -42,6 +43,7 @@ open class ClientMainPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     openTradesNotificationService: OpenTradesNotificationService,
     private val tradeReadStateRepository: TradeReadStateRepository,
+    private val profileStatsServiceFacade: ProfileStatsServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider,
     urlLauncher: UrlLauncher
 ) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, tradeReadStateRepository, urlLauncher) {
@@ -56,8 +58,6 @@ open class ClientMainPresenter(
     }
 
     override fun onViewUnattaching() {
-        // For Tor we might want to leave it running while in background to avoid delay of re-connect
-        // when going into foreground again.
         deactivateServices()
         super.onViewUnattaching()
     }
@@ -119,10 +119,12 @@ open class ClientMainPresenter(
             explorerServiceFacade.activate()
             mediationServiceFacade.activate()
             reputationServiceFacade.activate()
+
+            profileStatsServiceFacade.activate()
         }.onFailure { e ->
             // TODO give user feedback (we could have a general error screen covering usual
             //  issues like connection issues and potential solutions)
-            log.e("Error at onViewAttached", e)
+            log.e("Error activating services", e)
         }
     }
 
@@ -140,6 +142,8 @@ open class ClientMainPresenter(
         explorerServiceFacade.deactivate()
         mediationServiceFacade.deactivate()
         reputationServiceFacade.deactivate()
+
+        profileStatsServiceFacade.deactivate()
     }
 
     override fun isDemo(): Boolean = ApplicationBootstrapFacade.isDemo

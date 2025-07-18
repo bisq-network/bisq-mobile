@@ -4,7 +4,6 @@ import com.russhwolf.settings.Settings
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.domain.data.persistance.KeyValueStorage
-import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.TradeRepository
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
@@ -29,7 +28,6 @@ val domainModule = module {
     }
 
     // Repositories
-    single<BisqStatsRepository> { BisqStatsRepository() }
     single<SettingsRepository> { SettingsRepository(get()) }
     single<UserRepository> { UserRepository(get()) }
     single<TradeRepository> { TradeRepository(get()) }

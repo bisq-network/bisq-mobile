@@ -1,12 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases
 
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.data.IODispatcher
-import network.bisq.mobile.domain.data.repository.BisqStatsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.network_stats.ProfileStatsServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -15,7 +12,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class DashboardPresenter(
     private val mainPresenter: MainPresenter,
-    private val bisqStatsRepository: BisqStatsRepository,
+    private val profileStatsServiceFacade: ProfileStatsServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val offersServiceFacade: OffersServiceFacade
 ) : BasePresenter(mainPresenter), IGettingStarted {
@@ -35,7 +32,19 @@ open class DashboardPresenter(
 
     val formattedMarketPrice: StateFlow<String> = marketPriceServiceFacade.selectedFormattedMarketPrice
 
-    private var job: Job? = null
+    override fun onViewAttached() {
+        super.onViewAttached()
+        collectUI(offersServiceFacade.offerbookMarketItems) { items ->
+            _offersOnline.value = items.sumOf { it.numOffers.value }
+        }
+        collectUI(profileStatsServiceFacade.publishedProfilesCount) { count ->
+            _publishedProfiles.value = count
+            log.d { "DashboardPresenter: NetworkStats publishedProfilesCount received: $count" }
+        }
+        collectUI(mainPresenter.languageCode) {
+            marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
+        }
+    }
 
     override fun onStartTrading() {
         disableInteractive()
@@ -50,38 +59,4 @@ open class DashboardPresenter(
     override fun navigateLearnMore() {
         navigateToUrl(BisqLinks.BISQ_EASY_WIKI_URL)
     }
-
-    private fun refresh() {
-        disableInteractive()
-        job?.cancel()
-        job = launchUI {
-            try {
-                val bisqStats = withContext(IODispatcher) {
-                    bisqStatsRepository.fetch()
-                }
-                _publishedProfiles.value = bisqStats?.publishedProfiles ?: 0
-            } finally {
-                enableInteractive()
-            }
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        refresh()
-    }
-
-    override fun onViewAttached() {
-        super.onViewAttached()
-        refresh()
-
-        collectUI(offersServiceFacade.offerbookMarketItems) { items ->
-            _offersOnline.value = items.sumOf { it.numOffers.value }
-        }
-
-        collectUI(mainPresenter.languageCode) {
-            marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
-        }
-    }
-
 }
