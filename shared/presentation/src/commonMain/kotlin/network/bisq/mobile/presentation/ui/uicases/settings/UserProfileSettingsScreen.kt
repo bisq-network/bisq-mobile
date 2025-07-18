@@ -159,7 +159,7 @@ fun UserProfileSettingsScreen() {
 
     if (showDeleteConfirmation) {
         ConfirmationDialog(
-            headline = "mobile.settings.userProfile.deleteConfirmationDialog.headling".i18n(),
+            headline = "mobile.settings.userProfile.deleteConfirmationDialog.headline".i18n(),
             onConfirm = presenter::onDelete,
             onDismiss = { presenter.setShowDeleteProfileConfirmation(false) }
         )

@@ -108,7 +108,7 @@ class TradeDetailsHeaderPresenter(
             rightAmountDescription = "bisqEasy.tradeState.header.receive".i18n()
         } else {
             directionEnum = DirectionEnum.BUY
-            direction = "offer.sell".i18n().uppercase()
+            direction = "offer.buy".i18n().uppercase()
             leftAmountDescription = "bisqEasy.tradeState.header.pay".i18n()
             rightAmountDescription = "bisqEasy.tradeState.header.receive".i18n()
         }

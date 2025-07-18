@@ -25,8 +25,10 @@ open class OnBoardingPresenter(
 
     companion object {
         // TODO i18n
-        val CREATE_PROFILE_TEXT = "mobile.onboarding.createProfile".i18n()
-        val SETUP_CONNECTION_TEXT = "mobile.onboarding.setupConnection".i18n()
+        val CREATE_PROFILE_TEXT: String
+            get() = "mobile.onboarding.createProfile".i18n()
+        val SETUP_CONNECTION_TEXT: String
+            get() = "mobile.onboarding.setupConnection".i18n()
     }
 
     override val indexesToShow = listOf(0)
