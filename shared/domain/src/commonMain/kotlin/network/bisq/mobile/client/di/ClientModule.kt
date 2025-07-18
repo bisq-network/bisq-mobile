@@ -21,7 +21,7 @@ import network.bisq.mobile.client.service.market.ClientMarketPriceServiceFacade
 import network.bisq.mobile.client.service.market.MarketPriceApiGateway
 import network.bisq.mobile.client.service.mediation.ClientMediationServiceFacade
 import network.bisq.mobile.client.service.mediation.MediationApiGateway
-import network.bisq.mobile.client.service.network_stats.ClientNetworkStatsServiceFacade
+import network.bisq.mobile.client.service.network_stats.ClientProfileStatsServiceFacade
 import network.bisq.mobile.client.service.network_stats.UserProfileStats
 import network.bisq.mobile.client.service.reputation.ReputationApiGateway
 import network.bisq.mobile.client.service.offers.ClientOffersServiceFacade
@@ -69,7 +69,7 @@ import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
-import network.bisq.mobile.domain.service.network_stats.NetworkStatsServiceFacade
+import network.bisq.mobile.domain.service.network_stats.ProfileStatsServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -213,6 +213,6 @@ val clientModule = module {
     single<ReputationServiceFacade> { ClientReputationServiceFacade(get(), get()) }
 
     single { UserProfileStats(get(), get()) }
-    single<NetworkStatsServiceFacade> { ClientNetworkStatsServiceFacade(get(), get()) }
+    single<ProfileStatsServiceFacade> { ClientProfileStatsServiceFacade(get(), get()) }
 
 }

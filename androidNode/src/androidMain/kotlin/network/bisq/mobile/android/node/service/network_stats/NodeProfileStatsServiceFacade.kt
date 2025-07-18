@@ -3,12 +3,12 @@ package network.bisq.mobile.android.node.service.network_stats
 import bisq.common.observable.Pin
 import kotlinx.coroutines.Job
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.domain.service.network_stats.NetworkStatsServiceFacade
+import network.bisq.mobile.domain.service.network_stats.ProfileStatsServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
-class NodeNetworkStatsServiceFacade(
+class NodeProfileStatsServiceFacade(
     private val applicationService: AndroidApplicationService.Provider
-) : NetworkStatsServiceFacade(), Logging {
+) : ProfileStatsServiceFacade(), Logging {
 
     private var job: Job? = null
     private var publishedProfilesCountPin: Pin? = null

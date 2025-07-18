@@ -10,7 +10,12 @@ class UserProfileStats(
     private val webSocketApiClient: WebSocketApiClient,
     private val webSocketClientProvider: WebSocketClientProvider,
 ) : Logging {
-    suspend fun subscribeNetworkStats(): WebSocketEventObserver {
-        return webSocketClientProvider.get().subscribe(Topic.USER_PROFILE_STATS)
+    suspend fun subscribeStats(): WebSocketEventObserver {
+        return try {
+            webSocketClientProvider.get().subscribe(Topic.USER_PROFILE_STATS)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to subscribe to USER_PROFILE_STATS" }
+            throw e
+        }
     }
 }

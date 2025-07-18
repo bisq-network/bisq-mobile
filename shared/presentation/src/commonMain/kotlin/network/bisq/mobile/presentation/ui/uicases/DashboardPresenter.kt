@@ -3,7 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.network_stats.NetworkStatsServiceFacade
+import network.bisq.mobile.domain.service.network_stats.ProfileStatsServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -12,7 +12,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 open class DashboardPresenter(
     private val mainPresenter: MainPresenter,
-    private val networkStatsServiceFacade: NetworkStatsServiceFacade,
+    private val profileStatsServiceFacade: ProfileStatsServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val offersServiceFacade: OffersServiceFacade
 ) : BasePresenter(mainPresenter), IGettingStarted {
@@ -37,7 +37,7 @@ open class DashboardPresenter(
         collectUI(offersServiceFacade.offerbookMarketItems) { items ->
             _offersOnline.value = items.sumOf { it.numOffers.value }
         }
-        collectUI(networkStatsServiceFacade.publishedProfilesCount) { count ->
+        collectUI(profileStatsServiceFacade.publishedProfilesCount) { count ->
             _publishedProfiles.value = count
             log.d { "DashboardPresenter: NetworkStats publishedProfilesCount received: $count" }
         }

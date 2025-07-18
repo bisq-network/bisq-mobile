@@ -5,14 +5,13 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
-import network.bisq.mobile.domain.data.replicated.network.NetworkStatsDto
-import network.bisq.mobile.domain.service.network_stats.NetworkStatsServiceFacade
+import network.bisq.mobile.domain.service.network_stats.ProfileStatsServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 
-class ClientNetworkStatsServiceFacade(
+class ClientProfileStatsServiceFacade(
     private val apiGateway: UserProfileStats,
     private val json: kotlinx.serialization.json.Json,
-) : NetworkStatsServiceFacade(), Logging {
+) : ProfileStatsServiceFacade(), Logging {
 
     private var networkStatsObserver: WebSocketEventObserver? = null
     private var job: Job? = null
@@ -24,7 +23,7 @@ class ClientNetworkStatsServiceFacade(
         job?.cancel()
         job = launchIO {
             try {
-                networkStatsObserver = apiGateway.subscribeNetworkStats()
+                networkStatsObserver = apiGateway.subscribeStats()
                 networkStatsObserver?.webSocketEvent?.collect { webSocketEvent ->
                     if (webSocketEvent?.deferredPayload == null) {
                         log.d { "Received WebSocket event with null payload, skipping" }
@@ -33,10 +32,9 @@ class ClientNetworkStatsServiceFacade(
 
                     try {
                         log.d { "Processing network stats event: ${webSocketEvent.deferredPayload}" }
-                        val webSocketEventPayload: WebSocketEventPayload<Map<String, NetworkStatsDto>> =
+                        val webSocketEventPayload: WebSocketEventPayload<Int> =
                                 WebSocketEventPayload.from(json, webSocketEvent)
-                        @Suppress("CAST_NEVER_SUCCEEDS")
-                        val publishedProfiles = webSocketEventPayload.payload as Int
+                        val publishedProfiles = webSocketEventPayload.payload
                         statsMutex.withLock {
                             _publishedProfilesCount.value = publishedProfiles
                         }

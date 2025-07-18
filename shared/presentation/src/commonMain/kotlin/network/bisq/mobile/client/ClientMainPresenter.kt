@@ -14,7 +14,7 @@ import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
-import network.bisq.mobile.domain.service.network_stats.NetworkStatsServiceFacade
+import network.bisq.mobile.domain.service.network_stats.ProfileStatsServiceFacade
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -43,7 +43,7 @@ open class ClientMainPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     openTradesNotificationService: OpenTradesNotificationService,
     private val tradeReadStateRepository: TradeReadStateRepository,
-    private val networkStatsServiceFacade: NetworkStatsServiceFacade,
+    private val profileStatsServiceFacade: ProfileStatsServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider,
     urlLauncher: UrlLauncher
 ) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, tradeReadStateRepository, urlLauncher) {
@@ -120,7 +120,7 @@ open class ClientMainPresenter(
             mediationServiceFacade.activate()
             reputationServiceFacade.activate()
 
-            networkStatsServiceFacade.activate()
+            profileStatsServiceFacade.activate()
         }.onFailure { e ->
             // TODO give user feedback (we could have a general error screen covering usual
             //  issues like connection issues and potential solutions)
@@ -143,7 +143,7 @@ open class ClientMainPresenter(
         mediationServiceFacade.deactivate()
         reputationServiceFacade.deactivate()
 
-        networkStatsServiceFacade.deactivate()
+        profileStatsServiceFacade.deactivate()
     }
 
     override fun isDemo(): Boolean = ApplicationBootstrapFacade.isDemo

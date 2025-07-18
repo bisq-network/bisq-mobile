@@ -15,7 +15,7 @@ import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
-import network.bisq.mobile.domain.service.network_stats.NetworkStatsServiceFacade
+import network.bisq.mobile.domain.service.network_stats.ProfileStatsServiceFacade
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -44,7 +44,7 @@ class NodeMainPresenter(
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
-    private val networkStatsServiceFacade: NetworkStatsServiceFacade,
+    private val profileStatsServiceFacade: ProfileStatsServiceFacade,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
 ) : MainPresenter(
@@ -180,7 +180,7 @@ class NodeMainPresenter(
         reputationServiceFacade.activate()
         userProfileServiceFacade.activate()
 
-        networkStatsServiceFacade.activate()
+        profileStatsServiceFacade.activate()
     }
 
     private fun deactivateServices() {
@@ -198,6 +198,6 @@ class NodeMainPresenter(
         reputationServiceFacade.deactivate()
         userProfileServiceFacade.deactivate()
 
-        networkStatsServiceFacade.deactivate()
+        profileStatsServiceFacade.deactivate()
     }
 }
