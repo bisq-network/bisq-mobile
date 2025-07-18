@@ -210,8 +210,7 @@ class AndroidApplicationService(
 
 
         tradeService = TradeService(
-//            TODO: this is part of Bisq 2.1.8
-//            TradeService.Config.from(getConfig("trade")),
+            TradeService.Config.from(getConfig("trade")),
             networkService,
             identityService,
             persistenceService,
