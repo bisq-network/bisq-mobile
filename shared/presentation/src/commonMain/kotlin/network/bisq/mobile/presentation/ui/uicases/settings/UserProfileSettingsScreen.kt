@@ -23,6 +23,7 @@ import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
+import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -95,18 +96,30 @@ fun UserProfileSettingsScreen() {
         BreadcrumbNavigation(path = menuPath) { index ->
             if (index == 0) settingsPresenter.settingsNavigateBack()
         }
-        // Bot Icon
+        
         UserProfileScreenHeader(presenter)
-
-        SettingsTextField(label = "Bot ID", value = botId, editable = false)
-
-        BisqGap.V1()
 
         SettingsTextField(label = "Nickname", value = nickname, editable = false)
 
         BisqGap.V1()
 
-        SettingsTextField(label = "Profile ID", value = profileId, editable = false)
+        // Bot ID with copy functionality
+        SettingsTextField(
+            label = "Bot ID", 
+            value = botId, 
+            editable = false,
+            trailingIcon = { CopyIconButton(value = botId) }
+        )
+
+        BisqGap.V1()
+
+        // Profile ID with copy functionality
+        SettingsTextField(
+            label = "Profile ID", 
+            value = profileId, 
+            editable = false,
+            trailingIcon = { CopyIconButton(value = profileId) }
+        )
 
         BisqGap.V1()
 
