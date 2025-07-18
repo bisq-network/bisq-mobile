@@ -73,8 +73,9 @@ fun ChatInputField(
             },
             rightSuffixModifier = Modifier.width(BisqUIConstants.ScreenPadding2X),
             validation = {
-                if (it.length > 10000) {
-                    return@BisqTextField "mobile.tradeChat.chatInput.maxLength".i18n()
+                val maxChars = 10_000
+                if (it.length > maxChars) {
+                    return@BisqTextField "mobile.tradeChat.chatInput.maxLength".i18n(maxChars)
                 }
                 return@BisqTextField null
             }

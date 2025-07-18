@@ -24,7 +24,6 @@ open class OnBoardingPresenter(
 ) : BasePresenter(mainPresenter), IOnboardingPresenter {
 
     companion object {
-        // TODO i18n
         val CREATE_PROFILE_TEXT: String
             get() = "mobile.onboarding.createProfile".i18n()
         val SETUP_CONNECTION_TEXT: String
@@ -36,9 +35,6 @@ open class OnBoardingPresenter(
     private val _buttonText = MutableStateFlow(CREATE_PROFILE_TEXT)
     override val buttonText: StateFlow<String> = _buttonText
 
-    // TODO: Ideally slide content for xClients should only be here.
-    // Android node content (along with resources), should be moved to `androidNode`
-    // Then remove `indexesToShow`
     override val onBoardingData = listOf(
         PagerViewItem(
             title = "onboarding.bisq2.teaserHeadline1".i18n(),
