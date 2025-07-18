@@ -6,17 +6,11 @@ import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.utils.Logging
 
-class NetworkStatsApiGateway(
+class UserProfileStats(
     private val webSocketApiClient: WebSocketApiClient,
     private val webSocketClientProvider: WebSocketClientProvider,
 ) : Logging {
-    private val basePath = "network"
-
-    suspend fun getNetworkStats(): Result<NetworkStatsResponse> {
-        return webSocketApiClient.get("${basePath}/stats")
-    }
-
     suspend fun subscribeNetworkStats(): WebSocketEventObserver {
-        return webSocketClientProvider.get().subscribe(Topic.NETWORK_STATS)
+        return webSocketClientProvider.get().subscribe(Topic.USER_PROFILE_STATS)
     }
 }

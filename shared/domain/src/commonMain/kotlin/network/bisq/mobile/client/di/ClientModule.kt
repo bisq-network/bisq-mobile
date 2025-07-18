@@ -22,7 +22,7 @@ import network.bisq.mobile.client.service.market.MarketPriceApiGateway
 import network.bisq.mobile.client.service.mediation.ClientMediationServiceFacade
 import network.bisq.mobile.client.service.mediation.MediationApiGateway
 import network.bisq.mobile.client.service.network_stats.ClientNetworkStatsServiceFacade
-import network.bisq.mobile.client.service.network_stats.NetworkStatsApiGateway
+import network.bisq.mobile.client.service.network_stats.UserProfileStats
 import network.bisq.mobile.client.service.reputation.ReputationApiGateway
 import network.bisq.mobile.client.service.offers.ClientOffersServiceFacade
 import network.bisq.mobile.client.service.offers.OfferbookApiGateway
@@ -212,7 +212,7 @@ val clientModule = module {
     single { ReputationApiGateway(get()) }
     single<ReputationServiceFacade> { ClientReputationServiceFacade(get(), get()) }
 
-    single { NetworkStatsApiGateway(get(), get()) }
+    single { UserProfileStats(get(), get()) }
     single<NetworkStatsServiceFacade> { ClientNetworkStatsServiceFacade(get(), get()) }
 
 }

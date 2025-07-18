@@ -10,7 +10,7 @@ import network.bisq.mobile.domain.service.network_stats.NetworkStatsServiceFacad
 import network.bisq.mobile.domain.utils.Logging
 
 class ClientNetworkStatsServiceFacade(
-    private val apiGateway: NetworkStatsApiGateway,
+    private val apiGateway: UserProfileStats,
     private val json: kotlinx.serialization.json.Json,
 ) : NetworkStatsServiceFacade(), Logging {
 
@@ -23,16 +23,6 @@ class ClientNetworkStatsServiceFacade(
 
         job?.cancel()
         job = launchIO {
-            val result = apiGateway.getNetworkStats()
-            result.onSuccess { stats ->
-                statsMutex.withLock {
-                    _publishedProfilesCount.value = stats.publishedProfiles
-                }
-                log.d { "Network stats loaded: ${stats.publishedProfiles} published profiles" }
-            }.onFailure { error ->
-                log.e(error) { "Failed to load network stats" }
-            }
-            
             try {
                 networkStatsObserver = apiGateway.subscribeNetworkStats()
                 networkStatsObserver?.webSocketEvent?.collect { webSocketEvent ->
@@ -45,9 +35,10 @@ class ClientNetworkStatsServiceFacade(
                         log.d { "Processing network stats event: ${webSocketEvent.deferredPayload}" }
                         val webSocketEventPayload: WebSocketEventPayload<Map<String, NetworkStatsDto>> =
                                 WebSocketEventPayload.from(json, webSocketEvent)
-                        val payload = webSocketEventPayload.payload
+                        @Suppress("CAST_NEVER_SUCCEEDS")
+                        val publishedProfiles = webSocketEventPayload.payload as Int
                         statsMutex.withLock {
-                            _publishedProfilesCount.value = payload.values.sumOf { it.publishedProfiles }
+                            _publishedProfilesCount.value = publishedProfiles
                         }
                     } catch (e: Exception) {
                         log.e(e) { "Failed to process WebSocket event" }
