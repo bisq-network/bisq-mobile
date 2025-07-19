@@ -117,13 +117,13 @@ fun TradeDetailsHeader() {
                 if (isSell) {
                     InfoBoxSats(label = presenter.leftAmountDescription, value = leftAmount)
                 } else {
-                    InfoBox(
+                    InfoBoxCurrency(
                         label = presenter.leftAmountDescription,
                         value = "$leftAmount $leftCode"
                     )
                 }
                 if (isSell) {
-                    InfoBox(
+                    InfoBoxCurrency(
                         label = presenter.rightAmountDescription,
                         value = "$rightAmount $rightCode"
                     )
@@ -135,13 +135,13 @@ fun TradeDetailsHeader() {
                     if (isSell) {
                         InfoBoxSats(label = presenter.leftAmountDescription, value = leftAmount)
                     } else {
-                        InfoBox(
+                        InfoBoxCurrency(
                             label = presenter.leftAmountDescription,
                             value = "$leftAmount $leftCode"
                         )
                     }
                     if (isSell) {
-                        InfoBox(
+                        InfoBoxCurrency(
                             label = presenter.rightAmountDescription,
                             value = "$rightAmount $rightCode",
                             rightAlign = true

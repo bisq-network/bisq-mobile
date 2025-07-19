@@ -16,6 +16,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxCurrency
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.ui.components.organisms.offer.TakeOfferProgressDialog
@@ -55,7 +56,7 @@ fun TakeOfferReviewTradeScreen() {
             )
             if (presenter.takersDirection.isBuy) {
                 if (presenter.isSmallScreen()) {
-                    InfoBox(
+                    InfoBoxCurrency(
                         label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                         value = presenter.amountToPay,
                     )
@@ -66,7 +67,7 @@ fun TakeOfferReviewTradeScreen() {
                     )
                 } else {
                     InfoRowContainer {
-                        InfoBox(
+                        InfoBoxCurrency(
                             label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                             value = presenter.amountToPay,
                         )
@@ -83,7 +84,7 @@ fun TakeOfferReviewTradeScreen() {
                         label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                         value = presenter.amountToPay,
                     )
-                    InfoBox(
+                    InfoBoxCurrency(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                         value = presenter.amountToReceive,
                         rightAlign = true
@@ -94,7 +95,7 @@ fun TakeOfferReviewTradeScreen() {
                             label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                             value = presenter.amountToPay,
                         )
-                        InfoBox(
+                        InfoBoxCurrency(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                             value = presenter.amountToReceive,
                             rightAlign = true
@@ -118,6 +119,7 @@ fun TakeOfferReviewTradeScreen() {
                             horizontalArrangement = Arrangement.spacedBy(2.dp)
                         ) {
                             BisqText.h6Regular(presenter.price)
+                            BisqGap.HQuarter()
                             BisqText.baseRegularGrey(presenter.marketCodes)
                         }
                         BisqText.smallRegularGrey(presenter.priceDetails)

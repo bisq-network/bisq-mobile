@@ -16,6 +16,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxCurrency
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -53,7 +54,7 @@ fun CreateOfferReviewOfferScreen() {
             )
             if (presenter.isRangeOffer) {
                 if (presenter.direction == DirectionEnum.BUY) {
-                    InfoBox(
+                    InfoBoxCurrency(
                         label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                         value = presenter.amountToPay
                     )
@@ -72,7 +73,7 @@ fun CreateOfferReviewOfferScreen() {
                         }
                     )
                 } else {
-                    InfoBox(
+                    InfoBoxCurrency(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                         value = presenter.amountToReceive
                     )
@@ -94,7 +95,7 @@ fun CreateOfferReviewOfferScreen() {
             } else {
                 if (presenter.direction == DirectionEnum.BUY) {
                     InfoRowContainer {
-                        InfoBox(
+                        InfoBoxCurrency(
                             label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                             value = presenter.amountToPay,
                         )
@@ -109,7 +110,7 @@ fun CreateOfferReviewOfferScreen() {
                             label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
                             value = presenter.amountToPay
                         )
-                        InfoBox(
+                        InfoBoxCurrency(
                             label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                             value = presenter.amountToReceive,
                         )
@@ -127,6 +128,7 @@ fun CreateOfferReviewOfferScreen() {
                         horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
                         BisqText.h6Regular(presenter.formattedPrice)
+                        BisqGap.HQuarter()
                         BisqText.baseRegularGrey(presenter.marketCodes)
                     }
                 },

@@ -24,6 +24,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
+import network.bisq.mobile.presentation.ui.components.molecules.AmountWithCurrency
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -135,12 +136,9 @@ fun WelcomeCard(
 fun PriceProfileCard(price: String, priceText: String) {
     BisqCard(
         borderRadius = BisqUIConstants.ScreenPaddingQuarter,
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        BisqText.largeRegular(
-            text = price,
-            textAlign = TextAlign.Center,
-        )
+        AmountWithCurrency(price)
 
         BisqGap.V1()
 
