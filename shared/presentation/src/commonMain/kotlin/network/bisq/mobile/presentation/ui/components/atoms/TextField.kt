@@ -117,14 +117,14 @@ fun BisqTextField(
     }
 
     val whiteColor = BisqTheme.colors.white
-    val finalLabelColor by remember(disabled) {
-        mutableStateOf(
-            if (disabled) {
-                BisqTheme.colors.mid_grey20
-            } else {
-                whiteColor
+    val finalLabelColor by remember(disabled, validationError, hasInteracted) {
+        derivedStateOf {
+            when {
+                disabled -> BisqTheme.colors.dark_grey50
+                validationError?.isNotEmpty() == true && hasInteracted -> BisqTheme.colors.danger
+                else -> whiteColor
             }
-        )
+        }
     }
 
     val finalTextStyle by remember(disabled) {
@@ -171,11 +171,21 @@ fun BisqTextField(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                BisqText.baseLight(
-                    text = label,
-                    color = finalLabelColor,
-                    modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
-                )
+                val isError = validationError?.isNotEmpty() == true && hasInteracted
+                if (isError) {
+                    BisqText.baseRegular(
+                        text = label,
+                        color = finalLabelColor,
+                        modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+                    )
+                } else {
+                    BisqText.baseLight(
+                        text = label,
+                        color = finalLabelColor,
+                        modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+                    )
+                }
+
                 if (labelRightSuffix != null) {
                     labelRightSuffix()
                 }
