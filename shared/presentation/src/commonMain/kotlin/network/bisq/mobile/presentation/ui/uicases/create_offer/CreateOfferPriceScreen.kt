@@ -1,17 +1,15 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.foundation.layout.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.components.atoms.AmountSlider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText
@@ -38,6 +36,16 @@ fun CreateOfferTradePriceSelectorScreen() {
     val showWhyPopup by presenter.showWhyPopup.collectAsState()
     val hintText by presenter.hintText.collectAsState()
 
+    val min = -10f
+    val max = 50f
+
+    val sliderPosition = ((formattedPercentagePrice.toFloat() - min) / (max - min)).coerceIn(0f, 1f)
+
+    fun onSliderValueChange(newValue: Float) {
+        val price = min + newValue * (max - min)
+        presenter.onPercentagePriceChanged(price.toString(), true)
+    }
+
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.review.price.price".i18n(),
         stepIndex = 4,
@@ -49,8 +57,7 @@ fun CreateOfferTradePriceSelectorScreen() {
         shouldBlurBg = showWhyPopup,
     ) {
         BisqText.h3Regular(
-            text = "mobile.bisqEasy.tradeWizard.price.title".i18n(),
-            modifier = Modifier.align(Alignment.Start)
+            text = "mobile.bisqEasy.tradeWizard.price.title".i18n(), modifier = Modifier.align(Alignment.Start)
         )
         BisqGap.V1()
         BisqText.largeLightGrey("mobile.bisqEasy.tradeWizard.price.title".i18n())
@@ -69,8 +76,7 @@ fun CreateOfferTradePriceSelectorScreen() {
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
             ) {
                 if (priceType == CreateOfferPresenter.PriceType.PERCENTAGE) {
-                    BisqTextField(
-                        label = "bisqEasy.price.percentage.inputBoxText".i18n(),
+                    BisqTextField(label = "bisqEasy.price.percentage.inputBoxText".i18n(),
                         value = formattedPercentagePrice,
                         keyboardType = KeyboardType.Decimal,
                         onValueChange = { it, isValid -> presenter.onPercentagePriceChanged(it, isValid) },
@@ -86,8 +92,8 @@ fun CreateOfferTradePriceSelectorScreen() {
                                 return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeLessThanMarketPrice".i18n()
                             }
                             return@BisqTextField null
-                        }
-                    )
+                        })
+
                     BisqTextField(
                         label = presenter.fixPriceDescription,
                         value = formattedPrice,
@@ -95,13 +101,13 @@ fun CreateOfferTradePriceSelectorScreen() {
                         indicatorColor = BisqTheme.colors.mid_grey10
                     )
                 } else {
-                    BisqTextField(
-                        label = presenter.fixPriceDescription,
+                    BisqTextField(label = presenter.fixPriceDescription,
                         value = formattedPrice,
                         keyboardType = KeyboardType.Decimal,
                         onValueChange = { it, isValid -> presenter.onFixPriceChanged(it, isValid) },
                         validation = {
-                            val parsedValue = it.toDoubleOrNullLocaleAware() ?: return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.cannotBeEmpty".i18n()
+                            val parsedValue = it.toDoubleOrNullLocaleAware()
+                                ?: return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.cannotBeEmpty".i18n()
                             val parsedPercent = presenter.calculatePercentageForFixedValue(it)
                             if (parsedPercent < -10) {
                                 return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeGreaterThanMarketPrice".i18n()
@@ -109,8 +115,7 @@ fun CreateOfferTradePriceSelectorScreen() {
                                 return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.shouldBeLessThanMarketPrice".i18n()
                             }
                             return@BisqTextField null
-                        }
-                    )
+                        })
                     BisqTextField(
                         label = "bisqEasy.price.percentage.inputBoxText".i18n(),
                         value = formattedPercentagePrice,
@@ -119,24 +124,39 @@ fun CreateOfferTradePriceSelectorScreen() {
                         valueSuffix = "%",
                     )
                 }
+
+                BisqGap.V1()
+
+                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                    AmountSlider(value = sliderPosition, onValueChange = { onSliderValueChange(it) })
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 6.dp)
+                    ) {
+                        BisqText.smallLightGrey("Min: ${min.toInt()}%")
+                        BisqText.smallLightGrey("Max: ${max.toInt()}%")
+                    }
+                }
             }
 
             if (isBuy) {
-                NoteText(
-                    notes = hintText,
-                    linkText = "bisqEasy.price.feedback.learnWhySection.openButton".i18n(),
-                    textAlign = TextAlign.Center,
-                    onLinkClick = {
-                        presenter.setShowWhyPopup(true)
-                    }
-                )
+                BisqGap.V1()
+
+                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                    NoteText(notes = hintText,
+                        linkText = "bisqEasy.price.feedback.learnWhySection.openButton".i18n(),
+                        textAlign = TextAlign.Center,
+                        onLinkClick = {
+                            presenter.setShowWhyPopup(true)
+                        })
+                }
             }
         }
     }
 
     if (showWhyPopup) {
-        WhyHighPricePopup(
-            onDismiss = { presenter.setShowWhyPopup(false) }
-        )
+        WhyHighPricePopup(onDismiss = { presenter.setShowWhyPopup(false) })
     }
 }

@@ -61,7 +61,7 @@ fun BisqAmountSelector(
 
             AmountSlider(
                 value = sliderPosition,
-                max = maxSliderValue,
+                max = maxSliderValue ?: 1f,
                 leftMarker = leftMarkerSliderValue,
                 rightMarker = rightMarkerSliderValue,
                 onValueChange = { onSliderValueChange(it) }

@@ -18,7 +18,7 @@ fun RangeAmountSlider(
     Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
         AmountSlider(
             value = minRangeValue,
-            max= maxValue,
+            max= maxValue ?: 1f,
             leftMarker= leftMarkerValue,
             rightMarker= rightMarkerValue,
             onValueChange = { value ->
@@ -31,7 +31,7 @@ fun RangeAmountSlider(
 
         AmountSlider(
             value = maxRangeValue,
-            max= maxValue,
+            max= maxValue ?: 1f,
             leftMarker= leftMarkerValue,
             rightMarker= rightMarkerValue,
             onValueChange = { value ->
