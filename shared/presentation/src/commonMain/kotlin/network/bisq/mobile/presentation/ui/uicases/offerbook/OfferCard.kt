@@ -3,12 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.offerbook
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,6 +21,7 @@ import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferIt
 import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.icons.RemoveOfferIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqVDivider
 import network.bisq.mobile.presentation.ui.components.molecules.PaymentMethods
@@ -136,7 +132,16 @@ fun OfferCard(
 
             BisqGap.V1()
 
-            PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                PaymentMethods(item.baseSidePaymentMethods, item.quoteSidePaymentMethods)
+
+                if (isMyOffer) {
+                    RemoveOfferIcon()
+                }
+            }
             
             if (isInvalidDueToReputation) {
                 BisqGap.V1()

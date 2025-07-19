@@ -114,7 +114,7 @@ fun CheckCircleIcon(modifier: Modifier = Modifier.size(24.dp)) {
 }
 
 @Composable
-fun RemoveOfferIcon(modifier: Modifier = Modifier) {
+fun RemoveOfferIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.remove_offer), "Remove offer icon", modifier = modifier)
 }
 
