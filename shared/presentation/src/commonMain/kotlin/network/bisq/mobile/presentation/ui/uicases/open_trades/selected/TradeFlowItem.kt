@@ -87,11 +87,11 @@ fun TradeFlowItem(
                 )
 
             } else if (isActive) {
-                BisqText.baseBold(
+                BisqText.baseRegular(
                     textAlign = TextAlign.Center,
                     text = text,
                     color = textColor,
-                    modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                    modifier = Modifier.padding(start = 7.dp, top = 1.dp)
                 )
 
             } else {
@@ -99,7 +99,7 @@ fun TradeFlowItem(
                     textAlign = TextAlign.Center,
                     text = text,
                     color = textColor,
-                    modifier = Modifier.padding(start = 8.dp, top = 2.dp)
+                    modifier = Modifier.padding(start = 7.dp, top = 1.dp)
                 )
             }
 
