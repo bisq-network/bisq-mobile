@@ -31,7 +31,7 @@ class ClientProfileStatsServiceFacade(
                     }
 
                     try {
-                        log.d { "Processing network stats event: ${webSocketEvent.deferredPayload}" }
+                        log.d { "Processing published profiled count event: ${webSocketEvent.deferredPayload}" }
                         val webSocketEventPayload: WebSocketEventPayload<Int> =
                                 WebSocketEventPayload.from(json, webSocketEvent)
                         val publishedProfiles = webSocketEventPayload.payload

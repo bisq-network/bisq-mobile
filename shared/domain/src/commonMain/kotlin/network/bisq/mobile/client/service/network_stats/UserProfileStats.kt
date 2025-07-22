@@ -12,7 +12,7 @@ class UserProfileStats(
 ) : Logging {
     suspend fun subscribeStats(): WebSocketEventObserver {
         return try {
-            webSocketClientProvider.get().subscribe(Topic.USER_PROFILE_STATS)
+            webSocketClientProvider.get().subscribe(Topic.NUM_USER_PROFILES)
         } catch (e: Exception) {
             log.e(e) { "Failed to subscribe to USER_PROFILE_STATS" }
             throw e

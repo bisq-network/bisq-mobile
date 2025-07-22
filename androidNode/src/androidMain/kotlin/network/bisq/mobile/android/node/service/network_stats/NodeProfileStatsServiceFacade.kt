@@ -29,12 +29,12 @@ class NodeProfileStatsServiceFacade(
     }
 
     private fun observePublishedProfilesCount() {
+        publishedProfilesCountPin?.unbind()
+        publishedProfilesCountPin = null
         job?.cancel()
         job = launchIO {
             val userService = applicationService.userService
             val userProfileService = userService.get().userProfileService
-
-            publishedProfilesCountPin?.unbind()
             publishedProfilesCountPin = userProfileService.numUserProfiles.addObserver { num ->
                 _publishedProfilesCount.value = num
                 log.d { "Published profiles count updated: ${_publishedProfilesCount.value}" }

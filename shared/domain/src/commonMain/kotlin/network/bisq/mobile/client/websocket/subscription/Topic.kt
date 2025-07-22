@@ -15,7 +15,7 @@ import kotlin.reflect.typeOf
 enum class Topic(val typeOf: KType) {
     MARKET_PRICE(typeOf<Map<String, PriceQuoteVO>>()),
     NUM_OFFERS(typeOf<Map<String, Int>>()),
-    USER_PROFILE_STATS(typeOf<Int>()),
+    NUM_USER_PROFILES(typeOf<Int>()),
     OFFERS(typeOf<List<OfferItemPresentationDto>>()),
     TRADES(typeOf<List<TradeItemPresentationDto>>()),
     TRADE_PROPERTIES(typeOf<List<Map<String, TradePropertiesDto>>>()),
