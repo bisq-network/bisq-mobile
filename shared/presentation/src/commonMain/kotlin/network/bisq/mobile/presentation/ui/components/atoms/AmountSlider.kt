@@ -11,9 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
@@ -56,7 +53,7 @@ fun AmountSlider(
 
             val thumbPos = normalizedValue * width
             val leftPos = (normalizedLeftMarker ?: 0f) * width
-            val rightPos = (normalizedRightMarker ?: max.normalized()) * width
+            val rightPos = (normalizedRightMarker ?: 1f) * width
 
             // Track
             drawLine(
