@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.components.molecules.inputfield
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -35,26 +37,28 @@ fun BisqSearchField(
         else
             Modifier.width(80.dp),
         rightSuffix = {
-            if (rightSuffix != null) {
-                Row {
+            Row(horizontalArrangement = Arrangement.End) {
+                if (value.isNotEmpty()) {
                     BisqButton(
                         iconOnly = {
                             CloseIcon(color = BisqTheme.colors.mid_grey20)
                         },
                         onClick = { onValueChanged("", true) },
-                        type = BisqButtonType.Clear
+                        type = BisqButtonType.Clear,
+                        modifier = Modifier.weight(1f),
                     )
+                } else if (rightSuffix != null) {
+                    // when we don't have a clear button, we still want to
+                    // have a spacer to fill in it's place, to push the
+                    // right suffix which is a button usually in our case
+                    // to the end of the row to look better and
+                    // also prevent it from moving when our clear button is added
+                    Spacer(Modifier.weight(1f))
+                }
+
+                if (rightSuffix != null) {
                     rightSuffix()
                 }
-            } else {
-
-                BisqButton(
-                    iconOnly = {
-                        CloseIcon(color = BisqTheme.colors.mid_grey20)
-                    },
-                    onClick = { onValueChanged("", true) },
-                    type = BisqButtonType.Clear
-                )
             }
         },
         isSearch = true,

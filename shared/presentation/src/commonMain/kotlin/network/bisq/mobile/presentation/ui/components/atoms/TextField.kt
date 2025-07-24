@@ -52,6 +52,7 @@ fun BisqTextField(
     leftSuffix: (@Composable () -> Unit)? = null,
     rightSuffix: (@Composable () -> Unit)? = null,
     rightSuffixModifier: Modifier = Modifier.width(50.dp),
+    rightSuffixContentAlignment: Alignment = Alignment.CenterEnd,
     isSearch: Boolean = false,
     helperText: String = "",
     indicatorColor: Color = BisqTheme.colors.primary,
@@ -304,7 +305,10 @@ fun BisqTextField(
                         }
 
                         if (rightSuffix != null) {
-                            Box(modifier = rightSuffixModifier) {
+                            Box(
+                                modifier = rightSuffixModifier,
+                                contentAlignment = rightSuffixContentAlignment,
+                            ) {
                                 rightSuffix()
                             }
                         }
