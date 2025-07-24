@@ -209,8 +209,9 @@
 }
 
 # Comprehensive -dontwarn section (consolidated)
--dontwarn com.sun.xml.fastinfoset.sax.AttributesHolder
 -dontwarn com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector
+-dontwarn com.sun.xml.fastinfoset.sax.AttributesHolder
+-dontwarn com.fasterxml.jackson.module.jaxb.JaxbAnnotaionIntrospector
 -dontwarn com.sun.jdi.**
 -dontwarn com.sun.xml.fastinfoset.stax.**
 -dontwarn groovy.lang.**

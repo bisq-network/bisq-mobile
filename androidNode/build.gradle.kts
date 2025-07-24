@@ -167,6 +167,8 @@ android {
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
+            // General full shrinking brings issues with protobuf in jars
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
