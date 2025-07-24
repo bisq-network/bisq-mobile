@@ -8,6 +8,9 @@
 ### Avoid removing reflective access needed by Ktor's serialization
 -keepnames class kotlinx.serialization.** { *; }
 
+# Keep classes used by kmp persistance
+-keep class network.bisq.mobile.domain.data.model.** { *; }
+
 ### The following were suggested by R8 engine, should be reviewed carefully on release build testing
 -dontwarn java.lang.management.ManagementFactory
 -dontwarn java.lang.management.RuntimeMXBean

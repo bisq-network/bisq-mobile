@@ -1,7 +1,5 @@
 # Bisq Node proguard file
 
-## TODO - more node specifics
-
 ### protobuf deps
 -dontwarn java.lang.MatchException
 
@@ -37,13 +35,12 @@
 -dontwarn org.codehaus.groovy.**
 -dontwarn javax.inject.**
 -dontwarn org.gradle.**
--dontwarn org.bouncycastle.**
 -dontwarn javassist.**
 -dontwarn org.apache.maven.**
 -dontwarn kr.motd.maven.**
 -dontwarn org.eclipse.**
 
-# Optional: keep core Gradle plugin APIs if somehow referenced
+# Keep core Android/Gradle plugin APIs
 -keep class com.android.** { *; }
 -keep class org.gradle.** { *; }
 
@@ -55,18 +52,99 @@
 # Keep all classes that might be used via reflection
 -keep class * implements java.io.Serializable { *; }
 
-# Keep all enum values
+# Keep classes used by kmp persistance
+-keep class network.bisq.mobile.domain.data.model.** { *; }
+
+###########################################
+# Core Bisq Protobuf preservation rules
+###########################################
+
+# Keep all Bisq core classes
+-keep class org.bisq.** { *; }
+-keep class bisq.** { *; }
+-keep class chat.** { *; }
+-keep class network.** { *; }
+-keep class bonded_roles.** { *; }
+-keep class user.** { *; }
+
+# Keep all Protobuf-related classes
+-keep class com.google.protobuf.** { *; }
+
+# Keep names for Protobuf types to match type_url
+-keepnames class * implements com.google.protobuf.MessageLite
+-keepnames class * extends com.google.protobuf.GeneratedMessageLite
+-keepnames class * extends com.google.protobuf.GeneratedMessageV3
+
+# Keep inner builder classes and their members
+-keep class **$Builder { *; }
+-keepclassmembers class *$Builder { *; }
+
+# Keep class members of any class extending GeneratedMessageLite
+-keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite {
+    <fields>;
+    <methods>;
+}
+
+# Keep all protobuf resolver classes and their names - CRITICAL FOR PROTOBUF DESERIALIZATION
+-keep class bisq.common.proto.ProtoResolver { *; }
+-keep class bisq.common.proto.PersistableProtoResolverMap { *; }
+-keep class bisq.common.proto.NetworkStorageWhiteList { *; }
+-keep class * implements bisq.common.proto.PersistableProtoResolver { *; }
+
+# Keep all static initializers (needed for PersistableProtoResolverMap)
+-keepclassmembers class * {
+    static <clinit>();
+}
+
+# Keep annotations used for proto type resolving
+-keepattributes RuntimeVisibleAnnotations
+-keepattributes RuntimeVisibleParameterAnnotations
+-keepattributes RuntimeInvisibleAnnotations
+-keepattributes *Annotation*
+
+# Keep fields and methods used for reflection
+-keepclassmembers class * {
+    @com.google.protobuf.* *;
+}
+
+# Keep resolver and registration methods
+-keepclassmembers class * {
+    static *** register*(...);
+    public static void register(...);
+    public static * fromAny(...);
+    public static bisq.common.proto.ProtoResolver getResolver();
+    public static bisq.common.proto.ProtoResolver getNetworkMessageResolver();
+    public static * fromProto(*);
+}
+
+# Keep protobuf internal cached size fields and related synthetic methods
+-keepclassmembers class * {
+    int memoizedSerializedSize;
+    int memoizedSize;
+    int memoizedHashCode;
+    synthetic <methods>;
+}
+-keepclassmembers class * extends com.google.protobuf.GeneratedMessageLite {
+    public int getSerializedSize();
+}
+
+# Keep statics and enums used in Protobuf
 -keepclassmembers enum * {
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
+-keepclassmembers class * {
+    static <fields>;
+    static <methods>;
+}
 
-# Keep all Bisq2 core classes
--keep class bisq.** { *; }
--keep class network.bisq.** { *; }
+# Keep anything under .proto. packages if they exist
+-keep class **.proto.** { *; }
+-keepnames class **.proto.**
 
-# Keep all Protobuf-related classes
--keep class com.google.protobuf.** { *; }
+# Keep persistence store classes
+-keep class bisq.persistence.** { *; }
+-keep class bisq.network.identity.** { *; }
 
 # Keep all Bouncy Castle classes
 -keep class org.bouncycastle.** { *; }
@@ -74,245 +152,16 @@
 # Keep all Tor-related classes
 -keep class org.torproject.** { *; }
 
-# Preserve all classes and methods in the kmp-tor package
-#-keep class io.matthewnelson.kmp.tor.** { *; }
+# Ignore missing Java desktop/server classes
+-dontwarn com.sun.net.httpserver.**
+-dontwarn jakarta.servlet.**
+-dontwarn java.awt.**
+-dontwarn java.awt.image.**
+-dontwarn javax.servlet.**
+-dontwarn javax.**
+-dontwarn jakarta.**
 
-# Preserve classes with JNI annotations
-#-keepclasseswithmembers class * {
-#    @android.annotation.Keep *;
-#}
-#
-## Keep kmp-tor resource loading
-#-keep class io.matthewnelson.kmp.tor.resource.exec.** { *; }
-#-keep class io.matthewnelson.kmp.tor.resource.noexec.** { *; }
-#
-## Prevent obfuscation of kmp-tor internal classes
-#-dontwarn io.matthewnelson.kmp.tor.**
-
--dontwarn com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector
--dontwarn com.sun.jdi.VirtualMachine
--dontwarn com.sun.jdi.event.Event
--dontwarn com.sun.jdi.event.EventIterator
--dontwarn com.sun.jdi.event.EventQueue
--dontwarn com.sun.jdi.event.EventSet
--dontwarn com.sun.jdi.event.MethodEntryEvent
--dontwarn com.sun.net.httpserver.Headers
--dontwarn com.sun.net.httpserver.HttpExchange
--dontwarn com.sun.net.httpserver.HttpHandler
--dontwarn com.sun.net.httpserver.HttpServer
--dontwarn com.sun.net.httpserver.HttpsConfigurator
--dontwarn com.sun.net.httpserver.HttpsServer
--dontwarn com.sun.xml.fastinfoset.stax.StAXDocumentParser
--dontwarn com.sun.xml.fastinfoset.stax.StAXDocumentSerializer
--dontwarn groovy.lang.Closure
--dontwarn groovy.lang.GroovyObject
--dontwarn groovy.lang.MetaClass
--dontwarn groovy.transform.Generated
--dontwarn jakarta.servlet.http.HttpServlet
--dontwarn java.awt.Button
--dontwarn java.awt.Checkbox
--dontwarn java.awt.CheckboxGroup
--dontwarn java.awt.Component
--dontwarn java.awt.Dialog
--dontwarn java.awt.Frame
--dontwarn java.awt.Graphics2D
--dontwarn java.awt.Graphics
--dontwarn java.awt.Image
--dontwarn java.awt.Label
--dontwarn java.awt.MediaTracker
--dontwarn java.awt.TextArea
--dontwarn java.awt.event.ActionListener
--dontwarn java.awt.event.ItemListener
--dontwarn java.awt.event.WindowListener
--dontwarn java.awt.image.BufferedImage
--dontwarn java.awt.image.ImageObserver
--dontwarn java.awt.image.RenderedImage
--dontwarn java.beans.BeanInfo
--dontwarn java.beans.ConstructorProperties
--dontwarn java.beans.FeatureDescriptor
--dontwarn java.beans.IntrospectionException
--dontwarn java.beans.Introspector
--dontwarn java.beans.PropertyDescriptor
--dontwarn java.beans.Transient
--dontwarn java.lang.Module
--dontwarn java.lang.management.ManagementFactory
--dontwarn java.lang.management.RuntimeMXBean
--dontwarn java.lang.reflect.AnnotatedType
--dontwarn javax.imageio.ImageIO
--dontwarn javax.imageio.ImageReadParam
--dontwarn javax.imageio.ImageReader
--dontwarn javax.imageio.ImageWriter
--dontwarn javax.imageio.spi.ImageWriterSpi
--dontwarn javax.imageio.stream.ImageInputStream
--dontwarn javax.imageio.stream.ImageOutputStream
--dontwarn javax.mail.Address
--dontwarn javax.mail.Authenticator
--dontwarn javax.mail.BodyPart
--dontwarn javax.mail.Message$RecipientType
--dontwarn javax.mail.Message
--dontwarn javax.mail.Multipart
--dontwarn javax.mail.Session
--dontwarn javax.mail.Transport
--dontwarn javax.mail.internet.AddressException
--dontwarn javax.mail.internet.InternetAddress
--dontwarn javax.mail.internet.MimeBodyPart
--dontwarn javax.mail.internet.MimeMessage
--dontwarn javax.mail.internet.MimeMultipart
--dontwarn javax.management.DynamicMBean
--dontwarn javax.management.InstanceNotFoundException
--dontwarn javax.management.JMException
--dontwarn javax.management.MBeanAttributeInfo
--dontwarn javax.management.MBeanConstructorInfo
--dontwarn javax.management.MBeanInfo
--dontwarn javax.management.MBeanNotificationInfo
--dontwarn javax.management.MBeanOperationInfo
--dontwarn javax.management.MBeanRegistrationException
--dontwarn javax.management.MBeanServer
--dontwarn javax.management.MalformedObjectNameException
--dontwarn javax.management.ObjectInstance
--dontwarn javax.management.ObjectName
--dontwarn javax.management.QueryExp
--dontwarn javax.naming.Context
--dontwarn javax.naming.InitialContext
--dontwarn javax.naming.InvalidNameException
--dontwarn javax.naming.NamingEnumeration
--dontwarn javax.naming.NamingException
--dontwarn javax.naming.directory.Attribute
--dontwarn javax.naming.directory.Attributes
--dontwarn javax.naming.directory.DirContext
--dontwarn javax.naming.directory.InitialDirContext
--dontwarn javax.naming.directory.SearchControls
--dontwarn javax.naming.directory.SearchResult
--dontwarn javax.naming.ldap.LdapName
--dontwarn javax.naming.ldap.Rdn
--dontwarn javax.servlet.Filter
--dontwarn javax.servlet.ServletContainerInitializer
--dontwarn javax.servlet.ServletContextListener
--dontwarn javax.servlet.http.HttpServlet
--dontwarn javax.xml.stream.Location
--dontwarn javax.xml.stream.XMLEventFactory
--dontwarn javax.xml.stream.XMLEventWriter
--dontwarn javax.xml.stream.XMLStreamException
--dontwarn javax.xml.stream.XMLStreamReader
--dontwarn javax.xml.stream.XMLStreamWriter
--dontwarn javax.xml.stream.events.Attribute
--dontwarn javax.xml.stream.events.Characters
--dontwarn javax.xml.stream.events.EndDocument
--dontwarn javax.xml.stream.events.EndElement
--dontwarn javax.xml.stream.events.Namespace
--dontwarn javax.xml.stream.events.StartDocument
--dontwarn javax.xml.stream.events.StartElement
--dontwarn javax.xml.stream.events.XMLEvent
--dontwarn org.apache.avalon.framework.logger.Logger
--dontwarn org.apache.log.Hierarchy
--dontwarn org.apache.log.Logger
--dontwarn org.apache.log4j.Level
--dontwarn org.apache.log4j.Logger
--dontwarn org.apache.log4j.Priority
--dontwarn org.apache.commons.logging.impl.Log4JLogger
--keep class org.apache.commons.logging.impl.Log4JLogger { *; }
--dontwarn org.apache.maven.AbstractMavenLifecycleParticipant
--dontwarn org.apache.maven.plugin.AbstractMojo
--dontwarn org.apache.maven.plugins.annotations.LifecyclePhase
--dontwarn org.apache.maven.plugins.annotations.Mojo
--dontwarn org.brotli.dec.BrotliInputStream
--dontwarn org.codehaus.groovy.reflection.ClassInfo
--dontwarn org.codehaus.groovy.runtime.GeneratedClosure
--dontwarn org.codehaus.groovy.runtime.ScriptBytecodeAdapter
--dontwarn org.codehaus.groovy.runtime.typehandling.DefaultTypeTransformation
--dontwarn org.codehaus.groovy.runtime.typehandling.ShortTypeHandling
--dontwarn org.codehaus.groovy.transform.ImmutableASTTransformation
--dontwarn org.codehaus.janino.ClassBodyEvaluator
--dontwarn org.codehaus.janino.ScriptEvaluator
--dontwarn org.codehaus.plexus.component.annotations.Component
--dontwarn org.conscrypt.Conscrypt
--dontwarn org.eclipse.ui.IStartup
--dontwarn org.graalvm.nativeimage.hosted.Feature
--dontwarn org.gradle.api.Action
--dontwarn org.gradle.api.DefaultTask
--dontwarn org.gradle.api.Named
--dontwarn org.gradle.api.Plugin
--dontwarn org.gradle.api.Task
--dontwarn org.gradle.api.artifacts.Dependency
--dontwarn org.gradle.api.artifacts.ExternalModuleDependency
--dontwarn org.gradle.api.artifacts.dsl.DependencyHandler
--dontwarn org.gradle.api.attributes.Attribute
--dontwarn org.gradle.api.attributes.AttributeCompatibilityRule
--dontwarn org.gradle.api.attributes.AttributeContainer
--dontwarn org.gradle.api.attributes.AttributeDisambiguationRule
--dontwarn org.gradle.api.attributes.HasAttributes
--dontwarn org.gradle.api.component.SoftwareComponent
--dontwarn org.gradle.api.plugins.ExtensionAware
--dontwarn org.gradle.api.tasks.CacheableTask
--dontwarn org.gradle.api.tasks.util.PatternFilterable
--dontwarn org.gradle.util.GradleVersion
--dontwarn org.hibernate.validator.HibernateValidator
--dontwarn org.ietf.jgss.GSSContext
--dontwarn org.ietf.jgss.GSSCredential
--dontwarn org.ietf.jgss.GSSException
--dontwarn org.ietf.jgss.GSSManager
--dontwarn org.ietf.jgss.GSSName
--dontwarn org.ietf.jgss.Oid
--dontwarn org.jvnet.fastinfoset.VocabularyApplicationData
--dontwarn org.jvnet.staxex.XMLStreamWriterEx
--dontwarn org.osgi.framework.Bundle
--dontwarn org.osgi.framework.BundleActivator
--dontwarn org.osgi.framework.BundleContext
--dontwarn org.osgi.framework.BundleListener
--dontwarn org.osgi.framework.BundleReference
--dontwarn org.osgi.framework.FrameworkUtil
--dontwarn org.osgi.framework.SynchronousBundleListener
--dontwarn sun.reflect.Reflection
-
-## General
-
-# Keep Kotlin Metadata
--keepattributes KotlinMetadata
-
-# Keep KMP Framework Class Names
--keep class kotlinx.** { *; }
-
-# Avoid stripping enums used by KMP
--keepclassmembers enum * {
-    public static **[] values();
-    public static ** valueOf(java.lang.String);
-}
-
-# Keep Compose Compiler Intrinsics
--keep class androidx.compose.runtime.** { *; }
--keep class androidx.compose.foundation.** { *; }
--keep class androidx.compose.material.** { *; }
-
-# Keep Compose Preview Annotations (if using Android Studio Preview)
--keep @androidx.compose.ui.tooling.preview.Preview class * { *; }
-
-# Keep Composer Intrinsics
--keep class androidx.compose.runtime.internal.ComposableLambdaImpl { *; }
-
-# Keep all classes annotated with @Composable
--keep class * {
-    @androidx.compose.runtime.Composable *;
-}
-
-# Preserve classes used in reflection (Compose & tor)
--keepattributes *Annotation*, InnerClasses, Signature
-
-# Keep Jetpack Compose runtime classes
--keep class androidx.compose.** { *; }
-
-# Keep Kotlin metadata
--keep class kotlin.Metadata { *; }
--keepattributes InnerClasses
--keepattributes EnclosingMethod
-
-# Keep Koin classes and avoid stripping DI components
--keep class org.koin.** { *; }
--keepclassmembers class * {
-    @org.koin.core.annotation.* <fields>;
-    @org.koin.core.annotation.* <methods>;
-}
-
-# Keep Logback and SLF4J classes (MISSING - this is the issue!)
+# Keep Logback and SLF4J classes
 -keep class ch.qos.logback.** { *; }
 -keep class org.slf4j.** { *; }
 -dontwarn ch.qos.logback.**
@@ -324,3 +173,184 @@
 # Keep logback configuration classes that use reflection
 -keep class ch.qos.logback.core.rolling.** { *; }
 -keep class ch.qos.logback.classic.** { *; }
+
+## General Android/Kotlin/Compose
+
+# Keep Kotlin Metadata
+-keepattributes KotlinMetadata
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod
+
+# Keep KMP Framework Class Names
+-keep class kotlinx.** { *; }
+
+# Keep Compose Compiler Intrinsics
+-keep class androidx.compose.** { *; }
+
+# Keep all classes annotated with @Composable
+-keep class * {
+    @androidx.compose.runtime.Composable *;
+}
+
+# Keep Composer Intrinsics
+-keep class androidx.compose.runtime.internal.ComposableLambdaImpl { *; }
+
+# Keep Compose Preview Annotations
+-keep @androidx.compose.ui.tooling.preview.Preview class * { *; }
+
+# Keep Kotlin metadata
+-keep class kotlin.Metadata { *; }
+
+# Keep Koin classes and avoid stripping DI components
+-keep class org.koin.** { *; }
+-keepclassmembers class * {
+    @org.koin.core.annotation.* <fields>;
+    @org.koin.core.annotation.* <methods>;
+}
+
+# Comprehensive -dontwarn section (consolidated)
+-dontwarn com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector
+-dontwarn com.sun.jdi.**
+-dontwarn com.sun.xml.fastinfoset.stax.**
+-dontwarn groovy.lang.**
+-dontwarn groovy.transform.Generated
+-dontwarn java.beans.**
+-dontwarn java.lang.Module
+-dontwarn java.lang.management.**
+-dontwarn java.lang.reflect.AnnotatedType
+-dontwarn javax.imageio.**
+-dontwarn javax.mail.**
+-dontwarn javax.management.**
+-dontwarn javax.naming.**
+-dontwarn javax.xml.stream.**
+-dontwarn org.apache.avalon.framework.logger.Logger
+-dontwarn org.apache.log.**
+-dontwarn org.apache.log4j.**
+-dontwarn org.apache.commons.logging.impl.Log4JLogger
+-dontwarn org.apache.maven.**
+-dontwarn org.brotli.dec.BrotliInputStream
+-dontwarn org.codehaus.groovy.**
+-dontwarn org.codehaus.janino.**
+-dontwarn org.codehaus.plexus.component.annotations.Component
+-dontwarn org.conscrypt.Conscrypt
+-dontwarn org.eclipse.ui.IStartup
+-dontwarn org.graalvm.nativeimage.hosted.Feature
+-dontwarn org.hibernate.validator.HibernateValidator
+-dontwarn org.ietf.jgss.**
+-dontwarn org.jvnet.**
+-dontwarn org.osgi.framework.**
+-dontwarn sun.reflect.Reflection
+
+# Keep specific classes that need explicit preservation
+-keep class org.apache.commons.logging.impl.Log4JLogger { *; }
+
+# CRITICAL: Ensure ResolverConfig.config() runs and resolver registration works
+-keep class bisq.application.ResolverConfig { *; }
+-keepclassmembers class bisq.application.ResolverConfig {
+    public static void config();
+}
+
+# Keep all static initializers that register resolvers
+-keepclassmembers class bisq.application.ResolverConfig {
+    static <clinit>();
+}
+-keepclassmembers class bisq.common.proto.** {
+    static <clinit>();
+}
+-keepclassmembers class bisq.network.p2p.services.data.storage.DistributedDataResolver {
+    static <clinit>();
+}
+-keepclassmembers class bisq.network.p2p.message.NetworkMessageResolver {
+    static <clinit>();
+}
+
+# Keep all getResolver methods and their lambda implementations
+-keepclassmembers class * {
+    public static bisq.common.proto.ProtoResolver getResolver();
+    public static bisq.common.proto.ProtoResolver getDistributedDataResolver();
+    public static bisq.common.proto.ProtoResolver getNetworkMessageResolver();
+}
+
+# Prevent obfuscation of lambda methods in resolver classes
+-keepclassmembers class * {
+    static synthetic bisq.common.proto.ProtoResolver lambda$getResolver$*(...);
+    static synthetic bisq.common.proto.ProtoResolver lambda$getDistributedDataResolver$*(...);
+    static synthetic bisq.common.proto.ProtoResolver lambda$getNetworkMessageResolver$*(...);
+}
+
+# Keep the resolver registration methods
+-keepclassmembers class bisq.network.p2p.services.data.storage.DistributedDataResolver {
+    public static void addResolver(java.lang.String, bisq.common.proto.ProtoResolver);
+}
+-keepclassmembers class bisq.network.p2p.message.NetworkMessageResolver {
+    public static void addResolver(java.lang.String, bisq.common.proto.ProtoResolver);
+}
+
+# Alternative: Keep all classes that have getResolver methods
+-keep class * {
+    public static bisq.common.proto.ProtoResolver getResolver();
+}
+
+# Keep the specific store classes that are failing
+-keep class bisq.settings.SettingsStore { *; }
+-keep class bisq.user.profile.UserProfileStore { *; }
+-keep class bisq.user.identity.UserIdentityStore { *; }
+-keep class bisq.user.banned.BannedUserStore { *; }
+-keep class bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannelStore { *; }
+
+# Keep PersistableProtoResolverMap and its methods
+-keep class bisq.common.proto.PersistableProtoResolverMap { *; }
+-keepclassmembers class bisq.common.proto.PersistableProtoResolverMap {
+    *;
+}
+
+# Keep NetworkProtoResolverMap and its methods  
+-keep class bisq.common.proto.NetworkProtoResolverMap { *; }
+-keepclassmembers class bisq.common.proto.NetworkProtoResolverMap {
+    *;
+}
+
+# Keep all classes that have getResolver() methods - these are the ones failing
+-keep class bisq.chat.** { *; }
+-keep class bisq.offer.** { *; }
+-keep class bisq.account.** { *; }
+-keep class bisq.common.** { *; }
+-keep class bisq.settings.** { *; }
+-keep class bisq.support.** { *; }
+-keep class bisq.trade.** { *; }
+-keep class bisq.user.** { *; }
+-keep class bisq.bonded_roles.** { *; }
+
+# Keep all store classes that are being persisted
+-keep class **.*Store { *; }
+-keep class **.*Store$* { *; }
+
+# Keep all classes ending with Data (common pattern for protobuf classes)
+-keep class **.*Data { *; }
+-keep class **.*Data$* { *; }
+
+# Keep all classes ending with Message
+-keep class **.*Message { *; }
+-keep class **.*Message$* { *; }
+
+# Prevent obfuscation of lambda expressions in resolver methods
+-keepclassmembers class * {
+    public static bisq.common.proto.ProtoResolver getResolver();
+    public static * lambda$*(...);
+}
+
+# Keep all protobuf generated classes from being renamed
+-keepnames class **.protobuf.** { *; }
+
+# NUCLEAR OPTION: Disable ALL R8 optimizations
+-dontoptimize
+-dontobfuscate
+-dontshrink
+
+# Keep everything in bisq packages
+-keep class bisq.** { *; }
+-keep class org.bisq.** { *; }
+
+# Keep all protobuf classes
+-keep class com.google.protobuf.** { *; }
+-keep class **.protobuf.** { *; }

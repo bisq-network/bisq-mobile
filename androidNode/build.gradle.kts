@@ -138,14 +138,15 @@ android {
             // Exclude the conflicting META-INF files
             excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
             excludes.add("META-INF/DEPENDENCIES")
-            excludes.add("META-INF/LICENSE.md")
-            excludes.add("META-INF/NOTICE.md")
+            excludes.add("META-INF/LICENSE*.md")
+            excludes.add("META-INF/NOTICE*.md")
             excludes.add("META-INF/INDEX.LIST")
             excludes.add("META-INF/NOTICE.markdown")
             pickFirsts.add("**/protobuf/**/*.class")
             pickFirsts += listOf(
                 "META-INF/LICENSE*",
                 "META-INF/NOTICE*",
+                "META-INF/services/**",
                 "META-INF/*.version"
             )
         }
@@ -165,12 +166,9 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = true
+            isMinifyEnabled = false  // Disable R8 entirely
             signingConfig = signingConfigs.getByName("release")
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
-                "proguard-rules.pro"
-            )
+            // Remove proguard files line
             dependenciesInfo {
                 includeInApk = false
                 includeInBundle = false
