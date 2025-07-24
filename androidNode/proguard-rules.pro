@@ -244,108 +244,36 @@
 # Keep specific classes that need explicit preservation
 -keep class org.apache.commons.logging.impl.Log4JLogger { *; }
 
-# CRITICAL: Ensure ResolverConfig.config() runs and resolver registration works
--keep class bisq.application.ResolverConfig { *; }
--keepclassmembers class bisq.application.ResolverConfig {
-    public static void config();
-}
-
-# Keep all static initializers that register resolvers
--keepclassmembers class bisq.application.ResolverConfig {
-    static <clinit>();
-}
--keepclassmembers class bisq.common.proto.** {
-    static <clinit>();
-}
--keepclassmembers class bisq.network.p2p.services.data.storage.DistributedDataResolver {
-    static <clinit>();
-}
--keepclassmembers class bisq.network.p2p.message.NetworkMessageResolver {
-    static <clinit>();
-}
-
-# Keep all getResolver methods and their lambda implementations
--keepclassmembers class * {
-    public static bisq.common.proto.ProtoResolver getResolver();
-    public static bisq.common.proto.ProtoResolver getDistributedDataResolver();
-    public static bisq.common.proto.ProtoResolver getNetworkMessageResolver();
-}
-
-# Prevent obfuscation of lambda methods in resolver classes
--keepclassmembers class * {
-    static synthetic bisq.common.proto.ProtoResolver lambda$getResolver$*(...);
-    static synthetic bisq.common.proto.ProtoResolver lambda$getDistributedDataResolver$*(...);
-    static synthetic bisq.common.proto.ProtoResolver lambda$getNetworkMessageResolver$*(...);
-}
-
-# Keep the resolver registration methods
--keepclassmembers class bisq.network.p2p.services.data.storage.DistributedDataResolver {
-    public static void addResolver(java.lang.String, bisq.common.proto.ProtoResolver);
-}
--keepclassmembers class bisq.network.p2p.message.NetworkMessageResolver {
-    public static void addResolver(java.lang.String, bisq.common.proto.ProtoResolver);
-}
-
-# Alternative: Keep all classes that have getResolver methods
--keep class * {
-    public static bisq.common.proto.ProtoResolver getResolver();
-}
-
-# Keep the specific store classes that are failing
--keep class bisq.settings.SettingsStore { *; }
--keep class bisq.user.profile.UserProfileStore { *; }
--keep class bisq.user.identity.UserIdentityStore { *; }
--keep class bisq.user.banned.BannedUserStore { *; }
--keep class bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannelStore { *; }
-
-# Keep PersistableProtoResolverMap and its methods
--keep class bisq.common.proto.PersistableProtoResolverMap { *; }
--keepclassmembers class bisq.common.proto.PersistableProtoResolverMap {
-    *;
-}
-
-# Keep NetworkProtoResolverMap and its methods  
--keep class bisq.common.proto.NetworkProtoResolverMap { *; }
--keepclassmembers class bisq.common.proto.NetworkProtoResolverMap {
-    *;
-}
-
-# Keep all classes that have getResolver() methods - these are the ones failing
--keep class bisq.chat.** { *; }
--keep class bisq.offer.** { *; }
--keep class bisq.account.** { *; }
--keep class bisq.common.** { *; }
--keep class bisq.settings.** { *; }
--keep class bisq.support.** { *; }
--keep class bisq.trade.** { *; }
--keep class bisq.user.** { *; }
--keep class bisq.bonded_roles.** { *; }
-
-# Keep all store classes that are being persisted
--keep class **.*Store { *; }
--keep class **.*Store$* { *; }
-
-# Keep all classes ending with Data (common pattern for protobuf classes)
--keep class **.*Data { *; }
--keep class **.*Data$* { *; }
-
-# Keep all classes ending with Message
--keep class **.*Message { *; }
--keep class **.*Message$* { *; }
-
-# Prevent obfuscation of lambda expressions in resolver methods
--keepclassmembers class * {
-    public static bisq.common.proto.ProtoResolver getResolver();
-    public static * lambda$*(...);
-}
-
-# Keep all protobuf generated classes from being renamed
--keepnames class **.protobuf.** { *; }
-
-# NUCLEAR OPTION: Disable ALL R8 optimizations
+# Disable all optimizations that could break protobuf
 -dontoptimize
 -dontobfuscate
--dontshrink
+-dontpreverify
+
+# Keep all protobuf and resolver classes completely intact
+-keep class bisq.common.proto.** { *; }
+-keep class bisq.persistence.** { *; }
+-keep class bisq.network.p2p.services.data.storage.** { *; }
+-keep class bisq.network.p2p.message.** { *; }
+
+# Keep all protobuf generated classes
+-keep class com.google.protobuf.** { *; }
+-keep class **.protobuf.** { *; }
+
+# Keep all store classes and their methods
+-keep class **.*Store { *; }
+-keep class * implements bisq.persistence.PersistableStore { *; }
+
+# Keep resolver registration
+-keep class bisq.application.ResolverConfig { *; }
+
+# Keep all lambda expressions and synthetic methods
+-keep class * {
+    synthetic <methods>;
+    static synthetic <methods>;
+}
+
+# Preserve line numbers for debugging
+-keepattributes SourceFile,LineNumberTable
 
 # Keep everything in bisq packages
 -keep class bisq.** { *; }

@@ -134,7 +134,7 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            // the following exclude are needed to avoid protobuf hanging build when merging release resources for java
+            // the following exclude are needeD to avoid protobuf hanging build when merging release resources for java
             // Exclude the conflicting META-INF files
             excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
             excludes.add("META-INF/DEPENDENCIES")
@@ -166,9 +166,12 @@ android {
     }
     buildTypes {
         getByName("release") {
-            isMinifyEnabled = false  // Disable R8 entirely
+            isMinifyEnabled = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
             signingConfig = signingConfigs.getByName("release")
-            // Remove proguard files line
             dependenciesInfo {
                 includeInApk = false
                 includeInBundle = false
