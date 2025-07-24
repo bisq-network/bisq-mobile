@@ -209,6 +209,7 @@
 }
 
 # Comprehensive -dontwarn section (consolidated)
+-dontwarn com.sun.xml.fastinfoset.sax.AttributesHolder
 -dontwarn com.fasterxml.jackson.module.jaxb.JaxbAnnotationIntrospector
 -dontwarn com.sun.jdi.**
 -dontwarn com.sun.xml.fastinfoset.stax.**
@@ -275,10 +276,5 @@
 # Preserve line numbers for debugging
 -keepattributes SourceFile,LineNumberTable
 
-# Keep everything in bisq packages
--keep class bisq.** { *; }
--keep class org.bisq.** { *; }
-
-# Keep all protobuf classes
--keep class com.google.protobuf.** { *; }
--keep class **.protobuf.** { *; }
+# Allow R8 to shrink unused code outside of bisq packages
+-keep class !bisq.**,!network.bisq.**,!com.google.protobuf.** { *; }
