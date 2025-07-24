@@ -332,7 +332,7 @@ class Mappings {
 
     object BisqEasyOpenTradeMessageVOMapping {
         fun toBisq2Model(value: BisqEasyOpenTradeMessageDto): BisqEasyOpenTradeMessage {
-            // citationAuthorUserProfile not required for Bisq 2 model
+            // citationAuthorUserProfile not required for Bisq Easy model
             return BisqEasyOpenTradeMessage(
                 value.tradeId,
                 value.messageId,

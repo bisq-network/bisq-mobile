@@ -49,7 +49,7 @@ fun AmountSlider(
             val thumbRadius = 12.dp.toPx()
             val width = size.width
             val centerY = size.height / 2
-            val trackHeight = 3.dp.toPx()  // We use 2 px in Bisq 2 but seems to small here
+            val trackHeight = 3.dp.toPx()  // We use 2 px in Bisq Easy but seems to small here
 
             val thumbPos = normalizedValue * width
             val leftPos = (normalizedLeftMarker ?: 0f) * width
@@ -57,7 +57,7 @@ fun AmountSlider(
 
             // Track
             drawLine(
-                color = BisqTheme.colors.mid_grey10,  // We use mid_grey20 in Bisq 2 but seems to bright here
+                color = BisqTheme.colors.mid_grey10,  // We use mid_grey20 in Bisq Easy but seems to bright here
                 start = Offset(thumbRadius / 2, centerY),
                 end = Offset(width - thumbRadius / 2, centerY),
                 strokeWidth = trackHeight

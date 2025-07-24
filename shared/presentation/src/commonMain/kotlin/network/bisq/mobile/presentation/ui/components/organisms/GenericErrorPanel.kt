@@ -15,7 +15,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
-// TODO should be like Bisq 2 generic error popup
+// TODO should be like Bisq Easy generic error popup
 @Composable
 fun GenericErrorPanel(
     errorMessage: String,

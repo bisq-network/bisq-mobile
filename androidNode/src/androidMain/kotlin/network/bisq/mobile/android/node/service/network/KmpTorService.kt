@@ -23,7 +23,7 @@ import kotlin.io.path.absolutePathString
 
 
 /**
- * We use the external tor setup of Bisq 2 and use the kmp-tor runtime.
+ * We use the external tor setup of Bisq Easy and use the kmp-tor runtime.
  * The task of that class is to start the kmp tor runtime and configure the data for the external tor setup.
  *
  * 1. Setup kmp tor runtime: Create runtime, set environment, config and add observers.
@@ -31,7 +31,7 @@ import kotlin.io.path.absolutePathString
  * 3. Find socksPort by listening on TorEvent.NOTICE with data: `Socks listener listening on port {socksPort}.`
  * 4. Find control port by observing creation or mutation of the `control.txt` file which contains the control port.
  *    Read the value from format: `PORT=127.0.0.1:{controlPort}`
- * 5. Write the `external_tor.config` with socks port, control port and path to the auth cookie. This will be used by the Bisq 2 tor lib.
+ * 5. Write the `external_tor.config` with socks port, control port and path to the auth cookie. This will be used by the Bisq Easy tor lib.
  * 6. After tor daemon is started, we are completed. The network service can now be initialized.
  *    The bisq 2 tor lib will detect the external tor and use that.
  *
@@ -155,7 +155,7 @@ class KmpTorService : ServiceFacade(), Logging {
                 TorOption.CookieAuthentication.configure(true)
                 TorOption.DataDirectory.configure(torDir)
                 TorOption.CacheDirectory.configure(cacheDirectory)
-                TorOption.DisableNetwork.configure(true) // Bisq 2 tor lib managed the DisableNetwork state, initially it is disabled.
+                TorOption.DisableNetwork.configure(true) // Bisq Easy tor lib managed the DisableNetwork state, initially it is disabled.
                 TorOption.NoExec.configure(true)
                 TorOption.TruncateLogFile.configure(true)
             }
@@ -202,7 +202,7 @@ class KmpTorService : ServiceFacade(), Logging {
                 // We can't use FileObserver because it misses events between event processing.
                 // Tor writes the port to a swap file first, and renames it afterward.
                 // The FileObserver can miss the second operation, causing a deadlock.
-                // See Bisq 2 tor implementation at: bisq.network.tor.process.control_port.ControlPortFilePoller
+                // See Bisq Easy tor implementation at: bisq.network.tor.process.control_port.ControlPortFilePoller
 
                 var lastModified = 0L
                 var iterations = 0

@@ -4,15 +4,15 @@
 
 ### Naming conventions
 
-As we use the Bisq 2 domain classes and enums in the node mode we have to distinguish the names to avoid conflicts and confusion (
+As we use the Bisq Easy domain classes and enums in the node mode we have to distinguish the names to avoid conflicts and confusion (
 distinguishing by package name would pollute the code with very long fully qualified names).
 
-The `network.bisq.mobile.domain.data.replicated` package contains classes and enums which are replicas from the Bisq 2 sides data transfer
+The `network.bisq.mobile.domain.data.replicated` package contains classes and enums which are replicas from the Bisq Easy sides data transfer
 objects.
-In Bisq 2 those are post-fixed with `Dto` and reflect the same package structure as the domain models and enums. Enums are also post-fixed
+In Bisq Easy those are post-fixed with `Dto` and reflect the same package structure as the domain models and enums. Enums are also post-fixed
 with `Dto`.
 Those are pure value objects and replicate the domain models without any mutable fields or domain methods.
-On the Bisq 2 side those are only used for data transfer.
+On the Bisq Easy side those are only used for data transfer.
 
 In case we use those data as value objects, we use `VO` for classes and `Enum` (due lack of a better generic postfix) for enums.
 In case those data are used as immutable data source for models, we keep the `Dto` post-fix, as they are only used for data transfer and
@@ -21,7 +21,7 @@ not accessed directly from client code (data access via delegation inside the as
 For mapping between the domain objects and the value objects or enums we use the `Mappings` class with its specific mappings for all
 replicated value objects.
 For models we do not provide the `toBisq2Model` method as we don't need that usually. Instead we lookup in the domain service for the
-relevant Bisq 2 model.
+relevant Bisq Easy model.
 
 To avoid to pollute the value objects we use `Extensions` postfix for objects containing extensions to a value object and `Factory` for util
 methods to create a value object. `Utils` for other utility methods.
@@ -69,7 +69,7 @@ Model classes can contain also domain methods or util fields.
 
 #### Optional/nullable data
 
-Optional data is provided as nullable type in Kotlin. On the Bisq 2 side Optional is used in the domain layer instead of nullable annotated
+Optional data is provided as nullable type in Kotlin. On the Bisq Easy side Optional is used in the domain layer instead of nullable annotated
 fields.
 In case the dto is not reflecting a domain model, we use nullable annotation.
 For back-end provided nullable/optional fields we can use `@JsonInclude(JsonInclude.Include.NON_EMPTY)` to send those data at all.

@@ -46,7 +46,7 @@ class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentation
 
     // The user name is the nickname and the nym in case there are multiple nicknames in the network.
     // We get that set by the backend in the makersUserProfile but we need to update it after initial retrieval by websocket events.
-    // At Bisq 2 the UserNameLookup class handles that.
+    // At Bisq Easy the UserNameLookup class handles that.
     private val _userName = MutableStateFlow(offerItemPresentationDto.userProfile.userName)
     val userName: StateFlow<String> get() = _userName
 

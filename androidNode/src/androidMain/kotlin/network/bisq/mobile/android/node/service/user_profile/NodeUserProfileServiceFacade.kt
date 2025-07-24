@@ -29,10 +29,10 @@ import kotlin.math.max
 import kotlin.math.min
 
 /**
- * This is a facade to the Bisq 2 libraries UserIdentityService and UserProfileServices.
+ * This is a facade to the Bisq Easy libraries UserIdentityService and UserProfileServices.
  * It provides the API for the users profile presenter to interact with that domain.
  * It uses in a in-memory model for the relevant data required for the presenter to reflect the domains state.
- * Persistence is done inside the Bisq 2 libraries.
+ * Persistence is done inside the Bisq Easy libraries.
  */
 class NodeUserProfileServiceFacade(private val applicationService: AndroidApplicationService.Provider) :
     ServiceFacade(), UserProfileServiceFacade {
