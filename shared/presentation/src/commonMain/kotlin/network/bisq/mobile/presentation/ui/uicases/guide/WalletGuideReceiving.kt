@@ -43,6 +43,7 @@ fun WalletGuideReceiving() {
         stepsLength = 4,
         prevOnClick = presenter::prevClick,
         nextOnClick = presenter::receivingNextClick,
+        nextButtonText = "action.close".i18n(),
         horizontalAlignment = Alignment.Start,
         isInteractive = presenter.isInteractive.collectAsState().value,
     ) {

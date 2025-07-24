@@ -16,6 +16,10 @@ import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
+/**
+ * @param stepIndex starts at 1, so last step equals `stepsLength`
+ * @param stepsLength How many steps this wizard has
+ */
 @Composable
 fun MultiScreenWizardScaffold(
     title: String,
