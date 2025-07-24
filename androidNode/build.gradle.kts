@@ -179,6 +179,7 @@ android {
                 includeInBundle = false
             }
             isDebuggable = false
+            isCrunchPngs = true
         }
         getByName("debug") {
             isDebuggable = true

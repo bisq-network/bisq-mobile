@@ -249,7 +249,6 @@
 # Disable all optimizations that could break protobuf
 -dontoptimize
 -dontobfuscate
--dontpreverify
 
 # Keep all protobuf and resolver classes completely intact
 -keep class bisq.common.proto.** { *; }
@@ -277,5 +276,11 @@
 # Preserve line numbers for debugging
 -keepattributes SourceFile,LineNumberTable
 
-# Allow R8 to shrink unused code outside of bisq packages
--keep class !bisq.**,!network.bisq.**,!com.google.protobuf.** { *; }
+# More aggressive external library shrinking
+-keep class !bisq.**,!network.bisq.**,!com.google.protobuf.**,!io.grpc.**,!io.netty.**,!org.bouncycastle.**,!ch.qos.logback.**,!org.slf4j.** { *; }
+
+# Allow removal of unused external library methods
+-assumenosideeffects class android.util.Log {
+    public static *** d(...);
+    public static *** v(...);
+}
