@@ -105,16 +105,15 @@ open class CreateProfilePresenter(
                 log.i { "Show busy animation for createAndPublishInProgress" }
                 runCatching {
                     userProfileService.createAndPublishNewUserProfile(nickName.value)
-
-                    log.i { "Hide busy animation for createAndPublishInProgress" }
-                    withContext(Dispatchers.Main) {
-                        _createAndPublishInProgress.value = false
-                    }
-                    
                     // Navigate to TabContainer and completely clear the back stack
                     // This ensures the user can never navigate back to onboarding screens
                     navigateTo(Routes.TabContainer) {
                         it.popUpTo(Routes.Splash.name) { inclusive = true }
+                    }
+
+                    log.i { "Hide busy animation for createAndPublishInProgress" }
+                    withContext(Dispatchers.Main) {
+                        _createAndPublishInProgress.value = false
                     }
                     enableInteractive()
                 }.onFailure { e ->

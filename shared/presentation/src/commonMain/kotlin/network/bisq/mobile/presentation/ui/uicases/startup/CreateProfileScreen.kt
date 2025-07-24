@@ -18,7 +18,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
-import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogo
 import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
@@ -38,7 +37,6 @@ fun CreateProfileScreen(
     val nickNameValid by presenter.nickNameValid.collectAsState()
     val profileIcon by presenter.profileIcon.collectAsState()
     val nym by presenter.nym.collectAsState()
-    val id by presenter.id.collectAsState()
     val botSize = BisqUIConstants.ScreenPadding8X
 
     BisqScrollScaffold {
@@ -105,7 +103,8 @@ fun CreateProfileScreen(
         BisqButton(
             "action.next".i18n(),
             onClick = { presenter.onCreateAndPublishNewUserProfile() },
-            disabled = nickName.isEmpty() || createAndPublishInProgress || generateKeyPairInProgress || !nickNameValid
+            disabled = nickName.isEmpty() || createAndPublishInProgress || generateKeyPairInProgress || !nickNameValid,
+            isLoading = createAndPublishInProgress
         )
     }
 }
