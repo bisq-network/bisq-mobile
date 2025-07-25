@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bot_image
 import network.bisq.mobile.domain.PlatformImage
@@ -36,7 +37,7 @@ fun ProfileIconAndText(
 
         val icon = @Composable {
             Image(
-                painter = painter, "", modifier = Modifier.size(BisqUIConstants.ScreenPadding3X)
+                painter = painter, "", modifier = Modifier.size(30.dp) // same size as top bar
             )
         }
 
