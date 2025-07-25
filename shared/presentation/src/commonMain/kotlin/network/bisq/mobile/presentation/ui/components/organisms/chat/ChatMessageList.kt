@@ -87,7 +87,7 @@ fun ChatMessageList(
                         )
                     }
                 }
-                item { Spacer(Modifier.padding(bottom = BisqUIConstants.ScreenPadding)) }
+                item { }
             }
         }
 
