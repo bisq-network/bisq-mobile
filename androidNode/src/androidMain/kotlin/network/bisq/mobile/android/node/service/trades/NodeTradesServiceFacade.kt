@@ -43,6 +43,7 @@ import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferV
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
+import network.bisq.mobile.domain.service.trades.TradeSynchronizationHelper
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
@@ -651,82 +652,48 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
      * **Solution**: This method automatically identifies trades that might have missed state
      * updates and sends sync requests via the chat system to trigger message processing.
      *
-     * **Timing**: Runs automatically 2 seconds after service activation with intelligent logic:
-     * - Always syncs trades older than 10 minutes
-     * - Syncs trades in quick-progress states after 2 minutes
+     * **Timing**: Uses shared TradeSynchronizationHelper logic optimized for ongoing trades:
+     * - Quick-progress states: sync after 30 seconds
+     * - All ongoing trades: sync after 60 seconds
+     * - Long-running trades: sync after 5 minutes
      */
     private suspend fun synchronizeTradeStates() {
         try {
-            log.i { "KMP: Starting trade state synchronization after app restart" }
+            log.i { "KMP: Starting node trade state synchronization after app restart" }
 
-            val openTrades = bisqEasyTradeService.trades.filter { trade ->
-                !trade.tradeState.isFinalState
-            }
+            // Convert Bisq trades to presentation models for shared logic
+            val currentTrades = _openTradeItems.value
+            val tradesNeedingSync = TradeSynchronizationHelper.getTradesNeedingSync(currentTrades, isAppRestart = true)
 
-            if (openTrades.isEmpty()) {
-                log.d { "KMP: No open trades to synchronize" }
+            TradeSynchronizationHelper.logSynchronizationActivity(currentTrades, tradesNeedingSync)
+
+            if (tradesNeedingSync.isEmpty()) {
+                log.d { "KMP: No trades need synchronization" }
                 return
             }
 
-            log.i { "KMP: Found ${openTrades.size} open trades to synchronize" }
-
-            // For each open trade, check if we need to request state updates
-            openTrades.forEach { trade ->
+            // Send sync requests for trades that need it
+            tradesNeedingSync.forEach { trade ->
                 try {
-                    val tradeId = trade.id
-                    val currentState = trade.tradeState
-
-                    log.d { "KMP: Checking trade $tradeId in state $currentState" }
-
-                    // Check if this trade might have missed completion messages
-                    if (shouldSynchronizeTrade(trade)) {
-                        log.i { "KMP: Trade $tradeId needs synchronization, requesting sync" }
-                        requestTradeStateSync(trade)
+                    // Find the corresponding Bisq trade
+                    val bisqTrade = bisqEasyTradeService.trades.find { it.id == trade.tradeId }
+                    if (bisqTrade != null) {
+                        requestTradeStateSync(bisqTrade)
+                    } else {
+                        log.w { "KMP: Could not find Bisq trade for ${trade.tradeId}" }
                     }
                 } catch (e: Exception) {
-                    log.e(e) { "KMP: Error synchronizing trade ${trade.id}" }
+                    log.e(e) { "KMP: Error requesting sync for trade ${trade.tradeId}" }
                 }
             }
 
-            log.i { "KMP: Trade state synchronization completed" }
+            log.i { "KMP: Node trade state synchronization completed" }
         } catch (e: Exception) {
-            log.e(e) { "KMP: Error during trade state synchronization" }
+            log.e(e) { "KMP: Error during node trade state synchronization" }
         }
     }
 
-    /**
-     * Determines if a trade should be synchronized based on its state and timing.
-     *
-     * Uses intelligent logic to minimize unnecessary sync requests:
-     * - Always sync trades that have been open for more than 10 minutes
-     * - Sync trades in quick-progress states (BTC confirmation, fiat receipt) after 2 minutes
-     *
-     * @param trade The trade to evaluate for synchronization
-     * @return true if the trade should be synchronized, false otherwise
-     */
-    private fun shouldSynchronizeTrade(trade: BisqEasyTrade): Boolean {
-        val currentState = trade.tradeState
-        val timeSinceCreation = System.currentTimeMillis() - trade.contract.takeOfferDate
 
-        // Always sync trades that have been open for more than 10 minutes
-        if (timeSinceCreation > 10 * 60 * 1000) {
-            return true
-        }
-
-        // Sync trades in states that typically progress quickly
-        val quickProgressStates = setOf(
-            BisqEasyTradeState.SELLER_SENT_BTC_SENT_CONFIRMATION,
-            BisqEasyTradeState.BUYER_RECEIVED_BTC_SENT_CONFIRMATION,
-            BisqEasyTradeState.SELLER_CONFIRMED_FIAT_RECEIPT,
-            BisqEasyTradeState.BUYER_RECEIVED_SELLERS_FIAT_RECEIPT_CONFIRMATION
-        )
-
-        if (quickProgressStates.contains(currentState) && timeSinceCreation > 2 * 60 * 1000) {
-            return true
-        }
-
-        return false
-    }
 
     /**
      * Gets the last activity timestamp for a trade.

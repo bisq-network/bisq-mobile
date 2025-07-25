@@ -3,6 +3,7 @@ package network.bisq.mobile.domain.service.notifications
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.trades.TradeSynchronizationHelper
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
@@ -63,14 +64,11 @@ class OpenTradesNotificationService(
      * Checks for trades that might have been completed while the app was killed
      * and shows appropriate notifications.
      *
-     * **Purpose**: Detects trades that have been open for an unusually long time in
-     * intermediate states, which may indicate missed completion messages.
+     * **Enhanced Logic**: Detects both completed trades and stale trades that need attention.
+     * Shows completion notifications for trades that finished while the app was killed.
      *
-     * **Logic**: If a trade has been open for more than 30 minutes and is still in
-     * a non-terminal state, it shows a notification that the trade needs attention.
-     *
-     * **User Experience**: Provides proactive notifications to users about trades
-     * that may require manual intervention or have missed state updates.
+     * **Purpose**: Ensures users get notified about trade completions even when the app
+     * was not running when the trade completed.
      *
      * @param trades List of current trade items to check
      */
@@ -78,14 +76,67 @@ class OpenTradesNotificationService(
         try {
             log.d { "KMP: Checking for missed trade completions among ${trades.size} trades" }
 
-            trades.forEach { trade ->
-                val tradeState = trade.bisqEasyTradeModel.tradeState.value
-                val timeSinceCreation = System.currentTimeMillis() - trade.bisqEasyTradeModel.takeOfferDate
+            // Check for completed trades that might have finished while app was killed
+            checkForCompletedTrades(trades)
 
-                // If a trade has been open for more than 30 minutes and is still in an intermediate state,
-                // it might have missed completion messages
-                if (timeSinceCreation > 30 * 60 * 1000 && !OffersServiceFacade.isTerminalState(tradeState)) {
-                    log.i { "KMP: Trade ${trade.shortTradeId} has been open for ${timeSinceCreation / 60000} minutes in state $tradeState" }
+            // Check for stale trades that need attention
+            checkForStaleTrades(trades)
+
+        } catch (e: Exception) {
+            log.e(e) { "KMP: Error checking for missed trade completions" }
+        }
+    }
+
+    /**
+     * Checks for trades that completed while the app was killed and shows completion notifications.
+     */
+    private fun checkForCompletedTrades(trades: List<TradeItemPresentationModel>) {
+        try {
+            val completedTrades = trades.filter { trade ->
+                val tradeState = trade.bisqEasyTradeModel.tradeState.value
+                OffersServiceFacade.isTerminalState(tradeState)
+            }
+
+            if (completedTrades.isNotEmpty()) {
+                log.i { "KMP: Found ${completedTrades.size} completed trades, showing completion notifications" }
+
+                completedTrades.forEach { trade ->
+                    val tradeState = trade.bisqEasyTradeModel.tradeState.value
+                    log.i { "KMP: Showing completion notification for trade ${trade.shortTradeId} in state $tradeState" }
+
+                    // Show completion notification
+                    notificationServiceController.pushNotification(
+                        "mobile.openTradeNotifications.tradeCompleted.title".i18n(trade.shortTradeId),
+                        "mobile.openTradeNotifications.tradeCompleted.message".i18n(trade.peersUserName, tradeState.toString())
+                    )
+                }
+            }
+        } catch (e: Exception) {
+            log.e(e) { "KMP: Error checking for completed trades" }
+        }
+    }
+
+    /**
+     * Checks for trades that have been stale for too long and shows attention notifications.
+     */
+    private fun checkForStaleTrades(trades: List<TradeItemPresentationModel>) {
+        try {
+            // Use shared synchronization helper to identify problematic trades
+            val tradesNeedingAttention = TradeSynchronizationHelper.getTradesNeedingSync(trades)
+                .filter { trade ->
+                    val timeSinceCreation = System.currentTimeMillis() - trade.bisqEasyTradeModel.takeOfferDate
+                    // Only notify for trades that have been open for more than 10 minutes
+                    timeSinceCreation > 10 * 60 * 1000
+                }
+
+            if (tradesNeedingAttention.isNotEmpty()) {
+                log.i { "KMP: Found ${tradesNeedingAttention.size} stale trades needing attention" }
+
+                tradesNeedingAttention.forEach { trade ->
+                    val tradeState = trade.bisqEasyTradeModel.tradeState.value
+                    val timeSinceCreation = System.currentTimeMillis() - trade.bisqEasyTradeModel.takeOfferDate
+
+                    log.i { "KMP: Trade ${trade.shortTradeId} needs attention - open for ${timeSinceCreation / 60000} minutes in state $tradeState" }
 
                     // Show a notification that the trade needs attention
                     notificationServiceController.pushNotification(
@@ -95,7 +146,7 @@ class OpenTradesNotificationService(
                 }
             }
         } catch (e: Exception) {
-            log.e(e) { "KMP: Error checking for missed trade completions" }
+            log.e(e) { "KMP: Error checking for stale trades" }
         }
     }
 }

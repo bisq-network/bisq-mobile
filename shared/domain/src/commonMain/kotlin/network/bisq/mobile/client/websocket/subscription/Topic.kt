@@ -19,7 +19,7 @@ enum class Topic(val typeOf: KType) {
     OFFERS(typeOf<List<OfferItemPresentationDto>>()),
     TRADES(typeOf<List<TradeItemPresentationDto>>()),
     TRADE_PROPERTIES(typeOf<List<Map<String, TradePropertiesDto>>>()),
-    TRADE_CHAT_MESSAGES(typeOf<List<BisqEasyOpenTradeMessageDto>>()),
+    TRADE_CHATS(typeOf<List<BisqEasyOpenTradeMessageDto>>()),
     CHAT_REACTIONS(typeOf<List<BisqEasyOpenTradeMessageReactionVO>>()),
-    REPUTATION(typeOf<Map<String, ReputationScoreVO>>()),
+    USER_REPUTATION(typeOf<Map<String, ReputationScoreVO>>()),
 }

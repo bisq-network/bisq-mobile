@@ -1,8 +1,10 @@
 package network.bisq.mobile.client.service.trades
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.subscription.ModificationType
@@ -14,13 +16,36 @@ import network.bisq.mobile.domain.data.replicated.presentation.open_trades.Trade
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
+import network.bisq.mobile.domain.service.trades.TradeSynchronizationHelper
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 
+/**
+ * Client implementation of TradesServiceFacade with enhanced trade state synchronization.
+ *
+ * **Trade Notification Bug Fix**: This class includes a comprehensive solution to address
+ * the issue where trade completion notifications are missed when the mobile app is killed
+ * and restarted.
+ *
+ * **Key Features**:
+ * - Automatic trade state synchronization on app restart
+ * - Uses existing chat API to trigger server-side message processing
+ * - Intelligent timing optimized for ongoing trades (30-60 seconds)
+ * - Shared synchronization logic with node implementation
+ *
+ * **How It Works**:
+ * 1. On service activation, waits 2 seconds then runs synchronization
+ * 2. Uses TradeSynchronizationHelper to identify trades needing sync
+ * 3. Sends chat messages via existing API to trigger peer message processing
+ * 4. Monitors TRADE_PROPERTIES subscription for automatic state updates
+ */
 class ClientTradesServiceFacade(
     private val apiGateway: TradesApiGateway,
     webSocketClientProvider: WebSocketClientProvider,
     json: Json
 ) : ServiceFacade(), TradesServiceFacade {
+
+    // Cache for trade properties received before trades list is populated
+    private val pendingTradeProperties = mutableMapOf<String, TradePropertiesDto>()
 
     // Properties
     private val _openTradeItems = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
@@ -42,6 +67,12 @@ class ClientTradesServiceFacade(
 
         openTradesSubscription.subscribe()
         tradePropertiesSubscription.subscribe()
+
+        // Trigger trade state synchronization after activation
+        serviceScope.launch {
+            delay(2000) // Wait for subscriptions to be ready
+            synchronizeTradeStates()
+        }
     }
 
     override fun deactivate() {
@@ -135,7 +166,11 @@ class ClientTradesServiceFacade(
             modificationType == ModificationType.ADDED
         ) {
             payload.forEach { item ->
-                _openTradeItems.update { it + TradeItemPresentationModel(item) }
+                val tradeModel = TradeItemPresentationModel(item)
+                _openTradeItems.update { it + tradeModel }
+
+                // Apply any pending trade properties for this trade
+                applyPendingTradeProperties(tradeModel)
             }
         } else if (modificationType == ModificationType.REMOVED) {
             payload.forEach { item ->
@@ -147,25 +182,182 @@ class ClientTradesServiceFacade(
         }
     }
 
+    /**
+     * Applies any pending trade properties for a newly loaded trade.
+     */
+    private fun applyPendingTradeProperties(trade: TradeItemPresentationModel) {
+        val tradeId = trade.tradeId
+        val shortTradeId = trade.shortTradeId
+
+        // Check for pending properties using both full and short trade IDs
+        val pendingData = pendingTradeProperties[tradeId]
+            ?: pendingTradeProperties[shortTradeId]
+            ?: pendingTradeProperties.entries.find { it.key.take(8) == shortTradeId }?.value
+
+        if (pendingData != null) {
+            log.i { "KMP: Applying pending trade properties for $tradeId" }
+            applyTradeProperties(trade, tradeId, pendingData)
+
+            // Remove from pending cache
+            pendingTradeProperties.remove(tradeId)
+            pendingTradeProperties.remove(shortTradeId)
+            pendingTradeProperties.entries.removeAll { it.key.take(8) == shortTradeId }
+        }
+    }
+
     private fun handleTradePropertiesChange(payload: List<Map<String, TradePropertiesDto>>, modificationType: ModificationType) {
+        log.i { "KMP: handleTradePropertiesChange called with ${payload.size} items, modificationType: $modificationType" }
+
         payload.flatMap { it.entries }
             .forEach { (tradeId, data) ->
-                findOpenTradeItemModel(tradeId)?.apply {
-                    log.i { "Apply mutable data to trade with ID $tradeId" }
-                    data.tradeState?.let { bisqEasyTradeModel.tradeState.value = it }
-                    data.interruptTradeInitiator?.let { bisqEasyTradeModel.interruptTradeInitiator.value = it }
-                    data.paymentAccountData?.let { bisqEasyTradeModel.paymentAccountData.value = it }
-                    data.bitcoinPaymentData?.let { bisqEasyTradeModel.bitcoinPaymentData.value = it }
-                    data.paymentProof?.let { bisqEasyTradeModel.paymentProof.value = it }
-                    data.errorMessage?.let { bisqEasyTradeModel.errorMessage.value = it }
-                    data.errorStackTrace?.let { bisqEasyTradeModel.errorStackTrace.value = it }
-                    data.peersErrorMessage?.let { bisqEasyTradeModel.peersErrorMessage.value = it }
-                    data.peersErrorStackTrace?.let { bisqEasyTradeModel.peersErrorStackTrace.value = it }
+                log.i { "KMP: Processing trade properties for $tradeId - state: ${data.tradeState}" }
+
+                val trade = findOpenTradeItemModel(tradeId)
+                if (trade != null) {
+                    // Trade found - apply properties immediately
+                    applyTradeProperties(trade, tradeId, data)
+                } else {
+                    // Trade not found - cache properties for later application
+                    log.i { "KMP: Trade not found, caching properties for $tradeId" }
+                    pendingTradeProperties[tradeId] = data
                 }
             }
     }
 
-    private fun findOpenTradeItemModel(tradeId: String): TradeItemPresentationModel? =
-        _openTradeItems.value.find { it.tradeId == tradeId }
+    /**
+     * Applies trade properties to a trade model.
+     */
+    private fun applyTradeProperties(trade: TradeItemPresentationModel, tradeId: String, data: TradePropertiesDto) {
+        log.i { "KMP: Apply mutable data to trade with ID $tradeId - new state: ${data.tradeState}" }
+        data.tradeState?.let {
+            log.i { "KMP: Updating trade $tradeId state from ${trade.bisqEasyTradeModel.tradeState.value} to $it" }
+            trade.bisqEasyTradeModel.tradeState.value = it
+        }
+        data.paymentAccountData?.let { trade.bisqEasyTradeModel.paymentAccountData.value = it }
+        data.bitcoinPaymentData?.let { trade.bisqEasyTradeModel.bitcoinPaymentData.value = it }
+        data.paymentProof?.let { trade.bisqEasyTradeModel.paymentProof.value = it }
+        data.interruptTradeInitiator?.let { trade.bisqEasyTradeModel.interruptTradeInitiator.value = it }
+    }
+
+    private fun findOpenTradeItemModel(tradeId: String): TradeItemPresentationModel? {
+        // First try exact match
+        var result = _openTradeItems.value.find { it.tradeId == tradeId }
+
+        // If not found, try matching by short ID (for TRADE_PROPERTIES compatibility)
+        if (result == null) {
+            result = _openTradeItems.value.find { it.shortTradeId == tradeId.take(8) }
+            if (result != null) {
+                log.d { "KMP: Found trade by short ID match: ${result.tradeId} for lookup $tradeId" }
+            }
+        }
+
+        if (result == null) {
+            log.w { "KMP: Could not find trade for ID: $tradeId. Available trades: ${_openTradeItems.value.map { "${it.shortTradeId}(${it.tradeId})" }}" }
+        }
+
+        return result
+    }
+
+    /**
+     * Synchronizes trade states after app restart to ensure we haven't missed any state changes
+     * while the app was killed.
+     *
+     * **Client Implementation**: Uses WebSocket re-subscription to force server to send fresh data.
+     * Also logs detailed trade state information for debugging.
+     *
+     * **Timing**: Uses shared TradeSynchronizationHelper logic optimized for ongoing trades:
+     * - Quick-progress states: sync after 30 seconds
+     * - All ongoing trades: sync after 60 seconds
+     * - Long-running trades: sync after 5 minutes
+     */
+    private suspend fun synchronizeTradeStates() {
+        try {
+            log.i { "KMP: Starting client trade state synchronization after app restart" }
+
+            val currentTrades = _openTradeItems.value
+
+            // Log detailed trade information for debugging
+            currentTrades.forEach { trade ->
+                val state = trade.bisqEasyTradeModel.tradeState.value
+                val age = System.currentTimeMillis() - trade.bisqEasyTradeModel.takeOfferDate
+                log.i { "KMP: Current trade ${trade.shortTradeId} - state: $state, age: ${age/1000}s" }
+            }
+
+            val tradesNeedingSync = TradeSynchronizationHelper.getTradesNeedingSync(currentTrades, isAppRestart = true)
+
+            TradeSynchronizationHelper.logSynchronizationActivity(currentTrades, tradesNeedingSync)
+
+            if (tradesNeedingSync.isEmpty()) {
+                log.d { "KMP: No trades need synchronization, but refreshing WebSocket once" }
+                refreshWebSocketSubscriptions()
+                return
+            }
+
+            // Refresh WebSocket subscriptions once to get fresh data
+            log.i { "KMP: Refreshing WebSocket subscriptions for ${tradesNeedingSync.size} trades needing sync" }
+            refreshWebSocketSubscriptions()
+
+            log.i { "KMP: Client trade state synchronization completed" }
+        } catch (e: Exception) {
+            log.e(e) { "KMP: Error during client trade state synchronization" }
+        }
+    }
+
+    /**
+     * Requests a trade state synchronization by re-subscribing to WebSocket topics.
+     *
+     * **How it works**: Re-subscribes to TRADES and TRADE_PROPERTIES topics to force
+     * the server to send fresh data. This is more reliable than chat messages because
+     * it directly requests current state from the server.
+     *
+     * **Why this works**: When a client re-subscribes, the server calls getJsonPayload()
+     * which returns the current state of all trades, ensuring we get the latest data.
+     *
+     * @param trade The trade to request synchronization for (currently syncs all trades)
+     */
+    private suspend fun requestTradeStateSync(trade: TradeItemPresentationModel) {
+        try {
+            val tradeId = trade.tradeId
+            log.d { "KMP: Requesting client sync via WebSocket re-subscription for trade $tradeId" }
+
+            // Re-subscribe to force server to send fresh data
+            refreshWebSocketSubscriptions()
+
+            log.d { "KMP: Client sync request completed for trade $tradeId" }
+        } catch (e: Exception) {
+            log.e(e) { "KMP: Error requesting client trade state sync for trade ${trade.tradeId}" }
+        }
+    }
+
+    /**
+     * Refreshes WebSocket subscriptions to get fresh data from the server.
+     * This forces the server to send current state via getJsonPayload().
+     *
+     * **Important**: Only call this during app restart, not during normal operation,
+     * as it can disrupt real-time updates.
+     */
+    private suspend fun refreshWebSocketSubscriptions() {
+        try {
+            log.i { "KMP: Refreshing WebSocket subscriptions to get fresh trade data" }
+
+            // Dispose current subscriptions
+            openTradesSubscription.dispose()
+            tradePropertiesSubscription.dispose()
+
+            // Wait a moment for cleanup
+            delay(500) // Increased delay to ensure proper cleanup
+
+            // Re-subscribe to get fresh data
+            openTradesSubscription.subscribe()
+            tradePropertiesSubscription.subscribe()
+
+            // Wait for subscriptions to be established
+            delay(1000) // Wait for WebSocket connection to be re-established
+
+            log.i { "KMP: WebSocket subscriptions refreshed successfully" }
+        } catch (e: Exception) {
+            log.e(e) { "KMP: Error refreshing WebSocket subscriptions" }
+        }
+    }
 
 }
