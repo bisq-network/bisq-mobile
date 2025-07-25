@@ -279,8 +279,8 @@ class ClientTradesServiceFacade(
             // Log detailed trade information for debugging
             currentTrades.forEach { trade ->
                 val state = trade.bisqEasyTradeModel.tradeState.value
-                val age = System.currentTimeMillis() - trade.bisqEasyTradeModel.takeOfferDate
-                log.i { "KMP: Current trade ${trade.shortTradeId} - state: $state, age: ${age/1000}s" }
+                val age = kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - trade.bisqEasyTradeModel.takeOfferDate
+                log.i { "KMP: Current trade ${trade.shortTradeId} - state: $state, age: ${age / 1000}s" }
             }
 
             val tradesNeedingSync = TradeSynchronizationHelper.getTradesNeedingSync(currentTrades, isAppRestart = true)

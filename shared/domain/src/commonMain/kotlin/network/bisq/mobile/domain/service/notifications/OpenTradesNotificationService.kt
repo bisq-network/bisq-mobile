@@ -124,7 +124,7 @@ class OpenTradesNotificationService(
             // Use shared synchronization helper to identify problematic trades
             val tradesNeedingAttention = TradeSynchronizationHelper.getTradesNeedingSync(trades)
                 .filter { trade ->
-                    val timeSinceCreation = System.currentTimeMillis() - trade.bisqEasyTradeModel.takeOfferDate
+                    val timeSinceCreation = kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - trade.bisqEasyTradeModel.takeOfferDate
                     // Only notify for trades that have been open for more than 10 minutes
                     timeSinceCreation > 10 * 60 * 1000
                 }
@@ -134,7 +134,7 @@ class OpenTradesNotificationService(
 
                 tradesNeedingAttention.forEach { trade ->
                     val tradeState = trade.bisqEasyTradeModel.tradeState.value
-                    val timeSinceCreation = System.currentTimeMillis() - trade.bisqEasyTradeModel.takeOfferDate
+                    val timeSinceCreation = kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - trade.bisqEasyTradeModel.takeOfferDate
 
                     log.i { "KMP: Trade ${trade.shortTradeId} needs attention - open for ${timeSinceCreation / 60000} minutes in state $tradeState" }
 

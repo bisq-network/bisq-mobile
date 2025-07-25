@@ -27,7 +27,7 @@ object TradeSynchronizationHelper : Logging {
      */
     fun shouldSynchronizeTrade(trade: TradeItemPresentationModel, isAppRestart: Boolean = false): Boolean {
         val currentState = trade.bisqEasyTradeModel.tradeState.value
-        val timeSinceCreation = System.currentTimeMillis() - trade.bisqEasyTradeModel.takeOfferDate
+        val timeSinceCreation = kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - trade.bisqEasyTradeModel.takeOfferDate
 
         // On app restart, sync ALL non-final trades to ensure we haven't missed state changes
         if (isAppRestart) {
@@ -96,7 +96,7 @@ object TradeSynchronizationHelper : Logging {
         
         if (tradesNeedingSync.isNotEmpty()) {
             tradesNeedingSync.forEach { trade ->
-                val timeSinceCreation = System.currentTimeMillis() - trade.bisqEasyTradeModel.takeOfferDate
+                val timeSinceCreation = kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - trade.bisqEasyTradeModel.takeOfferDate
                 log.i { "KMP: Trade ${trade.shortTradeId} needs sync - state: ${trade.bisqEasyTradeModel.tradeState.value}, age: ${timeSinceCreation / 1000}s" }
             }
         }
