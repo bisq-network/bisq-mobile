@@ -16,6 +16,7 @@ fun SettingsTextField(
         value = value,
         disabled = !editable,
         isTextArea = isTextArea,
+        minLines = if (isTextArea) 2 else 1,
         onValueChange = { newValue, isValid ->
             if (onValueChange != null) {
                 onValueChange(newValue, isValid)

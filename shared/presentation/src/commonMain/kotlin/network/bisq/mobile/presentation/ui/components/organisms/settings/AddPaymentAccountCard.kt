@@ -80,6 +80,7 @@ fun AppPaymentAccountCard(
             placeholder = "user.paymentAccounts.createAccount.accountData.prompt".i18n(),
             label = "user.paymentAccounts.accountData".i18n(),
             isTextArea = true,
+            minLines = 2,
             validation = {
                 if (it.isEmpty()) {
                     return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.accountData.isMandatory".i18n()

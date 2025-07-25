@@ -50,6 +50,7 @@ fun SellerState1(
             value = paymentAccountData,
             onValueChange = { it, isValid -> presenter.onPaymentDataInput(it, isValid) },
             isTextArea = true,
+            minLines = 2,
             showPaste = true,
             validation = {
                 // Same validation as PaymentAccountSettingsScreen.accountData field validation

@@ -59,6 +59,7 @@ fun BisqTextField(
     isTextArea: Boolean = false,
     keyboardType: KeyboardType = KeyboardType.Unspecified,
     paddingValues: PaddingValues = PaddingValues(all = BisqUIConstants.ScreenPadding),
+    minLines: Int = 1,
     maxLength: Int = 0,
     disabled: Boolean = false,
     color: Color = BisqTheme.colors.light_grey20,
@@ -74,6 +75,7 @@ fun BisqTextField(
         fontSize = 18.sp,
         textDecoration = TextDecoration.None
     ),
+    textFieldAlignment: Alignment = Alignment.TopStart,
 ) {
     var hasInteracted by remember { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
@@ -266,7 +268,7 @@ fun BisqTextField(
                     },
                 singleLine = !isTextArea,
                 maxLines = if (isTextArea) 4 else 1,
-                minLines = if (isTextArea) 2 else 1,
+                minLines = minLines,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = keyboardType,
                     imeAction = imeAction
@@ -285,7 +287,10 @@ fun BisqTextField(
                             Spacer(modifier = Modifier.width(10.dp))
                         }
 
-                        Box(modifier = Modifier.weight(1f)) {
+                        Box(
+                            modifier = Modifier.weight(1f),
+                            contentAlignment = textFieldAlignment,
+                        ) {
                             if (value.isEmpty()) {
                                 BisqText.largeLightGrey(placeholder)
                             }

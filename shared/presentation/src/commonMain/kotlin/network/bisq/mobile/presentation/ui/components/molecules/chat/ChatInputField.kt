@@ -78,7 +78,9 @@ fun ChatInputField(
                     return@BisqTextField "mobile.tradeChat.chatInput.maxLength".i18n(maxChars)
                 }
                 return@BisqTextField null
-            }
+            },
+            minLines = 1,
+            textFieldAlignment = Alignment.CenterStart,
         )
 
     }

@@ -34,6 +34,7 @@ fun TrustedNodeAPIIncompatiblePopup(
             value = errorMessage,
             indicatorColor = BisqTheme.colors.backgroundColor,
             isTextArea = true,
+            minLines = 2,
         )
 
         BisqGap.V1()
