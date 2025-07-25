@@ -51,38 +51,23 @@ open class BisqForegroundService : Service(), Logging {
         }
         log.i { "Service ready" }
 
+        // Update the foreground service notification with proper text after a short delay
         CoroutineScope(Dispatchers.Main).launch {
             delay(1000)
-            // Create an Intent to open the MainActivity when the notification is tapped
-            val pendingIntent = null
-//            val intent = Intent(this, MainActivity::class.java).apply {
-//                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK // Clears any existing task and starts a new one
-//            }
-//
-//            // Create a PendingIntent to wrap the Intent
-//            val pendingIntent: PendingIntent = PendingIntent.getActivity(
-//                this@BisqForegroundService,
-//                0,
-//                intent,
-//                PendingIntent.FLAG_UPDATE_CURRENT // This flag updates the existing PendingIntent if it's already created
-//            )
-            val updatedNotification: Notification = NotificationCompat.Builder(this@BisqForegroundService, CHANNEL_ID)
+
+            val serviceNotification: Notification = NotificationCompat.Builder(this@BisqForegroundService, CHANNEL_ID)
                 .setContentTitle("mobile.bisqService.title".i18n())
                 .setContentText("mobile.bisqService.subTitle".i18n())
                 .setSmallIcon(android.R.drawable.ic_notification_overlay)
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_LOW) // Low priority for service notification
                 .setOngoing(true)  // Keeps the notification active
-                .setContentIntent(pendingIntent)  // Set the pending intent to launch the app
                 .build()
 
-            // Update the notification
-//            NotificationManagerCompat.from(this@BisqForegroundService).notify(SERVICE_ID, updatedNotification)
-
+            // Update the SAME notification ID to replace the silent one
             val notificationManager = this@BisqForegroundService.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.notify(PUSH_NOTIFICATION_ID, updatedNotification)
+            notificationManager.notify(SERVICE_ID, serviceNotification) // Use SERVICE_ID, not PUSH_NOTIFICATION_ID
 
-            // Log the update
-            log.i { "Notification updated after 10 seconds" }
+            log.i { "Service notification updated with text" }
         }
     }
 

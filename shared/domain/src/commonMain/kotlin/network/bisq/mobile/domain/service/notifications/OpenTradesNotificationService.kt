@@ -1,6 +1,7 @@
 package network.bisq.mobile.domain.service.notifications
 
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.trades.TradeSynchronizationHelper
@@ -42,21 +43,47 @@ class OpenTradesNotificationService(
      */
     private fun onTradeUpdate(trade: TradeItemPresentationModel) {
         log.d { "open trade: $trade" }
-        notificationServiceController.registerObserver(trade.bisqEasyTradeModel.tradeState) {
-            log.d { "Open trade State Changed to: $it" }
-            if (OffersServiceFacade.isTerminalState(it)) {
+        notificationServiceController.registerObserver(trade.bisqEasyTradeModel.tradeState) { newState ->
+            log.d { "Open trade State Changed to: $newState" }
+
+            if (OffersServiceFacade.isTerminalState(newState)) {
+                // Trade is actually completed
                 notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.tradeState)
                 notificationServiceController.pushNotification(
                     "mobile.openTradeNotifications.tradeCompleted.title".i18n(trade.shortTradeId),
-                    "mobile.openTradeNotifications.tradeCompleted.message".i18n(trade.peersUserName, it)
+                    "mobile.openTradeNotifications.tradeCompleted.message".i18n(trade.peersUserName, newState)
                 )
-            } else {
+            } else if (shouldNotifyForTradeUpdate(newState)) {
+                // Trade needs user attention but is not completed
                 notificationServiceController.pushNotification(
                     "mobile.openTradeNotifications.needsAttention.title".i18n(trade.shortTradeId),
-                    "mobile.openTradeNotifications.needsAttention.message".i18n(trade.peersUserName)
+                    "mobile.openTradeNotifications.tradeUpdate.message".i18n(trade.peersUserName)
                 )
             }
+            // Don't notify for user's own actions or unimportant state changes
+        }
+    }
 
+    /**
+     * Determines if a trade state change should trigger an "update" notification.
+     *
+     * Uses a more permissive approach: notify for most state changes EXCEPT
+     * obvious user-initiated actions that shouldn't generate notifications.
+     */
+    private fun shouldNotifyForTradeUpdate(state: BisqEasyTradeStateEnum): Boolean {
+        val stateName = state.name
+        return when {
+            // Don't notify for user's own explicit actions
+            state == BisqEasyTradeStateEnum.REJECTED -> false
+            state == BisqEasyTradeStateEnum.CANCELLED -> false
+
+            // Don't notify for initial states that don't represent progress
+            state == BisqEasyTradeStateEnum.INIT -> false
+            state == BisqEasyTradeStateEnum.TAKER_SENT_TAKE_OFFER_REQUEST -> false
+
+            // For all other states, notify (this includes peer actions, received states, etc.)
+            // This is more permissive and ensures we don't miss important trade progress
+            else -> true
         }
     }
 
