@@ -103,28 +103,15 @@ actual class NotificationServiceController (private val appForegroundController:
         }
 
         // Create a PendingIntent to handle the notification click
+        // For Android 15+ compatibility, use simpler approach without ActivityOptions
         val pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        
-        val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            // Android 14+ requires explicit opt-in for background activity launches
-            val activityOptions = ActivityOptions.makeBasic().apply {
-                setPendingIntentBackgroundActivityStartMode(ActivityOptions.MODE_BACKGROUND_ACTIVITY_START_ALLOWED)
-            }
-            PendingIntent.getActivity(
-                context,
-                0,
-                intent,
-                pendingIntentFlags,
-                activityOptions.toBundle()
-            )
-        } else {
-            PendingIntent.getActivity(
-                context,
-                0,
-                intent,
-                pendingIntentFlags
-            )
-        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            intent,
+            pendingIntentFlags
+        )
 
         // Add dismiss action for better UX and notification management (API35+ target)
         val dismissIntent = Intent(context, BisqForegroundService::class.java).apply {
@@ -142,10 +129,19 @@ actual class NotificationServiceController (private val appForegroundController:
             .setContentTitle(title)
             .setContentText(message)
             .setSmallIcon(android.R.drawable.ic_notification_overlay)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT) // For android previous to O
+            .setPriority(NotificationCompat.PRIORITY_HIGH) // High priority for immediate attention
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPendingIntent)
+            // Enhanced visibility for Android 15+
+            .setCategory(NotificationCompat.CATEGORY_MESSAGE)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
+            .setWhen(System.currentTimeMillis())
+            .setShowWhen(true)
+            // Ensure notification is not grouped or minimized
+            .setOnlyAlertOnce(false)
+            .setLocalOnly(false)
             .build()
         notificationManager.notify(BisqForegroundService.PUSH_NOTIFICATION_ID, notification)
         log.d {"Pushed notification: $title: $message" }
@@ -155,7 +151,20 @@ actual class NotificationServiceController (private val appForegroundController:
 
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(BisqForegroundService.CHANNEL_ID, SERVICE_NAME, NotificationManager.IMPORTANCE_LOW)
+            val channel = NotificationChannel(
+                BisqForegroundService.CHANNEL_ID,
+                SERVICE_NAME,
+                NotificationManager.IMPORTANCE_HIGH // High priority for trade notifications
+            ).apply {
+                description = "Important Bisq trade notifications and updates"
+                enableLights(true)
+                enableVibration(true)
+                setShowBadge(true)
+                // For Android 15+ compatibility
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    setAllowBubbles(true)
+                }
+            }
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
         }
