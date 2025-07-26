@@ -68,11 +68,7 @@ class ClientTradesServiceFacade(
         openTradesSubscription.subscribe()
         tradePropertiesSubscription.subscribe()
 
-        // Trigger trade state synchronization after activation
-        serviceScope.launch {
-            delay(2000) // Wait for subscriptions to be ready
-            synchronizeTradeStates()
-        }
+        launchTradeStateSync()
     }
 
     override fun deactivate() {
@@ -195,7 +191,7 @@ class ClientTradesServiceFacade(
             ?: pendingTradeProperties.entries.find { it.key.take(8) == shortTradeId }?.value
 
         if (pendingData != null) {
-            log.i { "KMP: Applying pending trade properties for $tradeId" }
+            log.i { "Applying pending trade properties for $tradeId" }
             applyTradeProperties(trade, tradeId, pendingData)
 
             // Remove from pending cache
@@ -206,11 +202,11 @@ class ClientTradesServiceFacade(
     }
 
     private fun handleTradePropertiesChange(payload: List<Map<String, TradePropertiesDto>>, modificationType: ModificationType) {
-        log.i { "KMP: handleTradePropertiesChange called with ${payload.size} items, modificationType: $modificationType" }
+        log.i { "handleTradePropertiesChange called with ${payload.size} items, modificationType: $modificationType" }
 
         payload.flatMap { it.entries }
             .forEach { (tradeId, data) ->
-                log.i { "KMP: Processing trade properties for $tradeId - state: ${data.tradeState}" }
+                log.i { "Processing trade properties for $tradeId - state: ${data.tradeState}" }
 
                 val trade = findOpenTradeItemModel(tradeId)
                 if (trade != null) {
@@ -218,7 +214,7 @@ class ClientTradesServiceFacade(
                     applyTradeProperties(trade, tradeId, data)
                 } else {
                     // Trade not found - cache properties for later application
-                    log.i { "KMP: Trade not found, caching properties for $tradeId" }
+                    log.i { "Trade not found, caching properties for $tradeId" }
                     pendingTradeProperties[tradeId] = data
                 }
             }
@@ -228,9 +224,9 @@ class ClientTradesServiceFacade(
      * Applies trade properties to a trade model.
      */
     private fun applyTradeProperties(trade: TradeItemPresentationModel, tradeId: String, data: TradePropertiesDto) {
-        log.i { "KMP: Apply mutable data to trade with ID $tradeId - new state: ${data.tradeState}" }
+        log.i { "Apply mutable data to trade with ID $tradeId - new state: ${data.tradeState}" }
         data.tradeState?.let {
-            log.i { "KMP: Updating trade $tradeId state from ${trade.bisqEasyTradeModel.tradeState.value} to $it" }
+            log.i { "Updating trade $tradeId state from ${trade.bisqEasyTradeModel.tradeState.value} to $it" }
             trade.bisqEasyTradeModel.tradeState.value = it
         }
         data.paymentAccountData?.let { trade.bisqEasyTradeModel.paymentAccountData.value = it }
@@ -247,12 +243,12 @@ class ClientTradesServiceFacade(
         if (result == null) {
             result = _openTradeItems.value.find { it.shortTradeId == tradeId.take(8) }
             if (result != null) {
-                log.d { "KMP: Found trade by short ID match: ${result.tradeId} for lookup $tradeId" }
+                log.d { "Found trade by short ID match: ${result.tradeId} for lookup $tradeId" }
             }
         }
 
         if (result == null) {
-            log.w { "KMP: Could not find trade for ID: $tradeId. Available trades: ${_openTradeItems.value.map { "${it.shortTradeId}(${it.tradeId})" }}" }
+            log.w { "Could not find trade for ID: $tradeId. Available trades: ${_openTradeItems.value.map { "${it.shortTradeId}(${it.tradeId})" }}" }
         }
 
         return result
@@ -270,9 +266,9 @@ class ClientTradesServiceFacade(
      * - All ongoing trades: sync after 60 seconds
      * - Long-running trades: sync after 5 minutes
      */
-    private suspend fun synchronizeTradeStates() {
+    override suspend fun synchronizeTradeStates() {
         try {
-            log.i { "KMP: Starting client trade state synchronization after app restart" }
+            log.i { "Starting client trade state synchronization after app restart" }
 
             val currentTrades = _openTradeItems.value
 
@@ -280,7 +276,7 @@ class ClientTradesServiceFacade(
             currentTrades.forEach { trade ->
                 val state = trade.bisqEasyTradeModel.tradeState.value
                 val age = kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - trade.bisqEasyTradeModel.takeOfferDate
-                log.i { "KMP: Current trade ${trade.shortTradeId} - state: $state, age: ${age / 1000}s" }
+                log.i { "Current trade ${trade.shortTradeId} - state: $state, age: ${age / 1000}s" }
             }
 
             val tradesNeedingSync = TradeSynchronizationHelper.getTradesNeedingSync(currentTrades, isAppRestart = true)
@@ -288,18 +284,18 @@ class ClientTradesServiceFacade(
             TradeSynchronizationHelper.logSynchronizationActivity(currentTrades, tradesNeedingSync)
 
             if (tradesNeedingSync.isEmpty()) {
-                log.d { "KMP: No trades need synchronization, but refreshing WebSocket once" }
+                log.d { "No trades need synchronization, but refreshing WebSocket once" }
                 refreshWebSocketSubscriptions()
                 return
             }
 
             // Refresh WebSocket subscriptions once to get fresh data
-            log.i { "KMP: Refreshing WebSocket subscriptions for ${tradesNeedingSync.size} trades needing sync" }
+            log.i { "Refreshing WebSocket subscriptions for ${tradesNeedingSync.size} trades needing sync" }
             refreshWebSocketSubscriptions()
 
-            log.i { "KMP: Client trade state synchronization completed" }
+            log.i { "Client trade state synchronization completed" }
         } catch (e: Exception) {
-            log.e(e) { "KMP: Error during client trade state synchronization" }
+            log.e(e) { "Error during client trade state synchronization" }
         }
     }
 
@@ -318,14 +314,14 @@ class ClientTradesServiceFacade(
     private suspend fun requestTradeStateSync(trade: TradeItemPresentationModel) {
         try {
             val tradeId = trade.tradeId
-            log.d { "KMP: Requesting client sync via WebSocket re-subscription for trade $tradeId" }
+            log.d { "Requesting client sync via WebSocket re-subscription for trade $tradeId" }
 
             // Re-subscribe to force server to send fresh data
             refreshWebSocketSubscriptions()
 
-            log.d { "KMP: Client sync request completed for trade $tradeId" }
+            log.d { "Client sync request completed for trade $tradeId" }
         } catch (e: Exception) {
-            log.e(e) { "KMP: Error requesting client trade state sync for trade ${trade.tradeId}" }
+            log.e(e) { "Error requesting client trade state sync for trade ${trade.tradeId}" }
         }
     }
 
@@ -338,7 +334,7 @@ class ClientTradesServiceFacade(
      */
     private suspend fun refreshWebSocketSubscriptions() {
         try {
-            log.i { "KMP: Refreshing WebSocket subscriptions to get fresh trade data" }
+            log.i { "Refreshing WebSocket subscriptions to get fresh trade data" }
 
             // Dispose current subscriptions
             openTradesSubscription.dispose()
@@ -354,9 +350,9 @@ class ClientTradesServiceFacade(
             // Wait for subscriptions to be established
             delay(1000) // Wait for WebSocket connection to be re-established
 
-            log.i { "KMP: WebSocket subscriptions refreshed successfully" }
+            log.i { "WebSocket subscriptions refreshed successfully" }
         } catch (e: Exception) {
-            log.e(e) { "KMP: Error refreshing WebSocket subscriptions" }
+            log.e(e) { "Error refreshing WebSocket subscriptions" }
         }
     }
 

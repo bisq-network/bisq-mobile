@@ -17,7 +17,7 @@ class OpenTradesNotificationService(
         notificationServiceController.startService()
         runCatching {
             notificationServiceController.registerObserver(tradesServiceFacade.openTradeItems) { newValue ->
-                log.d { "KMP: open trades in total: ${newValue.size}" }
+                log.d { "open trades in total: ${newValue.size}" }
                 newValue.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
                     .forEach { trade ->
                         onTradeUpdate(trade)
@@ -101,7 +101,7 @@ class OpenTradesNotificationService(
      */
     private fun checkForMissedTradeCompletions(trades: List<TradeItemPresentationModel>) {
         try {
-            log.d { "KMP: Checking for missed trade completions among ${trades.size} trades" }
+            log.d { "Checking for missed trade completions among ${trades.size} trades" }
 
             // Check for completed trades that might have finished while app was killed
             checkForCompletedTrades(trades)
@@ -110,7 +110,7 @@ class OpenTradesNotificationService(
             checkForStaleTrades(trades)
 
         } catch (e: Exception) {
-            log.e(e) { "KMP: Error checking for missed trade completions" }
+            log.e(e) { "Error checking for missed trade completions" }
         }
     }
 
@@ -125,11 +125,11 @@ class OpenTradesNotificationService(
             }
 
             if (completedTrades.isNotEmpty()) {
-                log.i { "KMP: Found ${completedTrades.size} completed trades, showing completion notifications" }
+                log.i { "Found ${completedTrades.size} completed trades, showing completion notifications" }
 
                 completedTrades.forEach { trade ->
                     val tradeState = trade.bisqEasyTradeModel.tradeState.value
-                    log.i { "KMP: Showing completion notification for trade ${trade.shortTradeId} in state $tradeState" }
+                    log.i { "Showing completion notification for trade ${trade.shortTradeId} in state $tradeState" }
 
                     // Show completion notification
                     notificationServiceController.pushNotification(
@@ -139,7 +139,7 @@ class OpenTradesNotificationService(
                 }
             }
         } catch (e: Exception) {
-            log.e(e) { "KMP: Error checking for completed trades" }
+            log.e(e) { "Error checking for completed trades" }
         }
     }
 
@@ -157,13 +157,13 @@ class OpenTradesNotificationService(
                 }
 
             if (tradesNeedingAttention.isNotEmpty()) {
-                log.i { "KMP: Found ${tradesNeedingAttention.size} stale trades needing attention" }
+                log.i { "Found ${tradesNeedingAttention.size} stale trades needing attention" }
 
                 tradesNeedingAttention.forEach { trade ->
                     val tradeState = trade.bisqEasyTradeModel.tradeState.value
                     val timeSinceCreation = kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - trade.bisqEasyTradeModel.takeOfferDate
 
-                    log.i { "KMP: Trade ${trade.shortTradeId} needs attention - open for ${timeSinceCreation / 60000} minutes in state $tradeState" }
+                    log.i { "Trade ${trade.shortTradeId} needs attention - open for ${timeSinceCreation / 60000} minutes in state $tradeState" }
 
                     // Show a notification that the trade needs attention
                     notificationServiceController.pushNotification(
@@ -173,7 +173,7 @@ class OpenTradesNotificationService(
                 }
             }
         } catch (e: Exception) {
-            log.e(e) { "KMP: Error checking for stale trades" }
+            log.e(e) { "Error checking for stale trades" }
         }
     }
 }

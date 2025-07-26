@@ -28,6 +28,10 @@ import org.koin.core.component.inject
  * TODO refactor to have a BaseService that both ServiceFacade and other services can leverage
  */
 abstract class ServiceFacade : LifeCycleAware, KoinComponent, Logging {
+    companion object {
+        private const val TRADE_STATE_SYNC_DELAY = 2000L
+    }
+
     private var isActivated = atomic(false)
     
     // we use KoinCompoent inject to avoid having to pass the manager as parameter on every single service
@@ -59,6 +63,19 @@ abstract class ServiceFacade : LifeCycleAware, KoinComponent, Logging {
         deactivate()
         activate()
     }
+
+    protected fun launchTradeStateSync() {
+        launchIO {
+            delay(TRADE_STATE_SYNC_DELAY)
+            synchronizeTradeStates()
+        }
+    }
+
+    /**
+     * Synchronizes trade states after app restart to ensure we haven't missed any state changes
+     * while the app was killed.
+     */
+    protected abstract suspend fun synchronizeTradeStates()
     
     // Helper methods for launching coroutines with the jobsManager
     protected fun launchIO(block: suspend CoroutineScope.() -> Unit): Job {

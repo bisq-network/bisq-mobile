@@ -124,11 +124,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
             }
         })
 
-        // Trigger trade state synchronization after activation
-        serviceScope.launch {
-            delay(2000) // Wait for network to be ready
-            synchronizeTradeStates()
-        }
+        launchTradeStateSync()
 
         channelsPin = bisqEasyOpenTradeChannelService.channels.addObserver(object : CollectionObserver<BisqEasyOpenTradeChannel?> {
             override fun add(channel: BisqEasyOpenTradeChannel?) {
@@ -657,9 +653,9 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
      * - All ongoing trades: sync after 60 seconds
      * - Long-running trades: sync after 5 minutes
      */
-    private suspend fun synchronizeTradeStates() {
+    override suspend fun synchronizeTradeStates() {
         try {
-            log.i { "KMP: Starting node trade state synchronization after app restart" }
+            log.i { "Starting node trade state synchronization after app restart" }
 
             // Convert Bisq trades to presentation models for shared logic
             val currentTrades = _openTradeItems.value
@@ -668,7 +664,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
             TradeSynchronizationHelper.logSynchronizationActivity(currentTrades, tradesNeedingSync)
 
             if (tradesNeedingSync.isEmpty()) {
-                log.d { "KMP: No trades need synchronization" }
+                log.d { "No trades need synchronization" }
                 return
             }
 
@@ -680,16 +676,16 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
                     if (bisqTrade != null) {
                         requestTradeStateSync(bisqTrade)
                     } else {
-                        log.w { "KMP: Could not find Bisq trade for ${trade.tradeId}" }
+                        log.w { "Could not find Bisq trade for ${trade.tradeId}" }
                     }
                 } catch (e: Exception) {
-                    log.e(e) { "KMP: Error requesting sync for trade ${trade.tradeId}" }
+                    log.e(e) { "Error requesting sync for trade ${trade.tradeId}" }
                 }
             }
 
-            log.i { "KMP: Node trade state synchronization completed" }
+            log.i { "Node trade state synchronization completed" }
         } catch (e: Exception) {
-            log.e(e) { "KMP: Error during node trade state synchronization" }
+            log.e(e) { "Error during node trade state synchronization" }
         }
     }
 
@@ -725,19 +721,19 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
             val channel = bisqEasyOpenTradeChannelService.findChannel(tradeId)
 
             if (channel.isPresent) {
-                log.d { "KMP: Sending sync request for trade $tradeId" }
+                log.d { "Sending sync request for trade $tradeId" }
 
                 // Send a system message to trigger message processing
                 // This will cause any pending trade protocol messages to be processed
                 val syncMessage = "Synchronizing trade state..."
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(syncMessage, channel.get())
 
-                log.d { "KMP: Sync request sent for trade $tradeId" }
+                log.d { "Sync request sent for trade $tradeId" }
             } else {
-                log.w { "KMP: No channel found for trade $tradeId, cannot request sync" }
+                log.w { "No channel found for trade $tradeId, cannot request sync" }
             }
         } catch (e: Exception) {
-            log.e(e) { "KMP: Error requesting trade state sync for trade ${trade.id}" }
+            log.e(e) { "Error requesting trade state sync for trade ${trade.id}" }
         }
     }
 }

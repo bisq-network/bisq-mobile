@@ -31,25 +31,25 @@ object TradeSynchronizationHelper : Logging {
 
         // On app restart, sync ALL non-final trades to ensure we haven't missed state changes
         if (isAppRestart) {
-            log.d { "KMP: Trade ${trade.shortTradeId} should sync - app restart, age: ${timeSinceCreation / 1000}s" }
+            log.d { "Trade ${trade.shortTradeId} should sync - app restart, age: ${timeSinceCreation / 1000}s" }
             return true
         }
 
         // Always sync trades that have been open for more than 5 minutes
         if (timeSinceCreation > 5 * 60 * 1000) {
-            log.d { "KMP: Trade ${trade.shortTradeId} should sync - open for ${timeSinceCreation / 60000} minutes" }
+            log.d { "Trade ${trade.shortTradeId} should sync - open for ${timeSinceCreation / 60000} minutes" }
             return true
         }
 
         // Sync ongoing trades after 60 seconds
         if (timeSinceCreation > 60 * 1000) {
-            log.d { "KMP: Trade ${trade.shortTradeId} should sync - ongoing trade open for ${timeSinceCreation / 1000} seconds" }
+            log.d { "Trade ${trade.shortTradeId} should sync - ongoing trade open for ${timeSinceCreation / 1000} seconds" }
             return true
         }
 
         // Sync trades in quick-progress states after 30 seconds
         if (isQuickProgressState(currentState) && timeSinceCreation > 30 * 1000) {
-            log.d { "KMP: Trade ${trade.shortTradeId} should sync - quick-progress state $currentState for ${timeSinceCreation / 1000} seconds" }
+            log.d { "Trade ${trade.shortTradeId} should sync - quick-progress state $currentState for ${timeSinceCreation / 1000} seconds" }
             return true
         }
 
@@ -92,12 +92,12 @@ object TradeSynchronizationHelper : Logging {
      * Logs synchronization activity for debugging purposes.
      */
     fun logSynchronizationActivity(trades: List<TradeItemPresentationModel>, tradesNeedingSync: List<TradeItemPresentationModel>) {
-        log.i { "KMP: Trade synchronization check - ${trades.size} total trades, ${tradesNeedingSync.size} need sync" }
+        log.i { "Trade synchronization check - ${trades.size} total trades, ${tradesNeedingSync.size} need sync" }
         
         if (tradesNeedingSync.isNotEmpty()) {
             tradesNeedingSync.forEach { trade ->
                 val timeSinceCreation = kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - trade.bisqEasyTradeModel.takeOfferDate
-                log.i { "KMP: Trade ${trade.shortTradeId} needs sync - state: ${trade.bisqEasyTradeModel.tradeState.value}, age: ${timeSinceCreation / 1000}s" }
+                log.i { "Trade ${trade.shortTradeId} needs sync - state: ${trade.bisqEasyTradeModel.tradeState.value}, age: ${timeSinceCreation / 1000}s" }
             }
         }
     }
