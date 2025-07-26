@@ -17,6 +17,9 @@ import network.bisq.mobile.domain.utils.Logging
  * - Long-running trades: sync after 5 minutes
  */
 object TradeSynchronizationHelper : Logging {
+    private const val QUICK_PROGRESS_SYNC_DELAY = 30 * 1000L  // 30 seconds
+    private const val ONGOING_TRADE_SYNC_DELAY = 60 * 1000L   // 60 seconds
+    private const val LONG_RUNNING_SYNC_DELAY = 5 * 60 * 1000L // 5 minutes
 
     /**
      * Determines if a trade should be synchronized based on its state and timing.
@@ -25,7 +28,7 @@ object TradeSynchronizationHelper : Logging {
      * @param isAppRestart Whether this is being called during app restart (default: false)
      * @return true if the trade should be synchronized, false otherwise
      */
-    fun shouldSynchronizeTrade(trade: TradeItemPresentationModel, isAppRestart: Boolean = false): Boolean {
+    private fun shouldSynchronizeTrade(trade: TradeItemPresentationModel, isAppRestart: Boolean = false): Boolean {
         val currentState = trade.bisqEasyTradeModel.tradeState.value
         val timeSinceCreation = kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - trade.bisqEasyTradeModel.takeOfferDate
 
@@ -36,19 +39,19 @@ object TradeSynchronizationHelper : Logging {
         }
 
         // Always sync trades that have been open for more than 5 minutes
-        if (timeSinceCreation > 5 * 60 * 1000) {
+        if (timeSinceCreation > LONG_RUNNING_SYNC_DELAY) {
             log.d { "Trade ${trade.shortTradeId} should sync - open for ${timeSinceCreation / 60000} minutes" }
             return true
         }
 
         // Sync ongoing trades after 60 seconds
-        if (timeSinceCreation > 60 * 1000) {
+        if (timeSinceCreation > ONGOING_TRADE_SYNC_DELAY) {
             log.d { "Trade ${trade.shortTradeId} should sync - ongoing trade open for ${timeSinceCreation / 1000} seconds" }
             return true
         }
 
         // Sync trades in quick-progress states after 30 seconds
-        if (isQuickProgressState(currentState) && timeSinceCreation > 30 * 1000) {
+        if (isQuickProgressState(currentState) && timeSinceCreation > QUICK_PROGRESS_SYNC_DELAY) {
             log.d { "Trade ${trade.shortTradeId} should sync - quick-progress state $currentState for ${timeSinceCreation / 1000} seconds" }
             return true
         }

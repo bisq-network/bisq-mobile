@@ -13,6 +13,10 @@ class OpenTradesNotificationService(
     val notificationServiceController: NotificationServiceController,
     private val tradesServiceFacade: TradesServiceFacade): Logging {
 
+    companion object {
+        private const val STALE_TRADE_NOTIFICATION_THRESHOLD = 10 * 60 * 1000L // 10 minutes
+    }
+
     fun launchNotificationService() {
         notificationServiceController.startService()
         runCatching {
@@ -153,7 +157,7 @@ class OpenTradesNotificationService(
                 .filter { trade ->
                     val timeSinceCreation = kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - trade.bisqEasyTradeModel.takeOfferDate
                     // Only notify for trades that have been open for more than 10 minutes
-                    timeSinceCreation > 10 * 60 * 1000
+                    timeSinceCreation > STALE_TRADE_NOTIFICATION_THRESHOLD
                 }
 
             if (tradesNeedingAttention.isNotEmpty()) {

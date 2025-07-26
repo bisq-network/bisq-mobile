@@ -44,6 +44,11 @@ class ClientTradesServiceFacade(
     json: Json
 ) : ServiceFacade(), TradesServiceFacade {
 
+    companion object {
+        private const val MAX_CACHED_TRADE_PROPERTIES = 500
+        private const val TRADE_STATE_SYNC_DELAY = 2000L
+    }
+
     // Cache for trade properties received before trades list is populated
     private val pendingTradeProperties = mutableMapOf<String, TradePropertiesDto>()
 
@@ -165,7 +170,6 @@ class ClientTradesServiceFacade(
                 val tradeModel = TradeItemPresentationModel(item)
                 _openTradeItems.update { it + tradeModel }
 
-                // Apply any pending trade properties for this trade
                 applyPendingTradeProperties(tradeModel)
             }
         } else if (modificationType == ModificationType.REMOVED) {
@@ -215,6 +219,10 @@ class ClientTradesServiceFacade(
                 } else {
                     // Trade not found - cache properties for later application
                     log.i { "Trade not found, caching properties for $tradeId" }
+                    if (pendingTradeProperties.size >= MAX_CACHED_TRADE_PROPERTIES) {
+                        log.w { "Pending properties cache full, removing oldest entry" }
+                        pendingTradeProperties.remove(pendingTradeProperties.keys.first())
+                    }
                     pendingTradeProperties[tradeId] = data
                 }
             }
@@ -263,10 +271,11 @@ class ClientTradesServiceFacade(
      *
      * **Timing**: Uses shared TradeSynchronizationHelper logic optimized for ongoing trades:
      * - Quick-progress states: sync after 30 seconds
-     * - All ongoing trades: sync after 60 seconds
+     * - All ongoing trades: s
+     * ync after 60 seconds
      * - Long-running trades: sync after 5 minutes
      */
-    override suspend fun synchronizeTradeStates() {
+    private suspend fun synchronizeTradeStates() {
         try {
             log.i { "Starting client trade state synchronization after app restart" }
 
@@ -322,6 +331,13 @@ class ClientTradesServiceFacade(
             log.d { "Client sync request completed for trade $tradeId" }
         } catch (e: Exception) {
             log.e(e) { "Error requesting client trade state sync for trade ${trade.tradeId}" }
+        }
+    }
+
+    private fun launchTradeStateSync() {
+        launchIO {
+            delay(TRADE_STATE_SYNC_DELAY)
+            synchronizeTradeStates()
         }
     }
 

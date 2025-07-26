@@ -23,7 +23,6 @@ import bisq.support.mediation.MediationRequestService
 import bisq.trade.bisq_easy.BisqEasyTrade
 import bisq.trade.bisq_easy.BisqEasyTradeService
 import bisq.trade.bisq_easy.protocol.BisqEasyProtocol
-import bisq.trade.bisq_easy.protocol.BisqEasyTradeState
 import bisq.user.banned.BannedUserService
 import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfile
@@ -33,7 +32,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
@@ -75,6 +73,10 @@ import kotlin.time.Duration.Companion.seconds
  */
 class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Provider) :
     ServiceFacade(), TradesServiceFacade {
+
+    companion object {
+        private const val TRADE_STATE_SYNC_DELAY = 2000L
+    }
 
     // Dependencies
     private val marketPriceService: MarketPriceService by lazy { applicationService.bondedRolesService.get().marketPriceService }
@@ -653,7 +655,7 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
      * - All ongoing trades: sync after 60 seconds
      * - Long-running trades: sync after 5 minutes
      */
-    override suspend fun synchronizeTradeStates() {
+    private suspend fun synchronizeTradeStates() {
         try {
             log.i { "Starting node trade state synchronization after app restart" }
 
@@ -689,8 +691,6 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
         }
     }
 
-
-
     /**
      * Gets the last activity timestamp for a trade.
      * Currently uses the trade creation time as a baseline.
@@ -701,6 +701,13 @@ class NodeTradesServiceFacade(applicationService: AndroidApplicationService.Prov
     private fun getLastTradeActivity(trade: BisqEasyTrade): Long {
         // Use the trade's creation time as fallback
         return trade.contract.takeOfferDate
+    }
+
+    private fun launchTradeStateSync() {
+        launchIO {
+            delay(TRADE_STATE_SYNC_DELAY)
+            synchronizeTradeStates()
+        }
     }
 
     /**

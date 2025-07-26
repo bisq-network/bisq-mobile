@@ -49,7 +49,6 @@ class ClientUserProfileServiceFacade(
         super<ServiceFacade>.deactivate()
     }
 
-
     // API
     override suspend fun hasUserProfile(): Boolean {
         return getUserIdentityIds().isNotEmpty()
