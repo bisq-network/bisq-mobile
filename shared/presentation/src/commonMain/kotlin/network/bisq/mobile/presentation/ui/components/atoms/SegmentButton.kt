@@ -56,13 +56,13 @@ fun BisqSegmentButton(
                         )
                     },
                     colors = SegmentedButtonColors(
-                        activeContainerColor = BisqTheme.colors.secondary,
+                        activeContainerColor = BisqTheme.colors.primary,
                         activeContentColor = BisqTheme.colors.light_grey50,
                         activeBorderColor = BisqTheme.colors.backgroundColor,
                         inactiveContainerColor = BisqTheme.colors.secondaryDisabled,
                         inactiveContentColor = BisqTheme.colors.light_grey50,
                         inactiveBorderColor = BisqTheme.colors.backgroundColor,
-                        disabledActiveContainerColor = BisqTheme.colors.secondaryDisabled,
+                        disabledActiveContainerColor = BisqTheme.colors.primaryDisabled,
                         disabledActiveContentColor = BisqTheme.colors.mid_grey30,
                         disabledActiveBorderColor = BisqTheme.colors.backgroundColor,
                         disabledInactiveContainerColor = BisqTheme.colors.secondaryDisabled,

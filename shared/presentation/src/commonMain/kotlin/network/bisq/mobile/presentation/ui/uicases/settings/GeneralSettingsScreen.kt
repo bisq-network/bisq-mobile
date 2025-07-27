@@ -118,6 +118,7 @@ fun GeneralSettingsScreen() {
 
         BisqHDivider()
 
+        /*
         BisqText.h4Regular("settings.notification.options".i18n())
 
         BisqGap.V1()
@@ -134,6 +135,7 @@ fun GeneralSettingsScreen() {
         )
 
         BisqHDivider()
+        */
 
         BisqText.h4Regular("settings.trade.headline".i18n())
 
@@ -167,18 +169,6 @@ fun GeneralSettingsScreen() {
             }
         )
 
-        BisqHDivider()
-
-        BisqText.h4Regular("settings.display.headline".i18n())
-
-        BisqGap.V1()
-
-        BisqSwitch(
-            label = "settings.display.useAnimations".i18n(),
-            checked = useAnimations,
-            onSwitch = { presenter.setUseAnimations(it) }
-        )
-
         BisqGap.V1()
 
         BisqTextField(
@@ -194,6 +184,18 @@ fun GeneralSettingsScreen() {
                 }
                 return@BisqTextField null
             }
+        )
+
+        BisqHDivider()
+
+        BisqText.h4Regular("settings.display.headline".i18n())
+
+        BisqGap.V1()
+
+        BisqSwitch(
+            label = "settings.display.useAnimations".i18n(),
+            checked = useAnimations,
+            onSwitch = { presenter.setUseAnimations(it) }
         )
 
         if (shouldShowPoWAdjustmentFactor) {

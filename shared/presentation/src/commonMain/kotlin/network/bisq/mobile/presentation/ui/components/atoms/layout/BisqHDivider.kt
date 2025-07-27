@@ -6,12 +6,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun BisqHDivider() {
     HorizontalDivider(
         thickness = 1.dp,
         modifier = Modifier.padding(vertical = 28.dp),
-        color = Color(0XFF2B2B2B)
+        color = BisqTheme.colors.mid_grey10
     )
 }
