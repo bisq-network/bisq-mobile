@@ -11,6 +11,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+
+enum class BisqChipType {
+    Default,
+    Outline,
+}
 
 @Composable
 fun BisqChip(
@@ -19,13 +25,48 @@ fun BisqChip(
     onClick: ((String) -> Unit)? = null,
     onRemove: ((String) -> Unit)? = null,
     modifier: Modifier = Modifier,
+    type: BisqChipType = BisqChipType.Default,
 ) {
+
+    val chipColors = if (type == BisqChipType.Outline) {
+        SelectableChipColors(
+            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+            labelColor = BisqTheme.colors.primary,
+            leadingIconColor = BisqTheme.colors.primary,
+            trailingIconColor = BisqTheme.colors.primary,
+            selectedLabelColor = BisqTheme.colors.primary,
+            selectedLeadingIconColor = BisqTheme.colors.primary,
+            selectedTrailingIconColor = BisqTheme.colors.primary,
+            selectedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+            disabledContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+            disabledLabelColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
+            disabledLeadingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
+            disabledTrailingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
+            disabledSelectedContainerColor = androidx.compose.ui.graphics.Color.Transparent,
+        )
+    } else {
+        SelectableChipColors(
+            containerColor = BisqTheme.colors.primaryDim,
+            labelColor = BisqTheme.colors.light_grey10,
+            leadingIconColor = BisqTheme.colors.light_grey10,
+            trailingIconColor = BisqTheme.colors.light_grey10,
+            selectedLabelColor = BisqTheme.colors.light_grey10,
+            selectedLeadingIconColor = BisqTheme.colors.primary,
+            selectedTrailingIconColor = BisqTheme.colors.primary,
+            selectedContainerColor = BisqTheme.colors.secondary,
+            disabledContainerColor = BisqTheme.colors.secondary,
+            disabledLabelColor = BisqTheme.colors.light_grey10,
+            disabledLeadingIconColor = BisqTheme.colors.primary,
+            disabledTrailingIconColor = BisqTheme.colors.primary,
+            disabledSelectedContainerColor = BisqTheme.colors.secondary,
+        )
+    }
 
     InputChip(
         onClick = {
             onClick?.invoke(label)
         },
-        label = { BisqText.baseRegular(label, modifier = Modifier.padding(top= 12.dp)) },
+        label = { BisqText.baseRegular(label, modifier = Modifier.padding(vertical = BisqUIConstants.ScreenPadding)) },
         selected = false,
         trailingIcon = {
             if (showRemove) {
@@ -37,28 +78,16 @@ fun BisqChip(
             }
         },
         modifier = modifier,
-        colors = SelectableChipColors( // TODO:
-            containerColor = BisqTheme.colors.primaryDim,
-            labelColor = BisqTheme.colors.light_grey10,
-            leadingIconColor =BisqTheme.colors.light_grey10,
-            trailingIconColor = BisqTheme.colors.light_grey10,
-            selectedLabelColor = BisqTheme.colors.light_grey10,
-            selectedLeadingIconColor = BisqTheme.colors.primary,
-            selectedTrailingIconColor = BisqTheme.colors.primary,
-            selectedContainerColor = BisqTheme.colors.secondary,
-
-            disabledContainerColor =BisqTheme.colors.secondary,
-            disabledLabelColor = BisqTheme.colors.light_grey10,
-            disabledLeadingIconColor = BisqTheme.colors.primary,
-            disabledTrailingIconColor =BisqTheme.colors.primary ,
-            disabledSelectedContainerColor = BisqTheme.colors.secondary,
-        ),
-        border = InputChipDefaults.inputChipBorder(
-            borderColor = BisqTheme.colors.primary,
-            selectedBorderColor = BisqTheme.colors.primary,
-            enabled = true,
-            selected = true,
-        )
+        colors = chipColors,
+        border = if (type == BisqChipType.Outline) {
+            InputChipDefaults.inputChipBorder(
+                borderColor = BisqTheme.colors.primary,
+                selectedBorderColor = BisqTheme.colors.primary,
+                enabled = true,
+                selected = false,
+            )
+        } else {
+            null
+        }
     )
-
 }

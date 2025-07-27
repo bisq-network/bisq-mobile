@@ -1,22 +1,36 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
-// TODO: Should do Multi-select dropdown separately?
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun BisqDropDown(
     label: String = "",
+    helpText: String = "",
     items: List<Pair<String, String>>,
     value: String,
     values: Set<String>? = null,
@@ -28,7 +42,11 @@ fun BisqDropDown(
     showKey: Boolean = false,
     chipMultiSelect: Boolean = false,
     chipShowOnlyKey: Boolean = false,
+    maxSelectionLimit: Int? = null,
+    outlineChip: Boolean = false,
 ) {
+    val showError = remember { mutableStateOf(false) }
+    val coroutineScope = rememberCoroutineScope()
     var expanded by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
     var selected by remember(items, values) {
@@ -41,14 +59,28 @@ fun BisqDropDown(
         items
     }
 
-    Column {
+    Column(modifier = modifier) {
         if (label.isNotEmpty()) {
             BisqText.baseLight(label)
             BisqGap.VQuarter()
         }
 
         BisqButton(
-            onClick = { expanded = true },
+            onClick = {
+                val limitReached = chipMultiSelect && maxSelectionLimit != null && selected.size >= maxSelectionLimit
+                if (limitReached) {
+                    showError.value = true
+
+                    coroutineScope.launch {
+                        delay(3000)
+                        showError.value = false
+                    }
+
+                    expanded = false
+                } else {
+                    expanded = true
+                }
+            },
             fullWidth = true,
             padding = PaddingValues(
                 horizontal = BisqUIConstants.ScreenPadding,
@@ -56,9 +88,9 @@ fun BisqDropDown(
             ),
             backgroundColor = BisqTheme.colors.secondary,
             text = if (showKey) {
-                items.find { it.first == value }?.first
+                items.find { it.first == value }?.first ?: placeholder
             } else {
-                items.find { it.first == value }?.second
+                items.find { it.first == value }?.second ?: placeholder
             },
             textAlign = TextAlign.Start,
             rightIcon = { ArrowDownIcon() }
@@ -73,35 +105,64 @@ fun BisqDropDown(
             if (searchable) {
                 BisqTextField(
                     value = searchText,
-                    onValueChange = { it, isValid -> searchText = it },
+                    onValueChange = { it, _ -> searchText = it },
                     placeholder = "mobile.components.dropdown.searchPlaceholder".i18n(),
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth().padding(BisqUIConstants.ScreenPaddingHalfQuarter)
                 )
             }
 
-            filteredItems.forEachIndexed { index, item ->
-                val textToShow = if (showKey) {
-                    item.first
-                } else {
-                    item.second
-                }
+            filteredItems.forEach { item ->
+                val textToShow = if (showKey) item.first else item.second
+
                 DropdownMenuItem(
                     text = { BisqText.baseRegular(textToShow) },
                     onClick = {
-                        onValueChanged?.invoke(item)
-                        expanded = false
+                        showError.value = false
                         if (chipMultiSelect) {
-                            selected = selected + item
+                            val isAlreadySelected = selected.contains(item)
+
+                            if (!isAlreadySelected) {
+                                selected = selected + item
+                            }
+
+                            onSetChanged?.invoke(selected)
+                            searchText = ""
+                            expanded = false
+                        } else {
+                            onValueChanged?.invoke(item)
+                            expanded = false
+                            searchText = ""
                         }
-                        onSetChanged?.invoke(selected)
-                        searchText = ""
                     },
                 )
             }
         }
 
+        BisqGap.VHalf()
+
+        if(showError.value) {
+            BisqText.smallRegular(
+                text = "mobile.components.dropdown.maxSelection".i18n(maxSelectionLimit.toString()), // "Maximum of {0} items can be selected",
+                modifier = Modifier.padding(
+                    start = BisqUIConstants.ScreenPaddingQuarter,
+                    top = BisqUIConstants.ScreenPadding1px,
+                    bottom = BisqUIConstants.ScreenPaddingQuarter
+                ),
+                color = BisqTheme.colors.danger
+            )
+        } else {
+            BisqText.smallRegular(
+                text = helpText,
+                modifier = Modifier.padding(
+                    start = BisqUIConstants.ScreenPaddingQuarter,
+                    top = BisqUIConstants.ScreenPadding1px,
+                    bottom = BisqUIConstants.ScreenPaddingQuarter
+                ),
+            )
+        }
+
         if (chipMultiSelect) {
-            BisqGap.VQuarter()
+            BisqGap.VHalf()
             // TODO: Should do BisqChipRow
             FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
@@ -111,7 +172,9 @@ fun BisqDropDown(
                     BisqChip(
                         label = if (chipShowOnlyKey) pair.first else pair.second,
                         showRemove = selected.size != 1,
+                        type = BisqChipType.Outline,
                         onRemove = {
+                            showError.value = false
                             selected = selected - pair
                             onSetChanged?.invoke(selected)
                             searchText = ""

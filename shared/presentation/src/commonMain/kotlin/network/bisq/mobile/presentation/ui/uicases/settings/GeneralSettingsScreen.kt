@@ -101,7 +101,8 @@ fun GeneralSettingsScreen() {
         BisqGap.V1()
 
         BisqDropDown(
-            label = "${"settings.language.supported.headline".i18n()} (${"settings.language.supported.subHeadLine".i18n()})",
+            label = "settings.language.supported.headline".i18n(),
+            helpText = "settings.language.supported.subHeadLine".i18n(),
             items = allLanguagePairs,
             value = if (supportedLanguageCodes.isNotEmpty()) supportedLanguageCodes.last() else selectedLauguage,
             values = supportedLanguageCodes,
@@ -111,6 +112,8 @@ fun GeneralSettingsScreen() {
             },
             searchable = true,
             chipMultiSelect = true,
+            maxSelectionLimit = 5,
+            outlineChip = true,
         )
 
         BisqHDivider()
@@ -205,10 +208,9 @@ fun GeneralSettingsScreen() {
                 value = powFactor,
                 keyboardType = KeyboardType.Decimal,
                 disabled = !ignorePow,
-                numberWithTwoDecimals = true,
                 onValueChange = { it, isValid -> presenter.setPowFactor(it, isValid) },
                 validation = {
-                    val parsedValue = it.toDoubleOrNullLocaleAware() ?: return@BisqTextField "Value cannot be empty"
+                    val parsedValue = it.toIntOrNull() ?: return@BisqTextField "mobile.settings.network.difficultyAdjustmentFactor.validation.cannotBeEmpty".i18n()
                     if (parsedValue < 0 || parsedValue > 160_000) {
                         return@BisqTextField "authorizedRole.securityManager.difficultyAdjustment.invalid".i18n(
                             160000

@@ -132,7 +132,7 @@ val presentationModule = module {
         )
     } bind ITrustedNodeSetupPresenter::class
 
-    single { GeneralSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
+    factory { GeneralSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
     single { PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
 

@@ -144,7 +144,7 @@ val androidNodeModule = module {
 
     single<AboutPresenter> { NodeAboutPresenter(get()) } bind IAboutPresenter::class
 
-    single<GeneralSettingsPresenter> { NodeGeneralSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
+    factory<GeneralSettingsPresenter> { NodeGeneralSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
     single<IOnboardingPresenter> { OnBoardingNodePresenter(get(), get(), get()) } bind IOnboardingPresenter::class
 }

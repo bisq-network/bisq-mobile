@@ -212,7 +212,7 @@ open class GeneralSettingsPresenter(
         _tradePriceTolerance.value = NumberFormatter.format(settings.maxTradePriceDeviation * 100)
         _useAnimations.value = settings.useAnimations
         _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData.toString()
-        _powFactor.value = NumberFormatter.format(settingsServiceFacade.difficultyAdjustmentFactor.value)
+        _powFactor.value = NumberFormatter.format(settingsServiceFacade.difficultyAdjustmentFactor.value).split(".")[0]
         _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
     }
 }
