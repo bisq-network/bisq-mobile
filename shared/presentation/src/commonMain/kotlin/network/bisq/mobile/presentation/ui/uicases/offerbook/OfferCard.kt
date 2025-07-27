@@ -61,11 +61,11 @@ fun OfferCard(
     }
 
     val myOfferBackgroundColor = BisqTheme.colors.primary.copy(alpha = 0.15f)
-    val invalidOfferBackgroundColor = BisqTheme.colors.dark_grey40.copy(alpha = 0.5f)
+    val invalidOfferBackgroundColor = BisqTheme.colors.dark_grey50.copy(alpha = 0.4f)
     val backgroundColor = when {
         isMyOffer -> myOfferBackgroundColor
         isInvalidDueToReputation -> invalidOfferBackgroundColor
-        else -> BisqTheme.colors.dark_grey40
+        else -> BisqTheme.colors.dark_grey50.copy(alpha = 0.9f)
     }
     
     val height = 140.dp
