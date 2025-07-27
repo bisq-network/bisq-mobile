@@ -37,7 +37,7 @@ fun ProfileIconAndText(
 
         val icon = @Composable {
             Image(
-                painter = painter, "", modifier = Modifier.size(30.dp) // same size as top bar
+                painter = painter, "", modifier = Modifier.size(BisqUIConstants.topBarAvatarSize)
             )
         }
 

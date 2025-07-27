@@ -249,11 +249,24 @@ class CreateOfferPricePresenter(
         navigateBack()
     }
 
+
+    fun onClose() {
+        if (isValid(percentagePriceValue)) {
+            commitToModel()
+        }
+        navigateToOfferList()
+    }
+
     fun onNext() {
         if (isValid(percentagePriceValue)) {
             commitToModel()
             navigateTo(Routes.CreateOfferPaymentMethod)
         }
+    }
+
+    private fun navigateToOfferList() {
+        navigateBackTo(Routes.TabContainer)
+        navigateToTab(Routes.TabOfferbook)
     }
 
     private fun commitToModel() {

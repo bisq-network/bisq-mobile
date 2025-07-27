@@ -1,14 +1,19 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
+import network.bisq.mobile.presentation.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.organisms.PaymentMethodCard
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 @Composable
@@ -27,7 +32,15 @@ fun CreateOfferPaymentMethodSelectorScreen() {
         prevOnClick = { presenter.onBack() },
         nextButtonText = "action.next".i18n(),
         nextOnClick = { presenter.onNext() },
-        snackbarHostState = presenter.getSnackState()
+        snackbarHostState = presenter.getSnackState(),
+        showUserAvatar = false,
+        extraActions = {
+            BisqIconButton(onClick = {
+                presenter.onClose()
+            }, modifier = Modifier.size(BisqUIConstants.topBarAvatarSize)){
+                CloseIcon()
+            }
+        },
     ) {
         BisqText.h3Regular("bisqEasy.takeOffer.paymentMethods.headline.fiatAndBitcoin".i18n())
 

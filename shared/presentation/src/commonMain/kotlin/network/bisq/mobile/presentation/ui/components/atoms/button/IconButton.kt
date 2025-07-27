@@ -13,13 +13,12 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun BisqIconButton(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier,
+    modifier: Modifier = Modifier.size(BisqUIConstants.ScreenPadding2X),
     disabled: Boolean = false,
     content: @Composable () -> Unit
 ) {
     IconButton(
-        modifier = Modifier
-            .size(BisqUIConstants.ScreenPadding2X)
+        modifier = modifier
             .alpha(if (disabled) 0.5f else 1.0f),
         onClick = onClick,
         colors = IconButtonColors(

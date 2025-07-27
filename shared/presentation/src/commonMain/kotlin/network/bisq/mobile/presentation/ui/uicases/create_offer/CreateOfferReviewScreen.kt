@@ -3,15 +3,21 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.components.atoms.FontSize
+import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
+import network.bisq.mobile.presentation.ui.components.atoms.button.CloseIconButton
+import network.bisq.mobile.presentation.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
@@ -36,6 +42,14 @@ fun CreateOfferReviewOfferScreen() {
         nextButtonText = "bisqEasy.tradeWizard.review.nextButton.createOffer".i18n(),
         nextOnClick = { presenter.onCreateOffer() },
         isInteractive = presenter.isInteractive.collectAsState().value,
+        showUserAvatar = false,
+        extraActions = {
+            BisqIconButton(onClick = {
+                presenter.onClose()
+            }, modifier = Modifier.size(BisqUIConstants.topBarAvatarSize)){
+                CloseIcon()
+            }
+        },
     ) {
         BisqText.h3Regular("bisqEasy.tradeWizard.review.headline.maker".i18n())
         BisqGap.V2()

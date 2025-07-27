@@ -232,6 +232,11 @@ class CreateOfferAmountPresenter(
         navigateBack()
     }
 
+    fun onClose() {
+        commitToModel()
+        navigateToOfferList()
+    }
+
     fun onNext() {
         if (amountType.value == AmountType.RANGE_AMOUNT && quoteSideMaxRangeAmount.asDouble() < quoteSideMinRangeAmount.asDouble()) {
             showSnackbar("mobile.bisqEasy.tradeWizard.amount.range.validation.minShouldBeLessThanMax".i18n())
@@ -239,6 +244,11 @@ class CreateOfferAmountPresenter(
         }
         commitToModel()
         navigateTo(Routes.CreateOfferPrice)
+    }
+
+    private fun navigateToOfferList() {
+        navigateBackTo(Routes.TabContainer)
+        navigateToTab(Routes.TabOfferbook)
     }
 
     fun navigateToReputation() {

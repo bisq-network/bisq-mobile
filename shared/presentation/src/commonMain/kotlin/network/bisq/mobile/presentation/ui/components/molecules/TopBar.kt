@@ -1,9 +1,13 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -42,6 +46,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 interface ITopBarPresenter : ViewPresenter {
@@ -53,6 +58,9 @@ interface ITopBarPresenter : ViewPresenter {
     fun navigateToUserProfile()
 }
 
+/**
+ * @param extraActions will be rendered before user avatar
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TopBar(
@@ -64,6 +72,7 @@ fun TopBar(
     isFlowScreen: Boolean = false,
     showUserAvatar: Boolean = true,
     stepText: String = "",
+    extraActions: @Composable (RowScope.() -> Unit)? = null,
 ) {
     val presenter: ITopBarPresenter = koinInject()
     val navController: NavHostController = presenter.getRootNavController()
@@ -134,8 +143,13 @@ fun TopBar(
         actions = {
             Row(
                 modifier = Modifier.padding(top = if (isFlowScreen) 15.dp else 0.dp, end = 16.dp),
+                horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+
+                if (extraActions != null) {
+                    extraActions()
+                }
 
 //                TODO implement full feature after MVP
 //                BellIcon()
@@ -143,7 +157,7 @@ fun TopBar(
                 if (showUserAvatar) {
 
                     val userIconModifier = Modifier
-                        .size(30.dp)
+                        .size(BisqUIConstants.topBarAvatarSize)
                         .alpha(if (presenter.avatarEnabled(currentTab)) 1.0f else 0.5f)
                         .clickable {
                             if (presenter.avatarEnabled(currentTab)) {

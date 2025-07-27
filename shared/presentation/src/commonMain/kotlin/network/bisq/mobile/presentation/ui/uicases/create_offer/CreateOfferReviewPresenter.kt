@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import kotlinx.coroutines.delay
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
@@ -110,6 +109,10 @@ class CreateOfferReviewPresenter(
         navigateBack()
     }
 
+    fun onClose() {
+        navigateToOfferList()
+    }
+
     fun onCreateOffer() {
         disableInteractive()
 
@@ -117,12 +120,12 @@ class CreateOfferReviewPresenter(
             // We use withContext(IODispatcher) for the service call, thus we switch context and block
             createOfferPresenter.createOffer()
             // After createOffer is completed  we are back on presenterScope
-            onGoToOfferList()
+            navigateToOfferList()
             enableInteractive()
         }
     }
 
-    private fun onGoToOfferList() {
+    private fun navigateToOfferList() {
         navigateBackTo(Routes.TabContainer)
         navigateToTab(Routes.TabOfferbook)
     }

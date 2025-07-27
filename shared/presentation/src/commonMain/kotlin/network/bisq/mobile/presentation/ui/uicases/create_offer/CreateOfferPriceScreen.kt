@@ -13,6 +13,8 @@ import network.bisq.mobile.presentation.ui.components.atoms.AmountSlider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText
+import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
+import network.bisq.mobile.presentation.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.ToggleTab
@@ -55,6 +57,14 @@ fun CreateOfferTradePriceSelectorScreen() {
         nextOnClick = { presenter.onNext() },
         nextDisabled = !presenter.formattedPercentagePriceValid.collectAsState().value,
         shouldBlurBg = showWhyPopup,
+        showUserAvatar = false,
+        extraActions = {
+            BisqIconButton(onClick = {
+                presenter.onClose()
+            }, modifier = Modifier.size(BisqUIConstants.topBarAvatarSize)){
+                CloseIcon()
+            }
+        },
     ) {
         BisqText.h3Regular(
             text = "mobile.bisqEasy.tradeWizard.price.title".i18n(), modifier = Modifier.align(Alignment.Start)

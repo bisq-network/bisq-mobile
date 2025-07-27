@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
@@ -11,6 +12,8 @@ import androidx.compose.ui.Modifier
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
+import network.bisq.mobile.presentation.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BisqSearchField
@@ -33,7 +36,15 @@ fun CreateOfferCurrencySelectorScreen() {
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() },
         useStaticScaffold = true,
-        horizontalAlignment = Alignment.Start
+        horizontalAlignment = Alignment.Start,
+        showUserAvatar = false,
+        extraActions = {
+            BisqIconButton(onClick = {
+                presenter.onClose()
+            }, modifier = Modifier.size(BisqUIConstants.topBarAvatarSize)){
+                CloseIcon()
+            }
+        },
     ) {
 
         BisqText.h3Regular(presenter.headline)

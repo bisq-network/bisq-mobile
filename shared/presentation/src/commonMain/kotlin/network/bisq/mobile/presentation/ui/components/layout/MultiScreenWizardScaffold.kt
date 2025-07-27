@@ -19,6 +19,8 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 /**
  * @param stepIndex starts at 1, so last step equals `stepsLength`
  * @param stepsLength How many steps this wizard has
+ * @param showUserAvatar whether to show user avatar on TopBar or not
+ * @param extraActions extra actions to pass to TopBar
  */
 @Composable
 fun MultiScreenWizardScaffold(
@@ -38,6 +40,8 @@ fun MultiScreenWizardScaffold(
     isInteractive: Boolean = true,
     showJumpToBottom: Boolean = false,
     shouldBlurBg: Boolean = false,
+    showUserAvatar: Boolean = true,
+    extraActions: @Composable (RowScope.() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
 
@@ -83,7 +87,13 @@ fun MultiScreenWizardScaffold(
         PaddingValues(all = 0.dp),
         {
             Column {
-                TopBar(title, isFlowScreen = true, stepText = "$stepIndex/$stepsLength")
+                TopBar(
+                    title,
+                    isFlowScreen = true,
+                    stepText = "$stepIndex/$stepsLength",
+                    showUserAvatar = showUserAvatar,
+                    extraActions = extraActions,
+                )
                 BisqProgressBar(
                     stepIndex.toFloat() / stepsLength.toFloat(),
                     modifier = Modifier.fillMaxWidth().padding(top = BisqUIConstants.ScreenPaddingHalf)
