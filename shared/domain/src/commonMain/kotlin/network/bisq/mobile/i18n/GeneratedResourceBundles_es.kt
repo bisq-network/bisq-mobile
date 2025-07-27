@@ -1673,6 +1673,7 @@ object GeneratedResourceBundles_es {
             "mobile.components.topBar.confirmationDialog.headline" to "ES_Are you sure want to exit the Trade?",
             "mobile.openTrades.inMediation.banner" to "ES_A mediator has joined the trade chat.\nPlease use the trade chat to get assistance from the mediator.",
             "mobile.components.marketFilter.showMarkets.all" to "ES_All",
+            "mobile.settings.about" to "ES_About",
             "mobile.components.paymentMethods.customPaymentMethod" to "ES_Custom payment method: {0}",
             "mobile.organisms.trustednodeApiIncompatiblePopup.fixTrustedNode" to "ES_Fix trusted node",
             "mobile.onboarding.createProfile" to "Create Profile",

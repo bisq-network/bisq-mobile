@@ -1659,6 +1659,7 @@ object GeneratedResourceBundles_pcm {
             "mobile.components.topBar.confirmationDialog.headline" to "Are you sure want to exit the Trade?",
             "mobile.openTrades.inMediation.banner" to "A mediator has joined the trade chat.\nPlease use the trade chat to get assistance from the mediator.",
             "mobile.components.marketFilter.showMarkets.all" to "All",
+            "mobile.settings.about" to "About",
             "mobile.components.paymentMethods.customPaymentMethod" to "Custom payment method: {0}",
             "mobile.organisms.trustednodeApiIncompatiblePopup.fixTrustedNode" to "Fix trusted node",
             "mobile.onboarding.createProfile" to "Create Profile",

@@ -16,25 +16,17 @@ open class SettingsPresenter(
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), ISettingsPresenter {
 
-    override val appName: String = BuildConfig.APP_NAME
-
     final override fun menuTree(): MenuItem {
         val defaultList: MutableList<MenuItem> = mutableListOf(
             MenuItem.Leaf(label = "mobile.settings.general".i18n(), route = Routes.GeneralSettings),
             MenuItem.Leaf(label = "user.userProfile".i18n(), route = Routes.UserProfileSettings),
             MenuItem.Leaf(label = "user.paymentAccounts".i18n(), route = Routes.PaymentAccountSettings),
+            MenuItem.Leaf(label = "mobile.settings.about".i18n(), route = Routes.About),
         )
         return MenuItem.Parent(
             label = "Bisq",
             children = addCustomSettings(defaultList)
         )
-    }
-
-    override fun versioning(): Triple<String, String, String> {
-        val demo = if (isDemo()) "-demo-" else ""
-        val version = demo + if (isIOS()) BuildConfig.IOS_APP_VERSION else BuildConfig.ANDROID_APP_VERSION
-        val wsApiVersion = BuildConfig.BISQ_API_VERSION
-        return Triple(version, "node-api", wsApiVersion)
     }
 
     protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {

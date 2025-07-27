@@ -16,9 +16,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 interface ISettingsPresenter : ViewPresenter {
-    val appName: String
     fun menuTree(): MenuItem
-    fun versioning(): Triple<String, String, String>
 
     fun navigate(route: Routes)
     fun settingsNavigateBack()
@@ -66,20 +64,5 @@ fun SettingsScreen(isTabSelected: Boolean) {
                 }
             }
         }
-        SettingsFooter(presenter.appName, presenter.versioning())
-    }
-}
-
-@Composable
-fun SettingsFooter(appName: String, versioning: Triple<String, String, String>) {
-    val versionNumber = versioning.first
-    val networkName = versioning.second
-    val networkVersion = versioning.third
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.Center
-    ) {
-        BisqText.baseRegular("$appName v$versionNumber ($networkName: v$networkVersion)")
     }
 }
