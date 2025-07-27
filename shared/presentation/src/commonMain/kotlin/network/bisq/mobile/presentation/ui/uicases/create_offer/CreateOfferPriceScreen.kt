@@ -61,7 +61,7 @@ fun CreateOfferTradePriceSelectorScreen() {
         extraActions = {
             BisqIconButton(onClick = {
                 presenter.onClose()
-            }, modifier = Modifier.size(BisqUIConstants.topBarAvatarSize)){
+            }, size = BisqUIConstants.topBarAvatarSize){
                 CloseIcon()
             }
         },

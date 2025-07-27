@@ -7,18 +7,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.Dp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun BisqIconButton(
     onClick: () -> Unit,
-    modifier: Modifier = Modifier.size(BisqUIConstants.ScreenPadding2X),
+    modifier: Modifier = Modifier,
     disabled: Boolean = false,
+    size: Dp = BisqUIConstants.ScreenPadding2X,
     content: @Composable () -> Unit
 ) {
     IconButton(
-        modifier = modifier
+        modifier = modifier.size(size)
             .alpha(if (disabled) 0.5f else 1.0f),
         onClick = onClick,
         colors = IconButtonColors(
