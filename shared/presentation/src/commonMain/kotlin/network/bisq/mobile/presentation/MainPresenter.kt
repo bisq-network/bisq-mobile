@@ -49,6 +49,8 @@ open class MainPresenter(
     private val _readMessageCountsByTrade = MutableStateFlow(emptyMap<String, Int>())
     override val readMessageCountsByTrade: StateFlow<Map<String, Int>> = _readMessageCountsByTrade
 
+    override val showAnimation: StateFlow<Boolean> get() = settingsService.useAnimations
+
     init {
         val localeCode = getDeviceLanguageCode()
         val screenWidth = getScreenWidthDp()

@@ -15,8 +15,10 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
+import network.bisq.mobile.presentation.ui.components.context.LocalAnimationsEnabled
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
+import network.bisq.mobile.presentation.ui.navigation.graph.TabNavGraph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
@@ -35,6 +37,8 @@ interface AppPresenter : ViewPresenter {
 
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>>
     val readMessageCountsByTrade: StateFlow<Map<String, Int>>
+
+    val showAnimation: StateFlow<Boolean>
 
     // Actions
     fun toggleContentVisibility()
@@ -93,6 +97,7 @@ fun App() {
     var isNavControllerSet by remember { mutableStateOf(false) }
     val presenter: AppPresenter = koinInject()
     val languageCode by presenter.languageCode.collectAsState()
+    val showAnimation by presenter.showAnimation.collectAsState()
 
     I18nSupport.initialize(languageCode)
 
@@ -106,7 +111,9 @@ fun App() {
         BisqTheme(darkTheme = true) {
             if (isNavControllerSet) {
                 SwipeBackIOSNavigationHandler(rootNavController) {
-                    RootNavGraph(rootNavController)
+                    CompositionLocalProvider(LocalAnimationsEnabled provides showAnimation) {
+                        RootNavGraph(rootNavController)
+                    }
                 }
             }
             ErrorOverlay()

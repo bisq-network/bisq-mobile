@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -33,6 +35,7 @@ import network.bisq.mobile.domain.getDecimalSeparator
 import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.button.PasteIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.context.LocalAnimationsEnabled
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -76,10 +79,17 @@ fun BisqTextField(
         textDecoration = TextDecoration.None
     ),
     textFieldAlignment: Alignment = Alignment.TopStart,
+    enableAnimation: Boolean = LocalAnimationsEnabled.current,
 ) {
     var hasInteracted by remember { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
     var validationError by remember { mutableStateOf<String?>(null) }
+
+    val animatedLineProgress by animateFloatAsState(
+        targetValue = if (isFocused && enableAnimation) 1f else 0f,
+        animationSpec = tween(durationMillis = 300),
+        label = "BottomBorderAnimation"
+    )
 
     val focusManager = LocalFocusManager.current
 
@@ -98,7 +108,8 @@ fun BisqTextField(
     val finalIndicatorColor by remember(validationError, isFocused, hasInteracted) {
         mutableStateOf(
             if (validationError == null || validationError?.isEmpty() == true || !hasInteracted)
-                if (isFocused) indicatorColor else grey2Color
+                if(!enableAnimation && isFocused) indicatorColor
+                else grey2Color
             else
                 dangerColor
         )
@@ -124,6 +135,7 @@ fun BisqTextField(
         derivedStateOf {
             when {
                 disabled -> BisqTheme.colors.dark_grey50
+                isFocused -> BisqTheme.colors.primary
                 validationError?.isNotEmpty() == true && hasInteracted -> BisqTheme.colors.danger
                 else -> whiteColor
             }
@@ -203,12 +215,24 @@ fun BisqTextField(
                 .background(color = finalBackgroundColor)
                 .drawBehind {
                     if (!isSearch) {
+                        val strokeWidth = 4.dp.toPx()
+                        val y = size.height
+
                         drawLine(
                             color = finalIndicatorColor,
-                            start = Offset(0f, size.height),
-                            end = Offset(size.width, size.height),
-                            strokeWidth = 4.dp.toPx()
+                            start = Offset(0f, y),
+                            end = Offset(size.width, y),
+                            strokeWidth = strokeWidth
                         )
+
+                        if (animatedLineProgress > 0f) {
+                            drawLine(
+                                color = indicatorColor,
+                                start = Offset(0f, y),
+                                end = Offset(size.width * animatedLineProgress, y),
+                                strokeWidth = strokeWidth
+                            )
+                        }
                     }
                 }
         ) {
