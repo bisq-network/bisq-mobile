@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.components.molecules.inputfield
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.helpers.BitcoinTransactionValidation
@@ -20,7 +21,8 @@ fun PaymentProofField(
     onValueChange: ((String, Boolean) -> Unit)? = null,
     disabled: Boolean = false,
     type: PaymentProofType = PaymentProofType.BitcoinTx,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    direction: DirectionEnum = DirectionEnum.BUY,
 ) {
     val validation: (String) -> String? = remember(type) {
         {
@@ -43,7 +45,8 @@ fun PaymentProofField(
         value = value,
         onValueChange = onValueChange,
         disabled = disabled,
-        showPaste = true,
+        showCopy = direction == DirectionEnum.BUY,
+        showPaste = direction == DirectionEnum.SELL,
         modifier = modifier,
         validation = validation,
     )

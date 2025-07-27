@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.trade_check_circle
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.*
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -103,6 +104,7 @@ fun SellerState3a(
             value = paymentProof ?: "",
             type = if (isLightning) PaymentProofType.LightningPreImage else PaymentProofType.BitcoinTx,
             onValueChange = { it, isValid -> presenter.onPaymentProofInput(it, isValid) },
+            direction = DirectionEnum.SELL,
         )
 
         BisqGap.V1()
