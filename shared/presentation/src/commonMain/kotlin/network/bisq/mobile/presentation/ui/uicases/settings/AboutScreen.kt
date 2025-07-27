@@ -93,6 +93,7 @@ fun AboutScreen() {
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
+            BisqGap.V1()
         }
 
         BisqGap.V3()
