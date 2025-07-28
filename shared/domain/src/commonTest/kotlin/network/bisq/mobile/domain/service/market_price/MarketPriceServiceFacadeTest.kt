@@ -51,7 +51,7 @@ class MarketPriceServiceFacadeTest : KoinTest {
     fun testPersistSelectedMarket() = runBlocking {
         // Create a test market
         val marketVO = MarketVO("BTC", "USD")
-        val marketListItem = MarketListItem(marketVO)
+        val marketListItem = MarketListItem(marketVO, 0)
         
         // Select the market
         testMarketPriceServiceFacade.selectMarket(marketListItem)
