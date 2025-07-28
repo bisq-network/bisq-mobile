@@ -1,13 +1,10 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -142,7 +139,7 @@ fun TopBar(
         },
         actions = {
             Row(
-                modifier = Modifier.padding(top = if (isFlowScreen) 15.dp else 0.dp, end = 16.dp),
+                modifier = Modifier.padding(end = 16.dp),
                 horizontalArrangement = Arrangement.End,
                 verticalAlignment = Alignment.CenterVertically
             ) {
