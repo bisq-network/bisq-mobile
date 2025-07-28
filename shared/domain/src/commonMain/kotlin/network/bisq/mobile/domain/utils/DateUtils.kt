@@ -32,13 +32,26 @@ object DateUtils {
         return Triple(years, months, days)
     }
 
-    //todo used for last user activity which should be in format: "3 min, 22 sec ago"
-    fun lastSeen(epochMillis: Long, timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
-        val instant = Instant.fromEpochMilliseconds(epochMillis)
-        val localDateTime = instant.toLocalDateTime(timeZone)
-        return localDateTime.toString()
-            .split(".")[0] // remove ms
-            .replace("T", " ") // separate date time
+    /**
+     * Calculate and format the time elapsed since the given timestamp
+     * @param epochMillis The timestamp in milliseconds since epoch
+     * @param timeZone The timezone to use (defaults to system timezone)
+     * @return Formatted string like "3 min ago", "2 hours ago", etc.
+     */
+    fun lastSeen(epochMillis: Long): String {
+        val lastActivityInstant = Instant.fromEpochMilliseconds(epochMillis)
+        val currentInstant = Clock.System.now()
+        
+        val durationInSeconds = lastActivityInstant.until(currentInstant, DateTimeUnit.SECOND)
+        
+        return when {
+            durationInSeconds < 60 -> "$durationInSeconds sec ago"
+            durationInSeconds < 3600 -> "${durationInSeconds / 60} min ago"
+            durationInSeconds < 86400 -> "${durationInSeconds / 3600} hours ago"
+            durationInSeconds < 2592000 -> "${durationInSeconds / 86400} days ago" // ~30 days
+            durationInSeconds < 31536000 -> "${durationInSeconds / 2592000} months ago" // ~365 days
+            else -> "${durationInSeconds / 31536000} years ago"
+        }
     }
 
     fun toDateTime(epochMillis: Long, timeZone: TimeZone = TimeZone.currentSystemDefault()): String {
@@ -46,5 +59,4 @@ object DateUtils {
         val localDateTime = instant.toLocalDateTime(timeZone)
         return formatDateTime(localDateTime)
     }
-
 }
