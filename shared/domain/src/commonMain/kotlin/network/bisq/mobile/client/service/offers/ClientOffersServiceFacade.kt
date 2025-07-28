@@ -18,12 +18,14 @@ import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 
 class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val userRepository: UserRepository,
     private val apiGateway: OfferbookApiGateway,
     private val json: Json
 ) : ServiceFacade(), OffersServiceFacade {
@@ -73,6 +75,7 @@ class ClientOffersServiceFacade(
     override suspend fun deleteOffer(offerId: String): Result<Boolean> {
         val result: Result<Unit> = apiGateway.deleteOffer(offerId)
         if (result.isSuccess) {
+            userRepository.updateLastActivity()
             return Result.success(true)
         } else {
             throw result.exceptionOrNull() ?: IllegalStateException("No Exception is set in result failure")
@@ -98,6 +101,7 @@ class ClientOffersServiceFacade(
             supportedLanguageCodes
         )
         if (apiResult.isSuccess) {
+            userRepository.updateLastActivity()
             return Result.success(apiResult.getOrThrow().offerId)
         } else {
             return Result.failure(apiResult.exceptionOrNull()!!)

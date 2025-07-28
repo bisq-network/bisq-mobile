@@ -146,7 +146,7 @@ class UserProfileSettingsPresenter(
                     userProfileServiceFacade.updateAndPublishUserProfile(statement.value, tradeTerms.value)
                 }
                 if (result.isSuccess) {
-                    setLastActivity(userRepository.updateLastActivity())
+                    userRepository.updateLastActivity()?.let { setLastActivity(it) }
                     showSnackbar("mobile.settings.userProfile.saveSucess".i18n())
                 } else {
                     showSnackbar("mobile.settings.userProfile.saveFailure".i18n())

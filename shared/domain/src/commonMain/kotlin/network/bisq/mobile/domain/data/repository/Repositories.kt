@@ -14,12 +14,14 @@ open class SettingsRepository(keyValueStorage: KeyValueStorage<Settings>) : Sing
 open class TradeReadStateRepository(keyValueStorage: KeyValueStorage<TradeReadState>) : SingleObjectRepository<TradeReadState>(keyValueStorage, TradeReadState())
 
 open class UserRepository(keyValueStorage: KeyValueStorage<User>) : SingleObjectRepository<User>(keyValueStorage, User()) {
-    suspend fun updateLastActivity(): User {
+    suspend fun updateLastActivity(): User? {
         return withContext(IODispatcher) {
-            val user = fetch() ?: throw IllegalStateException("User not found")
-            update(user.apply {
-                lastActivity = Clock.System.now().toEpochMilliseconds()
-            })
+            val user = fetch()
+            if (user != null) {
+                update(user.apply {
+                    lastActivity = Clock.System.now().toEpochMilliseconds()
+                })
+            }
             user
         }
     }

@@ -14,6 +14,7 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradeSynchronizationHelper
@@ -39,6 +40,7 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
  * 4. Monitors TRADE_PROPERTIES subscription for automatic state updates
  */
 class ClientTradesServiceFacade(
+    private val userRepository: UserRepository,
     private val apiGateway: TradesApiGateway,
     webSocketClientProvider: WebSocketClientProvider,
     json: Json
@@ -102,6 +104,7 @@ class ClientTradesServiceFacade(
         )
         if (apiResult.isSuccess) {
             takeOfferStatus.value = TakeOfferStatus.SUCCESS
+            userRepository.updateLastActivity()
             return Result.success(apiResult.getOrThrow().tradeId)
         } else {
             return Result.failure(apiResult.exceptionOrNull()!!)
@@ -113,42 +116,51 @@ class ClientTradesServiceFacade(
     }
 
     override suspend fun rejectTrade(): Result<Unit> {
+        userRepository.updateLastActivity()
         return apiGateway.rejectTrade(requireNotNull(tradeId))
     }
 
     override suspend fun cancelTrade(): Result<Unit> {
+        userRepository.updateLastActivity()
         return apiGateway.cancelTrade(requireNotNull(tradeId))
     }
 
     override suspend fun closeTrade(): Result<Unit> {
         val result = apiGateway.closeTrade(requireNotNull(tradeId))
         if (result.isSuccess) {
+            userRepository.updateLastActivity()
             _selectedTrade.value = null
         }
         return result
     }
 
     override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> {
+        userRepository.updateLastActivity()
         return apiGateway.sellerSendsPaymentAccount(requireNotNull(tradeId), paymentAccountData)
     }
 
     override suspend fun buyerSendBitcoinPaymentData(bitcoinPaymentData: String): Result<Unit> {
+        userRepository.updateLastActivity()
         return apiGateway.buyerSendBitcoinPaymentData(requireNotNull(tradeId), bitcoinPaymentData)
     }
 
     override suspend fun sellerConfirmFiatReceipt(): Result<Unit> {
+        userRepository.updateLastActivity()
         return apiGateway.sellerConfirmFiatReceipt(requireNotNull(tradeId))
     }
 
     override suspend fun buyerConfirmFiatSent(): Result<Unit> {
+        userRepository.updateLastActivity()
         return apiGateway.buyerConfirmFiatSent(requireNotNull(tradeId))
     }
 
     override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> {
+        userRepository.updateLastActivity()
         return apiGateway.sellerConfirmBtcSent(requireNotNull(tradeId), paymentProof)
     }
 
     override suspend fun btcConfirmed(): Result<Unit> {
+        userRepository.updateLastActivity()
         return apiGateway.btcConfirmed(requireNotNull(tradeId))
     }
 

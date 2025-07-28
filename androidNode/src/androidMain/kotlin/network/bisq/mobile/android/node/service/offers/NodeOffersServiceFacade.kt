@@ -41,6 +41,7 @@ import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -50,7 +51,8 @@ import java.util.Optional
 
 class NodeOffersServiceFacade(
     applicationService: AndroidApplicationService.Provider,
-    private val marketPriceServiceFacade: MarketPriceServiceFacade
+    private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val userRepository: UserRepository
 ) : ServiceFacade(), OffersServiceFacade {
 
     // Dependencies
@@ -143,6 +145,7 @@ class NodeOffersServiceFacade(
             if (!broadcastResultNotEmpty) {
                 log.w { "Delete offer message was not broadcast to network. Maybe there are no peers connected." }
             }
+            userRepository.updateLastActivity()
             return Result.success(broadcastResultNotEmpty)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -167,6 +170,7 @@ class NodeOffersServiceFacade(
             Mappings.PriceSpecMapping.toBisq2Model(priceSpec),
             ArrayList<String>(supportedLanguageCodes)
         )
+        userRepository.updateLastActivity()
         return Result.success(offerId)
     }
 
