@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.drop
@@ -11,6 +10,7 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
+import network.bisq.mobile.domain.formatters.MarketPriceFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -98,7 +98,7 @@ class TakeOfferReviewPresenter(
         }
 
         marketCodes = offerListItem.bisqEasyOffer.market.marketCodes
-        price = offerListItem.formattedPrice.value //todo we need updated price not static offer price
+        price = MarketPriceFormatter.format(takeOfferModel.priceQuote.value, takeOfferModel.priceQuote.market)
         applyPriceDetails()
     }
 
