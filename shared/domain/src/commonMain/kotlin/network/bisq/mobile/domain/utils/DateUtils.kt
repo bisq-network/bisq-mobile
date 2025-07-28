@@ -35,7 +35,6 @@ object DateUtils {
     /**
      * Calculate and format the time elapsed since the given timestamp
      * @param epochMillis The timestamp in milliseconds since epoch
-     * @param timeZone The timezone to use (defaults to system timezone)
      * @return Formatted string like "3 min ago", "2 hours ago", etc.
      */
     fun lastSeen(epochMillis: Long): String {
