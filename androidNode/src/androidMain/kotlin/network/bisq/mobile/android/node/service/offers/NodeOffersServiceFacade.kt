@@ -25,7 +25,10 @@ import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -73,8 +76,21 @@ class NodeOffersServiceFacade(
     private val _selectedOfferbookMarket = MutableStateFlow(OfferbookMarket.EMPTY)
     override val selectedOfferbookMarket: StateFlow<OfferbookMarket> get() = _selectedOfferbookMarket
 
-    private val _offerbookMarketItems: MutableStateFlow<List<MarketListItem>> by lazy { MutableStateFlow(fillMarketListItems()) }
+    private val _offerbookMarketItems = MutableStateFlow<List<MarketListItem>>(emptyList())
     override val offerbookMarketItems: StateFlow<List<MarketListItem>> get() = _offerbookMarketItems
+
+    override val sortedOfferbookMarketItems: StateFlow<List<MarketListItem>> = offerbookMarketItems.map { list -> list.sortedWith(
+        compareByDescending<MarketListItem> { it.numOffers }
+            .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
+            .thenBy { item ->
+                if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) item.market.quoteCurrencyName
+                else null
+            }
+    )}.stateIn(
+        serviceScope,
+        SharingStarted.WhileSubscribed(5_000, 10_000),
+        emptyList()
+    )
 
     // Misc
     private var selectedChannel: BisqEasyOfferbookChannel? = null
@@ -93,7 +109,11 @@ class NodeOffersServiceFacade(
 
         observeSelectedChannel()
         observeMarketPrice()
-        numOffersObservers.forEach { it.resume() }
+        if (numOffersObservers.isNotEmpty())  {
+            numOffersObservers.forEach { it.resume() }
+        } else {
+            observeMarketListItems(_offerbookMarketItems)
+        }
         log.d { "NodeOffersServiceFacade activated, numOffersObservers: ${numOffersObservers.size}" }
     }
 
@@ -332,41 +352,50 @@ class NodeOffersServiceFacade(
         log.d { "Chat messages observer added for ${channel.market.marketCodes}, pin: $chatMessagesPin" }
     }
 
-    private fun fillMarketListItems(): MutableList<MarketListItem> {
-        log.d { "Filling market list items" }
+    private fun observeMarketListItems(itemsFlow: MutableStateFlow<List<MarketListItem>>) {
+        log.d { "Observing market list items" }
         numOffersObservers.forEach { it.dispose() }
         numOffersObservers.clear()
 
-        val offerbookMarketItems: MutableList<MarketListItem> = mutableListOf()
-        bisqEasyOfferbookChannelService.channels
-            .forEach { channel ->
-                val marketVO = MarketVO(
-                    channel.market.baseCurrencyCode,
-                    channel.market.quoteCurrencyCode,
-                    channel.market.baseCurrencyName,
-                    channel.market.quoteCurrencyName,
+        val channels = bisqEasyOfferbookChannelService.channels
+        val initialItems = channels.map { channel ->
+            val marketVO = MarketVO(
+                channel.market.baseCurrencyCode,
+                channel.market.quoteCurrencyCode,
+                channel.market.baseCurrencyName,
+                channel.market.quoteCurrencyName,
+            )
+            MarketListItem(marketVO, channel.chatMessages.size)
+        }
+        itemsFlow.value = initialItems
+
+        channels.forEach { channel ->
+            val marketVO = MarketVO(
+                channel.market.baseCurrencyCode,
+                channel.market.quoteCurrencyCode,
+                channel.market.baseCurrencyName,
+                channel.market.quoteCurrencyName,
+            )
+            val market = Mappings.MarketMapping.toBisq2Model(marketVO)
+            if (marketPriceService.marketPriceByCurrencyMap.isEmpty() ||
+                marketPriceService.marketPriceByCurrencyMap.containsKey(market)
+            ) {
+                val numOffersObserver = NumOffersObserver(
+                    channel,
+                    { numOffers ->
+                        // Rebuild the list immutably
+                        itemsFlow.value = itemsFlow.value.map {
+                            if (it.market == marketVO) it.copy(numOffers = numOffers) else it
+                        }
+                    },
                 )
-
-                // We convert channel.market to our replicated Market model
-                val offerbookMarketItem = MarketListItem(marketVO)
-
-                val market = Mappings.MarketMapping.toBisq2Model(marketVO)
-                if (marketPriceService.marketPriceByCurrencyMap.isEmpty() ||
-                    marketPriceService.marketPriceByCurrencyMap.containsKey(market)
-                ) {
-                    offerbookMarketItems.add(offerbookMarketItem)
-                    val numOffersObserver = NumOffersObserver(
-                        channel,
-                        offerbookMarketItem::setNumOffers
-                    )
-                    numOffersObservers.add(numOffersObserver)
-                    log.d { "Added market ${market.marketCodes} with initial offers count: ${channel.chatMessages.size}" }
-                } else {
-                    log.d { "Skipped market ${market.marketCodes} - not in marketPriceByCurrencyMap" }
-                }
+                numOffersObservers.add(numOffersObserver)
+                log.d { "Added market ${market.marketCodes} with initial offers count: ${channel.chatMessages.size}" }
+            } else {
+                log.d { "Skipped market ${market.marketCodes} - not in marketPriceByCurrencyMap" }
             }
-        log.d { "Filled market list items, count: ${offerbookMarketItems.size}" }
-        return offerbookMarketItems
+        }
+        log.d { "Filled market list items, count: ${itemsFlow.value.size}" }
     }
 
     private fun observeMarketPrice() {

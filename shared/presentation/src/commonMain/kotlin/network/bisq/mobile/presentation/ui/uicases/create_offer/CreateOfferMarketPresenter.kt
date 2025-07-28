@@ -1,8 +1,10 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
@@ -28,11 +30,10 @@ class CreateOfferMarketPresenter(
         _searchText.value = newValue
     }
 
-    private val _marketList = MutableStateFlow(offersServiceFacade.getSortedOfferbookMarketItems())
 
     val marketListItemWithNumOffers: StateFlow<List<MarketListItem>> = combine(
         _searchText,
-        _marketList
+        offersServiceFacade.sortedOfferbookMarketItems,
     ) { searchText, marketList ->
         if (searchText.isBlank()) {
             marketList
@@ -43,7 +44,7 @@ class CreateOfferMarketPresenter(
             }
         }
     }.stateIn(
-        CoroutineScope(Dispatchers.Main),
+        presenterScope,
         SharingStarted.Lazily,
         emptyList()
     )

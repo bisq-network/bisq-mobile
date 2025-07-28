@@ -1,11 +1,13 @@
 package network.bisq.mobile.client.service.offers
 
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.subscription.ModificationType
@@ -37,8 +39,21 @@ class ClientOffersServiceFacade(
     private val _selectedOfferbookMarket = MutableStateFlow(OfferbookMarket.EMPTY)
     override val selectedOfferbookMarket: StateFlow<OfferbookMarket> get() = _selectedOfferbookMarket //todo make nullable
 
-    private val _offerbookMarketItems: MutableStateFlow<List<MarketListItem>> = MutableStateFlow(listOf())
-    override val offerbookMarketItems: StateFlow<List<MarketListItem>> = _offerbookMarketItems
+    private val _offerbookMarketItems: MutableStateFlow<List<MarketListItem>> = MutableStateFlow(emptyList())
+    override val offerbookMarketItems: StateFlow<List<MarketListItem>> get() = _offerbookMarketItems
+
+    override val sortedOfferbookMarketItems: StateFlow<List<MarketListItem>> = offerbookMarketItems.map { list -> list.sortedWith(
+        compareByDescending<MarketListItem> { it.numOffers }
+            .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
+            .thenBy { item ->
+                if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) item.market.quoteCurrencyName
+                else null
+            }
+    )}.stateIn(
+        serviceScope,
+        SharingStarted.WhileSubscribed(5_000, 10_000),
+        emptyList()
+    )
 
     // Misc
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
@@ -147,10 +162,13 @@ class ClientOffersServiceFacade(
             val webSocketEventPayload: WebSocketEventPayload<Map<String, Int>> =
                 WebSocketEventPayload.from(json, webSocketEvent)
             val numOffersByMarketCode = webSocketEventPayload.payload
-            offerbookMarketItems.value.map { marketListItem ->
-                val numOffers = numOffersByMarketCode[marketListItem.market.quoteCurrencyCode] ?: 0
-                marketListItem.setNumOffers(numOffers)
-                marketListItem
+            _offerbookMarketItems.update {
+                it.map { marketListItem ->
+                    val newNumOffers = numOffersByMarketCode.getOrElse(
+                        marketListItem.market.quoteCurrencyCode
+                    ) { 0 }
+                    marketListItem.copy(numOffers = newNumOffers)
+                }
             }
         }
     }
@@ -207,7 +225,7 @@ class ClientOffersServiceFacade(
 
     private fun fillMarketListItems(markets: List<MarketVO>) {
         val marketListItems = markets.map { marketVO ->
-            MarketListItem(marketVO)
+            MarketListItem(marketVO, 0)
         }
 
         _offerbookMarketItems.value = marketListItems

@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -66,9 +65,11 @@ class OfferbookMarketPresenter(
         _sortBy,
         _marketPriceUpdated
     ) { filter: MarketFilter, searchText: String, sortBy: MarketSortBy, forceTrigger: Boolean ->
-        computeMarketList(filter, searchText, sortBy)
+        Triple(filter, searchText, sortBy)
+    }.combine(offersServiceFacade.offerbookMarketItems) { params, items ->
+        computeMarketList(params.first, params.second, params.third, items)
     }.stateIn(
-        CoroutineScope(Dispatchers.Main),
+        presenterScope,
         SharingStarted.Lazily,
         emptyList()
     )
@@ -76,12 +77,13 @@ class OfferbookMarketPresenter(
     private fun computeMarketList(
         filter: MarketFilter,
         searchText: String,
-        sortBy: MarketSortBy
+        sortBy: MarketSortBy,
+        items: List<MarketListItem>,
     ): List<MarketListItem> {
-        return offersServiceFacade.offerbookMarketItems.value
+        return items
             .filter { item ->
                 when (filter) {
-                    MarketFilter.WithOffers -> item.numOffers.value > 0
+                    MarketFilter.WithOffers -> item.numOffers > 0
                     MarketFilter.All -> true
                 }
             }
@@ -93,7 +95,7 @@ class OfferbookMarketPresenter(
             .sortedWith(
                 compareByDescending<MarketListItem> {
                     when (sortBy) {
-                        MarketSortBy.MostOffers -> it.numOffers.value
+                        MarketSortBy.MostOffers -> it.numOffers
                         else -> 0
                     }
                 }

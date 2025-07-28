@@ -16,23 +16,14 @@
  */
 package network.bisq.mobile.domain.data.model.offerbook
 
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 
 /**
  * Provides data for offerbook market list items
  */
-data class MarketListItem(val market: MarketVO) {
-    private val _numOffers = MutableStateFlow(0)
-    val numOffers: StateFlow<Int> get() = _numOffers
-
-    fun setNumOffers(value: Int) {
-        _numOffers.value = value
-    }
-
+data class MarketListItem(val market: MarketVO, val numOffers: Int) {
     override fun toString(): String {
         return "MarketListItem(market=$market, " +
-                "_numOffers=$_numOffers"
+                "numOffers=$numOffers"
     }
 }

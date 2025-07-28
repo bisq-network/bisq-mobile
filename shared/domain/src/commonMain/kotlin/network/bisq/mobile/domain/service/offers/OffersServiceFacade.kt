@@ -16,6 +16,8 @@ interface OffersServiceFacade : LifeCycleAware {
     val offerbookListItems: StateFlow<List<OfferItemPresentationModel>>
     val selectedOfferbookMarket: StateFlow<OfferbookMarket>
 
+    val sortedOfferbookMarketItems: StateFlow<List<MarketListItem>>
+
     suspend fun deleteOffer(offerId: String): Result<Boolean>
 
     suspend fun createOffer(
@@ -30,15 +32,6 @@ interface OffersServiceFacade : LifeCycleAware {
 
     fun selectOfferbookMarket(marketListItem: MarketListItem)
 
-    fun getSortedOfferbookMarketItems(): List<MarketListItem> = offerbookMarketItems.value
-        .sortedWith(
-            compareByDescending<MarketListItem> { it.numOffers.value }
-                .thenByDescending { mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) } // [1]
-                .thenBy { item ->
-                    if (!mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) item.market.quoteCurrencyName
-                    else null // Null values will naturally be sorted together
-                }
-        )
 
     // [1] thenBy doesn’t work as expected for boolean expressions because true and false are
     // sorted alphabetically (false before true), thus we use thenByDescending

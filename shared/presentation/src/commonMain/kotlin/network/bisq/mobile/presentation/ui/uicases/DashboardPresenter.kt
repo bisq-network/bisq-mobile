@@ -35,7 +35,7 @@ open class DashboardPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         collectUI(offersServiceFacade.offerbookMarketItems) { items ->
-            _offersOnline.value = items.sumOf { it.numOffers.value }
+            _offersOnline.value = items.sumOf { it.numOffers }
         }
         collectUI(profileStatsServiceFacade.publishedProfilesCount) { count ->
             _publishedProfiles.value = count
