@@ -48,7 +48,9 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.S
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.SellerStateMainChain3bPresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.TradeStatesProvider
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.AboutPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.IAboutPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
@@ -97,6 +99,8 @@ val presentationModule = module {
     single { TabContainerPresenter(get(), get(), get()) } bind ITabContainerPresenter::class
 
     single<SettingsPresenter> { SettingsPresenter(get(), get()) } bind ISettingsPresenter::class
+
+    single<AboutPresenter> { AboutPresenter(get()) } bind IAboutPresenter::class
 
     single<UserProfileSettingsPresenter> {
         UserProfileSettingsPresenter(
