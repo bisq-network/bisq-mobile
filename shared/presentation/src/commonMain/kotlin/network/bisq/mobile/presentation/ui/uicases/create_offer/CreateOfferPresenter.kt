@@ -79,6 +79,7 @@ class CreateOfferPresenter(
 
     fun onStartCreateOffer() {
         createOfferModel = CreateOfferModel()
+        marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
 
         createOfferModel.apply {
             marketPriceServiceFacade.selectedMarketPriceItem.value?.let {
