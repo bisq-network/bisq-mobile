@@ -135,7 +135,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
     RememberPresenterLifecycle(presenter, {
         if (!isWorkflow) {
-            menuPath.add((menuTree as MenuItem.Parent).children[4])
+            menuPath.add((menuTree as MenuItem.Parent).children[3])
         }
     })
 

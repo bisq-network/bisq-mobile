@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
@@ -21,7 +20,6 @@ open class SettingsPresenter(
             MenuItem.Leaf(label = "mobile.settings.general".i18n(), route = Routes.GeneralSettings),
             MenuItem.Leaf(label = "user.userProfile".i18n(), route = Routes.UserProfileSettings),
             MenuItem.Leaf(label = "user.paymentAccounts".i18n(), route = Routes.PaymentAccountSettings),
-            MenuItem.Leaf(label = "mobile.settings.about".i18n(), route = Routes.About),
         )
         return MenuItem.Parent(
             label = "Bisq",
@@ -31,6 +29,7 @@ open class SettingsPresenter(
 
     protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
         menuItems.add(MenuItem.Leaf("mobile.settings.trustedNode".i18n(), Routes.TrustedNodeSettings))
+        menuItems.add(MenuItem.Leaf(label = "mobile.settings.about".i18n(), route = Routes.About))
         return menuItems.toList()
     }
 
