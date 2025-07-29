@@ -25,10 +25,6 @@ import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -45,7 +41,6 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.repository.UserRepository
-import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import java.util.Date
@@ -56,7 +51,7 @@ class NodeOffersServiceFacade(
     applicationService: AndroidApplicationService.Provider,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val userRepository: UserRepository
-) : ServiceFacade(), OffersServiceFacade {
+) : OffersServiceFacade() {
 
     // Dependencies
     private val userIdentityService: UserIdentityService by lazy { applicationService.userService.get().userIdentityService }
@@ -69,28 +64,6 @@ class NodeOffersServiceFacade(
 //  TODO restore for usage of v2.1.8
 //    private val bisqEasyOfferbookMessageService: BisqEasyOfferbookMessageService by lazy { applicationService.bisqEasyService.get().bisqEasyOfferbookMessageService }
 
-    // Properties
-    private val _offerbookListItems = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
-    override val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> get() = _offerbookListItems
-
-    private val _selectedOfferbookMarket = MutableStateFlow(OfferbookMarket.EMPTY)
-    override val selectedOfferbookMarket: StateFlow<OfferbookMarket> get() = _selectedOfferbookMarket
-
-    private val _offerbookMarketItems = MutableStateFlow<List<MarketListItem>>(emptyList())
-    override val offerbookMarketItems: StateFlow<List<MarketListItem>> get() = _offerbookMarketItems
-
-    override val sortedOfferbookMarketItems: StateFlow<List<MarketListItem>> = offerbookMarketItems.map { list -> list.sortedWith(
-        compareByDescending<MarketListItem> { it.numOffers }
-            .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
-            .thenBy { item ->
-                if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) item.market.quoteCurrencyName
-                else null
-            }
-    )}.stateIn(
-        serviceScope,
-        SharingStarted.WhileSubscribed(5_000, 10_000),
-        emptyList()
-    )
 
     // Misc
     private var selectedChannel: BisqEasyOfferbookChannel? = null
@@ -105,7 +78,7 @@ class NodeOffersServiceFacade(
     // Life cycle
     override fun activate() {
         log.d { "Activating NodeOffersServiceFacade" }
-        super<ServiceFacade>.activate()
+        super<OffersServiceFacade>.activate()
 
         observeSelectedChannel()
         observeMarketPrice()
@@ -128,7 +101,7 @@ class NodeOffersServiceFacade(
         numOffersObservers.forEach { it.dispose() }
         log.d { "NodeOffersServiceFacade deactivated" }
 
-        super<ServiceFacade>.deactivate()
+        super<OffersServiceFacade>.deactivate()
     }
 
     // API

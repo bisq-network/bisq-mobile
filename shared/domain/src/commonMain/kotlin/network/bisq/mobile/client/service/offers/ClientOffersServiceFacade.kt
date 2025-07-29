@@ -1,12 +1,7 @@
 package network.bisq.mobile.client.service.offers
 
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -21,7 +16,6 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.repository.UserRepository
-import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 
@@ -30,30 +24,7 @@ class ClientOffersServiceFacade(
     private val userRepository: UserRepository,
     private val apiGateway: OfferbookApiGateway,
     private val json: Json
-) : ServiceFacade(), OffersServiceFacade {
-
-    // Properties
-    private val _offerbookListItems = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
-    override val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> get() = _offerbookListItems
-
-    private val _selectedOfferbookMarket = MutableStateFlow(OfferbookMarket.EMPTY)
-    override val selectedOfferbookMarket: StateFlow<OfferbookMarket> get() = _selectedOfferbookMarket //todo make nullable
-
-    private val _offerbookMarketItems: MutableStateFlow<List<MarketListItem>> = MutableStateFlow(emptyList())
-    override val offerbookMarketItems: StateFlow<List<MarketListItem>> get() = _offerbookMarketItems
-
-    override val sortedOfferbookMarketItems: StateFlow<List<MarketListItem>> = offerbookMarketItems.map { list -> list.sortedWith(
-        compareByDescending<MarketListItem> { it.numOffers }
-            .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
-            .thenBy { item ->
-                if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) item.market.quoteCurrencyName
-                else null
-            }
-    )}.stateIn(
-        serviceScope,
-        SharingStarted.WhileSubscribed(5_000, 10_000),
-        emptyList()
-    )
+) : OffersServiceFacade() {
 
     // Misc
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
@@ -63,7 +34,7 @@ class ClientOffersServiceFacade(
 
     // Life cycle
     override fun activate() {
-        super<ServiceFacade>.activate()
+        super<OffersServiceFacade>.activate()
 
         observeMarketPrice()
         observeAvailableMarkets()
@@ -72,7 +43,7 @@ class ClientOffersServiceFacade(
     override fun deactivate() {
         _offerbookMarketItems.value = emptyList()
         hasSubscribedToOffers.value = false
-        super<ServiceFacade>.deactivate()
+        super<OffersServiceFacade>.deactivate()
     }
 
     // API
