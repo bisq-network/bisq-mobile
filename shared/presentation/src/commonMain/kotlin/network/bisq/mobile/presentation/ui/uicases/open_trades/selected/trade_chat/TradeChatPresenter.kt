@@ -1,10 +1,12 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat
 
 import androidx.compose.foundation.lazy.LazyListState
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.TradeReadState
@@ -21,6 +23,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class TradeChatPresenter(
     mainPresenter: MainPresenter,
@@ -123,6 +126,10 @@ class TradeChatPresenter(
     }
 
     fun onReportUser(message: BisqEasyOpenTradeMessageModel) {
+    }
+
+    fun onOpenChatRules() {
+        navigateTo(Routes.ChatRules)
     }
 
     fun onDontShowAgainChatRulesWarningBox() {

@@ -35,6 +35,8 @@ enum class Routes(val title: String) {
 
     TradeChat(title = "trade_chat"),
 
+    ChatRules(title = "chat_rules"),
+
     GeneralSettings(title = "general_settings"),
     UserProfileSettings(title = "user_profile_settings"),
     PaymentAccountSettings(title = "payment_account_settings"),
