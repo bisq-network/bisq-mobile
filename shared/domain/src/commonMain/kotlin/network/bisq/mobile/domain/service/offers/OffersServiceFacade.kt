@@ -22,7 +22,7 @@ abstract class OffersServiceFacade : ServiceFacade(), LifeCycleAware {
     val offerbookListItems: StateFlow<List<OfferItemPresentationModel>> get() = _offerbookListItems
 
     protected val _selectedOfferbookMarket = MutableStateFlow(OfferbookMarket.EMPTY)
-    val selectedOfferbookMarket: StateFlow<OfferbookMarket> get() = _selectedOfferbookMarket //todo make nullable?
+    val selectedOfferbookMarket: StateFlow<OfferbookMarket> get() = _selectedOfferbookMarket
 
     protected val _offerbookMarketItems = MutableStateFlow<List<MarketListItem>>(emptyList())
     val offerbookMarketItems: StateFlow<List<MarketListItem>> get() = _offerbookMarketItems
