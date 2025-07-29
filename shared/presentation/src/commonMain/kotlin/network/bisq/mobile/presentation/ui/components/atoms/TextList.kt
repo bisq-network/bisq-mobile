@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -18,6 +19,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
  * @param vSpacing Vertical spacing between list items.
  * @param regex Regex to split the text.
  * @param mark Optional mark string for all items. If null, uses getMark.
+ * @param getMark Function to generate mark for each item (used when mark is null).
  */
 @Composable
 fun TextList(
@@ -30,8 +32,9 @@ fun TextList(
     getMark: (Int) -> String = { "$it. " },
     modifier: Modifier = Modifier,
 ) {
-    val list = text.split(regex.toRegex())
-    if (list.size == 1 && list[0] == text) {
+    val compiledRegex = remember(regex) { regex.toRegex() }
+    val list = text.split(compiledRegex).filter { it.isNotBlank() }
+    if (list.isEmpty() || (list.size == 1 && list[0] == text)) {
         // Single item, render as plain text
         style(text, modifier)
         return
@@ -42,10 +45,9 @@ fun TextList(
     ) {
         var i = 0
         for (item in list) {
-            val textContent = item.trimStart()
-            if (textContent.isEmpty()) continue
+            val content = item.trim()
+            if (content.isEmpty()) continue
             i++
-            val content = textContent.trimEnd()
             val markString = mark ?: getMark(i)
             Row {
                 style(markString, Modifier)
@@ -77,13 +79,16 @@ fun UnorderedTextList(
   )
 }
 
+/**
+ * Renders an ordered (numbered) list. Note: Original numbering is ignored and items are renumbered starting from 1.
+ */
 @Composable
 fun OrderedTextList(
   text: String,
   style: @Composable (String, Modifier) -> Unit = { t, m -> BisqText.baseRegular(text = t, modifier = m) },
   gap: Dp = BisqUIConstants.ScreenPaddingHalfQuarter,
   vSpacing: Dp = BisqUIConstants.ScreenPaddingHalfQuarter,
-  regex: String = "\\d+\\.\\s+",
+  regex: String = "\\d+\\.\\s*",
   modifier: Modifier = Modifier,
 ) {
   TextList(
