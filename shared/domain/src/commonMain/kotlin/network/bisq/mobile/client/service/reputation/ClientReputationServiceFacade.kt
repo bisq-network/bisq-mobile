@@ -52,10 +52,9 @@ class ClientReputationServiceFacade(
 
     override suspend fun getProfileAge(userProfileId: String): Result<Long?> {
         return try {
-            // TODO: Implement HTTP API call to get profile age from bisq2 backend
-            // For now, return null to indicate profile age is not available
-            Result.success(null)
+            apiGateway.getProfileAge(userProfileId)
         } catch (e: Exception) {
+            log.e(e) { "Failed to get profile age for userId=$userProfileId" }
             Result.failure(e)
         }
     }

@@ -209,7 +209,7 @@ val clientModule = module {
 
     single<LanguageServiceFacade> { ClientLanguageServiceFacade() }
 
-    single { ReputationApiGateway(get()) }
+    single { ReputationApiGateway(get(), get()) }
     single<ReputationServiceFacade> { ClientReputationServiceFacade(get(), get()) }
 
     single { UserProfileStats(get(), get()) }
