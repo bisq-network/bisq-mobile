@@ -10,4 +10,11 @@ interface ReputationServiceFacade : LifeCycleAware {
 
     suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO>
 
+    /**
+     * Get the profile age (creation timestamp) for a user profile
+     * @param userProfileId The user profile ID
+     * @return The profile creation timestamp in milliseconds, or null if not available
+     */
+    suspend fun getProfileAge(userProfileId: String): Result<Long?>
+
 }

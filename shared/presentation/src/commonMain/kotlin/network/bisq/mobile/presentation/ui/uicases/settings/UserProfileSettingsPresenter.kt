@@ -68,12 +68,14 @@ class UserProfileSettingsPresenter(
             val user = withContext(IODispatcher) { userRepository.fetch() }
             val userProfile = withContext(IODispatcher) { userProfileServiceFacade.getSelectedUserProfile() }
             userProfile?.let {
-                setProfileAge(it)
                 setProfileId(it)
                 setBotId(it)
                 setNickname(it)
                 setStatement(it)
                 setTradeTerms(it)
+
+                val profileAge = withContext(IODispatcher) { reputationServiceFacade.getProfileAge(it.id) }
+                setProfileAge(profileAge.getOrNull())
             }
             val reputationProfileId = userProfile?.id ?: DEFAULT_UNKNOWN_VALUE
             val reputation = withContext(IODispatcher) { reputationServiceFacade.getReputation(reputationProfileId) }
@@ -120,15 +122,17 @@ class UserProfileSettingsPresenter(
         _profileId.value = userProfile.id
     }
 
-    private fun setProfileAge(userProfile: UserProfileVO) {
-        userProfile.publishDate.let { pd ->
-            _profileAge.value = DateUtils.periodFrom(pd).let {
+    private fun setProfileAge(profileAgeTimestamp: Long?) {
+        if (profileAgeTimestamp != null) {
+            _profileAge.value = DateUtils.periodFrom(profileAgeTimestamp).let {
                 listOfNotNull(
                     if (it.first > 0) "${it.first} years" else null,
                     if (it.second > 0) "${it.second} months" else null,
                     if (it.third > 0) "${it.third} days" else null
                 ).ifEmpty { listOf("less than a day") }.joinToString(", ")
             }
+        } else {
+            _profileAge.value = DEFAULT_UNKNOWN_VALUE
         }
     }
 
