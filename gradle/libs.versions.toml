@@ -36,6 +36,7 @@ androidx-constraintlayout = "2.1.4"
 androidx-core-ktx = "1.13.1"
 androidx-espresso-core = "3.6.1"
 androidx-material = "1.12.0"
+androidx-core-splashscreen = "1.0.0"
 
 desugar_jdk_libs = "2.1.5"
 roboelectric = "4.10.3"
@@ -115,6 +116,7 @@ androidx-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manife
 
 #kotlin-test-junit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
 androidx-core = { group = "androidx.core", name = "core", version.ref = "androidx-core" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "androidx-core-splashscreen" }
 #androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidx-core-ktx" }
 roboelectric = { group = "org.robolectric", name = "robolectric", version.ref = "roboelectric" }
 androidx-test = { group = "androidx.test", name = "core", version.ref = "androidx-test" }

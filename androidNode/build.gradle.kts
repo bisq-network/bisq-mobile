@@ -288,6 +288,8 @@ dependencies {
     implementation(libs.kmp.tor.resource.exec)
 
     coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+    implementation(libs.androidx.core.splashscreen)
 }
 
 // ensure tests run on the same Java version as the main code

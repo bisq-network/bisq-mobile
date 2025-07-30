@@ -132,6 +132,8 @@ dependencies {
     // FIXME hack to avoid the issue that org.slf4j is not found as we exclude it in shared
     implementation(libs.ktor.client.cio)
     debugImplementation(compose.uiTooling)
+
+    implementation(libs.androidx.core.splashscreen)
 }
 
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {
