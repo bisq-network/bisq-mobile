@@ -7,7 +7,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
-
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -40,16 +39,6 @@ class ClientReputationServiceFacade(
         super<ServiceFacade>.deactivate()
     }
 
-    // API
-    override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
-        val reputation = reputationByUserProfileId.value[userProfileId]
-        return when {
-            BuildConfig.IS_DEBUG -> reputationDevStub(userProfileId)
-            reputation == null -> Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not cached yet"))
-            else -> Result.success(reputation)
-        }
-    }
-
     override suspend fun getProfileAge(userProfileId: String): Result<Long?> {
         return try {
             apiGateway.getProfileAge(userProfileId)
@@ -59,41 +48,17 @@ class ClientReputationServiceFacade(
         }
     }
 
-    private fun reputationDevStub(userProfileId: String): Result<ReputationScoreVO> {
-        val reputation = reputationByUserProfileId.value[userProfileId]
-        // Hardcoded rep for dev/testing
-        // val myId = "f346be"
-        val myId = "7730e" // replace with mobile User's ID
-        val bobId = "e35fe38" // replace with bisq2 user's ID
-        return when {
-            userProfileId.startsWith(myId) -> {
-                Result.success(
-                    ReputationScoreVO(
-                        totalScore = 7000,  // Default value will be 0, as bisq-mobile user wont have any rep to start with
-                        // Try with different values: 0, <1200, 1200, 1200+
-                        fiveSystemScore = 3.5, ranking = 10
-                    )
-                )
-            }
-
-            userProfileId.startsWith(bobId) -> {
-                Result.success(
-                    ReputationScoreVO(
-                        totalScore = 10000, // Default value is 0, as devModeReputationScore set is bisq2, is not propagating to mobile.
-                        fiveSystemScore = 4.2, ranking = 3
-                    )
-                )
-            }
-
-            reputation == null -> {
-                Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not cached yet"))
-            }
-
-            else -> {
-                log.w { "Dev stuff for $userProfileId not setup, returning current network reputation" }
-                Result.success(reputation)
-            }
+    // API
+    override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
+        // We do not have access to the config data, thus we check with BuildConfig.IS_DEBUG if we are in dev mode and if so,
+        // we request the reputation score from the API instead of looking up the MutableStateFlow field which would contain only
+        // scores of profiles which have real reputation. By calling the getReputationScore on the backend we will get the
+        // devModeReputationScore in case the user has set that at the backend apps config and is in devMode.
+        if (BuildConfig.IS_DEBUG) {
+            return apiGateway.getReputationScore(userProfileId)
         }
+        return reputationByUserProfileId.value[userProfileId]?.let { Result.success(it) }
+            ?: Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not found"))
     }
 
     // Private

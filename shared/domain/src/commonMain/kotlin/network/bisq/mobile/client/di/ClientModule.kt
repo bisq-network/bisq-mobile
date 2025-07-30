@@ -23,10 +23,10 @@ import network.bisq.mobile.client.service.mediation.ClientMediationServiceFacade
 import network.bisq.mobile.client.service.mediation.MediationApiGateway
 import network.bisq.mobile.client.service.network_stats.ClientProfileStatsServiceFacade
 import network.bisq.mobile.client.service.network_stats.UserProfileStats
-import network.bisq.mobile.client.service.reputation.ReputationApiGateway
 import network.bisq.mobile.client.service.offers.ClientOffersServiceFacade
 import network.bisq.mobile.client.service.offers.OfferbookApiGateway
 import network.bisq.mobile.client.service.reputation.ClientReputationServiceFacade
+import network.bisq.mobile.client.service.reputation.ReputationApiGateway
 import network.bisq.mobile.client.service.settings.ClientSettingsServiceFacade
 import network.bisq.mobile.client.service.settings.SettingsApiGateway
 import network.bisq.mobile.client.service.trades.ClientTradesServiceFacade

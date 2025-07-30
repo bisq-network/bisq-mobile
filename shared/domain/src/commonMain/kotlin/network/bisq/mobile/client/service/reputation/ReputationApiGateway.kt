@@ -8,13 +8,10 @@ import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScor
 import network.bisq.mobile.domain.utils.Logging
 
 class ReputationApiGateway(
+    private val webSocketApiClient: WebSocketApiClient,
     private val webSocketClientProvider: WebSocketClientProvider,
-    private val webSocketApiClient: WebSocketApiClient
 ) : Logging {
     private val basePath = "reputation"
-    suspend fun getReputationScore(userProfileId: String): Result<ReputationScoreVO> {
-        return webSocketApiClient.get("$basePath/score/$userProfileId")
-    }
 
     suspend fun getProfileAge(userProfileId: String): Result<Long?> {
         return webSocketApiClient.get("$basePath/profile-age/$userProfileId")
@@ -27,5 +24,9 @@ class ReputationApiGateway(
             log.e(e) { "Failed to subscribe to reputation events: ${e.message}" }
             throw e
         }
+    }
+
+    suspend fun getReputationScore(userProfileId: String): Result<ReputationScoreVO> {
+        return webSocketApiClient.get("$basePath/score/$userProfileId")
     }
 }
