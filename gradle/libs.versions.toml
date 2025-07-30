@@ -36,7 +36,7 @@ androidx-constraintlayout = "2.1.4"
 androidx-core-ktx = "1.13.1"
 androidx-espresso-core = "3.6.1"
 androidx-material = "1.12.0"
-androidx-core-splashscreen = "1.0.0"
+androidx-core-splashscreen = "1.0.1"
 
 desugar_jdk_libs = "2.1.5"
 roboelectric = "4.10.3"
