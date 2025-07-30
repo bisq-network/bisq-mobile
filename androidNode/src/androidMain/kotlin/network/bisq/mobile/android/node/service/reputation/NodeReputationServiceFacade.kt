@@ -1,6 +1,6 @@
 package network.bisq.mobile.android.node.service.reputation
 
-import bisq.common.network.TransportType
+import bisq.common.application.DevMode
 import bisq.common.observable.Pin
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.service.ServiceFacade
@@ -42,12 +41,12 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
 
     // API
     override suspend fun getReputation(userProfileId: String): Result<ReputationScoreVO> {
-        val reputation = reputationByUserProfileId.value[userProfileId]
-        return when {
-            BuildNodeConfig.IS_DEBUG && !isExclusivelyTorNetwork() -> reputationDevStub(userProfileId)
-            reputation == null -> Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not cached yet"))
-            else -> Result.success(reputation)
+        val score = when {
+            useDevModeReputationScore() -> provideDevModeReputationScore(userProfileId)
+            else -> reputationByUserProfileId.value[userProfileId]
         }
+        return score?.let { Result.success(it) }
+            ?: Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not found"))
     }
 
     override suspend fun getProfileAge(userProfileId: String): Result<Long?> {
@@ -75,64 +74,23 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
         }
     }
 
-    private fun reputationDevStub(userProfileId: String): Result<ReputationScoreVO> {
-        val reputation = reputationByUserProfileId.value[userProfileId]
-        // Hardcoded rep for dev/testing
-//        val myId = "f346be"
-        val myId = "730765" // replace with mobile User's ID
-        val bobId = "e35fe38" // replace with bisq2 user's ID
-        return when {
-            userProfileId.startsWith(myId) -> {
-                Result.success(
-                    ReputationScoreVO(
-                        totalScore = 25000,  // Default value will be 0, as bisq-mobile user wont have any rep to start with
-                        // Try with different values: 0, <1200, 1200, 1200+
-                        fiveSystemScore = 3.5,
-                        ranking = 10
-                    )
-                )
-            }
-            userProfileId.startsWith(bobId) -> {
-                Result.success(
-                    ReputationScoreVO(
-                        totalScore = 10000, // Default value is 0, as devModeReputationScore set is bisq2, is not propagating to mobile.
-                        fiveSystemScore = 4.2,
-                        ranking = 3
-                    )
-                )
-            }
-            reputation == null -> {
-                Result.failure(NoSuchElementException("Reputation for userId=$userProfileId not cached yet"))
-            }
-            else -> {
-                log.w { "Dev stuff for $userProfileId not setup, returning current network reputation" }
-                Result.success(reputation)
-            }
-        }
-    }
+    private fun useDevModeReputationScore() = DevMode.isDevMode() && DevMode.devModeReputationScore() > 0L
 
-    /**
-     * Check if the current network is using Tor transport
-     * TODO this could be uplifted to the ServiceFacade base class
-     */
-    private fun isExclusivelyTorNetwork(): Boolean {
-        return try {
-            val applicationServiceInstance = applicationService.applicationService
-            val networkService = applicationServiceInstance.networkService
-            val supportedTransportTypes = networkService.supportedTransportTypes
-            val torSupported = supportedTransportTypes.size == 1 && supportedTransportTypes.contains(TransportType.TOR)
-            log.d { "🔍 Reputation: Checking if network is Tor" }
-            log.d { "   Supported transport types: $supportedTransportTypes" }
-            log.d { "   Tor network: $torSupported" }
-            torSupported
-        } catch (e: Exception) {
-            log.w(e) { "⚠️ Reputation: Could not check Tor network status, defaulting to false" }
-            false // Default to false (non-Tor) to allow dev stub if check fails
+    // If we have set devModeReputationScore and if we are in dev mode we override the real reputation score.
+    // This code would get provided by reputationService.findReputationScore but as we use the observer and the MutableStateFlow
+    // We do not get not existing reputation values, thus we make the call here and provide the result to the MutableStateFlow field.
+    private fun provideDevModeReputationScore(userProfileId: String): ReputationScoreVO? {
+        return reputationService.findReputationScore(userProfileId)?.get()?.let {
+            Mappings.ReputationScoreMapping.fromBisq2Model(it)
+        }?.also {
+            _reputationByUserProfileId.update { current ->
+                current + (userProfileId to it)
+            }
         }
     }
 
     // Private
-    private suspend fun observeReputation() {
+    private fun observeReputation() {
         reputationChangePin?.unbind()
         reputationChangePin = reputationService.userProfileIdWithScoreChange.addObserver { userProfileId ->
             try {
