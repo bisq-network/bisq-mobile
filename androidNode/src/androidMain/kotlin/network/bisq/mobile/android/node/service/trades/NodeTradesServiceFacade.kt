@@ -148,6 +148,8 @@ class NodeTradesServiceFacade(
         tradesPin?.unbind()
 
         unbindAllPinsByTradeId()
+        _openTradeItems.value = emptyList()
+        _selectedTrade.value = null
 
         super<ServiceFacade>.deactivate()
     }
