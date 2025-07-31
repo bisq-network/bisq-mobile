@@ -47,6 +47,7 @@ fun BisqDropDown(
 ) {
     val showError = remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    var errorDismissJob by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
     var expanded by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
     var selected by remember(items, values) {
@@ -71,7 +72,8 @@ fun BisqDropDown(
                 if (limitReached) {
                     showError.value = true
 
-                    coroutineScope.launch {
+                    errorDismissJob?.cancel()
+                    errorDismissJob = coroutineScope.launch {
                         delay(3000)
                         showError.value = false
                     }
@@ -145,7 +147,7 @@ fun BisqDropDown(
                 text = "mobile.components.dropdown.maxSelection".i18n(maxSelectionLimit.toString()), // "Maximum of {0} items can be selected",
                 modifier = Modifier.padding(
                     start = BisqUIConstants.ScreenPaddingQuarter,
-                    top = BisqUIConstants.ScreenPadding1px,
+                    top = BisqUIConstants.ScreenPadding1,
                     bottom = BisqUIConstants.ScreenPaddingQuarter
                 ),
                 color = BisqTheme.colors.danger
@@ -155,7 +157,7 @@ fun BisqDropDown(
                 text = helpText,
                 modifier = Modifier.padding(
                     start = BisqUIConstants.ScreenPaddingQuarter,
-                    top = BisqUIConstants.ScreenPadding1px,
+                    top = BisqUIConstants.ScreenPadding1,
                     bottom = BisqUIConstants.ScreenPaddingQuarter
                 ),
             )

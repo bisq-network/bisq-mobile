@@ -153,8 +153,8 @@ open class GeneralSettingsPresenter(
             try {
                 _powFactor.value = value
                 if (isValid) {
-                    val _value = value.toDoubleOrNullLocaleAware()
-                    settingsServiceFacade.setDifficultyAdjustmentFactor(_value ?: 0.0)
+                    val _value = value.toIntOrNull()
+                    settingsServiceFacade.setDifficultyAdjustmentFactor(_value?.toDouble() ?: 0.0)
                 }
             } finally {
                 enableInteractive()
@@ -212,7 +212,7 @@ open class GeneralSettingsPresenter(
         _tradePriceTolerance.value = NumberFormatter.format(settings.maxTradePriceDeviation * 100)
         _useAnimations.value = settings.useAnimations
         _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData.toString()
-        _powFactor.value = NumberFormatter.format(settingsServiceFacade.difficultyAdjustmentFactor.value).split(".")[0]
+        _powFactor.value = settingsServiceFacade.difficultyAdjustmentFactor.value.toInt().toString()
         _ignorePow.value = settingsServiceFacade.ignoreDiffAdjustmentFromSecManager.value
     }
 }

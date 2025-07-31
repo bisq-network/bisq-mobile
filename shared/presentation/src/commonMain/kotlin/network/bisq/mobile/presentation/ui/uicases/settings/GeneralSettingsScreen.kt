@@ -119,6 +119,7 @@ fun GeneralSettingsScreen() {
         BisqHDivider()
 
         /*
+        TODO: Will enable later
         BisqText.h4Regular("settings.notification.options".i18n())
 
         BisqGap.V1()

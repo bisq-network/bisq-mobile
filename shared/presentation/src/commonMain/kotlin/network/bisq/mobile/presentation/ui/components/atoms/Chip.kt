@@ -55,9 +55,9 @@ fun BisqChip(
             selectedTrailingIconColor = BisqTheme.colors.primary,
             selectedContainerColor = BisqTheme.colors.secondary,
             disabledContainerColor = BisqTheme.colors.secondary,
-            disabledLabelColor = BisqTheme.colors.light_grey10,
-            disabledLeadingIconColor = BisqTheme.colors.primary,
-            disabledTrailingIconColor = BisqTheme.colors.primary,
+            disabledLabelColor = BisqTheme.colors.light_grey10.copy(alpha = 0.4f),
+            disabledLeadingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
+            disabledTrailingIconColor = BisqTheme.colors.primary.copy(alpha = 0.4f),
             disabledSelectedContainerColor = BisqTheme.colors.secondary,
         )
     }
