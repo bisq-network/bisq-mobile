@@ -41,7 +41,8 @@ fun CreateOfferTradePriceSelectorScreen() {
     val min = -10f
     val max = 50f
 
-    val sliderPosition = ((formattedPercentagePrice.toFloat() - min) / (max - min)).coerceIn(0f, 1f)
+    val percentagePrice = formattedPercentagePrice.toDoubleOrNullLocaleAware()?.toFloat() ?: 0f
+    val sliderPosition = ((percentagePrice - min) / (max - min)).coerceIn(0f, 1f)
 
     fun onSliderValueChange(newValue: Float) {
         val price = min + newValue * (max - min)
