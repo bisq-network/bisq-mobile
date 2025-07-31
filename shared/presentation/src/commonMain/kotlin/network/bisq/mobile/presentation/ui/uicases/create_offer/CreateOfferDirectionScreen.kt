@@ -30,7 +30,7 @@ fun CreateOfferDirectionScreen() {
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.review.nextButton.createOffer".i18n(),
         stepIndex = 1,
-        stepsLength = 6,
+        stepsLength = 7,
         horizontalAlignment = Alignment.Start,
         showNextPrevButtons = false,
         shouldBlurBg = showSellerReputationWarning

@@ -260,7 +260,7 @@ class CreateOfferPricePresenter(
     fun onNext() {
         if (isValid(percentagePriceValue)) {
             commitToModel()
-            navigateTo(Routes.CreateOfferPaymentMethod)
+            navigateTo(Routes.CreateOfferQuoteSidePaymentMethod)
         }
     }
 

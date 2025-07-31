@@ -34,7 +34,7 @@ fun CreateOfferCurrencySelectorScreen() {
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.tradeWizard.market.title".i18n(),
         stepIndex = 2,
-        stepsLength = 6,
+        stepsLength = 7,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() },
         useStaticScaffold = true,

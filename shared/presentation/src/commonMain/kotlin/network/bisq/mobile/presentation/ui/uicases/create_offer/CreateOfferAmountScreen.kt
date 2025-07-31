@@ -43,7 +43,7 @@ fun CreateOfferAmountSelectorScreen() {
     MultiScreenWizardScaffold(
         "bisqEasy.openTrades.table.quoteAmount".i18n(),
         stepIndex = 3,
-        stepsLength = 6,
+        stepsLength = 7,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() },
         nextDisabled = !presenter.amountValid.collectAsState().value,
@@ -61,8 +61,7 @@ fun CreateOfferAmountSelectorScreen() {
 
         BisqText.h3Regular(
             text = presenter.headline,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.align(Alignment.CenterHorizontally)
+            modifier = Modifier.align(Alignment.Start)
         )
 
         BisqGap.V2()

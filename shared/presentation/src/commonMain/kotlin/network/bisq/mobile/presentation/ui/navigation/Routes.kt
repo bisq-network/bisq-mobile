@@ -20,7 +20,8 @@ enum class Routes(val title: String) {
     CreateOfferMarket(title = "create_offer_currency"),
     CreateOfferAmount(title = "create_offer_amount"),
     CreateOfferPrice(title = "create_offer_trade_price"),
-    CreateOfferPaymentMethod(title = "create_offer_payment_method"),
+    CreateOfferQuoteSidePaymentMethod(title = "create_offer_quote_side_payment_method"),
+    CreateOfferBaseSidePaymentMethod(title = "create_offer_base_side_payment_method"),
     CreateOfferReviewOffer(title = "create_offer_review_offer"),
 
     TabOfferbook(title = "tab_currencies"),

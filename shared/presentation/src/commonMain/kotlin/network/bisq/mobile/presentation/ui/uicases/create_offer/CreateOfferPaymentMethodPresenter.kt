@@ -90,16 +90,21 @@ class CreateOfferPaymentMethodPresenter(
         navigateToOfferList()
     }
 
-    fun onNext() {
-        if (isValid()) {
+    fun onQuoteSideNext() {
+        if (isQuoteSideValid()) {
+            commitToModel()
+            navigateTo(Routes.CreateOfferBaseSidePaymentMethod)
+        } else {
+            showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noFiatPaymentMethodSelected".i18n())
+        }
+    }
+
+    fun onBaseSideNext() {
+        if (isBaseSideValid()) {
             commitToModel()
             navigateTo(Routes.CreateOfferReviewOffer)
         } else {
-            if (selectedQuoteSidePaymentMethods.value.isEmpty()) {
-                showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noFiatPaymentMethodSelected".i18n())
-            } else if (selectedBaseSidePaymentMethods.value.isEmpty()) {
-                showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noBtcSettlementMethodSelected".i18n())
-            }
+            showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noBtcSettlementMethodSelected".i18n())
         }
     }
 
@@ -109,12 +114,14 @@ class CreateOfferPaymentMethodPresenter(
     }
 
     private fun commitToModel() {
-        if (isValid()) {
-            createOfferPresenter.commitPaymentMethod(selectedQuoteSidePaymentMethods.value, selectedBaseSidePaymentMethods.value)
-        }
+        createOfferPresenter.commitPaymentMethod(
+            selectedQuoteSidePaymentMethods.value,
+            selectedBaseSidePaymentMethods.value
+        )
     }
 
-    private fun isValid() = selectedQuoteSidePaymentMethods.value.isNotEmpty() && selectedBaseSidePaymentMethods.value.isNotEmpty()
+    private fun isQuoteSideValid() = selectedQuoteSidePaymentMethods.value.isNotEmpty()
+    private fun isBaseSideValid() = selectedBaseSidePaymentMethods.value.isNotEmpty()
 
     private fun getPaymentMethodsImagePaths(list: List<String>, directory: String) = list
         .map { paymentMethod ->

@@ -36,8 +36,8 @@ fun CreateOfferReviewOfferScreen() {
 
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.review.headline.maker".i18n(),
-        stepIndex = 6,
-        stepsLength = 6,
+        stepIndex = 7,
+        stepsLength = 7,
         prevOnClick = { presenter.onBack() },
         nextButtonText = "bisqEasy.tradeWizard.review.nextButton.createOffer".i18n(),
         nextOnClick = { presenter.onCreateOffer() },

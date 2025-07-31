@@ -17,7 +17,8 @@ import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountSelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferCurrencySelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferDirectionScreen
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPaymentMethodSelectorScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferSettlementMethodScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPaymentMethodScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferReviewOfferScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferTradePriceSelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideOverview
@@ -97,7 +98,8 @@ fun RootNavGraph(rootNavController: NavHostController) {
             Routes.CreateOfferMarket to { CreateOfferCurrencySelectorScreen() },
             Routes.CreateOfferAmount to { CreateOfferAmountSelectorScreen() },
             Routes.CreateOfferPrice to { CreateOfferTradePriceSelectorScreen() },
-            Routes.CreateOfferPaymentMethod to { CreateOfferPaymentMethodSelectorScreen() },
+            Routes.CreateOfferQuoteSidePaymentMethod to { CreateOfferPaymentMethodScreen() },
+            Routes.CreateOfferBaseSidePaymentMethod to { CreateOfferSettlementMethodScreen() },
             Routes.CreateOfferReviewOffer to { CreateOfferReviewOfferScreen() },
         )
         createOfferScreens.forEachIndexed { i: Int, (route, screen): Pair<Routes, @Composable () -> Unit> ->
