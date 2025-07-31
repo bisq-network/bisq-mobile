@@ -59,11 +59,14 @@ abstract class ConnectivityService : ServiceFacade() {
 
     /**
      * Starts monitoring connectivity every given period (ms). Default is 10 seconds.
+     * @param period of time in ms to check connectivity
+     * @param startDelay to delay the first check, default to 5 secs
      */
-    fun startMonitoring(period: Long = PERIOD) {
+    fun startMonitoring(period: Long = PERIOD, startDelay: Long = 5_000) {
         onStart()
         job?.cancel()
         job = launchIO {
+            delay(startDelay)
             while (true) {
                 checkConnectivity()
                 delay(period)
