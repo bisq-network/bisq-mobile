@@ -36,7 +36,7 @@ class ClientProfileStatsServiceFacade(
                                 WebSocketEventPayload.from(json, webSocketEvent)
                         val publishedProfiles = webSocketEventPayload.payload
                         statsMutex.withLock {
-                            _publishedProfilesCount.value = publishedProfiles
+                            _publishedProfilesCount.value = publishedProfiles ?: 0
                         }
                     } catch (e: Exception) {
                         log.e(e) { "Failed to process WebSocket event" }

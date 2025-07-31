@@ -35,11 +35,14 @@ open class DashboardPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         collectUI(offersServiceFacade.offerbookMarketItems) { items ->
-            _offersOnline.value = items.sumOf { it.numOffers }
+            val totalOffers = items?.sumOf { it.numOffers } ?: 0
+            _offersOnline.value = totalOffers
+            log.d { "DashboardPresenter: Updated offers online count: $totalOffers (items: ${items?.size ?: 0})" }
         }
         collectUI(profileStatsServiceFacade.publishedProfilesCount) { count ->
-            _publishedProfiles.value = count
-            log.d { "DashboardPresenter: NetworkStats publishedProfilesCount received: $count" }
+            val safeCount = count ?: 0
+            _publishedProfiles.value = safeCount
+            log.d { "DashboardPresenter: NetworkStats publishedProfilesCount received: $safeCount" }
         }
         collectUI(mainPresenter.languageCode) {
             marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()

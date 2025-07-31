@@ -33,8 +33,6 @@ class NumOffersObserver(
     }
 
     private fun updateNumOffers() {
-//        TODO restore for core version v2.1.8
-//        val count = bisqEasyOfferbookMessageService.getOffers(channel).count().toInt()
         val count = channel.chatMessages.stream()
             .filter { it.hasBisqEasyOffer() }
             .count().toInt()

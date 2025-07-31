@@ -356,9 +356,10 @@ class NodeOffersServiceFacade(
                 val numOffersObserver = NumOffersObserver(
                     channel,
                     { numOffers ->
+                        val safeNumOffers = numOffers ?: 0
                         // Rebuild the list immutably
                         itemsFlow.value = itemsFlow.value.map {
-                            if (it.market == marketVO) it.copy(numOffers = numOffers) else it
+                            if (it.market == marketVO) it.copy(numOffers = safeNumOffers) else it
                         }
                     },
                 )

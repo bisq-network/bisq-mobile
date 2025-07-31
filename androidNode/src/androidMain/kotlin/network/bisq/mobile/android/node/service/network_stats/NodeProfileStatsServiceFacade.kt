@@ -36,7 +36,7 @@ class NodeProfileStatsServiceFacade(
             val userService = applicationService.userService
             val userProfileService = userService.get().userProfileService
             publishedProfilesCountPin = userProfileService.numUserProfiles.addObserver { num ->
-                _publishedProfilesCount.value = num
+                _publishedProfilesCount.value = num ?: 0
                 log.d { "Published profiles count updated: ${_publishedProfilesCount.value}" }
             }
         }
