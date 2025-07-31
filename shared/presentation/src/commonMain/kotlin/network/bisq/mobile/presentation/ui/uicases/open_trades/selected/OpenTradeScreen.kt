@@ -39,7 +39,6 @@ fun OpenTradeScreen() {
     val buyerState4Presenter: BuyerState4Presenter = koinInject()
     val sellerState4Presenter: SellerState4Presenter = koinInject()
 
-    RememberPresenterLifecycle(presenter)
     val focusManager = LocalFocusManager.current
 
     val tradeAbortedBoxVisible by presenter.tradeAbortedBoxVisible.collectAsState()
