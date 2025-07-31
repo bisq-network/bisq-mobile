@@ -1,8 +1,16 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
 import androidx.compose.foundation.ScrollState
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -50,6 +58,9 @@ class OpenTradePresenter(
     private var tradeStateJob: Job? = null
     private var mediationJob: Job? = null
 
+    // TODO Protect from duplicate onViewAttached calls until https://github.com/bisq-network/bisq-mobile/issues/481 is fixed
+    private var onViewAttachedCalled = false
+
     init {
         _selectedTrade.value = tradesServiceFacade.selectedTrade.value
         launchUI {
@@ -63,6 +74,12 @@ class OpenTradePresenter(
     }
 
     override fun onViewAttached() {
+        // TODO Protect from duplicate onViewAttached calls until https://github.com/bisq-network/bisq-mobile/issues/481 is fixed
+        if (onViewAttachedCalled) {
+            return
+        }
+        onViewAttachedCalled = true
+
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
         val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
@@ -88,6 +105,9 @@ class OpenTradePresenter(
     }
 
     override fun onViewUnattaching() {
+        // TODO Protect from duplicate onViewAttached calls until https://github.com/bisq-network/bisq-mobile/issues/481 is fixed
+        onViewAttachedCalled = false
+
         _tradeAbortedBoxVisible.value = false
         _tradeProcessBoxVisible.value = false
         _isInMediation.value = false
