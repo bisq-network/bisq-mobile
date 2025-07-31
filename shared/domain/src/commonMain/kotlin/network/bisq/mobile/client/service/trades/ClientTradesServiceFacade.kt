@@ -4,7 +4,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.subscription.ModificationType
@@ -17,7 +16,6 @@ import network.bisq.mobile.domain.data.replicated.presentation.open_trades.Trade
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
-import network.bisq.mobile.domain.service.trades.TradeSynchronizationHelper
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 
 /**
@@ -74,8 +72,6 @@ class ClientTradesServiceFacade(
 
         openTradesSubscription.subscribe()
         tradePropertiesSubscription.subscribe()
-
-        launchTradeStateSync()
     }
 
     override fun deactivate() {
@@ -296,85 +292,6 @@ class ClientTradesServiceFacade(
         }
 
         return result
-    }
-
-    /**
-     * Synchronizes trade states after app restart to ensure we haven't missed any state changes
-     * while the app was killed.
-     *
-     * **Client Implementation**: Uses WebSocket re-subscription to force server to send fresh data.
-     * Also logs detailed trade state information for debugging.
-     *
-     * **Timing**: Uses shared TradeSynchronizationHelper logic optimized for ongoing trades:
-     * - Quick-progress states: sync after 30 seconds
-     * - All ongoing trades: s
-     * ync after 60 seconds
-     * - Long-running trades: sync after 5 minutes
-     */
-    private suspend fun synchronizeTradeStates() {
-        try {
-            log.i { "Starting client trade state synchronization after app restart" }
-
-            val currentTrades = _openTradeItems.value
-
-            // Log detailed trade information for debugging
-            currentTrades.forEach { trade ->
-                val state = trade.bisqEasyTradeModel.tradeState.value
-                val age = kotlinx.datetime.Clock.System.now().toEpochMilliseconds() - trade.bisqEasyTradeModel.takeOfferDate
-                log.i { "Current trade ${trade.shortTradeId} - state: $state, age: ${age / 1000}s" }
-            }
-
-            val tradesNeedingSync = TradeSynchronizationHelper.getTradesNeedingSync(currentTrades, isAppRestart = true)
-
-            TradeSynchronizationHelper.logSynchronizationActivity(currentTrades, tradesNeedingSync)
-
-            if (tradesNeedingSync.isEmpty()) {
-                log.d { "No trades need synchronization, but refreshing WebSocket once" }
-                refreshWebSocketSubscriptions()
-                return
-            }
-
-            // Refresh WebSocket subscriptions once to get fresh data
-            log.i { "Refreshing WebSocket subscriptions for ${tradesNeedingSync.size} trades needing sync" }
-            refreshWebSocketSubscriptions()
-
-            log.i { "Client trade state synchronization completed" }
-        } catch (e: Exception) {
-            log.e(e) { "Error during client trade state synchronization" }
-        }
-    }
-
-    /**
-     * Requests a trade state synchronization by re-subscribing to WebSocket topics.
-     *
-     * **How it works**: Re-subscribes to TRADES and TRADE_PROPERTIES topics to force
-     * the server to send fresh data. This is more reliable than chat messages because
-     * it directly requests current state from the server.
-     *
-     * **Why this works**: When a client re-subscribes, the server calls getJsonPayload()
-     * which returns the current state of all trades, ensuring we get the latest data.
-     *
-     * @param trade The trade to request synchronization for (currently syncs all trades)
-     */
-    private suspend fun requestTradeStateSync(trade: TradeItemPresentationModel) {
-        try {
-            val tradeId = trade.tradeId
-            log.d { "Requesting client sync via WebSocket re-subscription for trade $tradeId" }
-
-            // Re-subscribe to force server to send fresh data
-            refreshWebSocketSubscriptions()
-
-            log.d { "Client sync request completed for trade $tradeId" }
-        } catch (e: Exception) {
-            log.e(e) { "Error requesting client trade state sync for trade ${trade.tradeId}" }
-        }
-    }
-
-    private fun launchTradeStateSync() {
-        launchIO {
-            delay(TRADE_STATE_SYNC_DELAY)
-            synchronizeTradeStates()
-        }
     }
 
     /**

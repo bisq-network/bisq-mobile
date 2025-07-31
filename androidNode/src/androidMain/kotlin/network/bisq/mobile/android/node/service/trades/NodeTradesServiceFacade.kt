@@ -42,7 +42,6 @@ import network.bisq.mobile.domain.data.replicated.presentation.open_trades.Trade
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
-import network.bisq.mobile.domain.service.trades.TradeSynchronizationHelper
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
@@ -76,10 +75,6 @@ class NodeTradesServiceFacade(
     private val userRepository: UserRepository,
     applicationService: AndroidApplicationService.Provider
 ) : ServiceFacade(), TradesServiceFacade {
-
-    companion object {
-        private const val TRADE_STATE_SYNC_DELAY = 2000L
-    }
 
     // Dependencies
     private val marketPriceService: MarketPriceService by lazy { applicationService.bondedRolesService.get().marketPriceService }
@@ -128,8 +123,6 @@ class NodeTradesServiceFacade(
                 handleTradesCleared()
             }
         })
-
-        launchTradeStateSync()
 
         channelsPin = bisqEasyOpenTradeChannelService.channels.addObserver(object : CollectionObserver<BisqEasyOpenTradeChannel?> {
             override fun add(channel: BisqEasyOpenTradeChannel?) {
@@ -645,115 +638,5 @@ class NodeTradesServiceFacade(
         val trade = requireNotNull(bisqEasyTradeService.findTrade(tradeId).getOrNull()) { "Trade must not be null" }
         val userName = channel.myUserIdentity.userName
         return Triple(channel, trade, userName)
-    }
-
-    /**
-     * Synchronizes trade states after app restart to ensure we haven't missed any state changes
-     * while the app was killed.
-     *
-     * **Problem**: When the mobile app is killed while a trade is in progress, and the peer
-     * completes the trade from desktop, the mobile app doesn't receive notifications about
-     * the trade completion when it restarts. The trade remains stuck in an intermediate state
-     * until the user manually sends a chat message.
-     *
-     * **Root Cause**: Trade protocol messages and chat messages are separate systems. When the
-     * app is killed, trade completion messages may not be processed properly on restart. Chat
-     * activity triggers message processing, which is why sending a chat message "fixes" the issue.
-     *
-     * **Solution**: This method automatically identifies trades that might have missed state
-     * updates and sends sync requests via the chat system to trigger message processing.
-     *
-     * **Timing**: Uses shared TradeSynchronizationHelper logic optimized for ongoing trades:
-     * - Quick-progress states: sync after 30 seconds
-     * - All ongoing trades: sync after 60 seconds
-     * - Long-running trades: sync after 5 minutes
-     */
-    private suspend fun synchronizeTradeStates() {
-        try {
-            log.i { "Starting node trade state synchronization after app restart" }
-
-            // Convert Bisq trades to presentation models for shared logic
-            val currentTrades = _openTradeItems.value
-            val tradesNeedingSync = TradeSynchronizationHelper.getTradesNeedingSync(currentTrades, isAppRestart = true)
-
-            TradeSynchronizationHelper.logSynchronizationActivity(currentTrades, tradesNeedingSync)
-
-            if (tradesNeedingSync.isEmpty()) {
-                log.d { "No trades need synchronization" }
-                return
-            }
-
-            // Send sync requests for trades that need it
-            tradesNeedingSync.forEach { trade ->
-                try {
-                    // Find the corresponding Bisq trade
-                    val bisqTrade = bisqEasyTradeService.trades.find { it.id == trade.tradeId }
-                    if (bisqTrade != null) {
-                        requestTradeStateSync(bisqTrade)
-                    } else {
-                        log.w { "Could not find Bisq trade for ${trade.tradeId}" }
-                    }
-                } catch (e: Exception) {
-                    log.e(e) { "Error requesting sync for trade ${trade.tradeId}" }
-                }
-            }
-
-            log.i { "Node trade state synchronization completed" }
-        } catch (e: Exception) {
-            log.e(e) { "Error during node trade state synchronization" }
-        }
-    }
-
-    /**
-     * Gets the last activity timestamp for a trade.
-     * Currently uses the trade creation time as a baseline.
-     *
-     * @param trade The trade to get activity timestamp for
-     * @return The timestamp of the last known activity for this trade
-     */
-    private fun getLastTradeActivity(trade: BisqEasyTrade): Long {
-        // Use the trade's creation time as fallback
-        return trade.contract.takeOfferDate
-    }
-
-    private fun launchTradeStateSync() {
-        launchIO {
-            delay(TRADE_STATE_SYNC_DELAY)
-            synchronizeTradeStates()
-        }
-    }
-
-    /**
-     * Requests a trade state synchronization by sending a chat message.
-     *
-     * **How it works**: Sends a system log message via the existing chat infrastructure.
-     * This triggers the peer to process any pending trade protocol messages, effectively
-     * synchronizing the trade state without requiring manual user interaction.
-     *
-     * **Non-intrusive**: Uses the existing message processing pipeline and doesn't
-     * disrupt normal chat functionality.
-     *
-     * @param trade The trade to request synchronization for
-     */
-    private suspend fun requestTradeStateSync(trade: BisqEasyTrade) {
-        try {
-            val tradeId = trade.id
-            val channel = bisqEasyOpenTradeChannelService.findChannel(tradeId)
-
-            if (channel.isPresent) {
-                log.d { "Sending sync request for trade $tradeId" }
-
-                // Send a system message to trigger message processing
-                // This will cause any pending trade protocol messages to be processed
-                val syncMessage = "Synchronizing trade state..."
-                bisqEasyOpenTradeChannelService.sendTradeLogMessage(syncMessage, channel.get())
-
-                log.d { "Sync request sent for trade $tradeId" }
-            } else {
-                log.w { "No channel found for trade $tradeId, cannot request sync" }
-            }
-        } catch (e: Exception) {
-            log.e(e) { "Error requesting trade state sync for trade ${trade.id}" }
-        }
     }
 }
