@@ -30,6 +30,12 @@ object FiatPaymentRailUtil {
                 // We add NATIONAL_BANK to all others
                 fiatPaymentRail == FiatPaymentRailEnum.NATIONAL_BANK -> true
 
+                // Temporarily we won't show custom payment method
+                fiatPaymentRail == FiatPaymentRailEnum.CUSTOM -> false
+
+                // If a payment method don't have any countryCodes and currencyCodes, we add it for all countries
+                fiatPaymentRail.currencyCodes.isEmpty() && fiatPaymentRail.countryCodes.isEmpty() -> true
+
                 else -> fiatPaymentRail.supportsCurrency(currencyCode)
             }
         }

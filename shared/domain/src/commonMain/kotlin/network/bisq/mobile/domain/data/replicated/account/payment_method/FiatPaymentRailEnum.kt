@@ -19,9 +19,9 @@ package network.bisq.mobile.domain.data.replicated.account.payment_method
 enum class FiatPaymentRailEnum(val countryCodes: List<String> = emptyList(), val currencyCodes: List<String> = emptyList()) :
     PaymentRailEnum {
     CUSTOM(ArrayList(), ArrayList()),  // Custom defined payment rail by the user
-    SEPA(FiatPaymentRailUtil.sepaEuroCountries),
-    SEPA_INSTANT(FiatPaymentRailUtil.sepaEuroCountries),
-    ZELLE(listOf("US")),
+    SEPA(FiatPaymentRailUtil.sepaEuroCountries, listOf("EUR")),
+    SEPA_INSTANT(FiatPaymentRailUtil.sepaEuroCountries, listOf("EUR")),
+    ZELLE(listOf("US"), listOf("USD")),
     REVOLUT(FiatPaymentRailUtil.revolutCountries, FiatPaymentRailUtil.revolutCurrencies),
     WISE(FiatPaymentRailUtil.wiseCountries, FiatPaymentRailUtil.wiseCurrencies),
     NATIONAL_BANK(ArrayList(), ArrayList()),

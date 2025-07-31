@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -23,6 +24,22 @@ fun PaymentMethodCard(
     onToggle: (String) -> Unit,
 ) {
 
+    val selected by selectedPaymentMethods.collectAsState()
+
+    data class Entry(
+        val key: String,
+        val imagePath: String,
+        val displayName: String,
+        val isCustom: Boolean
+    )
+
+    val entries = availablePaymentMethods
+        .mapIndexed { idx, key ->
+            val (name, missing) = i18NPaymentMethod(key)
+            Entry(key, imagePaths.getOrElse(idx) { "" }, name, missing)
+        }
+        .sortedBy { it.displayName }
+
     Column(
         modifier = Modifier.padding(horizontal = 16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -34,19 +51,14 @@ fun PaymentMethodCard(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            repeat(availablePaymentMethods.size) { index ->
-                val paymentMethod = availablePaymentMethods[index]
-                val isSelected = selectedPaymentMethods.collectAsState().value.contains(paymentMethod)
-
-                val (paymenti18NName, missing) = i18NPaymentMethod(paymentMethod)
-
+            entries.forEachIndexed { index, entry ->
                 PaymentTypeCard(
-                    image = imagePaths[index],
-                    title = paymenti18NName,
-                    onClick = { onToggle(paymentMethod) },
-                    isSelected = isSelected,
+                    image = entry.imagePath,
+                    title = entry.displayName,
+                    onClick = { onToggle(entry.key) },
+                    isSelected = selected.contains(entry.key),
                     index = index + 1,
-                    isCustomPaymentMethod = missing
+                    isCustomPaymentMethod = entry.isCustom
                 )
             }
         }
