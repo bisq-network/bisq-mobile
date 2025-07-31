@@ -5,6 +5,8 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
@@ -20,7 +22,7 @@ class CreateOfferMarketPresenter(
     private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter) {
 
-    lateinit var headline: String
+    var headline: String
     var market: MarketVO? = null
     var marketListItem: MarketListItem? = null
 
@@ -30,15 +32,35 @@ class CreateOfferMarketPresenter(
         _searchText.value = newValue
     }
 
+    override fun onViewAttached() {
+        super.onViewAttached()
+
+        // wait for market items to be ready
+        disableInteractive()
+        collectIO(offersServiceFacade.offerbookMarketItems) { markets ->
+            if (markets.isNotEmpty()) {
+                enableInteractive()
+            }
+        }
+    }
 
     val marketListItemWithNumOffers: StateFlow<List<MarketListItem>> = combine(
         _searchText,
-        offersServiceFacade.sortedOfferbookMarketItems,
+        offersServiceFacade.offerbookMarketItems,
     ) { searchText, marketList ->
+        val sortedList = marketList.sortedWith(
+            compareByDescending<MarketListItem> { it.numOffers }
+                .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
+                .thenBy { item ->
+                    if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) item.market.quoteCurrencyName
+                    else null
+                }
+        )
+        
         if (searchText.isBlank()) {
-            marketList
+            sortedList
         } else {
-            marketList.filter {
+            sortedList.filter {
                 it.market.quoteCurrencyCode.contains(searchText, ignoreCase = true) ||
                         it.market.quoteCurrencyName.contains(searchText, ignoreCase = true)
             }

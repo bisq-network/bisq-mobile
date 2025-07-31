@@ -100,6 +100,7 @@ class ClientOffersServiceFacade(
             if (result.isFailure) {
                 result.exceptionOrNull()
                     ?.let { log.e { "GetMarkets request failed with exception $it" } }
+                log.w { "GetMarkets failed, market list will remain empty" }
                 return@launchIO
             }
 

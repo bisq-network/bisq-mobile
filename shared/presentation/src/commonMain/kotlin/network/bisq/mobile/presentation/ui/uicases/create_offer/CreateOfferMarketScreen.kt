@@ -1,9 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
@@ -27,6 +29,7 @@ fun CreateOfferCurrencySelectorScreen() {
 
     val searchText = presenter.searchText.collectAsState().value
     val filteredMarketList = presenter.marketListItemWithNumOffers.collectAsState().value
+    val isInteractive = presenter.isInteractive.collectAsState().value
 
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.tradeWizard.market.title".i18n(),
@@ -60,16 +63,22 @@ fun CreateOfferCurrencySelectorScreen() {
 
         BisqGap.V1()
 
-        LazyColumn(
-            modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
-        ) {
-            items(filteredMarketList) { item ->
-                CurrencyCard(
-                    item,
-                    isSelected = presenter.market == item.market,
-                    onClick = { presenter.onSelectMarket(item) }
-                )
+        if (isInteractive) {
+            LazyColumn(
+                modifier = Modifier.fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
+            ) {
+                items(filteredMarketList) { item ->
+                    CurrencyCard(
+                        item,
+                        isSelected = presenter.market == item.market,
+                        onClick = { presenter.onSelectMarket(item) }
+                    )
+                }
+            }
+        } else {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                CircularProgressIndicator()
             }
         }
 

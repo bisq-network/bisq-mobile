@@ -335,10 +335,21 @@ class OfferbookPresenter(
     fun createOffer() {
         disableInteractive()
         try {
-            val market = offersServiceFacade.selectedOfferbookMarket.value.market
+            val selectedMarket = offersServiceFacade.selectedOfferbookMarket.value.market
             createOfferPresenter.onStartCreateOffer()
-            createOfferPresenter.commitMarket(market)
-            createOfferPresenter.skipCurrency = true
+            
+            // Check if a market is already selected (not EMPTY)
+            val hasValidMarket = selectedMarket.baseCurrencyCode.isNotEmpty() && selectedMarket.quoteCurrencyCode.isNotEmpty()
+            
+            if (hasValidMarket) {
+                // Use the already selected market
+                createOfferPresenter.commitMarket(selectedMarket)
+                createOfferPresenter.skipCurrency = true
+            } else {
+                // No market selected, go to market selection
+                createOfferPresenter.skipCurrency = false
+            }
+            
             enableInteractive()
             navigateTo(Routes.CreateOfferDirection)
         } catch (e: Exception) {
