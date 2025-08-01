@@ -161,8 +161,11 @@ class CreateOfferPresenter(
         }
     }
 
-    fun commitPaymentMethod(selectedQuoteSidePaymentMethods: Set<String>, selectedBaseSidePaymentMethods: Set<String>) {
+    fun commitPaymentMethod(selectedQuoteSidePaymentMethods: Set<String>) {
         createOfferModel.selectedQuoteSidePaymentMethods = selectedQuoteSidePaymentMethods
+    }
+
+    fun commitSettlementMethod(selectedBaseSidePaymentMethods: Set<String>) {
         createOfferModel.selectedBaseSidePaymentMethods = selectedBaseSidePaymentMethods
     }
 

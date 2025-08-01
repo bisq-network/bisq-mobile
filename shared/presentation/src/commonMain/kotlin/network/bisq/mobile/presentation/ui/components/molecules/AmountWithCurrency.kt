@@ -16,23 +16,26 @@ fun AmountWithCurrency(
 
     if(isRangeAmount) {
         val priceRange = formattedPrice.split("-")
+        if (priceRange.size != 2) {
+            // Fallback to single amount display if parsing fails
+            SingleAmountWithCurrency(formattedPrice)
+            return
+        }
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            _SingleAmountWithCurrency(priceRange[0].trim())
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            SingleAmountWithCurrency(priceRange[0].trim())
             BisqGap.HHalf()
             BisqText.largeRegular(text = "-")
             BisqGap.HHalf()
-            _SingleAmountWithCurrency(priceRange[1].trim())
+            SingleAmountWithCurrency(priceRange[1].trim())
         }
     } else {
-        _SingleAmountWithCurrency(formattedPrice)
+        SingleAmountWithCurrency(formattedPrice)
     }
 }
 
 @Composable
-fun _SingleAmountWithCurrency(
+private fun SingleAmountWithCurrency(
     formattedPrice: String,
 ) {
     val priceFragments = formattedPrice.split(" ")
