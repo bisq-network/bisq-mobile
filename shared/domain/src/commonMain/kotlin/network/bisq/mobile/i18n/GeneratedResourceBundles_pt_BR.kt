@@ -1569,6 +1569,7 @@ object GeneratedResourceBundles_pt_BR {
             "mobile.settings.trustedNode" to "Trusted Node",
             "mobile.openTradeNotifications.tradeCompleted.message" to "Your trade with {0} has finished as {1}",
             "mobile.onboarding.bisq2.bisqP2PInMobile" to "Bisq p2p in mobile",
+            "mobile.bisqEasy.tradeWizard.price.adjustedDueToMarketChange" to "Price adjusted due to market price change",
             "mobile.profile.generatingKeyPairFailed" to "Generating the key pair failed. Profile generation won't work",
             "mobile.user.paymentAccounts.createAccount.validations.name.isMandatory" to "Name is mandatory",
             "mobile.user.paymentAccounts.createAccount.validations.name.maxLength" to "Max length: 256 characters",
