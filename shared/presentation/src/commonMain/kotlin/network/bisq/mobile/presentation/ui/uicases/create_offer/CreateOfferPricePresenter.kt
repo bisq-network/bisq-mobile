@@ -26,10 +26,10 @@ class CreateOfferPricePresenter(
     private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter) {
 
-    lateinit var priceTypeTitle: String
-    lateinit var fixPriceDescription: String
+    var priceTypeTitle: String
+    var fixPriceDescription: String
     var priceTypes: List<PriceType> = PriceType.entries.toList()
-    lateinit var priceQuote: PriceQuoteVO
+    var priceQuote: PriceQuoteVO
     var percentagePriceValue: Double = 0.0
     private val _formattedPercentagePrice = MutableStateFlow("")
     val formattedPercentagePrice: StateFlow<String> = _formattedPercentagePrice
@@ -39,7 +39,6 @@ class CreateOfferPricePresenter(
     private val _formattedPrice = MutableStateFlow("")
     val formattedPrice: StateFlow<String> = _formattedPrice
     private val _formattedPriceValid = MutableStateFlow(true)
-    val formattedPriceValid: StateFlow<Boolean> = _formattedPriceValid
 
     private val _priceType = MutableStateFlow(PriceType.PERCENTAGE)
     val priceType: StateFlow<PriceType> = _priceType
@@ -49,7 +48,7 @@ class CreateOfferPricePresenter(
     private val _hintText = MutableStateFlow("")
     val hintText: StateFlow<String> = _hintText
 
-    private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
+    private var createOfferModel: CreateOfferPresenter.CreateOfferModel
 
     private var _showWhyPopup: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showWhyPopup: StateFlow<Boolean> = _showWhyPopup
@@ -73,10 +72,54 @@ class CreateOfferPricePresenter(
         fixPriceDescription = "bisqEasy.price.tradePrice.inputBoxText".i18n(createOfferModel.market!!.marketCodes)
 
         _isBuy.value = createOfferModel.direction.isBuy
-        //onPercentagePriceChanged("10")
 
         if (isBuy.value) {
             updateHintText(percentagePriceValue)
+        }
+    }
+
+    override fun onViewAttached() {
+        super.onViewAttached()
+        observeMarketPriceChanges()
+    }
+
+    private fun observeMarketPriceChanges() {
+        collectIO(marketPriceServiceFacade.selectedMarketPriceItem) { marketPriceItem ->
+            if (marketPriceItem != null) {
+                revalidateCurrentPrices()
+            }
+        }
+    }
+
+    private fun revalidateCurrentPrices() {
+        try {
+            val isCurrentlyValid = isValid(percentagePriceValue)
+
+            if (!isCurrentlyValid) {
+                // Auto-adjust to valid range
+                val adjustedPercentage = percentagePriceValue.coerceIn(-0.1, 0.5)
+                log.i { "Auto-adjusting price from ${percentagePriceValue * 100}% to ${adjustedPercentage * 100}% due to market price change" }
+
+                // Reuse existing method to update both percentage and fixed price consistently
+                val adjustedPercentageString = PercentageFormatter.format(adjustedPercentage, false)
+                onPercentagePriceChanged(adjustedPercentageString, true)
+
+                showSnackbar("mobile.bisqEasy.tradeWizard.price.adjustedDueToMarketChange".i18n())
+            } else {
+                // Price is still valid, but we need to update the calculated values based on new market price
+                if (priceType.value == PriceType.PERCENTAGE) {
+                    // For percentage price, recalculate the fixed price with new market price
+                    val currentPercentageString = _formattedPercentagePrice.value
+                    onPercentagePriceChanged(currentPercentageString, true)
+                } else {
+                    // For fixed price, recalculate the percentage with new market price
+                    val currentFixedPriceString = _formattedPrice.value
+                    onFixPriceChanged(currentFixedPriceString, true)
+                }
+            }
+
+        } catch (e: Exception) {
+            log.e(e) { "Failed to revalidate prices after market price change: ${e.message}" }
         }
     }
 
