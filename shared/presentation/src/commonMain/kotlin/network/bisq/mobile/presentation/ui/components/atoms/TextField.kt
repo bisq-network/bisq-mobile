@@ -15,7 +15,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -134,7 +140,7 @@ fun BisqTextField(
     val finalLabelColor by remember(disabled, validationError, hasInteracted) {
         derivedStateOf {
             when {
-                disabled -> BisqTheme.colors.dark_grey50
+                disabled -> BisqTheme.colors.mid_grey30
                 isFocused -> BisqTheme.colors.primary
                 validationError?.isNotEmpty() == true && hasInteracted -> BisqTheme.colors.danger
                 else -> whiteColor
