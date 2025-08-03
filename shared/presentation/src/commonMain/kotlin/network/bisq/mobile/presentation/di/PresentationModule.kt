@@ -52,6 +52,8 @@ import network.bisq.mobile.presentation.ui.uicases.settings.AboutPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IAboutPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.IIgnoredUsersPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.IgnoredUsersPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfileSettingsPresenter
@@ -133,6 +135,8 @@ val presentationModule = module {
     } bind ITrustedNodeSetupPresenter::class
 
     factory { GeneralSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
+
+    factory { IgnoredUsersPresenter(get(), get()) } bind IIgnoredUsersPresenter::class
 
     single { PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
 

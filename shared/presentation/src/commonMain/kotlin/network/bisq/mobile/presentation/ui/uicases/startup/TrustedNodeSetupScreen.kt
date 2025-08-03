@@ -160,10 +160,6 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
         if (isWorkflow) {
             BisqLogo()
             BisqGap.V2()
-        } else {
-            BreadcrumbNavigation(path = menuPath) { index ->
-                if (index == 0) settingsPresenter.settingsNavigateBack()
-            }
         }
         BisqText.largeRegular(
             text = "mobile.trustedNodeSetup.subTitle".i18n(),

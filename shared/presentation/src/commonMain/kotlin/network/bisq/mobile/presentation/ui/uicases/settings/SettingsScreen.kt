@@ -24,7 +24,6 @@ interface ISettingsPresenter : ViewPresenter {
     fun menuTree(): MenuItem
 
     fun navigate(route: Routes)
-    fun settingsNavigateBack()
 }
 
 @Composable

@@ -49,6 +49,9 @@ class TradeChatPresenter(
     private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
     val avatarMap: StateFlow<Map<String, PlatformImage?>> get() = _avatarMap.asStateFlow()
 
+    private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
+    val ignoreUserId: StateFlow<String> = _ignoreUserId
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -60,7 +63,13 @@ class TradeChatPresenter(
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
 
             bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
-                _chatMessages.value = messages.toList()
+                userProfileServiceFacade.getIgnoredUserProfileIds()
+
+                val filteredMessages = messages.filter { message ->
+                    !userProfileServiceFacade.isChatUserIgnored(message.senderUserProfileId)
+                }
+
+                _chatMessages.value = filteredMessages.toList()
 
                 messages.toList().forEach { message ->
                     withContext(IODispatcher) {
@@ -123,7 +132,25 @@ class TradeChatPresenter(
         _quotedMessage.value = quotedMessage
     }
 
-    fun onIgnoreUser(message: BisqEasyOpenTradeMessageModel) {
+    fun showIgnoreUserPopup(id: String) {
+        _ignoreUserId.value = id
+    }
+
+    fun hideIgnoreUserPopup() {
+        _ignoreUserId.value = ""
+    }
+
+    suspend fun onConfirmedIgnoreUser(id: String) {
+        userProfileServiceFacade.ignoreUserProfile(id)
+        this.hideIgnoreUserPopup()
+    }
+
+    suspend fun undoIgnoreUserProfile(id: String) {
+        userProfileServiceFacade.undoIgnoreUserProfile(id)
+    }
+
+    fun onDismissIgnoreUser() {
+        this.hideIgnoreUserPopup();
     }
 
     fun onReportUser(message: BisqEasyOpenTradeMessageModel) {

@@ -94,10 +94,7 @@ fun UserProfileSettingsScreen() {
         isInteractive = isInteractive,
         shouldBlurBg = showDeleteConfirmation,
     ) {
-        BreadcrumbNavigation(path = menuPath) { index ->
-            if (index == 0) settingsPresenter.settingsNavigateBack()
-        }
-        
+
         UserProfileScreenHeader(presenter)
 
         SettingsTextField(label = "mobile.settings.userProfile.labels.nickname".i18n(), value = nickname, editable = false)

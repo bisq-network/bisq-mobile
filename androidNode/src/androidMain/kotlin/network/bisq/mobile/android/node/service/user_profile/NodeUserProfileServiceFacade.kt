@@ -5,6 +5,7 @@ import bisq.security.DigestUtil
 import bisq.security.SecurityService
 import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
+import bisq.user.profile.UserProfileService
 import bisq.user.identity.NymIdGenerator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -45,6 +46,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     // Dependencies
     private val securityService: SecurityService by lazy { applicationService.securityService.get() }
     private val userService: UserService by lazy { applicationService.userService.get() }
+    private val userProfileService: UserProfileService by lazy { applicationService.userProfileService.get() }
     private val catHashService: AndroidNodeCatHashService by lazy { applicationService.androidCatHashService.get() }
 
     // Properties
@@ -195,5 +197,30 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         val random: Int = Random().nextInt(800)
         // Limit to 200-2000 ms
         delay(min(1000.0, max(200.0, (200 + random - powDuration).toDouble())).toLong())
+    }
+
+    override suspend fun ignoreUserProfile(id: String) {
+        val userProfile = userProfileService.findUserProfile(id).orElse(null)
+
+        if(userProfile != null) {
+            userProfileService.ignoreUserProfile(userProfile);
+        }
+    }
+
+    override suspend fun undoIgnoreUserProfile(id: String) {
+        val userProfile = userProfileService.findUserProfile(id).orElse(null)
+
+        if(userProfile != null) {
+            userProfileService.undoIgnoreUserProfile(userProfile);
+        }
+    }
+
+    override suspend fun isChatUserIgnored(profileId: String): Boolean {
+        return userProfileService.isChatUserIgnored(profileId)
+    }
+
+    override suspend fun getIgnoredUserProfileIds(): List<String> {
+        log.d { "++++++++ ignored IDs  " + userProfileService.ignoredUserProfileIds.toList() }
+        return userProfileService.ignoredUserProfileIds.toList()
     }
 }

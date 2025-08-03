@@ -80,14 +80,14 @@ fun ChatMessageContextMenu(
                         onSetShowMenu(false)
                     }
                 )
-                DropdownMenuItem(
-                    text = { BisqText.smallRegular("chat.message.contextMenu.reportUser".i18n()) },
-                    leadingIcon = { FlagIcon() },
-                    onClick = {
-                        onReportUser()
-                        onSetShowMenu(false)
-                    }
-                )
+//                DropdownMenuItem(
+//                    text = { BisqText.smallRegular("chat.message.contextMenu.reportUser".i18n()) },
+//                    leadingIcon = { FlagIcon() },
+//                    onClick = {
+//                        onReportUser()
+//                        onSetShowMenu(false)
+//                    }
+//                )
             }
         }
     }

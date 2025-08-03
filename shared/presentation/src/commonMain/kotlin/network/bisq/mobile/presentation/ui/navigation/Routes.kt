@@ -42,6 +42,7 @@ enum class Routes(val title: String) {
     GeneralSettings(title = "general_settings"),
     UserProfileSettings(title = "user_profile_settings"),
     PaymentAccountSettings(title = "payment_account_settings"),
+    IgnoredUsers(title = "ignored_users_settings"),
     About(title = "about"),
 
     TabSettings(title = "tab_settings"),

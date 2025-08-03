@@ -74,4 +74,12 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * It is recommended to call this from a background (non-main) dispatcher.
      */
     suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage?
+
+    suspend fun ignoreUserProfile(id: String)
+
+    suspend fun undoIgnoreUserProfile(id: String)
+
+    suspend fun isChatUserIgnored(profileId: String): Boolean
+
+    suspend fun getIgnoredUserProfileIds(): List<String>
 }

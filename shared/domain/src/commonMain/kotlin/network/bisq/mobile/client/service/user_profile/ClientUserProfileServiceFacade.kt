@@ -176,12 +176,28 @@ class ClientUserProfileServiceFacade(
                     val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()!!.toByteArray()
                     clientCatHashService.getImage(pubKeyHash, powSolution, userProfile.avatarVersion, 120)
                 } catch (e: Exception) {
-                    log.e {"Avatar generation failed for ${userProfile.nym}"}
+                    log.e { "Avatar generation failed for ${userProfile.nym}" }
                     null
                 }
                 avatarMap[userProfile.nym] = avatar
             }
             return avatarMap[userProfile.nym]
         }
+    }
+
+    override suspend fun ignoreUserProfile(id: String) {
+
+    }
+
+    override suspend fun undoIgnoreUserProfile(id: String) {
+
+    }
+
+    override suspend fun isChatUserIgnored(profileId: String): Boolean {
+        return true
+    }
+
+    override suspend fun getIgnoredUserProfileIds(): List<String> {
+        return emptyList()
     }
 }
