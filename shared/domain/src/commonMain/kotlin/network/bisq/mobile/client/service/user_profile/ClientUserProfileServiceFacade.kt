@@ -156,6 +156,12 @@ class ClientUserProfileServiceFacade(
         return apiResult.getOrDefault(emptyList())
     }
 
+    override suspend fun findUserProfile(id: String): UserProfileVO? {
+        // For client implementation, we might need to make an API call
+        // For now, return null as this is not implemented in the client
+        return null
+    }
+
     // Private
     private suspend fun createSimulatedDelay(requestDuration: Long) {
         // Proof of work creation for difficulty 65536 takes about 50 ms to 100 ms on a 4 GHz Intel Core i7.

@@ -69,6 +69,11 @@ interface UserProfileServiceFacade : LifeCycleAware {
     suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO>
 
     /**
+     * @return UserProfile if exists, null otherwise
+     */
+    suspend fun findUserProfile(id: String): UserProfileVO?
+
+    /**
      * @return Get avatar of the user
      * This function may perform CPU-intensive work such as Base64 decoding and image generation.
      * It is recommended to call this from a background (non-main) dispatcher.

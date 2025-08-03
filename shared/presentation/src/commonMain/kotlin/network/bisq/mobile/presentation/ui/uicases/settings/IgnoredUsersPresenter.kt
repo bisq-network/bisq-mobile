@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
@@ -10,14 +12,39 @@ class IgnoredUsersPresenter(
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IIgnoredUsersPresenter {
 
-    override fun getIgnoredUsers(): List<UserProfileVO> {
-        return emptyList()
+    private val _ignoredUsers = MutableStateFlow<List<UserProfileVO>>(emptyList())
+    override val ignoredUsers: StateFlow<List<UserProfileVO>> = _ignoredUsers
+
+    override fun onViewAttached() {
+        super.onViewAttached()
+        loadIgnoredUsers()
+    }
+
+    private fun loadIgnoredUsers() {
+        launchIO {
+            try {
+                val ignoredUserIds = userProfileService.getIgnoredUserProfileIds()
+
+                val userProfiles = ignoredUserIds.mapNotNull { id ->
+                    userProfileService.findUserProfile(id)
+                }
+
+                _ignoredUsers.value = userProfiles
+            } catch (e: Exception) {
+                log.e(e) { "Failed to load ignored users" }
+                _ignoredUsers.value = emptyList()
+            }
+        }
     }
 
     override fun unblockUser(userId: String) {
+        launchIO {
+            try {
+                userProfileService.undoIgnoreUserProfile(userId)
+                loadIgnoredUsers()
+            } catch (e: Exception) {
+                log.e(e) { "Failed to unblock user: $userId" }
+            }
+        }
     }
-
-    override fun settingsNavigateBack() {
-        navigateBack()
-    }
-} 
+}

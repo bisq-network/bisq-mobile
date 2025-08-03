@@ -167,6 +167,15 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     }
 
+    override suspend fun findUserProfile(id: String): UserProfileVO? {
+        val userProfile = userProfileService.findUserProfile(id)
+        return if (userProfile.isPresent) {
+            Mappings.UserProfileMapping.fromBisq2Model(userProfile.get())
+        } else {
+            null
+        }
+    }
+
     override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
         return avatarMapMutex.withLock {
             if (avatarMap[userProfile.nym] == null) {
