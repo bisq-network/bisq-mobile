@@ -80,7 +80,7 @@ object MarketFilterUtil : Logging {
      * @param markets List of markets to sort
      * @return Sorted list by number of offers (desc), then main currencies first, then alphabetically for non-main currencies
      */
-    private fun sortMarketsStandard(markets: List<MarketListItem>): List<MarketListItem> {
+    internal fun sortMarketsStandard(markets: List<MarketListItem>): List<MarketListItem> {
         return markets.sortedWith(
             compareByDescending<MarketListItem> { it.numOffers }
                 .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
