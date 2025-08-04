@@ -85,8 +85,13 @@ class CreateOfferPricePresenter(
 
     private fun observeMarketPriceChanges() {
         collectIO(marketPriceServiceFacade.selectedMarketPriceItem) { marketPriceItem ->
-            if (marketPriceItem != null) {
-                revalidateCurrentPrices()
+            runCatching {
+                if (marketPriceItem != null) {
+                    revalidateCurrentPrices()
+                }
+            }.onFailure { e ->
+                log.e(e) { "Failed to process market price change: ${e.message}" }
+                showSnackbar("mobile.bisqEasy.tradeWizard.price.updateError".i18n(), isError = true)
             }
         }
     }

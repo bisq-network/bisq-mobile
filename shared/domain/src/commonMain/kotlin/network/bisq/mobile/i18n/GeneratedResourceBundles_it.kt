@@ -1542,6 +1542,7 @@ object GeneratedResourceBundles_it {
             "mobile.user.paymentAccounts.createAccount.paymentAccount.validations.minLength" to "Min length: 3 characters",
             "mobile.components.button.passEitherTextOrCustomTextorIcon" to "Error: Pass either text or customText or icon",
             "mobile.takeOffer.unexpectedError" to "Unexpected error occurred, please try again",
+            "mobile.bisqEasy.tradeWizard.price.updateError" to "Unable to update prices due to market price change",
             "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage.validation.shouldBeGreaterThanMarketPrice" to "Min: -10%",
             "mobile.bisqEasy.offerbook.unableToDeleteOffer" to "Unable to delete offer {0}",
             "mobile.dashboard.title" to "Bisq Easy Client",
