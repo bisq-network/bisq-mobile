@@ -1,15 +1,10 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -25,13 +20,6 @@ class OfferbookMarketPresenter(
     private val offersServiceFacade: OffersServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade
 ) : BasePresenter(mainPresenter) {
-
-    companion object {
-        const val FILTER_REFRESH_FREQUENCY = 3000L
-    }
-
-    private val jobScope = CoroutineScope(SupervisorJob())
-    private var updateJob: Job? = null
 
     private var mainCurrencies = OffersServiceFacade.mainCurrencies
 
@@ -77,38 +65,44 @@ class OfferbookMarketPresenter(
         sortBy: MarketSortBy,
         items: List<MarketListItem>,
     ): List<MarketListItem> {
-        return items
-            // First filter out markets without price data
-            .let { MarketFilterUtil.filterMarketsWithPriceData(it, marketPriceServiceFacade) }
-            // Then apply offer-based filtering
-            .filter { item ->
-                when (filter) {
-                    MarketFilter.WithOffers -> item.numOffers > 0
-                    MarketFilter.All -> true
+        log.d { "Offerbook computing market list - input: ${items.size} markets, filter: $filter, search: '$searchText', sort: $sortBy" }
+
+        val marketsWithPriceData = MarketFilterUtil.filterMarketsWithPriceData(items, marketPriceServiceFacade)
+        log.d { "Offerbook after price filtering: ${marketsWithPriceData.size}/${items.size} markets have price data" }
+
+        val afterOfferFilter = marketsWithPriceData.filter { item ->
+            when (filter) {
+                MarketFilter.WithOffers -> item.numOffers > 0
+                MarketFilter.All -> true
+            }
+        }
+        log.d { "Offerbook after offer filtering ($filter): ${afterOfferFilter.size}/${marketsWithPriceData.size} markets" }
+
+        val afterSearchFilter = MarketFilterUtil.filterMarketsBySearch(afterOfferFilter, searchText)
+        if (searchText.isNotBlank()) {
+            log.d { "Offerbook after search filtering ('$searchText'): ${afterSearchFilter.size}/${afterOfferFilter.size} markets" }
+        }
+
+        val finalResult = afterSearchFilter.sortedWith(
+            compareByDescending<MarketListItem> {
+                when (sortBy) {
+                    MarketSortBy.MostOffers -> it.numOffers
+                    else -> 0
                 }
             }
-            // Apply search filtering
-            .let { MarketFilterUtil.filterMarketsBySearch(it, searchText) }
-            // Apply sorting
-            .sortedWith(
-                compareByDescending<MarketListItem> {
+                .thenByDescending { mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
+                .thenBy {
                     when (sortBy) {
-                        MarketSortBy.MostOffers -> it.numOffers
-                        else -> 0
+                        MarketSortBy.NameAZ -> it.market.quoteCurrencyName
+                        MarketSortBy.NameZA -> it.market.quoteCurrencyName
+                        else -> null
                     }
                 }
-                    .thenByDescending { mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
-                    .thenBy {
-                        when (sortBy) {
-                            MarketSortBy.NameAZ -> it.market.quoteCurrencyName
-                            MarketSortBy.NameZA -> it.market.quoteCurrencyName
-                            else -> null
-                        }
-                    }
-                    .let { comparator ->
-                        if (sortBy == MarketSortBy.NameZA) comparator.reversed() else comparator
-                    }
-            )
+                .let { comparator ->
+                    if (sortBy == MarketSortBy.NameZA) comparator.reversed() else comparator
+                }
+        )
+        return finalResult
     }
 
     fun onSelectMarket(marketListItem: MarketListItem) {
@@ -118,39 +112,15 @@ class OfferbookMarketPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        startUpdatingMarketPrices()
         observeGlobalMarketPrices()
     }
 
     private fun observeGlobalMarketPrices() {
-        collectIO(marketPriceServiceFacade.globalPriceUpdate) { _ ->
+        collectIO(marketPriceServiceFacade.globalPriceUpdate) { timestamp ->
+            log.d { "Offerbook received global price update at timestamp: $timestamp" }
+            val previousValue = _marketPriceUpdated.value
             _marketPriceUpdated.value = !_marketPriceUpdated.value
+            log.d { "Offerbook triggered market filtering update: $previousValue -> ${_marketPriceUpdated.value}" }
         }
-    }
-
-    override fun onViewUnattaching() {
-        stopUpdatingMarketPrices()
-        super.onViewUnattaching()
-    }
-
-    private fun startUpdatingMarketPrices() {
-        // Launch a coroutine that updates the market prices every 3 seconds
-        updateJob = jobScope.launch {
-            while (updateJob != null) { // Ensure the loop stops when the coroutine is cancelled
-                updateMarketPrices()
-                delay(FILTER_REFRESH_FREQUENCY) // Wait for 3 seconds before the next update
-            }
-        }
-    }
-
-    private fun stopUpdatingMarketPrices() {
-        // Cancel the job to stop the background updates
-        updateJob?.cancel()
-        updateJob = null
-    }
-
-    private fun updateMarketPrices() {
-        // fake trigger a refresh
-        _marketPriceUpdated.value = !_marketPriceUpdated.value
     }
 }

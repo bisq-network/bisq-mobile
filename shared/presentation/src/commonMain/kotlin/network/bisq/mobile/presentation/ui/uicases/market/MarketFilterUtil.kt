@@ -23,9 +23,9 @@ object MarketFilterUtil : Logging {
     ): List<MarketListItem> {
         return markets.filter { marketListItem ->
             val hasPriceData = marketPriceServiceFacade.findMarketPriceItem(marketListItem.market) != null
-            if (!hasPriceData) {
-                log.d { "Filtering out market ${marketListItem.market.marketCodes} - no price data available" }
-            }
+//            if (!hasPriceData) {
+//                log.v { "Filtering out market ${marketListItem.market.marketCodes} - no price data available" }
+//            }
             hasPriceData
         }
     }
@@ -59,16 +59,26 @@ object MarketFilterUtil : Logging {
         searchText: String,
         marketPriceServiceFacade: MarketPriceServiceFacade
     ): List<MarketListItem> {
-        return markets
-            .let { filterMarketsWithPriceData(it, marketPriceServiceFacade) }
-            .let { sortMarketsStandard(it) }
-            .let { filterMarketsBySearch(it, searchText) }
+        log.d { "CreateOffer filtering pipeline - input: ${markets.size} markets, search: '$searchText'" }
+
+        val withPriceData = filterMarketsWithPriceData(markets, marketPriceServiceFacade)
+        log.d { "CreateOffer after price filtering: ${withPriceData.size}/${markets.size} markets have price data" }
+
+        val sorted = sortMarketsStandard(withPriceData)
+
+        val finalResult = filterMarketsBySearch(sorted, searchText)
+        if (searchText.isNotBlank()) {
+            log.d { "CreateOffer after search filtering ('$searchText'): ${finalResult.size}/${sorted.size} markets" }
+        }
+
+        log.d { "CreateOffer final result: ${finalResult.size} markets - ${finalResult.take(5).map { it.market.quoteCurrencyCode }}" }
+        return finalResult
     }
 
     /**
      * Sorts markets using the standard Bisq sorting logic
      * @param markets List of markets to sort
-     * @return Sorted list with main currencies first, then by number of offers, then alphabetically
+     * @return Sorted list by number of offers (desc), then main currencies first, then alphabetically for non-main currencies
      */
     private fun sortMarketsStandard(markets: List<MarketListItem>): List<MarketListItem> {
         return markets.sortedWith(

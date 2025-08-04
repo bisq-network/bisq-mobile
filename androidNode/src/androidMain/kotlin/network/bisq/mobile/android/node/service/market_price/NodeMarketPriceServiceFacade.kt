@@ -78,6 +78,8 @@ class NodeMarketPriceServiceFacade(
     // Private
     private fun observeMarketPrice() {
         marketPricePin = marketPriceService.marketPriceByCurrencyMap.addObserver(Runnable {
+            val mapSize = marketPriceService.marketPriceByCurrencyMap.size
+            log.d { "Node market price map updated, size: $mapSize" }
             updateMarketPriceItem()
             triggerGlobalPriceUpdate()
         })

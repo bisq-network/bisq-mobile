@@ -43,6 +43,7 @@ class ClientMarketPriceServiceFacade(
                     val webSocketEventPayload: WebSocketEventPayload<Map<String, PriceQuoteVO>> =
                         WebSocketEventPayload.from(json, webSocketEvent)
                     val marketPriceMap = webSocketEventPayload.payload
+                    log.d { "Client received price data for ${marketPriceMap.size} market price map markets: ${marketPriceMap.keys.take(10)}" }
                     quotesMutex.withLock {
                         quotes.putAll(marketPriceMap)
                     }

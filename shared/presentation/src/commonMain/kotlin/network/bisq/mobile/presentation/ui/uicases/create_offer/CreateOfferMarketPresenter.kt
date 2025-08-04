@@ -51,8 +51,11 @@ class CreateOfferMarketPresenter(
     }
 
     private fun observeGlobalMarketPrices() {
-        collectIO(marketPriceServiceFacade.globalPriceUpdate) { _ ->
+        collectIO(marketPriceServiceFacade.globalPriceUpdate) { timestamp ->
+            log.d { "CreateOffer received global price update at timestamp: $timestamp" }
+            val previousValue = _marketPriceUpdated.value
             _marketPriceUpdated.value = !_marketPriceUpdated.value
+            log.d { "CreateOffer triggered market filtering update: $previousValue -> ${_marketPriceUpdated.value}" }
         }
     }
 

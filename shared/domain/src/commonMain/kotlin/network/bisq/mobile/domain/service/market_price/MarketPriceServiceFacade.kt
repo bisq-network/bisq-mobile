@@ -32,7 +32,9 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
      * Should be called whenever any market price data changes
      */
     protected fun triggerGlobalPriceUpdate() {
-        _globalPriceUpdate.value = Clock.System.now().toEpochMilliseconds()
+        val timestamp = Clock.System.now().toEpochMilliseconds()
+        _globalPriceUpdate.value = timestamp
+        log.d { "Global price update triggered at timestamp: $timestamp" }
     }
     
     protected fun persistSelectedMarketToSettings(marketListItem: MarketListItem) {
