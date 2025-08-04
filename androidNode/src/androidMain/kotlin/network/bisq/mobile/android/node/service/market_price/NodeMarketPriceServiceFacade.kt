@@ -77,7 +77,10 @@ class NodeMarketPriceServiceFacade(
 
     // Private
     private fun observeMarketPrice() {
-        marketPricePin = marketPriceService.marketPriceByCurrencyMap.addObserver(Runnable { updateMarketPriceItem() })
+        marketPricePin = marketPriceService.marketPriceByCurrencyMap.addObserver(Runnable {
+            updateMarketPriceItem()
+            triggerGlobalPriceUpdate()
+        })
     }
 
     private fun observeSelectedMarket() {

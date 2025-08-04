@@ -11,24 +11,24 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFilter
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketSortBy
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.uicases.market.MarketFilterUtil
 
 class OfferbookMarketPresenter(
     mainPresenter: MainPresenter,
     private val offersServiceFacade: OffersServiceFacade,
+    private val marketPriceServiceFacade: MarketPriceServiceFacade
 ) : BasePresenter(mainPresenter) {
 
     companion object {
         const val FILTER_REFRESH_FREQUENCY = 3000L
     }
-
-    //todo
-    //var marketListItemWithNumOffers: List<MarketListItem> = offerbookServiceFacade.getSortedOfferbookMarketItems()
 
     private val jobScope = CoroutineScope(SupervisorJob())
     private var updateJob: Job? = null
@@ -37,9 +37,6 @@ class OfferbookMarketPresenter(
 
     // flag to force market update trigger when needed
     private val _marketPriceUpdated = MutableStateFlow(false)
-
-    //TODO not used
-    var marketPriceUpdated: StateFlow<Boolean> = _marketPriceUpdated
 
     private val _sortBy = MutableStateFlow(MarketSortBy.MostOffers)
     var sortBy: StateFlow<MarketSortBy> = _sortBy
@@ -81,17 +78,18 @@ class OfferbookMarketPresenter(
         items: List<MarketListItem>,
     ): List<MarketListItem> {
         return items
+            // First filter out markets without price data
+            .let { MarketFilterUtil.filterMarketsWithPriceData(it, marketPriceServiceFacade) }
+            // Then apply offer-based filtering
             .filter { item ->
                 when (filter) {
                     MarketFilter.WithOffers -> item.numOffers > 0
                     MarketFilter.All -> true
                 }
             }
-            .filter { item ->
-                searchText.isEmpty() ||
-                        item.market.quoteCurrencyCode.contains(searchText, ignoreCase = true) ||
-                        item.market.quoteCurrencyName.contains(searchText, ignoreCase = true)
-            }
+            // Apply search filtering
+            .let { MarketFilterUtil.filterMarketsBySearch(it, searchText) }
+            // Apply sorting
             .sortedWith(
                 compareByDescending<MarketListItem> {
                     when (sortBy) {
@@ -121,6 +119,13 @@ class OfferbookMarketPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         startUpdatingMarketPrices()
+        observeGlobalMarketPrices()
+    }
+
+    private fun observeGlobalMarketPrices() {
+        collectIO(marketPriceServiceFacade.globalPriceUpdate) { _ ->
+            _marketPriceUpdated.value = !_marketPriceUpdated.value
+        }
     }
 
     override fun onViewUnattaching() {

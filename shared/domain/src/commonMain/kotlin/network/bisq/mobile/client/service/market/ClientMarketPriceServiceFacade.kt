@@ -33,7 +33,6 @@ class ClientMarketPriceServiceFacade(
             updateMarketPriceItem()
         }
 
-        // Use the jobsManager to launch a coroutine instead of serviceScope directly
         launchIO {
             val observer = apiGateway.subscribeMarketPrice()
             observer.webSocketEvent.collect { webSocketEvent ->
@@ -48,6 +47,7 @@ class ClientMarketPriceServiceFacade(
                         quotes.putAll(marketPriceMap)
                     }
                     updateMarketPriceItem()
+                    triggerGlobalPriceUpdate()
                 } catch (e: Exception) {
                     log.e(e.toString(), e)
                 }

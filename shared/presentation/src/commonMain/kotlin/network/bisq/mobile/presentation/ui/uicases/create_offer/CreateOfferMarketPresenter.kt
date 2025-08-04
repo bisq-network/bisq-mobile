@@ -5,8 +5,6 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
@@ -15,22 +13,28 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.presentation.ui.uicases.market.MarketFilterUtil
 
 class CreateOfferMarketPresenter(
     mainPresenter: MainPresenter,
     private val offersServiceFacade: OffersServiceFacade,
-    private val createOfferPresenter: CreateOfferPresenter
+    private val createOfferPresenter: CreateOfferPresenter,
+    private val marketPriceServiceFacade: MarketPriceServiceFacade
 ) : BasePresenter(mainPresenter) {
 
     var headline: String
     var market: MarketVO? = null
-    var marketListItem: MarketListItem? = null
+    private var marketListItem: MarketListItem? = null
 
     private var _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> = _searchText
     fun setSearchText(newValue: String) {
         _searchText.value = newValue
     }
+
+    // Trigger to force market list updates when market prices change
+    private val _marketPriceUpdated = MutableStateFlow(false)
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -42,29 +46,27 @@ class CreateOfferMarketPresenter(
                 enableInteractive()
             }
         }
+
+        observeGlobalMarketPrices()
+    }
+
+    private fun observeGlobalMarketPrices() {
+        collectIO(marketPriceServiceFacade.globalPriceUpdate) { _ ->
+            _marketPriceUpdated.value = !_marketPriceUpdated.value
+        }
     }
 
     val marketListItemWithNumOffers: StateFlow<List<MarketListItem>> = combine(
         _searchText,
         offersServiceFacade.offerbookMarketItems,
-    ) { searchText, marketList ->
-        val sortedList = marketList.sortedWith(
-            compareByDescending<MarketListItem> { it.numOffers }
-                .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
-                .thenBy { item ->
-                    if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) item.market.quoteCurrencyName
-                    else null
-                }
+        _marketPriceUpdated
+    ) { searchText, marketList, _ ->
+        // Use shared filtering utility for consistent behavior
+        MarketFilterUtil.filterAndSortMarketsForCreateOffer(
+            marketList,
+            searchText,
+            marketPriceServiceFacade
         )
-        
-        if (searchText.isBlank()) {
-            sortedList
-        } else {
-            sortedList.filter {
-                it.market.quoteCurrencyCode.contains(searchText, ignoreCase = true) ||
-                        it.market.quoteCurrencyName.contains(searchText, ignoreCase = true)
-            }
-        }
     }.stateIn(
         presenterScope,
         SharingStarted.Lazily,

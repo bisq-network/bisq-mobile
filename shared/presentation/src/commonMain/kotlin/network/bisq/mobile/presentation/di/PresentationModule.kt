@@ -137,7 +137,7 @@ val presentationModule = module {
     single { PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
 
     // Offerbook
-    single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get()) }
+    single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get()) }
     single<OfferbookPresenter> { OfferbookPresenter(get(), get(), get(), get(), get(), get(), get()) }
 
     // Take offer
@@ -149,7 +149,7 @@ val presentationModule = module {
     // Create offer
     single { CreateOfferPresenter(get(), get(), get(), get()) }
     factory { CreateOfferDirectionPresenter(get(), get(), get(), get()) }
-    factory { CreateOfferMarketPresenter(get(), get(), get()) }
+    factory { CreateOfferMarketPresenter(get(), get(), get(), get()) }
     factory { CreateOfferPricePresenter(get(), get(), get()) }
     factory { CreateOfferAmountPresenter(get(), get(), get(), get(), get()) }
     factory { CreateOfferPaymentMethodPresenter(get(), get()) }

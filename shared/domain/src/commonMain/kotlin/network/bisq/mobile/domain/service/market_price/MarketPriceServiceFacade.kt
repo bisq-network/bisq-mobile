@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.service.market_price
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
@@ -16,11 +17,23 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
     protected val _selectedFormattedMarketPrice = MutableStateFlow("N/A")
     val selectedFormattedMarketPrice: StateFlow<String> = _selectedFormattedMarketPrice
 
+    // Global price update trigger - emits when any market price changes
+    private val _globalPriceUpdate = MutableStateFlow(0L)
+    val globalPriceUpdate: StateFlow<Long> get() = _globalPriceUpdate
+
     // Abstract methods that must be implemented by concrete classes
     abstract fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem?
     abstract fun findUSDMarketPriceItem(): MarketPriceItem?
     abstract fun refreshSelectedFormattedMarketPrice()
     abstract fun selectMarket(marketListItem: MarketListItem)
+
+    /**
+     * Triggers a global price update notification
+     * Should be called whenever any market price data changes
+     */
+    protected fun triggerGlobalPriceUpdate() {
+        _globalPriceUpdate.value = Clock.System.now().toEpochMilliseconds()
+    }
     
     protected fun persistSelectedMarketToSettings(marketListItem: MarketListItem) {
         launchIO {
