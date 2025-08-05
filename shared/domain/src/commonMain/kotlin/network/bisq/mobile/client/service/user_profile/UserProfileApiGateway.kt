@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.service.user_profile
 
+import io.ktor.http.encodeURLPath
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -13,20 +14,16 @@ class UserProfileApiGateway(
     suspend fun ping(): Result<KeyMaterialResponse> {
         return webSocketApiClient.get("$basePath/ping")
     }
-    
+
     suspend fun getKeyMaterial(): Result<KeyMaterialResponse> {
         return webSocketApiClient.get("$basePath/key-material")
     }
 
     suspend fun createAndPublishNewUserProfile(
-        nickName: String,
-        keyMaterialResponse: KeyMaterialResponse
+        nickName: String, keyMaterialResponse: KeyMaterialResponse
     ): Result<CreateUserIdentityResponse> {
         val createUserIdentityRequest = CreateUserIdentityRequest(
-            nickName,
-            "",
-            "",
-            keyMaterialResponse
+            nickName, "", "", keyMaterialResponse
         )
         return webSocketApiClient.post(basePath, createUserIdentityRequest)
     }
@@ -45,6 +42,9 @@ class UserProfileApiGateway(
     }
 
     suspend fun findUserProfiles(ids: List<String>): Result<List<UserProfileVO>> {
+        if (ids.isEmpty()) {
+            return Result.success(emptyList())
+        }
         return webSocketApiClient.get("$basePath/list?ids=${ids.joinToString(",")}")
     }
 
@@ -52,12 +52,12 @@ class UserProfileApiGateway(
         return webSocketApiClient.get("$profileBasePath/ignored")
     }
 
-    suspend fun ignoreUser(userId: String ): Result<Unit> {
+    suspend fun ignoreUser(userId: String): Result<Unit> {
         val request = IgnoreUserProfileRequest(userId)
         return webSocketApiClient.post("$profileBasePath/ignore", request)
     }
 
     suspend fun undoIgnoreUser(userId: String): Result<Unit> {
-        return webSocketApiClient.delete("$profileBasePath/ignore/$userId")
+        return webSocketApiClient.delete("$profileBasePath/ignore/${userId.encodeURLPath()}")
     }
 }

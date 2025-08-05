@@ -61,12 +61,12 @@ class TradeChatPresenter(
             val settings = withContext(IODispatcher) { settingsRepository.fetch() }
             settings?.let { _showChatRulesWarnBox.value = it.showChatRulesWarnBox }
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
+            val ignoredUserIds = userProfileServiceFacade.getIgnoredUserProfileIds().toSet()
 
             bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
-                userProfileServiceFacade.getIgnoredUserProfileIds()
 
                 val filteredMessages = messages.filter { message ->
-                    !userProfileServiceFacade.isChatUserIgnored(message.senderUserProfileId)
+                    !ignoredUserIds.contains(message.senderUserProfileId)
                 }
 
                 _chatMessages.value = filteredMessages.toList()

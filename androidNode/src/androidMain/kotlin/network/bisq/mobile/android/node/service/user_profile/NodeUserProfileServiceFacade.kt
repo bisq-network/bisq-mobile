@@ -112,8 +112,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun updateAndPublishUserProfile(
-        statement: String?,
-        terms: String?
+        statement: String?, terms: String?
     ): Result<UserProfileVO> {
         try {
             val selectedUserIdentity = userService.userIdentityService.selectedUserIdentity
@@ -192,7 +191,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
                     )
                     avatarMap[userProfile.nym] = avatar
                 } catch (e: Exception) {
-                    log.e {"Avatar generation failed for ${userProfile.nym}"}
+                    log.e { "Avatar generation failed for ${userProfile.nym}" }
                 }
             }
             return avatarMap[userProfile.nym]
@@ -215,16 +214,20 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     override suspend fun ignoreUserProfile(id: String) {
         val userProfile = userProfileService.findUserProfile(id).orElse(null)
 
-        if(userProfile != null) {
-            userProfileService.ignoreUserProfile(userProfile);
+        if (userProfile != null) {
+            userProfileService.ignoreUserProfile(userProfile)
+        } else {
+            log.w { "Cannot ignore user profile: profile not found for id $id" }
         }
     }
 
     override suspend fun undoIgnoreUserProfile(id: String) {
         val userProfile = userProfileService.findUserProfile(id).orElse(null)
 
-        if(userProfile != null) {
-            userProfileService.undoIgnoreUserProfile(userProfile);
+        if (userProfile != null) {
+            userProfileService.undoIgnoreUserProfile(userProfile)
+        } else {
+            log.w { "Cannot unignore user profile: profile not found for id $id" }
         }
     }
 
@@ -233,7 +236,6 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun getIgnoredUserProfileIds(): List<String> {
-        log.d { "++++++++ ignored IDs  " + userProfileService.ignoredUserProfileIds.toList() }
         return userProfileService.ignoredUserProfileIds.toList()
     }
 }

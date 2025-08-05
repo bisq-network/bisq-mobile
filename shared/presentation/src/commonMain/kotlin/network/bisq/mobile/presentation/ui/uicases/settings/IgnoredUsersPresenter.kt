@@ -36,12 +36,14 @@ class IgnoredUsersPresenter(
 
                 val userProfiles = userProfileService.findUserProfiles(ignoredUserIds)
 
+                val newAvatars = mutableMapOf<String, PlatformImage?>()
                 userProfiles.forEach { it ->
                     if (_avatarMap.value[it.nym] == null) {
-                        val currentAvatarMap = _avatarMap.value.toMutableMap()
-                        currentAvatarMap[it.nym] = userProfileService.getUserAvatar(it)
-                        _avatarMap.value = currentAvatarMap
+                        newAvatars[it.nym] = userProfileService.getUserAvatar(it)
                     }
+                }
+                _avatarMap.update { currentMap ->
+                    currentMap + newAvatars
                 }
 
                 _ignoredUsers.value = userProfiles

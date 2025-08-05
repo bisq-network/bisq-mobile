@@ -42,7 +42,7 @@ fun IgnoredUsersScreen() {
     RememberPresenterLifecycle(presenter)
 
     BisqScrollScaffold(
-        topBar = { TopBar("mobile.settings.ignoredUsers.title".i18n()) },
+        topBar = { TopBar("mobile.settings.ignoredUsers".i18n()) },
         padding = PaddingValues(all = BisqUIConstants.Zero),
         verticalArrangement = Arrangement.SpaceBetween,
         isInteractive = presenter.isInteractive.collectAsState().value,
