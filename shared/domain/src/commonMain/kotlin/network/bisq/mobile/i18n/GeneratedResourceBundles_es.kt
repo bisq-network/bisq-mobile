@@ -1675,7 +1675,7 @@ object GeneratedResourceBundles_es {
             "mobile.bisqEasy.takeOffer.paymentMethods.headline.btc" to "[ES] Which settlement method do you want to use?",
             "mobile.settings.userProfile.saveSucess" to "ES_Save success",
             "error.warning" to "ES_Warning",
-            "mobile.chat.ignoreUserWarn" to "[ES] Selecting 'Ignore user' will effectively hide all messages from this user.\n\nThis action will take effect the next time you enter the chat.",
+            "mobile.chat.ignoreUserWarn" to "[ES] Selecting 'Ignore user' will effectively hide all messages from this user.\n\nThis action will take effect when you restart the app.\n\nTo reverse this, goto Settings > Ignored users.",
             "mobile.tradeChat.jumpToBottom" to "ES_Jump to bottom",
             "mobile.components.marketFilter.sortBy.nameZA" to "ES_Name Z-A",
             "mobile.components.topBar.confirmationDialog.headline" to "ES_Are you sure want to exit the Trade?",

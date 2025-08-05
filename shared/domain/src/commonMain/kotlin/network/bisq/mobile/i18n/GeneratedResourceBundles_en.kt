@@ -1750,7 +1750,7 @@ object GeneratedResourceBundles_en {
             "mobile.components.topBar.step" to "Step {0}",
             "mobile.trustedNodeSetup.trustedBisqNodeURL.label" to "Trusted Bisq Node URL",
             "error.warning" to "Warning",
-            "mobile.chat.ignoreUserWarn" to "Selecting 'Ignore user' will effectively hide all messages from this user.\n\nThis action will take effect the next time you enter the chat.",
+            "mobile.chat.ignoreUserWarn" to "Selecting 'Ignore user' will effectively hide all messages from this user.\n\nThis action will take effect when you restart the app.\n\nTo reverse this, goto Settings > Ignored users.",
             "mobile.components.marketFilter.sortBy.nameZA" to "Name Z-A",
             "mobile.components.topBar.confirmationDialog.headline" to "Are you sure want to exit the Trade?",
             "mobile.bisqEasy.createOffer.progress.quoteSidePaymentMethod" to "Payment Method",

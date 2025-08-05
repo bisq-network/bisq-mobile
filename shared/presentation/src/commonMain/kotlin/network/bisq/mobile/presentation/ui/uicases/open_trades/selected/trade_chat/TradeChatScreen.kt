@@ -75,6 +75,7 @@ fun TradeChatScreen() {
                 message = "mobile.chat.ignoreUserWarn".i18n(),
                 confirmButtonText = "chat.ignoreUser.confirm".i18n(),
                 dismissButtonText = "action.cancel".i18n(),
+                verticalButtonPlacement = true,
                 onConfirm = {
                     scope.launch {
                         presenter.onConfirmedIgnoreUser(ignoreUserId)

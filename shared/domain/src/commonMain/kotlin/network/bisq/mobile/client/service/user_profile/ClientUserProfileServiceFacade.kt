@@ -37,6 +37,9 @@ class ClientUserProfileServiceFacade(
     private val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf<String, PlatformImage?>()
     private val avatarMapMutex = Mutex()
 
+    private var ignoredUserIdsCache: List<String>? = null
+    private val ignoredUserIdsMutex = Mutex()
+
     // Misc
     override fun activate() {
         super<ServiceFacade>.activate()
@@ -204,6 +207,9 @@ class ClientUserProfileServiceFacade(
             if (apiResult.isFailure) {
                 throw apiResult.exceptionOrNull()!!
             }
+            ignoredUserIdsMutex.withLock {
+                ignoredUserIdsCache = null
+            }
             return apiResult.getOrThrow()
         } catch (e: Exception) {
             log.e(e) { "Failed to ignore user id: $id" }
@@ -216,6 +222,9 @@ class ClientUserProfileServiceFacade(
             val apiResult = apiGateway.undoIgnoreUser(id)
             if (apiResult.isFailure) {
                 throw apiResult.exceptionOrNull()!!
+            }
+            ignoredUserIdsMutex.withLock {
+                ignoredUserIdsCache = null
             }
             return apiResult.getOrThrow()
         } catch (e: Exception) {
@@ -230,15 +239,24 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun getIgnoredUserProfileIds(): List<String> {
-        try {
-            val apiResult = apiGateway.getIgnoredUserIds()
-            if (apiResult.isFailure) {
-                throw apiResult.exceptionOrNull()!!
+        return ignoredUserIdsMutex.withLock {
+            if (ignoredUserIdsCache != null) {
+                return@withLock ignoredUserIdsCache!!
             }
-            return apiResult.getOrThrow()
-        } catch (e: Exception) {
-            log.e(e) { "Failed to fetch ignore User Ids" }
-            throw e
+            try {
+                val apiResult = apiGateway.getIgnoredUserIds()
+                if (apiResult.isFailure) {
+                    throw apiResult.exceptionOrNull()!!
+                }
+
+                val result = apiResult.getOrThrow()
+                ignoredUserIdsCache = result
+                return@withLock result
+
+            } catch (e: Exception) {
+                log.e(e) { "Failed to fetch ignore User Ids" }
+                throw e
+            }
         }
     }
 }

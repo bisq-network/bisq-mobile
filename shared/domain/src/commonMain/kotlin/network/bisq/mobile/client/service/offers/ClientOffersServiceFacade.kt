@@ -12,15 +12,18 @@ import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 
 class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val userProfileServiceFacade: UserProfileServiceFacade,
     private val userRepository: UserRepository,
     private val apiGateway: OfferbookApiGateway,
     private val json: Json
@@ -187,9 +190,11 @@ class ClientOffersServiceFacade(
                     webSocketEvent.modificationType == ModificationType.ADDED
                 ) {
                     payload.forEach { item ->
-                        val model = OfferItemPresentationModel(item)
-                        val quoteCurrencyCode = item.bisqEasyOffer.market.quoteCurrencyCode
-                        offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }[model.offerId] = model
+                        if (isValidOfferMessage(item.bisqEasyOffer)) {
+                            val model = OfferItemPresentationModel(item)
+                            val quoteCurrencyCode = item.bisqEasyOffer.market.quoteCurrencyCode
+                            offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }[model.offerId] = model
+                        }
                     }
                 } else if (webSocketEvent.modificationType == ModificationType.REMOVED) {
                     payload.forEach { item ->
@@ -218,5 +223,20 @@ class ClientOffersServiceFacade(
         }
 
         _offerbookMarketItems.value = marketListItems
+    }
+
+    private suspend fun isValidOfferMessage(offer: BisqEasyOfferVO): Boolean {
+        val makersUserProfileId = offer.makerNetworkId.pubKey.id
+
+        // Check if the maker's user profile exists and is not banned/ignored
+        val makerUserProfile = userProfileServiceFacade.findUserProfile(makersUserProfileId)
+        if (makerUserProfile == null) {
+            return false
+        }
+        if (userProfileServiceFacade.isChatUserIgnored(makersUserProfileId)) {
+            return false
+        }
+
+        return true
     }
 }
