@@ -46,6 +46,8 @@ fun BuyerState2a(
             value = paymentAccountData,
             disabled = true,
             showCopy = true,
+            isTextArea = true,
+            maxLines = Int.MAX_VALUE,
         )
 
         BisqGap.V1()

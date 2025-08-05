@@ -69,6 +69,7 @@ fun BisqTextField(
     keyboardType: KeyboardType = KeyboardType.Unspecified,
     paddingValues: PaddingValues = PaddingValues(all = BisqUIConstants.ScreenPadding),
     minLines: Int = 1,
+    maxLines: Int = if (isTextArea) 4 else 1,
     maxLength: Int = 0,
     disabled: Boolean = false,
     color: Color = BisqTheme.colors.light_grey20,
@@ -297,7 +298,7 @@ fun BisqTextField(
                         }
                     },
                 singleLine = !isTextArea,
-                maxLines = if (isTextArea) 4 else 1,
+                maxLines = maxLines,
                 minLines = minLines,
                 keyboardOptions = KeyboardOptions(
                     keyboardType = keyboardType,
