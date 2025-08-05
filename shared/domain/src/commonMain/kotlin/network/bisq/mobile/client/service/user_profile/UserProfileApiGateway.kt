@@ -8,6 +8,7 @@ class UserProfileApiGateway(
     private val webSocketApiClient: WebSocketApiClient
 ) {
     private val basePath = "user-identities"
+    private val profileBasePath = "user-profiles"
 
     suspend fun ping(): Result<KeyMaterialResponse> {
         return webSocketApiClient.get("$basePath/ping")
@@ -43,9 +44,20 @@ class UserProfileApiGateway(
         return webSocketApiClient.get("$basePath/selected/user-profile")
     }
 
-    suspend fun findUserIdentities(ids: List<String>): Result<List<UserIdentityVO>> {
-        // TODO: Unimplemented in bisq2
-        // return webSocketApiClient.get("$basePath/list/${ids.joinToString()}")
-        return Result.success(emptyList())
+    suspend fun findUserProfiles(ids: List<String>): Result<List<UserProfileVO>> {
+        return webSocketApiClient.get("$basePath/list?ids=${ids.joinToString(",")}")
+    }
+
+    suspend fun getIgnoredUserIds(): Result<List<String>> {
+        return webSocketApiClient.get("$profileBasePath/ignored")
+    }
+
+    suspend fun ignoreUser(userId: String ): Result<Unit> {
+        val request = IgnoreUserProfileRequest(userId)
+        return webSocketApiClient.post("$profileBasePath/ignore", request)
+    }
+
+    suspend fun undoIgnoreUser(userId: String): Result<Unit> {
+        return webSocketApiClient.delete("$profileBasePath/ignore/$userId")
     }
 }

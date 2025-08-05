@@ -25,9 +25,10 @@ class IgnoredUsersPresenter(
             try {
                 val ignoredUserIds = userProfileService.getIgnoredUserProfileIds()
 
-                val userProfiles = ignoredUserIds.mapNotNull { id ->
-                    userProfileService.findUserProfile(id)
-                }
+                log.d { ignoredUserIds.toString() }
+
+                val userProfiles = userProfileService.findUserProfiles(ignoredUserIds)
+                log.d { userProfiles.toString() }
 
                 _ignoredUsers.value = userProfiles
             } catch (e: Exception) {

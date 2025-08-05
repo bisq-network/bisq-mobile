@@ -149,17 +149,24 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO> {
-        val apiResult = apiGateway.findUserIdentities(ids)
+        return emptyList()
+    }
+
+    override suspend fun findUserProfile(id: String): UserProfileVO? {
+        val apiResult = apiGateway.findUserProfiles(listOf(id))
+        if (apiResult.isFailure) {
+            return null
+        }
+        val response = apiResult.getOrNull()
+        return response?.firstOrNull()
+    }
+
+    override suspend fun findUserProfiles(ids: List<String>): List<UserProfileVO> {
+        val apiResult = apiGateway.findUserProfiles(ids)
         if (apiResult.isFailure) {
             return emptyList()
         }
         return apiResult.getOrDefault(emptyList())
-    }
-
-    override suspend fun findUserProfile(id: String): UserProfileVO? {
-        // For client implementation, we might need to make an API call
-        // For now, return null as this is not implemented in the client
-        return null
     }
 
     // Private
@@ -192,18 +199,46 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun ignoreUserProfile(id: String) {
-
+        try {
+            val apiResult = apiGateway.ignoreUser(id)
+            if (apiResult.isFailure) {
+                throw apiResult.exceptionOrNull()!!
+            }
+            return apiResult.getOrThrow()
+        } catch (e: Exception) {
+            log.e(e) { "Failed to ignore user id: $id" }
+            throw e
+        }
     }
 
     override suspend fun undoIgnoreUserProfile(id: String) {
-
+        try {
+            val apiResult = apiGateway.undoIgnoreUser(id)
+            if (apiResult.isFailure) {
+                throw apiResult.exceptionOrNull()!!
+            }
+            return apiResult.getOrThrow()
+        } catch (e: Exception) {
+            log.e(e) { "Failed to undo ignore user id: $id" }
+            throw e
+        }
     }
 
     override suspend fun isChatUserIgnored(profileId: String): Boolean {
-        return true
+        val ignoredUsers = getIgnoredUserProfileIds()
+        return ignoredUsers.contains(profileId)
     }
 
     override suspend fun getIgnoredUserProfileIds(): List<String> {
-        return emptyList()
+        try {
+            val apiResult = apiGateway.getIgnoredUserIds()
+            if (apiResult.isFailure) {
+                throw apiResult.exceptionOrNull()!!
+            }
+            return apiResult.getOrThrow()
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch ignore User Ids" }
+            throw e
+        }
     }
 }

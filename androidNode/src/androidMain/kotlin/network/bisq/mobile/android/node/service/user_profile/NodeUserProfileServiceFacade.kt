@@ -176,6 +176,10 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         }
     }
 
+    override suspend fun findUserProfiles(ids: List<String>): List<UserProfileVO> {
+        return ids.mapNotNull { id -> findUserProfile(id) }
+    }
+
     override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
         return avatarMapMutex.withLock {
             if (avatarMap[userProfile.nym] == null) {
