@@ -146,7 +146,7 @@ actual class NotificationServiceController (private val appForegroundController:
             .setContentTitle(title)
             .setContentText(message)
             .setSmallIcon(android.R.drawable.ic_notification_overlay)
-            .setPriority(NotificationCompat.PRIORITY_HIGH) // High priority for immediate attention
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT) // Default priority to avoid OS killing the app
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "Dismiss", dismissPendingIntent)
@@ -189,19 +189,15 @@ actual class NotificationServiceController (private val appForegroundController:
             val channel = NotificationChannel(
                 BisqForegroundService.CHANNEL_ID,
                 SERVICE_NAME,
-                NotificationManager.IMPORTANCE_HIGH // High priority for trade notifications
+                NotificationManager.IMPORTANCE_DEFAULT // Default importance to avoid OS killing the app
             ).apply {
-                description = "Important Bisq trade notifications and updates"
-                enableLights(true)
+                description = "Bisq trade notifications and updates"
+                enableLights(false) // Reduce aggressive behavior
                 enableVibration(true)
                 setShowBadge(true)
-                // For Android 15+ compatibility - ensure notifications can bypass DND
+                // Keep bubbles disabled for now
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    setAllowBubbles(true)
-                }
-                // For Android 15+ - ensure notifications are not silenced
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-                    setBypassDnd(false) // Don't bypass DND but ensure high importance
+                    setAllowBubbles(false)
                 }
             }
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

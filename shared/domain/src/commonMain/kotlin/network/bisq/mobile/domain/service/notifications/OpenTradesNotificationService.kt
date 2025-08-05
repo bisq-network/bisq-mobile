@@ -58,6 +58,30 @@ class OpenTradesNotificationService(
             // Unregister observer when trade concludes
             if (OffersServiceFacade.isTerminalState(newState)) {
                 notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.tradeState)
+                notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.paymentAccountData)
+                notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.bitcoinPaymentData)
+            }
+        }
+
+        // Register observer for payment account data (seller sends payment info)
+        notificationServiceController.registerObserver(trade.bisqEasyTradeModel.paymentAccountData) { paymentData ->
+            log.d { "Payment account data changed for trade ${trade.shortTradeId}: ${paymentData?.isNotEmpty()}" }
+            if (!paymentData.isNullOrEmpty()) {
+                notificationServiceController.pushNotification(
+                    "mobile.openTradeNotifications.paymentInfoReceived.title".i18n(trade.shortTradeId),
+                    "mobile.openTradeNotifications.paymentInfoReceived.message".i18n(trade.peersUserName)
+                )
+            }
+        }
+
+        // Register observer for bitcoin payment data (buyer sends bitcoin address)
+        notificationServiceController.registerObserver(trade.bisqEasyTradeModel.bitcoinPaymentData) { bitcoinData ->
+            log.d { "Bitcoin payment data changed for trade ${trade.shortTradeId}: ${bitcoinData?.isNotEmpty()}" }
+            if (!bitcoinData.isNullOrEmpty()) {
+                notificationServiceController.pushNotification(
+                    "mobile.openTradeNotifications.bitcoinInfoReceived.title".i18n(trade.shortTradeId),
+                    "mobile.openTradeNotifications.bitcoinInfoReceived.message".i18n(trade.peersUserName)
+                )
             }
         }
     }

@@ -64,8 +64,12 @@ class OpenTradePresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        require(tradesServiceFacade.selectedTrade.value != null)
-        val openTradeItemModel = tradesServiceFacade.selectedTrade.value!!
+        val selectedTrade = tradesServiceFacade.selectedTrade.value
+        if (selectedTrade == null) {
+            log.w { "KMP: OpenTradePresenter.onViewAttached called but selectedTrade is null - skipping initialization" }
+            return
+        }
+        val openTradeItemModel = selectedTrade
         var initReadCount : Int? = null
 
         collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) { tradeState ->
