@@ -203,6 +203,8 @@ class NodeOffersServiceFacade(
 //            BuildNodeConfig.TRADE_PROTOCOL_VERSION,
         )
 
+
+
         val channel: BisqEasyOfferbookChannel = bisqEasyOfferbookChannelService.findChannel(market).get()
 
         val myOfferMessage = BisqEasyOfferbookMessage(
