@@ -1580,7 +1580,6 @@ object GeneratedResourceBundles_es {
             "mobile.components.copyIconButton.copied" to "ES_Text copied",
             "mobile.components.marketFilter.showMarkets" to "ES_Show Markets",
             "mobile.bisqEasy.tradeWizard.price.subTitle" to "ES_This can be defined as a percentage price which floats with the market price or fixed price.",
-            "mobile.bisqEasy.tradeWizard.price.updateError" to "ES_Unable to update prices due to market price change",
             "mobile.bisqEasy.tradeState.info.seller.phase1.accountData.validations.minLength" to "ES_Min length: 3 characters",
             "mobile.createProfile.nickname.minLength" to "Min length: 1 character",
             "mobile.reputation.learnMore" to "ES_Learn more about the reputation system at the Bisq Wiki.",

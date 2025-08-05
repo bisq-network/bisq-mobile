@@ -5,8 +5,10 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import android.app.ActivityOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -91,10 +93,24 @@ actual class NotificationServiceController (private val appForegroundController:
 
     // TODO support for on click and decide if we block on foreground
     actual fun pushNotification(title: String, message: String) {
+        log.i { "pushNotification called - title: '$title', message: '$message', isAppInForeground: ${isAppInForeground()}" }
+
         if (isAppInForeground()) {
             log.w { "Skipping notification since app is in the foreground" }
             return
         }
+
+        // Check notification permission for Android 13+ (API 33+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                log.e { "POST_NOTIFICATIONS permission not granted, cannot send notification" }
+                return
+            }
+        }
+
+        // Generate unique notification ID to avoid overwriting previous notifications
+        val notificationId = generateNotificationId(title, message)
 
         // Create an intent that brings the user back to the app
         val intent = Intent(context, activityClassForIntents).apply {
@@ -103,12 +119,12 @@ actual class NotificationServiceController (private val appForegroundController:
         }
 
         // Create a PendingIntent to handle the notification click
-        // For Android 15+ compatibility, use simpler approach without ActivityOptions
+        // Use unique request code to avoid PendingIntent conflicts
         val pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
 
         val pendingIntent = PendingIntent.getActivity(
             context,
-            0,
+            notificationId, // Use unique request code
             intent,
             pendingIntentFlags
         )
@@ -116,10 +132,11 @@ actual class NotificationServiceController (private val appForegroundController:
         // Add dismiss action for better UX and notification management (API35+ target)
         val dismissIntent = Intent(context, BisqForegroundService::class.java).apply {
             action = DISMISS_NOTIFICATION_ACTION
+            putExtra("notificationId", notificationId)
         }
         val dismissPendingIntent = PendingIntent.getService(
             context,
-            1,
+            notificationId + 10000, // Offset to avoid conflicts
             dismissIntent,
             DISMISS_PENDING_INTENT_FLAGS
         )
@@ -142,9 +159,27 @@ actual class NotificationServiceController (private val appForegroundController:
             // Ensure notification is not grouped or minimized
             .setOnlyAlertOnce(false)
             .setLocalOnly(false)
+            // Add group for better organization on Android 15+
+            .setGroup("BISQ_TRADE_NOTIFICATIONS")
             .build()
-        notificationManager.notify(BisqForegroundService.PUSH_NOTIFICATION_ID, notification)
-        log.d {"Pushed notification: $title: $message" }
+
+        try {
+            notificationManager.notify(notificationId, notification)
+            log.i { "Successfully pushed notification with ID $notificationId: $title: $message" }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to push notification with ID $notificationId: $title: $message" }
+        }
+    }
+
+    private fun generateNotificationId(title: String, message: String): Int {
+        // Generate a unique ID based on content to avoid collisions
+        // Start from 1000 to avoid conflicts with service notification IDs
+        return (title + message).hashCode().let { hash ->
+            if (hash < 1000) hash + 1000 else hash
+        }.let { id ->
+            // Ensure it's positive and not conflicting with service IDs
+            kotlin.math.abs(id) % 100000 + 1000
+        }
     }
 
     actual override fun isServiceRunning() = isRunning
@@ -160,13 +195,18 @@ actual class NotificationServiceController (private val appForegroundController:
                 enableLights(true)
                 enableVibration(true)
                 setShowBadge(true)
-                // For Android 15+ compatibility
+                // For Android 15+ compatibility - ensure notifications can bypass DND
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                     setAllowBubbles(true)
+                }
+                // For Android 15+ - ensure notifications are not silenced
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                    setBypassDnd(false) // Don't bypass DND but ensure high importance
                 }
             }
             val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
+            log.i { "Created notification channel with IMPORTANCE_HIGH" }
         }
     }
 

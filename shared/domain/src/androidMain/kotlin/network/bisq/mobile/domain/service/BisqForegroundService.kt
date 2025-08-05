@@ -75,8 +75,9 @@ open class BisqForegroundService : Service(), Logging {
         // Android API 35
         if (intent?.action == "DISMISS_NOTIFICATION") {
             val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.cancel(PUSH_NOTIFICATION_ID)
-            log.i { "Notification dismissed by user" }
+            val notificationId = intent.getIntExtra("notificationId", PUSH_NOTIFICATION_ID)
+            notificationManager.cancel(notificationId)
+            log.i { "Notification $notificationId dismissed by user" }
             return START_STICKY
         }
         
