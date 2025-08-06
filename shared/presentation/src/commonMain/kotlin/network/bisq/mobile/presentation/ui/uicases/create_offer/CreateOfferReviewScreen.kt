@@ -3,12 +3,9 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
@@ -16,7 +13,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.components.atoms.FontSize
 import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
-import network.bisq.mobile.presentation.ui.components.atoms.button.CloseIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
@@ -51,20 +47,11 @@ fun CreateOfferReviewOfferScreen() {
             }
         },
     ) {
-        BisqText.h3Regular("bisqEasy.tradeWizard.review.headline.maker".i18n())
-        BisqGap.V2()
+        BisqGap.V1()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
             InfoBox(
                 label = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
                 value = presenter.headLine,
-            )
-            InfoBox(
-                label = "bisqEasy.takeOffer.review.method.fiat".i18n(),
-                value = presenter.quoteSidePaymentMethodDisplayString,
-            )
-            InfoBox(
-                label = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
-                value = presenter.baseSidePaymentMethodDisplayString
             )
             if (presenter.isRangeOffer) {
                 if (presenter.direction == DirectionEnum.BUY) {
@@ -135,7 +122,7 @@ fun CreateOfferReviewOfferScreen() {
             BisqHDivider()
 
             InfoBox(
-                label = "bisqEasy.tradeWizard.review.priceDescription.taker".i18n(),
+                label = "bisqEasy.tradeWizard.review.priceDescription.maker".i18n(),
                 valueComposable = {
                     Row(
                         verticalAlignment = Alignment.Bottom,
@@ -147,6 +134,15 @@ fun CreateOfferReviewOfferScreen() {
                     }
                 },
                 subvalue = presenter.priceDetails
+            )
+
+            InfoBox(
+                label = "bisqEasy.takeOffer.review.method.fiat".i18n(),
+                value = presenter.quoteSidePaymentMethodDisplayString,
+            )
+            InfoBox(
+                label = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
+                value = presenter.baseSidePaymentMethodDisplayString
             )
 
             InfoBox(

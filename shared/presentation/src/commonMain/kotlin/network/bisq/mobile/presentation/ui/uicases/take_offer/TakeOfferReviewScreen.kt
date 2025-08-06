@@ -44,8 +44,7 @@ fun TakeOfferReviewTradeScreen() {
         isInteractive = presenter.isInteractive.collectAsState().value,
         shouldBlurBg = showProgressDialog || showSuccessDialog,
     ) {
-        BisqText.h3Regular("bisqEasy.takeOffer.progress.review".i18n())
-        BisqGap.V2()
+        BisqGap.V1()
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
