@@ -1710,6 +1710,7 @@ object GeneratedResourceBundles_ru {
             "mobile.openTradeNotifications.paymentInfoReceived.message" to "Payment information from {0} has been received",
             "mobile.openTradeNotifications.paymentInfoReceived.title" to "Trade [{0}] - Payment info received",
             "bootstrap.connectedToTrustedNode" to "Connected to trusted node",
+            "mobile.tradeChat.sender.me" to "Me",
             "mobile.bisqEasy.tradeState.info.seller.phase1.accountData.validations.maxLength" to "Max length: 1024 characters",
             "mobile.components.topBar.step" to "Step {0}",
             "mobile.trustedNodeSetup.trustedBisqNodeURL.label" to "Trusted Bisq Node URL",

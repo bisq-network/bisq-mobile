@@ -5,29 +5,32 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.BadgedBox
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.animations.AnimatedBadge
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.atoms.button.FloatingButton
-import network.bisq.mobile.presentation.ui.components.atoms.icons.ChatIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
-import network.bisq.mobile.presentation.ui.components.organisms.trades.*
+import network.bisq.mobile.presentation.ui.components.organisms.trades.CancelTradeDialog
+import network.bisq.mobile.presentation.ui.components.organisms.trades.CloseTradeDialog
+import network.bisq.mobile.presentation.ui.components.organisms.trades.InvalidAddressConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.organisms.trades.InvalidPaymentProofConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.organisms.trades.OpenMediationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.*
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.BuyerState1aPresenter
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.BuyerState4Presenter
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.SellerState3aPresenter
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.SellerState4Presenter
 import org.koin.compose.koinInject
 
 @Composable
@@ -51,6 +54,8 @@ fun OpenTradeScreen() {
     val showInterruptionConfirmationDialog by headerPresenter.showInterruptionConfirmationDialog.collectAsState()
     val showMediationConfirmationDialog by headerPresenter.showMediationConfirmationDialog.collectAsState()
     val newMsgCount by presenter.newMsgCount.collectAsState()
+    val lastChatMsg by presenter.lastChatMsg.collectAsState()
+    val isInteractive by presenter.isInteractive.collectAsState()
 
     val buyerState1aAddressFieldType by buyerState1aPresenter.bitcoinLnAddressFieldType.collectAsState()
     val buyerState1aShowInvalidAddressDialog by buyerState1aPresenter.showInvalidAddressDialog.collectAsState()
@@ -77,31 +82,6 @@ fun OpenTradeScreen() {
 
     BisqStaticScaffold(
         topBar = { TopBar("mobile.bisqEasy.openTrades.title".i18n(presenter.selectedTrade.value?.shortTradeId ?: "")) },
-        floatingButton = {
-            val icon = @Composable {
-                FloatingButton(
-                    enabled = presenter.isInteractive.collectAsState().value,
-                    onClick = { presenter.onOpenChat() },
-                ) {
-                    ChatIcon(modifier = Modifier.size(34.dp))
-                }
-            }
-
-            if (newMsgCount == 0) {
-                icon()
-            } else {
-                BadgedBox(badge = {
-                    AnimatedBadge(showAnimation = true, xOffset = (-4).dp) {
-                        BisqText.xsmallLight(
-                            newMsgCount.toString(),
-                            textAlign = TextAlign.Center, color = BisqTheme.colors.dark_grey20
-                        )
-                    }
-                }) {
-                    icon()
-                }
-            }
-        },
         shouldBlurBg = shouldBlurBg,
     ) {
         Box(
@@ -136,6 +116,15 @@ fun OpenTradeScreen() {
                         BisqGap.V2()
                         TradeFlowPane(presenter.tradeFlowPresenter)
                     }
+
+                    BisqGap.V2()
+
+                    TradeChatRow(
+                        presenter = presenter,
+                        lastChatMsg = lastChatMsg,
+                        newMsgCount = newMsgCount,
+                        enabled = isInteractive,
+                    )
                 }
             }
         }

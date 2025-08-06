@@ -17,9 +17,9 @@ import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountSelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferCurrencySelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferDirectionScreen
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferSettlementMethodScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPaymentMethodScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferReviewOfferScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferSettlementMethodScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferTradePriceSelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideOverview
 import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideProcess
@@ -82,7 +82,13 @@ fun RootNavGraph(rootNavController: NavHostController) {
             Routes.About to { AboutScreen() },
         )
         otherScreens.forEach{ (route, screen): Pair<Routes, @Composable () -> Unit> ->
-            addScreen(route.name, content = screen)
+            addScreen(
+                route.name,
+                navAnimation = if (route == Routes.TradeChat)
+                    NavAnimation.SLIDE_IN_FROM_BOTTOM
+                else NavAnimation.SLIDE_IN_FROM_RIGHT,
+                content = screen,
+            )
         }
 
         val takeOfferScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
@@ -130,23 +136,31 @@ fun RootNavGraph(rootNavController: NavHostController) {
     }
 }
 
+enum class NavAnimation {
+    FADE_IN,
+    SLIDE_IN_FROM_RIGHT,
+    SLIDE_IN_FROM_BOTTOM,
+}
+
 fun NavGraphBuilder.addScreen(
     route: String,
     wizardTransition: Boolean = false,
+    navAnimation: NavAnimation = if (wizardTransition)  NavAnimation.FADE_IN else NavAnimation.SLIDE_IN_FROM_RIGHT,
     content: @Composable () -> Unit
 ) {
     composable(
         route = route,
         enterTransition = {
-            if (wizardTransition) {
-                // When user presses 'Next', fadeIn the next step screen
-                fadeIn(animationSpec = tween(150))
-            } else {
-                // When a screen is pushed in, slide in from right edge of the screen to left
-                slideIntoContainer(
+            when (navAnimation) {
+                NavAnimation.SLIDE_IN_FROM_RIGHT -> slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Left,
                     animationSpec = tween(300)
                 )
+                NavAnimation.SLIDE_IN_FROM_BOTTOM -> slideIntoContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Up,
+                    animationSpec = tween(300)
+                )
+                NavAnimation.FADE_IN -> fadeIn(animationSpec = tween(150))
             }
         },
         exitTransition = {
@@ -158,15 +172,16 @@ fun NavGraphBuilder.addScreen(
             null
         },
         popExitTransition = {
-            if (wizardTransition) {
-                // When user presses 'Back', fadeOut the current step screen
-                fadeOut(animationSpec = tween(150))
-            } else {
-                // When current screen is poped out, slide if from screen to screen's right edge
-                slideOutOfContainer(
+            when (navAnimation) {
+                NavAnimation.SLIDE_IN_FROM_RIGHT -> slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.Right,
                     animationSpec = tween(300)
                 )
+                NavAnimation.SLIDE_IN_FROM_BOTTOM -> slideOutOfContainer(
+                    AnimatedContentTransitionScope.SlideDirection.Down,
+                    animationSpec = tween(300)
+                )
+                NavAnimation.FADE_IN -> fadeOut(animationSpec = tween(150))
             }
         }
 

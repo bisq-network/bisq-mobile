@@ -1665,6 +1665,7 @@ object GeneratedResourceBundles_es {
             "mobile.general.currency" to "ES_Currency",
             "mobile.user.paymentAccounts.createAccount.validations.name.minLength" to "ES_Min length: 3 characters",
             "mobile.bisqEasy.tradeState.info.seller.phase1.accountData.validations.maxLength" to "ES_Max length: 1024 characters",
+            "mobile.tradeChat.sender.me" to "ES_Me",
             "mobile.trustedNodeSetup.paste" to "ES_Paste",
             "mobile.components.topBar.step" to "ES_Step {0}",
             "mobile.trustedNodeSetup.trustedBisqNodeURL.label" to "ES_Trusted Bisq Node URL",

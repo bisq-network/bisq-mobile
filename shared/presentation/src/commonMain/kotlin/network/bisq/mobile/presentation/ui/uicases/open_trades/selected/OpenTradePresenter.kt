@@ -1,9 +1,18 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
 import androidx.compose.foundation.ScrollState
-import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.TradeReadState
+import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.BTC_CONFIRMED
@@ -42,6 +51,10 @@ class OpenTradePresenter(
     // New chat count to display over Chat FAB
     private val _newMsgCount: MutableStateFlow<Int> = MutableStateFlow(0)
     val newMsgCount: StateFlow<Int> = _newMsgCount
+
+    // New chat count to display over Chat FAB
+    private val _lastChatMsg: MutableStateFlow<BisqEasyOpenTradeMessageModel?> = MutableStateFlow(null)
+    val lastChatMsg: StateFlow<BisqEasyOpenTradeMessageModel?> = _lastChatMsg
 
     private var _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
     private var _coroutineScope: CoroutineScope? = null
@@ -84,6 +97,7 @@ class OpenTradePresenter(
                 initReadCount = readState[openTradeItemModel.tradeId]
             }
             _newMsgCount.update { _ -> it.size - initReadCount!! }
+            _lastChatMsg.update { _ -> it.maxByOrNull { msg -> msg.date } }
         }
 
         collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation) {
