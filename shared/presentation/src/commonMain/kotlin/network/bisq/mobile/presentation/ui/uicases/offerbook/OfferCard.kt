@@ -40,8 +40,7 @@ fun OfferCard(
     val buyColor = BisqTheme.colors.primary.copy(alpha = 0.8f)
     val myOfferColor = BisqTheme.colors.mid_grey20
     val isMyOffer = item.isMyOffer
-    val isInvalidDueToReputation = item.isInvalidDueToReputation
-    
+
     val directionalLabel: String
     val directionalLabelColor: Color
     val makersDirection = item.bisqEasyOffer.direction
@@ -64,7 +63,7 @@ fun OfferCard(
     val invalidOfferBackgroundColor = BisqTheme.colors.dark_grey50.copy(alpha = 0.4f)
     val backgroundColor = when {
         isMyOffer -> myOfferBackgroundColor
-        isInvalidDueToReputation -> invalidOfferBackgroundColor
+        item.isInvalidDueToReputation-> invalidOfferBackgroundColor
         else -> BisqTheme.colors.dark_grey50.copy(alpha = 0.9f)
     }
     
@@ -142,14 +141,7 @@ fun OfferCard(
                     RemoveOfferIcon()
                 }
             }
-            
-            if (isInvalidDueToReputation) {
-                BisqGap.V1()
-                BisqText.smallRegular(
-                    text = "mobile.bisqEasy.offerbook.insufficientReputation".i18n(),
-                    color = BisqTheme.colors.warning
-                )
-            }
+
         }
     }
 }
