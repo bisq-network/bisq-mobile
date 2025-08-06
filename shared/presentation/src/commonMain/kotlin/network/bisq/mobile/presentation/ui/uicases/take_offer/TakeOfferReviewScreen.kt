@@ -35,8 +35,8 @@ fun TakeOfferReviewTradeScreen() {
 
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.progress.review".i18n(),
-        stepIndex = 3,
-        stepsLength = 3,
+        stepIndex = 4,
+        stepsLength = 4,
         prevOnClick = { presenter.onBack() },
         nextButtonText = "bisqEasy.takeOffer.review.takeOffer".i18n(),
         nextOnClick = { presenter.onTakeOffer() },

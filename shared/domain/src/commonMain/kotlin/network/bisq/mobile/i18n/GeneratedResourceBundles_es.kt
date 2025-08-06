@@ -1651,6 +1651,7 @@ object GeneratedResourceBundles_es {
             "mobile.createProfile.nickname.maxLength" to "Max length: 100 characters",
             "mobile.bisqEasy.createOffer.progress.baseSidePaymentMethod" to "[ES] Settlement Method",
             "mobile.trustedNodeSetup.warning" to "ES_Warning",
+            "mobile.bisqEasy.takeOffer.progress.quoteSidePaymentMethod" to "[ES] Payment Method",
             "mobile.settings.userProfile.labels.save" to "ES_Save",
             "mobile.components.currencyCard.numberOfOffers" to "ES_{0} offers",
             "mobile.bottomNavigation.offerbook" to "ES_Offerbook",
@@ -1669,6 +1670,7 @@ object GeneratedResourceBundles_es {
             "mobile.trustedNodeSetup.trustedBisqNodeURL.label" to "ES_Trusted Bisq Node URL",
             "mobile.bisqEasy.offerbook.insufficientReputation" to "ES_Insufficient reputation to take this offer",
             "mobile.trustedNodeSetup.changeWarning" to "ES_Changing your trusted node will require setting up your profile again. All your current profile data will be lost.\n\nDo you want to continue?",
+            "mobile.bisqEasy.takeOffer.paymentMethods.headline.btc" to "[ES] Which settlement method do you want to use?",
             "mobile.settings.userProfile.saveSucess" to "ES_Save success",
             "error.warning" to "ES_Warning",
             "mobile.tradeChat.jumpToBottom" to "ES_Jump to bottom",
@@ -1703,6 +1705,7 @@ object GeneratedResourceBundles_es {
             "mobile.validations.amountValidator.invalidNumber" to "ES_Invalid number",
             "mobile.bisqEasy.tradeWizard.price.tradePrice.type.percentage" to "ES_Percentage",
             "mobile.components.dropdown.searchPlaceholder" to "ES_Search...",
+            "mobile.bisqEasy.takeOffer.paymentMethods.headline.fiat" to "[ES] Which payment method do you want to use?",
             "mobile.dashboard.bulletPoint2" to "ES_Connect to Trusted Nodes: Start trading with confidence by connecting to a trusted Bisq node hosted by someone you trust.",
             "mobile.dashboard.bulletPoint3" to "ES_Remote Management for Experts: Manage your trades on the go by connecting securely to your own desktop-based Bisq node, no matter where you are.",
             "mobile.bisqEasy.tradeWizard.market.headline.buyer" to "ES_In which currency do you want to pay",
@@ -1714,6 +1717,7 @@ object GeneratedResourceBundles_es {
             "mobile.settings.trade.maxTradePriceDeviation.validation.cannotBeEmpty" to "ES_Value cannot be empty",
             "mobile.components.marketFilter.sortBy.nameAZ" to "ES_Name A-Z",
             "mobile.bisqEasy.tradeWizard.market.title" to "ES_Currency",
+            "mobile.bisqEasy.takeOffer.progress.baseSidePaymentMethod" to "[ES] Settlement Method",
         ),
     )
 }

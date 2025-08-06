@@ -11,7 +11,7 @@ import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 @Composable
-fun TakeOfferPaymentMethodScreen() {
+fun TakeOfferSettlementMethodScreen() {
     val presenter: TakeOfferPaymentMethodPresenter = koinInject()
 
     val baseSidePaymentMethod: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
@@ -32,26 +32,26 @@ fun TakeOfferPaymentMethodScreen() {
     RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
-        "mobile.bisqEasy.takeOffer.progress.quoteSidePaymentMethod".i18n(),
-        stepIndex = 2,
+        "mobile.bisqEasy.takeOffer.progress.baseSidePaymentMethod".i18n(),
+        stepIndex = 3,
         stepsLength = 4,
         prevOnClick = { presenter.onBack() },
-        nextOnClick = { presenter.onQuoteSideNext() },
+        nextOnClick = { presenter.onBaseSideNext() },
         snackbarHostState = presenter.getSnackState()
     ) {
 
-        BisqText.h3Regular("mobile.bisqEasy.takeOffer.paymentMethods.headline.fiat".i18n())
+        BisqText.h3Regular("mobile.bisqEasy.takeOffer.paymentMethods.headline.btc".i18n())
 
-        if (presenter.hasMultipleQuoteSidePaymentMethods) {
+        if (presenter.hasMultipleBaseSidePaymentMethods) {
             BisqGap.V2()
             BisqGap.V2()
 
             PaymentMethodCard(
-                title = "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.buyer".i18n(presenter.quoteCurrencyCode),
-                imagePaths = presenter.getQuoteSidePaymentMethodsImagePaths(),
-                availablePaymentMethods = presenter.quoteSidePaymentMethods,
-                selectedPaymentMethods = quoteSidePaymentMethod,
-                onToggle = { selected -> presenter.onQuoteSidePaymentMethodSelected(selected) },
+                title = "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.seller".i18n(presenter.quoteCurrencyCode),
+                imagePaths = presenter.getBaseSidePaymentMethodsImagePaths(),
+                availablePaymentMethods = presenter.baseSidePaymentMethods,
+                selectedPaymentMethods = baseSidePaymentMethod,
+                onToggle = { selected -> presenter.onBaseSidePaymentMethodSelected(selected) },
             )
         }
     }

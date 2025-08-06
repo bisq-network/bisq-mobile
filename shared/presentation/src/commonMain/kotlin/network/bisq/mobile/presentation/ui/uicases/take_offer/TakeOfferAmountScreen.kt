@@ -22,7 +22,7 @@ fun TakeOfferTradeAmountScreen() {
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.progress.amount".i18n(),
         stepIndex = 1,
-        stepsLength = 3,
+        stepsLength = 4,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() },
         nextDisabled = !presenter.amountValid.collectAsState().value,

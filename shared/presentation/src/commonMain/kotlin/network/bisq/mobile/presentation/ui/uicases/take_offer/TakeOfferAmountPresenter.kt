@@ -118,7 +118,9 @@ class TakeOfferAmountPresenter(
         commitToModel()
 
         if (takeOfferPresenter.showPaymentMethodsScreen()) {
-            navigateTo(Routes.TakeOfferPaymentMethod)
+            navigateTo(Routes.TakeOfferQuoteSidePaymentMethod)
+        } else if (takeOfferPresenter.showSettlementMethodsScreen()) {
+            navigateTo(Routes.TakeOfferBaseSidePaymentMethod)
         } else {
             navigateTo(Routes.TakeOfferReviewTrade)
         }

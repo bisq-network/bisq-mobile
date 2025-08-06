@@ -95,7 +95,11 @@ class TakeOfferPresenter(
     }
 
     fun showPaymentMethodsScreen(): Boolean {
-        return takeOfferModel.hasMultipleQuoteSidePaymentMethods || takeOfferModel.hasMultipleBaseSidePaymentMethods
+        return takeOfferModel.hasMultipleQuoteSidePaymentMethods
+    }
+
+    fun showSettlementMethodsScreen(): Boolean {
+        return takeOfferModel.hasMultipleBaseSidePaymentMethods
     }
 
     fun showAmountScreen(): Boolean {
@@ -113,8 +117,11 @@ class TakeOfferPresenter(
     }
 
 
-    fun commitPaymentMethod(quoteSidePaymentMethod: String, baseSidePaymentMethod: String) {
+    fun commitPaymentMethod(quoteSidePaymentMethod: String) {
         takeOfferModel.quoteSidePaymentMethod = quoteSidePaymentMethod
+    }
+
+    fun commitSettlementMethod(baseSidePaymentMethod: String) {
         takeOfferModel.baseSidePaymentMethod = baseSidePaymentMethod
     }
 

@@ -28,7 +28,8 @@ enum class Routes(val title: String) {
     OffersByMarket(title = "offer_list"),
 
     TakeOfferTradeAmount(title = "take_offer_trade_amount"),
-    TakeOfferPaymentMethod(title = "take_offer_payment_method"),
+    TakeOfferQuoteSidePaymentMethod(title = "take_offer_quote_side_payment_method"),
+    TakeOfferBaseSidePaymentMethod(title = "take_offer_base_side_payment_method"),
     TakeOfferReviewTrade(title = "take_offer_review_trade"),
 
     TabOpenTradeList(title = "tab_my_trades"),

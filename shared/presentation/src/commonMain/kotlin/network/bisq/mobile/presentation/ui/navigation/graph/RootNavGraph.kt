@@ -44,6 +44,7 @@ import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScreen
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPaymentMethodScreen
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferReviewTradeScreen
+import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferSettlementMethodScreen
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferTradeAmountScreen
 
 @Composable
@@ -86,7 +87,8 @@ fun RootNavGraph(rootNavController: NavHostController) {
 
         val takeOfferScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
             Routes.TakeOfferTradeAmount to { TakeOfferTradeAmountScreen() },
-            Routes.TakeOfferPaymentMethod to { TakeOfferPaymentMethodScreen() },
+            Routes.TakeOfferQuoteSidePaymentMethod to { TakeOfferPaymentMethodScreen() },
+            Routes.TakeOfferBaseSidePaymentMethod to { TakeOfferSettlementMethodScreen() },
             Routes.TakeOfferReviewTrade to { TakeOfferReviewTradeScreen() },
         )
         takeOfferScreens.forEachIndexed { i: Int, (route, screen): Pair<Routes, @Composable () -> Unit> ->
