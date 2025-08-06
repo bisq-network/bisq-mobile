@@ -14,18 +14,20 @@ import org.koin.compose.koinInject
 fun TakeOfferSettlementMethodScreen() {
     val presenter: TakeOfferPaymentMethodPresenter = koinInject()
 
-    val baseSidePaymentMethod: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
-    val quoteSidePaymentMethod: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
+    val baseSidePaymentMethod: MutableStateFlow<Set<String>> = remember { MutableStateFlow(emptySet()) }
+    val quoteSidePaymentMethod: MutableStateFlow<Set<String>> = remember { MutableStateFlow(emptySet()) }
+
+    fun convertToSet(value: String?): Set<String> = value?.let { setOf(it) } ?: emptySet()
 
     LaunchedEffect(Unit) {
         presenter.baseSidePaymentMethod.collect { value ->
-            baseSidePaymentMethod.value = value?.let { setOf(it) } ?: emptySet()
+            baseSidePaymentMethod.value = convertToSet(value)
         }
     }
 
     LaunchedEffect(Unit) {
         presenter.quoteSidePaymentMethod.collect { value ->
-            quoteSidePaymentMethod.value = value?.let { setOf(it) } ?: emptySet()
+            quoteSidePaymentMethod.value = convertToSet(value)
         }
     }
 

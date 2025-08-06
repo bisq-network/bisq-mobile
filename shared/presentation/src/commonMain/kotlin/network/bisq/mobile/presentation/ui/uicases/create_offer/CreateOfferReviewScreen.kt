@@ -137,11 +137,11 @@ fun CreateOfferReviewOfferScreen() {
             )
 
             InfoBox(
-                label = "bisqEasy.takeOffer.review.method.fiat".i18n(),
+                label = "bisqEasy.tradeWizard.review.paymentMethodDescription.fiat".i18n(), // Fiat payment method
                 value = presenter.quoteSidePaymentMethodDisplayString,
             )
             InfoBox(
-                label = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
+                label = "bisqEasy.tradeWizard.review.paymentMethodDescription.btc".i18n(), // Bitcoin settlement method
                 value = presenter.baseSidePaymentMethodDisplayString
             )
 
