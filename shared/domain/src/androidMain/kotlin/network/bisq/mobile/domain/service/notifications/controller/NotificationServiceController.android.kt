@@ -9,13 +9,13 @@ import android.content.pm.PackageManager
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import android.app.ActivityOptions
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.helper.getNotifResId
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.service.BisqForegroundService
 import network.bisq.mobile.domain.utils.Logging
@@ -145,7 +145,7 @@ actual class NotificationServiceController (private val appForegroundController:
         val notification = NotificationCompat.Builder(context, BisqForegroundService.CHANNEL_ID)
             .setContentTitle(title)
             .setContentText(message)
-            .setSmallIcon(android.R.drawable.ic_notification_overlay)
+            .setSmallIcon(getNotifResId(context))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT) // Default priority to avoid OS killing the app
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)

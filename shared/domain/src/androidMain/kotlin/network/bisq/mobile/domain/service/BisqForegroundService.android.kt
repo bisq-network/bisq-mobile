@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.helper.getNotifResId
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
 
@@ -41,7 +42,7 @@ open class BisqForegroundService : Service(), Logging {
 
     override fun onCreate() {
         super.onCreate()
-        initDefaultNotifications()
+        initDefaultNotifications(applicationContext)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             ServiceCompat.startForeground(this, SERVICE_ID, silentNotification, ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING)
             log.i { "Started as foreground service compat"}
@@ -56,9 +57,9 @@ open class BisqForegroundService : Service(), Logging {
             delay(1000)
 
             val serviceNotification: Notification = NotificationCompat.Builder(this@BisqForegroundService, CHANNEL_ID)
+                .setSmallIcon(getNotifResId(applicationContext))
                 .setContentTitle("mobile.bisqService.title".i18n())
                 .setContentText("mobile.bisqService.subTitle".i18n())
-                .setSmallIcon(android.R.drawable.ic_notification_overlay)
                 .setPriority(NotificationCompat.PRIORITY_LOW) // Low priority for service notification
                 .setOngoing(true)  // Keeps the notification active
                 .build()
@@ -102,17 +103,17 @@ open class BisqForegroundService : Service(), Logging {
 
     override fun onBind(intent: Intent?): IBinder? = null
 
-    private fun initDefaultNotifications() {
+    private fun initDefaultNotifications(context: Context) {
         silentNotification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("") // No title
             .setContentText("")  // No content
-            .setSmallIcon(android.R.drawable.ic_notification_overlay)
+            .setSmallIcon(getNotifResId(context))
             .setPriority(NotificationCompat.PRIORITY_MIN)  // Silent notification
             .setOngoing(true)  // Keeps the notification active
             .build()
         defaultNotification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(SERVICE_NAME)
-            .setSmallIcon(android.R.drawable.ic_notification_overlay)
+            .setSmallIcon(getNotifResId(context))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT) // For android previous to O
             .build()
     }
