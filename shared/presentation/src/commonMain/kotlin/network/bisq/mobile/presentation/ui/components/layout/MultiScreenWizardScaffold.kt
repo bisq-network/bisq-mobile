@@ -1,6 +1,17 @@
 package network.bisq.mobile.presentation.ui.components.layout
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -108,7 +119,7 @@ fun MultiScreenWizardScaffold(
                     windowInsets = WindowInsets(top = 0.dp, bottom = 0.dp)
                 ) {
                     Row(
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         BisqButton(
@@ -124,7 +135,7 @@ fun MultiScreenWizardScaffold(
                                 vertical = BisqUIConstants.ScreenPaddingHalf
                             ),
                             disabled = prevOnClick == null || prevDisabled,
-                            modifier = Modifier.weight(1.0F)
+                            modifier = Modifier.weight(1.0F).fillMaxHeight()
                         )
                         BisqGap.H1()
                         BisqButton(
@@ -139,7 +150,7 @@ fun MultiScreenWizardScaffold(
                                 vertical = BisqUIConstants.ScreenPaddingHalf
                             ),
                             disabled = nextOnClick == null || nextDisabled,
-                            modifier = Modifier.weight(1.0F)
+                            modifier = Modifier.weight(1.0F).fillMaxHeight()
                         )
                     }
                 }
