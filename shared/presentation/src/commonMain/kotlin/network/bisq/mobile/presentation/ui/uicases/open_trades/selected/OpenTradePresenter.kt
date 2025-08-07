@@ -48,11 +48,9 @@ class OpenTradePresenter(
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> = _isInMediation
 
-    // New chat count to display over Chat FAB
     private val _newMsgCount: MutableStateFlow<Int> = MutableStateFlow(0)
     val newMsgCount: StateFlow<Int> = _newMsgCount
 
-    // New chat count to display over Chat FAB
     private val _lastChatMsg: MutableStateFlow<BisqEasyOpenTradeMessageModel?> = MutableStateFlow(null)
     val lastChatMsg: StateFlow<BisqEasyOpenTradeMessageModel?> = _lastChatMsg
 
