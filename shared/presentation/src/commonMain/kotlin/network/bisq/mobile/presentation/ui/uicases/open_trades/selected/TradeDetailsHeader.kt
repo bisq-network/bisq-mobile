@@ -1,15 +1,30 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
-import androidx.compose.animation.*
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.IconButton
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,9 +40,15 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UpIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfileRow
-import network.bisq.mobile.presentation.ui.components.molecules.info.*
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxCurrency
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxStyle
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 @Composable
@@ -205,12 +226,13 @@ fun TradeDetailsHeader() {
                         BisqGap.V2()
 
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                            horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             if (showInterruptTradeButton) {
                                 BisqButton(
+                                    modifier = Modifier.weight(1f).fillMaxHeight(),
                                     text = interruptTradeButtonText,
                                     onClick = { presenter.onOpenInterruptionConfirmationDialog() },
                                     type = BisqButtonType.Outline,
@@ -218,6 +240,7 @@ fun TradeDetailsHeader() {
                             }
                             if (showMediationButton) {
                                 BisqButton(
+                                    modifier = Modifier.weight(1f).fillMaxHeight(),
                                     text = openMediationButtonText,
                                     onClick = { presenter.onOpenMediationConfirmationDialog() },
                                     type = BisqButtonType.GreyOutline,
