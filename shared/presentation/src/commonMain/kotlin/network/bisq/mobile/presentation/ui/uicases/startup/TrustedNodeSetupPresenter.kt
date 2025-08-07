@@ -1,12 +1,12 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.Settings
@@ -31,22 +31,22 @@ class TrustedNodeSetupPresenter(
     }
 
     private val _isBisqApiUrlValid = MutableStateFlow(true)
-    override val isBisqApiUrlValid: StateFlow<Boolean> = _isBisqApiUrlValid
+    override val isBisqApiUrlValid: StateFlow<Boolean> get() = _isBisqApiUrlValid
 
     private val _isBisqApiVersionValid = MutableStateFlow(true)
-    override val isBisqApiVersionValid: StateFlow<Boolean> = _isBisqApiVersionValid
+    override val isBisqApiVersionValid: StateFlow<Boolean> get() = _isBisqApiVersionValid
 
     private val _bisqApiUrl = MutableStateFlow("ws://10.0.2.2:8090")
-    override val bisqApiUrl: StateFlow<String> = _bisqApiUrl
+    override val bisqApiUrl: StateFlow<String> get() = _bisqApiUrl
 
     private val _trustedNodeVersion = MutableStateFlow("")
-    override val trustedNodeVersion: StateFlow<String> = _trustedNodeVersion
+    override val trustedNodeVersion: StateFlow<String> get() = _trustedNodeVersion
 
     private val _isConnected = MutableStateFlow(false)
-    override val isConnected: StateFlow<Boolean> = _isConnected
+    override val isConnected: StateFlow<Boolean> get() = _isConnected
 
     private val _isLoading = MutableStateFlow(false)
-    override val isLoading: StateFlow<Boolean> = _isLoading
+    override val isLoading: StateFlow<Boolean> get() = _isLoading
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -62,7 +62,11 @@ class TrustedNodeSetupPresenter(
                     settingsRepository.fetch()
                 }
                 data?.let {
-                    updateBisqApiUrl(it.bisqApiUrl, true)
+                    updateBisqApiUrl(
+                        if (it.bisqApiUrl.isBlank() && !_bisqApiUrl.value.isBlank())
+                            _bisqApiUrl.value
+                        else it.bisqApiUrl
+                    )
                     validateVersion()
                 }
             } catch (e: Exception) {
@@ -71,9 +75,9 @@ class TrustedNodeSetupPresenter(
         }
     }
 
-    override fun updateBisqApiUrl(newUrl: String, isValid: Boolean) {
+    override fun updateBisqApiUrl(newUrl: String) {
         _bisqApiUrl.value = newUrl
-        _isBisqApiUrlValid.value = isValid
+        _isBisqApiUrlValid.value = validateWsUrl(newUrl) == null
     }
 
     override fun isNewTrustedNodeUrl(): Boolean {
@@ -129,7 +133,7 @@ class TrustedNodeSetupPresenter(
                         webSocketClientProvider.get().await()
                         validateVersion()
                     }
-                    
+
                     if (isCompatibleVersion) {
                         _isConnected.value = true
 
@@ -215,7 +219,6 @@ class TrustedNodeSetupPresenter(
     }
 
     override suspend fun validateVersion(): Boolean {
-        _isBisqApiVersionValid.value = false
         _trustedNodeVersion.value = settingsServiceFacade.getTrustedNodeVersion()
         if (settingsServiceFacade.isApiCompatible()) {
             _isBisqApiVersionValid.value = true
