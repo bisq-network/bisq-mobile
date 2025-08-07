@@ -2,7 +2,10 @@ package network.bisq.mobile.presentation.ui.components.molecules.dialog
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,18 +70,20 @@ fun ConfirmationDialog(
                 )
             }
         } else {
-            Row(horizontalArrangement = Arrangement.SpaceBetween) {
+            Row(
+                modifier = Modifier.height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+            ) {
                 BisqButton(
+                    modifier = Modifier.weight(1.0F).fillMaxHeight(),
                     text = confirmButtonText,
                     onClick = onConfirm,
-                    modifier = Modifier.weight(1.0F),
                 )
-                BisqGap.H1()
                 BisqButton(
+                    modifier = Modifier.weight(1.0F).fillMaxHeight(),
                     text = dismissButtonText,
                     type = BisqButtonType.Grey,
                     onClick = onDismiss,
-                    modifier = Modifier.weight(1.0F),
                 )
             }
         }

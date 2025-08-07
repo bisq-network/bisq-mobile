@@ -1,9 +1,14 @@
 package network.bisq.mobile.presentation.ui.components.organisms.trades
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
@@ -13,7 +18,9 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.InfoIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
+import network.bisq.mobile.presentation.ui.helpers.spaceBetweenWithMin
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun MediationRequestDialog(
@@ -37,15 +44,19 @@ fun MediationRequestDialog(
             textAlign = TextAlign.Center
         )
         BisqGap.V1()
-        Row {
+        Row(
+            horizontalArrangement = Arrangement.spaceBetweenWithMin(BisqUIConstants.ScreenPadding),
+            modifier = Modifier.height(IntrinsicSize.Max)
+        ) {
             BisqButton(
+                modifier = Modifier.fillMaxHeight(),
                 text = "action.cancel".i18n(),
                 type = BisqButtonType.Grey,
                 onClick = onDismiss,
                 padding = PaddingValues(horizontal = 42.dp, vertical = 8.dp)
             )
-            BisqGap.H1()
             BisqButton(
+                modifier = Modifier.fillMaxHeight(),
                 text = "bisqEasy.mediation.request.confirm.openMediation".i18n(),
                 backgroundColor = BisqTheme.colors.primary,
                 onClick = onConfirm,

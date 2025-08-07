@@ -2,14 +2,17 @@ package network.bisq.mobile.presentation.ui.components.organisms.settings
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -20,6 +23,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.helpers.spaceBetweenWithMin
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
@@ -95,16 +99,18 @@ fun AppPaymentAccountCard(
             }
         )
         Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
+            horizontalArrangement = Arrangement.spaceBetweenWithMin(BisqUIConstants.ScreenPadding),
+            modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max)
         ) {
             BisqButton(
+                modifier = Modifier.fillMaxHeight(),
                 text = "action.cancel".i18n(),
                 type = BisqButtonType.Grey,
                 onClick = onCancel,
                 padding = PaddingValues(horizontal = 24.dp, vertical = 12.dp)
             )
             BisqButton(
+                modifier = Modifier.fillMaxHeight(),
                 text = "action.save".i18n(),
                 onClick = { onConfirm(accountName, accountDescription) },
                 padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp),
