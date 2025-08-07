@@ -1,7 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
@@ -10,6 +12,7 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
+import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -39,6 +42,7 @@ class CreateOfferReviewPresenter(
     private val _showMediatorWaitingDialog = MutableStateFlow(false)
     val showMediatorWaitingDialog: StateFlow<Boolean> get() = _showMediatorWaitingDialog
 
+    private var mediatorWaitJob: Job? = null
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
 
 
@@ -133,7 +137,7 @@ class CreateOfferReviewPresenter(
                     navigateToOfferList()
                 } else {
                     val exception = result.exceptionOrNull()
-                    if (exception?.message?.contains("mediator", ignoreCase = true) == true) {
+                    if (exception is MediatorNotAvailableException) {
                         showMediatorWaitingDialogAndRetry()
                     } else {
                         showSnackbar("mobile.bisqEasy.createOffer.failed".i18n())
@@ -151,20 +155,22 @@ class CreateOfferReviewPresenter(
 
     private suspend fun showMediatorWaitingDialogAndRetry() {
         _showMediatorWaitingDialog.value = true
-        val retryResult = withContext(IODispatcher) {
-            createOfferPresenter.createOfferWithMediatorWait()
-        }
-        _showMediatorWaitingDialog.value = false
-
-        if (retryResult.isSuccess) {
-            navigateToOfferList()
-        } else {
-            showSnackbar("mobile.bisqEasy.createOffer.mediatorTimeout".i18n())
+        mediatorWaitJob = launchIO {
+            val retryResult = createOfferPresenter.createOfferWithMediatorWait()
+            if (isActive) {
+                _showMediatorWaitingDialog.value = false
+                if (retryResult.isSuccess) {
+                    launchUI { navigateToOfferList() }
+                } else {
+                    launchUI { showSnackbar("mobile.bisqEasy.createOffer.mediatorTimeout".i18n()) }
+                }
+            }
         }
     }
 
     fun onDismissMediatorWaitingDialog() {
         _showMediatorWaitingDialog.value = false
+        mediatorWaitJob?.cancel()
         enableInteractive()
     }
 

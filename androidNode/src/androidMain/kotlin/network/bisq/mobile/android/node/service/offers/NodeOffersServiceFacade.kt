@@ -19,7 +19,6 @@ import bisq.offer.Direction
 import bisq.offer.amount.spec.AmountSpec
 import bisq.offer.bisq_easy.BisqEasyOffer
 import bisq.offer.price.spec.PriceSpec
-import bisq.support.mediation.MediationRequestService
 import bisq.user.identity.UserIdentity
 import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
@@ -31,6 +30,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.sync.withLock
@@ -47,6 +47,7 @@ import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferIt
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import java.util.Date
 import java.util.Optional
@@ -57,6 +58,11 @@ class NodeOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val userRepository: UserRepository
 ) : OffersServiceFacade() {
+
+    companion object {
+        private val MEDIATOR_WAIT_TIMEOUT = 1.minutes
+        private val MEDIATOR_POLL_INTERVAL = 2.seconds
+    }
 
     // Dependencies
     private val userIdentityService: UserIdentityService by lazy { applicationService.userService.get().userIdentityService }
@@ -268,44 +274,42 @@ class NodeOffersServiceFacade(
         priceSpec: PriceSpec,
         supportedLanguageCodes: List<String>
     ): String {
-        // First check if mediator is available
         val mediationRequestService = applicationService.supportService.get().mediationRequestService
         val userIdentity: UserIdentity = userIdentityService.selectedUserIdentity
 
-        // Try to select a mediator to check availability
-        val mediator = mediationRequestService.selectMediator(
-            userIdentity.userProfile.id,
-            userIdentity.userProfile.id,
-            "temp-offer-id"
-        )
+        log.d { "Checking mediator availability..." }
 
-        if (mediator.isPresent) {
-            // Mediator is available, proceed with normal offer creation
-            log.d { "Mediator available, creating offer normally" }
-            return createOffer(direction, market, bitcoinPaymentMethods, fiatPaymentMethods, amountSpec, priceSpec, supportedLanguageCodes)
-        }
+        try {
+            return withTimeout(MEDIATOR_WAIT_TIMEOUT) {
+                // Check immediately, then poll with delay
+                var firstCheck = true
+                while (true) {
+                    if (!firstCheck) {
+                        delay(MEDIATOR_POLL_INTERVAL)
+                    }
 
-        // No mediator available, wait with timeout
-        log.d { "No mediator available, waiting up to 1 minute..." }
+                    val currentMediator = mediationRequestService.selectMediator(
+                        userIdentity.userProfile.id,
+                        userIdentity.userProfile.id,
+                        "temp-offer-id"
+                    )
 
-        return withTimeout(1.minutes) {
-            while (true) {
-                delay(2.seconds) // Check every 2 seconds
+                    if (currentMediator.isPresent) {
+                        log.d { "Mediator available, creating offer" }
+                        return@withTimeout createOffer(direction, market, bitcoinPaymentMethods, fiatPaymentMethods, amountSpec, priceSpec, supportedLanguageCodes)
+                    }
 
-                val currentMediator = mediationRequestService.selectMediator(
-                    userIdentity.userProfile.id,
-                    userIdentity.userProfile.id,
-                    "temp-offer-id"
-                )
+                    if (firstCheck) {
+                        log.d { "No mediator available, waiting up to ${MEDIATOR_WAIT_TIMEOUT.inWholeSeconds} seconds..." }
+                    }
 
-                if (currentMediator.isPresent) {
-                    log.d { "Mediator became available, creating offer" }
-                    return@withTimeout createOffer(direction, market, bitcoinPaymentMethods, fiatPaymentMethods, amountSpec, priceSpec, supportedLanguageCodes)
+                    firstCheck = false
                 }
+                @Suppress("UNREACHABLE_CODE")
+                error("Unreachable")
             }
-
-            // This should never be reached due to timeout, but needed for compilation
-            throw IllegalStateException("Timeout waiting for mediator")
+        } catch (e: TimeoutCancellationException) {
+            throw MediatorNotAvailableException("Timeout waiting for mediator after ${MEDIATOR_WAIT_TIMEOUT.inWholeSeconds} seconds")
         }
     }
 
