@@ -2,11 +2,13 @@ package network.bisq.mobile.presentation.ui.uicases
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -60,20 +62,18 @@ fun DashboardScreen() {
                 priceText = "dashboard.marketPrice".i18n()
             )
             BisqGap.V1()
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Box(modifier = Modifier.weight(1f)) {
-                    PriceProfileCard(
-                        price = offersOnline.toString(),
-                        priceText = "dashboard.offersOnline".i18n()
-                    )
-                }
+            Row(modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max)) {
+                PriceProfileCard(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    price = offersOnline.toString(),
+                    priceText = "dashboard.offersOnline".i18n()
+                )
                 BisqGap.H1()
-                Box(modifier = Modifier.weight(1f)) {
-                    PriceProfileCard(
-                        price = publishedProfiles.toString(),
-                        priceText = "dashboard.activeUsers".i18n()
-                    )
-                }
+                PriceProfileCard(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    price = publishedProfiles.toString(),
+                    priceText = "dashboard.activeUsers".i18n()
+                )
             }
         }
         // BisqButton("bisqEasy.tradeGuide.tabs.headline".i18n(), onClick = { presenter.navigateToGuide() })
@@ -133,8 +133,9 @@ fun WelcomeCard(
 }
 
 @Composable
-fun PriceProfileCard(price: String, priceText: String) {
+fun PriceProfileCard(modifier: Modifier = Modifier, price: String, priceText: String) {
     BisqCard(
+        modifier = modifier,
         borderRadius = BisqUIConstants.ScreenPaddingQuarter,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
