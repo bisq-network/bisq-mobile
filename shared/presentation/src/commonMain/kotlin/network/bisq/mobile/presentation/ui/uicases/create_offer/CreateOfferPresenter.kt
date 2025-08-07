@@ -169,10 +169,10 @@ class CreateOfferPresenter(
         createOfferModel.selectedBaseSidePaymentMethods = selectedBaseSidePaymentMethods
     }
 
-    suspend fun createOffer() {
+    suspend fun createOffer(): Result<String> {
         if (isDemo()) {
             showSnackbar("mobile.bisqEasy.offerbook.createOfferDisabledInDemonstrationMode".i18n())
-            return
+            return Result.failure(IllegalStateException("Demo mode"))
         }
 
         val direction: DirectionEnum = createOfferModel.direction
@@ -201,8 +201,53 @@ class CreateOfferPresenter(
             setOf("en")
         }
 
-        withContext(IODispatcher) {
+        return withContext(IODispatcher) {
             offersServiceFacade.createOffer(
+                direction,
+                market,
+                bitcoinPaymentMethods,
+                fiatPaymentMethods,
+                amountSpec,
+                priceSpec,
+                supportedLanguageCodes
+            )
+        }
+    }
+
+    suspend fun createOfferWithMediatorWait(): Result<String> {
+        if (isDemo()) {
+            showSnackbar("mobile.bisqEasy.offerbook.createOfferDisabledInDemonstrationMode".i18n())
+            return Result.failure(IllegalStateException("Demo mode"))
+        }
+
+        val direction: DirectionEnum = createOfferModel.direction
+        val market: MarketVO = createOfferModel.market!!
+        val bitcoinPaymentMethods: Set<String> = createOfferModel.selectedBaseSidePaymentMethods
+        val fiatPaymentMethods: Set<String> = createOfferModel.selectedQuoteSidePaymentMethods
+
+        val amountSpec = if (createOfferModel.amountType == AmountType.FIXED_AMOUNT) {
+            QuoteSideFixedAmountSpecVO(createOfferModel.quoteSideFixedAmount!!.value)
+        } else {
+            QuoteSideRangeAmountSpecVO(
+                createOfferModel.quoteSideMinRangeAmount!!.value, createOfferModel.quoteSideMaxRangeAmount!!.value
+            )
+        }
+        val priceSpec = if (createOfferModel.priceType == PriceType.FIXED) {
+            FixPriceSpecVO(createOfferModel.priceQuote)
+        } else {
+            if (createOfferModel.percentagePriceValue == 0.0) MarketPriceSpecVO()
+            else FloatPriceSpecVO(createOfferModel.percentagePriceValue)
+        }
+
+        val supportedLanguageCodes = runCatching {
+            settingsServiceFacade.getSettings().getOrThrow().supportedLanguageCodes
+        }.getOrElse {
+            log.w(it) { "Failed to fetch settings, defaulting to English" }
+            setOf("en")
+        }
+
+        return withContext(IODispatcher) {
+            offersServiceFacade.createOfferWithMediatorWait(
                 direction,
                 market,
                 bitcoinPaymentMethods,

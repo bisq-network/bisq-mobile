@@ -17,6 +17,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.InformationConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxCurrency
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
@@ -151,5 +152,15 @@ fun CreateOfferReviewOfferScreen() {
                 subvalue = presenter.feeDetails,
             )
         }
+    }
+
+    // Mediator waiting dialog
+    if (presenter.showMediatorWaitingDialog.collectAsState().value) {
+        InformationConfirmationDialog(
+//            message = "mobile.bisqEasy.createOffer.mediatorWaiting.title".i18n(),
+            message = "mobile.bisqEasy.createOffer.mediatorWaiting.message".i18n(),
+            onConfirm = { presenter.onDismissMediatorWaitingDialog() },
+            onDismiss = { presenter.onDismissMediatorWaitingDialog() }
+        )
     }
 }

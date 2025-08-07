@@ -52,6 +52,16 @@ abstract class OffersServiceFacade : ServiceFacade(), LifeCycleAware {
         supportedLanguageCodes: Set<String>,
     ): Result<String>
 
+    abstract suspend fun createOfferWithMediatorWait(
+        direction: DirectionEnum,
+        market: MarketVO,
+        bitcoinPaymentMethods: Set<String>,
+        fiatPaymentMethods: Set<String>,
+        amountSpec: AmountSpecVO,
+        priceSpec: PriceSpecVO,
+        supportedLanguageCodes: Set<String>,
+    ): Result<String>
+
     abstract fun selectOfferbookMarket(marketListItem: MarketListItem)
 
 
