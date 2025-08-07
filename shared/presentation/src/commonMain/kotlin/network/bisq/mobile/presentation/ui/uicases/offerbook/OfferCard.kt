@@ -98,7 +98,7 @@ fun OfferCard(
         BisqGap.H1()
 
         Column(
-            modifier = Modifier.weight(3.0F)
+            modifier = Modifier.weight(3.0F).fillMaxHeight()
         ) {
             Row {
                 if (isMyOffer) {
@@ -115,7 +115,7 @@ fun OfferCard(
                     BisqGap.HHalf()
 
                     BisqText.baseRegularHighlight(
-                        text = userName.truncate(15),
+                        text = userName.truncate(13),
                         color = directionalLabelColor,
                     )
                 }
@@ -129,7 +129,7 @@ fun OfferCard(
 
             BisqText.smallRegular("@ " + item.formattedPriceSpec)
 
-            BisqGap.V1()
+            Spacer(modifier = Modifier.weight(1f))
 
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -141,6 +141,8 @@ fun OfferCard(
                     RemoveOfferIcon()
                 }
             }
+
+            BisqGap.VHalf()
 
         }
     }
