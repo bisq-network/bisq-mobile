@@ -32,8 +32,15 @@ class WebSocketClientProvider(
         fun parseUri(uri: String): Pair<String,Int>? {
             return uri.split("//").let { parts ->
                 parts.getOrNull(1)?.let { hostAndPort ->
-                    hostAndPort.split(":").let {
-                        return Pair(it[0], it[1].toInt())
+                    hostAndPort.split(":").let { it
+                        if (it.size >= 2) {
+                            val host = it[0]
+                            val port = it[1].toIntOrNull()
+                            if (host.isNotBlank() && port != null && port > 0) {
+                                return Pair(host, port)
+                            }
+                       }
+                        return null
                     }
                 }
             }
