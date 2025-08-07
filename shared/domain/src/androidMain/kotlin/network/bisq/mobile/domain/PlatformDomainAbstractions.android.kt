@@ -6,26 +6,26 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.net.Uri
 import android.os.Build
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.net.toUri
 import com.russhwolf.settings.Settings
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
 import java.io.ByteArrayOutputStream
-import java.text.DecimalFormat
-import java.util.Locale
-import java.util.Properties
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
-import java.text.NumberFormat
-import java.text.DecimalFormatSymbols
+import java.util.Locale
+import java.util.Properties
 
 actual fun formatDateTime(dateTime: LocalDateTime): String {
     val timeZone = TimeZone.currentSystemDefault()
@@ -47,7 +47,7 @@ actual fun getDeviceLanguageCode(): String {
     return Locale.getDefault().language
 }
 
-actual fun setupUncaughtExceptionHandler(onCrash: () -> Unit) {
+actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
     Thread.setDefaultUncaughtExceptionHandler { thread, throwable ->
         println("Uncaught exception on thread: ${thread.name}")
         throwable.printStackTrace()
@@ -55,13 +55,13 @@ actual fun setupUncaughtExceptionHandler(onCrash: () -> Unit) {
         // TODO report to some sort non-survaillant crashlytics?
 
         // Let the UI react
-        onCrash()
+        onCrash(throwable)
     }
 }
 
 class AndroidUrlLauncher(private val context: Context) : UrlLauncher {
     override fun openUrl(url: String) {
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+        val intent = Intent(Intent.ACTION_VIEW, url.toUri())
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
         context.startActivity(intent)
     }

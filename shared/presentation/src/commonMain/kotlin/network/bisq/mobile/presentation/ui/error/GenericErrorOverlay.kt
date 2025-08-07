@@ -3,6 +3,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import network.bisq.mobile.presentation.ui.AppPresenter
@@ -15,10 +16,10 @@ import org.koin.compose.koinInject
 fun ErrorOverlay() {
     val appPresenter: AppPresenter = koinInject()
 
-    val errorMessage = GenericErrorHandler.genericErrorMessage.collectAsState().value
-    val isUncaughtException = GenericErrorHandler.isUncaughtException.collectAsState().value
+    val errorMessage by GenericErrorHandler.genericErrorMessage.collectAsState()
+    val isUncaughtException by GenericErrorHandler.isUncaughtException.collectAsState()
 
-    if (errorMessage != null) {
+    errorMessage?.let {
         Box(
             Modifier
                 .fillMaxSize()
@@ -26,9 +27,9 @@ fun ErrorOverlay() {
         ) {
             // TODO: Should define exception types.
             // For this specific issue, have a type like TRUST_NODE_VERSION_INCOMPATIBLE
-            if (errorMessage.startsWith("Your configured trusted ")) {
+            if (it.startsWith("Your configured trusted ")) {
                 TrustedNodeAPIIncompatiblePopup(
-                    errorMessage = errorMessage,
+                    errorMessage = it,
                     onFix = {
                         appPresenter.navigateToTrustedNode()
                         GenericErrorHandler.clearGenericError()
@@ -36,7 +37,7 @@ fun ErrorOverlay() {
                 )
             } else {
                 ReportBugPanel(
-                    errorMessage = errorMessage,
+                    errorMessage = it,
                     isUncaughtException = isUncaughtException,
                     onClose = { GenericErrorHandler.clearGenericError() }
                 )

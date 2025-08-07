@@ -59,10 +59,10 @@ actual fun getDeviceLanguageCode(): String {
     return NSLocale.currentLocale.languageCode ?: "en"
 }
 
-private var globalOnCrash: (() -> Unit)? = null
+private var globalOnCrash: ((Throwable) -> Unit)? = null
 @OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 @Throws(Exception::class)
-actual fun setupUncaughtExceptionHandler(onCrash: () -> Unit) {
+actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
     // TODO this catches the exceptions but let them go through crashing the app, whether in android it will stop the propagation
     globalOnCrash = onCrash
     NSSetUncaughtExceptionHandler(staticCFunction { exception: NSException? ->
@@ -73,7 +73,9 @@ actual fun setupUncaughtExceptionHandler(onCrash: () -> Unit) {
             // TODO report to some sort non-survaillant crashlytics?
 
             // Let the UI react
-            globalOnCrash?.invoke()
+            val cause = Throwable(exception.reason)
+            val throwable = Throwable(message = exception.name, cause)
+            globalOnCrash?.invoke(throwable)
 
             // needed on iOS
             dispatch_async(dispatch_get_main_queue()) {

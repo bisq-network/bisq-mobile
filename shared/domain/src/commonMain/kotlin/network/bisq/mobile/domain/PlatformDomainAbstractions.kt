@@ -28,7 +28,7 @@ expect fun formatDateTime(dateTime: LocalDateTime): String
 
 expect fun encodeURIParam(param: String): String
 
-expect fun setupUncaughtExceptionHandler(onCrash: () -> Unit)
+expect fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit)
 
 expect fun getDeviceLanguageCode(): String
 
