@@ -1,8 +1,12 @@
 package network.bisq.mobile.presentation.ui.components.organisms
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -21,6 +25,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ExclamationRedIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
@@ -48,7 +53,10 @@ fun ReportBugPanel(
 
         BisqGap.V1()
 
-        BisqText.baseRegularGrey("popup.reportError".i18n())
+        BisqText.smallLight(
+            text = "popup.reportError".i18n(),
+            color = BisqTheme.colors.mid_grey30,
+        )
 
         BisqGap.V1()
 
@@ -66,7 +74,10 @@ fun ReportBugPanel(
 
         BisqGap.V1()
 
-        Row {
+        Row (
+            modifier = Modifier.height(IntrinsicSize.Max),
+            horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+        ) {
             BisqButton(
                 text = "action.close".i18n(),
                 onClick = {
@@ -76,10 +87,9 @@ fun ReportBugPanel(
                         onClose.invoke()
                 },
                 type = BisqButtonType.Grey,
-                modifier = Modifier.weight(1.0f),
+                modifier = Modifier.weight(1.0f).fillMaxHeight(),
                 padding = PaddingValues(BisqUIConstants.ScreenPaddingHalf)
             )
-            BisqGap.H1()
             BisqButton(
                 text = "support.reports.title".i18n(),
                 onClick = {
@@ -89,7 +99,7 @@ fun ReportBugPanel(
                     if (!isUncaughtException)
                         onClose.invoke()
                 },
-                modifier = Modifier.weight(1.0f),
+                modifier = Modifier.weight(1.0f).fillMaxHeight(),
                 padding = PaddingValues(BisqUIConstants.ScreenPaddingHalf)
             )
         }
