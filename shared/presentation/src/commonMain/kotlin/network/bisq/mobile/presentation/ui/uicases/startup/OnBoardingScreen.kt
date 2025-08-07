@@ -4,7 +4,9 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
@@ -36,7 +38,7 @@ fun OnBoardingScreen() {
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { presenter.indexesToShow.size })
 
-    val mainButtonText = presenter.buttonText.collectAsState().value
+    val mainButtonText by presenter.buttonText.collectAsState()
 
     RememberPresenterLifecycle(presenter)
 
@@ -47,7 +49,7 @@ fun OnBoardingScreen() {
     BisqScrollScaffold {
         BisqLogo()
         BisqGap.V2()
-        BisqText.h1LightGrey("onboarding.bisq2.headline".i18n())
+        BisqText.h1LightGrey("onboarding.bisq2.headline".i18n(), textAlign = TextAlign.Center)
         BisqGap.V2()
         BisqPagerView(pagerState, finalPages)
         BisqGap.V2()
