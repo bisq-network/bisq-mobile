@@ -28,6 +28,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.composeModels.PagerViewItem
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
@@ -84,7 +85,10 @@ fun PagerSingleItem(
     ) {
         Image(painterResource(image), title, modifier = Modifier.size(120.dp))
         BisqGap.V4()
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Column(
+            Modifier.padding(PaddingValues(horizontal = BisqUIConstants.ScreenPaddingHalf)),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             BisqText.h4Regular(title, textAlign = TextAlign.Center)
             BisqGap.V2()
             BisqText.largeRegularGrey(
