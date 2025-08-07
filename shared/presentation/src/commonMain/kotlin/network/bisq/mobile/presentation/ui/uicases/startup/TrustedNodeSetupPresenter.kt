@@ -114,14 +114,19 @@ class TrustedNodeSetupPresenter(
         }
         _isLoading.value = true
         log.d { "Test: ${_bisqApiUrl.value} isWorkflow $isWorkflow" }
-        val connectionSettings = WebSocketClientProvider.parseUri(_bisqApiUrl.value)
 
         val connectionJob = launchUI {
             try {
+                val parsedUri = WebSocketClientProvider.parseUri(_bisqApiUrl.value)
+                if (parsedUri == null) {
+                    throw RuntimeException("Failed to parse uri")
+                }
+                val (host, port) = parsedUri
+
                 // Add a timeout to prevent indefinite waiting
                 val success = withTimeout(15000) { // 15 second timeout
                     withContext(IODispatcher) {
-                        return@withContext webSocketClientProvider.testClient(connectionSettings.first, connectionSettings.second)
+                        return@withContext webSocketClientProvider.testClient(host, port)
                     }
                 }
 

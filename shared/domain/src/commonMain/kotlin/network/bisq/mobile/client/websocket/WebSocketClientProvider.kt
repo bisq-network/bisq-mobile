@@ -25,9 +25,17 @@ class WebSocketClientProvider(
     private val mutex = Mutex()
 
     companion object {
-        fun parseUri(uri: String): Pair<String,Int> {
-            uri.split("//")[1].split(":").let {
-                return Pair(it[0], it[1].toInt())
+
+        /**
+         * Returns a pair of host and port only if the uri is in the format of "scheme://host:port"
+         */
+        fun parseUri(uri: String): Pair<String,Int>? {
+            return uri.split("//").let { parts ->
+                parts.getOrNull(1)?.let { hostAndPort ->
+                    hostAndPort.split(":").let {
+                        return Pair(it[0], it[1].toInt())
+                    }
+                }
             }
         }
     }
@@ -93,14 +101,13 @@ class WebSocketClientProvider(
                 var port = defaultPort
                 
                 settings?.bisqApiUrl?.takeIf { it.isNotBlank() }?.let { url ->
-                    try {
-                        parseUri(url).apply {
-                            host = first
-                            port = second
-                            log.d { "Using saved settings for trusted node: $host:$port" }
-                        }
-                    } catch (e: Exception) {
-                        log.e(e) { "Error parsing saved URL $url, falling back to defaults" }
+                    val parsedUri = parseUri(url);
+                    if (parsedUri != null) {
+                        host = parsedUri.first
+                        port = parsedUri.second
+                        log.d { "Using saved settings for trusted node: $host:$port" }
+                    } else {
+                        log.e { "Error parsing saved URL $url, falling back to defaults" }
                     }
                 }
 
@@ -136,7 +143,12 @@ class WebSocketClientProvider(
                     mutex.withLock {
                         newSettings?.bisqApiUrl?.takeIf { it.isNotBlank() }?.let { url ->
                             try {
-                                val (newHost, newPort) = parseUri(url)
+                                val parsedUri = parseUri(url)
+                                if (parsedUri == null) {
+                                    log.e { "Error parsing new URL $url" }
+                                    return@let
+                                }
+                                val (newHost, newPort) = parsedUri
 
                                 if (isDifferentFromCurrentClient(newHost, newPort)) {
                                     if (currentClient != null) {
@@ -167,7 +179,7 @@ class WebSocketClientProvider(
                                     }
                                 }
                             } catch (e: Exception) {
-                                log.e(e) { "Error parsing or connecting to new URL $url" }
+                                log.e(e) { "Error connecting to new URL $url" }
                             }
                         }
                     }
