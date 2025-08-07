@@ -45,5 +45,5 @@ val testModule = module {
         )
     }
 
-    factory<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
+    single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
 }

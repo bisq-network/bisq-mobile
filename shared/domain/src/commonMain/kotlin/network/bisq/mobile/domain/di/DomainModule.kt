@@ -36,5 +36,5 @@ val domainModule = module {
     // Services
     single<OpenTradesNotificationService> { OpenTradesNotificationService(get(), get()) }
 
-    factory<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
+    single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
 }

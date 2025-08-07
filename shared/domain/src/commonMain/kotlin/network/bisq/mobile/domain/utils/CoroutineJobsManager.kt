@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.domain.data.IODispatcher
+import network.bisq.mobile.domain.getPlatformInfo
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
@@ -72,12 +73,47 @@ interface CoroutineJobsManager {
 class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
     private val jobs = mutableSetOf<Job>()
     private val jobsMutex = Mutex()
-    private var uiScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-    private var ioScope = CoroutineScope(IODispatcher + SupervisorJob())
+
+    // Create exception handler that will handle uncaught coroutine exceptions
+    private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
+        log.e(exception) { "Uncaught coroutine exception" }
+
+        // Handle the exception gracefully
+        try {
+            onCoroutineException?.invoke(exception)
+        } catch (e: Exception) {
+            log.e(e) { "Error in coroutine exception handler" }
+        }
+    }
+
+    // TODO we might need to make the whole manager platform-specific to cater for iOS properly
+    // Platform-aware scope creation
+    private val isIOS = getPlatformInfo().name.lowercase().contains("ios")
+    private var uiScope = if (isIOS) {
+        CoroutineScope(Dispatchers.Main + SupervisorJob())
+    } else {
+        CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler)
+    }
+    private var ioScope = if (isIOS) {
+        CoroutineScope(IODispatcher + SupervisorJob())
+    } else {
+        CoroutineScope(IODispatcher + SupervisorJob() + exceptionHandler)
+    }
+
+    // Callback for handling coroutine exceptions
+    private var onCoroutineException: ((Throwable) -> Unit)? = null
+
+    fun setCoroutineExceptionHandler(handler: (Throwable) -> Unit) {
+        if (isIOS) {
+            log.d { "iOS detected - coroutine exception handler not supported" }
+            return
+        }
+        onCoroutineException = handler
+    }
     
     override fun addJob(job: Job): Job {
         // direct, lock-protected mutation – no extra coroutines
-        runBlocking {           // cheap; single quick critical section
+        runBlocking {
             jobsMutex.withLock { jobs.add(job) }
         }
 
@@ -108,26 +144,54 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
             flow.collect { collector(it) }
         }
     }
+
+    override fun getUIScope(): CoroutineScope = uiScope
+
+    override fun getIOScope(): CoroutineScope = ioScope
     
     override suspend fun dispose() {
+        if (isIOS) {
+            // On iOS, don't dispose scopes during shutdown to avoid crashes
+            // The system will clean up when the app terminates
+            return
+        }
+
+        // Android - normal disposal
+        disposeScopes()
+        recreateScopes()
+    }
+
+    private suspend fun disposeScopes() {
         runCatching {
-            log.d { "Disposing coroutine jobs" }
             jobsMutex.withLock {
-                log.d { "Disposing ${jobs.size} coroutine jobs" }
-                jobs.forEach { it.cancel() }
+                jobs.forEach {
+                    runCatching { it.cancel() }.onFailure {
+                        log.w { "Failed to cancel job: ${it.message}" }
+                    }
+                }
                 jobs.clear()
             }
 
-            uiScope.cancel()
-            ioScope.cancel()
+            runCatching { uiScope.cancel() }.onFailure {
+                log.w { "Failed to cancel UI scope: ${it.message}" }
+            }
+            runCatching { ioScope.cancel() }.onFailure {
+                log.w { "Failed to cancel IO scope: ${it.message}" }
+            }
         }.onFailure {
             log.e(it) { "Failed to dispose coroutine jobs" }
         }
-        uiScope = CoroutineScope(kotlinx.coroutines.Dispatchers.Main + SupervisorJob())
-        ioScope = CoroutineScope(IODispatcher + SupervisorJob())
     }
-    
-    override fun getUIScope(): CoroutineScope = uiScope
-    
-    override fun getIOScope(): CoroutineScope = ioScope
+
+    private fun recreateScopes() {
+        runCatching {
+            uiScope = CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler)
+            ioScope = CoroutineScope(IODispatcher + SupervisorJob() + exceptionHandler)
+        }.onFailure {
+            log.e(it) { "Failed to recreate coroutine scopes" }
+            // Fallback: create basic scopes without exception handler
+            uiScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+            ioScope = CoroutineScope(IODispatcher + SupervisorJob())
+        }
+    }
 }
