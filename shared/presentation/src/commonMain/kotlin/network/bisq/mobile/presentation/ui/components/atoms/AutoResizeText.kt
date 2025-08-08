@@ -34,11 +34,11 @@ fun AutoResizeText(
     lineHeight: TextUnit = TextUnit.Unspecified,
     maxLines: Int = 1,
     overflow: TextOverflow = TextOverflow.Clip,
-    minimumFontSize: TextUnit = 6.sp,
+    minimumFontSize: TextUnit = 10.sp,
     modifier: Modifier = Modifier,
 ) {
-    var readyToDraw by remember { mutableStateOf(false) }
-    var determinedFontSize by remember { mutableStateOf(fontSize.size) }
+    var readyToDraw by remember(text, fontSize, maxLines, overflow) { mutableStateOf(false) }
+    var determinedFontSize by remember(text, fontSize)  { mutableStateOf(fontSize.size) }
     val determinedLineHeight by remember {
         derivedStateOf {
             if (lineHeight == TextUnit.Unspecified) {
@@ -70,7 +70,8 @@ fun AutoResizeText(
         overflow = overflow,
         onTextLayout = { textLayoutResult ->
             if (textLayoutResult.hasVisualOverflow && determinedFontSize > minimumFontSize) {
-                determinedFontSize = determinedFontSize * 0.9f
+                val next = determinedFontSize * 0.9f
+                determinedFontSize = if (next < minimumFontSize) minimumFontSize else next
             } else {
                 readyToDraw = true
             }
