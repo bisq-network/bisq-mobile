@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.painter.Painter
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bot_image
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -17,10 +18,12 @@ import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -30,7 +33,10 @@ import org.koin.compose.koinInject
 interface IIgnoredUsersPresenter : ViewPresenter {
     val ignoredUsers: StateFlow<List<UserProfileVO>>
     val avatarMap: StateFlow<Map<String, PlatformImage?>>
+    val ignoreUserId: StateFlow<String>
     fun unblockUser(userId: String)
+    fun unblockUserConfirm(userId: String)
+    fun dismissConfirm()
 }
 
 @Composable
@@ -38,6 +44,8 @@ fun IgnoredUsersScreen() {
     val presenter: IIgnoredUsersPresenter = koinInject()
     val ignoredUsers = presenter.ignoredUsers.collectAsState().value
     val userAvatarMap by presenter.avatarMap.collectAsState()
+    val ignoreUserId by presenter.ignoreUserId.collectAsState()
+    val showIgnoreUserWarnBox = ignoreUserId.isNotEmpty()
 
     RememberPresenterLifecycle(presenter)
 
@@ -65,6 +73,21 @@ fun IgnoredUsersScreen() {
             }
         }
 
+        if (showIgnoreUserWarnBox) {
+            ConfirmationDialog(
+                headline = "error.warning".i18n(),
+                headlineColor = BisqTheme.colors.warning,
+                headlineLeftIcon = { WarningIcon() },
+                message = "mobile.chat.undoIgnoreUserWarn".i18n(),
+                confirmButtonText = "user.profileCard.userActions.undoIgnore".i18n(),
+                dismissButtonText = "action.cancel".i18n(),
+                verticalButtonPlacement = true,
+                onConfirm = {
+                    presenter.unblockUserConfirm(ignoreUserId)
+                },
+                onDismiss = { presenter.dismissConfirm() }
+            )
+        }
     }
 }
 

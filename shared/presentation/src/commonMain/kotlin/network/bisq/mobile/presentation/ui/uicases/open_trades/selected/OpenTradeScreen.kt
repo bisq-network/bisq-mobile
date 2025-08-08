@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -27,6 +28,7 @@ import network.bisq.mobile.presentation.ui.components.organisms.trades.InvalidAd
 import network.bisq.mobile.presentation.ui.components.organisms.trades.InvalidPaymentProofConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.organisms.trades.OpenMediationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.BuyerState1aPresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.BuyerState4Presenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.SellerState3aPresenter
@@ -61,6 +63,7 @@ fun OpenTradeScreen() {
     val newMsgCount by presenter.newMsgCount.collectAsState()
     val lastChatMsg by presenter.lastChatMsg.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
+    val isIgnoredUser by presenter.ignoredUser.collectAsState()
 
     val buyerState1aAddressFieldType by buyerState1aPresenter.bitcoinLnAddressFieldType.collectAsState()
     val buyerState1aShowInvalidAddressDialog by buyerState1aPresenter.showInvalidAddressDialog.collectAsState()
@@ -101,6 +104,14 @@ fun OpenTradeScreen() {
             ) {
                 if (selectedTrade != null) {
                     TradeDetailsHeader()
+
+                    if (isIgnoredUser) {
+                        BisqGap.V2()
+                        BisqText.baseRegular(
+                            "mobile.bisqEasy.openTrades.warnIgnoredUser".i18n(),
+                            color = BisqTheme.colors.warning
+                        )
+                    }
 
                     if (isInMediation) {
                         BisqGap.V2()

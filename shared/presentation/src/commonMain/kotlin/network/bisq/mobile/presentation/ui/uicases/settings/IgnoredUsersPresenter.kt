@@ -19,6 +19,9 @@ class IgnoredUsersPresenter(
     private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
     override val avatarMap: StateFlow<Map<String, PlatformImage?>> = _avatarMap
 
+    private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
+    override val ignoreUserId: StateFlow<String> = _ignoreUserId
+
     override fun onViewAttached() {
         super.onViewAttached()
         loadIgnoredUsers()
@@ -55,13 +58,22 @@ class IgnoredUsersPresenter(
     }
 
     override fun unblockUser(userId: String) {
+        _ignoreUserId.value = userId
+    }
+
+    override fun unblockUserConfirm(userId: String) {
         launchIO {
             try {
                 userProfileService.undoIgnoreUserProfile(userId)
+                _ignoreUserId.value = ""
                 loadIgnoredUsers()
             } catch (e: Exception) {
                 log.e(e) { "Failed to unblock user: $userId" }
             }
         }
+    }
+
+    override fun dismissConfirm() {
+        _ignoreUserId.value = ""
     }
 }
