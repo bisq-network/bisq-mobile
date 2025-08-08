@@ -233,7 +233,7 @@ class ClientOffersServiceFacade(
         if (makerUserProfile == null) {
             return false
         }
-        if (userProfileServiceFacade.isChatUserIgnored(makersUserProfileId)) {
+        if (userProfileServiceFacade.isUserIgnored(makersUserProfileId)) {
             return false
         }
 

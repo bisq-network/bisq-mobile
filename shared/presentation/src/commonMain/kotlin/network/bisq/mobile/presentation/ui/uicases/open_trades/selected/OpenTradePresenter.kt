@@ -92,10 +92,8 @@ class OpenTradePresenter(
         var initReadCount : Int? = null
 
         launchIO {
-            val ignoredUserIds = userProfileServiceFacade.getIgnoredUserProfileIds()
-            if (ignoredUserIds.contains(selectedTrade.peersUserProfile.id)) {
-                _ignoredUser.value = true
-            }
+            val ignoredIds = userProfileServiceFacade.getIgnoredUserProfileIds()
+            _ignoredUser.value = ignoredIds.contains(selectedTrade.peersUserProfile.id)
         }
 
         collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) { tradeState ->

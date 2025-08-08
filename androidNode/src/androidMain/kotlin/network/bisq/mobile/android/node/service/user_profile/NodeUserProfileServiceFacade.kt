@@ -152,20 +152,6 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         }
     }
 
-    override suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO> {
-        val idList: MutableList<UserIdentityVO> = mutableListOf()
-
-        ids.map {
-            val userIdentity = userService.userIdentityService.findUserIdentity(it)
-            if (userIdentity.isPresent) {
-                idList.add(Mappings.UserIdentityMapping.fromBisq2Model(userIdentity.get()))
-            }
-        }
-
-        return idList
-
-    }
-
     override suspend fun findUserProfile(id: String): UserProfileVO? {
         val userProfile = userProfileService.findUserProfile(id)
         return if (userProfile.isPresent) {
@@ -231,7 +217,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         }
     }
 
-    override suspend fun isChatUserIgnored(profileId: String): Boolean {
+    override suspend fun isUserIgnored(profileId: String): Boolean {
         return userProfileService.isChatUserIgnored(profileId)
     }
 

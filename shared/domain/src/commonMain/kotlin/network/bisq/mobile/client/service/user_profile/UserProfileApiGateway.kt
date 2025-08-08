@@ -45,7 +45,7 @@ class UserProfileApiGateway(
         if (ids.isEmpty()) {
             return Result.success(emptyList())
         }
-        return webSocketApiClient.get("$basePath/list?ids=${ids.joinToString(",")}")
+        return webSocketApiClient.get("$profileBasePath?ids=${ids.joinToString(",")}")
     }
 
     suspend fun getIgnoredUserIds(): Result<List<String>> {

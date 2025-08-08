@@ -64,17 +64,12 @@ interface UserProfileServiceFacade : LifeCycleAware {
     suspend fun getSelectedUserProfile(): UserProfileVO?
 
     /**
-     * @return UserIdentity if exists, null otherwise
-     */
-    suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO>
-
-    /**
      * @return UserProfile if exists, null otherwise
      */
     suspend fun findUserProfile(id: String): UserProfileVO?
 
     /**
-     * @return List<UserProfile> if exists, null otherwise
+     * @return List of UserProfiles for the given IDs (empty if none found)
      */
     suspend fun findUserProfiles(ids: List<String>): List<UserProfileVO>
 
@@ -89,7 +84,7 @@ interface UserProfileServiceFacade : LifeCycleAware {
 
     suspend fun undoIgnoreUserProfile(id: String)
 
-    suspend fun isChatUserIgnored(profileId: String): Boolean
+    suspend fun isUserIgnored(profileId: String): Boolean
 
     suspend fun getIgnoredUserProfileIds(): List<String>
 }

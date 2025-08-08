@@ -64,11 +64,12 @@ fun IgnoredUsersScreen() {
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
-                repeat(ignoredUsers.size) { index ->
-                    val user = ignoredUsers[index]
-                    IgnoredUserItem(user = user,
+                ignoredUsers.forEach { user ->
+                    IgnoredUserItem(
+                        user = user,
                         userAvatar = userAvatarMap[user.nym],
-                        onUnblock = { presenter.unblockUser(user.id) })
+                        onUnblock = { presenter.unblockUser(user.id) }
+                    )
                 }
             }
         }
@@ -109,7 +110,7 @@ private fun IgnoredUserItem(
         ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(painter, "", modifier = Modifier.size(BisqUIConstants.ScreenPadding3X))
+        Image(painter, contentDescription = null, modifier = Modifier.size(BisqUIConstants.ScreenPadding3X))
 
         BisqGap.HHalf()
 
