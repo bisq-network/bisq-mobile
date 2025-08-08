@@ -68,6 +68,8 @@ interface CoroutineJobsManager {
 
     /**
      * Set a custom coroutine exception handler.
+     * Note: On iOS, this method has no effect due to platform limitations.
+     * @param handler The exception handler callback
      */
     fun setCoroutineExceptionHandler(handler: (Throwable) -> Unit)
 }
@@ -79,7 +81,9 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
     private val jobs = mutableSetOf<Job>()
     private val jobsMutex = Mutex()
 
-    // Create exception handler that will handle uncaught coroutine exceptions
+    // Dedicated scope for job management operations - independent of user scopes
+    private var jobManagementScope = CoroutineScope(IODispatcher + SupervisorJob())
+
     private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
         log.e(exception) { "Uncaught coroutine exception" }
 
@@ -116,14 +120,13 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
         onCoroutineException = handler
     }
     
+    // uses dedicated scope to avoid collisions
     override fun addJob(job: Job): Job {
-        // direct, lock-protected mutation – no extra coroutines
-        runBlocking {
+        jobManagementScope.launch {
             jobsMutex.withLock { jobs.add(job) }
         }
-
         job.invokeOnCompletion {
-            runBlocking {
+            jobManagementScope.launch {
                 jobsMutex.withLock { jobs.remove(job) }
             }
         }
@@ -133,7 +136,7 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
     override fun launchUI(context: CoroutineContext,  block: suspend CoroutineScope.() -> Unit): Job {
         return addJob(uiScope.launch(context) { block() })
     }
-    
+
     override fun launchIO(block: suspend CoroutineScope.() -> Unit): Job {
         return addJob(ioScope.launch { block() })
     }
@@ -183,6 +186,9 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
             runCatching { ioScope.cancel() }.onFailure {
                 log.w { "Failed to cancel IO scope: ${it.message}" }
             }
+            runCatching { jobManagementScope.cancel() }.onFailure {
+                log.w { "Failed to cancel job management scope: ${it.message}" }
+            }
         }.onFailure {
             log.e(it) { "Failed to dispose coroutine jobs" }
         }
@@ -192,11 +198,13 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
         runCatching {
             uiScope = CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler)
             ioScope = CoroutineScope(IODispatcher + SupervisorJob() + exceptionHandler)
+            jobManagementScope = CoroutineScope(IODispatcher + SupervisorJob())
         }.onFailure {
             log.e(it) { "Failed to recreate coroutine scopes" }
             // Fallback: create basic scopes without exception handler
             uiScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
             ioScope = CoroutineScope(IODispatcher + SupervisorJob())
+            jobManagementScope = CoroutineScope(IODispatcher + SupervisorJob())
         }
     }
 }
