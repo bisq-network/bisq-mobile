@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.data.persistance.KeyValueStorage
 import network.bisq.mobile.domain.data.persistance.PersistenceSource
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
+import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import org.koin.dsl.module
 import org.koin.core.qualifier.named
 
@@ -45,5 +46,14 @@ val testModule = module {
         )
     }
 
-    single<CoroutineJobsManager> { DefaultCoroutineJobsManager() }
+    // Exception handler setup - singleton to ensure consistent setup
+    single<CoroutineExceptionHandlerSetup> { CoroutineExceptionHandlerSetup() }
+
+    // Job managers - factory to ensure each component has its own instance
+    factory<CoroutineJobsManager> {
+        DefaultCoroutineJobsManager().apply {
+            // Set up exception handler from the singleton setup
+            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
+        }
+    }
 }

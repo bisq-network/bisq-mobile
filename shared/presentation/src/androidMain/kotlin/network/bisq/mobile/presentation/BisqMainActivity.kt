@@ -16,7 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -32,7 +32,7 @@ abstract class BisqMainActivity : ComponentActivity() {
     }
 
     private val presenter: MainPresenter by inject()
-    private val jobsManager: CoroutineJobsManager by inject()
+    private val exceptionHandlerSetup: CoroutineExceptionHandlerSetup by inject()
 
     // TODO probably better to handle from presenter once the user reach home?
     private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
@@ -56,7 +56,7 @@ abstract class BisqMainActivity : ComponentActivity() {
         setupKoinDI()
 
         // Set up coroutine exception handler after DI is initialized
-        GenericErrorHandler.setupCoroutineExceptionHandler(jobsManager)
+        GenericErrorHandler.setupCoroutineExceptionHandler(exceptionHandlerSetup)
 
         presenter.attachView(this)
 

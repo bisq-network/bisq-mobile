@@ -65,6 +65,11 @@ interface CoroutineJobsManager {
      * Get the IO coroutine scope.
      */
     fun getIOScope(): CoroutineScope
+
+    /**
+     * Set a custom coroutine exception handler.
+     */
+    fun setCoroutineExceptionHandler(handler: (Throwable) -> Unit)
 }
 
 /**
@@ -103,7 +108,7 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
     // Callback for handling coroutine exceptions
     private var onCoroutineException: ((Throwable) -> Unit)? = null
 
-    fun setCoroutineExceptionHandler(handler: (Throwable) -> Unit) {
+    override fun setCoroutineExceptionHandler(handler: (Throwable) -> Unit) {
         if (isIOS) {
             log.d { "iOS detected - coroutine exception handler not supported" }
             return

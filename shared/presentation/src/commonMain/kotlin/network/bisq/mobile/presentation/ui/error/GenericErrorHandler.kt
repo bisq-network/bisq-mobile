@@ -5,8 +5,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.setupUncaughtExceptionHandler
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
+import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.getLogger
 import kotlin.jvm.JvmStatic
@@ -46,13 +45,11 @@ class GenericErrorHandler : Logging {
         }
 
         @JvmStatic
-        fun setupCoroutineExceptionHandler(jobsManager: CoroutineJobsManager) {
-            if (jobsManager is DefaultCoroutineJobsManager) {
-                jobsManager.setCoroutineExceptionHandler { throwable ->
-                    _isUncaughtException.value = false // This is a handled coroutine exception, not uncaught
-                    MainScope().launch {
-                        handleGenericError("Coroutine operation failed", throwable)
-                    }
+        fun setupCoroutineExceptionHandler(handlerSetup: CoroutineExceptionHandlerSetup) {
+            handlerSetup.setGlobalExceptionHandler { throwable ->
+                _isUncaughtException.value = false // This is a handled coroutine exception, not uncaught
+                MainScope().launch {
+                    handleGenericError("Coroutine operation failed", throwable)
                 }
             }
         }
