@@ -48,6 +48,9 @@ class TradeChatPresenter(
     private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
     val avatarMap: StateFlow<Map<String, PlatformImage?>> = _avatarMap
 
+    private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
+    val ignoreUserId: StateFlow<String> = _ignoreUserId
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -57,9 +60,15 @@ class TradeChatPresenter(
             val settings = withContext(IODispatcher) { settingsRepository.fetch() }
             settings?.let { _showChatRulesWarnBox.value = it.showChatRulesWarnBox }
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
+            val ignoredUserIds = userProfileServiceFacade.getIgnoredUserProfileIds().toSet()
 
             bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
-                _chatMessages.value = messages.toList()
+
+                val filteredMessages = messages.filter { message ->
+                    !ignoredUserIds.contains(message.senderUserProfileId)
+                }
+
+                _chatMessages.value = filteredMessages.toList()
 
                 messages.toList().forEach { message ->
                     withContext(IODispatcher) {
@@ -122,7 +131,25 @@ class TradeChatPresenter(
         _quotedMessage.value = quotedMessage
     }
 
-    fun onIgnoreUser(message: BisqEasyOpenTradeMessageModel) {
+    fun showIgnoreUserPopup(id: String) {
+        _ignoreUserId.value = id
+    }
+
+    fun hideIgnoreUserPopup() {
+        _ignoreUserId.value = ""
+    }
+
+    suspend fun onConfirmedIgnoreUser(id: String) {
+        userProfileServiceFacade.ignoreUserProfile(id)
+        this.hideIgnoreUserPopup()
+    }
+
+    suspend fun undoIgnoreUserProfile(id: String) {
+        userProfileServiceFacade.undoIgnoreUserProfile(id)
+    }
+
+    fun onDismissIgnoreUser() {
+        this.hideIgnoreUserPopup();
     }
 
     fun onReportUser(message: BisqEasyOpenTradeMessageModel) {

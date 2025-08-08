@@ -83,9 +83,6 @@ fun GeneralSettingsScreen() {
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         isInteractive = presenter.isInteractive.collectAsState().value,
     ) {
-        BreadcrumbNavigation(path = menuPath) { index ->
-            if (index == 0) settingsPresenter.settingsNavigateBack()
-        }
 
         BisqText.h4Regular("settings.language".i18n())
 

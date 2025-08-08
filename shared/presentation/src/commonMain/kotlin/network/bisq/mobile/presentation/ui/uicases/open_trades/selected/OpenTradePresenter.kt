@@ -22,8 +22,10 @@ import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqE
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.PEER_CANCELLED
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.PEER_REJECTED
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum.REJECTED
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -34,6 +36,7 @@ class OpenTradePresenter(
     private val tradesServiceFacade: TradesServiceFacade,
     val tradeFlowPresenter: TradeFlowPresenter,
     private val tradeReadStateRepository: TradeReadStateRepository,
+    private val userProfileServiceFacade: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
     private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
@@ -53,6 +56,9 @@ class OpenTradePresenter(
 
     private val _lastChatMsg: MutableStateFlow<BisqEasyOpenTradeMessageModel?> = MutableStateFlow(null)
     val lastChatMsg: StateFlow<BisqEasyOpenTradeMessageModel?> = _lastChatMsg
+
+    private val _ignoredUser: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val ignoredUser: StateFlow<Boolean> = _ignoredUser
 
     private var _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
     private var _coroutineScope: CoroutineScope? = null
@@ -82,6 +88,11 @@ class OpenTradePresenter(
         }
         val openTradeItemModel = selectedTrade
         var initReadCount : Int? = null
+
+        launchIO {
+            val ignoredIds = userProfileServiceFacade.getIgnoredUserProfileIds()
+            _ignoredUser.value = ignoredIds.contains(selectedTrade.peersUserProfile.id)
+        }
 
         collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) { tradeState ->
             tradeStateChanged(tradeState)

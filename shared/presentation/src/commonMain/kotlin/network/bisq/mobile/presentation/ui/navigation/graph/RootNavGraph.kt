@@ -35,6 +35,7 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_ch
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.AboutScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsScreen
+import network.bisq.mobile.presentation.ui.uicases.settings.IgnoredUsersScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.PaymentAccountSettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.AgreementScreen
@@ -79,6 +80,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
             Routes.GeneralSettings to { GeneralSettingsScreen() },
             Routes.UserProfileSettings to { UserProfileSettingsScreen() },
             Routes.PaymentAccountSettings to { PaymentAccountSettingsScreen() },
+            Routes.IgnoredUsers to { IgnoredUsersScreen() },
             Routes.About to { AboutScreen() },
         )
         otherScreens.forEach{ (route, screen): Pair<Routes, @Composable () -> Unit> ->

@@ -103,6 +103,8 @@ class AndroidApplicationService(
             Supplier { applicationService.contractService }
         var userService: Supplier<UserService> =
             Supplier { applicationService.userService }
+        var userProfileService: Supplier<UserProfileService> =
+            Supplier { applicationService.userProfileService }
         var chatService: Supplier<ChatService> =
             Supplier { applicationService.chatService }
         var settingsService: Supplier<SettingsService> =

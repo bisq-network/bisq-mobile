@@ -42,7 +42,7 @@ fun ChatMessageList(
     onRemoveReaction: (BisqEasyOpenTradeMessageModel, BisqEasyOpenTradeMessageReactionVO) -> Unit = { message: BisqEasyOpenTradeMessageModel, reaction: BisqEasyOpenTradeMessageReactionVO -> },
     onReply: (BisqEasyOpenTradeMessageModel) -> Unit = {},
     onCopy: (BisqEasyOpenTradeMessageModel) -> Unit = {},
-    onIgnoreUser: (BisqEasyOpenTradeMessageModel) -> Unit = {},
+    onIgnoreUser: (String) -> Unit = {},
     onReportUser: (BisqEasyOpenTradeMessageModel) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
@@ -82,7 +82,7 @@ fun ChatMessageList(
                             onRemoveReaction = { reaction -> onRemoveReaction(message, reaction) },
                             onReply = { onReply(message) },
                             onCopy = { onCopy(message) },
-                            onIgnoreUser = { onIgnoreUser(message) },
+                            onIgnoreUser = { onIgnoreUser(message.senderUserProfileId) },
                             onReportUser = { onReportUser(message) },
                         )
                     }

@@ -19,6 +19,7 @@ open class SettingsPresenter(
         val defaultList: MutableList<MenuItem> = mutableListOf(
             MenuItem.Leaf(label = "mobile.settings.general".i18n(), route = Routes.GeneralSettings),
             MenuItem.Leaf(label = "user.userProfile".i18n(), route = Routes.UserProfileSettings),
+            MenuItem.Leaf(label = "mobile.settings.ignoredUsers".i18n(), route = Routes.IgnoredUsers),
             MenuItem.Leaf(label = "user.paymentAccounts".i18n(), route = Routes.PaymentAccountSettings),
         )
         return MenuItem.Parent(
@@ -35,9 +36,5 @@ open class SettingsPresenter(
 
     override fun navigate(route: Routes) {
         navigateTo(route)
-    }
-
-    override fun settingsNavigateBack() {
-        navigateBack()
     }
 }

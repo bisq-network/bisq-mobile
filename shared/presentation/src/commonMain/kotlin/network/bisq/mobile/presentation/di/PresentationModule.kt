@@ -52,6 +52,8 @@ import network.bisq.mobile.presentation.ui.uicases.settings.AboutPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IAboutPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.IIgnoredUsersPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.IgnoredUsersPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfileSettingsPresenter
@@ -134,6 +136,8 @@ val presentationModule = module {
 
     factory { GeneralSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
+    factory { IgnoredUsersPresenter(get(), get()) } bind IIgnoredUsersPresenter::class
+
     single { PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
 
     // Offerbook
@@ -180,7 +184,7 @@ val presentationModule = module {
     single { TradeDetailsHeaderPresenter(get(), get(), get(), get()) }
     factory { InterruptedTradePresenter(get(), get(), get(), get()) }
     factory { TradeFlowPresenter(get(), get(), get()) }
-    factory { OpenTradePresenter(get(), get(), get(), get()) }
+    factory { OpenTradePresenter(get(), get(), get(), get(), get()) }
 
     factory { TradeChatPresenter(get(), get(), get(), get(), get(), get()) }
 

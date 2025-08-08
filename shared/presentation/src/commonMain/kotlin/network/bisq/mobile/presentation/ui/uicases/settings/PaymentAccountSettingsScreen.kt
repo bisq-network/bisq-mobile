@@ -72,11 +72,6 @@ fun PaymentAccountSettingsScreen() {
         isInteractive = presenter.isInteractive.collectAsState().value,
         shouldBlurBg = showConfirmationDialog,
     ) {
-        if (accounts.isNotEmpty()) {
-            BreadcrumbNavigation(path = menuPath) { index ->
-                if (index == 0) settingsPresenter.settingsNavigateBack()
-            }
-        }
         if (showBottomSheet) {
             BisqBottomSheet(
                 onDismissRequest = { showBottomSheet = !showBottomSheet }

@@ -64,9 +64,14 @@ interface UserProfileServiceFacade : LifeCycleAware {
     suspend fun getSelectedUserProfile(): UserProfileVO?
 
     /**
-     * @return UserIdentity if exists, null otherwise
+     * @return UserProfile if exists, null otherwise
      */
-    suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO>
+    suspend fun findUserProfile(id: String): UserProfileVO?
+
+    /**
+     * @return List of UserProfiles for the given IDs (empty if none found)
+     */
+    suspend fun findUserProfiles(ids: List<String>): List<UserProfileVO>
 
     /**
      * @return Get avatar of the user
@@ -74,4 +79,12 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * It is recommended to call this from a background (non-main) dispatcher.
      */
     suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage?
+
+    suspend fun ignoreUserProfile(id: String)
+
+    suspend fun undoIgnoreUserProfile(id: String)
+
+    suspend fun isUserIgnored(profileId: String): Boolean
+
+    suspend fun getIgnoredUserProfileIds(): List<String>
 }
