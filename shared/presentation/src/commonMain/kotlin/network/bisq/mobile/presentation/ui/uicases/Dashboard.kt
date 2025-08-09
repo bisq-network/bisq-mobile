@@ -49,16 +49,18 @@ fun DashboardScreen() {
 
     val offersOnline: Number by presenter.offersOnline.collectAsState()
     val publishedProfiles: Number by presenter.publishedProfiles.collectAsState()
+    val isInteractive by presenter.isInteractive.collectAsState()
+    val formattedMarketPrice by presenter.formattedMarketPrice.collectAsState()
 
     BisqScrollLayout(
         padding = PaddingValues(all = BisqUIConstants.Zero),
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
-        isInteractive = presenter.isInteractive.collectAsState().value
+        isInteractive = isInteractive,
     ) {
 
         Column {
             PriceProfileCard(
-                price = presenter.formattedMarketPrice.collectAsState().value,
+                price = formattedMarketPrice,
                 priceText = "dashboard.marketPrice".i18n()
             )
             BisqGap.V1()

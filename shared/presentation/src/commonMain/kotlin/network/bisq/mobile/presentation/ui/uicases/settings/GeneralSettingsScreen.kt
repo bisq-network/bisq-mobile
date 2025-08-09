@@ -1,14 +1,21 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
-import network.bisq.mobile.presentation.ui.components.atoms.*
+import network.bisq.mobile.presentation.ui.components.atoms.BisqDropDown
+import network.bisq.mobile.presentation.ui.components.atoms.BisqSwitch
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
@@ -58,17 +65,18 @@ fun GeneralSettingsScreen() {
     val presenter: IGeneralSettingsPresenter = koinInject()
     val settingsPresenter: ISettingsPresenter = koinInject()
 
-    val i18nPairs = presenter.i18nPairs.collectAsState().value
-    val allLanguagePairs = presenter.allLanguagePairs.collectAsState().value
-    val selectedLauguage = presenter.languageCode.collectAsState().value
-    val supportedLanguageCodes = presenter.supportedLanguageCodes.collectAsState().value
-    val closeOfferWhenTradeTaken = presenter.closeOfferWhenTradeTaken.collectAsState().value
-    val tradePriceTolerance = presenter.tradePriceTolerance.collectAsState().value
-    val numDaysAfterRedactingTradeData = presenter.numDaysAfterRedactingTradeData.collectAsState().value
-    val useAnimations = presenter.useAnimations.collectAsState().value
-    val powFactor = presenter.powFactor.collectAsState().value
-    val ignorePow = presenter.ignorePow.collectAsState().value
-    val shouldShowPoWAdjustmentFactor = presenter.shouldShowPoWAdjustmentFactor.collectAsState().value
+    val isInteractive by presenter.isInteractive.collectAsState()
+    val i18nPairs by presenter.i18nPairs.collectAsState()
+    val allLanguagePairs by presenter.allLanguagePairs.collectAsState()
+    val selectedLauguage by presenter.languageCode.collectAsState()
+    val supportedLanguageCodes by presenter.supportedLanguageCodes.collectAsState()
+    val closeOfferWhenTradeTaken by presenter.closeOfferWhenTradeTaken.collectAsState()
+    val tradePriceTolerance by presenter.tradePriceTolerance.collectAsState()
+    val numDaysAfterRedactingTradeData by presenter.numDaysAfterRedactingTradeData.collectAsState()
+    val useAnimations by presenter.useAnimations.collectAsState()
+    val powFactor by presenter.powFactor.collectAsState()
+    val ignorePow by presenter.ignorePow.collectAsState()
+    val shouldShowPoWAdjustmentFactor by presenter.shouldShowPoWAdjustmentFactor.collectAsState()
 
     val menuTree: MenuItem = settingsPresenter.menuTree()
     val menuPath = remember { mutableStateListOf(menuTree) }
@@ -81,7 +89,7 @@ fun GeneralSettingsScreen() {
         topBar = { TopBar("mobile.settings.title".i18n()) },
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = isInteractive,
     ) {
         BreadcrumbNavigation(path = menuPath) { index ->
             if (index == 0) settingsPresenter.settingsNavigateBack()
@@ -131,7 +139,7 @@ fun GeneralSettingsScreen() {
                 Pair("mention", "chat.notificationsSettingsMenu.mention".i18n()),
                 Pair("off", "chat.notificationsSettingsMenu.off".i18n()),
             ),
-            value = presenter.chatNotification.collectAsState().value,
+            value = presenter.chatNotification.collectAsState().value, // define at top using `by` keyword later
             onValueChange = { presenter.setChatNotification(it.first) }
         )
 

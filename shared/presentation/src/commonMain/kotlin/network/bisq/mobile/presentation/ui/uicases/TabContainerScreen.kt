@@ -1,6 +1,10 @@
 package network.bisq.mobile.presentation.ui.uicases
 
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import bisqapps.shared.presentation.generated.resources.Res
@@ -37,6 +41,7 @@ interface ITabContainerPresenter : ViewPresenter {
 @Composable
 fun TabContainerScreen() {
     val presenter: ITabContainerPresenter = koinInject()
+    val isInteractive by presenter.isInteractive.collectAsState()
     val navController: NavHostController = presenter.getRootTabNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute by remember(navBackStackEntry) {
@@ -88,7 +93,7 @@ fun TabContainerScreen() {
                 )
             }
         },
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = isInteractive,
         snackbarHostState = presenter.getSnackState(),
         content = { TabNavGraph() }
 

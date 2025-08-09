@@ -1,8 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
@@ -32,7 +35,7 @@ interface IAgreementPresenter : ViewPresenter {
 @Composable
 fun AgreementScreen() {
     val presenter: IAgreementPresenter = koinInject()
-    val isAccepted = presenter.isAccepted.collectAsState().value
+    val isAccepted by presenter.isAccepted.collectAsState()
 
     RememberPresenterLifecycle(presenter)
 

@@ -15,11 +15,11 @@ import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.icons.GreenSortIcon
-import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BisqSearchField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SortIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.BisqBottomSheet
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BisqSearchField
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFilter
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFilters
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -30,6 +30,8 @@ import org.koin.compose.koinInject
 fun OfferbookMarketScreen() {
     val presenter: OfferbookMarketPresenter = koinInject()
     var showFilterDialog by remember { mutableStateOf(false) }
+    val searchText by presenter.searchText.collectAsState()
+    val isInteractive by presenter.isInteractive.collectAsState()
 
     val marketItems by presenter.marketListItemWithNumOffers.collectAsState()
     val filter by presenter.filter.collectAsState()
@@ -39,11 +41,11 @@ fun OfferbookMarketScreen() {
     BisqStaticLayout(
         padding = PaddingValues(all = BisqUIConstants.Zero),
         verticalArrangement = Arrangement.Top,
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = isInteractive,
     ) {
 
         BisqSearchField(
-            value = presenter.searchText.collectAsState().value,
+            value = searchText,
             onValueChanged = { it, isValid -> presenter.setSearchText(it) },
             rightSuffix = {
                 // TODO: Height to be reduced with Icon only buttons

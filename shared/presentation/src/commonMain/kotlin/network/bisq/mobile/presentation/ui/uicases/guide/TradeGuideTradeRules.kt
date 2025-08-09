@@ -1,8 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.guide
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.BisqLinks
@@ -19,6 +22,7 @@ fun TradeGuideTradeRules() {
     val presenter: TradeGuideTradeRulesPresenter = koinInject()
     val userAgreed by presenter.tradeRulesConfirmed.collectAsState()
     var _userAgreed by remember { mutableStateOf(userAgreed) }
+    val isInteractive by presenter.isInteractive.collectAsState()
 
     RememberPresenterLifecycle(presenter)
 
@@ -33,7 +37,7 @@ fun TradeGuideTradeRules() {
         nextButtonText = "action.finish".i18n(),
         nextDisabled = !_userAgreed,
         horizontalAlignment = Alignment.Start,
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = isInteractive,
         showJumpToBottom = true
     ) {
         BisqText.h3Regular("bisqEasy.tradeGuide.rules.headline".i18n())

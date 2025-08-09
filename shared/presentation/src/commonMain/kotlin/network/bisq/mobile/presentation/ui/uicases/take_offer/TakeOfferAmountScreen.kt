@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
@@ -17,6 +18,11 @@ import org.koin.compose.koinInject
 @Composable
 fun TakeOfferTradeAmountScreen() {
     val presenter: TakeOfferAmountPresenter = koinInject()
+    val formattedQuoteAmount by presenter.formattedQuoteAmount.collectAsState()
+    val formattedBaseAmount by presenter.formattedBaseAmount.collectAsState()
+    val sliderPosition by presenter.sliderPosition.collectAsState()
+    val amountValid by presenter.amountValid.collectAsState()
+
     RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
@@ -25,7 +31,7 @@ fun TakeOfferTradeAmountScreen() {
         stepsLength = 4,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() },
-        nextDisabled = !presenter.amountValid.collectAsState().value,
+        nextDisabled = !amountValid,
     ) {
         BisqText.h3Regular("bisqEasy.takeOffer.amount.headline.buyer".i18n())
         BisqGap.V1()
@@ -43,12 +49,12 @@ fun TakeOfferTradeAmountScreen() {
             quoteCurrencyCode = presenter.quoteCurrencyCode,
             formattedMinAmount = presenter.formattedMinAmountWithCode,
             formattedMaxAmount = presenter.formattedMaxAmountWithCode,
-            formattedFiatAmount = presenter.formattedQuoteAmount.collectAsState().value,
-            formattedBtcAmount = presenter.formattedBaseAmount.collectAsState().value,
+            formattedFiatAmount = formattedQuoteAmount,
+            formattedBtcAmount = formattedBaseAmount,
             onSliderValueChange = { sliderValue -> presenter.onSliderValueChanged(sliderValue) },
             onTextValueChange = { textInput -> presenter.onTextValueChanged(textInput) },
             validateTextField = { presenter.validateTextField(it) },
-            sliderPosition = presenter.sliderPosition.collectAsState().value,
+            sliderPosition = sliderPosition,
         )
     }
 }

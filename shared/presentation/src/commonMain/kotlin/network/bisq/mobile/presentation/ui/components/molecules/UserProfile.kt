@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
@@ -32,7 +33,7 @@ fun UserProfile(
     showUserName: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    val fiveSystemScore: Double = reputation.collectAsState().value.fiveSystemScore
+    val reputation by reputation.collectAsState()
 
     val painter: Painter = if (userAvatar == null) {
         painterResource(Res.drawable.img_bot_image)
@@ -57,7 +58,7 @@ fun UserProfile(
                 )
                 BisqGap.VQuarter()
             }
-            StarRating(fiveSystemScore)
+            StarRating(reputation.fiveSystemScore)
         }
         BisqGap.V2()
         Row(verticalAlignment = Alignment.CenterVertically) {

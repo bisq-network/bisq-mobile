@@ -43,6 +43,7 @@ fun OfferbookScreen() {
     val showDeleteConfirmation by presenter.showDeleteConfirmation.collectAsState()
     val showNotEnoughReputationDialog by presenter.showNotEnoughReputationDialog.collectAsState()
     val userAvatarMap by presenter.avatarMap.collectAsState()
+    val isInteractive by presenter.isInteractive.collectAsState()
 
     BisqStaticScaffold(
         topBar = { TopBar(title = "offers".i18n()) },
@@ -52,7 +53,7 @@ fun OfferbookScreen() {
                 enabled = !presenter.isDemo()
             )
         },
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = isInteractive,
         shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog
     ) {
         DirectionToggle(

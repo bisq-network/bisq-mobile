@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.guide
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -13,6 +14,7 @@ import org.koin.compose.koinInject
 @Composable
 fun TradeGuideOverview() {
     val presenter: TradeGuideOverviewPresenter = koinInject()
+    val isInteractive by presenter.isInteractive.collectAsState()
 
     RememberPresenterLifecycle(presenter)
 
@@ -25,7 +27,7 @@ fun TradeGuideOverview() {
         prevOnClick = presenter::prevClick,
         nextOnClick = presenter::overviewNextClick,
         horizontalAlignment = Alignment.Start,
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = isInteractive,
     ) {
         BisqText.h3Regular("bisqEasy.tradeGuide.welcome.headline".i18n())
 

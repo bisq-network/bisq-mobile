@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import network.bisq.mobile.presentation.ui.components.atoms.BisqProgressBar
@@ -17,6 +18,8 @@ import org.koin.compose.koinInject
 @Composable
 fun SplashScreen() {
     val presenter: SplashPresenter = koinInject()
+    val progress by presenter.progress.collectAsState()
+    val state by presenter.state.collectAsState()
 
     RememberPresenterLifecycle(presenter)
 
@@ -24,10 +27,10 @@ fun SplashScreen() {
         BisqLogo()
 
         Column {
-            BisqProgressBar(presenter.progress.collectAsState().value)
+            BisqProgressBar(progress)
 
             BisqText.baseRegularGrey(
-                text = presenter.state.collectAsState().value,
+                text = state,
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )

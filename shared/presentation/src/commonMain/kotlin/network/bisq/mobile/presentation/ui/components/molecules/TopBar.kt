@@ -78,16 +78,17 @@ fun TopBar(
     val navController: NavHostController = presenter.getRootNavController()
     val tabNavController: NavHostController = presenter.getRootTabNavController()
 
-    val showAnimation = presenter.showAnimation.collectAsState().value
+    val showAnimation by presenter.showAnimation.collectAsState()
     var showBackConfirmationDialog by remember { mutableStateOf(false) }
 
-    val currentTab = tabNavController.currentBackStackEntryAsState().value?.destination?.route
+    val currentBackStackEntry by tabNavController.currentBackStackEntryAsState()
+    val currentTab = remember(currentBackStackEntry) { currentBackStackEntry?.destination?.route }
 
     val showBackButton = (customBackButton == null &&
             navController.previousBackStackEntry != null &&
             !presenter.isAtHome())
 
-    val connectivityStatus = presenter.connectivityStatus.collectAsState().value
+    val connectivityStatus by presenter.connectivityStatus.collectAsState()
 
     val defaultBackButton: @Composable () -> Unit = {
         IconButton(onClick = {
@@ -171,7 +172,6 @@ fun TopBar(
 //                BellIcon()
 
                 if (showUserAvatar) {
-
                     val userIconModifier = Modifier
                         .size(BisqUIConstants.topBarAvatarSize)
                         .alpha(if (presenter.avatarEnabled(currentTab)) 1.0f else 0.5f)

@@ -5,7 +5,13 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -23,6 +29,7 @@ import org.koin.compose.koinInject
 @Composable
 fun WalletGuideReceiving() {
     val presenter: WalletGuideReceivingPresenter = koinInject()
+    val isInteractive by presenter.isInteractive.collectAsState()
 
     RememberPresenterLifecycle(presenter)
 
@@ -45,7 +52,7 @@ fun WalletGuideReceiving() {
         nextOnClick = presenter::receivingNextClick,
         nextButtonText = "action.close".i18n(),
         horizontalAlignment = Alignment.Start,
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = isInteractive,
     ) {
         BisqText.h3Regular("bisqEasy.walletGuide.receive.headline".i18n())
 

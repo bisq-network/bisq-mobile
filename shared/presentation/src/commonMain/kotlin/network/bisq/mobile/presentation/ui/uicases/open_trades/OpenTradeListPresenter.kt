@@ -1,6 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades
 
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.formatters.NumberFormatter
@@ -19,8 +22,8 @@ class OpenTradeListPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade
 ) : BasePresenter(mainPresenter) {
 
-    private val _openTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
-    val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = _openTradeItems
+    private val _sortedOpenTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
+    val sortedOpenTradeItems: StateFlow<List<TradeItemPresentationModel>> = _sortedOpenTradeItems
 
     val tradeRulesConfirmed: StateFlow<Boolean> = settingsServiceFacade.tradeRulesConfirmed
 
@@ -44,13 +47,13 @@ class OpenTradeListPresenter(
                 Pair(unreadMessages, openTrades)
             }.collect { (unreadMessages, openTrades) ->
                 _tradesWithUnreadMessages.value = unreadMessages
-                _openTradeItems.value = openTrades.map {
+                _sortedOpenTradeItems.value = openTrades.map {
                     it.apply {
                         quoteAmountWithCode = "${NumberFormatter.format(it.quoteAmount.toDouble() / 10000.0)} ${it.quoteCurrencyCode}"
                         formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec, true)
                         formattedBaseAmount = NumberFormatter.btcFormat(it.baseAmount)
                     }
-                }
+                }.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
             }
         }
 

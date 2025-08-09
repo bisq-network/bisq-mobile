@@ -2,12 +2,22 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.blur
@@ -35,11 +45,12 @@ import org.koin.compose.koinInject
 @Composable
 fun OpenTradeListScreen() {
     val presenter: OpenTradeListPresenter = koinInject()
+    val isInteractive by presenter.isInteractive.collectAsState()
 
+    val tradeGuideVisible by presenter.tradeGuideVisible.collectAsState()
+    val tradeRulesConfirmed by presenter.tradeRulesConfirmed.collectAsState()
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
-
-    val sortedList =
-        presenter.openTradeItems.collectAsState().value.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
+    val sortedOpenTradeItems by presenter.sortedOpenTradeItems.collectAsState()
 
     val userAvatarMap by presenter.avatarMap.collectAsState()
 
@@ -49,7 +60,7 @@ fun OpenTradeListScreen() {
         return tradeId in tradesWithUnreadMessages.keys
     }
 
-    if (presenter.tradeGuideVisible.collectAsState().value) {
+    if (tradeGuideVisible) {
         InformationConfirmationDialog(
             message = "bisqEasy.tradeGuide.notConfirmed.warn".i18n(),
             confirmButtonText = "bisqEasy.tradeGuide.open".i18n(),
@@ -64,12 +75,12 @@ fun OpenTradeListScreen() {
 
     BisqStaticLayout(
         padding = PaddingValues(all = BisqUIConstants.Zero),
-        isInteractive = presenter.isInteractive.collectAsState().value
+        isInteractive = isInteractive,
     ) {
 
-        if (presenter.openTradeItems.collectAsState().value.isEmpty()) {
+        if (sortedOpenTradeItems.isEmpty()) {
             NoTradesSection(presenter)
-        } else if (!presenter.tradeRulesConfirmed.collectAsState().value) {
+        } else if (!tradeRulesConfirmed) {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -100,7 +111,7 @@ fun OpenTradeListScreen() {
                         )
                     }
                 }
-                items(sortedList) { trade ->
+                items(sortedOpenTradeItems) { trade ->
                     val isUnread = isTradeUnread(trade.tradeId)
                     OpenTradeListItem(
                         trade,
@@ -117,7 +128,7 @@ fun OpenTradeListScreen() {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                items(sortedList) { trade ->
+                items(sortedOpenTradeItems) { trade ->
                     val isUnread = isTradeUnread(trade.tradeId)
                     OpenTradeListItem(
                         trade,

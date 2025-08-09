@@ -25,7 +25,7 @@ fun CreateOfferDirectionScreen() {
     val presenter: CreateOfferDirectionPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val showSellerReputationWarning = presenter.showSellerReputationWarning.collectAsState().value
+    val showSellerReputationWarning by presenter.showSellerReputationWarning.collectAsState()
 
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.review.nextButton.createOffer".i18n(),

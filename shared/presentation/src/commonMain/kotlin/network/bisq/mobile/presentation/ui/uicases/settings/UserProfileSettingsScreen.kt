@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -22,8 +23,8 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
-import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButton
+import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -66,17 +67,18 @@ fun UserProfileSettingsScreen() {
     val presenter: IUserProfileSettingsPresenter = koinInject()
     val settingsPresenter: ISettingsPresenter = koinInject()
 
-    val botId = presenter.botId.collectAsState().value
-    val nickname = presenter.nickname.collectAsState().value
-    val profileId = presenter.profileId.collectAsState().value
-    val profileAge = presenter.profileAge.collectAsState().value
-    val lastUserActivity = presenter.lastUserActivity.collectAsState().value
-    val reputation = presenter.reputation.collectAsState().value
-    val statement = presenter.statement.collectAsState().value
-    val tradeTerms = presenter.tradeTerms.collectAsState().value
+    val isInteractive by presenter.isInteractive.collectAsState()
+    val botId by presenter.botId.collectAsState()
+    val nickname by presenter.nickname.collectAsState()
+    val profileId by presenter.profileId.collectAsState()
+    val profileAge by presenter.profileAge.collectAsState()
+    val lastUserActivity by presenter.lastUserActivity.collectAsState()
+    val reputation by presenter.reputation.collectAsState()
+    val statement by presenter.statement.collectAsState()
+    val tradeTerms by presenter.tradeTerms.collectAsState()
 
-    val showLoading = presenter.showLoading.collectAsState().value
-    val showDeleteConfirmation = presenter.showDeleteProfileConfirmation.collectAsState().value
+    val showLoading by presenter.showLoading.collectAsState()
+    val showDeleteConfirmation by presenter.showDeleteProfileConfirmation.collectAsState()
 
     val menuTree: MenuItem = settingsPresenter.menuTree()
     val menuPath = remember { mutableStateListOf(menuTree) }
@@ -90,7 +92,7 @@ fun UserProfileSettingsScreen() {
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         snackbarHostState = presenter.getSnackState(),
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = isInteractive,
         shouldBlurBg = showDeleteConfirmation,
     ) {
         BreadcrumbNavigation(path = menuPath) { index ->
@@ -168,7 +170,7 @@ fun UserProfileSettingsScreen() {
 
 @Composable
 private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter) {
-    val connectivityStatus = presenter.connectivityStatus.collectAsState().value
+    val connectivityStatus by presenter.connectivityStatus.collectAsState()
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -195,7 +197,7 @@ private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter) {
 
 @Composable
 private fun UserProfileScreenFooter(presenter: IUserProfileSettingsPresenter, showLoading: Boolean) {
-    val isLoading = presenter.showLoading.collectAsState().value
+    val isLoading by presenter.showLoading.collectAsState()
 
     Row(
         modifier = Modifier.fillMaxWidth(),

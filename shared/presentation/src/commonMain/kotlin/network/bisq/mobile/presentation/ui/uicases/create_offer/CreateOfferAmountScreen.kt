@@ -8,7 +8,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -39,6 +38,19 @@ fun CreateOfferAmountSelectorScreen() {
     val reputationBasedMaxSellAmount by presenter.formattedReputationBasedMaxAmount.collectAsState()
     val showLimitPopup by presenter.showLimitPopup.collectAsState()
     val shouldShowWarningIcon by presenter.shouldShowWarningIcon.collectAsState()
+    val amountValid by presenter.amountValid.collectAsState()
+    val amountType by presenter.amountType.collectAsState()
+    val fixedAmountSliderPosition by presenter.fixedAmountSliderPosition.collectAsState()
+    val reputationBasedMaxSliderValue by presenter.reputationBasedMaxSliderValue.collectAsState()
+    val rightMarkerSliderValue by presenter.rightMarkerSliderValue.collectAsState()
+    val formattedQuoteSideFixedAmount by presenter.formattedQuoteSideFixedAmount.collectAsState()
+    val formattedBaseSideFixedAmount by presenter.formattedBaseSideFixedAmount.collectAsState()
+    val minRangeSliderValue by presenter.minRangeSliderValue.collectAsState()
+    val maxRangeSliderValue by presenter.maxRangeSliderValue.collectAsState()
+    val formattedQuoteSideMinRangeAmount by presenter.formattedQuoteSideMinRangeAmount.collectAsState()
+    val formattedBaseSideMinRangeAmount by presenter.formattedBaseSideMinRangeAmount.collectAsState()
+    val formattedQuoteSideMaxRangeAmount by presenter.formattedQuoteSideMaxRangeAmount.collectAsState()
+    val formattedBaseSideMaxRangeAmount by presenter.formattedBaseSideMaxRangeAmount.collectAsState()
 
     MultiScreenWizardScaffold(
         "bisqEasy.openTrades.table.quoteAmount".i18n(),
@@ -46,7 +58,7 @@ fun CreateOfferAmountSelectorScreen() {
         stepsLength = 7,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() },
-        nextDisabled = !presenter.amountValid.collectAsState().value,
+        nextDisabled = !amountValid,
         snackbarHostState = presenter.getSnackState(),
         shouldBlurBg = showLimitPopup,
         showUserAvatar = false,
@@ -83,16 +95,16 @@ fun CreateOfferAmountSelectorScreen() {
 
         BisqGap.V2()
 
-        if (presenter.amountType.collectAsState().value == AmountType.FIXED_AMOUNT) {
+        if (amountType == AmountType.FIXED_AMOUNT) {
             BisqAmountSelector(
                 quoteCurrencyCode = presenter.quoteCurrencyCode,
                 formattedMinAmount = presenter.formattedMinAmountWithCode,
                 formattedMaxAmount = presenter.formattedMaxAmountWithCode,
-                sliderPosition = presenter.fixedAmountSliderPosition.collectAsState().value,
-                maxSliderValue = presenter.reputationBasedMaxSliderValue.collectAsState().value,
-                rightMarkerSliderValue = presenter.rightMarkerSliderValue.collectAsState().value,
-                formattedFiatAmount = presenter.formattedQuoteSideFixedAmount.collectAsState().value,
-                formattedBtcAmount = presenter.formattedBaseSideFixedAmount.collectAsState().value,
+                sliderPosition = fixedAmountSliderPosition,
+                maxSliderValue = reputationBasedMaxSliderValue,
+                rightMarkerSliderValue = rightMarkerSliderValue,
+                formattedFiatAmount = formattedQuoteSideFixedAmount,
+                formattedBtcAmount = formattedBaseSideFixedAmount,
                 onSliderValueChange = { presenter.onFixedAmountSliderValueChange(it) },
                 onTextValueChange = { presenter.onFixedAmountTextValueChange(it) },
                 validateTextField = { presenter.validateTextField(it) },
@@ -102,16 +114,16 @@ fun CreateOfferAmountSelectorScreen() {
                 formattedMinAmount = presenter.formattedMinAmountWithCode,
                 formattedMaxAmount = presenter.formattedMaxAmountWithCode,
                 quoteCurrencyCode = presenter.quoteCurrencyCode,
-                minRangeSliderValue = presenter.minRangeSliderValue.collectAsState().value,
+                minRangeSliderValue = minRangeSliderValue,
                 onMinRangeSliderValueChange = { presenter.onMinRangeSliderValueChange(it) },
-                maxRangeSliderValue = presenter.maxRangeSliderValue.collectAsState().value,
+                maxRangeSliderValue = maxRangeSliderValue,
                 onMaxRangeSliderValueChange = { presenter.onMaxRangeSliderValueChange(it) },
-                maxSliderValue = presenter.reputationBasedMaxSliderValue.collectAsState().value,
-                rightMarkerSliderValue = presenter.rightMarkerSliderValue.collectAsState().value,
-                formattedQuoteSideMinRangeAmount = presenter.formattedQuoteSideMinRangeAmount.collectAsState().value,
-                formattedBaseSideMinRangeAmount = presenter.formattedBaseSideMinRangeAmount.collectAsState().value,
-                formattedQuoteSideMaxRangeAmount = presenter.formattedQuoteSideMaxRangeAmount.collectAsState().value,
-                formattedBaseSideMaxRangeAmount = presenter.formattedBaseSideMaxRangeAmount.collectAsState().value,
+                maxSliderValue = reputationBasedMaxSliderValue,
+                rightMarkerSliderValue = rightMarkerSliderValue,
+                formattedQuoteSideMinRangeAmount = formattedQuoteSideMinRangeAmount,
+                formattedBaseSideMinRangeAmount = formattedBaseSideMinRangeAmount,
+                formattedQuoteSideMaxRangeAmount = formattedQuoteSideMaxRangeAmount,
+                formattedBaseSideMaxRangeAmount = formattedBaseSideMaxRangeAmount,
                 onMinAmountTextValueChange = { presenter.onMinAmountTextValueChange(it) },
                 onMaxAmountTextValueChange = { presenter.onMaxAmountTextValueChange(it) },
                 validateRangeMinTextField = { presenter.validateTextField(it) },

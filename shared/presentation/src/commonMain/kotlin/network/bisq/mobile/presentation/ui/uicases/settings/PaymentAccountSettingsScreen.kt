@@ -1,23 +1,36 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.*
-import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
-import network.bisq.mobile.presentation.ui.components.atoms.*
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
+import network.bisq.mobile.presentation.ui.components.atoms.BisqEditableDropDown
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
+import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.BisqBottomSheet
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
-import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
 import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.components.organisms.settings.AppPaymentAccountCard
@@ -42,6 +55,7 @@ fun PaymentAccountSettingsScreen() {
     val presenter: IPaymentAccountSettingsPresenter = koinInject()
     val settingsPresenter: ISettingsPresenter = koinInject()
 
+    val isInteractive by presenter.isInteractive.collectAsState()
     val accounts by presenter.accounts.collectAsState()
     val selectedAccount by presenter.selectedAccount.collectAsState()
 
@@ -69,7 +83,7 @@ fun PaymentAccountSettingsScreen() {
         topBar = { TopBar("user.paymentAccounts".i18n()) },
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         snackbarHostState = presenter.getSnackState(),
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = isInteractive,
         shouldBlurBg = showConfirmationDialog,
     ) {
         if (accounts.isNotEmpty()) {

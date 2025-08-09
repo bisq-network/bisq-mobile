@@ -8,6 +8,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.i18n.i18n
@@ -27,9 +28,9 @@ fun CreateOfferCurrencySelectorScreen() {
     val presenter: CreateOfferMarketPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val searchText = presenter.searchText.collectAsState().value
-    val filteredMarketList = presenter.marketListItemWithNumOffers.collectAsState().value
-    val isInteractive = presenter.isInteractive.collectAsState().value
+    val searchText by presenter.searchText.collectAsState()
+    val filteredMarketList by presenter.marketListItemWithNumOffers.collectAsState()
+    val isInteractive by presenter.isInteractive.collectAsState()
 
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.tradeWizard.market.title".i18n(),

@@ -1,7 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqDropDown
@@ -14,6 +16,7 @@ import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 fun SellerState1(
     presenter: SellerState1Presenter
 ) {
+    val paymentAccountDataValid by presenter.paymentAccountDataValid.collectAsState()
     val paymentAccountData by presenter.paymentAccountData.collectAsState()
     val paymentAccountName by presenter.paymentAccountName.collectAsState()
     val accounts by presenter.accounts.collectAsState()
@@ -33,7 +36,7 @@ fun SellerState1(
         )
 
         BisqGap.V1()
-        if (accountPairs.size > 0) {
+        if (accountPairs.isNotEmpty()) {
             BisqDropDown(
                 label = "user.paymentAccounts".i18n(),
                 items = accountPairs,
@@ -71,7 +74,7 @@ fun SellerState1(
         BisqButton(
             text = "bisqEasy.tradeState.info.seller.phase1.buttonText".i18n(), // Send account data
             onClick = { presenter.onSendPaymentData() },
-            disabled = !presenter.paymentAccountDataValid.collectAsState().value,
+            disabled = !paymentAccountDataValid,
         )
     }
 }

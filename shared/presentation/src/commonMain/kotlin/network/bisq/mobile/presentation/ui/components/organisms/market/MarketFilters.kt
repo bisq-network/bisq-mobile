@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqSegmentButton
@@ -43,12 +44,14 @@ fun MarketFilter.getDisplayName(): String {
 fun MarketFilters() {
 
     val presenter: OfferbookMarketPresenter = koinInject()
+    val sortBy by presenter.sortBy.collectAsState()
+    val filter by presenter.filter.collectAsState()
 
     Column(modifier = Modifier.padding(all = BisqUIConstants.ScreenPadding2X)) {
 
         BisqSegmentButton(
             label = "mobile.components.marketFilter.sortBy".i18n(),
-            value = presenter.sortBy.collectAsState().value.getDisplayName(),
+            value = sortBy.getDisplayName(),
             items = MarketSortBy.entries.map { it.name to it.getDisplayName() },
             onValueChange = {
                 val newValue = when (it.second) {
@@ -65,7 +68,7 @@ fun MarketFilters() {
         BisqSegmentButton(
             label = "mobile.components.marketFilter.showMarkets".i18n(),
             items = MarketFilter.entries.map { it.name to it.getDisplayName() },
-            value = presenter.filter.collectAsState().value.getDisplayName(),
+            value = filter.getDisplayName(),
             onValueChange = {
                 val newValue = when (it.second) {
                     "mobile.components.marketFilter.showMarkets.all".i18n() -> MarketFilter.All

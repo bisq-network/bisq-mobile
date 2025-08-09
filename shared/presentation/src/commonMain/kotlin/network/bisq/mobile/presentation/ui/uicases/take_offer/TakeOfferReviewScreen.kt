@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -28,8 +29,9 @@ import org.koin.compose.koinInject
 @Composable
 fun TakeOfferReviewTradeScreen() {
     val presenter: TakeOfferReviewPresenter = koinInject()
-    val showProgressDialog = presenter.showTakeOfferProgressDialog.collectAsState().value
-    val showSuccessDialog = presenter.showTakeOfferSuccessDialog.collectAsState().value
+    val showProgressDialog by presenter.showTakeOfferProgressDialog.collectAsState()
+    val showSuccessDialog by presenter.showTakeOfferSuccessDialog.collectAsState()
+    val isInteractive by presenter.isInteractive.collectAsState()
 
     RememberPresenterLifecycle(presenter)
 
@@ -41,7 +43,7 @@ fun TakeOfferReviewTradeScreen() {
         nextButtonText = "bisqEasy.takeOffer.review.takeOffer".i18n(),
         nextOnClick = { presenter.onTakeOffer() },
         snackbarHostState = presenter.getSnackState(),
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = isInteractive,
         shouldBlurBg = showProgressDialog || showSuccessDialog,
     ) {
         BisqGap.V1()
