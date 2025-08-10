@@ -11,7 +11,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.ServiceFacade
@@ -187,59 +186,60 @@ class ClientUserProfileServiceFacade(
         }
     }
 
-    override suspend fun ignoreUserProfile(id: String) {
+    override suspend fun ignoreUserProfile(profileId: String) {
         try {
-            val apiResult = apiGateway.ignoreUser(id)
+            val apiResult = apiGateway.ignoreUser(profileId)
             if (apiResult.isFailure) {
                 throw apiResult.exceptionOrNull()!!
             }
             ignoredUserIdsMutex.withLock {
-                ignoredUserIdsCache = null
+                ignoredUserIdsCache = (ignoredUserIdsCache ?: emptySet()) + profileId
             }
         } catch (e: Exception) {
-            log.e(e) { "Failed to ignore user id: $id" }
+            log.e(e) { "Failed to ignore user id: $profileId" }
             throw e
         }
     }
 
-    override suspend fun undoIgnoreUserProfile(id: String) {
+    override suspend fun undoIgnoreUserProfile(profileId: String) {
         try {
-            val apiResult = apiGateway.undoIgnoreUser(id)
+            val apiResult = apiGateway.undoIgnoreUser(profileId)
             if (apiResult.isFailure) {
                 throw apiResult.exceptionOrNull()!!
             }
             ignoredUserIdsMutex.withLock {
-                ignoredUserIdsCache = null
+                ignoredUserIdsCache = (ignoredUserIdsCache ?: emptySet()) - profileId
             }
         } catch (e: Exception) {
-            log.e(e) { "Failed to undo ignore user id: $id" }
+            log.e(e) { "Failed to undo ignore user id: $profileId" }
             throw e
         }
     }
 
     override suspend fun isUserIgnored(profileId: String): Boolean {
+        val cached = ignoredUserIdsMutex.withLock { ignoredUserIdsCache }
+        if (cached != null) return profileId in cached
+
+        val fresh = apiGateway.getIgnoredUserIds().getOrThrow().toSet()
         return ignoredUserIdsMutex.withLock {
-            val ids = ignoredUserIdsCache ?: run {
-                // populate cache if absent
-                val fresh = apiGateway.getIgnoredUserIds().getOrThrow().toSet()
-                ignoredUserIdsCache = fresh
-                fresh
-            }
-            profileId in ids
+            ignoredUserIdsCache = fresh
+            profileId in fresh
         }
     }
 
     override suspend fun getIgnoredUserProfileIds(): List<String> {
-        return ignoredUserIdsMutex.withLock {
-            ignoredUserIdsCache?.let { return@withLock it.toList() }
-            try {
-                val fetched: Set<String> = apiGateway.getIgnoredUserIds().getOrThrow().toSet()
+        val cached = ignoredUserIdsMutex.withLock { ignoredUserIdsCache }
+        if (cached != null) return cached.toList()
+        try {
+            val fetched: Set<String> = apiGateway.getIgnoredUserIds().getOrThrow().toSet()
+            return ignoredUserIdsMutex.withLock {
                 ignoredUserIdsCache = fetched
-                return@withLock fetched.toList()
-            } catch (e: Exception) {
-                log.e(e) { "Failed to fetch ignored user IDs" }
-                throw e
+                fetched.toList()
             }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch ignored user IDs" }
+            throw e
         }
+
     }
 }

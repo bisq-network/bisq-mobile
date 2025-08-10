@@ -197,23 +197,23 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         delay(min(1000.0, max(200.0, (200 + random - powDuration).toDouble())).toLong())
     }
 
-    override suspend fun ignoreUserProfile(id: String) {
-        val userProfile = userProfileService.findUserProfile(id).orElse(null)
+    override suspend fun ignoreUserProfile(profileId: String) {
+        val userProfile = userProfileService.findUserProfile(profileId).orElse(null)
 
         if (userProfile != null) {
             userProfileService.ignoreUserProfile(userProfile)
         } else {
-            log.w { "Cannot ignore user profile: profile not found for id $id" }
+            log.w { "Cannot ignore user profile: profile not found for id $profileId" }
         }
     }
 
-    override suspend fun undoIgnoreUserProfile(id: String) {
-        val userProfile = userProfileService.findUserProfile(id).orElse(null)
+    override suspend fun undoIgnoreUserProfile(profileId: String) {
+        val userProfile = userProfileService.findUserProfile(profileId).orElse(null)
 
         if (userProfile != null) {
             userProfileService.undoIgnoreUserProfile(userProfile)
         } else {
-            log.w { "Cannot unignore user profile: profile not found for id $id" }
+            log.w { "Cannot unignore user profile: profile not found for id $profileId" }
         }
     }
 

@@ -70,6 +70,8 @@ interface UserProfileServiceFacade : LifeCycleAware {
 
     /**
      * @return List of UserProfiles for the given IDs (empty if none found)
+     *  - The order of results matches the order of the input IDs.
+     *  - Duplicate IDs will produce duplicate profiles in the result.
      */
     suspend fun findUserProfiles(ids: List<String>): List<UserProfileVO>
 
@@ -80,11 +82,23 @@ interface UserProfileServiceFacade : LifeCycleAware {
      */
     suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage?
 
-    suspend fun ignoreUserProfile(id: String)
+    /**
+     * Marks the given profile as ignored. Implementations must persist this update.
+     */
+    suspend fun ignoreUserProfile(profileId: String)
 
-    suspend fun undoIgnoreUserProfile(id: String)
+    /**
+     * Removes the ignore mark for the given profile. Implementations must persist this update.
+     */
+    suspend fun undoIgnoreUserProfile(profileId: String)
 
+    /**
+     * Returns true if the given profile is currently ignored.
+     */
     suspend fun isUserIgnored(profileId: String): Boolean
 
+    /**
+     * Returns the current snapshot of ignored profile IDs.
+     */
     suspend fun getIgnoredUserProfileIds(): List<String>
 }
