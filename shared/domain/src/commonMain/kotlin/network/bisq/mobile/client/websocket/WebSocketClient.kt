@@ -97,7 +97,7 @@ class WebSocketClient(
         CONNECTED
     }
 
-    val _webSocketClientStatus = MutableStateFlow(WebSocketClientStatus.DISCONNECTED)
+    private val _webSocketClientStatus = MutableStateFlow(WebSocketClientStatus.DISCONNECTED)
     val webSocketClientStatus: StateFlow<WebSocketClientStatus> get() = _webSocketClientStatus.asStateFlow()
 
     private var listenerJob: Job? = null

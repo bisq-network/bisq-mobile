@@ -27,7 +27,7 @@ class TakeOfferAmountPresenter(
     private val takeOfferPresenter: TakeOfferPresenter
 ) : BasePresenter(mainPresenter) {
 
-    val _sliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
+    private val _sliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
     val sliderPosition: StateFlow<Float> = _sliderPosition
 
     lateinit var quoteCurrencyCode: String

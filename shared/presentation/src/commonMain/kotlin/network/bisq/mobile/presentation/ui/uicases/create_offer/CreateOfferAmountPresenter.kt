@@ -50,7 +50,7 @@ class CreateOfferAmountPresenter(
     lateinit var quoteCurrencyCode: String
     lateinit var formattedMinAmount: String
 
-    val _amountType: MutableStateFlow<AmountType> = MutableStateFlow(AmountType.FIXED_AMOUNT)
+    private val _amountType: MutableStateFlow<AmountType> = MutableStateFlow(AmountType.FIXED_AMOUNT)
     val amountType: StateFlow<AmountType> get() = _amountType.asStateFlow()
 
     // FIXED_AMOUNT
