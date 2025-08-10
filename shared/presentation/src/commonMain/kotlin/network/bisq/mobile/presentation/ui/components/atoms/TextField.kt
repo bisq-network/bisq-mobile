@@ -353,7 +353,7 @@ fun BisqTextField(
             )
         }
         // Error text has priority over help field
-        if (validationError?.isNotEmpty() == true && hasInteracted) {
+        if (validationError?.isNotEmpty() == true && hasInteracted && !isFocused) {
             BisqGap.VQuarter()
             BisqText.smallRegular(
                 text = validationError!!,
