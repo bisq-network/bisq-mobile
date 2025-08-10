@@ -508,6 +508,7 @@ class NodeOffersServiceFacade(
             return false
         }
 
+        /*
         val offer = message.bisqEasyOffer.get()
 
         // Check if the maker's user profile exists and is not banned/ignored
@@ -525,6 +526,7 @@ class NodeOffersServiceFacade(
 //        if (myUserIdentityIds.contains(makerUserProfile.get().id)) {
 //            return false
 //        }
+*/
 
         return true
     }

@@ -53,12 +53,7 @@ interface IPaymentAccountSettingsPresenter : ViewPresenter {
 fun PaymentAccountSettingsScreen() {
     val presenter: IPaymentAccountSettingsPresenter = koinInject()
     val settingsPresenter: ISettingsPresenter = koinInject()
-
-    val menuTree: MenuItem = settingsPresenter.menuTree()
-    val menuPath = remember { mutableStateListOf(menuTree) }
-    RememberPresenterLifecycle(presenter, {
-        menuPath.add((menuTree as MenuItem.Parent).children[2])
-    })
+    RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
     val accounts by presenter.accounts.collectAsState()

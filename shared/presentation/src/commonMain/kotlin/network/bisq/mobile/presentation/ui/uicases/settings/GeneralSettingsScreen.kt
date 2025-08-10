@@ -64,12 +64,7 @@ interface IGeneralSettingsPresenter : ViewPresenter {
 fun GeneralSettingsScreen() {
     val presenter: IGeneralSettingsPresenter = koinInject()
     val settingsPresenter: ISettingsPresenter = koinInject()
-
-    val menuTree: MenuItem = settingsPresenter.menuTree()
-    val menuPath = remember { mutableStateListOf(menuTree) }
-    RememberPresenterLifecycle(presenter, {
-        menuPath.add((menuTree as MenuItem.Parent).children[0])
-    })
+    RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
     val i18nPairs by presenter.i18nPairs.collectAsState()

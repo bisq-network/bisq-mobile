@@ -100,7 +100,7 @@ val presentationModule = module {
     single { OnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
     single { TabContainerPresenter(get(), get(), get()) } bind ITabContainerPresenter::class
 
-    single<SettingsPresenter> { SettingsPresenter(get(), get()) } bind ISettingsPresenter::class
+    single<SettingsPresenter> { SettingsPresenter(get(), get(), get()) } bind ISettingsPresenter::class
 
     single<AboutPresenter> { AboutPresenter(get()) } bind IAboutPresenter::class
 

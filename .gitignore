@@ -31,3 +31,6 @@ credentials
 !*.xcodeproj/project.xcworkspace/
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
+
+# i18n generated Resources
+**/i18n/GeneratedResourceBundles_*.kt

@@ -85,14 +85,7 @@ interface ITrustedNodeSetupPresenter : ViewPresenter {
 fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val presenter: ITrustedNodeSetupPresenter = koinInject()
     val settingsPresenter: ISettingsPresenter = koinInject()
-
-    val menuTree: MenuItem = settingsPresenter.menuTree()
-    val menuPath = remember { mutableStateListOf(menuTree) }
-    RememberPresenterLifecycle(presenter, {
-        if (!isWorkflow) {
-            menuPath.add((menuTree as MenuItem.Parent).children[3])
-        }
-    })
+    RememberPresenterLifecycle(presenter)
 
     val bisqApiUrl by presenter.bisqApiUrl.collectAsState()
     val isConnected by presenter.isConnected.collectAsState()
