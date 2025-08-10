@@ -53,6 +53,8 @@ We follow Bisq standard guidelines for contributions, fork + PR, etc. Please ref
 
 We are currently working in the project definition and Github issues will soon be available for contributors to pick what would they like to help with. Stay tuned for updates.
 
+For Jetpack Compose best practices in this project, see the [Compose guidelines](./docs/compose-guidelines/README.md).
+
 For now follow along to learn how to run this project.
 If you are a mobile enthusiast and feel driven by Bisq goals, please reach out!
 
