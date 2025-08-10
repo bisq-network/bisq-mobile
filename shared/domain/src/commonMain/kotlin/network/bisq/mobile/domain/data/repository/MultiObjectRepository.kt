@@ -5,6 +5,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.data.persistance.PersistenceSource
@@ -24,7 +25,7 @@ abstract class MultiObjectRepository<out T : BaseModel>(
 ) : Logging {
 
     private val _dataMap = MutableStateFlow<Map<String, T>>(emptyMap())
-    val dataMap: StateFlow<Map<String, T>> = _dataMap
+    val dataMap: StateFlow<Map<String, T>> get() = _dataMap.asStateFlow()
 
     private val job = Job()
     private val scope = CoroutineScope(job + IODispatcher)

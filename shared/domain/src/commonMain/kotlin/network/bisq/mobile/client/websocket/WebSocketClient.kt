@@ -8,11 +8,18 @@ import io.ktor.util.collections.ConcurrentMap
 import io.ktor.websocket.Frame
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.messages.SubscriptionRequest
@@ -91,7 +98,7 @@ class WebSocketClient(
     }
 
     val _webSocketClientStatus = MutableStateFlow(WebSocketClientStatus.DISCONNECTED)
-    val webSocketClientStatus: StateFlow<WebSocketClientStatus> = _webSocketClientStatus
+    val webSocketClientStatus: StateFlow<WebSocketClientStatus> get() = _webSocketClientStatus.asStateFlow()
 
     private var listenerJob: Job? = null
 

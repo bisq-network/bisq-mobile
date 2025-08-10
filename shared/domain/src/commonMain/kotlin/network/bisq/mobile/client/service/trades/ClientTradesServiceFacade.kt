@@ -3,6 +3,7 @@ package network.bisq.mobile.client.service.trades
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
@@ -54,10 +55,10 @@ class ClientTradesServiceFacade(
 
     // Properties
     private val _openTradeItems = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
-    override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> get() = _openTradeItems
+    override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> get() = _openTradeItems.asStateFlow()
 
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
-    override val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade
+    override val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade.asStateFlow()
 
     // Misc
     private val tradeId get() = selectedTrade.value?.tradeId

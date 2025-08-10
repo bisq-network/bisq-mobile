@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
@@ -40,7 +41,7 @@ class CreateOfferReviewPresenter(
     var isRangeOffer: Boolean = false
 
     private val _showMediatorWaitingDialog = MutableStateFlow(false)
-    val showMediatorWaitingDialog: StateFlow<Boolean> get() = _showMediatorWaitingDialog
+    val showMediatorWaitingDialog: StateFlow<Boolean> get() = _showMediatorWaitingDialog.asStateFlow()
 
     private var mediatorWaitJob: Job? = null
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel

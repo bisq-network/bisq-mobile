@@ -7,6 +7,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
@@ -37,24 +38,24 @@ class OpenTradePresenter(
 ) : BasePresenter(mainPresenter) {
 
     private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade // tradesServiceFacade.selectedTrade //
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade.asStateFlow() // tradesServiceFacade.selectedTrade //
 
     private val _tradeAbortedBoxVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val tradeAbortedBoxVisible: StateFlow<Boolean> = _tradeAbortedBoxVisible
+    val tradeAbortedBoxVisible: StateFlow<Boolean> get() = _tradeAbortedBoxVisible.asStateFlow()
 
     private val _tradeProcessBoxVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val tradeProcessBoxVisible: StateFlow<Boolean> = _tradeProcessBoxVisible
+    val tradeProcessBoxVisible: StateFlow<Boolean> get() = _tradeProcessBoxVisible.asStateFlow()
 
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isInMediation: StateFlow<Boolean> = _isInMediation
+    val isInMediation: StateFlow<Boolean> get() = _isInMediation.asStateFlow()
 
     private val _newMsgCount: MutableStateFlow<Int> = MutableStateFlow(0)
-    val newMsgCount: StateFlow<Int> = _newMsgCount
+    val newMsgCount: StateFlow<Int> get() = _newMsgCount.asStateFlow()
 
     private val _lastChatMsg: MutableStateFlow<BisqEasyOpenTradeMessageModel?> = MutableStateFlow(null)
-    val lastChatMsg: StateFlow<BisqEasyOpenTradeMessageModel?> = _lastChatMsg
+    val lastChatMsg: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _lastChatMsg.asStateFlow()
 
-    private var _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
+    private val _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
     private var _coroutineScope: CoroutineScope? = null
 
     private var languageJob: Job? = null

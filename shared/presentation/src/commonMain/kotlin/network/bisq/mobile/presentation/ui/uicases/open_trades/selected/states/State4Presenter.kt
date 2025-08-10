@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.TradeReadState
@@ -11,18 +12,16 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
-import kotlin.collections.orEmpty
-import kotlin.collections.toMutableMap
 
 abstract class State4Presenter(
     mainPresenter: MainPresenter,
     private val tradesServiceFacade: TradesServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
 ) : BasePresenter(mainPresenter) {
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
     private val _showCloseTradeDialog: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showCloseTradeDialog: StateFlow<Boolean> = _showCloseTradeDialog
+    val showCloseTradeDialog: StateFlow<Boolean> get() = _showCloseTradeDialog.asStateFlow()
 
     override fun onViewUnattaching() {
         _showCloseTradeDialog.value = false

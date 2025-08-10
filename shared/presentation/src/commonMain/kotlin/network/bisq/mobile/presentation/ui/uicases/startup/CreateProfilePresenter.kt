@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
@@ -25,37 +26,37 @@ open class CreateProfilePresenter(
 
     // Properties
     private val _id = MutableStateFlow("")
-    val id: StateFlow<String> get() = _id
+    val id: StateFlow<String> get() = _id.asStateFlow()
     private fun setId(value: String) {
         _id.value = value
     }
 
     private val _nym = MutableStateFlow("")
-    val nym: StateFlow<String> get() = _nym
+    val nym: StateFlow<String> get() = _nym.asStateFlow()
     private fun setNym(value: String) {
         _nym.value = value
     }
 
     private val _profileIcon = MutableStateFlow<PlatformImage?>(null)
-    val profileIcon: StateFlow<PlatformImage?> get() = _profileIcon
+    val profileIcon: StateFlow<PlatformImage?> get() = _profileIcon.asStateFlow()
     private fun setProfileIcon(value: PlatformImage?) {
         _profileIcon.value = value
     }
 
     private val _nickName = MutableStateFlow("")
-    val nickName: StateFlow<String> get() = _nickName
+    val nickName: StateFlow<String> get() = _nickName.asStateFlow()
     fun setNickname(value: String) {
         _nickName.value = value
     }
 
     private val _nickNameValid = MutableStateFlow(false)
-    val nickNameValid: StateFlow<Boolean> get() = _nickNameValid
+    val nickNameValid: StateFlow<Boolean> get() = _nickNameValid.asStateFlow()
 
     private val _generateKeyPairInProgress = MutableStateFlow(false)
-    val generateKeyPairInProgress: StateFlow<Boolean> get() = _generateKeyPairInProgress
+    val generateKeyPairInProgress: StateFlow<Boolean> get() = _generateKeyPairInProgress.asStateFlow()
 
     private val _createAndPublishInProgress = MutableStateFlow(false)
-    val createAndPublishInProgress: StateFlow<Boolean> get() = _createAndPublishInProgress
+    val createAndPublishInProgress: StateFlow<Boolean> get() = _createAndPublishInProgress.asStateFlow()
 
     // Misc
     private var job: Job? = null

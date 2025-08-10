@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -22,8 +23,8 @@ import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
-import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import org.koin.core.component.KoinComponent
@@ -137,7 +138,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     // Presenter is interactive by default
     private val _isInteractive = MutableStateFlow(true)
-    override val isInteractive: StateFlow<Boolean> = _isInteractive
+    override val isInteractive: StateFlow<Boolean> get() = _isInteractive.asStateFlow()
     private val snackbarHostState: SnackbarHostState = SnackbarHostState()
 
     override fun getSnackState(): SnackbarHostState {

@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.network_stats.ProfileStatsServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -25,12 +26,12 @@ open class DashboardPresenter(
     )
 
     private val _offersOnline = MutableStateFlow(0)
-    override val offersOnline: StateFlow<Int> = _offersOnline
+    override val offersOnline: StateFlow<Int> get() = _offersOnline.asStateFlow()
 
     private val _publishedProfiles = MutableStateFlow(0)
-    override val publishedProfiles: StateFlow<Int> = _publishedProfiles
+    override val publishedProfiles: StateFlow<Int> get() = _publishedProfiles.asStateFlow()
 
-    val formattedMarketPrice: StateFlow<String> = marketPriceServiceFacade.selectedFormattedMarketPrice
+    val formattedMarketPrice: StateFlow<String> get() = marketPriceServiceFacade.selectedFormattedMarketPrice
 
     override fun onViewAttached() {
         super.onViewAttached()

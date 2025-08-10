@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.formatters.NumberFormatter
@@ -21,8 +22,8 @@ open class GeneralSettingsPresenter(
     private val mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IGeneralSettingsPresenter {
 
-    override val i18nPairs: StateFlow<List<Pair<String, String>>> = languageServiceFacade.i18nPairs
-    override val allLanguagePairs: StateFlow<List<Pair<String, String>>> = languageServiceFacade.allPairs
+    override val i18nPairs: StateFlow<List<Pair<String, String>>> get() = languageServiceFacade.i18nPairs
+    override val allLanguagePairs: StateFlow<List<Pair<String, String>>> get() = languageServiceFacade.allPairs
 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
     override val languageCode: MutableStateFlow<String> = _languageCode
@@ -64,7 +65,7 @@ open class GeneralSettingsPresenter(
 
     private val _chatNotification: MutableStateFlow<String> =
         MutableStateFlow("chat.notificationsSettingsMenu.all".i18n())
-    override val chatNotification: StateFlow<String> = _chatNotification
+    override val chatNotification: StateFlow<String> get() = _chatNotification.asStateFlow()
     override fun setChatNotification(value: String) {
         disableInteractive()
         launchUI {
@@ -78,7 +79,7 @@ open class GeneralSettingsPresenter(
     }
 
     private val _closeOfferWhenTradeTaken: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    override val closeOfferWhenTradeTaken: StateFlow<Boolean> = _closeOfferWhenTradeTaken
+    override val closeOfferWhenTradeTaken: StateFlow<Boolean> get() = _closeOfferWhenTradeTaken.asStateFlow()
     override fun setCloseOfferWhenTradeTaken(value: Boolean) {
         disableInteractive()
         launchUI {
@@ -94,7 +95,7 @@ open class GeneralSettingsPresenter(
     // This is internally represented as ratio. So 100% is saved as 1.0, 5% as 0.05.
     // Hence the 100 multiplier and divider
     private val _tradePriceTolerance: MutableStateFlow<String> = MutableStateFlow("5")
-    override val tradePriceTolerance: StateFlow<String> = _tradePriceTolerance
+    override val tradePriceTolerance: StateFlow<String> get() = _tradePriceTolerance.asStateFlow()
     override fun setTradePriceTolerance(value: String, isValid: Boolean) {
         disableInteractive()
         launchUI {
@@ -113,7 +114,7 @@ open class GeneralSettingsPresenter(
     }
 
     private val _numDaysAfterRedactingTradeData = MutableStateFlow("90")
-    override val numDaysAfterRedactingTradeData: StateFlow<String> = _numDaysAfterRedactingTradeData
+    override val numDaysAfterRedactingTradeData: StateFlow<String> get() = _numDaysAfterRedactingTradeData.asStateFlow()
     override fun setNumDaysAfterRedactingTradeData(value: String, isValid: Boolean) {
         disableInteractive()
         launchUI {
@@ -132,7 +133,7 @@ open class GeneralSettingsPresenter(
     }
 
     private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    override val useAnimations: StateFlow<Boolean> = _useAnimations
+    override val useAnimations: StateFlow<Boolean> get() = _useAnimations.asStateFlow()
     override fun setUseAnimations(value: Boolean) {
         disableInteractive()
         launchUI {
@@ -146,7 +147,7 @@ open class GeneralSettingsPresenter(
     }
 
     private val _powFactor: MutableStateFlow<String> = MutableStateFlow("1")
-    override val powFactor: StateFlow<String> = _powFactor
+    override val powFactor: StateFlow<String> get() = _powFactor.asStateFlow()
     override fun setPowFactor(value: String, isValid: Boolean) {
         disableInteractive()
         launchUI {
@@ -163,7 +164,7 @@ open class GeneralSettingsPresenter(
     }
 
     private val _ignorePow: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    override val ignorePow: StateFlow<Boolean> = _ignorePow
+    override val ignorePow: StateFlow<Boolean> get() = _ignorePow.asStateFlow()
     override fun setIgnorePow(value: Boolean) {
         disableInteractive()
         launchUI {
@@ -176,7 +177,7 @@ open class GeneralSettingsPresenter(
         }
     }
 
-    override val shouldShowPoWAdjustmentFactor: StateFlow<Boolean> = MutableStateFlow(false)
+    override val shouldShowPoWAdjustmentFactor: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
 
     private var jobs: MutableSet<Job> = mutableSetOf()
 

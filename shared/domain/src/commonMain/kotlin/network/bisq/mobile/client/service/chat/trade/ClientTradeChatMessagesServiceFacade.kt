@@ -4,6 +4,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -34,12 +35,12 @@ class ClientTradeChatMessagesServiceFacade(
 
     private val _allBisqEasyOpenTradeMessages: MutableStateFlow<Set<BisqEasyOpenTradeMessageDto>> =
         MutableStateFlow(emptySet())
-    private val allBisqEasyOpenTradeMessages: StateFlow<Set<BisqEasyOpenTradeMessageDto>> =
-        _allBisqEasyOpenTradeMessages
+    private val allBisqEasyOpenTradeMessages: StateFlow<Set<BisqEasyOpenTradeMessageDto>> get() =
+        _allBisqEasyOpenTradeMessages.asStateFlow()
 
     private val _allChatReactions: MutableStateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> =
         MutableStateFlow(emptySet())
-    private val allChatReactions: StateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> = _allChatReactions
+    private val allChatReactions: StateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> get() = _allChatReactions.asStateFlow()
 
     private var jobs: MutableSet<Job> = mutableSetOf()
 

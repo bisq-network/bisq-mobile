@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -17,22 +18,22 @@ class BuyerState1aPresenter(
 ) : BasePresenter(mainPresenter) {
 
     private var _headline = MutableStateFlow("")
-    val headline: StateFlow<String> get() = _headline
+    val headline: StateFlow<String> get() = _headline.asStateFlow()
 
     private var _description = MutableStateFlow("")
-    val description: StateFlow<String> get() = _description
+    val description: StateFlow<String> get() = _description.asStateFlow()
 
     private var _bitcoinPaymentData = MutableStateFlow("")
-    val bitcoinPaymentData: StateFlow<String> get() = _bitcoinPaymentData
+    val bitcoinPaymentData: StateFlow<String> get() = _bitcoinPaymentData.asStateFlow()
 
     private var _bitcoinPaymentDataValid = MutableStateFlow(false)
-    val bitcoinPaymentDataValid: StateFlow<Boolean> get() = _bitcoinPaymentDataValid
+    val bitcoinPaymentDataValid: StateFlow<Boolean> get() = _bitcoinPaymentDataValid.asStateFlow()
 
     private var _bitcoinAddressFieldType = MutableStateFlow(BitcoinLnAddressFieldType.Bitcoin)
-    val bitcoinLnAddressFieldType: StateFlow<BitcoinLnAddressFieldType> get() = _bitcoinAddressFieldType
+    val bitcoinLnAddressFieldType: StateFlow<BitcoinLnAddressFieldType> get() = _bitcoinAddressFieldType.asStateFlow()
 
     private val _showInvalidAddressDialog = MutableStateFlow(false)
-    val showInvalidAddressDialog: StateFlow<Boolean> get() = _showInvalidAddressDialog
+    val showInvalidAddressDialog: StateFlow<Boolean> get() = _showInvalidAddressDialog.asStateFlow()
     fun setShowInvalidAddressDialog(value: Boolean) {
         _showInvalidAddressDialog.value = value
     }

@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.service
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.utils.Logging
 import platform.Foundation.NSNotificationCenter
 import platform.UIKit.UIApplicationDidEnterBackgroundNotification
@@ -10,7 +11,7 @@ import platform.UIKit.UIApplicationWillEnterForegroundNotification
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class AppForegroundController : ForegroundDetector, Logging {
     private val _isForeground = MutableStateFlow(true)
-    override val isForeground: StateFlow<Boolean> = _isForeground
+    override val isForeground: StateFlow<Boolean> get() = _isForeground.asStateFlow()
 
     init {
         val notificationCenter = NSNotificationCenter.defaultCenter

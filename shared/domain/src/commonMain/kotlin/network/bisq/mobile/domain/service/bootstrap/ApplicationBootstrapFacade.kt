@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.service.bootstrap
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.service.ServiceFacade
 
 @Suppress("RedundantOverride")
@@ -11,13 +12,13 @@ abstract class ApplicationBootstrapFacade : ServiceFacade() {
     }
 
     private val _state = MutableStateFlow("")
-    val state: StateFlow<String> = _state
+    val state: StateFlow<String> get() = _state.asStateFlow()
     fun setState(value: String) {
         _state.value = value
     }
 
     private val _progress = MutableStateFlow(0f)
-    val progress: StateFlow<Float> = _progress
+    val progress: StateFlow<Float> get() = _progress.asStateFlow()
     fun setProgress(value: Float) {
         _progress.value = value
     }

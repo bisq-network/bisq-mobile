@@ -13,7 +13,7 @@ class TradeGuideTradeRulesPresenter(
     private val settingsServiceFacade: SettingsServiceFacade
 ) : BasePresenter(mainPresenter) {
 
-    val tradeRulesConfirmed: StateFlow<Boolean> = settingsServiceFacade.tradeRulesConfirmed
+    val tradeRulesConfirmed: StateFlow<Boolean> get() = settingsServiceFacade.tradeRulesConfirmed
 
     fun prevClick() {
         navigateBack()

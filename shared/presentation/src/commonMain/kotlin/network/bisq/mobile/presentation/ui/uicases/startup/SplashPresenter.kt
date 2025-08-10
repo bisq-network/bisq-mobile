@@ -18,7 +18,7 @@ import kotlin.coroutines.cancellation.CancellationException
 
 open class SplashPresenter(
     mainPresenter: MainPresenter,
-    applicationBootstrapFacade: ApplicationBootstrapFacade,
+    private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val userProfileService: UserProfileServiceFacade,
     private val userRepository: UserRepository,
     private val settingsRepository: SettingsRepository,
@@ -27,8 +27,8 @@ open class SplashPresenter(
     private val webSocketClientProvider: WebSocketClientProvider?,
 ) : BasePresenter(mainPresenter) {
 
-    val state: StateFlow<String> = applicationBootstrapFacade.state
-    val progress: StateFlow<Float> = applicationBootstrapFacade.progress
+    val state: StateFlow<String> get() = applicationBootstrapFacade.state
+    val progress: StateFlow<Float> get() = applicationBootstrapFacade.progress
 
     private var hasNavigatedAway = false
 

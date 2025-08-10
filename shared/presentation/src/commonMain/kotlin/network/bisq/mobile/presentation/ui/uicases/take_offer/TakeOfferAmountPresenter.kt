@@ -2,7 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.take_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
@@ -13,6 +13,7 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOEx
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -26,17 +27,17 @@ class TakeOfferAmountPresenter(
     private val takeOfferPresenter: TakeOfferPresenter
 ) : BasePresenter(mainPresenter) {
 
-    var _sliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
-    var sliderPosition: StateFlow<Float> = _sliderPosition
+    val _sliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
+    val sliderPosition: StateFlow<Float> = _sliderPosition
 
     lateinit var quoteCurrencyCode: String
     lateinit var formattedMinAmount: String
     lateinit var formattedMinAmountWithCode: String
     lateinit var formattedMaxAmountWithCode: String
     private val _formattedQuoteAmount = MutableStateFlow("")
-    val formattedQuoteAmount: StateFlow<String> = _formattedQuoteAmount
+    val formattedQuoteAmount: StateFlow<String> get() = _formattedQuoteAmount.asStateFlow()
     private val _formattedBaseAmount = MutableStateFlow("")
-    val formattedBaseAmount: StateFlow<String> = _formattedBaseAmount
+    val formattedBaseAmount: StateFlow<String> get() = _formattedBaseAmount.asStateFlow()
 
     private lateinit var takeOfferModel: TakeOfferPresenter.TakeOfferModel
     private var minAmount: Long = 0L
@@ -46,8 +47,8 @@ class TakeOfferAmountPresenter(
     private lateinit var quoteAmount: FiatVO
     private lateinit var baseAmount: CoinVO
 
-    private var _amountValid: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    val amountValid: StateFlow<Boolean> = _amountValid
+    private val _amountValid: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    val amountValid: StateFlow<Boolean> get() = _amountValid.asStateFlow()
 
     init {
         runCatching {

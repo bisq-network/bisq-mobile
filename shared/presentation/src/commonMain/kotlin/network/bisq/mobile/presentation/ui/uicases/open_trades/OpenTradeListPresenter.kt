@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.PlatformImage
@@ -23,18 +24,18 @@ class OpenTradeListPresenter(
 ) : BasePresenter(mainPresenter) {
 
     private val _sortedOpenTradeItems: MutableStateFlow<List<TradeItemPresentationModel>> = MutableStateFlow(emptyList())
-    val sortedOpenTradeItems: StateFlow<List<TradeItemPresentationModel>> = _sortedOpenTradeItems
+    val sortedOpenTradeItems: StateFlow<List<TradeItemPresentationModel>> get() = _sortedOpenTradeItems.asStateFlow()
 
-    val tradeRulesConfirmed: StateFlow<Boolean> = settingsServiceFacade.tradeRulesConfirmed
+    val tradeRulesConfirmed: StateFlow<Boolean> get() = settingsServiceFacade.tradeRulesConfirmed
 
     private val _tradeGuideVisible = MutableStateFlow(false)
-    val tradeGuideVisible: StateFlow<Boolean> get() = _tradeGuideVisible
+    val tradeGuideVisible: StateFlow<Boolean> get() = _tradeGuideVisible.asStateFlow()
 
     private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
-    val tradesWithUnreadMessages: StateFlow<Map<String, Int>> = _tradesWithUnreadMessages
+    val tradesWithUnreadMessages: StateFlow<Map<String, Int>> get() = _tradesWithUnreadMessages.asStateFlow()
 
     private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
-    val avatarMap: StateFlow<Map<String, PlatformImage?>> = _avatarMap
+    val avatarMap: StateFlow<Map<String, PlatformImage?>> get() = _avatarMap.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

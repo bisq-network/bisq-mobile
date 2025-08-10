@@ -4,6 +4,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
@@ -31,22 +32,22 @@ class TrustedNodeSetupPresenter(
     }
 
     private val _isBisqApiUrlValid = MutableStateFlow(true)
-    override val isBisqApiUrlValid: StateFlow<Boolean> get() = _isBisqApiUrlValid
+    override val isBisqApiUrlValid: StateFlow<Boolean> get() = _isBisqApiUrlValid.asStateFlow()
 
     private val _isBisqApiVersionValid = MutableStateFlow(true)
-    override val isBisqApiVersionValid: StateFlow<Boolean> get() = _isBisqApiVersionValid
+    override val isBisqApiVersionValid: StateFlow<Boolean> get() = _isBisqApiVersionValid.asStateFlow()
 
     private val _bisqApiUrl = MutableStateFlow("ws://10.0.2.2:8090")
-    override val bisqApiUrl: StateFlow<String> get() = _bisqApiUrl
+    override val bisqApiUrl: StateFlow<String> get() = _bisqApiUrl.asStateFlow()
 
     private val _trustedNodeVersion = MutableStateFlow("")
-    override val trustedNodeVersion: StateFlow<String> get() = _trustedNodeVersion
+    override val trustedNodeVersion: StateFlow<String> get() = _trustedNodeVersion.asStateFlow()
 
     private val _isConnected = MutableStateFlow(false)
-    override val isConnected: StateFlow<Boolean> get() = _isConnected
+    override val isConnected: StateFlow<Boolean> get() = _isConnected.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
-    override val isLoading: StateFlow<Boolean> get() = _isLoading
+    override val isLoading: StateFlow<Boolean> get() = _isLoading.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

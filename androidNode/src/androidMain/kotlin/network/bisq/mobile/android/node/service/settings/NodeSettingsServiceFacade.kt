@@ -6,13 +6,14 @@ import bisq.settings.ChatNotificationType
 import bisq.settings.SettingsService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import java.util.*
+import java.util.Locale
 
 class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), SettingsServiceFacade {
     private val languageToLocaleMap = mapOf(
@@ -32,19 +33,19 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
 
     // Properties
     private val _isTacAccepted: MutableStateFlow<Boolean?> = MutableStateFlow(null)
-    override val isTacAccepted: StateFlow<Boolean?> get() = _isTacAccepted
+    override val isTacAccepted: StateFlow<Boolean?> get() = _isTacAccepted.asStateFlow()
     override suspend fun confirmTacAccepted(value: Boolean) {
         settingsService.setIsTacAccepted(value)
     }
 
     private val _tradeRulesConfirmed = MutableStateFlow(false)
-    override val tradeRulesConfirmed: StateFlow<Boolean> get() = _tradeRulesConfirmed
+    override val tradeRulesConfirmed: StateFlow<Boolean> get() = _tradeRulesConfirmed.asStateFlow()
     override suspend fun confirmTradeRules(value: Boolean) {
         settingsService.setTradeRulesConfirmed(value)
     }
 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("")
-    override val languageCode: StateFlow<String> get() = _languageCode
+    override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()
     override suspend fun setLanguageCode(value: String) {
         settingsService.setLanguageCode(value)
         val locale = languageToLocaleMap[value] ?: Locale("en", "US")
@@ -53,14 +54,14 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     }
 
     private val _supportedLanguageCodes: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
-    override val supportedLanguageCodes: StateFlow<Set<String>> get() = _supportedLanguageCodes
+    override val supportedLanguageCodes: StateFlow<Set<String>> get() = _supportedLanguageCodes.asStateFlow()
     override suspend fun setSupportedLanguageCodes(value: Set<String>) {
         settingsService.supportedLanguageCodes.setAll(value)
     }
 
     private val _chatNotificationType: MutableStateFlow<ChatChannelNotificationTypeEnum> =
         MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
-    override val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum> get() = _chatNotificationType
+    override val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum> get() = _chatNotificationType.asStateFlow()
     override suspend fun setChatNotificationType(value: ChatChannelNotificationTypeEnum) {
         settingsService.setChatNotificationType(
             when (value) {
@@ -73,37 +74,37 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     }
 
     private val _closeMyOfferWhenTaken = MutableStateFlow(true)
-    override val closeMyOfferWhenTaken: StateFlow<Boolean> get() = _closeMyOfferWhenTaken
+    override val closeMyOfferWhenTaken: StateFlow<Boolean> get() = _closeMyOfferWhenTaken.asStateFlow()
     override suspend fun setCloseMyOfferWhenTaken(value: Boolean) {
         settingsService.setCloseMyOfferWhenTaken(value)
     }
 
     private val _maxTradePriceDeviation = MutableStateFlow(5.0)
-    override val maxTradePriceDeviation: StateFlow<Double> get() = _maxTradePriceDeviation
+    override val maxTradePriceDeviation: StateFlow<Double> get() = _maxTradePriceDeviation.asStateFlow()
     override suspend fun setMaxTradePriceDeviation(value: Double) {
         settingsService.setMaxTradePriceDeviation(value)
     }
 
     private val _useAnimations: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    override val useAnimations: StateFlow<Boolean> get() = _useAnimations
+    override val useAnimations: StateFlow<Boolean> get() = _useAnimations.asStateFlow()
     override suspend fun setUseAnimations(value: Boolean) {
         settingsService.setUseAnimations(value)
     }
 
     private val _difficultyAdjustmentFactor: MutableStateFlow<Double> = MutableStateFlow(1.0)
-    override val difficultyAdjustmentFactor: StateFlow<Double> get() = _difficultyAdjustmentFactor
+    override val difficultyAdjustmentFactor: StateFlow<Double> get() = _difficultyAdjustmentFactor.asStateFlow()
     override suspend fun setDifficultyAdjustmentFactor(value: Double) {
         settingsService.setDifficultyAdjustmentFactor(value)
     }
 
     private val _numDaysAfterRedactingTradeData = MutableStateFlow(90)
-    override val numDaysAfterRedactingTradeData: StateFlow<Int> = _numDaysAfterRedactingTradeData
+    override val numDaysAfterRedactingTradeData: StateFlow<Int> get() = _numDaysAfterRedactingTradeData.asStateFlow()
     override suspend fun setNumDaysAfterRedactingTradeData(days: Int) {
         settingsService.setNumDaysAfterRedactingTradeData(days)
     }
 
     private val _ignoreDiffAdjustmentFromSecManager: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> get() = _ignoreDiffAdjustmentFromSecManager
+    override val ignoreDiffAdjustmentFromSecManager: StateFlow<Boolean> get() = _ignoreDiffAdjustmentFromSecManager.asStateFlow()
     override suspend fun setIgnoreDiffAdjustmentFromSecManager(value: Boolean) {
         settingsService.setIgnoreDiffAdjustmentFromSecManager(value)
     }

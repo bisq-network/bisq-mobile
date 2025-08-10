@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -27,7 +28,7 @@ class CreateOfferDirectionPresenter(
     private val _reputation = MutableStateFlow<ReputationScoreVO?>(null)
 
     private val _showSellerReputationWarning = MutableStateFlow(false)
-    val showSellerReputationWarning: StateFlow<Boolean> get() = _showSellerReputationWarning
+    val showSellerReputationWarning: StateFlow<Boolean> get() = _showSellerReputationWarning.asStateFlow()
     fun setShowSellerReputationWarning(value: Boolean) {
         _showSellerReputationWarning.value = value
     }

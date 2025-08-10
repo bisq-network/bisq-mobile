@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.offerbook
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
@@ -27,19 +28,19 @@ class OfferbookMarketPresenter(
     private val _marketPriceUpdated = MutableStateFlow(false)
 
     private val _sortBy = MutableStateFlow(MarketSortBy.MostOffers)
-    var sortBy: StateFlow<MarketSortBy> = _sortBy
+    val sortBy: StateFlow<MarketSortBy> get() = _sortBy.asStateFlow()
     fun setSortBy(newValue: MarketSortBy) {
         _sortBy.value = newValue
     }
 
-    private var _filter = MutableStateFlow(MarketFilter.All)
-    var filter: StateFlow<MarketFilter> = _filter
+    private val _filter = MutableStateFlow(MarketFilter.All)
+    val filter: StateFlow<MarketFilter> get() = _filter.asStateFlow()
     fun setFilter(newValue: MarketFilter) {
         _filter.value = newValue
     }
 
-    private var _searchText = MutableStateFlow("")
-    val searchText: StateFlow<String> = _searchText
+    private val _searchText = MutableStateFlow("")
+    val searchText: StateFlow<String> get() = _searchText.asStateFlow()
     fun setSearchText(newValue: String) {
         _searchText.value = newValue
     }

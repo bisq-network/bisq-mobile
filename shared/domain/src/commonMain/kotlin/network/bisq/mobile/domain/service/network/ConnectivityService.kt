@@ -7,6 +7,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -55,7 +56,7 @@ abstract class ConnectivityService : ServiceFacade() {
 
     private var job: Job? = null
     private val _status = MutableStateFlow(ConnectivityStatus.DISCONNECTED)
-    val status: StateFlow<ConnectivityStatus> = _status
+    val status: StateFlow<ConnectivityStatus> get() = _status.asStateFlow()
 
     /**
      * Starts monitoring connectivity every given period (ms). Default is 10 seconds.

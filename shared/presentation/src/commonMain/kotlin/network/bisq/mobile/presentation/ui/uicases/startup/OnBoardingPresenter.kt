@@ -2,12 +2,14 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 
 import androidx.compose.foundation.pager.PagerState
 import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.*
+import bisqapps.shared.presentation.generated.resources.img_bisq_Easy
+import bisqapps.shared.presentation.generated.resources.img_fiat_btc
+import bisqapps.shared.presentation.generated.resources.img_learn_and_discover
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -33,7 +35,7 @@ open class OnBoardingPresenter(
     override val indexesToShow = listOf(0)
 
     private val _buttonText = MutableStateFlow(CREATE_PROFILE_TEXT)
-    override val buttonText: StateFlow<String> = _buttonText
+    override val buttonText: StateFlow<String> get() = _buttonText.asStateFlow()
 
     override val onBoardingData = listOf(
         PagerViewItem(

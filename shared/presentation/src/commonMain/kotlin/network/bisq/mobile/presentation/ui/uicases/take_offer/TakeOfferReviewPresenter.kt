@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.take_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
@@ -49,13 +50,13 @@ class TakeOfferReviewPresenter(
     private val takeOfferErrorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
 
     private val _showTakeOfferProgressDialog = MutableStateFlow(false)
-    val showTakeOfferProgressDialog: StateFlow<Boolean> get() = _showTakeOfferProgressDialog
+    val showTakeOfferProgressDialog: StateFlow<Boolean> get() = _showTakeOfferProgressDialog.asStateFlow()
     private fun setShowTakeOfferProgressDialog(value: Boolean) {
         _showTakeOfferProgressDialog.value = value
     }
 
     private val _showTakeOfferSuccessDialog = MutableStateFlow(false)
-    val showTakeOfferSuccessDialog: StateFlow<Boolean> get() = _showTakeOfferSuccessDialog
+    val showTakeOfferSuccessDialog: StateFlow<Boolean> get() = _showTakeOfferSuccessDialog.asStateFlow()
     private fun setShowTakeOfferSuccessDialog(value: Boolean) {
         _showTakeOfferSuccessDialog.value = value
     }

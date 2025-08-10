@@ -6,12 +6,13 @@ import android.content.Context
 import android.os.Bundle
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.utils.Logging
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 actual class AppForegroundController(val context: Context) : ForegroundDetector, Logging {
     private val _isForeground = MutableStateFlow(false)
-    override val isForeground: StateFlow<Boolean> = _isForeground
+    override val isForeground: StateFlow<Boolean> get() = _isForeground.asStateFlow()
 
     init {
         (context.applicationContext as Application).registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {

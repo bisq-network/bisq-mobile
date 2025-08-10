@@ -1,9 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
@@ -26,25 +26,25 @@ class BuyerStateMainChain3bPresenter(
     private val explorerServiceFacade: ExplorerServiceFacade
 ) : BasePresenter(mainPresenter) {
 
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
     private val _buttonText: MutableStateFlow<String> = MutableStateFlow("")
-    val buttonText: StateFlow<String> = _buttonText
+    val buttonText: StateFlow<String> get() = _buttonText.asStateFlow()
 
     private val _txConfirmationState: MutableStateFlow<TxConfirmationState> = MutableStateFlow(IDLE)
-    val txConfirmationState: StateFlow<TxConfirmationState> = _txConfirmationState
+    val txConfirmationState: StateFlow<TxConfirmationState> get() = _txConfirmationState.asStateFlow()
 
     private val _blockExplorer: MutableStateFlow<String> = MutableStateFlow("")
-    val blockExplorer: StateFlow<String> = _blockExplorer
+    val blockExplorer: StateFlow<String> get() = _blockExplorer.asStateFlow()
 
     private val _balanceFromTx: MutableStateFlow<String> = MutableStateFlow("")
-    val balanceFromTx: StateFlow<String> = _balanceFromTx
+    val balanceFromTx: StateFlow<String> get() = _balanceFromTx.asStateFlow()
 
     private val _errorMessage: MutableStateFlow<String?> = MutableStateFlow(null)
-    val errorMessage: StateFlow<String?> = _errorMessage
+    val errorMessage: StateFlow<String?> get() = _errorMessage.asStateFlow()
 
     private val _skip: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val skip: StateFlow<Boolean> = _skip
+    val skip: StateFlow<Boolean> get() = _skip.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

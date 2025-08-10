@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -18,7 +19,7 @@ class TabContainerPresenter(
 ) : BasePresenter(mainPresenter), ITabContainerPresenter {
 
     private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
-    override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> = _tradesWithUnreadMessages
+    override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> get() = _tradesWithUnreadMessages.asStateFlow()
     override val showAnimation: StateFlow<Boolean> get() = settingsServiceFacade.useAnimations
     private var forceServicesReactivation = false
 

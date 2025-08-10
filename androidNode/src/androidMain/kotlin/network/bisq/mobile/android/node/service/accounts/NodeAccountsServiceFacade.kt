@@ -4,6 +4,7 @@ import bisq.account.AccountService
 import bisq.account.accounts.UserDefinedFiatAccount
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.UserDefinedFiatAccountMapping
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
@@ -14,10 +15,10 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
     private val accountService: AccountService by lazy { applicationService.accountService.get() }
 
     private val _accounts = MutableStateFlow<List<UserDefinedFiatAccountVO>>(emptyList())
-    override val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = _accounts
+    override val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = _accounts.asStateFlow()
 
     private val _selectedAccount = MutableStateFlow<UserDefinedFiatAccountVO?>(null)
-    override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = _selectedAccount
+    override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = _selectedAccount.asStateFlow()
 
     override fun activate() {
         super<ServiceFacade>.activate()

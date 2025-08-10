@@ -3,7 +3,17 @@ package network.bisq.mobile.presentation
 import androidx.annotation.CallSuper
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.take
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
@@ -36,18 +46,18 @@ open class MainPresenter(
 
     // Observable state
     private val _isContentVisible = MutableStateFlow(false)
-    override val isContentVisible: StateFlow<Boolean> = _isContentVisible
+    override val isContentVisible: StateFlow<Boolean> get() = _isContentVisible.asStateFlow()
 
     private val _isSmallScreen = MutableStateFlow(false)
-    override val isSmallScreen: StateFlow<Boolean> = _isSmallScreen
+    override val isSmallScreen: StateFlow<Boolean> get() = _isSmallScreen.asStateFlow()
 
-    final override val languageCode: StateFlow<String> = settingsService.languageCode
+    final override val languageCode: StateFlow<String> get() = settingsService.languageCode
 
     private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
-    override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> = _tradesWithUnreadMessages
+    override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> get() = _tradesWithUnreadMessages.asStateFlow()
 
     private val _readMessageCountsByTrade = MutableStateFlow(emptyMap<String, Int>())
-    override val readMessageCountsByTrade: StateFlow<Map<String, Int>> = _readMessageCountsByTrade
+    override val readMessageCountsByTrade: StateFlow<Map<String, Int>> get() = _readMessageCountsByTrade.asStateFlow()
 
     override val showAnimation: StateFlow<Boolean> get() = settingsService.useAnimations
 

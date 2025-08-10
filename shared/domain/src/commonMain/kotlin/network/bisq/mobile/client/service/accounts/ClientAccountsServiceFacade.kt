@@ -2,6 +2,7 @@ package network.bisq.mobile.client.service.accounts
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -11,10 +12,10 @@ class ClientAccountsServiceFacade(
 ) : ServiceFacade(), AccountsServiceFacade {
 
     private val _accounts = MutableStateFlow<List<UserDefinedFiatAccountVO>>(emptyList())
-    override val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = _accounts
+    override val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = _accounts.asStateFlow()
 
     private val _selectedAccount = MutableStateFlow<UserDefinedFiatAccountVO?>(null)
-    override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = _selectedAccount
+    override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = _selectedAccount.asStateFlow()
 
     override fun activate() {
         super<ServiceFacade>.activate()

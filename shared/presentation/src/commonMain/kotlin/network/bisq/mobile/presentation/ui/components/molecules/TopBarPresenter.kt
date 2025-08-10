@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.components.molecules
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
@@ -15,12 +16,12 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 open class TopBarPresenter(
     private val userRepository: UserRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
-    connectivityService: ConnectivityService,
+    private val connectivityService: ConnectivityService,
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), ITopBarPresenter {
 
     private val _uniqueAvatar = MutableStateFlow(userRepository.data.value?.uniqueAvatar)
-    override val uniqueAvatar: StateFlow<PlatformImage?> get() = _uniqueAvatar
+    override val uniqueAvatar: StateFlow<PlatformImage?> get() = _uniqueAvatar.asStateFlow()
 
     private fun setUniqueAvatar(value: PlatformImage?) {
         _uniqueAvatar.value = value
@@ -28,7 +29,7 @@ open class TopBarPresenter(
 
     override val showAnimation: StateFlow<Boolean> get() = settingsServiceFacade.useAnimations
 
-    override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> = connectivityService.status
+    override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> get() = connectivityService.status
 
     override fun onViewAttached() {
         super.onViewAttached()

@@ -45,7 +45,7 @@ class KmpTorService : ServiceFacade(), Logging {
     private var controlPortFileObserverJob: Job? = null
 
     private val _startupFailure: MutableStateFlow<KmpTorException?> = MutableStateFlow(null)
-    val startupFailure: StateFlow<KmpTorException?> = _startupFailure.asStateFlow()
+    val startupFailure: StateFlow<KmpTorException?> get() = _startupFailure.asStateFlow()
 
     fun startTor(baseDir: Path): CompletableDeferred<Boolean> {
         this.baseDir = baseDir

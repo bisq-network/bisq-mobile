@@ -18,6 +18,7 @@ package network.bisq.mobile.domain.data.replicated.presentation.offerbook
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 
 /**
@@ -39,19 +40,19 @@ class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentation
 
     // In case of market price or float is used, the price and the base amount need to be updated at market price updates.
     private val _formattedPrice = MutableStateFlow(offerItemPresentationDto.formattedPrice)
-    val formattedPrice: StateFlow<String> get() = _formattedPrice
+    val formattedPrice: StateFlow<String> get() = _formattedPrice.asStateFlow()
 
     private val _formattedBaseAmount = MutableStateFlow(offerItemPresentationDto.formattedBaseAmount)
-    val formattedBaseAmount: StateFlow<String> get() = _formattedBaseAmount
+    val formattedBaseAmount: StateFlow<String> get() = _formattedBaseAmount.asStateFlow()
 
     // The user name is the nickname and the nym in case there are multiple nicknames in the network.
     // We get that set by the backend in the makersUserProfile but we need to update it after initial retrieval by websocket events.
     // At Bisq Easy the UserNameLookup class handles that.
     private val _userName = MutableStateFlow(offerItemPresentationDto.userProfile.userName)
-    val userName: StateFlow<String> get() = _userName
+    val userName: StateFlow<String> get() = _userName.asStateFlow()
 
     private val _makersReputationScore = MutableStateFlow(offerItemPresentationDto.reputationScore)
-    val makersReputationScore: StateFlow<ReputationScoreVO> get() = _makersReputationScore
+    val makersReputationScore: StateFlow<ReputationScoreVO> get() = _makersReputationScore.asStateFlow()
 
     var isInvalidDueToReputation: Boolean = false
 

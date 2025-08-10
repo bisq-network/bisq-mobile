@@ -28,9 +28,9 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfile
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
@@ -93,10 +93,10 @@ class NodeTradesServiceFacade(
 
     // Properties
     private val _openTradeItems = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
-    override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> get() = _openTradeItems
+    override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> get() = _openTradeItems.asStateFlow()
 
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
-    override val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade
+    override val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade.asStateFlow()
 
     // Misc
     private var tradesPin: Pin? = null

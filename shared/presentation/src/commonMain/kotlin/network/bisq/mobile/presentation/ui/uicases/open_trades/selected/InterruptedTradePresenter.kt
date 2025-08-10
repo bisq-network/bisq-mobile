@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.TradeReadState
@@ -14,8 +15,6 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import kotlin.collections.orEmpty
-import kotlin.collections.toMutableMap
 
 class InterruptedTradePresenter(
     mainPresenter: MainPresenter,
@@ -24,23 +23,23 @@ class InterruptedTradePresenter(
     private val tradeReadStateRepository: TradeReadStateRepository,
 ) : BasePresenter(mainPresenter) {
 
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
-    private var _interruptedTradeInfo: MutableStateFlow<String> = MutableStateFlow("")
-    val interruptedTradeInfo: StateFlow<String> = _interruptedTradeInfo
+    private val _interruptedTradeInfo: MutableStateFlow<String> = MutableStateFlow("")
+    val interruptedTradeInfo: StateFlow<String> get() = _interruptedTradeInfo.asStateFlow()
 
-    private var _interruptionInfoVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val interruptionInfoVisible: StateFlow<Boolean> = _interruptionInfoVisible
+    private val _interruptionInfoVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val interruptionInfoVisible: StateFlow<Boolean> get() = _interruptionInfoVisible.asStateFlow()
 
     var errorMessage: String = ""
-    private var _errorMessageVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val errorMessageVisible: StateFlow<Boolean> = _errorMessageVisible
+    private val _errorMessageVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val errorMessageVisible: StateFlow<Boolean> get() = _errorMessageVisible.asStateFlow()
 
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isInMediation: StateFlow<Boolean> = _isInMediation
+    val isInMediation: StateFlow<Boolean> get() = _isInMediation.asStateFlow()
 
     private val _reportToMediatorButtonVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val reportToMediatorButtonVisible: StateFlow<Boolean> = _reportToMediatorButtonVisible
+    val reportToMediatorButtonVisible: StateFlow<Boolean> get() = _reportToMediatorButtonVisible.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
@@ -16,16 +17,16 @@ class SellerState1Presenter(
     private val accountsServiceFacade: AccountsServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
-    val accounts: StateFlow<List<UserDefinedFiatAccountVO>> = accountsServiceFacade.accounts
+    val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = accountsServiceFacade.accounts
 
     private var _paymentAccountData = MutableStateFlow("")
-    val paymentAccountData: StateFlow<String> get() = _paymentAccountData
+    val paymentAccountData: StateFlow<String> get() = _paymentAccountData.asStateFlow()
 
     private var _paymentAccountDataValid = MutableStateFlow(false)
-    val paymentAccountDataValid: StateFlow<Boolean> get() = _paymentAccountDataValid
+    val paymentAccountDataValid: StateFlow<Boolean> get() = _paymentAccountDataValid.asStateFlow()
 
     private var _paymentAccountName = MutableStateFlow("")
-    val paymentAccountName: StateFlow<String> get() = _paymentAccountName
+    val paymentAccountName: StateFlow<String> get() = _paymentAccountName.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

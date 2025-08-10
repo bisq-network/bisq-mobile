@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
@@ -14,7 +15,7 @@ open class AgreementPresenter(
 ) : BasePresenter(mainPresenter), IAgreementPresenter {
 
     private val _accepted = MutableStateFlow(false)
-    override val isAccepted: StateFlow<Boolean> = _accepted
+    override val isAccepted: StateFlow<Boolean> get() = _accepted.asStateFlow()
 
 
     override fun onAccept(accepted: Boolean) {

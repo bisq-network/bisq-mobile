@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
@@ -22,7 +23,7 @@ class UserProfileSettingsPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
     private val userRepository: UserRepository,
-    connectivityService: ConnectivityService,
+    private val connectivityService: ConnectivityService,
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IUserProfileSettingsPresenter {
 
@@ -31,35 +32,35 @@ class UserProfileSettingsPresenter(
     }
 
     private val _uniqueAvatar = MutableStateFlow(userRepository.data.value?.uniqueAvatar)
-    override val uniqueAvatar: StateFlow<PlatformImage?> get() = _uniqueAvatar
+    override val uniqueAvatar: StateFlow<PlatformImage?> get() = _uniqueAvatar.asStateFlow()
 
     private val _reputation = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
-    override val reputation: StateFlow<String> = _reputation
+    override val reputation: StateFlow<String> get() = _reputation.asStateFlow()
     private val _lastUserActivity = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
-    override val lastUserActivity: StateFlow<String> = _lastUserActivity
+    override val lastUserActivity: StateFlow<String> get() = _lastUserActivity.asStateFlow()
     private val _profileAge = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
-    override val profileAge: StateFlow<String> = _profileAge
+    override val profileAge: StateFlow<String> get() = _profileAge.asStateFlow()
     private val _profileId = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
-    override val profileId: StateFlow<String> = _profileId
+    override val profileId: StateFlow<String> get() = _profileId.asStateFlow()
     private val _nickname = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
-    override val nickname: StateFlow<String> = _nickname
+    override val nickname: StateFlow<String> get() = _nickname.asStateFlow()
     private val _botId = MutableStateFlow(DEFAULT_UNKNOWN_VALUE)
-    override val botId: StateFlow<String> = _botId
+    override val botId: StateFlow<String> get() = _botId.asStateFlow()
     private val _tradeTerms = MutableStateFlow("")
-    override val tradeTerms: StateFlow<String> = _tradeTerms
+    override val tradeTerms: StateFlow<String> get() = _tradeTerms.asStateFlow()
     private val _statement = MutableStateFlow("")
-    override val statement: StateFlow<String> = _statement
+    override val statement: StateFlow<String> get() = _statement.asStateFlow()
 
     private val _showLoading = MutableStateFlow(false)
-    override val showLoading: StateFlow<Boolean> = _showLoading
+    override val showLoading: StateFlow<Boolean> get() = _showLoading.asStateFlow()
 
     private val _showDeleteOfferConfirmation = MutableStateFlow(false)
-    override val showDeleteProfileConfirmation: StateFlow<Boolean> get() = _showDeleteOfferConfirmation
+    override val showDeleteProfileConfirmation: StateFlow<Boolean> get() = _showDeleteOfferConfirmation.asStateFlow()
     override fun setShowDeleteProfileConfirmation(value: Boolean) {
         _showDeleteOfferConfirmation.value = value
     }
 
-    override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> = connectivityService.status
+    override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> get() = connectivityService.status
 
     override fun onViewAttached() {
         super.onViewAttached()

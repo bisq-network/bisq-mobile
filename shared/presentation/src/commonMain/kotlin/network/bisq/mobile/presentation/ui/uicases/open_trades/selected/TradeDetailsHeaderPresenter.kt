@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
@@ -34,44 +35,44 @@ class TradeDetailsHeaderPresenter(
 
     private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> =
         MutableStateFlow(tradesServiceFacade.selectedTrade.value)
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = _selectedTrade
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade.asStateFlow()
 
     var direction: String = ""
     var directionEnum: DirectionEnum = DirectionEnum.BUY
     var leftAmountDescription: String = ""
-    private var _leftAmount: MutableStateFlow<String> = MutableStateFlow("")
-    var leftAmount: StateFlow<String> = _leftAmount
-    private var _leftCode: MutableStateFlow<String> = MutableStateFlow("")
-    var leftCode: StateFlow<String> = _leftCode
+    private val _leftAmount: MutableStateFlow<String> = MutableStateFlow("")
+    val leftAmount: StateFlow<String> get() = _leftAmount.asStateFlow()
+    private val _leftCode: MutableStateFlow<String> = MutableStateFlow("")
+    val leftCode: StateFlow<String> get() = _leftCode.asStateFlow()
     var rightAmountDescription: String = ""
-    private var _rightAmount: MutableStateFlow<String> = MutableStateFlow("")
-    var rightAmount: StateFlow<String> = _rightAmount
-    private var _rightCode: MutableStateFlow<String> = MutableStateFlow("")
-    var rightCode: StateFlow<String> = _rightCode
+    private val _rightAmount: MutableStateFlow<String> = MutableStateFlow("")
+    val rightAmount: StateFlow<String> get() = _rightAmount.asStateFlow()
+    private val _rightCode: MutableStateFlow<String> = MutableStateFlow("")
+    val rightCode: StateFlow<String> get() = _rightCode.asStateFlow()
 
-    private var _tradeCloseType: MutableStateFlow<TradeCloseType?> = MutableStateFlow(null)
-    val tradeCloseType: StateFlow<TradeCloseType?> = _tradeCloseType
+    private val _tradeCloseType: MutableStateFlow<TradeCloseType?> = MutableStateFlow(null)
+    val tradeCloseType: StateFlow<TradeCloseType?> get() = _tradeCloseType.asStateFlow()
 
-    private var _interruptTradeButtonText: MutableStateFlow<String> = MutableStateFlow("")
-    val interruptTradeButtonText: StateFlow<String> = _interruptTradeButtonText
+    private val _interruptTradeButtonText: MutableStateFlow<String> = MutableStateFlow("")
+    val interruptTradeButtonText: StateFlow<String> get() = _interruptTradeButtonText.asStateFlow()
 
-    private var _openMediationButtonText: MutableStateFlow<String> = MutableStateFlow("")
-    val openMediationButtonText: StateFlow<String> = _openMediationButtonText
+    private val _openMediationButtonText: MutableStateFlow<String> = MutableStateFlow("")
+    val openMediationButtonText: StateFlow<String> get() = _openMediationButtonText.asStateFlow()
 
     private val _showInterruptionConfirmationDialog = MutableStateFlow(false)
-    val showInterruptionConfirmationDialog: StateFlow<Boolean> get() = _showInterruptionConfirmationDialog
+    val showInterruptionConfirmationDialog: StateFlow<Boolean> get() = _showInterruptionConfirmationDialog.asStateFlow()
 
     private val _showMediationConfirmationDialog = MutableStateFlow(false)
-    val showMediationConfirmationDialog: StateFlow<Boolean> get() = _showMediationConfirmationDialog
+    val showMediationConfirmationDialog: StateFlow<Boolean> get() = _showMediationConfirmationDialog.asStateFlow()
 
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isInMediation: StateFlow<Boolean> = this._isInMediation
+    val isInMediation: StateFlow<Boolean> get() = this._isInMediation.asStateFlow()
 
     private val _peerAvatar: MutableStateFlow<PlatformImage?> = MutableStateFlow(null)
-    val peerAvatar: StateFlow<PlatformImage?> = _peerAvatar
+    val peerAvatar: StateFlow<PlatformImage?> get() = _peerAvatar.asStateFlow()
 
     private val _isShowDetails: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isShowDetails: StateFlow<Boolean> = this._isShowDetails
+    val isShowDetails: StateFlow<Boolean> get() = this._isShowDetails.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

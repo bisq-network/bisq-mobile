@@ -3,6 +3,7 @@ package network.bisq.mobile.client.service.reputation
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.shared.BuildConfig
@@ -18,7 +19,7 @@ class ClientReputationServiceFacade(
 
     // Properties
     private val _reputationByUserProfileId = MutableStateFlow<Map<String, ReputationScoreVO>>(emptyMap())
-    override val reputationByUserProfileId: StateFlow<Map<String, ReputationScoreVO>> get() = _reputationByUserProfileId
+    override val reputationByUserProfileId: StateFlow<Map<String, ReputationScoreVO>> get() = _reputationByUserProfileId.asStateFlow()
 
     // Misc
     private var reputationSequenceNumber = atomic(-1)

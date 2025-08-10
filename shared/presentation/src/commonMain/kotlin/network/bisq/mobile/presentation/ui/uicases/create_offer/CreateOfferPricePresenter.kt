@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
@@ -32,26 +33,26 @@ class CreateOfferPricePresenter(
     var priceQuote: PriceQuoteVO
     var percentagePriceValue: Double = 0.0
     private val _formattedPercentagePrice = MutableStateFlow("")
-    val formattedPercentagePrice: StateFlow<String> = _formattedPercentagePrice
+    val formattedPercentagePrice: StateFlow<String> get() = _formattedPercentagePrice.asStateFlow()
     private val _formattedPercentagePriceValid = MutableStateFlow(true)
-    val formattedPercentagePriceValid: StateFlow<Boolean> = _formattedPercentagePriceValid
+    val formattedPercentagePriceValid: StateFlow<Boolean> get() = _formattedPercentagePriceValid.asStateFlow()
 
     private val _formattedPrice = MutableStateFlow("")
-    val formattedPrice: StateFlow<String> = _formattedPrice
+    val formattedPrice: StateFlow<String> get() = _formattedPrice.asStateFlow()
     private val _formattedPriceValid = MutableStateFlow(true)
 
     private val _priceType = MutableStateFlow(PriceType.PERCENTAGE)
-    val priceType: StateFlow<PriceType> = _priceType
+    val priceType: StateFlow<PriceType> get() = _priceType.asStateFlow()
 
-    private var _isBuy: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    var isBuy: StateFlow<Boolean> = _isBuy
+    private val _isBuy: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    val isBuy: StateFlow<Boolean> get() = _isBuy.asStateFlow()
     private val _hintText = MutableStateFlow("")
-    val hintText: StateFlow<String> = _hintText
+    val hintText: StateFlow<String> get() = _hintText.asStateFlow()
 
     private var createOfferModel: CreateOfferPresenter.CreateOfferModel
 
-    private var _showWhyPopup: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val showWhyPopup: StateFlow<Boolean> = _showWhyPopup
+    private val _showWhyPopup: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val showWhyPopup: StateFlow<Boolean> get() = _showWhyPopup.asStateFlow()
     fun setShowWhyPopup(newValue: Boolean) {
         _showWhyPopup.value = newValue
     }

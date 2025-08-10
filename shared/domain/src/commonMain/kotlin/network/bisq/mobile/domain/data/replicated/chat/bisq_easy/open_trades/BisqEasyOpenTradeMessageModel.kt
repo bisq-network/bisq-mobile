@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
@@ -22,7 +23,7 @@ class BisqEasyOpenTradeMessageModel(
     private val _chatReactions: MutableStateFlow<List<BisqEasyOpenTradeMessageReactionVO>> = MutableStateFlow(
         chatReactions
     )
-    val chatReactions: StateFlow<List<BisqEasyOpenTradeMessageReactionVO>> = _chatReactions
+    val chatReactions: StateFlow<List<BisqEasyOpenTradeMessageReactionVO>> get() = _chatReactions.asStateFlow()
 
     // Delegates of BisqEasyOpenTradeMessageDto
     val id: String = bisqEasyOpenTradeMessage.messageId

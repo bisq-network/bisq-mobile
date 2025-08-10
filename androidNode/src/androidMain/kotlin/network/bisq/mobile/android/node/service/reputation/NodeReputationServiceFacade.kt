@@ -5,6 +5,7 @@ import bisq.common.observable.Pin
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.AndroidApplicationService
@@ -20,7 +21,7 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
     // Properties
     private val _reputationByUserProfileId: MutableStateFlow<Map<String, ReputationScoreVO>> =
         MutableStateFlow(emptyMap())
-    override val reputationByUserProfileId: StateFlow<Map<String, ReputationScoreVO>> get() = _reputationByUserProfileId
+    override val reputationByUserProfileId: StateFlow<Map<String, ReputationScoreVO>> get() = _reputationByUserProfileId.asStateFlow()
 
     // Misc
     private var reputationChangePin: Pin? = null

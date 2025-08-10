@@ -15,9 +15,9 @@ open class PaymentAccountPresenter(
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IPaymentAccountSettingsPresenter {
 
-    override val accounts: StateFlow<List<UserDefinedFiatAccountVO>> = accountsServiceFacade.accounts
+    override val accounts: StateFlow<List<UserDefinedFiatAccountVO>> get() = accountsServiceFacade.accounts
 
-    override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> = accountsServiceFacade.selectedAccount
+    override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = accountsServiceFacade.selectedAccount
 
 
     override fun selectAccount(account: UserDefinedFiatAccountVO) {

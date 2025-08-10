@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.TradeRoleEnumExtensions.isSeller
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -74,7 +75,7 @@ class TradeFlowPresenter(
     val buyerState4Presenter = tradeStatesProvider.buyerState4Presenter
     val sellerState4Presenter = tradeStatesProvider.sellerState4Presenter
 
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
     val steps = listOf(
         TradeFlowStep.ACCOUNT_DETAILS,
         TradeFlowStep.FIAT_PAYMENT,
@@ -82,8 +83,8 @@ class TradeFlowPresenter(
         TradeFlowStep.TRADE_COMPLETED
     )
 
-    private var _tradePhaseState: MutableStateFlow<TradePhaseState> = MutableStateFlow(TradePhaseState.INIT)
-    val tradePhaseState: StateFlow<TradePhaseState> = _tradePhaseState
+    private val _tradePhaseState: MutableStateFlow<TradePhaseState> = MutableStateFlow(TradePhaseState.INIT)
+    val tradePhaseState: StateFlow<TradePhaseState> get() = _tradePhaseState.asStateFlow()
 
     private var isSeller: Boolean = false
     private var isMainChain: Boolean = false

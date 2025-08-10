@@ -1,8 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -16,28 +16,28 @@ class SellerState3aPresenter(
     private val tradesServiceFacade: TradesServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
-    private var _paymentProof: MutableStateFlow<String?> = MutableStateFlow(null)
-    val paymentProof: StateFlow<String?> get() = _paymentProof
+    private val _paymentProof: MutableStateFlow<String?> = MutableStateFlow(null)
+    val paymentProof: StateFlow<String?> get() = _paymentProof.asStateFlow()
 
-    private var _paymentProofValid: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val paymentProofValid: StateFlow<Boolean> get() = _paymentProofValid
+    private val _paymentProofValid: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val paymentProofValid: StateFlow<Boolean> get() = _paymentProofValid.asStateFlow()
 
     private val _showInvalidAddressDialog = MutableStateFlow(false)
-    val showInvalidAddressDialog: StateFlow<Boolean> get() = _showInvalidAddressDialog
+    val showInvalidAddressDialog: StateFlow<Boolean> get() = _showInvalidAddressDialog.asStateFlow()
     fun setShowInvalidAddressDialog(value: Boolean) {
         _showInvalidAddressDialog.value = value
     }
 
-    private var _buttonEnabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val buttonEnabled: StateFlow<Boolean> get() = _buttonEnabled
+    private val _buttonEnabled: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val buttonEnabled: StateFlow<Boolean> get() = _buttonEnabled.asStateFlow()
 
     private var _bitcoinAddressFieldType = MutableStateFlow(BitcoinLnAddressFieldType.Bitcoin)
-    val bitcoinLnAddressFieldType: StateFlow<BitcoinLnAddressFieldType> get() = _bitcoinAddressFieldType
+    val bitcoinLnAddressFieldType: StateFlow<BitcoinLnAddressFieldType> get() = _bitcoinAddressFieldType.asStateFlow()
 
-    private var _isLightning: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val isLightning: StateFlow<Boolean> get() = _isLightning
+    private val _isLightning: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val isLightning: StateFlow<Boolean> get() = _isLightning.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

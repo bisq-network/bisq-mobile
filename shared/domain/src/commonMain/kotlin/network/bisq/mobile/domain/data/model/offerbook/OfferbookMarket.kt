@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.data.model.offerbook
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
 
@@ -11,7 +12,7 @@ import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactor
 // todo Not used yet, maybe we can remove it later
 data class OfferbookMarket(val market: MarketVO) {
     private val _formattedPrice = MutableStateFlow("")
-    val formattedPrice: StateFlow<String> get() = _formattedPrice
+    val formattedPrice: StateFlow<String> get() = _formattedPrice.asStateFlow()
 
     fun setFormattedPrice(value: String) {
         _formattedPrice.value = value

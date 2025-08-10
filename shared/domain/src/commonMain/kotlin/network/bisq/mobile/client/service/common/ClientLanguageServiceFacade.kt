@@ -3,6 +3,7 @@ package network.bisq.mobile.client.service.common
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
@@ -11,10 +12,10 @@ class ClientLanguageServiceFacade : ServiceFacade(), LanguageServiceFacade {
 
     // Properties
     private val _i18nPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(emptyList())
-    override val i18nPairs: StateFlow<List<Pair<String, String>>> = _i18nPairs
+    override val i18nPairs: StateFlow<List<Pair<String, String>>> get() = _i18nPairs.asStateFlow()
 
     private val _allPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(emptyList())
-    override val allPairs: StateFlow<List<Pair<String, String>>> = _allPairs
+    override val allPairs: StateFlow<List<Pair<String, String>>> get() = _allPairs.asStateFlow()
 
     private val _defaultLanguage: MutableStateFlow<String> = MutableStateFlow("en")
 

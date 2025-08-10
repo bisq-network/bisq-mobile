@@ -9,8 +9,8 @@ import network.bisq.mobile.presentation.MainPresenter
 
 class BuyerState2bPresenter(
     mainPresenter: MainPresenter,
-    tradesServiceFacade: TradesServiceFacade,
+    private val tradesServiceFacade: TradesServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 }

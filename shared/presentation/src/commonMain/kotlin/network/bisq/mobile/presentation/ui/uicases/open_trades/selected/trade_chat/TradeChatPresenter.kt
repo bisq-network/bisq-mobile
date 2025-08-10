@@ -4,6 +4,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -34,19 +35,19 @@ class TradeChatPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter), Logging {
 
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> = tradesServiceFacade.selectedTrade
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
     private val _chatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(listOf())
-    val chatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> = _chatMessages
+    val chatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> get() = _chatMessages.asStateFlow()
 
     private val _quotedMessage: MutableStateFlow<BisqEasyOpenTradeMessageModel?> = MutableStateFlow(null)
-    val quotedMessage: StateFlow<BisqEasyOpenTradeMessageModel?> = _quotedMessage
+    val quotedMessage: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _quotedMessage.asStateFlow()
 
     private val _showChatRulesWarnBox: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    val showChatRulesWarnBox: StateFlow<Boolean> = _showChatRulesWarnBox
+    val showChatRulesWarnBox: StateFlow<Boolean> get() = _showChatRulesWarnBox.asStateFlow()
 
     private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
-    val avatarMap: StateFlow<Map<String, PlatformImage?>> = _avatarMap
+    val avatarMap: StateFlow<Map<String, PlatformImage?>> get() = _avatarMap.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
