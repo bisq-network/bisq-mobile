@@ -1554,6 +1554,7 @@ object GeneratedResourceBundles_it {
             "mobile.bisqEasy.offerbook.offerCard.BuyBitcoinFrom" to "{0} Bitcoin from",
             "mobile.trustedNodeSetup.version.expectedAPI" to "Expected API version: {0}",
             "mobile.openTradeNotifications.offerTaken.message" to "Your offer has been taken by {0}",
+            "offerbook_title" to "Offerbook - {0}",
             "mobile.user.paymentAccounts.createAccount.validations.accountData.maxLength" to "Max length: 1024 characters",
             "mobile.settings.trustedNode" to "Trusted Node",
             "mobile.openTradeNotifications.tradeCompleted.message" to "Your trade with {0} has finished as {1}",

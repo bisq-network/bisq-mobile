@@ -1567,6 +1567,7 @@ object GeneratedResourceBundles_es {
             "mobile.clientApplicationBootstrap.connectingToTrustedNode" to "ES_Connecting to Trusted Node..",
             "mobile.bisqEasy.offerbook.offerCard.BuyBitcoinFrom" to "ES_{0} Bitcoin from",
             "mobile.trustedNodeSetup.version.expectedAPI" to "ES_Expected API version: {0}",
+            "offerbook_title" to "ES_Offerbook - {0}",
             "mobile.user.paymentAccounts.createAccount.validations.accountData.maxLength" to "ES_Max length: 1024 characters",
             "mobile.settings.trustedNode" to "ES_Trusted Node",
             "mobile.openTradeNotifications.tradeCompleted.message" to "ES_Your trade with {0} has finished as {1}",

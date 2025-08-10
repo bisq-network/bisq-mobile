@@ -44,9 +44,10 @@ fun OfferbookScreen() {
     val showNotEnoughReputationDialog by presenter.showNotEnoughReputationDialog.collectAsState()
     val userAvatarMap by presenter.avatarMap.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
+    val selectedMarket by presenter.selectedMarket.collectAsState()
 
     BisqStaticScaffold(
-        topBar = { TopBar(title = "offers".i18n()) },
+        topBar = { TopBar(title = "offerbook_title".i18n(selectedMarket?.market?.quoteCurrencyCode ?: "")) },
         floatingButton = {
             BisqFABAddButton(
                 onClick = { presenter.createOffer() },
