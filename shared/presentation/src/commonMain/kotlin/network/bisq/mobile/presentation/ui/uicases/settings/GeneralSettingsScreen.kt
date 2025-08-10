@@ -68,7 +68,7 @@ fun GeneralSettingsScreen() {
     val isInteractive by presenter.isInteractive.collectAsState()
     val i18nPairs by presenter.i18nPairs.collectAsState()
     val allLanguagePairs by presenter.allLanguagePairs.collectAsState()
-    val selectedLauguage by presenter.languageCode.collectAsState()
+    val selectedLanguage by presenter.languageCode.collectAsState()
     val supportedLanguageCodes by presenter.supportedLanguageCodes.collectAsState()
     val closeOfferWhenTradeTaken by presenter.closeOfferWhenTradeTaken.collectAsState()
     val tradePriceTolerance by presenter.tradePriceTolerance.collectAsState()
@@ -102,7 +102,7 @@ fun GeneralSettingsScreen() {
         BisqDropDown(
             label = "settings.language.headline".i18n(),
             items = i18nPairs,
-            value = selectedLauguage,
+            value = selectedLanguage,
             onValueChanged = { presenter.setLanguageCode(it.first) },
         )
 
@@ -112,7 +112,7 @@ fun GeneralSettingsScreen() {
             label = "settings.language.supported.headline".i18n(),
             helpText = "settings.language.supported.subHeadLine".i18n(),
             items = allLanguagePairs,
-            value = if (supportedLanguageCodes.isNotEmpty()) supportedLanguageCodes.last() else selectedLauguage,
+            value = if (supportedLanguageCodes.isNotEmpty()) supportedLanguageCodes.last() else selectedLanguage,
             values = supportedLanguageCodes,
             onSetChanged = { set ->
                 val codes = set.map { it.first }.toSet()
@@ -139,7 +139,7 @@ fun GeneralSettingsScreen() {
                 Pair("mention", "chat.notificationsSettingsMenu.mention".i18n()),
                 Pair("off", "chat.notificationsSettingsMenu.off".i18n()),
             ),
-            value = presenter.chatNotification.collectAsState().value, // define at top using `by` keyword later
+            value = chatNotification, // define at top using `by` keyword later
             onValueChange = { presenter.setChatNotification(it.first) }
         )
 

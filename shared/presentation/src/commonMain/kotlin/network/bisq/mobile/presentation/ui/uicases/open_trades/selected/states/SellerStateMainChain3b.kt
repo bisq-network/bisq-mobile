@@ -14,7 +14,11 @@ import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.trade_bitcoin_confirmation
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.atoms.*
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -30,13 +34,13 @@ fun SellerStateMainChain3b(
 ) {
     RememberPresenterLifecycle(presenter)
 
+    val selectedTrade by presenter.selectedTrade.collectAsState()
     val confirmationState by presenter.txConfirmationState.collectAsState()
     val btcBalance by presenter.balanceFromTx.collectAsState()
     val buttonText by presenter.buttonText.collectAsState()
     val explorerRequestError by presenter.errorMessage.collectAsState()
     val blockExplorer by presenter.blockExplorer.collectAsState()
-    val tradeItemModel = presenter.selectedTrade.value!!
-    val txId = tradeItemModel.bisqEasyTradeModel.paymentProof.value ?: "data.na".i18n()
+    val txId = selectedTrade?.bisqEasyTradeModel?.paymentProof?.value ?: "data.na".i18n()
     val waitingText =
         "bisqEasy.tradeState.info.seller.phase3b.balance.prompt".i18n(txId)  // Waiting for blockchain data...
     val balanceLabel = "bisqEasy.tradeState.info.seller.phase3b.balance".i18n() // Bitcoin payment

@@ -51,15 +51,10 @@ fun MarketFilters() {
 
         BisqSegmentButton(
             label = "mobile.components.marketFilter.sortBy".i18n(),
-            value = sortBy.getDisplayName(),
+            value = sortBy.name,
             items = MarketSortBy.entries.map { it.name to it.getDisplayName() },
-            onValueChange = {
-                val newValue = when (it.second) {
-                    "mobile.components.marketFilter.sortBy.mostOffers".i18n() -> MarketSortBy.MostOffers
-                    "mobile.components.marketFilter.sortBy.nameAZ".i18n() -> MarketSortBy.NameAZ
-                    else -> MarketSortBy.NameZA
-                }
-                presenter.setSortBy(newValue)
+            onValueChange = { pair ->
+                presenter.setSortBy(MarketSortBy.valueOf(pair.first))
             },
         )
 
@@ -68,13 +63,9 @@ fun MarketFilters() {
         BisqSegmentButton(
             label = "mobile.components.marketFilter.showMarkets".i18n(),
             items = MarketFilter.entries.map { it.name to it.getDisplayName() },
-            value = filter.getDisplayName(),
-            onValueChange = {
-                val newValue = when (it.second) {
-                    "mobile.components.marketFilter.showMarkets.all".i18n() -> MarketFilter.All
-                    else -> MarketFilter.WithOffers
-                }
-                presenter.setFilter(newValue)
+            value = filter.name,
+            onValueChange = { pair ->
+                presenter.setFilter(MarketFilter.valueOf(pair.first))
             },
         )
 

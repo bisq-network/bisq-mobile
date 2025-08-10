@@ -51,9 +51,9 @@ fun TakeOfferTradeAmountScreen() {
             formattedMaxAmount = presenter.formattedMaxAmountWithCode,
             formattedFiatAmount = formattedQuoteAmount,
             formattedBtcAmount = formattedBaseAmount,
-            onSliderValueChange = { sliderValue -> presenter.onSliderValueChanged(sliderValue) },
-            onTextValueChange = { textInput -> presenter.onTextValueChanged(textInput) },
-            validateTextField = { presenter.validateTextField(it) },
+            onSliderValueChange = presenter::onSliderValueChanged,
+            onTextValueChange = presenter::onTextValueChanged,
+            validateTextField = presenter::validateTextField,
             sliderPosition = sliderPosition,
         )
     }

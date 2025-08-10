@@ -33,7 +33,7 @@ fun UserProfile(
     showUserName: Boolean = true,
     modifier: Modifier = Modifier
 ) {
-    val reputation by reputation.collectAsState()
+    val reputationScore by reputation.collectAsState()
 
     val painter: Painter = if (userAvatar == null) {
         painterResource(Res.drawable.img_bot_image)
@@ -58,7 +58,7 @@ fun UserProfile(
                 )
                 BisqGap.VQuarter()
             }
-            StarRating(reputation.fiveSystemScore)
+            StarRating(reputationScore.fiveSystemScore)
         }
         BisqGap.V2()
         Row(verticalAlignment = Alignment.CenterVertically) {

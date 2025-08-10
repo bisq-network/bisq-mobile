@@ -80,7 +80,7 @@ fun CreateOfferAmountSelectorScreen() {
 
         ToggleTab(
             options = AmountType.entries,
-            initialOption = presenter.amountType.value,
+            initialOption = amountType,
             onStateChange = { value ->
                 presenter.onSelectAmountType(value)
             },

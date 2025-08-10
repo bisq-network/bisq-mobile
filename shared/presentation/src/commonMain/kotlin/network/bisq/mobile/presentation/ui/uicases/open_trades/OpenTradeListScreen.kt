@@ -84,7 +84,7 @@ fun OpenTradeListScreen() {
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = if (presenter.tradeGuideVisible.value) Modifier.fillMaxSize()
+                modifier = if (tradeGuideVisible) Modifier.fillMaxSize()
                     .blur(8.dp) else Modifier.fillMaxSize()
             ) {
                 item {
@@ -111,7 +111,7 @@ fun OpenTradeListScreen() {
                         )
                     }
                 }
-                items(sortedOpenTradeItems) { trade ->
+                items(sortedOpenTradeItems, key = { it.tradeId }) { trade ->
                     val isUnread = isTradeUnread(trade.tradeId)
                     OpenTradeListItem(
                         trade,
@@ -128,7 +128,7 @@ fun OpenTradeListScreen() {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                items(sortedOpenTradeItems) { trade ->
+                items(sortedOpenTradeItems, key = { it.tradeId }) { trade ->
                     val isUnread = isTradeUnread(trade.tradeId)
                     OpenTradeListItem(
                         trade,

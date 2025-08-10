@@ -171,6 +171,7 @@ fun UserProfileSettingsScreen() {
 @Composable
 private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter) {
     val connectivityStatus by presenter.connectivityStatus.collectAsState()
+    val uniqueAvatar by presenter.uniqueAvatar.collectAsState()
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -187,7 +188,7 @@ private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter) {
             contentAlignment = Alignment.Center
         ) {
             UserIcon(
-                presenter.uniqueAvatar.value,
+                uniqueAvatar,
                 modifier = Modifier.size(72.dp),
                 connectivityStatus = connectivityStatus
             )
@@ -197,8 +198,6 @@ private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter) {
 
 @Composable
 private fun UserProfileScreenFooter(presenter: IUserProfileSettingsPresenter, showLoading: Boolean) {
-    val isLoading by presenter.showLoading.collectAsState()
-
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
@@ -218,7 +217,7 @@ private fun UserProfileScreenFooter(presenter: IUserProfileSettingsPresenter, sh
         BisqButton(
             "mobile.settings.userProfile.labels.save".i18n(),
             onClick = presenter::onSave,
-            isLoading = isLoading,
+            isLoading = showLoading,
             modifier = Modifier.weight(1.0F),
             padding = PaddingValues(
                 horizontal = BisqUIConstants.ScreenPadding,

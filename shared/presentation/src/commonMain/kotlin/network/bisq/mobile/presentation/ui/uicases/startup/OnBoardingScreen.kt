@@ -35,12 +35,11 @@ interface IOnboardingPresenter : ViewPresenter {
 fun OnBoardingScreen() {
     val presenter: IOnboardingPresenter = koinInject()
 
+    RememberPresenterLifecycle(presenter)
+
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { presenter.indexesToShow.size })
-
     val mainButtonText by presenter.buttonText.collectAsState()
-
-    RememberPresenterLifecycle(presenter)
 
     val finalPages = presenter.onBoardingData.filterIndexed { index, _ ->
         presenter.indexesToShow.contains(index)

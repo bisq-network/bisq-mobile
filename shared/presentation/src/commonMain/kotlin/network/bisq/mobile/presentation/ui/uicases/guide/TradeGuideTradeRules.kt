@@ -21,7 +21,7 @@ import org.koin.compose.koinInject
 fun TradeGuideTradeRules() {
     val presenter: TradeGuideTradeRulesPresenter = koinInject()
     val userAgreed by presenter.tradeRulesConfirmed.collectAsState()
-    var _userAgreed by remember { mutableStateOf(userAgreed) }
+    var localUserAgreed by remember(userAgreed) { mutableStateOf(userAgreed) }
     val isInteractive by presenter.isInteractive.collectAsState()
 
     RememberPresenterLifecycle(presenter)
@@ -35,7 +35,7 @@ fun TradeGuideTradeRules() {
         prevOnClick = presenter::prevClick,
         nextOnClick = presenter::tradeRulesNextClick,
         nextButtonText = "action.finish".i18n(),
-        nextDisabled = !_userAgreed,
+        nextDisabled = !localUserAgreed,
         horizontalAlignment = Alignment.Start,
         isInteractive = isInteractive,
         showJumpToBottom = true
@@ -59,9 +59,9 @@ fun TradeGuideTradeRules() {
         if (!userAgreed)
             BisqCheckbox(
                 "tac.confirm".i18n(),
-                checked = _userAgreed,
+                checked = localUserAgreed,
                 onCheckedChange = {
-                    _userAgreed = it
+                    localUserAgreed = it
                 }
             )
 

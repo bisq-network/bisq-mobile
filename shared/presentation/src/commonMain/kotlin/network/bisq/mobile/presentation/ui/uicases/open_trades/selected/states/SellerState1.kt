@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqDropDown
@@ -20,9 +21,7 @@ fun SellerState1(
     val paymentAccountData by presenter.paymentAccountData.collectAsState()
     val paymentAccountName by presenter.paymentAccountName.collectAsState()
     val accounts by presenter.accounts.collectAsState()
-    val accountPairs: List<Pair<String, String>> = accounts.map { account ->
-        account.accountName to account.accountPayload.accountData
-    }
+    val accountPairs = remember(accounts) { accounts.map { it.accountName to it.accountPayload.accountData } }
 
     RememberPresenterLifecycle(presenter)
 

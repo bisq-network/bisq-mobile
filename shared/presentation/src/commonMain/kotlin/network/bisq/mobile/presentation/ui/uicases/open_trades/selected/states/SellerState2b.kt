@@ -2,6 +2,8 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -14,8 +16,10 @@ fun SellerState2b(
 ) {
     RememberPresenterLifecycle(presenter)
 
-    val shortId = presenter.selectedTrade.value!!.shortTradeId
-    val quoteAmountWithCode = presenter.selectedTrade.value!!.quoteAmountWithCode
+    val selectedTrade by presenter.selectedTrade.collectAsState()
+    val trade = selectedTrade ?: return
+    val shortId = trade.shortTradeId
+    val quoteAmountWithCode = trade.quoteAmountWithCode
 
     Column {
         BisqGap.V1()

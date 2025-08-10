@@ -2,6 +2,8 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -16,10 +18,13 @@ fun BuyerState2a(
 ) {
     RememberPresenterLifecycle(presenter)
 
-    val openTradeItemModel = presenter.selectedTrade.value!!
-    val quoteAmount = openTradeItemModel.quoteAmountWithCode
-    val paymentAccountData = openTradeItemModel.bisqEasyTradeModel.paymentAccountData.value ?: "data.na".i18n()
-    val tradeId = openTradeItemModel.bisqEasyTradeModel.shortId
+    val selectedTrade by presenter.selectedTrade.collectAsState()
+
+    val trade = selectedTrade ?: return
+
+    val quoteAmount = trade.quoteAmountWithCode
+    val paymentAccountData by trade.bisqEasyTradeModel.paymentAccountData.collectAsState()
+    val tradeId = trade.bisqEasyTradeModel.shortId
 
     Column(horizontalAlignment = Alignment.Start) {
         BisqGap.V1()
@@ -43,7 +48,7 @@ fun BuyerState2a(
             // use up too much space for that and show it as helper text instead.
             // Use the trade ID {0} for the 'Reason for payment' field
             helperText = "mobile.tradeState.info.buyer.phase2a.reasonForPaymentInfo".i18n(tradeId),
-            value = paymentAccountData,
+            value = paymentAccountData ?: "data.na".i18n(),
             disabled = true,
             showCopy = true,
             isTextArea = true,

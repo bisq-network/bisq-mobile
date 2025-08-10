@@ -44,6 +44,7 @@ fun OpenTradeScreen() {
 
     val focusManager = LocalFocusManager.current
 
+    val selectedTrade by presenter.selectedTrade.collectAsState()
     val tradeAbortedBoxVisible by presenter.tradeAbortedBoxVisible.collectAsState()
     val tradeProcessBoxVisible by presenter.tradeProcessBoxVisible.collectAsState()
     val isInMediation by presenter.isInMediation.collectAsState()
@@ -81,7 +82,7 @@ fun OpenTradeScreen() {
     })
 
     BisqStaticScaffold(
-        topBar = { TopBar("mobile.bisqEasy.openTrades.title".i18n(presenter.selectedTrade.value?.shortTradeId ?: "")) },
+        topBar = { TopBar("mobile.bisqEasy.openTrades.title".i18n(selectedTrade?.shortTradeId ?: "")) },
         shouldBlurBg = shouldBlurBg,
     ) {
         Box(
@@ -99,7 +100,7 @@ fun OpenTradeScreen() {
                     .verticalScroll(scrollState)
                     .fillMaxSize()
             ) {
-                if (presenter.selectedTrade.value != null) {
+                if (selectedTrade != null) {
                     TradeDetailsHeader()
 
                     if (isInMediation) {

@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
@@ -17,9 +19,12 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 fun BuyerState3a(
     presenter: BuyerState3aPresenter,
 ) {
-    val openTradeItemModel = presenter.selectedTrade.value!!
-    val quoteCurrencyCode = openTradeItemModel.quoteCurrencyCode
-    val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
+    val selectedTrade by presenter.selectedTrade.collectAsState()
+
+    val trade = selectedTrade ?: return
+
+    val quoteCurrencyCode = trade.quoteCurrencyCode
+    val paymentMethod = trade.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
     // Bitcoin address / Lightning invoice
     val bitcoinPaymentData = "bisqEasy.tradeState.bitcoinPaymentData.$paymentMethod".i18n()
 

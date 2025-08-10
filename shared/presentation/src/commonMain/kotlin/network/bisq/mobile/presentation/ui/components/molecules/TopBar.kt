@@ -19,6 +19,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -82,7 +83,7 @@ fun TopBar(
     var showBackConfirmationDialog by remember { mutableStateOf(false) }
 
     val currentBackStackEntry by tabNavController.currentBackStackEntryAsState()
-    val currentTab = remember(currentBackStackEntry) { currentBackStackEntry?.destination?.route }
+    val currentTab by remember { derivedStateOf { currentBackStackEntry?.destination?.route } }
 
     val showBackButton = (customBackButton == null &&
             navController.previousBackStackEntry != null &&

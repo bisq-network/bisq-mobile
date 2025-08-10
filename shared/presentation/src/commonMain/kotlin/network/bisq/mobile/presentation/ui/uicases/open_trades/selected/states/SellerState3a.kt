@@ -16,7 +16,11 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.trade_check_circle
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.atoms.*
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
+import network.bisq.mobile.presentation.ui.components.atoms.FontSize
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressField
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofField
@@ -30,21 +34,21 @@ fun SellerState3a(
 ) {
     RememberPresenterLifecycle(presenter)
 
+    val selectedTrade by presenter.selectedTrade.collectAsState()
+    val trade = selectedTrade ?: return
     val paymentProof by presenter.paymentProof.collectAsState()
     val buttonEnabled by presenter.buttonEnabled.collectAsState()
-    val openTradeItemModel = presenter.selectedTrade.value!!
-    val quoteAmount = openTradeItemModel.quoteAmountWithCode
-    val baseAmount = openTradeItemModel.formattedBaseAmount
-    val paymentMethod = openTradeItemModel.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
+    val quoteAmount = trade.quoteAmountWithCode
+    val baseAmount = trade.formattedBaseAmount
+    val paymentMethod = trade.bisqEasyTradeModel.contract.baseSidePaymentMethodSpec.paymentMethod
     val bitcoinPaymentDescription =
         "bisqEasy.tradeState.info.seller.phase3a.bitcoinPayment.description.$paymentMethod".i18n()
     val paymentProofDescription =
         "bisqEasy.tradeState.info.seller.phase3a.paymentProof.description.$paymentMethod".i18n()
     val paymentProofPrompt = "bisqEasy.tradeState.info.seller.phase3a.paymentProof.prompt.$paymentMethod".i18n()
 
-    val bitcoinPaymentData = openTradeItemModel.bisqEasyTradeModel.bitcoinPaymentData.value ?: "data.na".i18n()
+    val bitcoinPaymentData by trade.bisqEasyTradeModel.bitcoinPaymentData.collectAsState()
     val isLightning by presenter.isLightning.collectAsState()
-    val showInvalidAddressDialog by presenter.showInvalidAddressDialog.collectAsState()
     val addressFieldType by presenter.bitcoinLnAddressFieldType.collectAsState()
 
     Column(horizontalAlignment = Alignment.Start) {
@@ -86,7 +90,7 @@ fun SellerState3a(
         BitcoinLnAddressField(
             // Bitcoin address / Lightning invoice
             label = bitcoinPaymentDescription,
-            value = bitcoinPaymentData,
+            value = bitcoinPaymentData ?: "data.na".i18n(),
             type = addressFieldType,
             disabled = true,
         )

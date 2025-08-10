@@ -12,6 +12,8 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +39,9 @@ fun TradeChatRow(
     newMsgCount: Int = 0,
     enabled: Boolean = true,
 ) {
-    val text = remember(lastChatMsg, presenter.selectedTrade.value) {
+    val selectedTrade by presenter.selectedTrade.collectAsState()
+
+    val text = remember(lastChatMsg, selectedTrade) {
         if (lastChatMsg == null) {
             ""
         } else {
@@ -50,7 +54,7 @@ fun TradeChatRow(
                 else ->
                     if (lastChatMsg.text != null) {
                         val sender =
-                            if (lastChatMsg.senderUserProfile.id == presenter.selectedTrade.value?.myUserProfile?.id) {
+                            if (lastChatMsg.senderUserProfile.id == selectedTrade?.myUserProfile?.id) {
                                 "mobile.tradeChat.sender.me".i18n()
                             } else {
                                 lastChatMsg.senderUserProfile.nickName

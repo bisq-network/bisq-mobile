@@ -41,6 +41,7 @@ class OpenTradeListPresenter(
         tradesServiceFacade.resetSelectedTradeToNull()
 
         launchUI {
+            // todo: investigate if mutating here is a good idea (it.apply)
             combine(
                 mainPresenter.tradesWithUnreadMessages, tradesServiceFacade.openTradeItems, mainPresenter.languageCode
             ) { unreadMessages, openTrades, _ ->

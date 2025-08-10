@@ -6,7 +6,11 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonColors
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -32,7 +36,7 @@ fun BisqSegmentButton(
         SingleChoiceSegmentedButtonRow(
             modifier = Modifier.fillMaxWidth()
         ) {
-            items.forEachIndexed { index, label ->
+            items.forEachIndexed { index, pair ->
                 SegmentedButton(
                     shape = SegmentedButtonDefaults.itemShape(
                         index = index,
@@ -48,7 +52,7 @@ fun BisqSegmentButton(
                     enabled = !disabled,
                     label = {
                         BisqText.baseRegular(
-                            label.second,
+                            pair.second,
                             color = if(disabled)
                                 BisqTheme.colors.mid_grey20
                             else

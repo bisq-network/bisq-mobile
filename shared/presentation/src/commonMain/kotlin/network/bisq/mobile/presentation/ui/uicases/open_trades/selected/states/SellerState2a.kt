@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
@@ -20,8 +22,8 @@ fun SellerState2a(
 ) {
     RememberPresenterLifecycle(presenter)
 
-    val quoteCurrencyCode = presenter.selectedTrade.value!!.quoteCurrencyCode
-    val quoteAmountWithCode = presenter.selectedTrade.value!!.quoteAmountWithCode
+    val selectedTrade by presenter.selectedTrade.collectAsState()
+    val trade = selectedTrade ?: return
 
     Column(horizontalAlignment = Alignment.Start) {
         BisqGap.V1()
@@ -33,13 +35,13 @@ fun SellerState2a(
                 image = Res.drawable.trade_fiat_payment,
                 isLoading = true
             )
-            BisqText.h5Light("bisqEasy.tradeState.info.seller.phase2a.waitForPayment.headline".i18n(quoteCurrencyCode))
+            BisqText.h5Light("bisqEasy.tradeState.info.seller.phase2a.waitForPayment.headline".i18n(trade.quoteCurrencyCode))
         }
         Column {
             BisqGap.V2()
             BisqText.baseLightGrey(
                 // Once the buyer has initiated the payment of {0}, you will get notified.
-                "bisqEasy.tradeState.info.seller.phase2a.waitForPayment.info".i18n(quoteAmountWithCode),
+                "bisqEasy.tradeState.info.seller.phase2a.waitForPayment.info".i18n(trade.quoteAmountWithCode),
             )
         }
     }

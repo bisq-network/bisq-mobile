@@ -60,7 +60,7 @@ fun ChatMessageList(
                 modifier = Modifier.fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
             ) {
-                items(messages) { message ->
+                items(messages, key = { it.id }) { message ->
                     if (message.chatMessageType == ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE) {
                         ProtocolLogMessageBox(message)
                     } else if (message.chatMessageType == ChatMessageTypeEnum.LEAVE) {

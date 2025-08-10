@@ -93,7 +93,7 @@ fun PaymentAccountSettingsScreen() {
         }
         if (showBottomSheet) {
             BisqBottomSheet(
-                onDismissRequest = { showBottomSheet = !showBottomSheet }
+                onDismissRequest = { showBottomSheet = false }
             ) {
                 AppPaymentAccountCard(
                     onCancel = { showBottomSheet = false },

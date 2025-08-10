@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
@@ -23,8 +25,9 @@ fun BuyerStateLightning3b(
 ) {
     RememberPresenterLifecycle(presenter)
 
-    val openTradeItemModel = presenter.selectedTrade.value!!
-    val preImage = openTradeItemModel.bisqEasyTradeModel.paymentProof.value
+    val selectedTrade by presenter.selectedTrade.collectAsState()
+    val trade = selectedTrade ?: return
+    val preImage by trade.bisqEasyTradeModel.paymentProof.collectAsState()
 
     Column {
         BisqGap.V1()
@@ -51,7 +54,7 @@ fun BuyerStateLightning3b(
                 PaymentProofField(
                     // Preimage
                     label = "bisqEasy.tradeState.info.phase3b.lightning.preimage".i18n(),
-                    value = preImage,
+                    value = preImage!!,
                     type = PaymentProofType.LightningPreImage,
                     disabled = true,
                 )

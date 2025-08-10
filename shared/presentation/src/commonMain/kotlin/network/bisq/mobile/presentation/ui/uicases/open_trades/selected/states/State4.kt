@@ -5,13 +5,20 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.trade_completed
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.atoms.*
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsStyle
+import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
+import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 
@@ -21,9 +28,8 @@ fun State4(
 ) {
     RememberPresenterLifecycle(presenter)
 
-    val tradeItemModel = presenter.selectedTrade.value
-    val quoteAmount = tradeItemModel?.quoteAmountWithCode ?: ""
-    val baseAmount = tradeItemModel?.formattedBaseAmount ?: ""
+    val tradeItemModel by presenter.selectedTrade.collectAsState()
+    val trade = tradeItemModel ?: return
 
     Column {
         BisqGap.V1()
@@ -43,14 +49,15 @@ fun State4(
             BisqGap.V2()
 
             BtcSatsText(
-                baseAmount,
+                trade.formattedBaseAmount,
                 label = presenter.getMyDirectionString(),
                 style = BtcSatsStyle.TextField
             )
             BisqGap.VHalf()
+
             BisqTextField(
                 label = presenter.getMyOutcomeString(),
-                value = quoteAmount,
+                value = trade.quoteAmountWithCode,
                 disabled = true
             )
 
