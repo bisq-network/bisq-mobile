@@ -53,8 +53,7 @@ class UserProfileApiGateway(
     }
 
     suspend fun ignoreUser(userId: String): Result<Unit> {
-        val request = IgnoreUserProfileRequest(userId)
-        return webSocketApiClient.post("$profileBasePath/ignore", request)
+        return webSocketApiClient.post("$profileBasePath/ignore/$userId", "")
     }
 
     suspend fun undoIgnoreUser(userId: String): Result<Unit> {

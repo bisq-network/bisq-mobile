@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
@@ -23,8 +24,9 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
-import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
+import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -89,8 +91,15 @@ class OfferbookPresenter(
                 selectedDirection,
                 mainPresenter.languageCode
             ) { offers, direction, _ ->
-                offers.filter { it.bisqEasyOffer.direction.mirror == direction }
-            }.collectLatest { filtered ->
+                offers to direction
+                // offers.filter { it.bisqEasyOffer.direction.mirror == direction }
+            }
+                .mapLatest { (offers, direction) ->
+                    offers
+                        .filter { it.bisqEasyOffer.direction.mirror == direction }
+                        .filter { offer -> isOfferNotFromIgnoredUser(offer.bisqEasyOffer) }
+                }
+                .collectLatest { filtered ->
                 _sortedFilteredOffers.value = processAllOffers(filtered).sortedWith(
                     compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
             }
@@ -389,5 +398,20 @@ class OfferbookPresenter(
 
     private suspend fun setupReputationDialogContent(item: OfferItemPresentationModel) {
         canTakeOffer(item)
+    }
+
+    private suspend fun isOfferNotFromIgnoredUser(offer: BisqEasyOfferVO): Boolean {
+        val makersUserProfileId = offer.makerNetworkId.pubKey.id
+
+        // Check if the maker's user profile exists and is not banned/ignored
+        val makerUserProfile = userProfileServiceFacade.findUserProfile(makersUserProfileId)
+        if (makerUserProfile == null) {
+            return false
+        }
+        if (userProfileServiceFacade.isUserIgnored(makersUserProfileId)) {
+            return false
+        }
+
+        return true
     }
 }

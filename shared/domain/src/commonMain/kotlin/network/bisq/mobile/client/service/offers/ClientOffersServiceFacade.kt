@@ -12,7 +12,6 @@ import network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
@@ -81,13 +80,7 @@ class ClientOffersServiceFacade(
         supportedLanguageCodes: Set<String>
     ): Result<String> {
         val apiResult = apiGateway.publishOffer(
-            direction,
-            market,
-            bitcoinPaymentMethods,
-            fiatPaymentMethods,
-            amountSpec,
-            priceSpec,
-            supportedLanguageCodes
+            direction, market, bitcoinPaymentMethods, fiatPaymentMethods, amountSpec, priceSpec, supportedLanguageCodes
         )
         if (apiResult.isSuccess) {
             userRepository.updateLastActivity()
@@ -107,15 +100,22 @@ class ClientOffersServiceFacade(
         supportedLanguageCodes: Set<String>
     ): Result<String> {
         // For client mode, we delegate to the server which should handle mediator waiting
-        return createOffer(direction, market, bitcoinPaymentMethods, fiatPaymentMethods, amountSpec, priceSpec, supportedLanguageCodes)
+        return createOffer(
+            direction,
+            market,
+            bitcoinPaymentMethods,
+            fiatPaymentMethods,
+            amountSpec,
+            priceSpec,
+            supportedLanguageCodes
+        )
     }
 
     private fun observeAvailableMarkets() {
         launchIO {
             val result = apiGateway.getMarkets()
             if (result.isFailure) {
-                result.exceptionOrNull()
-                    ?.let { log.e { "GetMarkets request failed with exception $it" } }
+                result.exceptionOrNull()?.let { log.e { "GetMarkets request failed with exception $it" } }
                 log.w { "GetMarkets failed, market list will remain empty" }
                 return@launchIO
             }
@@ -148,8 +148,10 @@ class ClientOffersServiceFacade(
             }
 
             try {
-                val webSocketEventPayload: WebSocketEventPayload<Map<String, Int>> =
-                    WebSocketEventPayload.from(json, webSocketEvent)
+                val webSocketEventPayload: WebSocketEventPayload<Map<String, Int>> = WebSocketEventPayload.from(
+                    json,
+                    webSocketEvent
+                )
                 val numOffersByMarketCode = webSocketEventPayload.payload
 
                 _offerbookMarketItems.update { list ->
@@ -176,25 +178,22 @@ class ClientOffersServiceFacade(
                 }
                 if (offersSequenceNumber.value >= webSocketEvent.sequenceNumber) {
                     log.w {
-                        "Sequence number is larger or equal than the one we " +
-                                "received from the backend. We ignore that event."
+                        "Sequence number is larger or equal than the one we " + "received from the backend. We ignore that event."
                     }
                     return@collect
                 }
 
                 offersSequenceNumber.value = webSocketEvent.sequenceNumber
-                val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
-                    WebSocketEventPayload.from(json, webSocketEvent)
+                val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> = WebSocketEventPayload.from(
+                    json,
+                    webSocketEvent
+                )
                 val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
-                if (webSocketEvent.modificationType == ModificationType.REPLACE ||
-                    webSocketEvent.modificationType == ModificationType.ADDED
-                ) {
+                if (webSocketEvent.modificationType == ModificationType.REPLACE || webSocketEvent.modificationType == ModificationType.ADDED) {
                     payload.forEach { item ->
-                        if (isValidOfferMessage(item.bisqEasyOffer)) {
-                            val model = OfferItemPresentationModel(item)
-                            val quoteCurrencyCode = item.bisqEasyOffer.market.quoteCurrencyCode
-                            offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }[model.offerId] = model
-                        }
+                        val model = OfferItemPresentationModel(item)
+                        val quoteCurrencyCode = item.bisqEasyOffer.market.quoteCurrencyCode
+                        offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }[model.offerId] = model
                     }
                 } else if (webSocketEvent.modificationType == ModificationType.REMOVED) {
                     payload.forEach { item ->
@@ -223,20 +222,5 @@ class ClientOffersServiceFacade(
         }
 
         _offerbookMarketItems.value = marketListItems
-    }
-
-    private suspend fun isValidOfferMessage(offer: BisqEasyOfferVO): Boolean {
-        val makersUserProfileId = offer.makerNetworkId.pubKey.id
-
-        // Check if the maker's user profile exists and is not banned/ignored
-        val makerUserProfile = userProfileServiceFacade.findUserProfile(makersUserProfileId)
-        if (makerUserProfile == null) {
-            return false
-        }
-        if (userProfileServiceFacade.isUserIgnored(makersUserProfileId)) {
-            return false
-        }
-
-        return true
     }
 }
