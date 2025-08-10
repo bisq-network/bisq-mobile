@@ -14,8 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
@@ -36,7 +34,6 @@ fun InterruptedTradePane() {
     val interruptionInfoVisible by presenter.interruptionInfoVisible.collectAsState()
     val interruptedTradeInfo by presenter.interruptedTradeInfo.collectAsState()
     val errorMessageVisible by presenter.errorMessageVisible.collectAsState()
-    val errorMessage by remember { mutableStateOf(presenter.errorMessage) }
     val isInMediation by presenter.isInMediation.collectAsState()
     val reportToMediatorButtonVisible by presenter.reportToMediatorButtonVisible.collectAsState()
 
@@ -64,7 +61,7 @@ fun InterruptedTradePane() {
             if (errorMessageVisible) {
                 // TODO: Add red warn icon
                 BisqText.baseMedium(
-                    text = errorMessage,
+                    text = presenter.errorMessage,
                     color = BisqTheme.colors.danger
                 )
             }
@@ -90,7 +87,7 @@ fun InterruptedTradePane() {
             }
             BisqButton(
                 modifier = Modifier.fillMaxHeight(),
-                text = "Close",
+                text = "action.close".i18n(),
                 onClick = { presenter.onCloseTrade() },
             )
         }
