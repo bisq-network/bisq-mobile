@@ -279,8 +279,46 @@
 # More aggressive external library shrinking
 -keep class !bisq.**,!network.bisq.**,!com.google.protobuf.**,!io.grpc.**,!io.netty.**,!org.bouncycastle.**,!ch.qos.logback.**,!org.slf4j.** { *; }
 
-# Allow removal of unused external library methods
+# Allow removal of unused external library methods and debug logs in release builds
 -assumenosideeffects class android.util.Log {
     public static *** d(...);
     public static *** v(...);
+    public static *** i(...);
+}
+
+# Remove Kermit debug/info/verbose logs in release builds
+-assumenosideeffects class co.touchlab.kermit.Logger {
+    public *** d(...);
+    public *** v(...);
+    public *** i(...);
+}
+
+# Remove debug log calls from our logging interface
+-assumenosideeffects class * implements network.bisq.mobile.domain.utils.Logging {
+    *** log.d(...);
+    *** log.v(...);
+    *** log.i(...);
+}
+
+# Remove System.out and System.err calls from Bisq2 JARs in release builds
+-assumenosideeffects class java.lang.System {
+    public static java.io.PrintStream out;
+    public static java.io.PrintStream err;
+}
+-assumenosideeffects class java.io.PrintStream {
+    public *** println(...);
+    public *** print(...);
+    public *** printf(...);
+    public *** format(...);
+}
+
+# Remove specific verbose logging calls from Bisq2 protobuf classes
+-assumenosideeffects class bisq.network.protobuf.** {
+    *** getSerializedSize(...);
+}
+-assumenosideeffects class bisq.chat.protobuf.** {
+    *** getSerializedSize(...);
+}
+-assumenosideeffects class bisq.offer.protobuf.** {
+    *** getSerializedSize(...);
 }

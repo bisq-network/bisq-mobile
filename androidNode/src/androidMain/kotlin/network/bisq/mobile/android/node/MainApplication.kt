@@ -17,6 +17,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import java.security.Security
+import network.bisq.mobile.android.node.BuildNodeConfig
 
 /**
  * Bisq Android Node Application definition
@@ -47,6 +48,10 @@ class MainApplication : BisqMainApplication() {
         // as the very first step of the bootstrap process
 //        setupTorSystemProperties()
         log.i { "Bisq Node Application Created" }
+    }
+
+    override fun isDebug(): Boolean {
+        return BuildNodeConfig.IS_DEBUG
     }
 
     private fun setupBisqCoreStatics() {
