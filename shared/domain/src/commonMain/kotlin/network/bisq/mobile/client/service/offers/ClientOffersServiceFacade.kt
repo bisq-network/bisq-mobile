@@ -149,12 +149,11 @@ class ClientOffersServiceFacade(
                     WebSocketEventPayload.from(json, webSocketEvent)
                 val numOffersByMarketCode = webSocketEventPayload.payload
 
-                _offerbookMarketItems.update {
-                    it.map { marketListItem ->
-                        val newNumOffers = numOffersByMarketCode.getOrElse(
-                            marketListItem.market.quoteCurrencyCode
-                        ) { 0 }
-                        marketListItem.copy(numOffers = newNumOffers)
+                _offerbookMarketItems.update { list ->
+                    list.map { marketListItem ->
+                        numOffersByMarketCode[marketListItem.market.quoteCurrencyCode]
+                            ?.let { marketListItem.copy(numOffers = it) }
+                                ?: marketListItem
                     }
                 }
             } catch (e: Exception) {

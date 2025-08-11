@@ -11,6 +11,7 @@ class NumOffersObserver(
     val setNumOffers: (Int) -> Unit
 ) : Logging {
     private var channelPin: Pin? = null
+    private var cachedCount: Int = 0
 
     init {
         resume()
@@ -33,10 +34,23 @@ class NumOffersObserver(
     }
 
     private fun updateNumOffers() {
-        val count = channel.chatMessages.stream()
-            .filter { it.hasBisqEasyOffer() }
-            .count().toInt()
-        log.d { "Updated num offers for ${channel.market.marketCodes}: $count" }
-        setNumOffers(count)
+        try {
+            // Use simple iteration instead of stream to reduce allocations
+            var count = 0
+            for (message in channel.chatMessages) {
+                if (message.hasBisqEasyOffer()) {
+                    count++
+                }
+            }
+
+            // Only update if count changed to reduce unnecessary updates
+            if (count != cachedCount) {
+                cachedCount = count
+                log.d { "Updated num offers for ${channel.market.marketCodes}: $count" }
+                setNumOffers(count)
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Error updating num offers for ${channel.market.marketCodes}" }
+        }
     }
 }

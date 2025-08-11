@@ -63,12 +63,24 @@ jobs:
           echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
           echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
 
+
       - name: Run androidClient Tests
         env:
           CI: true
-        run: |
-          ./gradlew androidClient:clean androidClient:assembleDebug --info
-          ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
+        run: ./gradlew androidClient:clean androidClient:assembleDebug --info
+
+      - name: Headless Android emulator and run instrumentation tests
+        env:
+          CI: true
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: default
+          arch: x86_64
+          profile: pixel_5
+          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect
+          disable-animations: true
+          script: ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
 
       - name: Run iOS Tests
         if: startsWith(runner.os, 'macOS')
@@ -79,7 +91,7 @@ jobs:
     name: Node Build (Needs Secrets)
     runs-on: ubuntu-latest
     needs: build
-    if: github.event_name != 'pull_request' # skip for fork PRs
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository # skip only fork PRs
 
     env:
       CI: true

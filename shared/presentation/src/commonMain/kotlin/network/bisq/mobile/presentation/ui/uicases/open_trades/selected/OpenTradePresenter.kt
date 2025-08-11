@@ -78,7 +78,7 @@ class OpenTradePresenter(
         super.onViewAttached()
         val selectedTrade = tradesServiceFacade.selectedTrade.value
         if (selectedTrade == null) {
-            log.w { "KMP: OpenTradePresenter.onViewAttached called but selectedTrade is null - skipping initialization" }
+            log.w { "OpenTradePresenter.onViewAttached called but selectedTrade is null - skipping initialization" }
             return
         }
         val openTradeItemModel = selectedTrade

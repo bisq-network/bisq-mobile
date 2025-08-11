@@ -2,6 +2,8 @@ package network.bisq.mobile.domain.utils
 
 import co.touchlab.kermit.Logger
 import co.touchlab.kermit.Severity
+import co.touchlab.kermit.loggerConfigInit
+import co.touchlab.kermit.platformLogWriter
 import network.bisq.mobile.client.shared.BuildConfig
 
 private val loggerCache = mutableMapOf<String, Logger>()
@@ -37,15 +39,17 @@ private fun doGetLogger(tag: String?): Logger {
  * In debug builds, all log levels are shown.
  */
 private fun createLogger(tag: String): Logger {
-    val baseLogger = Logger.withTag(tag)
-
     return if (BuildConfig.IS_DEBUG) {
         // Debug build: show all logs
-        baseLogger
+        Logger.withTag(tag)
     } else {
         // Release build: only show ERROR and ASSERT logs
-        baseLogger.apply {
-            Logger.setMinSeverity(Severity.Error)
-        }
+        Logger(
+            config = loggerConfigInit(
+                platformLogWriter(),
+                minSeverity = Severity.Error
+            ),
+            tag = tag
+        )
     }
 }

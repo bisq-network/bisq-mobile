@@ -62,6 +62,7 @@ class NodeOffersServiceFacade(
     companion object {
         private val MEDIATOR_WAIT_TIMEOUT = 1.minutes
         private val MEDIATOR_POLL_INTERVAL = 2.seconds
+        private val MEMORY_LOG_INTERVAL = 30.seconds
     }
 
     // Dependencies
@@ -85,6 +86,7 @@ class NodeOffersServiceFacade(
     private var chatMessagesPin: Pin? = null
     private var selectedChannelPin: Pin? = null
     private var marketPricePin: Pin? = null
+    private var memoryMonitoringJob: kotlinx.coroutines.Job? = null
 
     // Life cycle
     override fun activate() {
@@ -98,11 +100,14 @@ class NodeOffersServiceFacade(
         } else {
             observeMarketListItems(_offerbookMarketItems)
         }
+        startMemoryMonitoring()
         log.d { "NodeOffersServiceFacade activated, numOffersObservers: ${numOffersObservers.size}" }
     }
 
     override fun deactivate() {
         log.d { "Deactivating NodeOffersServiceFacade" }
+        memoryMonitoringJob?.cancel()
+        memoryMonitoringJob = null
         chatMessagesPin?.unbind()
         chatMessagesPin = null
         selectedChannelPin?.unbind()
@@ -374,20 +379,34 @@ class NodeOffersServiceFacade(
             chatMessages.addObserver(object : CollectionObserver<BisqEasyOfferbookMessage> {
                 override fun add(message: BisqEasyOfferbookMessage) {
                     if (!message.bisqEasyOffer.isPresent) {
-                        log.d { "Ignoring message without offer in ${channel.market.marketCodes}" }
                         return
                     }
+
+                    val offerId = message.bisqEasyOffer.get().id
                     serviceScope.launch(Dispatchers.Default) {
-                        val offerId = message.bisqEasyOffer.get().id
-                        log.d { "Processing offer message: $offerId in ${channel.market.marketCodes}" }
-                        if (!offerMessagesContainsKey(offerId) && isValidOfferMessage(message)) {
+                        try {
+                            // Quick validation before expensive operations
+                            if (offerMessagesContainsKey(offerId) || !isValidOfferMessage(message)) {
+                                return@launch
+                            }
+
+                            // Create objects only after validation
                             val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
                             val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
+
                             _offerbookListItems.update { it + offerItemPresentationModel }
                             putOfferMessage(offerId, message)
-                            log.i { "Added offer $offerId to list for ${channel.market.marketCodes}, total offers: ${_offerbookListItems.value.size}" }
-                        } else {
-                            log.d { "Skipped offer $offerId in ${channel.market.marketCodes} - already exists: ${offerMessagesContainsKey(offerId)}, valid: ${isValidOfferMessage(message)}" }
+
+                            val currentSize = _offerbookListItems.value.size
+                            log.i { "Added offer $offerId to ${channel.market.marketCodes}, total: $currentSize" }
+
+                            // Log memory pressure if list is getting large
+                            if (currentSize > 100 && currentSize % 50 == 0) {
+                                val mapSize = offerMapMutex.withLock { bisqEasyOfferbookMessageByOfferId.size }
+                                log.w { "MEMORY: Large offer list - UI: $currentSize, Map: $mapSize" }
+                            }
+                        } catch (e: Exception) {
+                            log.e(e) { "Error processing offer $offerId" }
                         }
                     }
                 }
@@ -525,8 +544,15 @@ class NodeOffersServiceFacade(
 
     private suspend fun clearOfferMessages() {
         offerMapMutex.withLock {
-            log.d { "Clearing offer messages map, current size: ${bisqEasyOfferbookMessageByOfferId.size}" }
+            val currentSize = bisqEasyOfferbookMessageByOfferId.size
+            log.d { "Clearing offer messages map, current size: $currentSize" }
             bisqEasyOfferbookMessageByOfferId.clear()
+
+            // Suggest GC after clearing large collections
+            if (currentSize > 50) {
+                log.w { "MEMORY: Cleared large offer map ($currentSize items), suggesting GC" }
+                System.gc()
+            }
         }
     }
 
@@ -541,6 +567,32 @@ class NodeOffersServiceFacade(
             val contains = bisqEasyOfferbookMessageByOfferId.containsKey(offerId)
             log.d { "Checking if offer $offerId exists in map: $contains, map size: ${bisqEasyOfferbookMessageByOfferId.size}" }
             contains
+        }
+    }
+
+    private fun startMemoryMonitoring() {
+        memoryMonitoringJob = serviceScope.launch {
+            while (true) {
+                delay(MEMORY_LOG_INTERVAL)
+                try {
+                    val runtime = Runtime.getRuntime()
+                    val usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024
+                    val maxMemory = runtime.maxMemory() / 1024 / 1024
+                    val offerMapSize = offerMapMutex.withLock { bisqEasyOfferbookMessageByOfferId.size }
+                    val offersListSize = _offerbookListItems.value.size
+                    val observersCount = numOffersObservers.size
+
+                    log.w { "MEMORY: Used ${usedMemory}MB/${maxMemory}MB, OfferMap: $offerMapSize, OffersList: $offersListSize, Observers: $observersCount" }
+
+                    // Force GC if memory usage is high
+                    if (usedMemory > maxMemory * 0.8) {
+                        log.w { "MEMORY: High memory usage detected, suggesting GC" }
+                        System.gc()
+                    }
+                } catch (e: Exception) {
+                    log.e(e) { "Error in memory monitoring" }
+                }
+            }
         }
     }
 }

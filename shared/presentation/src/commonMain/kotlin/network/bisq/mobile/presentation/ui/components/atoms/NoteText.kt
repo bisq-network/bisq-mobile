@@ -59,7 +59,13 @@ fun NoteText(
             // For custom actions, use LinkAnnotation.Clickable
             withLink(
                 LinkAnnotation.Clickable(
-                    tag = "custom_action"
+                    tag = "custom_action",
+                    styles = TextLinkStyles(
+                    style = SpanStyle(
+                        color = BisqTheme.colors.primary,
+                        textDecoration = TextDecoration.Underline
+                        )
+                    )
                 ) {
                     // Handle custom click with confirmation if needed
                     if (openConfirmation) {
