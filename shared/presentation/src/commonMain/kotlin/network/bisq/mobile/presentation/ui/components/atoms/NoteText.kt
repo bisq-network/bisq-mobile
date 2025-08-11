@@ -1,13 +1,17 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
-import androidx.compose.foundation.text.ClickableText
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.WebLinkConfirmationDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
@@ -29,48 +33,70 @@ fun NoteText(
         append(notes)
         append(" ")
 
-        val start = length
-        append(linkText)
-        val end = length
-
-        addStyle(
-            SpanStyle(
-                color = BisqTheme.colors.primary,
-                textDecoration = TextDecoration.Underline
-            ), start, end
-        )
-
-        // Add a custom annotation for click handling
-        addStringAnnotation(
-            tag = "LINK",
-            annotation = uri ?: "custom_action", // Use "custom_action" if no URI
-            start = start,
-            end = end
-        )
-    }
-
-    // TODO: ClickableText is deprecated. Hard to do this with Text/BasicText
-    ClickableText(
-        text = annotatedString,
-        onClick = { offset ->
-            annotatedString.getStringAnnotations(tag = "LINK", start = offset, end = offset)
-                .firstOrNull()?.let { annotation ->
-                    if (onLinkClick != null && annotation.item == "custom_action") {
-                        if (openConfirmation) {
-                            showConfirmDialog = true
-                        } else {
-                            onLinkClick()
-                        }
-                    } else if (uri != null) {
+        if (uri != null) {
+            withLink(
+                LinkAnnotation.Url(
+                    url = uri,
+                    styles = TextLinkStyles(
+                        style = SpanStyle(
+                            color = BisqTheme.colors.primary,
+                            textDecoration = TextDecoration.Underline
+                        )
+                    ),
+                    linkInteractionListener = { _ ->
+                        // Handle URL click with confirmation if needed
                         if (openConfirmation) {
                             showConfirmDialog = true
                         } else {
                             uriHandler.openUri(uri)
                         }
                     }
+                )
+            ) {
+                append(linkText)
+            }
+        } else if (onLinkClick != null) {
+            // For custom actions, use LinkAnnotation.Clickable
+            withLink(
+                LinkAnnotation.Clickable(
+                    tag = "custom_action"
+                ) {
+                    // Handle custom click with confirmation if needed
+                    if (openConfirmation) {
+                        showConfirmDialog = true
+                    } else {
+                        onLinkClick()
+                    }
                 }
-        },
-        style = androidx.compose.ui.text.TextStyle(
+            ) {
+                // Apply styling manually since LinkAnnotation.Clickable doesn't have styles parameter
+                val start = length
+                append(linkText)
+                val end = length
+                addStyle(
+                    SpanStyle(
+                        color = BisqTheme.colors.primary,
+                        textDecoration = TextDecoration.Underline
+                    ), start, end
+                )
+            }
+        } else {
+            // Fallback: just styled text without link functionality
+            val start = length
+            append(linkText)
+            val end = length
+            addStyle(
+                SpanStyle(
+                    color = BisqTheme.colors.primary,
+                    textDecoration = TextDecoration.Underline
+                ), start, end
+            )
+        }
+    }
+
+    BasicText(
+        text = annotatedString,
+        style = TextStyle(
             color = BisqTheme.colors.mid_grey20,
             fontSize = FontSize.SMALL.size,
             textAlign = textAlign
@@ -79,7 +105,7 @@ fun NoteText(
 
     if (showConfirmDialog) {
         WebLinkConfirmationDialog(
-            link = linkText,
+            link = uri ?: linkText,
             onConfirm = {
                 if (onLinkClick != null) {
                     onLinkClick()
@@ -89,7 +115,7 @@ fun NoteText(
                 showConfirmDialog = false
             },
             onDismiss = {
-                clipboardManager.setText(buildAnnotatedString { append(linkText) })
+                clipboardManager.setText(buildAnnotatedString { append(uri ?: linkText) })
                 showConfirmDialog = false
             }
         )
