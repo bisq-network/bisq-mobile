@@ -5,14 +5,14 @@ bisq-core-commit = "d73864d095f6c1f143c853905d45bb7d297278c1"
 # API version is usually same as bisq-cor but for more control we keep it separated
 #bisq-api = "2.1.7"
 
-kotlin = "2.0.21"
-kotlinReflect = "2.0.21"
-kotlinTestJunit = "2.0.21"
+kotlin = "2.0.20"
+kotlinReflect = "2.0.20"
+kotlinTestJunit = "2.0.20"
 kotlinx = "1.9.0" # latest stable
 kotlinxDatetime = "0.4.0" # latest stable
 kotlinxSerialization = "1.7.3"
-serializationPlugin = "2.0.21"
-ksp = "2.0.21-1.0.27"
+serializationPlugin = "2.0.20"
+ksp = "2.0.20-1.0.25"
 
 #noinspection AndroidGradlePluginVersion - we need to stick to it based on https://developer.android.com/build/kotlin-support
 agp = "8.5.0"
