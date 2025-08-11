@@ -41,6 +41,8 @@ interface ITabContainerPresenter : ViewPresenter {
 @Composable
 fun TabContainerScreen() {
     val presenter: ITabContainerPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
     val isInteractive by presenter.isInteractive.collectAsState()
     val navController: NavHostController = presenter.getRootTabNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -51,8 +53,6 @@ fun TabContainerScreen() {
     }
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
-
-    RememberPresenterLifecycle(presenter)
 
     BisqStaticScaffold(
         topBar = {

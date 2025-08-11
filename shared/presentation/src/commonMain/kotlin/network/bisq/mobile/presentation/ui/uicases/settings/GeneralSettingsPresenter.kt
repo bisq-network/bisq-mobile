@@ -205,9 +205,7 @@ open class GeneralSettingsPresenter(
         _supportedLanguageCodes.value = if (settings.supportedLanguageCodes.isNotEmpty())
             settings.supportedLanguageCodes
         else
-            setOf("en") // setOf(i18nPairs.collectAsState().value.first().first)
-
-        // _chatNotification.value =
+            setOf("en")
         _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
         _tradePriceTolerance.value = NumberFormatter.format(settings.maxTradePriceDeviation * 100)
         _useAnimations.value = settings.useAnimations

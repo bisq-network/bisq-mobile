@@ -13,6 +13,7 @@ import org.koin.compose.koinInject
 @Composable
 fun TakeOfferSettlementMethodScreen() {
     val presenter: TakeOfferPaymentMethodPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
 
     val baseSidePaymentMethod: MutableStateFlow<Set<String>> = remember { MutableStateFlow(emptySet()) }
     val quoteSidePaymentMethod: MutableStateFlow<Set<String>> = remember { MutableStateFlow(emptySet()) }
@@ -30,8 +31,6 @@ fun TakeOfferSettlementMethodScreen() {
             quoteSidePaymentMethod.value = convertToSet(value)
         }
     }
-
-    RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.takeOffer.progress.baseSidePaymentMethod".i18n(),

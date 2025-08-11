@@ -52,9 +52,9 @@ import org.koin.compose.koinInject
 @Composable
 fun TradeDetailsHeader() {
     val presenter: TradeDetailsHeaderPresenter = koinInject()
-    val isInteractive by presenter.isInteractive.collectAsState()
-
     RememberPresenterLifecycle(presenter)
+
+    val isInteractive by presenter.isInteractive.collectAsState()
 
     val showDetails by presenter.isShowDetails.collectAsState()
     val item by presenter.selectedTrade.collectAsState()

@@ -30,13 +30,14 @@ interface ISettingsPresenter : ViewPresenter {
 @Composable
 fun SettingsScreen(isTabSelected: Boolean) {
     val presenter: ISettingsPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
     val isInteractive by presenter.isInteractive.collectAsState()
     val menuTree: MenuItem = presenter.menuTree()
     val currentMenu = remember { mutableStateOf(menuTree) }
     val menuPath = remember { mutableStateListOf(menuTree) }
     val selectedLeaf = remember { mutableStateOf<MenuItem.Leaf?>(null) }
 
-    RememberPresenterLifecycle(presenter)
     // Reset to root menu when the tab is selected
     LaunchedEffect(isTabSelected) {
         if (isTabSelected) {

@@ -35,9 +35,9 @@ interface IAgreementPresenter : ViewPresenter {
 @Composable
 fun AgreementScreen() {
     val presenter: IAgreementPresenter = koinInject()
-    val isAccepted by presenter.isAccepted.collectAsState()
-
     RememberPresenterLifecycle(presenter)
+
+    val isAccepted by presenter.isAccepted.collectAsState()
 
     // TODO: Enhancement phase: To add a language dropdown, so as to render the agreement in supported languages
     BisqScrollScaffold(

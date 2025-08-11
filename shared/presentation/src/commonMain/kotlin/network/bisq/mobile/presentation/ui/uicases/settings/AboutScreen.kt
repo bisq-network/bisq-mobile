@@ -36,10 +36,10 @@ interface IAboutPresenter : ViewPresenter {
 @Composable
 fun AboutScreen() {
     val presenter: IAboutPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
     val versioning = remember { presenter.versioning() }
     val isInteractive by presenter.isInteractive.collectAsState()
-
-    RememberPresenterLifecycle(presenter)
 
     BisqScrollScaffold(
         topBar = { TopBar("mobile.settings.about".i18n(), showUserAvatar = false) },

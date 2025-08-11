@@ -30,6 +30,7 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.*
 fun TradeFlowPane(presenter: TradeFlowPresenter) {
     val tradePhaseState by presenter.tradePhaseState.collectAsState()
     RememberPresenterLifecycle(presenter)
+
     val presenterForPhase = presenter.presenterForPhase(tradePhaseState)
     Column(
         modifier = Modifier.fillMaxWidth()

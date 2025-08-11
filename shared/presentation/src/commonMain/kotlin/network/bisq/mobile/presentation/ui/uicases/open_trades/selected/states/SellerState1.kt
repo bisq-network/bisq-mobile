@@ -17,13 +17,13 @@ import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 fun SellerState1(
     presenter: SellerState1Presenter
 ) {
+    RememberPresenterLifecycle(presenter)
+
     val paymentAccountDataValid by presenter.paymentAccountDataValid.collectAsState()
     val paymentAccountData by presenter.paymentAccountData.collectAsState()
     val paymentAccountName by presenter.paymentAccountName.collectAsState()
     val accounts by presenter.accounts.collectAsState()
     val accountPairs = remember(accounts) { accounts.map { it.accountName to it.accountPayload.accountData } }
-
-    RememberPresenterLifecycle(presenter)
 
     Column {
         BisqGap.V1()

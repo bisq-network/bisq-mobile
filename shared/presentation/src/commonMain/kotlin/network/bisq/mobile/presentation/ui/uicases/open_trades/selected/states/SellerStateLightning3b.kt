@@ -24,8 +24,9 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 fun SellerStateLightning3b(
     presenter: SellerStateLightning3bPresenter,
 ) {
-    val buyerHasConfirmedBitcoinReceipt by presenter.buyerHasConfirmedBitcoinReceipt.collectAsState()
     RememberPresenterLifecycle(presenter)
+
+    val buyerHasConfirmedBitcoinReceipt by presenter.buyerHasConfirmedBitcoinReceipt.collectAsState()
 
     if (buyerHasConfirmedBitcoinReceipt) {
         SellerStateLightning3bPaymentConfirmed(presenter)

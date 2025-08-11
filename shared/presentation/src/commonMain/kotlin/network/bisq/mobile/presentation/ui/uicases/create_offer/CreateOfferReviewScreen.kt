@@ -30,10 +30,10 @@ import org.koin.compose.koinInject
 @Composable
 fun CreateOfferReviewOfferScreen() {
     val presenter: CreateOfferReviewPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
     val isInteractive by presenter.isInteractive.collectAsState()
     val showMediatorWaitingDialog by presenter.showMediatorWaitingDialog.collectAsState()
-
-    RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.review.headline.maker".i18n(),

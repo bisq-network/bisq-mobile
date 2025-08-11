@@ -20,11 +20,10 @@ import org.koin.compose.koinInject
 @Composable
 fun TradeGuideTradeRules() {
     val presenter: TradeGuideTradeRulesPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
     val userAgreed by presenter.tradeRulesConfirmed.collectAsState()
     var localUserAgreed by remember(userAgreed) { mutableStateOf(userAgreed) }
     val isInteractive by presenter.isInteractive.collectAsState()
-
-    RememberPresenterLifecycle(presenter)
 
     val title = "bisqEasy.tradeGuide.rules".i18n() + " - " + "bisqEasy.tradeGuide.tabs.headline".i18n()
 

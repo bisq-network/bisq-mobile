@@ -29,14 +29,14 @@ import org.koin.compose.koinInject
 @Composable
 fun OfferbookMarketScreen() {
     val presenter: OfferbookMarketPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+    
     var showFilterDialog by remember { mutableStateOf(false) }
     val searchText by presenter.searchText.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
 
     val marketItems by presenter.marketListItemWithNumOffers.collectAsState()
     val filter by presenter.filter.collectAsState()
-
-    RememberPresenterLifecycle(presenter)
 
     BisqStaticLayout(
         padding = PaddingValues(all = BisqUIConstants.Zero),

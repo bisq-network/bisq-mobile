@@ -29,11 +29,11 @@ import org.koin.compose.koinInject
 @Composable
 fun TakeOfferReviewTradeScreen() {
     val presenter: TakeOfferReviewPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
     val showProgressDialog by presenter.showTakeOfferProgressDialog.collectAsState()
     val showSuccessDialog by presenter.showTakeOfferSuccessDialog.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
-
-    RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.progress.review".i18n(),

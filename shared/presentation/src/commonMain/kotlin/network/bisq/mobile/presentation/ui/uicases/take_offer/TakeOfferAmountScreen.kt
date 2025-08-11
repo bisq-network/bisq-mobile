@@ -18,12 +18,12 @@ import org.koin.compose.koinInject
 @Composable
 fun TakeOfferTradeAmountScreen() {
     val presenter: TakeOfferAmountPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
     val formattedQuoteAmount by presenter.formattedQuoteAmount.collectAsState()
     val formattedBaseAmount by presenter.formattedBaseAmount.collectAsState()
     val sliderPosition by presenter.sliderPosition.collectAsState()
     val amountValid by presenter.amountValid.collectAsState()
-
-    RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
         "bisqEasy.takeOffer.progress.amount".i18n(),

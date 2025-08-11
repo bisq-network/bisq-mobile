@@ -17,10 +17,9 @@ import org.koin.compose.koinInject
 @Composable
 fun CreateOfferPaymentMethodScreen() {
     val presenter: CreateOfferPaymentMethodPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
 
     val selectedQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = remember { presenter.selectedQuoteSidePaymentMethods }
-
-    RememberPresenterLifecycle(presenter)
 
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.createOffer.progress.quoteSidePaymentMethod".i18n(),

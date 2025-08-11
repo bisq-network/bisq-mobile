@@ -29,9 +29,9 @@ import org.koin.compose.koinInject
 @Composable
 fun WalletGuideReceiving() {
     val presenter: WalletGuideReceivingPresenter = koinInject()
-    val isInteractive by presenter.isInteractive.collectAsState()
-
     RememberPresenterLifecycle(presenter)
+
+    val isInteractive by presenter.isInteractive.collectAsState()
 
     val title = "bisqEasy.walletGuide.receive".i18n() + " - " + "bisqEasy.walletGuide.tabs.headline".i18n()
 

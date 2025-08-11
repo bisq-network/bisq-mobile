@@ -76,6 +76,8 @@ fun TopBar(
     extraActions: @Composable (RowScope.() -> Unit)? = null,
 ) {
     val presenter: ITopBarPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
     val navController: NavHostController = presenter.getRootNavController()
     val tabNavController: NavHostController = presenter.getRootTabNavController()
 
@@ -83,7 +85,9 @@ fun TopBar(
     var showBackConfirmationDialog by remember { mutableStateOf(false) }
 
     val currentBackStackEntry by tabNavController.currentBackStackEntryAsState()
-    val currentTab by remember { derivedStateOf { currentBackStackEntry?.destination?.route } }
+    val currentTab by remember(currentBackStackEntry) {
+        derivedStateOf { currentBackStackEntry?.destination?.route }
+    }
 
     val showBackButton = (customBackButton == null &&
             navController.previousBackStackEntry != null &&
@@ -110,8 +114,6 @@ fun TopBar(
             )
         }
     }
-
-    RememberPresenterLifecycle(presenter)
 
     TopAppBar(
         navigationIcon = {

@@ -18,10 +18,10 @@ import org.koin.compose.koinInject
 @Composable
 fun SplashScreen() {
     val presenter: SplashPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
     val progress by presenter.progress.collectAsState()
     val state by presenter.state.collectAsState()
-
-    RememberPresenterLifecycle(presenter)
 
     BisqStaticScaffold(verticalArrangement = Arrangement.SpaceBetween) {
         BisqLogo()

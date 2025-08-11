@@ -32,7 +32,6 @@ import org.koin.compose.koinInject
 
 @Composable
 fun CreateOfferTradePriceSelectorScreen() {
-
     val presenter: CreateOfferPricePresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 

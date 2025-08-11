@@ -14,7 +14,6 @@ import org.koin.compose.koinInject
 @Composable
 fun TradeGuideOverview() {
     val presenter: TradeGuideOverviewPresenter = koinInject()
-
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()

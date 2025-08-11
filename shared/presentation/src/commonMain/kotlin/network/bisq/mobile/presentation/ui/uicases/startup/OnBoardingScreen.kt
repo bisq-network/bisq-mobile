@@ -34,7 +34,6 @@ interface IOnboardingPresenter : ViewPresenter {
 @Composable
 fun OnBoardingScreen() {
     val presenter: IOnboardingPresenter = koinInject()
-
     RememberPresenterLifecycle(presenter)
 
     val coroutineScope = rememberCoroutineScope()

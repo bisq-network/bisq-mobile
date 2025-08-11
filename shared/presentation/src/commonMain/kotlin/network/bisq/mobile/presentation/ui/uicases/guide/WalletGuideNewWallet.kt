@@ -16,7 +16,6 @@ import org.koin.compose.koinInject
 @Composable
 fun WalletGuideNewWallet() {
     val presenter: WalletGuideNewPresenter = koinInject()
-
     RememberPresenterLifecycle(presenter)
 
     val title = "bisqEasy.walletGuide.createWallet".i18n() + " - " + "bisqEasy.walletGuide.tabs.headline".i18n()

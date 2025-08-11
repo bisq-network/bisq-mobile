@@ -16,10 +16,9 @@ import org.koin.compose.koinInject
 @Composable
 fun TradeGuideProcess() {
     val presenter: TradeGuideProcessPresenter = koinInject()
-    val isInteractive by presenter.isInteractive.collectAsState()
-
     RememberPresenterLifecycle(presenter)
 
+    val isInteractive by presenter.isInteractive.collectAsState()
     val title = "bisqEasy.tradeGuide.process".i18n() + " - " + "bisqEasy.tradeGuide.tabs.headline".i18n()
 
     MultiScreenWizardScaffold(

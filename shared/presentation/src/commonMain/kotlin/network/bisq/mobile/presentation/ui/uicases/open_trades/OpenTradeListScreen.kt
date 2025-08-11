@@ -45,6 +45,8 @@ import org.koin.compose.koinInject
 @Composable
 fun OpenTradeListScreen() {
     val presenter: OpenTradeListPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
     val isInteractive by presenter.isInteractive.collectAsState()
 
     val tradeGuideVisible by presenter.tradeGuideVisible.collectAsState()
@@ -53,8 +55,6 @@ fun OpenTradeListScreen() {
     val sortedOpenTradeItems by presenter.sortedOpenTradeItems.collectAsState()
 
     val userAvatarMap by presenter.avatarMap.collectAsState()
-
-    RememberPresenterLifecycle(presenter)
 
     fun isTradeUnread(tradeId: String): Boolean {
         return tradeId in tradesWithUnreadMessages.keys

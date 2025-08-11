@@ -19,10 +19,9 @@ import org.koin.compose.koinInject
 @Composable
 fun WalletGuideDownload() {
     val presenter: WalletGuideDownloadPresenter = koinInject()
-    val isInteractive by presenter.isInteractive.collectAsState()
-
     RememberPresenterLifecycle(presenter)
 
+    val isInteractive by presenter.isInteractive.collectAsState()
     val title = "bisqEasy.walletGuide.download".i18n() + " - " + "bisqEasy.walletGuide.tabs.headline".i18n()
 
     MultiScreenWizardScaffold(
