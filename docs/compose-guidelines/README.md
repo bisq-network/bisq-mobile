@@ -7,7 +7,6 @@ This document outlines the general best‑practice guidelines we expect contribu
 - Prefer stateless UI; hoist state to callers
 - Unidirectional data flow: pass state down, send events up
 - Favor immutable models; use `@Stable` and `@Immutable` on classes where appropriate
-- Prefer cold `Flow`s over hot `StateFlow`s unless continuous observation is required
 
 ## Tips
 
