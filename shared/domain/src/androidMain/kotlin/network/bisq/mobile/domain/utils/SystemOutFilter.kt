@@ -62,6 +62,8 @@ class SystemOutFilter(
             completeBlockInRelease: Boolean = true
         ) {
             try {
+                val originalOut = System.out
+                val originalErr = System.err
                 if (!isDebugBuild && completeBlockInRelease) {
                     // Release builds: Complete blocking approach
                     val nullStream = object : OutputStream() {
@@ -73,13 +75,10 @@ class SystemOutFilter(
                     System.setOut(PrintStream(nullStream))
                     System.setErr(PrintStream(nullStream))
 
-                    // Note: Can't use Log.i here as we've redirected System.out
-                    println("SystemOutFilter: System.out/err completely blocked for release build")
+                    // Note: print before redirect so it’s visible
+                    originalOut.println("SystemOutFilter: System.out/err completely blocked for release build")
                 } else {
                     // Debug builds or smart filtering: Filter specific patterns
-                    val originalOut = System.out
-                    val originalErr = System.err
-                    
                     val filteredOut = SystemOutFilter(originalOut, isDebugBuild, "SystemOut")
                     val filteredErr = SystemOutFilter(originalErr, isDebugBuild, "SystemErr")
                     
@@ -96,6 +95,23 @@ class SystemOutFilter(
             }
         }
     }
+
+    // normalize all print calls
+    override fun print(x: Boolean) = print(x.toString())
+    override fun print(x: Char) = print(x.toString())
+    override fun print(x: Int) = print(x.toString())
+    override fun print(x: Long) = print(x.toString())
+    override fun print(x: Float) = print(x.toString())
+    override fun print(x: Double) = print(x.toString())
+    override fun print(x: CharArray?) = print(x?.concatToString())
+    override fun print(x: Any?) = print(x?.toString())
+    override fun println(x: Boolean) = println(x.toString())
+    override fun println(x: Char) = println(x.toString())
+    override fun println(x: Int) = println(x.toString())
+    override fun println(x: Long) = println(x.toString())
+    override fun println(x: Float) = println(x.toString())
+    override fun println(x: Double) = println(x.toString())
+    override fun println(x: CharArray?) = println(x?.concatToString())
 
     override fun println(x: String?) {
         if (shouldFilter(x)) {
@@ -124,35 +140,6 @@ class SystemOutFilter(
     override fun println() {
         originalStream.println()
     }
-
-    override fun println(x: Boolean) {
-        originalStream.println(x)
-    }
-
-    override fun println(x: Char) {
-        originalStream.println(x)
-    }
-
-    override fun println(x: Int) {
-        originalStream.println(x)
-    }
-
-    override fun println(x: Long) {
-        originalStream.println(x)
-    }
-
-    override fun println(x: Float) {
-        originalStream.println(x)
-    }
-
-    override fun println(x: Double) {
-        originalStream.println(x)
-    }
-
-    override fun println(x: CharArray?) {
-        originalStream.println(x)
-    }
-
     override fun println(x: Any?) {
         val str = x?.toString()
         if (shouldFilter(str)) {
