@@ -21,6 +21,7 @@ import org.koin.compose.koinInject
 fun TradeGuideTradeRules() {
     val presenter: TradeGuideTradeRulesPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
+
     val userAgreed by presenter.tradeRulesConfirmed.collectAsState()
     var localUserAgreed by remember(userAgreed) { mutableStateOf(userAgreed) }
     val isInteractive by presenter.isInteractive.collectAsState()

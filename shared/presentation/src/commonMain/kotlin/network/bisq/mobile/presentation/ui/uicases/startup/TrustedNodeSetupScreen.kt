@@ -86,6 +86,14 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val presenter: ITrustedNodeSetupPresenter = koinInject()
     val settingsPresenter: ISettingsPresenter = koinInject()
 
+    val menuTree: MenuItem = settingsPresenter.menuTree()
+    val menuPath = remember { mutableStateListOf(menuTree) }
+    RememberPresenterLifecycle(presenter, {
+        if (!isWorkflow) {
+            menuPath.add((menuTree as MenuItem.Parent).children[3])
+        }
+    })
+
     val bisqApiUrl by presenter.bisqApiUrl.collectAsState()
     val isConnected by presenter.isConnected.collectAsState()
     val isVersionValid by presenter.isBisqApiVersionValid.collectAsState()
@@ -144,15 +152,6 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             }
         }
     }
-
-    val menuTree: MenuItem = settingsPresenter.menuTree()
-    val menuPath = remember { mutableStateListOf(menuTree) }
-
-    RememberPresenterLifecycle(presenter, {
-        if (!isWorkflow) {
-            menuPath.add((menuTree as MenuItem.Parent).children[3])
-        }
-    })
 
     BisqScrollScaffold(
         topBar = { TopBar("mobile.trustedNodeSetup.title".i18n()) },

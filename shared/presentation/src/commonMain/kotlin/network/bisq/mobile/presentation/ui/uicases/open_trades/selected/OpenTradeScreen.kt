@@ -42,15 +42,19 @@ fun OpenTradeScreen() {
     val buyerState4Presenter: BuyerState4Presenter = koinInject()
     val sellerState4Presenter: SellerState4Presenter = koinInject()
 
+    val scrollState = rememberScrollState()
+    val scope = rememberCoroutineScope()
+    RememberPresenterLifecycle(presenter, {
+        presenter.setTradePaneScrollState(scrollState)
+        presenter.setUIScope(scope)
+    })
+
     val focusManager = LocalFocusManager.current
 
     val selectedTrade by presenter.selectedTrade.collectAsState()
     val tradeAbortedBoxVisible by presenter.tradeAbortedBoxVisible.collectAsState()
     val tradeProcessBoxVisible by presenter.tradeProcessBoxVisible.collectAsState()
     val isInMediation by presenter.isInMediation.collectAsState()
-    val scrollState = rememberScrollState()
-    val scope = rememberCoroutineScope()
-
     val tradeCloseType by headerPresenter.tradeCloseType.collectAsState()
     val showInterruptionConfirmationDialog by headerPresenter.showInterruptionConfirmationDialog.collectAsState()
     val showMediationConfirmationDialog by headerPresenter.showMediationConfirmationDialog.collectAsState()
@@ -75,11 +79,6 @@ fun OpenTradeScreen() {
                     sellerState4ShowCloseTradeDialog
         }
     }
-
-    RememberPresenterLifecycle(presenter, {
-        presenter.setTradePaneScrollState(scrollState)
-        presenter.setUIScope(scope)
-    })
 
     BisqStaticScaffold(
         topBar = { TopBar("mobile.bisqEasy.openTrades.title".i18n(selectedTrade?.shortTradeId ?: "")) },

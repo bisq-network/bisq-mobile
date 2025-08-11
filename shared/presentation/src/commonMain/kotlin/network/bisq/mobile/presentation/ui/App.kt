@@ -91,21 +91,20 @@ fun SafeInsetsContainer(
 @Composable
 @Preview
 fun App() {
-
+    val presenter: AppPresenter = koinInject()
     val rootNavController = rememberNavController()
     val tabNavController = rememberNavController()
     var isNavControllerSet by remember { mutableStateOf(false) }
-    val presenter: AppPresenter = koinInject()
-    val languageCode by presenter.languageCode.collectAsState()
-    val showAnimation by presenter.showAnimation.collectAsState()
-
-    I18nSupport.initialize(languageCode)
-
     RememberPresenterLifecycle(presenter, {
         presenter.navController = rootNavController
         presenter.tabNavController = tabNavController
         isNavControllerSet = true
     })
+
+    val languageCode by presenter.languageCode.collectAsState()
+    val showAnimation by presenter.showAnimation.collectAsState()
+
+    I18nSupport.initialize(languageCode)
 
     SafeInsetsContainer {
         BisqTheme(darkTheme = true) {

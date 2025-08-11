@@ -32,9 +32,7 @@ fun WalletGuideReceiving() {
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
-
     val title = "bisqEasy.walletGuide.receive".i18n() + " - " + "bisqEasy.walletGuide.tabs.headline".i18n()
-
     var showSecondImage by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {

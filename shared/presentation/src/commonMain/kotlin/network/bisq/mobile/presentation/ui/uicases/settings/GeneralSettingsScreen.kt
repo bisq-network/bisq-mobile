@@ -65,6 +65,12 @@ fun GeneralSettingsScreen() {
     val presenter: IGeneralSettingsPresenter = koinInject()
     val settingsPresenter: ISettingsPresenter = koinInject()
 
+    val menuTree: MenuItem = settingsPresenter.menuTree()
+    val menuPath = remember { mutableStateListOf(menuTree) }
+    RememberPresenterLifecycle(presenter, {
+        menuPath.add((menuTree as MenuItem.Parent).children[0])
+    })
+
     val isInteractive by presenter.isInteractive.collectAsState()
     val i18nPairs by presenter.i18nPairs.collectAsState()
     val allLanguagePairs by presenter.allLanguagePairs.collectAsState()
@@ -77,13 +83,6 @@ fun GeneralSettingsScreen() {
     val powFactor by presenter.powFactor.collectAsState()
     val ignorePow by presenter.ignorePow.collectAsState()
     val shouldShowPoWAdjustmentFactor by presenter.shouldShowPoWAdjustmentFactor.collectAsState()
-
-    val menuTree: MenuItem = settingsPresenter.menuTree()
-    val menuPath = remember { mutableStateListOf(menuTree) }
-
-    RememberPresenterLifecycle(presenter, {
-        menuPath.add((menuTree as MenuItem.Parent).children[0])
-    })
 
     BisqScrollScaffold(
         topBar = { TopBar("mobile.settings.title".i18n()) },

@@ -66,6 +66,12 @@ interface IUserProfileSettingsPresenter : ViewPresenter {
 fun UserProfileSettingsScreen() {
     val presenter: IUserProfileSettingsPresenter = koinInject()
     val settingsPresenter: ISettingsPresenter = koinInject()
+    
+    val menuTree: MenuItem = settingsPresenter.menuTree()
+    val menuPath = remember { mutableStateListOf(menuTree) }
+    RememberPresenterLifecycle(presenter, {
+        menuPath.add((menuTree as MenuItem.Parent).children[1])
+    })
 
     val isInteractive by presenter.isInteractive.collectAsState()
     val botId by presenter.botId.collectAsState()
@@ -79,13 +85,6 @@ fun UserProfileSettingsScreen() {
 
     val showLoading by presenter.showLoading.collectAsState()
     val showDeleteConfirmation by presenter.showDeleteProfileConfirmation.collectAsState()
-
-    val menuTree: MenuItem = settingsPresenter.menuTree()
-    val menuPath = remember { mutableStateListOf(menuTree) }
-
-    RememberPresenterLifecycle(presenter, {
-        menuPath.add((menuTree as MenuItem.Parent).children[1])
-    })
 
     BisqScrollScaffold(
         topBar = { TopBar("user.userProfile".i18n(), showUserAvatar = false) },
