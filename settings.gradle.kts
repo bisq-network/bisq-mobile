@@ -27,14 +27,15 @@ dependencyResolutionManagement {
         
         // Check if we're running in CI environment
         val isCi = System.getenv("CI") == "true"
-        if (isCi) {
+        val mavenUrl = System.getenv("MAVEN_URL")
+        if (isCi && mavenUrl != null) {
             // Use the remote Maven repository for CI builds
             maven {
-                url = uri("http://104.154.164.188");
+                url = uri(mavenUrl);
                 isAllowInsecureProtocol = true
                 credentials {
-                    username = "bisq-ci"
-                    password = System.getenv("MAVEN_PASSWORD") ?: "bisq-mobile-ci-21!"
+                    username = System.getenv("MAVEN_USERNAME")
+                    password = System.getenv("MAVEN_PASSWORD")
                 }
             }
         }
