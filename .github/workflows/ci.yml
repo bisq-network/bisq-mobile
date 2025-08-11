@@ -67,20 +67,21 @@ jobs:
       - name: Run androidClient Tests
         env:
           CI: true
-        run: ./gradlew androidClient:clean androidClient:assembleDebug --info
+        run: ./gradlew androidClient:clean androidClient:assembleDebug androidClient:testDebugUnitTest --info
 
-      - name: Headless Android emulator and run instrumentation tests
-        env:
-          CI: true
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 33
-          target: default
-          arch: x86_64
-          profile: pixel_5
-          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect
-          disable-animations: true
-          script: ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
+#      TODO seems GH default ci doesn't have support for this
+#      - name: Headless Android emulator and run instrumentation tests
+#        env:
+#          CI: true
+#        uses: reactivecircus/android-emulator-runner@v2
+#        with:
+#          api-level: 33
+#          target: default
+#          arch: x86_64
+#          profile: pixel_5
+#          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect
+#          disable-animations: true
+#          script: ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
 
       - name: Run iOS Tests
         if: startsWith(runner.os, 'macOS')
