@@ -61,7 +61,7 @@ class OpenTradePresenter(
     private val _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
 
     private val _ignoredUser: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val ignoredUser: StateFlow<Boolean> = _ignoredUser
+    val ignoredUser: StateFlow<Boolean> get() = _ignoredUser.asStateFlow()
 
     private var _coroutineScope: CoroutineScope? = null
 

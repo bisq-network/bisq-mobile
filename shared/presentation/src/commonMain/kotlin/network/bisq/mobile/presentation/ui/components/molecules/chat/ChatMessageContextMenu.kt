@@ -79,6 +79,7 @@ fun ChatMessageContextMenu(
                         onSetShowMenu(false)
                     }
                 )
+//              TODO: To be implemented in future release
 //                DropdownMenuItem(
 //                    text = { BisqText.smallRegular("chat.message.contextMenu.reportUser".i18n()) },
 //                    leadingIcon = { FlagIcon() },

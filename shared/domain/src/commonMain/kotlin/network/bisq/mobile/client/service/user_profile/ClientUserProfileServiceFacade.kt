@@ -188,10 +188,7 @@ class ClientUserProfileServiceFacade(
 
     override suspend fun ignoreUserProfile(profileId: String) {
         try {
-            val apiResult = apiGateway.ignoreUser(profileId)
-            if (apiResult.isFailure) {
-                throw apiResult.exceptionOrNull()!!
-            }
+            apiGateway.ignoreUser(profileId).getOrThrow()
             ignoredUserIdsMutex.withLock {
                 ignoredUserIdsCache = (ignoredUserIdsCache ?: emptySet()) + profileId
             }
@@ -203,10 +200,7 @@ class ClientUserProfileServiceFacade(
 
     override suspend fun undoIgnoreUserProfile(profileId: String) {
         try {
-            val apiResult = apiGateway.undoIgnoreUser(profileId)
-            if (apiResult.isFailure) {
-                throw apiResult.exceptionOrNull()!!
-            }
+            apiGateway.undoIgnoreUser(profileId).getOrThrow()
             ignoredUserIdsMutex.withLock {
                 ignoredUserIdsCache = (ignoredUserIdsCache ?: emptySet()) - profileId
             }

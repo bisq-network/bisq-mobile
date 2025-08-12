@@ -50,7 +50,7 @@ class TradeChatPresenter(
     val avatarMap: StateFlow<Map<String, PlatformImage?>> get() = _avatarMap.asStateFlow()
 
     private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
-    val ignoreUserId: StateFlow<String> = _ignoreUserId
+    val ignoreUserId: StateFlow<String> get() = _ignoreUserId.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

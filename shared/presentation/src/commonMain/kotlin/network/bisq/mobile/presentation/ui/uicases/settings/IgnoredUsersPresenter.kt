@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -14,13 +15,13 @@ class IgnoredUsersPresenter(
 ) : BasePresenter(mainPresenter), IIgnoredUsersPresenter {
 
     private val _ignoredUsers = MutableStateFlow<List<UserProfileVO>>(emptyList())
-    override val ignoredUsers: StateFlow<List<UserProfileVO>> = _ignoredUsers
+    override val ignoredUsers: StateFlow<List<UserProfileVO>> get() = _ignoredUsers.asStateFlow()
 
     private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
-    override val avatarMap: StateFlow<Map<String, PlatformImage?>> = _avatarMap
+    override val avatarMap: StateFlow<Map<String, PlatformImage?>> get() = _avatarMap.asStateFlow()
 
     private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
-    override val ignoreUserId: StateFlow<String> = _ignoreUserId
+    override val ignoreUserId: StateFlow<String> get() = _ignoreUserId.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

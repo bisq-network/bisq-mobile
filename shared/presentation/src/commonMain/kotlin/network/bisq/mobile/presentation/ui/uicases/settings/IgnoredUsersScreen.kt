@@ -42,12 +42,12 @@ interface IIgnoredUsersPresenter : ViewPresenter {
 @Composable
 fun IgnoredUsersScreen() {
     val presenter: IIgnoredUsersPresenter = koinInject()
+    RememberPresenterLifecycle(presenter)
+
     val ignoredUsers = presenter.ignoredUsers.collectAsState().value
     val userAvatarMap by presenter.avatarMap.collectAsState()
     val ignoreUserId by presenter.ignoreUserId.collectAsState()
     val showIgnoreUserWarnBox = ignoreUserId.isNotEmpty()
-
-    RememberPresenterLifecycle(presenter)
 
     BisqScrollScaffold(
         topBar = { TopBar("mobile.settings.ignoredUsers".i18n()) },
@@ -117,6 +117,8 @@ private fun IgnoredUserItem(
         BisqText.baseRegular(
             text = user.userName, modifier = Modifier.weight(1f)
         )
+
+        BisqGap.H1()
 
         BisqButton(
             "mobile.settings.ignoredUsers.unblock".i18n(),
