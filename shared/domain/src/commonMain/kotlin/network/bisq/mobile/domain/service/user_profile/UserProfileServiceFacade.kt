@@ -66,7 +66,7 @@ interface UserProfileServiceFacade : LifeCycleAware {
     /**
      * @return UserProfile if exists, null otherwise
      */
-    suspend fun findUserProfile(id: String): UserProfileVO?
+    suspend fun findUserProfile(profileId: String): UserProfileVO?
 
     /**
      * @return List of UserProfiles for the given IDs (empty if none found)

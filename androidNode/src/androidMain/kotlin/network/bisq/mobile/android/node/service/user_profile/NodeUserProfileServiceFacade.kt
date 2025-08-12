@@ -152,8 +152,8 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         }
     }
 
-    override suspend fun findUserProfile(id: String): UserProfileVO? {
-        val userProfile = userProfileService.findUserProfile(id)
+    override suspend fun findUserProfile(profileId: String): UserProfileVO? {
+        val userProfile = userProfileService.findUserProfile(profileId)
         return if (userProfile.isPresent) {
             Mappings.UserProfileMapping.fromBisq2Model(userProfile.get())
         } else {
@@ -198,6 +198,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun ignoreUserProfile(profileId: String) {
+        require(profileId.isNotBlank()) { "Profile ID cannot be blank" }
         val userProfile = userProfileService.findUserProfile(profileId)
             .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
 
@@ -205,6 +206,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun undoIgnoreUserProfile(profileId: String) {
+        require(profileId.isNotBlank()) { "Profile ID cannot be blank" }
         val userProfile = userProfileService.findUserProfile(profileId)
             .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
 

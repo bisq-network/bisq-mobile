@@ -11,7 +11,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -31,8 +30,6 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.BisqBottomSheet
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
-import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
-import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.components.organisms.settings.AppPaymentAccountCard
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -52,7 +49,6 @@ interface IPaymentAccountSettingsPresenter : ViewPresenter {
 @Composable
 fun PaymentAccountSettingsScreen() {
     val presenter: IPaymentAccountSettingsPresenter = koinInject()
-    val settingsPresenter: ISettingsPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()

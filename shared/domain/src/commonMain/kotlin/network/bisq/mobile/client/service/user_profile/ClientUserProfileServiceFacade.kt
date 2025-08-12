@@ -146,8 +146,8 @@ class ClientUserProfileServiceFacade(
 
     }
 
-    override suspend fun findUserProfile(id: String): UserProfileVO? {
-        val apiResult = apiGateway.findUserProfiles(listOf(id))
+    override suspend fun findUserProfile(profileId: String): UserProfileVO? {
+        val apiResult = apiGateway.findUserProfiles(listOf(profileId))
         val response = apiResult.getOrThrow()
         return response.firstOrNull()
     }

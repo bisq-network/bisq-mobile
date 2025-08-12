@@ -4,8 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.text.input.KeyboardType
 import kotlinx.coroutines.flow.StateFlow
@@ -20,8 +18,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
-import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
-import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
@@ -63,7 +59,6 @@ interface IGeneralSettingsPresenter : ViewPresenter {
 @Composable
 fun GeneralSettingsScreen() {
     val presenter: IGeneralSettingsPresenter = koinInject()
-    val settingsPresenter: ISettingsPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()

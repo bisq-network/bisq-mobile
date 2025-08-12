@@ -27,22 +27,20 @@ fun TradeChatScreen() {
 
     val scrollState = rememberLazyListState()
     val scope = rememberCoroutineScope() // TODO: How scopes are to be used?
+    val isInteractive by presenter.isInteractive.collectAsState()
     val selectedTrade by presenter.selectedTrade.collectAsState()
     val chatMessages by presenter.chatMessages.collectAsState()
     val quotedMessage by presenter.quotedMessage.collectAsState()
     val sortedChatMessages = chatMessages.sortedBy { it.date }
     val userAvatarMap by presenter.avatarMap.collectAsState()
     val ignoreUserId by presenter.ignoreUserId.collectAsState()
-    val showIgnoreUserWarnBox = ignoreUserId.isNotEmpty()
-
-    /*   var quotedMessage by remember {
-           mutableStateOf<BisqEasyOpenTradeMessageModel?>(null)
-       }*/
+    val showIgnoreUserWarnBox = ignoreUserId.isNotBlank()
 
     val clipboard = LocalClipboardManager.current
 
     BisqStaticScaffold(
         topBar = { TopBar(title = "mobile.tradeChat.title".i18n(selectedTrade?.shortTradeId ?: ""))},
+        isInteractive = isInteractive,
     ) {
 
         ChatMessageList(
@@ -76,11 +74,7 @@ fun TradeChatScreen() {
                 confirmButtonText = "chat.ignoreUser.confirm".i18n(),
                 dismissButtonText = "action.cancel".i18n(),
                 verticalButtonPlacement = true,
-                onConfirm = {
-                    scope.launch {
-                        presenter.onConfirmedIgnoreUser(ignoreUserId)
-                    }
-                },
+                onConfirm = { presenter.onConfirmedIgnoreUser(ignoreUserId) },
                 onDismiss = { presenter.onDismissIgnoreUser() }
             )
         }

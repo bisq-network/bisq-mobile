@@ -34,8 +34,8 @@ fun SettingsScreen(isTabSelected: Boolean) {
         verticalArrangement = Arrangement.Top,
         isInteractive = isInteractive,
     ) {
-        if (menuTree != null) {
-            SettingsMenu(menuItem = menuTree!!) { selectedItem ->
+        menuTree?.let { root ->
+            SettingsMenu(menuItem = root) { selectedItem ->
                 if (selectedItem is MenuItem.Leaf) {
                     presenter.navigate(selectedItem.route)
                 }

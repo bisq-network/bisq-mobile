@@ -101,9 +101,7 @@ class TradeChatPresenter(
         val citation = quotedMessage.value?.let { quotedMessage ->
             quotedMessage.text?.let { text ->
                 CitationVO(
-                    quotedMessage.senderUserProfileId,
-                    text,
-                    quotedMessage.id
+                    quotedMessage.senderUserProfileId, text, quotedMessage.id
                 )
             }
         }
@@ -140,13 +138,18 @@ class TradeChatPresenter(
         _ignoreUserId.value = ""
     }
 
-    suspend fun onConfirmedIgnoreUser(id: String) {
-        userProfileServiceFacade.ignoreUserProfile(id)
-        this.hideIgnoreUserPopup()
-    }
-
-    suspend fun undoIgnoreUserProfile(id: String) {
-        userProfileServiceFacade.undoIgnoreUserProfile(id)
+    fun onConfirmedIgnoreUser(id: String) {
+        launchIO {
+            disableInteractive()
+            try {
+                userProfileServiceFacade.ignoreUserProfile(id)
+                hideIgnoreUserPopup()
+            } catch (e: Exception) {
+                log.e(e) { "Failed to ignore user $id" }
+            } finally {
+                enableInteractive()
+            }
+        }
     }
 
     fun onDismissIgnoreUser() {
