@@ -26,6 +26,7 @@ import org.koin.android.ext.android.inject
 
 /**
  * Bisq Android Node Application definition
+ * TODO consider uplift ComponentCallbacks2 to shared app to use also in connect apps
  */
 class MainApplication : BisqMainApplication(), ComponentCallbacks2 {
 
@@ -52,8 +53,8 @@ class MainApplication : BisqMainApplication(), ComponentCallbacks2 {
 
     override fun onCreated() {
         setupBisqCoreStatics()
-        // Register for OS memory pressure callbacks
-        registerComponentCallbacks(this)
+        // Note: MainApplication already implements ComponentCallbacks2, so onTrimMemory is automatically called
+        // No need to registerComponentCallbacks(this) - that would cause infinite recursion
         // Note: Tor initialization is now handled in NodeApplicationBootstrapFacade
         log.i { "Bisq Node Application Created" }
     }
