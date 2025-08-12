@@ -22,7 +22,7 @@ open class SettingsPresenter(
 ) : BasePresenter(mainPresenter), ISettingsPresenter {
 
     private val _menuItems = MutableStateFlow<MenuItem?>(null)
-    override val menuItems: StateFlow<MenuItem?> = _menuItems.asStateFlow()
+    override val menuItems: StateFlow<MenuItem?> get() = _menuItems.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

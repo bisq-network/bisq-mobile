@@ -44,7 +44,8 @@ fun IgnoredUsersScreen() {
     val presenter: IIgnoredUsersPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val ignoredUsers = presenter.ignoredUsers.collectAsState().value
+    val isInteractive by presenter.isInteractive.collectAsState()
+    val ignoredUsers by presenter.ignoredUsers.collectAsState()
     val userAvatarMap by presenter.avatarMap.collectAsState()
     val ignoreUserId by presenter.ignoreUserId.collectAsState()
     val showIgnoreUserWarnBox = ignoreUserId.isNotEmpty()
@@ -53,7 +54,7 @@ fun IgnoredUsersScreen() {
         topBar = { TopBar("mobile.settings.ignoredUsers".i18n()) },
         padding = PaddingValues(all = BisqUIConstants.Zero),
         verticalArrangement = Arrangement.SpaceBetween,
-        isInteractive = presenter.isInteractive.collectAsState().value,
+        isInteractive = isInteractive,
     ) {
 
         if (ignoredUsers.isEmpty()) {
