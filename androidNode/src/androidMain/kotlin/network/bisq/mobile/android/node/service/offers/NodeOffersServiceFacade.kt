@@ -60,6 +60,11 @@ class NodeOffersServiceFacade(
 ) : OffersServiceFacade() {
 
     companion object {
+        private const val SMALL_DELAY = 10L
+        private const val SMALL_DELAY_THRESHOLD = 5
+        private const val MEMORY_GC_THRESHOLD = 0.8
+        private const val OFFER_BATCH_DELAY = 100L // milliseconds
+        private const val MAP_CLEAR_THRESHOLD = 50
         private val MEDIATOR_WAIT_TIMEOUT = 1.minutes
         private val MEDIATOR_POLL_INTERVAL = 2.seconds
         private val MEMORY_LOG_INTERVAL = 30.seconds
@@ -87,6 +92,8 @@ class NodeOffersServiceFacade(
     private var selectedChannelPin: Pin? = null
     private var marketPricePin: Pin? = null
     private var memoryMonitoringJob: kotlinx.coroutines.Job? = null
+    private var offerBatchJob: kotlinx.coroutines.Job? = null
+    private val pendingOffers = mutableListOf<BisqEasyOfferbookMessage>()
 
     // Life cycle
     override fun activate() {
@@ -108,6 +115,9 @@ class NodeOffersServiceFacade(
         log.d { "Deactivating NodeOffersServiceFacade" }
         memoryMonitoringJob?.cancel()
         memoryMonitoringJob = null
+        offerBatchJob?.cancel()
+        offerBatchJob = null
+        pendingOffers.clear()
         chatMessagesPin?.unbind()
         chatMessagesPin = null
         selectedChannelPin?.unbind()
@@ -382,33 +392,10 @@ class NodeOffersServiceFacade(
                         return
                     }
 
-                    val offerId = message.bisqEasyOffer.get().id
-                    serviceScope.launch(Dispatchers.Default) {
-                        try {
-                            // Quick validation before expensive operations
-                            if (offerMessagesContainsKey(offerId) || !isValidOfferMessage(message)) {
-                                return@launch
-                            }
-
-                            // Create objects only after validation
-                            val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
-                            val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
-
-                            _offerbookListItems.update { it + offerItemPresentationModel }
-                            putOfferMessage(offerId, message)
-
-                            val currentSize = _offerbookListItems.value.size
-                            log.i { "Added offer $offerId to ${channel.market.marketCodes}, total: $currentSize" }
-
-                            // Log memory pressure if list is getting large
-                            if (currentSize > 100 && currentSize % 50 == 0) {
-                                val mapSize = offerMapMutex.withLock { bisqEasyOfferbookMessageByOfferId.size }
-                                log.w { "MEMORY: Large offer list - UI: $currentSize, Map: $mapSize" }
-                            }
-                        } catch (e: Exception) {
-                            log.e(e) { "Error processing offer $offerId" }
-                        }
+                    synchronized(pendingOffers) {
+                        pendingOffers.add(message)
                     }
+                    startOffersBatchJob()
                 }
 
                 override fun remove(message: Any) {
@@ -434,6 +421,15 @@ class NodeOffersServiceFacade(
             })
         
         log.d { "Chat messages observer added for ${channel.market.marketCodes}, pin: $chatMessagesPin" }
+    }
+
+    private fun startOffersBatchJob() {
+        if (offerBatchJob?.isActive != true) {
+            offerBatchJob = launchIO {
+                delay(OFFER_BATCH_DELAY)
+                processPendingOffers()
+            }
+        }
     }
 
     private fun observeMarketListItems(itemsFlow: MutableStateFlow<List<MarketListItem>>) {
@@ -549,7 +545,7 @@ class NodeOffersServiceFacade(
             bisqEasyOfferbookMessageByOfferId.clear()
 
             // Suggest GC after clearing large collections
-            if (currentSize > 50) {
+            if (currentSize > MAP_CLEAR_THRESHOLD) {
                 log.w { "MEMORY: Cleared large offer map ($currentSize items), suggesting GC" }
                 System.gc()
             }
@@ -570,6 +566,61 @@ class NodeOffersServiceFacade(
         }
     }
 
+    private suspend fun processPendingOffers() {
+        val offersToProcess = synchronized(pendingOffers) {
+            val batch = pendingOffers.toList()
+            pendingOffers.clear()
+            batch
+        }
+
+        if (offersToProcess.isEmpty()) return
+
+        val newOffers = mutableListOf<OfferItemPresentationModel>()
+        var processedCount = 0
+
+        // Process in smaller chunks to reduce memory pressure
+        offersToProcess.chunked(5).forEach { chunk ->
+            for (message in chunk) {
+                try {
+                    val offerId = message.bisqEasyOffer.get().id
+
+                    // Quick validation before expensive operations
+                    if (offerMessagesContainsKey(offerId) || !isValidOfferMessage(message)) {
+                        continue
+                    }
+
+                    // Create objects only after validation
+                    val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
+                    val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
+
+                    newOffers.add(offerItemPresentationModel)
+                    putOfferMessage(offerId, message)
+                    processedCount++
+
+                } catch (e: Exception) {
+                    log.e(e) { "Error processing batched offer" }
+                }
+            }
+
+            if (offersToProcess.size > SMALL_DELAY_THRESHOLD) {
+                delay(SMALL_DELAY)
+            }
+        }
+
+        // Single UI update for all new offers
+        if (newOffers.isNotEmpty()) {
+            _offerbookListItems.update { it + newOffers }
+            val currentSize = _offerbookListItems.value.size
+            log.i { "Batch processed $processedCount offers, total: $currentSize" }
+
+            // Log memory pressure if list is getting large
+            if (currentSize > 100 && currentSize % 50 == 0) {
+                val mapSize = offerMapMutex.withLock { bisqEasyOfferbookMessageByOfferId.size }
+                log.w { "MEMORY: Large offer list - UI: $currentSize, Map: $mapSize" }
+            }
+        }
+    }
+
     private fun startMemoryMonitoring() {
         memoryMonitoringJob = serviceScope.launch {
             while (true) {
@@ -585,7 +636,7 @@ class NodeOffersServiceFacade(
                     log.w { "MEMORY: Used ${usedMemory}MB/${maxMemory}MB, OfferMap: $offerMapSize, OffersList: $offersListSize, Observers: $observersCount" }
 
                     // Force GC if memory usage is high
-                    if (usedMemory > maxMemory * 0.8) {
+                    if (usedMemory > maxMemory * MEMORY_GC_THRESHOLD) {
                         log.w { "MEMORY: High memory usage detected, suggesting GC" }
                         System.gc()
                     }

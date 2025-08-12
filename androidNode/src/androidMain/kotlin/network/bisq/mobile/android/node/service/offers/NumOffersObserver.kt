@@ -20,9 +20,8 @@ class NumOffersObserver(
     fun resume() {
         log.d { "Resuming NumOffersObserver for channel: ${channel.id}, market: ${channel.market.marketCodes}" }
         dispose()
-        channelPin = channel.chatMessages.addObserver { 
-            log.d { "Chat messages changed for ${channel.market.marketCodes}, updating num offers" }
-            updateNumOffers() 
+        channelPin = channel.chatMessages.addObserver {
+            updateNumOffers()
         }
         updateNumOffers() // Update immediately on resume
     }
@@ -35,18 +34,15 @@ class NumOffersObserver(
 
     private fun updateNumOffers() {
         try {
-            // Use simple iteration instead of stream to reduce allocations
-            var count = 0
-            for (message in channel.chatMessages) {
-                if (message.hasBisqEasyOffer()) {
-                    count++
-                }
-            }
+            val count = channel.chatMessages.count { it.hasBisqEasyOffer() }
 
             // Only update if count changed to reduce unnecessary updates
             if (count != cachedCount) {
                 cachedCount = count
-                log.d { "Updated num offers for ${channel.market.marketCodes}: $count" }
+                // Log only significant changes to reduce log spam
+                if (count % 10 == 0 || count < 10) {
+                    log.d { "Updated num offers for ${channel.market.marketCodes}: $count" }
+                }
                 setNumOffers(count)
             }
         } catch (e: Exception) {

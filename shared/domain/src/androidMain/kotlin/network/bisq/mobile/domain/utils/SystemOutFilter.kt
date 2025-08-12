@@ -48,6 +48,9 @@ class SystemOutFilter(
 
             // Add more patterns as needed for other verbose Bisq2 outputs
         )
+
+        private val FILTER_REGEX = FILTER_PATTERNS.joinToString("|") { Regex.escape(it) }
+            .toRegex(RegexOption.IGNORE_CASE)
         
         /**
          * Sets up System.out/err filtering for the application.
@@ -154,10 +157,7 @@ class SystemOutFilter(
 
     private fun shouldFilter(content: String?): Boolean {
         if (content == null) return false
-        
-        return FILTER_PATTERNS.any { pattern ->
-            content.contains(pattern, ignoreCase = true)
-        }
+        return FILTER_REGEX.containsMatchIn(content)
     }
 }
 
