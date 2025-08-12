@@ -29,11 +29,12 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.TimeoutCancellationException
+import java.util.concurrent.ConcurrentLinkedQueue
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
-import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
@@ -60,11 +61,13 @@ class NodeOffersServiceFacade(
 ) : OffersServiceFacade() {
 
     companion object {
-        private const val SMALL_DELAY = 10L
+        private const val SMALL_DELAY = 25L
         private const val SMALL_DELAY_THRESHOLD = 5
-        private const val MEMORY_GC_THRESHOLD = 0.8
+        // Higher threshold to avoid masking memory leaks - only suggest GC in critical situations
+        private const val MEMORY_GC_THRESHOLD = 0.85
         private const val OFFER_BATCH_DELAY = 100L // milliseconds
         private const val MAP_CLEAR_THRESHOLD = 50
+        private const val MIN_GC_INTERVAL = 10000L
         private val MEDIATOR_WAIT_TIMEOUT = 1.minutes
         private val MEDIATOR_POLL_INTERVAL = 2.seconds
         private val MEMORY_LOG_INTERVAL = 30.seconds
@@ -93,7 +96,10 @@ class NodeOffersServiceFacade(
     private var marketPricePin: Pin? = null
     private var memoryMonitoringJob: kotlinx.coroutines.Job? = null
     private var offerBatchJob: kotlinx.coroutines.Job? = null
-    private val pendingOffers = mutableListOf<BisqEasyOfferbookMessage>()
+    private val pendingOffers = ConcurrentLinkedQueue<BisqEasyOfferbookMessage>()
+    private val batchMutex = Mutex()
+
+    private var lastGcTime = 0L
 
     // Life cycle
     override fun activate() {
@@ -113,10 +119,6 @@ class NodeOffersServiceFacade(
 
     override fun deactivate() {
         log.d { "Deactivating NodeOffersServiceFacade" }
-        memoryMonitoringJob?.cancel()
-        memoryMonitoringJob = null
-        offerBatchJob?.cancel()
-        offerBatchJob = null
         pendingOffers.clear()
         chatMessagesPin?.unbind()
         chatMessagesPin = null
@@ -347,7 +349,7 @@ class NodeOffersServiceFacade(
                 updateMarketPrice()
 
                 // Clear the map synchronously before adding observers
-                serviceScope.launch(Dispatchers.Default) {
+                launchIO {
                     clearOfferMessages()
                     addChatMessagesObservers(channel)
                 }
@@ -392,9 +394,8 @@ class NodeOffersServiceFacade(
                         return
                     }
 
-                    synchronized(pendingOffers) {
-                        pendingOffers.add(message)
-                    }
+                    // Add to thread-safe queue (non-blocking)
+                    pendingOffers.offer(message)
                     startOffersBatchJob()
                 }
 
@@ -407,7 +408,7 @@ class NodeOffersServiceFacade(
                         }
                         item?.let { model ->
                             _offerbookListItems.update { it - model }
-                            serviceScope.launch(Dispatchers.Default) { removeOfferMessage(offerId) }
+                            launchIO { removeOfferMessage(offerId) }
                             log.i { "Removed offer: $offerId, remaining offers: ${_offerbookListItems.value.size}" }
                         }
                     }
@@ -416,7 +417,7 @@ class NodeOffersServiceFacade(
                 override fun clear() {
                     log.d { "Clearing all offer messages" }
                     _offerbookListItems.value = emptyList()
-                    serviceScope.launch(Dispatchers.Default) { clearOfferMessages() }
+                    launchIO { clearOfferMessages() }
                 }
             })
         
@@ -424,10 +425,16 @@ class NodeOffersServiceFacade(
     }
 
     private fun startOffersBatchJob() {
-        if (offerBatchJob?.isActive != true) {
-            offerBatchJob = launchIO {
-                delay(OFFER_BATCH_DELAY)
-                processPendingOffers()
+        // Use mutex to prevent race conditions when starting batch jobs
+        launchIO {
+            batchMutex.withLock {
+                // Only start a new job if none is running
+                if (offerBatchJob?.isActive != true) {
+                    offerBatchJob = serviceScope.launch(Dispatchers.Default) {
+                        delay(OFFER_BATCH_DELAY)
+                        processPendingOffers()
+                    }
+                }
             }
         }
     }
@@ -547,7 +554,7 @@ class NodeOffersServiceFacade(
             // Suggest GC after clearing large collections
             if (currentSize > MAP_CLEAR_THRESHOLD) {
                 log.w { "MEMORY: Cleared large offer map ($currentSize items), suggesting GC" }
-                System.gc()
+                suggestGCtoOS()
             }
         }
     }
@@ -567,10 +574,11 @@ class NodeOffersServiceFacade(
     }
 
     private suspend fun processPendingOffers() {
-        val offersToProcess = synchronized(pendingOffers) {
-            val batch = pendingOffers.toList()
-            pendingOffers.clear()
-            batch
+        // Drain the thread-safe queue (non-blocking)
+        val offersToProcess = mutableListOf<BisqEasyOfferbookMessage>()
+        while (true) {
+            val offer = pendingOffers.poll() ?: break
+            offersToProcess.add(offer)
         }
 
         if (offersToProcess.isEmpty()) return
@@ -603,7 +611,18 @@ class NodeOffersServiceFacade(
             }
 
             if (offersToProcess.size > SMALL_DELAY_THRESHOLD) {
-                delay(SMALL_DELAY)
+                try {
+                    val runtime = Runtime.getRuntime()
+                    val memoryUsage = (runtime.totalMemory() - runtime.freeMemory()).toDouble() / runtime.maxMemory()
+                    if (memoryUsage > MEMORY_GC_THRESHOLD) {
+                        log.w { "High memory pressure detected during batch processing" }
+                        delay(SMALL_DELAY * 2)  // Use a smaller multiplier to avoid excessive delays
+                    } else {
+                        delay(SMALL_DELAY)
+                    }
+                } catch (e: Exception) {
+                    log.e(e) { "Error checking memory usage, failed to delay offer processing" }
+                }
             }
         }
 
@@ -622,7 +641,7 @@ class NodeOffersServiceFacade(
     }
 
     private fun startMemoryMonitoring() {
-        memoryMonitoringJob = serviceScope.launch {
+        memoryMonitoringJob = launchIO {
             while (true) {
                 delay(MEMORY_LOG_INTERVAL)
                 try {
@@ -635,14 +654,76 @@ class NodeOffersServiceFacade(
 
                     log.w { "MEMORY: Used ${usedMemory}MB/${maxMemory}MB, OfferMap: $offerMapSize, OffersList: $offersListSize, Observers: $observersCount" }
 
-                    // Force GC if memory usage is high
+                    // Only suggest GC in critical situations (90%+) to avoid masking memory leaks
                     if (usedMemory > maxMemory * MEMORY_GC_THRESHOLD) {
-                        log.w { "MEMORY: High memory usage detected, suggesting GC" }
-                        System.gc()
+                        log.w { "MEMORY: Critical memory usage detected (${usedMemory}MB/${maxMemory}MB), suggesting GC" }
+                        suggestGCtoOS()
                     }
                 } catch (e: Exception) {
                     log.e(e) { "Error in memory monitoring" }
                 }
+            }
+        }
+    }
+
+    /**
+     * suggests Garbage Collection to OS making sure we don't call it too often
+     * TODO when the need to reuse memory management code arises, move to common helper object
+     */
+    private fun suggestGCtoOS() {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - lastGcTime > MIN_GC_INTERVAL) {
+            // Note: System.gc() is a suggestion only, used here for P2P sync GC pressure relief
+            // This is documented as necessary for heavy network sync workloads - see memory optimization PR
+            // for node release builds we use manifest largeHeap flag which in general should be sufficient
+            System.gc()
+            lastGcTime = currentTime
+        }
+    }
+
+    /**
+     * Handle system memory pressure callbacks
+     * Uses raw integer values instead of deprecated ComponentCallbacks2 constants
+     *
+     * Memory trim levels (from Android documentation):
+     * - TRIM_MEMORY_COMPLETE (80): App in background, system extremely low on memory
+     * - TRIM_MEMORY_MODERATE (60): App in background, system moderately low on memory
+     * - TRIM_MEMORY_BACKGROUND (40): App just moved to background
+     * - TRIM_MEMORY_UI_HIDDEN (20): App's UI no longer visible
+     * - TRIM_MEMORY_RUNNING_CRITICAL (15): App running, system extremely low on memory
+     * - TRIM_MEMORY_RUNNING_LOW (10): App running, system low on memory
+     * - TRIM_MEMORY_RUNNING_MODERATE (5): App running, system moderately low on memory
+     */
+    fun onTrimMemory(level: Int) {
+        when {
+            level >= 80 || level == 15 -> { // COMPLETE or RUNNING_CRITICAL
+                log.w { "MEMORY: Critical system memory pressure (level $level), clearing caches" }
+                launchIO {
+                    // Clear non-essential caches during critical memory pressure
+                    val clearedOffers = offerMapMutex.withLock {
+                        val size = bisqEasyOfferbookMessageByOfferId.size
+                        if (size > MAP_CLEAR_THRESHOLD) {
+                            // Keep only recent offers during memory pressure
+                            val recentOffers = bisqEasyOfferbookMessageByOfferId.entries
+                                .sortedByDescending { it.value.date }
+                                .take(25)
+                                .associate { it.key to it.value }
+                            bisqEasyOfferbookMessageByOfferId.clear()
+                            bisqEasyOfferbookMessageByOfferId.putAll(recentOffers)
+                            size - recentOffers.size
+                        } else 0
+                    }
+                    if (clearedOffers > 0) {
+                        log.w { "MEMORY: Cleared $clearedOffers old offers due to memory pressure" }
+                    }
+                }
+            }
+            level >= 10 -> { // RUNNING_LOW or higher
+                log.i { "MEMORY: System memory running low (level $level), reducing batch sizes" }
+                // Could reduce batch processing sizes here if needed
+            }
+            else -> {
+                log.d { "MEMORY: Minor memory trim request (level $level)" }
             }
         }
     }

@@ -5,7 +5,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.network_stats.ProfileStatsServiceFacade
@@ -35,16 +34,16 @@ open class DashboardPresenter(
         private val PROFILES_UPDATE_THROTTLE = 2.seconds
     }
 
+    private val _pendingOffersCount = MutableStateFlow<Int?>(null)
     private val _offersOnline = MutableStateFlow(0)
     override val offersOnline: StateFlow<Int> get() = _offersOnline.asStateFlow()
 
+    private val _pendingProfilesCount = MutableStateFlow<Int?>(null)
     private val _publishedProfiles = MutableStateFlow(0)
     override val publishedProfiles: StateFlow<Int> get() = _publishedProfiles.asStateFlow()
 
     private var offersThrottleJob: Job? = null
     private var profilesThrottleJob: Job? = null
-    private var pendingOffersCount: Int? = null
-    private var pendingProfilesCount: Int? = null
 
     val formattedMarketPrice: StateFlow<String> get() = marketPriceServiceFacade.selectedFormattedMarketPrice
 
@@ -64,13 +63,12 @@ open class DashboardPresenter(
 
     private fun launchThrottledProfileCountJob() {
         collectUI(profileStatsServiceFacade.publishedProfilesCount) { count ->
-            val safeCount = count ?: 0
-            pendingProfilesCount = safeCount
+            _pendingProfilesCount.value = count
 
             profilesThrottleJob?.cancel()
-            profilesThrottleJob = presenterScope.launch {
+            profilesThrottleJob = launchUI {
                 delay(PROFILES_UPDATE_THROTTLE)
-                pendingProfilesCount?.let { profileCount ->
+                _pendingProfilesCount.value?.let { profileCount ->
                     _publishedProfiles.value = profileCount
                     log.d { "DashboardPresenter: NetworkStats publishedProfilesCount received (throttled): $profileCount" }
                 }
@@ -80,8 +78,8 @@ open class DashboardPresenter(
 
     private fun launchThrottledOfferCountUpdateJob() {
         collectUI(offersServiceFacade.offerbookMarketItems) { items ->
-            val totalOffers = items?.sumOf { it.numOffers } ?: 0
-            pendingOffersCount = totalOffers
+            val totalOffers = items.sumOf { it.numOffers }
+            _pendingOffersCount.value = totalOffers
 
             launchThrottledOffersJob(items)
         }
@@ -91,9 +89,9 @@ open class DashboardPresenter(
         offersThrottleJob?.cancel()
         offersThrottleJob = launchUI {
             delay(OFFERS_UPDATE_THROTTLE)
-            pendingOffersCount?.let { count ->
+            _pendingOffersCount.value?.let { count ->
                 _offersOnline.value = count
-                log.d { "DashboardPresenter: Updated offers online count (throttled): $count (items: ${items?.size ?: 0})" }
+                log.d { "DashboardPresenter: Updated offers online count (throttled): $count (items: ${items.size})" }
             }
         }
     }

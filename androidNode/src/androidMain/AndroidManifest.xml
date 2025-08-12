@@ -14,7 +14,7 @@
         android:supportsRtl="true"
         android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@style/Theme.App.Starting"
-        android:largeHeap="true">
+        android:largeHeap="${largeHeap}"> <!-- Request larger heap for P2P sync GC pressure reduction caused by bisq2 jars -->
         <activity
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"

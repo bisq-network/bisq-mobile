@@ -117,6 +117,11 @@ android {
         buildConfigField("String", "APP_VERSION", "\"${version}\"")
         buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")
 
+        // Memory management configuration
+        // Default: standard heap. Release builds use large heap to handle heavy network sync
+        // while debug builds use standard heap to catch memory leaks early in development
+        manifestPlaceholders["largeHeap"] = "false"
+
         // for apk release build after tor inclusion
         ndk {
             //noinspection ChromeOsAbiSupport
@@ -180,6 +185,8 @@ android {
             }
             isDebuggable = false
             isCrunchPngs = true
+
+            manifestPlaceholders["largeHeap"] = "true"
         }
         getByName("debug") {
             isDebuggable = true
@@ -187,6 +194,9 @@ android {
             versionNameSuffix = "-debug"
             // Reduce GC logging noise in debug builds
             buildConfigField("String", "GC_LOG_LEVEL", "\"WARN\"")
+
+            // Keep standard heap in debug for leak detection
+            manifestPlaceholders["largeHeap"] = "false"
         }
     }
     applicationVariants.all {
