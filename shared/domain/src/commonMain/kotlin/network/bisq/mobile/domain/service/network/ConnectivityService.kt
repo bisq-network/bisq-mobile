@@ -114,9 +114,13 @@ abstract class ConnectivityService : ServiceFacade() {
                     log.d { "Executing ${blocksToExecute.size} pending connectivity blocks" }
 
                     blocksToExecute.forEach { block ->
-                        // fire&forget: Create a fresh scope for each block
-                        CoroutineScope(IODispatcher + SupervisorJob()).launch {
-                            block()
+                        // Use service scope intentionally to avoid cancellation
+                        serviceScope.launch {
+                            try {
+                                block()
+                            } catch (e: Exception) {
+                                log.e(e) { "Error executing pending connectivity block" }
+                            }
                         }
                     }
                 }
@@ -127,6 +131,13 @@ abstract class ConnectivityService : ServiceFacade() {
     fun stopMonitoring() {
         job?.cancel()
         job = null
+        // Clear any pending blocks to prevent memory leaks
+        serviceScope.launch {
+            mutex.withLock {
+                pendingConnectivityBlocks.clear()
+                log.d { "Cleared pending connectivity blocks" }
+            }
+        }
         onStop()
         log.d { "Connectivity stopped being monitored" }
     }
