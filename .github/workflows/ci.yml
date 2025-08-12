@@ -130,6 +130,15 @@ jobs:
           api-level: 33
           build-tools: 33.0.0
 
+      - name: Create fake local.properties
+        run: |
+          echo "KEYSTORE_PATH=/path/to/keystore" > local.properties
+          echo "KEYSTORE_PASSWORD=yourKeystorePassword" >> local.properties
+          echo "KEY_ALIAS=yourKeyAlias" >> local.properties
+          echo "CLI_KEY_ALIAS=yourCliKeyAlias" >> local.properties
+          echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
+          echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
+
       - name: Build Node Project with Maven Secrets
         run: |
           ./gradlew androidNode:clean androidNode:bundleDebug --refresh-dependencies --info
