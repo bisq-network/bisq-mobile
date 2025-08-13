@@ -38,4 +38,37 @@ class NodeSplashPresenter(
     override suspend fun hasConnectivity(): Boolean {
         return mainPresenter.isConnected()
     }
+
+    /**
+     * Use only for corner cases / temporary solutions whilst
+     * investigating a real fix
+     */
+    override fun restartApp() {
+        log.i { "User requested app restart from failed state - restarting application" }
+
+        try {
+            // Get the activity from the main presenter
+            val activity = (mainPresenter as NodeMainPresenter).getActivity()
+            val packageManager = activity.packageManager
+            val packageName = activity.packageName
+
+            // Create restart intent
+            val intent = packageManager.getLaunchIntentForPackage(packageName)
+            intent?.let { restartIntent ->
+                restartIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                restartIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                restartIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK)
+
+                // Start the app
+                activity.startActivity(restartIntent)
+
+                // Exit current process
+                kotlin.system.exitProcess(0)
+            } ?: run {
+                log.e { "Could not create restart intent" }
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to restart app" }
+        }
+    }
 }

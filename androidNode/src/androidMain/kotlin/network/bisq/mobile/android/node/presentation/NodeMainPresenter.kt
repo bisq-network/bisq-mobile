@@ -120,6 +120,12 @@ class NodeMainPresenter(
         }
     }
 
+    // Removed forceApplicationServiceRecreation - now using app restart instead
+
+    fun getActivity(): android.app.Activity {
+        return view as android.app.Activity
+    }
+
     override fun onViewUnattaching() {
         launchIO {
             deactivateServices()

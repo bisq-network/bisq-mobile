@@ -22,7 +22,7 @@ class NodeApplicationBootstrapFacade(
 
     companion object {
         private const val DEFAULT_CONNECTIVITY_TIMEOUT_MS = 15000L
-        private const val BOOTSTRAP_STAGE_TIMEOUT_MS = 60000L // 60 seconds per stage
+        private const val BOOTSTRAP_STAGE_TIMEOUT_MS = 20000L // 20 seconds per stage
     }
 
     private val applicationServiceState: Observable<State> by lazy { applicationService.state.get() }
@@ -33,12 +33,19 @@ class NodeApplicationBootstrapFacade(
     private var torWasStartedBefore = false
 
     override fun activate() {
+        log.i { "Bootstrap: activate() called - isActive: $isActive" }
+
         if (isActive) {
             log.d { "Bootstrap already active, forcing reset" }
             deactivate()
         }
 
         super.activate()
+        log.i { "Bootstrap: super.activate() completed, calling onInitializeAppState()" }
+
+        // Set up application state observer FIRST, before any initialization
+        setupApplicationStateObserver()
+
         onInitializeAppState()
 
         // Reset Tor initialization state
@@ -52,7 +59,6 @@ class NodeApplicationBootstrapFacade(
             log.i { "Bootstrap: Tor not required in configuration (CLEARNET only) - skipping Tor initialization" }
             // Complete immediately for CLEARNET
             torInitializationCompleted.complete(Unit)
-            setupApplicationStateObserver()
         }
     }
 
@@ -97,8 +103,7 @@ class NodeApplicationBootstrapFacade(
         setProgress(0.25f)
         // Complete Tor initialization
         torInitializationCompleted.complete(Unit)
-        log.i { "Bootstrap: Tor initialization completed - proceeding with application setup" }
-        setupApplicationStateObserver()
+        log.i { "Bootstrap: Tor initialization completed - application state observer already set up" }
     }
 
     private fun onTorInitializationFail() {
@@ -189,14 +194,19 @@ class NodeApplicationBootstrapFacade(
     }
 
     override fun deactivate() {
+        log.i { "Bootstrap: deactivate() called" }
         cancelTimeout()
         stopListiningToBootstrapProgress()
-        if (isTorSupported()) {
+
+        // Only stop Tor if we haven't already stopped it for retry
+        if (isTorSupported() && torWasStartedBefore) {
+            log.i { "Bootstrap: Stopping Tor daemon during deactivate" }
             kmpTorService.stopTor()
         }
 
         isActive = false
         super.deactivate()
+        log.i { "Bootstrap: deactivate() completed" }
     }
 
     private fun stopListiningToBootstrapProgress() {
@@ -220,16 +230,22 @@ class NodeApplicationBootstrapFacade(
         }
     }
 
-    private fun startTimeoutForStage(stageName: String) {
+    private fun startTimeoutForStage(stageName: String, extendedTimeout: Boolean = false) {
         currentTimeoutJob?.cancel()
         setTimeoutDialogVisible(false)
         setCurrentBootstrapStage(stageName)
 
-        log.i { "Bootstrap: Starting timeout for stage: $stageName" }
+        val timeoutDuration = if (extendedTimeout) {
+            BOOTSTRAP_STAGE_TIMEOUT_MS * 3 // 3x longer for extended wait (3 minutes)
+        } else {
+            BOOTSTRAP_STAGE_TIMEOUT_MS // Normal timeout (1 minute)
+        }
+
+        log.i { "Bootstrap: Starting timeout for stage: $stageName (${timeoutDuration/1000}s)" }
 
         currentTimeoutJob = serviceScope.launch {
             try {
-                delay(BOOTSTRAP_STAGE_TIMEOUT_MS)
+                delay(timeoutDuration)
                 if (!(isActive && bootstrapSuccessful)) {
                     log.w { "Bootstrap: Timeout reached for stage: $stageName" }
                     setTimeoutDialogVisible(true)
@@ -252,15 +268,25 @@ class NodeApplicationBootstrapFacade(
         setTimeoutDialogVisible(false)
     }
 
+    override fun extendTimeout() {
+        log.i { "Bootstrap: Extending timeout for current stage" }
+        val currentStage = currentBootstrapStage.value
+        if (currentStage.isNotEmpty()) {
+            // Restart timeout with double the duration for extended wait
+            startTimeoutForStage(currentStage, extendedTimeout = true)
+        }
+        setTimeoutDialogVisible(false)
+    }
+
     override suspend fun stopBootstrapForRetry() {
         log.i { "Bootstrap: User requested to stop bootstrap for retry" }
         stopListiningToBootstrapProgress()
         // Cancel any ongoing timeouts without showing progress toast
         cancelTimeout(showProgressToast = false)
 
-        // Kill Tor process if it was started - this is crucial for clean restart
+        // Kill Tor process if it was started
         if (isTorSupported()) {
-            log.i { "Bootstrap: Stopping Tor daemon for clean restart" }
+            log.i { "Bootstrap: Stopping Tor daemon" }
             kmpTorService.stopTor(true).await()
             torWasStartedBefore = false
         }
@@ -277,29 +303,5 @@ class NodeApplicationBootstrapFacade(
         log.i { "Bootstrap: Stopped and ready for retry" }
     }
 
-    override fun retryBootstrap() {
-        log.i { "Bootstrap: Retrying bootstrap process from scratch" }
-
-        // Reset all state
-        setBootstrapFailed(false)
-        setTimeoutDialogVisible(false)
-        bootstrapSuccessful = false
-
-        // Reset Tor initialization state
-        torInitializationCompleted = CompletableDeferred()
-        torWasStartedBefore = false
-
-        // Give Tor a moment to fully stop before restarting
-        launchIO {
-            if (isTorSupported()) {
-                log.i { "Bootstrap: Waiting for Tor to fully stop before restart..." }
-                delay(1000) // Give Tor time to clean up
-            }
-
-            // Deactivate and reactivate to restart the entire process
-            deactivate()
-            activate()
-        }
-    }
 
 }

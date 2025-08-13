@@ -162,12 +162,17 @@ open class SplashPresenter(
     }
 
     fun onTimeoutDialogContinue() {
-        log.i { "User chose to continue waiting" }
-        applicationBootstrapFacade.setTimeoutDialogVisible(false)
+        log.i { "User chose to continue waiting - extending timeout" }
+        applicationBootstrapFacade.extendTimeout()
     }
 
-    fun onBootstrapFailedRetry() {
-        log.i { "User requested bootstrap retry from failed state" }
-        applicationBootstrapFacade.retryBootstrap()
+    open fun onBootstrapFailedRetry() {
+        log.i { "User requested app restart from failed state" }
+        restartApp()
+    }
+
+    protected open fun restartApp() {
+        // Default implementation - platform-specific implementations will override
+        log.w { "App restart not implemented for this platform" }
     }
 }

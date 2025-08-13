@@ -75,14 +75,11 @@ abstract class ApplicationBootstrapFacade : ServiceFacade() {
     }
 
     /**
-     * Retry the bootstrap process from the beginning.
-     * This should clean up any existing state and restart the entire bootstrap.
+     * Extend the current timeout when user chooses to continue waiting.
+     * Default implementation just hides the dialog.
      */
-    open fun retryBootstrap() {
-        log.i { "Bootstrap: Retrying bootstrap process" }
-        setBootstrapFailed(false)
+    open fun extendTimeout() {
+        log.i { "Bootstrap: Extending timeout (default implementation)" }
         setTimeoutDialogVisible(false)
-        deactivate()
-        activate()
     }
 }
