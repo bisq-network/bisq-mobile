@@ -64,7 +64,8 @@ interface UserProfileServiceFacade : LifeCycleAware {
     suspend fun getSelectedUserProfile(): UserProfileVO?
 
     /**
-     * @return UserProfile if exists, null otherwise
+     * @return the UserProfile for the given ID if it exists; null if not found.
+     *         Implementations may perform network I/O and can throw on transport or persistence errors.
      */
     suspend fun findUserProfile(profileId: String): UserProfileVO?
 
@@ -84,11 +85,15 @@ interface UserProfileServiceFacade : LifeCycleAware {
 
     /**
      * Marks the given profile as ignored. Implementations must persist this update.
+     * Idempotent: calling this for an already-ignored profile is a no-op.
+     * May perform network I/O and can throw on transport or persistence errors.
      */
     suspend fun ignoreUserProfile(profileId: String)
 
     /**
      * Removes the ignore mark for the given profile. Implementations must persist this update.
+     * Idempotent: if the profile is not currently ignored, this is a no-op.
+     * May perform network I/O and can throw on transport or persistence errors
      */
     suspend fun undoIgnoreUserProfile(profileId: String)
 
