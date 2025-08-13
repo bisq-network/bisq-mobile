@@ -111,6 +111,15 @@ class TakeOfferReviewPresenter(
         navigateBack()
     }
 
+    fun onClose() {
+        navigateToOfferList()
+    }
+
+    private fun navigateToOfferList() {
+        navigateBackTo(Routes.TabContainer)
+        navigateToTab(Routes.TabOfferbook)
+    }
+
     fun onTakeOffer() {
         setShowTakeOfferProgressDialog(true)
         disableInteractive()

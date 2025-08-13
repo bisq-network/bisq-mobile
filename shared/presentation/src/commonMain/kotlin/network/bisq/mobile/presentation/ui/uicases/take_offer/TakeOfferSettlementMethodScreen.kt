@@ -38,7 +38,10 @@ fun TakeOfferSettlementMethodScreen() {
         stepsLength = 4,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onBaseSideNext() },
-        snackbarHostState = presenter.getSnackState()
+        snackbarHostState = presenter.getSnackState(),
+        showUserAvatar = false,
+        closeAction = true,
+        onConfirmedClose = presenter::onClose,
     ) {
 
         BisqText.h3Regular("mobile.bisqEasy.takeOffer.paymentMethods.headline.btc".i18n())

@@ -45,6 +45,9 @@ fun TakeOfferReviewTradeScreen() {
         snackbarHostState = presenter.getSnackState(),
         isInteractive = isInteractive,
         shouldBlurBg = showProgressDialog || showSuccessDialog,
+        showUserAvatar = false,
+        closeAction = true,
+        onConfirmedClose = presenter::onClose
     ) {
         BisqGap.V1()
         Column(

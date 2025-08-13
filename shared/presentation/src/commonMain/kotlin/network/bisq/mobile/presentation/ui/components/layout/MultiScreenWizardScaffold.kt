@@ -23,7 +23,10 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqProgressBar
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.molecules.ConfirmCloseAction
+import network.bisq.mobile.presentation.ui.components.molecules.ConfirmCloseOverlay
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.rememberConfirmCloseState
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -53,8 +56,16 @@ fun MultiScreenWizardScaffold(
     shouldBlurBg: Boolean = false,
     showUserAvatar: Boolean = true,
     extraActions: @Composable (RowScope.() -> Unit)? = null,
+    closeAction: Boolean = false,
+    onConfirmedClose: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit
 ) {
+
+    val confirmClose = rememberConfirmCloseState()
+    val extraActionsFinal: (@Composable RowScope.() -> Unit)? =
+        extraActions ?: if (closeAction) {
+            { ConfirmCloseAction(confirmClose) }
+        } else null
 
     val scaffold: @Composable (
         padding: PaddingValues,
@@ -76,7 +87,7 @@ fun MultiScreenWizardScaffold(
                 verticalArrangement = verticalArrangement,
                 snackbarHostState = snackState,
                 isInteractive = isInteractive,
-                shouldBlurBg = _shouldBlurBg,
+                shouldBlurBg = _shouldBlurBg || confirmClose.visible,
                 content = innerContent
             )
         } else { padding, topBar, bottomBar, hAlignment, verticalArrangement, snackState, _showJumpToBottom, _shouldBlurBg, innerContent ->
@@ -89,7 +100,7 @@ fun MultiScreenWizardScaffold(
                 snackbarHostState = snackState,
                 isInteractive = isInteractive,
                 showJumpToBottom = _showJumpToBottom,
-                shouldBlurBg = _shouldBlurBg,
+                shouldBlurBg = _shouldBlurBg || confirmClose.visible,
                 content = innerContent
             )
         }
@@ -103,7 +114,7 @@ fun MultiScreenWizardScaffold(
                     isFlowScreen = true,
                     stepText = "$stepIndex/$stepsLength",
                     showUserAvatar = showUserAvatar,
-                    extraActions = extraActions,
+                    extraActions = extraActionsFinal,
                 )
                 BisqProgressBar(
                     stepIndex.toFloat() / stepsLength.toFloat(),
@@ -175,6 +186,11 @@ fun MultiScreenWizardScaffold(
         }
 
     }
+
+    ConfirmCloseOverlay(
+        state = confirmClose,
+        onConfirmedClose = { onConfirmedClose?.invoke() }
+    )
 }
 
 

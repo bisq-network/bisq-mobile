@@ -65,6 +65,15 @@ class TakeOfferPaymentMethodPresenter(
         navigateBack()
     }
 
+    fun onClose() {
+        navigateToOfferList()
+    }
+
+    private fun navigateToOfferList() {
+        navigateBackTo(Routes.TabContainer)
+        navigateToTab(Routes.TabOfferbook)
+    }
+
     // Note the data is set at the service layer, so if there is only one payment method we
     // have it set at the service. We do not need to check here if we have the multiple options.
 

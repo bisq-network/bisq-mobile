@@ -36,7 +36,10 @@ fun TakeOfferPaymentMethodScreen() {
         stepsLength = 4,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onQuoteSideNext() },
-        snackbarHostState = presenter.getSnackState()
+        snackbarHostState = presenter.getSnackState(),
+        showUserAvatar = false,
+        closeAction = true,
+        onConfirmedClose = presenter::onClose,
     ) {
 
         BisqText.h3Regular("mobile.bisqEasy.takeOffer.paymentMethods.headline.fiat".i18n())

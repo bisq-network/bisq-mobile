@@ -32,6 +32,9 @@ fun TakeOfferTradeAmountScreen() {
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() },
         nextDisabled = !amountValid,
+        showUserAvatar = false,
+        closeAction = true,
+        onConfirmedClose = presenter::onClose,
     ) {
         BisqText.h3Regular("bisqEasy.takeOffer.amount.headline.buyer".i18n())
         BisqGap.V1()

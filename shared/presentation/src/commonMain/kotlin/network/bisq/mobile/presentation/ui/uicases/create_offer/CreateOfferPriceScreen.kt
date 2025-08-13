@@ -64,13 +64,8 @@ fun CreateOfferTradePriceSelectorScreen() {
         nextDisabled = !formattedPercentagePriceValid,
         shouldBlurBg = showWhyPopup,
         showUserAvatar = false,
-        extraActions = {
-            BisqIconButton(onClick = {
-                presenter.onClose()
-            }, size = BisqUIConstants.topBarAvatarSize){
-                CloseIcon()
-            }
-        },
+        closeAction = true,
+        onConfirmedClose = presenter::onClose,
     ) {
         BisqText.h3Regular(
             text = "mobile.bisqEasy.tradeWizard.price.title".i18n(), modifier = Modifier.align(Alignment.Start)

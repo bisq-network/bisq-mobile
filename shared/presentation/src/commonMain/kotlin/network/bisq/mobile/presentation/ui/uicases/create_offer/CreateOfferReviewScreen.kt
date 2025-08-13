@@ -44,13 +44,8 @@ fun CreateOfferReviewOfferScreen() {
         nextOnClick = { presenter.onCreateOffer() },
         isInteractive = isInteractive,
         showUserAvatar = false,
-        extraActions = {
-            BisqIconButton(onClick = {
-                presenter.onClose()
-            }, size = BisqUIConstants.topBarAvatarSize){
-                CloseIcon()
-            }
-        },
+        closeAction = true,
+        onConfirmedClose = presenter::onClose,
     ) {
         BisqGap.V1()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {

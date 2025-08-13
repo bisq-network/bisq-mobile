@@ -14,6 +14,9 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.ui.components.molecules.ConfirmCloseAction
+import network.bisq.mobile.presentation.ui.components.molecules.ConfirmCloseOverlay
+import network.bisq.mobile.presentation.ui.components.molecules.rememberConfirmCloseState
 import network.bisq.mobile.presentation.ui.components.organisms.offer.SellerReputationWarningDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -33,7 +36,10 @@ fun CreateOfferDirectionScreen() {
         stepsLength = 7,
         horizontalAlignment = Alignment.Start,
         showNextPrevButtons = false,
-        shouldBlurBg = showSellerReputationWarning
+        shouldBlurBg = showSellerReputationWarning,
+        showUserAvatar = false,
+        closeAction = true,
+        onConfirmedClose = presenter::onClose
     ) {
         BisqText.h3Regular(presenter.headline)
 

@@ -48,7 +48,7 @@ fun ConfirmationDialog(
                     BisqText.h6Regular(headline, color = headlineColor)
                 }
             }
-            BisqGap.V1()
+            BisqGap.V2()
         }
         if (message.isNotEmpty()) {
             BisqText.baseRegular(message)

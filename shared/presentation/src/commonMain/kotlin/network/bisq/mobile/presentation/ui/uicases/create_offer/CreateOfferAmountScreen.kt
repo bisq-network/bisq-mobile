@@ -12,18 +12,18 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText
-import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
-import network.bisq.mobile.presentation.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIconLightGrey
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.ui.components.molecules.rememberConfirmCloseState
 import network.bisq.mobile.presentation.ui.components.molecules.BisqAmountSelector
+import network.bisq.mobile.presentation.ui.components.molecules.ConfirmCloseAction
+import network.bisq.mobile.presentation.ui.components.molecules.ConfirmCloseOverlay
 import network.bisq.mobile.presentation.ui.components.molecules.RangeAmountSelector
 import network.bisq.mobile.presentation.ui.components.molecules.ToggleTab
 import network.bisq.mobile.presentation.ui.components.organisms.create_offer.ReputationBasedBuyerLimitsPopup
 import network.bisq.mobile.presentation.ui.components.organisms.create_offer.ReputationBasedSellerLimitsPopup
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.AmountType
 import org.koin.compose.koinInject
 
@@ -62,13 +62,8 @@ fun CreateOfferAmountSelectorScreen() {
         snackbarHostState = presenter.getSnackState(),
         shouldBlurBg = showLimitPopup,
         showUserAvatar = false,
-        extraActions = {
-            BisqIconButton(onClick = {
-                presenter.onClose()
-            }, size = BisqUIConstants.topBarAvatarSize){
-                CloseIcon()
-            }
-        },
+        closeAction = true,
+        onConfirmedClose = presenter::onClose
     ) {
 
         BisqText.h3Regular(

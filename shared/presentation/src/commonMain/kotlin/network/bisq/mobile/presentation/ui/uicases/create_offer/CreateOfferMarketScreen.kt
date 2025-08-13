@@ -41,13 +41,8 @@ fun CreateOfferCurrencySelectorScreen() {
         useStaticScaffold = true,
         horizontalAlignment = Alignment.Start,
         showUserAvatar = false,
-        extraActions = {
-            BisqIconButton(onClick = {
-                presenter.onClose()
-            }, size = BisqUIConstants.topBarAvatarSize){
-                CloseIcon()
-            }
-        },
+        closeAction = true,
+        onConfirmedClose = presenter::onClose,
     ) {
 
         BisqText.h3Regular(presenter.headline)

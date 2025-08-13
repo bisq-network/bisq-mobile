@@ -63,6 +63,11 @@ class CreateOfferDirectionPresenter(
         }
     }
 
+    fun onClose() {
+        commitToModel()
+        navigateToOfferList()
+    }
+
     fun showLearnReputation() {
         setShowSellerReputationWarning(false)
         navigateToUrl(BisqLinks.REPUTATION_BUILD_WIKI_URL)
@@ -78,6 +83,11 @@ class CreateOfferDirectionPresenter(
             navigateTo(Routes.CreateOfferAmount)
         else
             navigateTo(Routes.CreateOfferMarket)
+    }
+
+    private fun navigateToOfferList() {
+        navigateBackTo(Routes.TabContainer)
+        navigateToTab(Routes.TabOfferbook)
     }
 
     private fun commitToModel() {

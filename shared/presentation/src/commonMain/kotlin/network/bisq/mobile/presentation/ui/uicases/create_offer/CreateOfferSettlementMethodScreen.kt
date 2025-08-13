@@ -29,13 +29,8 @@ fun CreateOfferSettlementMethodScreen() {
         nextOnClick = { presenter.onBaseSideNext() },
         snackbarHostState = presenter.getSnackState(),
         showUserAvatar = false,
-        extraActions = {
-            BisqIconButton(onClick = {
-                presenter.onClose()
-            }, size = BisqUIConstants.topBarAvatarSize) {
-                CloseIcon()
-            }
-        }
+        closeAction = true,
+        onConfirmedClose = presenter::onClose,
     ) {
         BisqText.h3Regular("mobile.bisqEasy.createOffer.paymentMethods.headline.btc".i18n())
 
