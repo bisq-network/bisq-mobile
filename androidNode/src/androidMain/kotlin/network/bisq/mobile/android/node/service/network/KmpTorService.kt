@@ -285,7 +285,6 @@ class KmpTorService : ServiceFacade(), Logging {
 
             log.i { "Wrote external_tor.config to ${configFile.absolutePath}\n\n$configContent\n\n" }
 
-            // Verify that the control port is actually accessible
             verifyControlPortAccessible(controlPort)
 
         } catch (error: Exception) {
@@ -340,8 +339,6 @@ class KmpTorService : ServiceFacade(), Logging {
         disposeControlPortFileObserver()
         _startupFailure.value = null
     }
-
-    // Removed resetToColdStart method - now using app restart instead
 
     private fun disposeControlPortFileObserver() {
         controlPortFileObserverJob?.cancel()

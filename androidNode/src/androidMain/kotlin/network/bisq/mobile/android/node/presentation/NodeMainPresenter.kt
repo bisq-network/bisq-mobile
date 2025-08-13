@@ -120,12 +120,6 @@ class NodeMainPresenter(
         }
     }
 
-    // Removed forceApplicationServiceRecreation - now using app restart instead
-
-    fun getActivity(): android.app.Activity {
-        return view as android.app.Activity
-    }
-
     override fun onViewUnattaching() {
         launchIO {
             deactivateServices()
@@ -149,6 +143,31 @@ class NodeMainPresenter(
         }
 
         super.onDestroying()
+    }
+
+    fun restartApp() {
+        try {
+            val activity = view as Activity
+            val packageManager = activity.packageManager
+            val packageName = activity.packageName
+
+            // Create restart intent
+            val intent = packageManager.getLaunchIntentForPackage(packageName)
+            intent?.let { restartIntent ->
+                restartIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                restartIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                restartIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK)
+
+                // launch process
+                activity.startActivity(restartIntent)
+                // now suicide
+                kotlin.system.exitProcess(0)
+            } ?: run {
+                log.e { "Could not create restart intent" }
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to restart app" }
+        }
     }
 
     private fun stopPersistentServices() {
