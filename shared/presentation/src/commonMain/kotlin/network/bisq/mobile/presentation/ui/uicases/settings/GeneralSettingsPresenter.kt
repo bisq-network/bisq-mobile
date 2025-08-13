@@ -26,7 +26,7 @@ open class GeneralSettingsPresenter(
     override val allLanguagePairs: StateFlow<List<Pair<String, String>>> get() = languageServiceFacade.allPairs
 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
-    override val languageCode: MutableStateFlow<String> = _languageCode
+    override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()
     override fun setLanguageCode(langCode: String) {
         disableInteractive()
         launchUI {
@@ -50,7 +50,7 @@ open class GeneralSettingsPresenter(
     }
 
     private val _supportedLanguageCodes: MutableStateFlow<Set<String>> = MutableStateFlow(setOf("en"))
-    override val supportedLanguageCodes: MutableStateFlow<Set<String>> = _supportedLanguageCodes
+    override val supportedLanguageCodes: StateFlow<Set<String>> get() = _supportedLanguageCodes.asStateFlow()
     override fun setSupportedLanguageCodes(langCodes: Set<String>) {
         disableInteractive()
         launchUI {

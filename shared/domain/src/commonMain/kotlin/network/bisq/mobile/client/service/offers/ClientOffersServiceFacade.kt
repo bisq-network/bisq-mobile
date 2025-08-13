@@ -18,9 +18,11 @@ import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferIt
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 
 class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val userProfileServiceFacade: UserProfileServiceFacade,
     private val userRepository: UserRepository,
     private val apiGateway: OfferbookApiGateway,
     private val json: Json
@@ -78,13 +80,7 @@ class ClientOffersServiceFacade(
         supportedLanguageCodes: Set<String>
     ): Result<String> {
         val apiResult = apiGateway.publishOffer(
-            direction,
-            market,
-            bitcoinPaymentMethods,
-            fiatPaymentMethods,
-            amountSpec,
-            priceSpec,
-            supportedLanguageCodes
+            direction, market, bitcoinPaymentMethods, fiatPaymentMethods, amountSpec, priceSpec, supportedLanguageCodes
         )
         if (apiResult.isSuccess) {
             userRepository.updateLastActivity()
@@ -104,15 +100,22 @@ class ClientOffersServiceFacade(
         supportedLanguageCodes: Set<String>
     ): Result<String> {
         // For client mode, we delegate to the server which should handle mediator waiting
-        return createOffer(direction, market, bitcoinPaymentMethods, fiatPaymentMethods, amountSpec, priceSpec, supportedLanguageCodes)
+        return createOffer(
+            direction,
+            market,
+            bitcoinPaymentMethods,
+            fiatPaymentMethods,
+            amountSpec,
+            priceSpec,
+            supportedLanguageCodes
+        )
     }
 
     private fun observeAvailableMarkets() {
         launchIO {
             val result = apiGateway.getMarkets()
             if (result.isFailure) {
-                result.exceptionOrNull()
-                    ?.let { log.e { "GetMarkets request failed with exception $it" } }
+                result.exceptionOrNull()?.let { log.e { "GetMarkets request failed with exception $it" } }
                 log.w { "GetMarkets failed, market list will remain empty" }
                 return@launchIO
             }
@@ -145,8 +148,10 @@ class ClientOffersServiceFacade(
             }
 
             try {
-                val webSocketEventPayload: WebSocketEventPayload<Map<String, Int>> =
-                    WebSocketEventPayload.from(json, webSocketEvent)
+                val webSocketEventPayload: WebSocketEventPayload<Map<String, Int>> = WebSocketEventPayload.from(
+                    json,
+                    webSocketEvent
+                )
                 val numOffersByMarketCode = webSocketEventPayload.payload
 
                 _offerbookMarketItems.update { list ->
@@ -173,19 +178,18 @@ class ClientOffersServiceFacade(
                 }
                 if (offersSequenceNumber.value >= webSocketEvent.sequenceNumber) {
                     log.w {
-                        "Sequence number is larger or equal than the one we " +
-                                "received from the backend. We ignore that event."
+                        "Sequence number is larger or equal than the one we " + "received from the backend. We ignore that event."
                     }
                     return@collect
                 }
 
                 offersSequenceNumber.value = webSocketEvent.sequenceNumber
-                val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> =
-                    WebSocketEventPayload.from(json, webSocketEvent)
+                val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> = WebSocketEventPayload.from(
+                    json,
+                    webSocketEvent
+                )
                 val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
-                if (webSocketEvent.modificationType == ModificationType.REPLACE ||
-                    webSocketEvent.modificationType == ModificationType.ADDED
-                ) {
+                if (webSocketEvent.modificationType == ModificationType.REPLACE || webSocketEvent.modificationType == ModificationType.ADDED) {
                     payload.forEach { item ->
                         val model = OfferItemPresentationModel(item)
                         val quoteCurrencyCode = item.bisqEasyOffer.market.quoteCurrencyCode

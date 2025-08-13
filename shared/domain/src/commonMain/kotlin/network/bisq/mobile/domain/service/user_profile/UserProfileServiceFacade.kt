@@ -64,9 +64,17 @@ interface UserProfileServiceFacade : LifeCycleAware {
     suspend fun getSelectedUserProfile(): UserProfileVO?
 
     /**
-     * @return UserIdentity if exists, null otherwise
+     * @return the UserProfile for the given ID if it exists; null if not found.
+     *         Implementations may perform network I/O and can throw on transport or persistence errors.
      */
-    suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO>
+    suspend fun findUserProfile(profileId: String): UserProfileVO?
+
+    /**
+     * @return List of UserProfiles for the given IDs (empty if none found)
+     *  - The order of results matches the order of the input IDs.
+     *  - Duplicate IDs will produce duplicate profiles in the result.
+     */
+    suspend fun findUserProfiles(ids: List<String>): List<UserProfileVO>
 
     /**
      * @return Get avatar of the user
@@ -74,4 +82,28 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * It is recommended to call this from a background (non-main) dispatcher.
      */
     suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage?
+
+    /**
+     * Marks the given profile as ignored. Implementations must persist this update.
+     * Idempotent: calling this for an already-ignored profile is a no-op.
+     * May perform network I/O and can throw on transport or persistence errors.
+     */
+    suspend fun ignoreUserProfile(profileId: String)
+
+    /**
+     * Removes the ignore mark for the given profile. Implementations must persist this update.
+     * Idempotent: if the profile is not currently ignored, this is a no-op.
+     * May perform network I/O and can throw on transport or persistence errors
+     */
+    suspend fun undoIgnoreUserProfile(profileId: String)
+
+    /**
+     * Returns true if the given profile is currently ignored.
+     */
+    suspend fun isUserIgnored(profileId: String): Boolean
+
+    /**
+     * Returns the current snapshot of ignored profile IDs.
+     */
+    suspend fun getIgnoredUserProfileIds(): List<String>
 }

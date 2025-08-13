@@ -21,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -45,13 +44,10 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
-import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
-import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.helpers.spaceBetweenWithMin
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import org.koin.compose.koinInject
 
 interface ITrustedNodeSetupPresenter : ViewPresenter {
@@ -84,15 +80,7 @@ interface ITrustedNodeSetupPresenter : ViewPresenter {
 @Composable
 fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val presenter: ITrustedNodeSetupPresenter = koinInject()
-    val settingsPresenter: ISettingsPresenter = koinInject()
-
-    val menuTree: MenuItem = settingsPresenter.menuTree()
-    val menuPath = remember { mutableStateListOf(menuTree) }
-    RememberPresenterLifecycle(presenter, {
-        if (!isWorkflow) {
-            menuPath.add((menuTree as MenuItem.Parent).children[3])
-        }
-    })
+    RememberPresenterLifecycle(presenter)
 
     val bisqApiUrl by presenter.bisqApiUrl.collectAsState()
     val isConnected by presenter.isConnected.collectAsState()
@@ -160,10 +148,6 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
         if (isWorkflow) {
             BisqLogo()
             BisqGap.V2()
-        } else {
-            BreadcrumbNavigation(path = menuPath) { index ->
-                if (index == 0) settingsPresenter.settingsNavigateBack()
-            }
         }
         BisqText.largeRegular(
             text = "mobile.trustedNodeSetup.subTitle".i18n(),

@@ -508,18 +508,6 @@ class NodeOffersServiceFacade(
             return false
         }
 
-        val offer = message.bisqEasyOffer.get()
-
-        // Check if the maker's user profile exists and is not banned/ignored
-        val makerUserProfile = userProfileService.findUserProfile(offer.makersUserProfileId)
-        if (makerUserProfile.isEmpty) {
-            return false
-        }
-
-        if (userProfileService.isChatUserIgnored(makerUserProfile.get())) {
-            return false
-        }
-
         // Don't show our own offers
 //        val myUserIdentityIds = userIdentityService.userIdentities.map { it.userProfile.id }.toSet()
 //        if (myUserIdentityIds.contains(makerUserProfile.get().id)) {

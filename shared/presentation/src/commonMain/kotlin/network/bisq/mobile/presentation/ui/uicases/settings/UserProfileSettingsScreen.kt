@@ -11,8 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -29,8 +27,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
-import network.bisq.mobile.presentation.ui.components.molecules.settings.BreadcrumbNavigation
-import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -65,13 +61,7 @@ interface IUserProfileSettingsPresenter : ViewPresenter {
 @Composable
 fun UserProfileSettingsScreen() {
     val presenter: IUserProfileSettingsPresenter = koinInject()
-    val settingsPresenter: ISettingsPresenter = koinInject()
-    
-    val menuTree: MenuItem = settingsPresenter.menuTree()
-    val menuPath = remember { mutableStateListOf(menuTree) }
-    RememberPresenterLifecycle(presenter, {
-        menuPath.add((menuTree as MenuItem.Parent).children[1])
-    })
+    RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
     val botId by presenter.botId.collectAsState()
@@ -94,10 +84,7 @@ fun UserProfileSettingsScreen() {
         isInteractive = isInteractive,
         shouldBlurBg = showDeleteConfirmation,
     ) {
-        BreadcrumbNavigation(path = menuPath) { index ->
-            if (index == 0) settingsPresenter.settingsNavigateBack()
-        }
-        
+
         UserProfileScreenHeader(presenter)
 
         SettingsTextField(label = "mobile.settings.userProfile.labels.nickname".i18n(), value = nickname, editable = false)

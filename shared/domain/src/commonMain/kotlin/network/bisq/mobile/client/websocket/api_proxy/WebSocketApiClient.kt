@@ -45,6 +45,11 @@ class WebSocketApiClient(
         return request<T>("DELETE", path)
     }
 
+    suspend inline fun <reified T, reified  R> delete(path: String, requestBody: R): Result<T> {
+        val bodyAsJson = json.encodeToString(requestBody)
+        return request<T>("DELETE", path, bodyAsJson)
+    }
+
     suspend inline fun <reified T> put(path: String): Result<T> {
         return request<T>("PUT", path)
     }

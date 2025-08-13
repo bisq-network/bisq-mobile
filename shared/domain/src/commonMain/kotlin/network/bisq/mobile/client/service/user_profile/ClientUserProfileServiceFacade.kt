@@ -11,7 +11,6 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.ServiceFacade
@@ -24,8 +23,7 @@ import kotlin.math.min
 import kotlin.random.Random
 
 class ClientUserProfileServiceFacade(
-    private val apiGateway: UserProfileApiGateway,
-    private val clientCatHashService: ClientCatHashService<PlatformImage>
+    private val apiGateway: UserProfileApiGateway, private val clientCatHashService: ClientCatHashService<PlatformImage>
 ) : ServiceFacade(), UserProfileServiceFacade {
 
     private var keyMaterialResponse: KeyMaterialResponse? = null
@@ -36,6 +34,9 @@ class ClientUserProfileServiceFacade(
 
     private val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf<String, PlatformImage?>()
     private val avatarMapMutex = Mutex()
+
+    private var ignoredUserIdsCache: Set<String>? = null
+    private val ignoredUserIdsMutex = Mutex()
 
     // Misc
     override fun activate() {
@@ -68,10 +69,7 @@ class ClientUserProfileServiceFacade(
         val pubKeyHash: ByteArray = preparedData.id.hexToByteArray()
         val solutionEncoded = preparedData.proofOfWork.solutionEncoded
         val image: PlatformImage? = clientCatHashService.getImage(
-            pubKeyHash,
-            solutionEncoded.decodeBase64Bytes(),
-            0,
-            120
+            pubKeyHash, solutionEncoded.decodeBase64Bytes(), 0, 120
         )
 
         result(preparedData.id, preparedData.nym, image)
@@ -95,8 +93,7 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun updateAndPublishUserProfile(
-        statement: String?,
-        terms: String?
+        statement: String?, terms: String?
     ): Result<UserProfileVO> {
         try {
             // trigger exception if no selected user profile
@@ -109,8 +106,9 @@ class ClientUserProfileServiceFacade(
 
             val response: CreateUserIdentityResponse = apiResult.getOrThrow()
             this.keyMaterialResponse = null
-            log.i { "Call to updateAndPublishUserProfile successful. new statement = ${response.userProfile.statement}, " +
-                    "new terms = ${response.userProfile.terms}" }
+            log.i {
+                "Call to updateAndPublishUserProfile successful. new statement = ${response.userProfile.statement}, " + "new terms = ${response.userProfile.terms}"
+            }
 
             _selectedUserProfile.value = response.userProfile
             return Result.success(response.userProfile)
@@ -148,12 +146,15 @@ class ClientUserProfileServiceFacade(
 
     }
 
-    override suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO> {
-        val apiResult = apiGateway.findUserIdentities(ids)
-        if (apiResult.isFailure) {
-            return emptyList()
-        }
-        return apiResult.getOrDefault(emptyList())
+    override suspend fun findUserProfile(profileId: String): UserProfileVO? {
+        val apiResult = apiGateway.findUserProfiles(listOf(profileId))
+        val response = apiResult.getOrThrow()
+        return response.firstOrNull()
+    }
+
+    override suspend fun findUserProfiles(ids: List<String>): List<UserProfileVO> {
+        val apiResult = apiGateway.findUserProfiles(ids)
+        return apiResult.getOrThrow()
     }
 
     // Private
@@ -176,12 +177,63 @@ class ClientUserProfileServiceFacade(
                     val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()!!.toByteArray()
                     clientCatHashService.getImage(pubKeyHash, powSolution, userProfile.avatarVersion, 120)
                 } catch (e: Exception) {
-                    log.e {"Avatar generation failed for ${userProfile.nym}"}
+                    log.e(e) { "Avatar generation failed for ${userProfile.nym}" }
                     null
                 }
                 avatarMap[userProfile.nym] = avatar
             }
             return avatarMap[userProfile.nym]
         }
+    }
+
+    override suspend fun ignoreUserProfile(profileId: String) {
+        try {
+            apiGateway.ignoreUser(profileId).getOrThrow()
+            ignoredUserIdsMutex.withLock {
+                ignoredUserIdsCache = (ignoredUserIdsCache ?: emptySet()) + profileId
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to ignore user id: $profileId" }
+            throw e
+        }
+    }
+
+    override suspend fun undoIgnoreUserProfile(profileId: String) {
+        try {
+            apiGateway.undoIgnoreUser(profileId).getOrThrow()
+            ignoredUserIdsMutex.withLock {
+                ignoredUserIdsCache = (ignoredUserIdsCache ?: emptySet()) - profileId
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to undo ignore user id: $profileId" }
+            throw e
+        }
+    }
+
+    override suspend fun isUserIgnored(profileId: String): Boolean {
+        val cached = ignoredUserIdsMutex.withLock { ignoredUserIdsCache }
+        if (cached != null) return profileId in cached
+
+        val fresh = apiGateway.getIgnoredUserIds().getOrThrow().toSet()
+        return ignoredUserIdsMutex.withLock {
+            ignoredUserIdsCache = fresh
+            profileId in fresh
+        }
+    }
+
+    override suspend fun getIgnoredUserProfileIds(): List<String> {
+        val cached = ignoredUserIdsMutex.withLock { ignoredUserIdsCache }
+        if (cached != null) return cached.toList()
+        try {
+            val fetched: Set<String> = apiGateway.getIgnoredUserIds().getOrThrow().toSet()
+            return ignoredUserIdsMutex.withLock {
+                ignoredUserIdsCache = fetched
+                fetched.toList()
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to fetch ignored user IDs" }
+            throw e
+        }
+
     }
 }

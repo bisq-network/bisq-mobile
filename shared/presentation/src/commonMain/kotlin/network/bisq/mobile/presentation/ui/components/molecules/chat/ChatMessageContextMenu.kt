@@ -14,7 +14,6 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ClosedEyeIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
-import network.bisq.mobile.presentation.ui.components.atoms.icons.FlagIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ReplyIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
@@ -80,14 +79,15 @@ fun ChatMessageContextMenu(
                         onSetShowMenu(false)
                     }
                 )
-                DropdownMenuItem(
-                    text = { BisqText.smallRegular("chat.message.contextMenu.reportUser".i18n()) },
-                    leadingIcon = { FlagIcon() },
-                    onClick = {
-                        onReportUser()
-                        onSetShowMenu(false)
-                    }
-                )
+//              TODO: To be implemented in future release
+//                DropdownMenuItem(
+//                    text = { BisqText.smallRegular("chat.message.contextMenu.reportUser".i18n()) },
+//                    leadingIcon = { FlagIcon() },
+//                    onClick = {
+//                        onReportUser()
+//                        onSetShowMenu(false)
+//                    }
+//                )
             }
         }
     }

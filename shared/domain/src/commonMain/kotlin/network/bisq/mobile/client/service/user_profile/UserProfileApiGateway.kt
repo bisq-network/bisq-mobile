@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.service.user_profile
 
+import io.ktor.http.encodeURLPath
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -8,24 +9,21 @@ class UserProfileApiGateway(
     private val webSocketApiClient: WebSocketApiClient
 ) {
     private val basePath = "user-identities"
+    private val profileBasePath = "user-profiles"
 
     suspend fun ping(): Result<KeyMaterialResponse> {
         return webSocketApiClient.get("$basePath/ping")
     }
-    
+
     suspend fun getKeyMaterial(): Result<KeyMaterialResponse> {
         return webSocketApiClient.get("$basePath/key-material")
     }
 
     suspend fun createAndPublishNewUserProfile(
-        nickName: String,
-        keyMaterialResponse: KeyMaterialResponse
+        nickName: String, keyMaterialResponse: KeyMaterialResponse
     ): Result<CreateUserIdentityResponse> {
         val createUserIdentityRequest = CreateUserIdentityRequest(
-            nickName,
-            "",
-            "",
-            keyMaterialResponse
+            nickName, "", "", keyMaterialResponse
         )
         return webSocketApiClient.post(basePath, createUserIdentityRequest)
     }
@@ -43,9 +41,22 @@ class UserProfileApiGateway(
         return webSocketApiClient.get("$basePath/selected/user-profile")
     }
 
-    suspend fun findUserIdentities(ids: List<String>): Result<List<UserIdentityVO>> {
-        // TODO: Unimplemented in bisq2
-        // return webSocketApiClient.get("$basePath/list/${ids.joinToString()}")
-        return Result.success(emptyList())
+    suspend fun findUserProfiles(ids: List<String>): Result<List<UserProfileVO>> {
+        if (ids.isEmpty()) {
+            return Result.success(emptyList())
+        }
+        return webSocketApiClient.get("$profileBasePath?ids=${ids.joinToString(",")}")
+    }
+
+    suspend fun getIgnoredUserIds(): Result<List<String>> {
+        return webSocketApiClient.get("$profileBasePath/ignored")
+    }
+
+    suspend fun ignoreUser(userId: String): Result<Unit> {
+        return webSocketApiClient.post("$profileBasePath/ignore/$userId", "")
+    }
+
+    suspend fun undoIgnoreUser(userId: String): Result<Unit> {
+        return webSocketApiClient.delete("$profileBasePath/ignore/${userId.encodeURLPath()}")
     }
 }

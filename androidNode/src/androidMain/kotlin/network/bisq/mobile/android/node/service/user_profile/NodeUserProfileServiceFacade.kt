@@ -5,6 +5,7 @@ import bisq.security.DigestUtil
 import bisq.security.SecurityService
 import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
+import bisq.user.profile.UserProfileService
 import bisq.user.identity.NymIdGenerator
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -45,6 +46,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     // Dependencies
     private val securityService: SecurityService by lazy { applicationService.securityService.get() }
     private val userService: UserService by lazy { applicationService.userService.get() }
+    private val userProfileService: UserProfileService by lazy { applicationService.userProfileService.get() }
     private val catHashService: AndroidNodeCatHashService by lazy { applicationService.androidCatHashService.get() }
 
     // Properties
@@ -110,8 +112,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun updateAndPublishUserProfile(
-        statement: String?,
-        terms: String?
+        statement: String?, terms: String?
     ): Result<UserProfileVO> {
         try {
             val selectedUserIdentity = userService.userIdentityService.selectedUserIdentity
@@ -151,18 +152,17 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         }
     }
 
-    override suspend fun findUserIdentities(ids: List<String>): List<UserIdentityVO> {
-        val idList: MutableList<UserIdentityVO> = mutableListOf()
-
-        ids.map {
-            val userIdentity = userService.userIdentityService.findUserIdentity(it)
-            if (userIdentity.isPresent) {
-                idList.add(Mappings.UserIdentityMapping.fromBisq2Model(userIdentity.get()))
-            }
+    override suspend fun findUserProfile(profileId: String): UserProfileVO? {
+        val userProfile = userProfileService.findUserProfile(profileId)
+        return if (userProfile.isPresent) {
+            Mappings.UserProfileMapping.fromBisq2Model(userProfile.get())
+        } else {
+            null
         }
+    }
 
-        return idList
-
+    override suspend fun findUserProfiles(ids: List<String>): List<UserProfileVO> {
+        return ids.mapNotNull { id -> findUserProfile(id) }
     }
 
     override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
@@ -177,7 +177,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
                     )
                     avatarMap[userProfile.nym] = avatar
                 } catch (e: Exception) {
-                    log.e {"Avatar generation failed for ${userProfile.nym}"}
+                    log.e { "Avatar generation failed for ${userProfile.nym}" }
                 }
             }
             return avatarMap[userProfile.nym]
@@ -195,5 +195,29 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         val random: Int = Random().nextInt(800)
         // Limit to 200-2000 ms
         delay(min(1000.0, max(200.0, (200 + random - powDuration).toDouble())).toLong())
+    }
+
+    override suspend fun ignoreUserProfile(profileId: String) {
+        require(profileId.isNotBlank()) { "Profile ID cannot be blank" }
+        val userProfile = userProfileService.findUserProfile(profileId)
+            .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
+
+        userProfileService.ignoreUserProfile(userProfile)
+    }
+
+    override suspend fun undoIgnoreUserProfile(profileId: String) {
+        require(profileId.isNotBlank()) { "Profile ID cannot be blank" }
+        val userProfile = userProfileService.findUserProfile(profileId)
+            .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
+
+        userProfileService.undoIgnoreUserProfile(userProfile)
+    }
+
+    override suspend fun isUserIgnored(profileId: String): Boolean {
+        return userProfileService.isChatUserIgnored(profileId)
+    }
+
+    override suspend fun getIgnoredUserProfileIds(): List<String> {
+        return userProfileService.ignoredUserProfileIds.toList()
     }
 }

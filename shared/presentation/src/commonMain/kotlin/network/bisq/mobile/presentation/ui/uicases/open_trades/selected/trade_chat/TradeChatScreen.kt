@@ -8,12 +8,16 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
+import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.chat.ChatInputField
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.organisms.chat.ChatMessageList
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
 @Composable
@@ -23,20 +27,20 @@ fun TradeChatScreen() {
 
     val scrollState = rememberLazyListState()
     val scope = rememberCoroutineScope() // TODO: How scopes are to be used?
+    val isInteractive by presenter.isInteractive.collectAsState()
     val selectedTrade by presenter.selectedTrade.collectAsState()
     val chatMessages by presenter.chatMessages.collectAsState()
     val quotedMessage by presenter.quotedMessage.collectAsState()
     val sortedChatMessages = chatMessages.sortedBy { it.date }
     val userAvatarMap by presenter.avatarMap.collectAsState()
-
-    /*   var quotedMessage by remember {
-           mutableStateOf<BisqEasyOpenTradeMessageModel?>(null)
-       }*/
+    val ignoreUserId by presenter.ignoreUserId.collectAsState()
+    val showIgnoreUserWarnBox = ignoreUserId.isNotBlank()
 
     val clipboard = LocalClipboardManager.current
 
     BisqStaticScaffold(
         topBar = { TopBar(title = "mobile.tradeChat.title".i18n(selectedTrade?.shortTradeId ?: ""))},
+        isInteractive = isInteractive,
     ) {
 
         ChatMessageList(
@@ -49,7 +53,7 @@ fun TradeChatScreen() {
             onRemoveReaction = { message, reaction -> presenter.onRemoveReaction(message, reaction) },
             onReply = { message -> presenter.onReply(message) },
             onCopy = { message -> clipboard.setText(buildAnnotatedString { append(message.textString) }) },
-            onIgnoreUser = { message -> presenter.onIgnoreUser(message) },
+            onIgnoreUser = { id -> presenter.showIgnoreUserPopup(id) },
             onReportUser = { message -> presenter.onReportUser(message) },
         )
         ChatInputField(
@@ -60,5 +64,19 @@ fun TradeChatScreen() {
             },
             onCloseReply = { presenter.onReply(null) }
         )
+
+        if (showIgnoreUserWarnBox) {
+            ConfirmationDialog(
+                headline = "error.warning".i18n(),
+                headlineColor = BisqTheme.colors.warning,
+                headlineLeftIcon = { WarningIcon() },
+                message = "mobile.chat.ignoreUserWarn".i18n(),
+                confirmButtonText = "chat.ignoreUser.confirm".i18n(),
+                dismissButtonText = "action.cancel".i18n(),
+                verticalButtonPlacement = true,
+                onConfirm = { presenter.onConfirmedIgnoreUser(ignoreUserId) },
+                onDismiss = { presenter.onDismissIgnoreUser() }
+            )
+        }
     }
 }
