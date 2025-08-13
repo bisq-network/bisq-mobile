@@ -38,7 +38,7 @@ fun CreateOfferDirectionScreen() {
         showNextPrevButtons = false,
         shouldBlurBg = showSellerReputationWarning,
         showUserAvatar = false,
-        closeAction = true,
+        closeAction = !showSellerReputationWarning,
         onConfirmedClose = presenter::onClose
     ) {
         BisqText.h3Regular(presenter.headline)

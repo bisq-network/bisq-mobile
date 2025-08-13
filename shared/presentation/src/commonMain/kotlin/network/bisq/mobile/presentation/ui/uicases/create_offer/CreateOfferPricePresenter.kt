@@ -303,7 +303,7 @@ class CreateOfferPricePresenter(
         if (isValid(percentagePriceValue)) {
             commitToModel()
         }
-        navigateToOfferList()
+        navigateToOfferbookTab()
     }
 
     fun onNext() {
@@ -311,11 +311,6 @@ class CreateOfferPricePresenter(
             commitToModel()
             navigateTo(Routes.CreateOfferQuoteSidePaymentMethod)
         }
-    }
-
-    private fun navigateToOfferList() {
-        navigateBackTo(Routes.TabContainer)
-        navigateToTab(Routes.TabOfferbook)
     }
 
     private fun commitToModel() {

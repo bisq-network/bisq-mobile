@@ -285,6 +285,15 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         }
     }
 
+    /**
+     * Navigates to Offerbook tab.
+     * Called from Create offer, Take offer flow to close the work flow.
+     */
+    protected fun navigateToOfferbookTab() {
+        navigateBackTo(Routes.TabContainer)
+        navigateToTab(Routes.TabOfferbook)
+    }
+
     // Add a flag to track if we've shown the exit warning
     private var exitWarningShown = false
 

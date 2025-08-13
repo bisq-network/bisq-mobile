@@ -116,12 +116,7 @@ class TakeOfferAmountPresenter(
     }
 
     fun onClose() {
-        navigateToOfferList()
-    }
-
-    private fun navigateToOfferList() {
-        navigateBackTo(Routes.TabContainer)
-        navigateToTab(Routes.TabOfferbook)
+        navigateToOfferbookTab()
     }
 
     fun onNext() {

@@ -105,7 +105,7 @@ class CreateOfferMarketPresenter(
 
     fun onClose() {
         commitToModel()
-        navigateToOfferList()
+        navigateToOfferbookTab()
     }
 
 
@@ -113,11 +113,6 @@ class CreateOfferMarketPresenter(
         if (isValid()) {
             navigateNext()
         }
-    }
-
-    private fun navigateToOfferList() {
-        navigateBackTo(Routes.TabContainer)
-        navigateToTab(Routes.TabOfferbook)
     }
 
     private fun navigateNext() {
@@ -136,5 +131,5 @@ class CreateOfferMarketPresenter(
         }
     }
 
-    private fun isValid() = market != null
+    private fun isValid() = market != null && marketListItem != null
 }

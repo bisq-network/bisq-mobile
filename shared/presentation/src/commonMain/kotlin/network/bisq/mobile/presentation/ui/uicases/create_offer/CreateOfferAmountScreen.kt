@@ -60,6 +60,7 @@ fun CreateOfferAmountSelectorScreen() {
         nextOnClick = { presenter.onNext() },
         nextDisabled = !amountValid,
         snackbarHostState = presenter.getSnackState(),
+        isInteractive = !showLimitPopup,
         shouldBlurBg = showLimitPopup,
         showUserAvatar = false,
         closeAction = true,

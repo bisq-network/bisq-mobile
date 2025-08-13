@@ -62,7 +62,7 @@ class OfferbookPresenter(
     private val _showNotEnoughReputationDialog = MutableStateFlow(false)
     val showNotEnoughReputationDialog: StateFlow<Boolean> get() = _showNotEnoughReputationDialog.asStateFlow()
 
-    val selectedMarket = marketPriceServiceFacade.selectedMarketPriceItem
+    val selectedMarket get() = marketPriceServiceFacade.selectedMarketPriceItem
 
     var notEnoughReputationHeadline: String = ""
     var notEnoughReputationMessage: String = ""

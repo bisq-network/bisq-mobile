@@ -65,7 +65,7 @@ class CreateOfferDirectionPresenter(
 
     fun onClose() {
         commitToModel()
-        navigateToOfferList()
+        navigateToOfferbookTab()
     }
 
     fun showLearnReputation() {
@@ -83,11 +83,6 @@ class CreateOfferDirectionPresenter(
             navigateTo(Routes.CreateOfferAmount)
         else
             navigateTo(Routes.CreateOfferMarket)
-    }
-
-    private fun navigateToOfferList() {
-        navigateBackTo(Routes.TabContainer)
-        navigateToTab(Routes.TabOfferbook)
     }
 
     private fun commitToModel() {

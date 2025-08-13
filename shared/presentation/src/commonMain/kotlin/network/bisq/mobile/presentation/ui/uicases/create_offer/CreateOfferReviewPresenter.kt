@@ -122,7 +122,7 @@ class CreateOfferReviewPresenter(
     }
 
     fun onClose() {
-        navigateToOfferList()
+        navigateToOfferbookTab()
     }
 
     fun onCreateOffer() {
@@ -135,7 +135,7 @@ class CreateOfferReviewPresenter(
                 }
 
                 if (result.isSuccess) {
-                    navigateToOfferList()
+                    navigateToOfferbookTab()
                 } else {
                     val exception = result.exceptionOrNull()
                     if (exception is MediatorNotAvailableException) {
@@ -161,7 +161,7 @@ class CreateOfferReviewPresenter(
             if (isActive) {
                 _showMediatorWaitingDialog.value = false
                 if (retryResult.isSuccess) {
-                    launchUI { navigateToOfferList() }
+                    launchUI { navigateToOfferbookTab() }
                 } else {
                     launchUI { showSnackbar("mobile.bisqEasy.createOffer.mediatorTimeout".i18n()) }
                 }
@@ -173,10 +173,5 @@ class CreateOfferReviewPresenter(
         _showMediatorWaitingDialog.value = false
         mediatorWaitJob?.cancel()
         enableInteractive()
-    }
-
-    private fun navigateToOfferList() {
-        navigateBackTo(Routes.TabContainer)
-        navigateToTab(Routes.TabOfferbook)
     }
 }

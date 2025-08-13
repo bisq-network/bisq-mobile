@@ -47,7 +47,7 @@ fun OfferbookScreen() {
     val selectedMarket by presenter.selectedMarket.collectAsState()
 
     BisqStaticScaffold(
-        topBar = { TopBar(title = "offerbook_title".i18n(selectedMarket?.market?.quoteCurrencyCode ?: "")) },
+        topBar = { TopBar(title = "mobile.offerbook.title".i18n(selectedMarket?.market?.quoteCurrencyCode ?: "")) },
         floatingButton = {
             BisqFABAddButton(
                 onClick = { presenter.createOffer() },

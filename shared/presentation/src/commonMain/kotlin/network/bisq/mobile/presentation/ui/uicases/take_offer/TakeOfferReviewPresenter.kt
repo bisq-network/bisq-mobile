@@ -112,12 +112,7 @@ class TakeOfferReviewPresenter(
     }
 
     fun onClose() {
-        navigateToOfferList()
-    }
-
-    private fun navigateToOfferList() {
-        navigateBackTo(Routes.TabContainer)
-        navigateToTab(Routes.TabOfferbook)
+        navigateToOfferbookTab()
     }
 
     fun onTakeOffer() {
@@ -149,15 +144,9 @@ class TakeOfferReviewPresenter(
 
     fun onGoToOpenTrades() {
         setShowTakeOfferSuccessDialog(false)
-        closeWorkflow()
+        navigateToOfferbookTab()
         // ensure we go to the my trade tab
         navigateToTab(Routes.TabOpenTradeList)
-    }
-
-    private fun closeWorkflow() {
-        // Navigate back to TabContainer, which is part of RootNavigator's nav stack.
-        // Rather than navigating back to a specific Tab, which is part of TabNavController
-        navigateBackTo(Routes.TabContainer)
     }
 
     private fun applyPriceDetails() {

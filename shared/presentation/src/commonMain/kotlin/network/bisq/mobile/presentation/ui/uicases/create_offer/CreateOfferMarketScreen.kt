@@ -14,8 +14,6 @@ import androidx.compose.ui.Modifier
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
-import network.bisq.mobile.presentation.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BisqSearchField
@@ -40,6 +38,7 @@ fun CreateOfferCurrencySelectorScreen() {
         nextOnClick = { presenter.onNext() },
         useStaticScaffold = true,
         horizontalAlignment = Alignment.Start,
+        isInteractive = isInteractive,
         showUserAvatar = false,
         closeAction = true,
         onConfirmedClose = presenter::onClose,

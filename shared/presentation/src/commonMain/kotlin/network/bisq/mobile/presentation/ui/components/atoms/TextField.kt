@@ -81,9 +81,7 @@ fun BisqTextField(
     numberWithTwoDecimals: Boolean = false,
     modifier: Modifier = Modifier,
     textStyle: TextStyle = TextStyle(
-        color = color,
-        fontSize = 18.sp,
-        textDecoration = TextDecoration.None
+        color = color, fontSize = 18.sp, textDecoration = TextDecoration.None
     ),
     textFieldAlignment: Alignment = Alignment.TopStart,
     enableAnimation: Boolean = LocalAnimationsEnabled.current,
@@ -106,35 +104,31 @@ fun BisqTextField(
         else -> ImeAction.Done
     }
 
-    var finalValue = ""
-    finalValue = if (valuePrefix != null) valuePrefix + value else value
-    finalValue = if (valueSuffix != null) value + valueSuffix else value
+    val finalValue = buildString {
+        valuePrefix?.let { append(it) }
+        append(value)
+        valueSuffix?.let { append(it) }
+    }
 
     val dangerColor = BisqTheme.colors.danger
     val grey2Color = BisqTheme.colors.mid_grey20
-    val finalIndicatorColor by remember(validationError, isFocused, hasInteracted) {
-        mutableStateOf(
-            if (validationError == null || validationError?.isEmpty() == true || !hasInteracted)
-                if(!enableAnimation && isFocused) indicatorColor
-                else grey2Color
-            else
-                dangerColor
-        )
+    val finalIndicatorColor = when {
+        !validationError.isNullOrEmpty() && hasInteracted && enableAnimation -> dangerColor
+        !enableAnimation && isFocused -> indicatorColor
+        else -> grey2Color
     }
 
     val secondaryColor = BisqTheme.colors.secondary
     val secondaryHoverColor = BisqTheme.colors.secondaryHover
     val secondaryDisabledColor = BisqTheme.colors.secondaryDisabled
     val finalBackgroundColor by remember(disabled, isFocused) {
-        mutableStateOf(
-            if (disabled) {
-                secondaryDisabledColor
-            } else if (isFocused) {
-                secondaryHoverColor
-            } else {
-                secondaryColor
+        derivedStateOf {
+            when {
+                disabled -> secondaryDisabledColor
+                isFocused -> secondaryHoverColor
+                else -> secondaryColor
             }
-        )
+        }
     }
 
     val whiteColor = BisqTheme.colors.white
@@ -149,14 +143,10 @@ fun BisqTextField(
         }
     }
 
-    val finalTextStyle by remember(disabled) {
-        mutableStateOf(
-            if(disabled) {
-                textStyle.copy(color = BisqTheme.colors.mid_grey20)
-            } else {
-                textStyle
-            }
-        )
+    val finalTextStyle by remember(disabled, textStyle) {
+        derivedStateOf {
+            if (disabled) textStyle.copy(color = BisqTheme.colors.mid_grey20) else textStyle
+        }
     }
 
     // Trigger validation for read only fields, on first render
@@ -176,7 +166,7 @@ fun BisqTextField(
 
     val finalBorderRadius by remember(isFocused) {
         mutableStateOf(
-            if(isFocused) {
+            if (isFocused) {
                 0.dp
             } else {
                 6.dp
@@ -184,29 +174,23 @@ fun BisqTextField(
         )
     }
 
-    Column(
-        modifier = modifier
-    ) {
+    val decimalSeparator = remember { getDecimalSeparator().toString() }
+    val decimalLoosePattern = remember(decimalSeparator) {
+        Regex("^[-]?\\d*(${Regex.escape(decimalSeparator)}\\d{0,})?$")
+    }
+
+    Column(modifier = modifier) {
         if (label.isNotEmpty()) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                val isError = validationError?.isNotEmpty() == true && hasInteracted
-                if (isError) {
-                    BisqText.baseRegular(
-                        text = label,
-                        color = finalLabelColor,
-                        modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
-                    )
-                } else {
-                    BisqText.baseLight(
-                        text = label,
-                        color = finalLabelColor,
-                        modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
-                    )
-                }
+                BisqText.baseLight(
+                    text = label,
+                    color = finalLabelColor,
+                    modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
+                )
 
                 if (labelRightSuffix != null) {
                     labelRightSuffix()
@@ -215,94 +199,59 @@ fun BisqTextField(
 
             BisqGap.VQuarter()
         }
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clip(shape = RoundedCornerShape(topStart = finalBorderRadius, topEnd = finalBorderRadius))
-                .background(color = finalBackgroundColor)
-                .drawBehind {
-                    if (!isSearch) {
-                        val strokeWidth = 4.dp.toPx()
-                        val y = size.height
+        Box(modifier = Modifier.fillMaxWidth()
+            .clip(shape = RoundedCornerShape(topStart = finalBorderRadius, topEnd = finalBorderRadius))
+            .background(color = finalBackgroundColor).drawBehind {
+                if (!isSearch) {
+                    val strokeWidth = 4.dp.toPx()
+                    val y = size.height
 
+                    drawLine(
+                        color = finalIndicatorColor,
+                        start = Offset(0f, y),
+                        end = Offset(size.width, y),
+                        strokeWidth = strokeWidth
+                    )
+
+                    if (animatedLineProgress > 0f) {
                         drawLine(
-                            color = finalIndicatorColor,
+                            color = indicatorColor,
                             start = Offset(0f, y),
-                            end = Offset(size.width, y),
+                            end = Offset(size.width * animatedLineProgress, y),
                             strokeWidth = strokeWidth
                         )
-
-                        if (animatedLineProgress > 0f) {
-                            drawLine(
-                                color = indicatorColor,
-                                start = Offset(0f, y),
-                                end = Offset(size.width * animatedLineProgress, y),
-                                strokeWidth = strokeWidth
-                            )
-                        }
                     }
                 }
-        ) {
-            BasicTextField(
-                value = finalValue,
+            }) {
+            BasicTextField(value = finalValue,
                 onValueChange = {
-                    var cleanValue = it
-                    if (valuePrefix != null && cleanValue.startsWith(valuePrefix)) {
-                        cleanValue = cleanValue.removePrefix(valuePrefix)
-                    }
-                    if (valueSuffix != null && cleanValue.endsWith(valueSuffix)) {
-                        cleanValue = cleanValue.removeSuffix(valueSuffix)
-                    }
-                    if (maxLength != 0 && cleanValue.length > maxLength) {
-                        return@BasicTextField
-                    }
-                    if (numberWithTwoDecimals) {
-                        val separator = getDecimalSeparator().toString()
-                        val escapedSeparator = Regex.escape(separator)
-
-                        // Allow partial and complete decimal input
-                        val loosePattern = Regex("^[-]?\\d*(${escapedSeparator}\\d{0,})?\$")
-
-                        if (loosePattern.matches(cleanValue)) {
-                            val parts = cleanValue.split(separator)
-                            val integerPart = parts[0]
-                            val decimalPart = if (parts.size == 2) parts[1] else ""
-
-                            val trimmedValue = when {
-                                parts.size == 2 && decimalPart.length > 2 -> {
-                                    "$integerPart$separator${decimalPart.take(2)}"
-                                }
-                                else -> cleanValue // let the user keep typing normally
-                            }
-
-                            validationError = validation?.invoke(trimmedValue)
-                            onValueChange?.invoke(trimmedValue, validationError == null || validationError?.isEmpty() == true)
-                        }
-                    } else {
-                        validationError = validation?.invoke(cleanValue)
-                        onValueChange?.invoke(
-                            cleanValue,
-                            validationError == null || validationError?.isEmpty() == true
-                        )
+                    val processedValue = processText(
+                        it,
+                        valuePrefix,
+                        valueSuffix,
+                        maxLength,
+                        numberWithTwoDecimals,
+                        decimalSeparator,
+                        decimalLoosePattern
+                    )
+                    if (processedValue == value) return@BasicTextField
+                    validationError = validation?.invoke(processedValue)
+                    onValueChange?.invoke(
+                        processedValue, validationError.isNullOrEmpty()
+                    )
+                },
+                modifier = Modifier.padding(paddingValues).fillMaxWidth().onFocusChanged { focusState ->
+                    isFocused = focusState.isFocused
+                    if (!focusState.isFocused) {
+                        if (value.length > 0) hasInteracted = true
+                        validationError = validation?.invoke(value)
                     }
                 },
-                modifier = Modifier
-                    .padding(paddingValues)
-                    .fillMaxWidth()
-                    .onFocusChanged { focusState ->
-                        isFocused = focusState.isFocused
-                        if (!focusState.isFocused) {
-                            if (value.length > 0)
-                                hasInteracted = true
-                            validationError = validation?.invoke(value)
-                        }
-                    },
                 singleLine = !isTextArea,
                 maxLines = maxLines,
                 minLines = minLines,
                 keyboardOptions = KeyboardOptions(
-                    keyboardType = keyboardType,
-                    imeAction = imeAction
+                    keyboardType = keyboardType, imeAction = imeAction
                 ),
                 cursorBrush = SolidColor(BisqTheme.colors.primary),
                 enabled = !disabled,
@@ -310,8 +259,7 @@ fun BisqTextField(
                 decorationBox = { innerTextField ->
 
                     Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         if (leftSuffix != null) {
                             leftSuffix()
@@ -335,7 +283,7 @@ fun BisqTextField(
                         if (showPaste) {
                             PasteIconButton(onPaste = {
                                 validationError = validation?.invoke(it)
-                                onValueChange?.invoke(it, validationError == null)
+                                onValueChange?.invoke(it, validationError.isNullOrEmpty())
                                 hasInteracted = true
                             })
                         }
@@ -349,10 +297,9 @@ fun BisqTextField(
                             }
                         }
                     }
-                }
-            )
+                })
         }
-        // Error text has priority over help field
+        // Error text has priority over help field. But on focus, helper text is shown over error text.
         if (validationError?.isNotEmpty() == true && hasInteracted && !isFocused) {
             BisqGap.VQuarter()
             BisqText.smallRegular(
@@ -367,5 +314,51 @@ fun BisqTextField(
                 modifier = Modifier.padding(start = 4.dp, top = 1.dp, bottom = 4.dp),
             )
         }
+    }
+}
+
+
+fun processText(
+    value: String,
+    valuePrefix: String?,
+    valueSuffix: String?,
+    maxLength: Int,
+    numberWithTwoDecimals: Boolean,
+    decimalSeparator: String,
+    decimalLoosePattern: Regex,
+): String {
+    var cleanValue = value
+    if (valuePrefix != null && cleanValue.startsWith(valuePrefix)) {
+        cleanValue = cleanValue.removePrefix(valuePrefix)
+    }
+    if (valueSuffix != null && cleanValue.endsWith(valueSuffix)) {
+        cleanValue = cleanValue.removeSuffix(valueSuffix)
+    }
+    if (maxLength != 0 && cleanValue.length > maxLength) {
+        return cleanValue
+    }
+    if (numberWithTwoDecimals) {
+        val separator = decimalSeparator
+        val loosePattern = decimalLoosePattern
+
+        if (!loosePattern.matches(cleanValue)) {
+            return cleanValue
+        }
+        val parts = cleanValue.split(separator)
+        val integerPart = parts[0]
+        val decimalPart = if (parts.size == 2) parts[1] else ""
+
+        val trimmedValue = when {
+            parts.size == 2 && decimalPart.length > 2 -> {
+                "$integerPart$separator${decimalPart.take(2)}"
+            }
+
+            else -> cleanValue // let the user keep typing normally
+        }
+
+        return trimmedValue
+
+    } else {
+        return cleanValue
     }
 }

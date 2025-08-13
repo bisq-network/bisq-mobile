@@ -8,6 +8,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.organisms.PaymentMethodCard
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.helpers.convertToSet
 import org.koin.compose.koinInject
 
 @Composable
@@ -16,19 +17,10 @@ fun TakeOfferSettlementMethodScreen() {
     RememberPresenterLifecycle(presenter)
 
     val baseSidePaymentMethod: MutableStateFlow<Set<String>> = remember { MutableStateFlow(emptySet()) }
-    val quoteSidePaymentMethod: MutableStateFlow<Set<String>> = remember { MutableStateFlow(emptySet()) }
-
-    fun convertToSet(value: String?): Set<String> = value?.let { setOf(it) } ?: emptySet()
 
     LaunchedEffect(Unit) {
         presenter.baseSidePaymentMethod.collect { value ->
             baseSidePaymentMethod.value = convertToSet(value)
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        presenter.quoteSidePaymentMethod.collect { value ->
-            quoteSidePaymentMethod.value = convertToSet(value)
         }
     }
 

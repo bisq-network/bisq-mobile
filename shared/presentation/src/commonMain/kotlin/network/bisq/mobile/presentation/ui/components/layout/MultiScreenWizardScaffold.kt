@@ -34,7 +34,9 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
  * @param stepIndex starts at 1, so last step equals `stepsLength`
  * @param stepsLength How many steps this wizard has
  * @param showUserAvatar whether to show user avatar on TopBar or not
- * @param extraActions extra actions to pass to TopBar
+ * @param extraActions extra actions to pass to TopBar. If provided, it takes precedence over the built-in close action.
+ * @param closeAction when true, shows a default top-bar close action that opens a confirm-close dialog
+ * @param onConfirmedClose invoked after the user confirms the close action; ignored if null
  */
 @Composable
 fun MultiScreenWizardScaffold(
@@ -86,7 +88,7 @@ fun MultiScreenWizardScaffold(
                 horizontalAlignment = hAlignment,
                 verticalArrangement = verticalArrangement,
                 snackbarHostState = snackState,
-                isInteractive = isInteractive,
+                isInteractive = isInteractive && !confirmClose.visible,
                 shouldBlurBg = _shouldBlurBg || confirmClose.visible,
                 content = innerContent
             )
@@ -98,7 +100,7 @@ fun MultiScreenWizardScaffold(
                 horizontalAlignment = hAlignment,
                 verticalArrangement = verticalArrangement,
                 snackbarHostState = snackState,
-                isInteractive = isInteractive,
+                isInteractive = isInteractive && !confirmClose.visible,
                 showJumpToBottom = _showJumpToBottom,
                 shouldBlurBg = _shouldBlurBg || confirmClose.visible,
                 content = innerContent

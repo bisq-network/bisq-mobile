@@ -66,12 +66,7 @@ class TakeOfferPaymentMethodPresenter(
     }
 
     fun onClose() {
-        navigateToOfferList()
-    }
-
-    private fun navigateToOfferList() {
-        navigateBackTo(Routes.TabContainer)
-        navigateToTab(Routes.TabOfferbook)
+        navigateToOfferbookTab()
     }
 
     // Note the data is set at the service layer, so if there is only one payment method we

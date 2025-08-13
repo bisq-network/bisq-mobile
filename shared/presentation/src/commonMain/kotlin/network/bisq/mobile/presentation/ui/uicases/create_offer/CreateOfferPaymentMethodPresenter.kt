@@ -84,7 +84,7 @@ class CreateOfferPaymentMethodPresenter(
     fun onClose() {
         commitPaymentToModel()
         commitSettlementToModel()
-        navigateToOfferList()
+        navigateToOfferbookTab()
     }
 
     fun onQuoteSideNext() {
@@ -103,11 +103,6 @@ class CreateOfferPaymentMethodPresenter(
         } else {
             showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noBtcSettlementMethodSelected".i18n())
         }
-    }
-
-    private fun navigateToOfferList() {
-        navigateBackTo(Routes.TabContainer)
-        navigateToTab(Routes.TabOfferbook)
     }
 
     private fun commitPaymentToModel() {

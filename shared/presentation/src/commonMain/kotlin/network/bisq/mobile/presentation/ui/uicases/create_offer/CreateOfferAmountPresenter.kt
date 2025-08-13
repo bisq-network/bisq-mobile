@@ -235,7 +235,7 @@ class CreateOfferAmountPresenter(
 
     fun onClose() {
         commitToModel()
-        navigateToOfferList()
+        navigateToOfferbookTab()
     }
 
     fun onNext() {
@@ -245,11 +245,6 @@ class CreateOfferAmountPresenter(
         }
         commitToModel()
         navigateTo(Routes.CreateOfferPrice)
-    }
-
-    private fun navigateToOfferList() {
-        navigateBackTo(Routes.TabContainer)
-        navigateToTab(Routes.TabOfferbook)
     }
 
     fun navigateToReputation() {
