@@ -1,7 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,7 +29,7 @@ class CreateOfferPricePresenter(
 
     var priceTypeTitle: String
     var fixPriceDescription: String
-    var priceTypes: ImmutableList<PriceType> = PriceType.entries.toImmutableList()
+    var priceTypes: List<PriceType> = PriceType.entries.toList()
     var priceQuote: PriceQuoteVO
     var percentagePriceValue: Double = 0.0
     private val _formattedPercentagePrice = MutableStateFlow("")

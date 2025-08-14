@@ -6,7 +6,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import kotlinx.collections.immutable.toImmutableList
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqSegmentButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -53,7 +52,7 @@ fun MarketFilters() {
         BisqSegmentButton(
             label = "mobile.components.marketFilter.sortBy".i18n(),
             value = sortBy,
-            items = MarketSortBy.entries.map { it to it.getDisplayName() }.toImmutableList(),
+            items = MarketSortBy.entries.map { it to it.getDisplayName() },
             onValueChange = { pair ->
                 presenter.setSortBy(pair.first)
             },
@@ -63,7 +62,7 @@ fun MarketFilters() {
 
         BisqSegmentButton(
             label = "mobile.components.marketFilter.showMarkets".i18n(),
-            items = MarketFilter.entries.map { it to it.getDisplayName() }.toImmutableList(),
+            items = MarketFilter.entries.map { it to it.getDisplayName() },
             value = filter,
             onValueChange = { pair ->
                 presenter.setFilter(pair.first)
