@@ -77,17 +77,22 @@ class KmpTorService : ServiceFacade(), Logging {
         return torStartupCompleted
     }
 
+    /**
+     * Stop the tor runtime.
+     * @param forceStop If true, stop the tor runtime even if it is still starting.
+     * @return A deferred that completes when the tor runtime is stopped.
+     */
     fun stopTor(forceStop: Boolean = false): CompletableDeferred<Boolean> {
         val torStopCompleted = CompletableDeferred<Boolean>()
         if (torRuntime == null) {
             log.w("Tor runtime is already null, skipping stop")
-            torStopCompleted.complete(true) // ← Complete the deferred!
+            torStopCompleted.complete(true) // Stop was not performed
             return torStopCompleted
         }
 
         if (!forceStop && (!torDaemonStarted.isCompleted || !torDaemonStarted.isActive)) {
             log.i("Tor daemon is still starting, waiting for it to complete before stopping")
-            torStopCompleted.complete(true) // ← Complete the deferred!
+            torStopCompleted.complete(true) // Stop was skipped
             return torStopCompleted
         }
 
@@ -97,12 +102,15 @@ class KmpTorService : ServiceFacade(), Logging {
                 resetAndDispose()
                 handleError("Failed to stop Tor daemon: $error")
                 torRuntime = null
+                torStopCompleted.completeExceptionally(
+                    Exception("Failed to stop Tor daemon: $error")
+                )
             },
             {
                 log.i { "Tor daemon stopped" }
                 resetAndDispose()
                 torRuntime = null
-                torStopCompleted.takeIf { !it.isCompleted }?.complete(true)
+                torStopCompleted.complete(true)
             }
         )
         return torStopCompleted

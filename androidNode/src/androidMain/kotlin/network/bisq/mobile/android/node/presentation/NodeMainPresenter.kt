@@ -161,7 +161,8 @@ class NodeMainPresenter(
                 // launch process
                 activity.startActivity(restartIntent)
                 // now suicide
-                kotlin.system.exitProcess(0)
+                android.os.Process.killProcess(android.os.Process.myPid())
+//                kotlin.system.exitProcess(0)
             } ?: run {
                 log.e { "Could not create restart intent" }
             }

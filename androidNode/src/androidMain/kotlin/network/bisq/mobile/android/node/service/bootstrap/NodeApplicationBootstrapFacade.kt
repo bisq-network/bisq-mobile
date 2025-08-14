@@ -74,13 +74,13 @@ class NodeApplicationBootstrapFacade(
         setState("splash.applicationServiceState.INITIALIZE_APP".i18n())
         val progress = if (isTorSupported()) 0.25f else 0f
         setProgress(progress)
-        startTimeoutForStage("splash.applicationServiceState.INITIALIZE_APP".i18n())
+        startTimeoutForStage()
     }
 
     private fun initializeTorAndProceed() {
         setState("bootstrap.initializingTor".i18n())
         setProgress(0.1f)
-        startTimeoutForStage("bootstrap.initializingTor".i18n())
+        startTimeoutForStage()
 
         launchIO {
             try {
@@ -128,7 +128,7 @@ class NodeApplicationBootstrapFacade(
                 State.INITIALIZE_NETWORK -> {
                     setState("splash.applicationServiceState.INITIALIZE_NETWORK".i18n())
                     setProgress(0.5f)
-                    startTimeoutForStage("splash.applicationServiceState.INITIALIZE_NETWORK".i18n())
+                    startTimeoutForStage()
                 }
 
 
@@ -138,7 +138,7 @@ class NodeApplicationBootstrapFacade(
                 State.INITIALIZE_SERVICES -> {
                     setState("splash.applicationServiceState.INITIALIZE_SERVICES".i18n())
                     setProgress(0.75f)
-                    startTimeoutForStage("splash.applicationServiceState.INITIALIZE_SERVICES".i18n())
+                    startTimeoutForStage()
                 }
 
                 State.APP_INITIALIZED -> {
@@ -154,7 +154,7 @@ class NodeApplicationBootstrapFacade(
                         log.w { "Bootstrap: No connectivity detected - waiting for connection" }
                         setState("bootstrap.noConnectivity".i18n())
                         setProgress(0.95f)
-                        startTimeoutForStage("bootstrap.noConnectivity".i18n())
+                        startTimeoutForStage()
 
                         val connectivityJob = connectivityService.runWhenConnected {
                             log.i { "Bootstrap: Connectivity restored, completing initialization" }
@@ -196,12 +196,15 @@ class NodeApplicationBootstrapFacade(
     override fun deactivate() {
         log.i { "Bootstrap: deactivate() called" }
         cancelTimeout()
-        stopListiningToBootstrapProgress()
+        stopListeningToBootstrapProcess()
 
         // Only stop Tor if we haven't already stopped it for retry
         if (isTorSupported() && torWasStartedBefore) {
             log.i { "Bootstrap: Stopping Tor daemon during deactivate" }
-            kmpTorService.stopTor()
+            kmpTorService.stopTor().invokeOnCompletion { t ->
+                if (t != null) log.w(t) { "Bootstrap: Tor stop failed" }
+                else log.i { "Bootstrap: Tor stopped" }
+            }
         }
 
         isActive = false
@@ -209,7 +212,7 @@ class NodeApplicationBootstrapFacade(
         log.i { "Bootstrap: deactivate() completed" }
     }
 
-    private fun stopListiningToBootstrapProgress() {
+    private fun stopListeningToBootstrapProcess() {
         applicationServiceStatePin?.unbind()
         applicationServiceStatePin = null
     }
@@ -230,15 +233,15 @@ class NodeApplicationBootstrapFacade(
         }
     }
 
-    private fun startTimeoutForStage(stageName: String, extendedTimeout: Boolean = false) {
+    private fun startTimeoutForStage(stageName: String = state.value, extendedTimeout: Boolean = false) {
         currentTimeoutJob?.cancel()
         setTimeoutDialogVisible(false)
         setCurrentBootstrapStage(stageName)
 
         val timeoutDuration = if (extendedTimeout) {
-            BOOTSTRAP_STAGE_TIMEOUT_MS * 3 // 3x longer for extended wait (3 minutes)
+            BOOTSTRAP_STAGE_TIMEOUT_MS * 3 // 3x longer for extended wait (~60s)
         } else {
-            BOOTSTRAP_STAGE_TIMEOUT_MS // Normal timeout (1 minute)
+            BOOTSTRAP_STAGE_TIMEOUT_MS //  Normal timeout (~20s)
         }
 
         log.i { "Bootstrap: Starting timeout for stage: $stageName (${timeoutDuration/1000}s)" }
@@ -251,7 +254,7 @@ class NodeApplicationBootstrapFacade(
                     setTimeoutDialogVisible(true)
                 }
             } catch (e: Exception) {
-                log.d { "Bootstrap: Timeout job cancelled for stage: $stageName" }
+                log.e(e) { "Bootstrap: Timeout job cancelled for stage: $stageName" }
             }
         }
     }
@@ -280,7 +283,7 @@ class NodeApplicationBootstrapFacade(
 
     override suspend fun stopBootstrapForRetry() {
         log.i { "Bootstrap: User requested to stop bootstrap for retry" }
-        stopListiningToBootstrapProgress()
+        stopListeningToBootstrapProcess()
         // Cancel any ongoing timeouts without showing progress toast
         cancelTimeout(showProgressToast = false)
 

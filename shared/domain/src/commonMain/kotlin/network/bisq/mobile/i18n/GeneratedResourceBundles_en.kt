@@ -175,7 +175,7 @@ object GeneratedResourceBundles_en {
             "updater.table.progress" to "Download progress",
             "navigation.network.info.inventoryRequests.tooltip" to "Network data request state:\nNumber of pending requests: {0}\nMax. requests: {1}\nAll data received: {2}",
             "onboarding.createProfile.createProfile.busy" to "Initializing network node...",
-            "bootstrap.timeout.message" to "It looks like it's taking more than normal to {0}. Would you like to stop and restart the app?",
+            "bootstrap.timeout.message" to "It looks like {0} is taking longer than usual. Would you like to stop and restart the app?",
             "dashboard.second.button" to "Explore trade protocols",
             "dashboard.activeUsers" to "Published user profiles",
             "hyperlinks.openInBrowser.attention.headline" to "Open web link",
