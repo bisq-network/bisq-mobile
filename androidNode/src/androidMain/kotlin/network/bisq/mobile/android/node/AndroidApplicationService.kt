@@ -264,21 +264,42 @@ class AndroidApplicationService(
         readAllPersisted().join()
         log.i("readAllPersisted took ${(System.currentTimeMillis() - ts)} ms")
 
+        log.i("Starting securityService.initialize()")
         return securityService.initialize()
             .thenCompose { result: Boolean? ->
+                log.i("securityService.initialize() completed with result: $result")
                 setState(State.INITIALIZE_NETWORK)
+                log.i("Starting networkService.initialize()")
                 networkService.initialize()
             }
             .whenComplete { r: Boolean?, throwable: Throwable? ->
                 if (throwable == null) {
+                    log.i("networkService.initialize() completed with result: $r")
                     setState(State.INITIALIZE_SERVICES)
+                } else {
+                    log.e("networkService.initialize() failed", throwable)
                 }
             }
-            .thenCompose { result: Boolean? -> identityService.initialize() }
-            .thenCompose { result: Boolean? -> bondedRolesService.initialize() }
-            .thenCompose { result: Boolean? -> accountService.initialize() }
-            .thenCompose { result: Boolean? -> contractService.initialize() }
-            .thenCompose { result: Boolean? -> userService.initialize() }
+            .thenCompose { result: Boolean? ->
+                log.i("Starting identityService.initialize()")
+                identityService.initialize()
+            }
+            .thenCompose { result: Boolean? ->
+                log.i("identityService completed, starting bondedRolesService.initialize()")
+                bondedRolesService.initialize()
+            }
+            .thenCompose { result: Boolean? ->
+                log.i("bondedRolesService completed, starting accountService.initialize()")
+                accountService.initialize()
+            }
+            .thenCompose { result: Boolean? ->
+                log.i("accountService completed, starting contractService.initialize()")
+                contractService.initialize()
+            }
+            .thenCompose { result: Boolean? ->
+                log.i("contractService completed, starting userService.initialize()")
+                userService.initialize()
+            }
             .thenCompose { result: Boolean? -> settingsService.initialize() }
             .thenCompose { result: Boolean? -> offerService.initialize() }
             .thenCompose { result: Boolean? -> chatService.initialize() }

@@ -145,6 +145,32 @@ class NodeMainPresenter(
         super.onDestroying()
     }
 
+    fun restartApp() {
+        try {
+            val activity = view as Activity
+            val packageManager = activity.packageManager
+            val packageName = activity.packageName
+
+            // Create restart intent
+            val intent = packageManager.getLaunchIntentForPackage(packageName)
+            intent?.let { restartIntent ->
+                restartIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                restartIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                restartIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK)
+
+                // launch process
+                activity.startActivity(restartIntent)
+                // now suicide
+                android.os.Process.killProcess(android.os.Process.myPid())
+//                kotlin.system.exitProcess(0)
+            } ?: run {
+                log.e { "Could not create restart intent" }
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to restart app" }
+        }
+    }
+
     private fun stopPersistentServices() {
         try {
             // Explicitly stop services that might continue running

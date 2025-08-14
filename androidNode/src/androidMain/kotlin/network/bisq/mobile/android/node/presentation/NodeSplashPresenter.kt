@@ -38,4 +38,14 @@ class NodeSplashPresenter(
     override suspend fun hasConnectivity(): Boolean {
         return mainPresenter.isConnected()
     }
+
+    /**
+     * Use only for corner cases / temporary solutions whilst
+     * investigating a real fix
+     */
+    override fun restartApp() {
+        log.i { "User requested app restart from failed state - restarting application" }
+
+        (mainPresenter as NodeMainPresenter).restartApp()
+    }
 }

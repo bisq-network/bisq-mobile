@@ -11,6 +11,7 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -29,6 +30,10 @@ open class SplashPresenter(
 
     val state: StateFlow<String> get() = applicationBootstrapFacade.state
     val progress: StateFlow<Float> get() = applicationBootstrapFacade.progress
+    val isTimeoutDialogVisible: StateFlow<Boolean> get() = applicationBootstrapFacade.isTimeoutDialogVisible
+    val isBootstrapFailed: StateFlow<Boolean> get() = applicationBootstrapFacade.isBootstrapFailed
+    val currentBootstrapStage: StateFlow<String> get() = applicationBootstrapFacade.currentBootstrapStage
+    val shouldShowProgressToast: StateFlow<Boolean> get() = applicationBootstrapFacade.shouldShowProgressToast
 
     private var hasNavigatedAway = false
 
@@ -43,6 +48,13 @@ open class SplashPresenter(
             if (value == 1.0f && !hasNavigatedAway) {
                 hasNavigatedAway = true
                 navigateToNextScreen()
+            }
+        }
+
+        collectUI(shouldShowProgressToast) { shouldShow ->
+            if (shouldShow) {
+                showSnackbar("bootstrap.progress.continuing".i18n(), isError = false)
+                applicationBootstrapFacade.setShouldShowProgressToast(false)
             }
         }
     }
@@ -140,5 +152,27 @@ open class SplashPresenter(
             else -> navigateToHome() // TODO: Ideally this shouldn't happen here
         }
         return true
+    }
+
+    fun onTimeoutDialogStop() {
+        log.i { "User requested to stop bootstrap from timeout dialog" }
+        launchIO {
+            applicationBootstrapFacade.stopBootstrapForRetry()
+        }
+    }
+
+    fun onTimeoutDialogContinue() {
+        log.i { "User chose to continue waiting - extending timeout" }
+        applicationBootstrapFacade.extendTimeout()
+    }
+
+    open fun onBootstrapFailedRetry() {
+        log.i { "User requested app restart from failed state" }
+        restartApp()
+    }
+
+    protected open fun restartApp() {
+        // Default implementation - platform-specific implementations will override
+        log.w { "App restart not implemented for this platform" }
     }
 }

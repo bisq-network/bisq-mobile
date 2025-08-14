@@ -77,15 +77,23 @@ class KmpTorService : ServiceFacade(), Logging {
         return torStartupCompleted
     }
 
-    fun stopTor() {
+    /**
+     * Stop the tor runtime.
+     * @param forceStop If true, stop the tor runtime even if it is still starting.
+     * @return A deferred that completes when the tor runtime is stopped.
+     */
+    fun stopTor(forceStop: Boolean = false): CompletableDeferred<Boolean> {
+        val torStopCompleted = CompletableDeferred<Boolean>()
         if (torRuntime == null) {
             log.w("Tor runtime is already null, skipping stop")
-            return
+            torStopCompleted.complete(true) // Stop was not performed
+            return torStopCompleted
         }
 
-        if (!torDaemonStarted.isCompleted || !torDaemonStarted.isActive) {
+        if (!forceStop && (!torDaemonStarted.isCompleted || !torDaemonStarted.isActive)) {
             log.i("Tor daemon is still starting, waiting for it to complete before stopping")
-            return
+            torStopCompleted.complete(true) // Stop was skipped
+            return torStopCompleted
         }
 
         torRuntime!!.enqueue(
@@ -94,13 +102,18 @@ class KmpTorService : ServiceFacade(), Logging {
                 resetAndDispose()
                 handleError("Failed to stop Tor daemon: $error")
                 torRuntime = null
+                torStopCompleted.completeExceptionally(
+                    Exception("Failed to stop Tor daemon: $error")
+                )
             },
             {
                 log.i { "Tor daemon stopped" }
                 resetAndDispose()
                 torRuntime = null
+                torStopCompleted.complete(true)
             }
         )
+        return torStopCompleted
     }
 
     fun restartTor() {
@@ -279,8 +292,25 @@ class KmpTorService : ServiceFacade(), Logging {
             }
 
             log.i { "Wrote external_tor.config to ${configFile.absolutePath}\n\n$configContent\n\n" }
+
+            verifyControlPortAccessible(controlPort)
+
         } catch (error: Exception) {
             handleError("Failed to write external_tor.config. {$error}")
+        }
+    }
+
+    private fun verifyControlPortAccessible(controlPort: Int) {
+        try {
+            // Give Tor a moment to fully initialize the control port
+            Thread.sleep(500)
+
+            java.net.Socket().use { socket ->
+                socket.connect(java.net.InetSocketAddress("127.0.0.1", controlPort), 5000)
+                log.i { "Verified control port $controlPort is accessible" }
+            }
+        } catch (e: Exception) {
+            log.w(e) { "Control port $controlPort not yet accessible, but continuing anyway" }
         }
     }
 

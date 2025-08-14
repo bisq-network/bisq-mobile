@@ -23,6 +23,30 @@ abstract class ApplicationBootstrapFacade : ServiceFacade() {
         _progress.value = value
     }
 
+    private val _isTimeoutDialogVisible = MutableStateFlow(false)
+    val isTimeoutDialogVisible: StateFlow<Boolean> get() = _isTimeoutDialogVisible.asStateFlow()
+    fun setTimeoutDialogVisible(visible: Boolean) {
+        _isTimeoutDialogVisible.value = visible
+    }
+
+    private val _isBootstrapFailed = MutableStateFlow(false)
+    val isBootstrapFailed: StateFlow<Boolean> get() = _isBootstrapFailed.asStateFlow()
+    fun setBootstrapFailed(failed: Boolean) {
+        _isBootstrapFailed.value = failed
+    }
+
+    private val _currentBootstrapStage = MutableStateFlow("")
+    val currentBootstrapStage: StateFlow<String> get() = _currentBootstrapStage.asStateFlow()
+    fun setCurrentBootstrapStage(stage: String) {
+        _currentBootstrapStage.value = stage
+    }
+
+    private val _shouldShowProgressToast = MutableStateFlow(false)
+    val shouldShowProgressToast: StateFlow<Boolean> get() = _shouldShowProgressToast.asStateFlow()
+    fun setShouldShowProgressToast(show: Boolean) {
+        _shouldShowProgressToast.value = show
+    }
+
     protected var isActive = false
 
     override fun activate() {
@@ -39,4 +63,23 @@ abstract class ApplicationBootstrapFacade : ServiceFacade() {
      * For Tor configurations, this suspends until Tor is fully initialized.
      */
     abstract suspend fun waitForTor()
+
+    /**
+     * Stop the current bootstrap process and prepare for retry.
+     * This should purposely fail the bootstrap and show the retry button.
+     */
+    open suspend fun stopBootstrapForRetry() {
+        log.i { "Bootstrap: Stopping bootstrap for retry" }
+        setBootstrapFailed(true)
+        setTimeoutDialogVisible(false)
+    }
+
+    /**
+     * Extend the current timeout when user chooses to continue waiting.
+     * Default implementation just hides the dialog.
+     */
+    open fun extendTimeout() {
+        log.i { "Bootstrap: Extending timeout (default implementation)" }
+        setTimeoutDialogVisible(false)
+    }
 }
