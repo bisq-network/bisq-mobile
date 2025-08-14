@@ -31,7 +31,7 @@ interface IOnboardingPresenter : ViewPresenter {
 
     val filteredPages: List<PagerViewItem>
 
-    val indexesToShow: List<Number>
+    val indexesToShow: List<Int>
 
     fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState)
 

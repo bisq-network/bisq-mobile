@@ -129,17 +129,20 @@ class WebSocketApiClient(
                     val decodeFromString = json.decodeFromString<T>(body)
                     return Result.success(decodeFromString)
                 }
-            } else if (body.startsWith("{") || body.startsWith("[")) {
-                // TODO Not sure if we expect any json error messages.
-                try {
-                    val decodeFromString = json.decodeFromString<Map<String, String>>(body)
-                    val errorMessage = decodeFromString["error"]!!
-                    return Result.failure(WebSocketRestApiException(response.httpStatusCode, errorMessage))
-                } catch (e: Exception) {
+            } else {
+                val trimmed = body.trimStart()
+                if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+                    // TODO Not sure if we expect any json error messages.
+                    return try {
+                        val asMap = json.decodeFromString<Map<String, String>>(trimmed)
+                        val errorMessage = asMap["error"] ?: body
+                        Result.failure(WebSocketRestApiException(response.httpStatusCode, errorMessage))
+                    } catch (_: Exception) {
+                        Result.failure(WebSocketRestApiException(response.httpStatusCode, body))
+                    }
+                } else {
                     return Result.failure(WebSocketRestApiException(response.httpStatusCode, body))
                 }
-            } else {
-                return Result.failure(WebSocketRestApiException(response.httpStatusCode, body))
             }
         } catch (e: CancellationException) {
             // no log on cancellation
