@@ -67,18 +67,14 @@ fun SafeInsetsContainer(
 ) {
     // Outer container consumes insets and paints the background
     Box(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize()
             .consumeWindowInsets(WindowInsets.systemBars) // Eat insets, so no white stripes
             .background(Color.Black) // Or your desired background color behind system bars
     ) {
         // Inner container adds padding for content
         Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(
-                    top = WindowInsets.statusBars.topPaddingDp(),
-                    bottom = WindowInsets.navigationBars.bottomPaddingDp()
+            modifier = Modifier.fillMaxSize().padding(
+                    top = WindowInsets.statusBars.topPaddingDp(), bottom = WindowInsets.navigationBars.bottomPaddingDp()
                 )
         ) {
             content()
@@ -106,8 +102,12 @@ fun App() {
     val languageCode by presenter.languageCode.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
 
-    I18nSupport.initialize(languageCode)
-    setDefaultLocale(languageCode)
+    LaunchedEffect(languageCode) {
+        if (languageCode.isNotBlank()) {
+            I18nSupport.initialize(languageCode)
+            setDefaultLocale(languageCode)
+        }
+    }
 
     SafeInsetsContainer {
         BisqTheme(darkTheme = true) {

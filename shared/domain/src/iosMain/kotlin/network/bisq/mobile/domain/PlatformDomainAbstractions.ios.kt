@@ -215,5 +215,5 @@ actual fun String.toDoubleOrNullLocaleAware(): Double? {
 
 actual fun getLocaleCurrencyName(currencyCode: String): String {
     val rawName = defaultLocale.displayNameForKey(NSLocaleCurrencyCode, currencyCode)
-    return rawName?.capitalizeWords() ?: currencyCode
+    return rawName ?: currencyCode
 }

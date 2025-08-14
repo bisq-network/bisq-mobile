@@ -16,7 +16,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.domain.utils.StringUtils.capitalizeWords
 import java.io.ByteArrayOutputStream
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -169,8 +168,10 @@ actual fun String.toDoubleOrNullLocaleAware(): Double? {
 
 actual fun getLocaleCurrencyName(currencyCode: String): String {
     val javaLocale = Locale.getDefault()
-    val currency = Currency.getInstance(currencyCode)
-    val currencyDisplayName = currency.getDisplayName(javaLocale)
-
-    return currencyDisplayName.capitalizeWords()
+    return runCatching {
+        Currency.getInstance(currencyCode).getDisplayName(javaLocale)
+    }.getOrElse {
+        // Fallback gracefully when currency code is not recognized by the platform
+        currencyCode
+    }
 }

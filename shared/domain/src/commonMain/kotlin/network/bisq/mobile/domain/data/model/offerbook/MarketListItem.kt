@@ -24,6 +24,7 @@ import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 data class MarketListItem(val market: MarketVO, val numOffers: Int, val localeFiatCurrencyName: String) {
     override fun toString(): String {
         return "MarketListItem(market=$market, " +
-                "numOffers=$numOffers"
+                "numOffers=$numOffers, " +
+                "localeFiatCurrencyName=$localeFiatCurrencyName)"
     }
 }
