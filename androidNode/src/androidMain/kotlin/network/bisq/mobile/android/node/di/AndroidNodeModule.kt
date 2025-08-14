@@ -5,9 +5,9 @@ import network.bisq.mobile.android.node.presentation.NodeAboutPresenter
 import network.bisq.mobile.android.node.presentation.NodeDashboardPresenter
 import network.bisq.mobile.android.node.presentation.NodeGeneralSettingsPresenter
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
+import network.bisq.mobile.android.node.presentation.NodeOnBoardingPresenter
 import network.bisq.mobile.android.node.presentation.NodeSettingsPresenter
 import network.bisq.mobile.android.node.presentation.NodeSplashPresenter
-import network.bisq.mobile.android.node.presentation.OnBoardingNodePresenter
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.android.node.service.accounts.NodeAccountsServiceFacade
@@ -146,5 +146,5 @@ val androidNodeModule = module {
 
     factory<GeneralSettingsPresenter> { NodeGeneralSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
-    single<IOnboardingPresenter> { OnBoardingNodePresenter(get(), get(), get()) } bind IOnboardingPresenter::class
+    single<IOnboardingPresenter> { NodeOnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
 }

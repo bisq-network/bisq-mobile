@@ -9,6 +9,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -22,13 +23,21 @@ import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 interface IOnboardingPresenter : ViewPresenter {
-
+    val headline: String
+    
     val buttonText: StateFlow<String>
 
-    val onBoardingData: List<PagerViewItem>
+    val pages: List<PagerViewItem>
+
+    val filteredPages: List<PagerViewItem>
 
     val indexesToShow: List<Number>
+
     fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState)
+
+    fun mainButtonText(deviceSettings: Settings?): String
+
+    fun doCustomNavigationLogic(isBisqUrlSet: Boolean, hasProfile: Boolean)
 }
 
 @Composable
@@ -37,19 +46,16 @@ fun OnBoardingScreen() {
     RememberPresenterLifecycle(presenter)
 
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(pageCount = { presenter.indexesToShow.size })
+    val pagerState = rememberPagerState(pageCount = { presenter.filteredPages.size })
     val mainButtonText by presenter.buttonText.collectAsState()
 
-    val finalPages = presenter.onBoardingData.filterIndexed { index, _ ->
-        presenter.indexesToShow.contains(index)
-    }
-
     BisqScrollScaffold {
+        BisqGap.VHalf()
         BisqLogo()
         BisqGap.V2()
-        BisqText.h1LightGrey("onboarding.bisq2.headline".i18n(), textAlign = TextAlign.Center)
+        BisqText.h2Light(presenter.headline, textAlign = TextAlign.Center)
         BisqGap.V2()
-        BisqPagerView(pagerState, finalPages)
+        BisqPagerView(pagerState, presenter.filteredPages)
         BisqGap.V2()
 
         BisqButton(
