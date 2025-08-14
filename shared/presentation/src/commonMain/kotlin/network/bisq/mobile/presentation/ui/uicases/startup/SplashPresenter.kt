@@ -162,7 +162,7 @@ open class SplashPresenter(
         applicationBootstrapFacade.extendTimeout()
     }
 
-    open fun onBootstrapFailedRetry() {
+    open fun onRestart() {
         log.i { "User requested app restart from failed state" }
         restartApp()
     }

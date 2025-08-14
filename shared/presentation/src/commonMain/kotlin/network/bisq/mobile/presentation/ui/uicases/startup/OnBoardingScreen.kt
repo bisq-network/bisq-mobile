@@ -23,7 +23,7 @@ import org.koin.compose.koinInject
 
 interface IOnboardingPresenter : ViewPresenter {
     val headline: String
-    
+
     val buttonText: StateFlow<String>
 
     val filteredPages: List<PagerViewItem>
