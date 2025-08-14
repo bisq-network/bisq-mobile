@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -52,6 +53,7 @@ class CreateOfferAmountPresenter(
 
     private val _amountType: MutableStateFlow<AmountType> = MutableStateFlow(AmountType.FIXED_AMOUNT)
     val amountType: StateFlow<AmountType> get() = _amountType.asStateFlow()
+    val amountTypes = AmountType.entries.toImmutableList()
 
     // FIXED_AMOUNT
     private val _fixedAmountSliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)

@@ -30,20 +30,20 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.collections.immutable.ImmutableList
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun <T> ToggleTab(
-    options: List<T>,
-    initialOption: T,
-    onStateChange: (T) -> Unit,
+    options: ImmutableList<T>,
+    selectedOption: T,
+    onOptionSelected: (T) -> Unit,
     getDisplayString: (T) -> String,// Custom function to display the label for each option
     singleLine: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    var selectedOption by remember { mutableStateOf(initialOption) }
     val hPadding = BisqUIConstants.ScreenPadding
     val vPadding = BisqUIConstants.ScreenPadding
 
@@ -127,8 +127,7 @@ fun <T> ToggleTab(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
                                 onClick = {
-                                    selectedOption = option
-                                    onStateChange(selectedOption)
+                                    onOptionSelected(option)
                                 }
                             )
                             .padding(horizontal = hPadding, vertical = vPadding)
