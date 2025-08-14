@@ -122,7 +122,11 @@ open class ClientMainPresenter(
 
             profileStatsServiceFacade.activate()
         }.onFailure { e ->
-            log.e("Error activating services", e)
+            // Roll back any partially activated services
+            runCatching { deactivateServices() }.onFailure { deactEx ->
+                log.w { "Failed to rollback services after activation error: ${deactEx.message}" }
+            }
+            log.w { "Error activating services: ${e.message}" }
             handleInitializationError(e, "Service activation")
         }
     }

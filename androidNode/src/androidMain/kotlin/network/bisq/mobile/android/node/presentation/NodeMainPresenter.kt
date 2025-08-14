@@ -105,6 +105,7 @@ class NodeMainPresenter(
                                 activateServices(skipSettings = true)
                             } else {
                                 log.e("Initializing applicationService failed", throwable)
+                                applicationBootstrapFacade.deactivate()
                                 handleInitializationError(throwable, "Application service initialization")
                             }
                         }

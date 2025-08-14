@@ -198,76 +198,12 @@ open class MainPresenter(
      * @param context Additional context about where the error occurred (e.g., "Node initialization", "Service activation")
      */
     protected fun handleInitializationError(exception: Throwable, context: String = "Initialization") {
-        // TODO do we want to process the exception message?
-//        val errorMessage = when {
-//            // Tor-related errors
-//            exception.message?.contains("tor", ignoreCase = true) == true ||
-//            exception.message?.contains("proxy", ignoreCase = true) == true -> {
-//                "$context failed: Tor connection error\n\n" +
-//                "This usually happens when:\n" +
-//                "• Network connectivity issues\n" +
-//                "• Tor daemon failed to start\n" +
-//                "• Firewall blocking Tor connections\n\n" +
-//                "Try restarting the app or check your network connection.\n\n" +
-//                "Technical details: ${exception.message}"
-//            }
-//
-//            // Network/connectivity errors
-//            exception.message?.contains("network", ignoreCase = true) == true ||
-//            exception.message?.contains("connection", ignoreCase = true) == true ||
-//            exception.message?.contains("timeout", ignoreCase = true) == true ||
-//            exception.message?.contains("websocket", ignoreCase = true) == true -> {
-//                "$context failed: Network connection error\n\n" +
-//                "This usually happens when:\n" +
-//                "• No internet connection\n" +
-//                "• Network timeout\n" +
-//                "• Firewall blocking connections\n" +
-//                "• Server/node unreachable\n\n" +
-//                "Please check your internet connection and try restarting the app.\n\n" +
-//                "Technical details: ${exception.message}"
-//            }
-//
-//            // Configuration/setup errors
-//            exception.message?.contains("config", ignoreCase = true) == true ||
-//            exception.message?.contains("initialization", ignoreCase = true) == true ||
-//            exception.message?.contains("version", ignoreCase = true) == true ||
-//            exception.message?.contains("compatible", ignoreCase = true) == true -> {
-//                "$context failed: Configuration error\n\n" +
-//                "This usually happens when:\n" +
-//                "• Invalid configuration settings\n" +
-//                "• Version compatibility issues\n" +
-//                "• Corrupted data directory\n" +
-//                "• Insufficient permissions\n\n" +
-//                "Try restarting the app or check your settings. If the problem persists, you may need to reset the app data.\n\n" +
-//                "Technical details: ${exception.message}"
-//            }
-//
-//            // Authentication/authorization errors
-//            exception.message?.contains("auth", ignoreCase = true) == true ||
-//            exception.message?.contains("unauthorized", ignoreCase = true) == true -> {
-//                "$context failed: Authentication error\n\n" +
-//                "This usually happens when:\n" +
-//                "• Invalid credentials or tokens\n" +
-//                "• Authentication expired\n" +
-//                "• Access permissions denied\n\n" +
-//                "Please check your configuration and credentials.\n\n" +
-//                "Technical details: ${exception.message}"
-//            }
-//
-//            // Generic fallback
-//            else -> {
-//                "$context failed\n\n" +
-//                "The application could not start properly. This might be due to:\n" +
-//                "• Network connectivity issues\n" +
-//                "• System resource constraints\n" +
-//                "• Configuration problems\n\n" +
-//                "Try restarting the app. If the problem persists, please report this issue.\n\n" +
-//                "Technical details: ${exception.message ?: "Unknown error"}"
-//            }
-//        }
-
         // Use the existing error handling infrastructure
-        GenericErrorHandler.handleGenericError("Initialization process failed to complete: $context", exception)
+        launchUI {
+            GenericErrorHandler.handleGenericError(
+                "Initialization process failed during: $context",
+                exception)
+        }
     }
 
 }

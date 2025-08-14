@@ -169,8 +169,8 @@ class ClientUserProfileServiceFacade(
         delay(delayDuration)
     }
 
-    override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
-        return avatarMapMutex.withLock {
+    override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? =
+        avatarMapMutex.withLock {
             if (avatarMap[userProfile.nym] == null) {
                 val avatar = try {
                     val pubKeyHash = userProfile.networkId.pubKey.hash.decodeBase64()!!.toByteArray()
@@ -184,7 +184,6 @@ class ClientUserProfileServiceFacade(
             }
             return avatarMap[userProfile.nym]
         }
-    }
 
     override suspend fun ignoreUserProfile(profileId: String) {
         try {

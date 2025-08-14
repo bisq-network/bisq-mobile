@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
@@ -44,7 +45,7 @@ abstract class BisqMainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
 
-        intent?.getStringExtra("destination")?.let { destination ->
+        intent?.getStringExtra(NotificationServiceController.EXTRA_DESTINATION)?.let { destination ->
             Routes.fromString(destination)?.let { presenter.navigateToTab(it) }
         }
     }

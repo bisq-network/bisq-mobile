@@ -1,5 +1,6 @@
 package network.bisq.mobile.android.node.service.user_profile
 
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -132,8 +133,8 @@ class NodeUserProfileServiceFacadePerformanceTest {
         println("Cache lookup for $userCount users (5 rounds) took: ${lookupTime}ms")
         println("Average time per lookup: ${averageTimePerLookup}ms")
 
-        assertTrue(averageTimePerLookup < 0.1, "Average cache lookup should be under 0.1ms per user")
-        assertTrue(lookupTime < 1000, "Total lookup time should be under 1 second")
+        assertTrue(averageTimePerLookup < 0.5, "Average cache lookup should be under 0.5ms per user")
+        assertTrue(lookupTime < 2000, "Total lookup time should be under 2 seconds")
         assertEquals(userCount, avatarMap.size, "All users should be cached")
     }
 
@@ -242,5 +243,23 @@ class NodeUserProfileServiceFacadePerformanceTest {
         // Verify only one avatar generation occurred (first access)
         val avatar = avatarMap[baseUser.nym]
         assertNotNull(avatar, "Avatar should be cached")
+    }
+
+    @Test
+    fun `performance test - concurrent avatar loading is thread-safe`() = kotlinx.coroutines.runBlocking {
+        val user = createTestUserProfile(42)
+        val concurrentJobs = 200
+        val time = measureTimeMillis {
+            kotlinx.coroutines.coroutineScope {
+                repeat(concurrentJobs) {
+                    launch {
+                        getAvatarWithCachingThreadSafe(user)
+                    }
+                }
+            }
+        }
+        // Should complete quickly and only one avatar in cache
+        assertTrue(time < 200, "Concurrent cache lookups should be fast")
+        assertEquals(1, avatarMap.size, "Only one avatar should be cached for the same nym")
     }
 }

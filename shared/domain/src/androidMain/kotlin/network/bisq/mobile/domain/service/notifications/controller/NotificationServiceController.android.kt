@@ -31,6 +31,7 @@ actual class NotificationServiceController (private val appForegroundController:
         const val DISMISS_PENDING_INTENT_FLAGS = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         // NOTE: to avoid referencing dep Routes.TabOpenTradeList.name
         const val MY_TRADES_TAB = "tab_my_trades"
+        const val EXTRA_DESTINATION = "destination"
     }
 
     private val context = appForegroundController.context
@@ -39,7 +40,7 @@ actual class NotificationServiceController (private val appForegroundController:
     private val serviceScope = CoroutineScope(SupervisorJob())
     private val observerJobs = mutableMapOf<StateFlow<*>, Job>()
     private var isRunning = false
-    private var defaultDestination = MY_TRADES_TAB
+    private val defaultDestination = MY_TRADES_TAB
 
     var activityClassForIntents = context::class.java
 
@@ -116,7 +117,7 @@ actual class NotificationServiceController (private val appForegroundController:
         // Create an intent that brings the user back to the app
         val intent = Intent(context, activityClassForIntents).apply {
             flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
-            putExtra("destination", defaultDestination) // Add extras to navigate to a specific screen
+            putExtra(EXTRA_DESTINATION, defaultDestination) // Add extras to navigate to a specific screen
         }
 
         // Create a PendingIntent to handle the notification click

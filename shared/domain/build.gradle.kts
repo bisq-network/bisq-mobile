@@ -38,7 +38,11 @@ buildConfig {
         buildConfigField("WS_PORT", project.findProperty("client.x.trustednode.port").toString())
         buildConfigField("WS_ANDROID_HOST", project.findProperty("client.android.trustednode.ip").toString())
         buildConfigField("WS_IOS_HOST", project.findProperty("client.ios.trustednode.ip").toString())
-        buildConfigField("IS_DEBUG", project.gradle.startParameter.taskNames.any { it.contains("debug", ignoreCase = true) })
+        buildConfigField(
+            "IS_DEBUG",
+            (project.findProperty("bisq.isDebug")?.toString()?.toBoolean()
+                ?: project.gradle.startParameter.taskNames.any { it.contains("debug", ignoreCase = true) })
+        )
     }
     forClass("network.bisq.mobile.android.node", className = "BuildNodeConfig") {
         buildConfigField("APP_NAME", project.findProperty("node.name").toString())
@@ -50,7 +54,11 @@ buildConfig {
         buildConfigField("BISQ_CORE_VERSION", bisqCoreVersion)
         // Note: Update when updating kmp-tor lib
         buildConfigField("TOR_VERSION", "13.5.2")
-        buildConfigField("IS_DEBUG", project.gradle.startParameter.taskNames.any { it.contains("debug", ignoreCase = true) })
+        buildConfigField(
+            "IS_DEBUG",
+            (project.findProperty("bisq.isDebug")?.toString()?.toBoolean()
+                ?: project.gradle.startParameter.taskNames.any { it.contains("debug", ignoreCase = true) })
+        )
 
     }
 //    buildConfigField("APP_SECRET", "Z3JhZGxlLWphdmEtYnVpbGRjb25maWctcGx1Z2lu")

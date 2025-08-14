@@ -13,13 +13,10 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.ServiceFacade
@@ -27,6 +24,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import java.security.KeyPair
 import java.util.Base64
 import java.util.Random
+import java.util.concurrent.ConcurrentHashMap
 import kotlin.math.max
 import kotlin.math.min
 
@@ -41,6 +39,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     companion object {
         private const val AVATAR_VERSION = 0
+        private const val DEFAULT_SIZE = 120.0
     }
 
     // Dependencies
@@ -53,8 +52,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> get() = _selectedUserProfile.asStateFlow()
 
-    private val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf()
-    private val avatarMapMutex = Mutex()
+    private val avatarMap = ConcurrentHashMap<String, PlatformImage?>()
 
     // Misc
     private var pubKeyHash: ByteArray? = null
@@ -165,21 +163,19 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
-        return avatarMapMutex.withLock {
-            if (avatarMap[userProfile.nym] == null) {
-                try {
-                    val avatar = catHashService.getImage(
-                        Base64.getDecoder().decode(userProfile.networkId.pubKey.hash),
-                        Base64.getDecoder().decode(userProfile.proofOfWork.solutionEncoded),
-                        userProfile.avatarVersion,
-                        120.0
-                    )
-                    avatarMap[userProfile.nym] = avatar
-                } catch (e: Exception) {
-                    log.e { "Avatar generation failed for ${userProfile.nym}" }
-                }
+        val key = userProfile.nym
+        return avatarMap.computeIfAbsent(key) {
+            try {
+                catHashService.getImage(
+                    Base64.getDecoder().decode(userProfile.networkId.pubKey.hash),
+                    Base64.getDecoder().decode(userProfile.proofOfWork.solutionEncoded),
+                    userProfile.avatarVersion,
+                    DEFAULT_SIZE
+                )
+            } catch (e: Exception) {
+                log.e(e) { "Avatar generation failed for ${userProfile.nym}" }
+                null
             }
-            return avatarMap[userProfile.nym]
         }
     }
 
