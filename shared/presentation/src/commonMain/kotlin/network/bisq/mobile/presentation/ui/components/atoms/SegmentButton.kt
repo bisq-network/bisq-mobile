@@ -8,7 +8,6 @@ import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import kotlinx.collections.immutable.ImmutableList
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
@@ -17,7 +16,7 @@ fun <T> BisqSegmentButton(
     label: String = "",
     disabled: Boolean = false,
     value: T,
-    items: ImmutableList<Pair<T, String>>,
+    items: List<Pair<T, String>>,
     onValueChange: ((Pair<T, String>) -> Unit)? = null,
     modifier: Modifier = Modifier.fillMaxWidth(),
 ) {

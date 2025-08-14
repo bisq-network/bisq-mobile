@@ -30,14 +30,13 @@ import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import kotlinx.collections.immutable.ImmutableList
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun <T> ToggleTab(
-    options: ImmutableList<T>,
+    options: List<T>,
     selectedOption: T,
     onOptionSelected: (T) -> Unit,
     getDisplayString: (T) -> String,// Custom function to display the label for each option

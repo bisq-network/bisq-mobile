@@ -59,7 +59,6 @@ kotlin {
             implementation(libs.logging.kermit)
             implementation(libs.kotlinx.coroutines)
             implementation(libs.kotlinx.datetime)
-            implementation(libs.kotlinx.collections.immutable)
             
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
