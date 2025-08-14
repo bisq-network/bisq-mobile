@@ -58,6 +58,8 @@ kotlin {
             }
             kotlin.srcDirs(
                 "src/androidMain/kotlin",
+                // KMP androidMain needs both proto sources since it's shared between debug/release
+                // The Android-specific source sets below handle variant-specific separation
                 "${layout.buildDirectory}/generated/source/proto/debug/java",
                 "${layout.buildDirectory}/generated/source/proto/release/java"
             )
@@ -84,25 +86,24 @@ android {
     }
 
     sourceSets {
-        // TODO can we pick just the protos for each build type? release vs debug
         getByName("debug") {
             java {
                 srcDir("src/main/resources")
+                // Debug build only includes debug proto sources
                 srcDir("${layout.buildDirectory}/generated/source/proto/debug/java")
-                srcDir("${layout.buildDirectory}/generated/source/proto/release/java")
-                proto {
-                    srcDir("${layout.buildDirectory}/extracted-include-protos/debug")
-                }
+            }
+            proto {
+                srcDir("${layout.buildDirectory}/extracted-include-protos/debug")
             }
         }
         getByName("release") {
             java {
                 srcDir("src/release/resources")
-                srcDir("${layout.buildDirectory}/generated/source/proto/debug/java")
+                // Release build only includes release proto sources
                 srcDir("${layout.buildDirectory}/generated/source/proto/release/java")
-                proto {
-                    srcDir("${layout.buildDirectory}/extracted-include-protos/release")
-                }
+            }
+            proto {
+                srcDir("${layout.buildDirectory}/extracted-include-protos/release")
             }
         }
     }
