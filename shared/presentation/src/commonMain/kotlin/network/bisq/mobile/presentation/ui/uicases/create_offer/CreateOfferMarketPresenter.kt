@@ -63,8 +63,9 @@ class CreateOfferMarketPresenter(
     val marketListItemWithNumOffers: StateFlow<List<MarketListItem>> = combine(
         _searchText,
         offersServiceFacade.offerbookMarketItems,
-        _marketPriceUpdated
-    ) { searchText, marketList, _ ->
+        _marketPriceUpdated,
+        mainPresenter.languageCode,
+    ) { searchText, marketList, _, _ ->
         // Use shared filtering utility for consistent behavior
         MarketFilterUtil.filterAndSortMarketsForCreateOffer(
             marketList,

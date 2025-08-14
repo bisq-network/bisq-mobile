@@ -31,7 +31,7 @@ abstract class OffersServiceFacade : ServiceFacade(), LifeCycleAware {
         compareByDescending<MarketListItem> { it.numOffers }
             .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
             .thenBy { item ->
-                if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) item.market.quoteCurrencyName
+                if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) item.localeFiatCurrencyName
                 else null
             }
     )}.stateIn(

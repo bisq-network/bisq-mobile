@@ -4,6 +4,7 @@ import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
+import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.domain.utils.Logging
 
 /**
@@ -45,7 +46,8 @@ object MarketFilterUtil : Logging {
         } else {
             markets.filter { marketListItem ->
                 marketListItem.market.quoteCurrencyCode.contains(searchText, ignoreCase = true) ||
-                        marketListItem.market.quoteCurrencyName.contains(searchText, ignoreCase = true)
+                        marketListItem.market.quoteCurrencyName.contains(searchText, ignoreCase = true) ||
+                        marketListItem.localeFiatCurrencyName.contains(searchText, ignoreCase = true)
             }
         }
     }
@@ -59,10 +61,13 @@ object MarketFilterUtil : Logging {
         searchText: String,
         marketPriceServiceFacade: MarketPriceServiceFacade
     ): List<MarketListItem> {
-        log.d { "CreateOffer filtering pipeline - input: ${markets.size} markets, search: '$searchText'" }
+        val translatedMarkets = markets.map { item ->
+            item.copy(localeFiatCurrencyName = CurrencyUtils.getLocaleFiatCurrencyName(item.market.quoteCurrencyCode, item.market.quoteCurrencyName))
+        }
+        log.d { "CreateOffer filtering pipeline - input: ${translatedMarkets.size} markets, search: '$searchText'" }
 
-        val withPriceData = filterMarketsWithPriceData(markets, marketPriceServiceFacade)
-        log.d { "CreateOffer after price filtering: ${withPriceData.size}/${markets.size} markets have price data" }
+        val withPriceData = filterMarketsWithPriceData(translatedMarkets, marketPriceServiceFacade)
+        log.d { "CreateOffer after price filtering: ${withPriceData.size}/${translatedMarkets.size} markets have price data" }
 
         val sorted = sortMarketsStandard(withPriceData)
 
@@ -86,7 +91,7 @@ object MarketFilterUtil : Logging {
                 .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
                 .thenBy { item ->
                     if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) {
-                        item.market.quoteCurrencyName
+                        item.localeFiatCurrencyName
                     } else null
                 }
         )

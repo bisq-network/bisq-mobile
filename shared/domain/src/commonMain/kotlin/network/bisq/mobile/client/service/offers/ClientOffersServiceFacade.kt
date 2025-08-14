@@ -218,7 +218,7 @@ class ClientOffersServiceFacade(
 
     private fun fillMarketListItems(markets: List<MarketVO>) {
         val marketListItems = markets.map { marketVO ->
-            MarketListItem(marketVO, 0)
+            MarketListItem(marketVO, 0, "")
         }
 
         _offerbookMarketItems.value = marketListItems

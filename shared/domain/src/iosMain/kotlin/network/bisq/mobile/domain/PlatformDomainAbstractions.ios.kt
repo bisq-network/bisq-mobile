@@ -10,6 +10,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
+import network.bisq.mobile.domain.utils.StringUtils.capitalizeWords
 import platform.Foundation.*
 import platform.UIKit.UIApplication
 import platform.UIKit.UIDevice
@@ -210,4 +211,9 @@ actual fun String.toDoubleOrNullLocaleAware(): Double? {
     }
     val number = formatter.numberFromString(this)
     return number?.doubleValue?.toDouble()
+}
+
+actual fun getLocaleCurrencyName(currencyCode: String): String {
+    val rawName = defaultLocale.displayNameForKey(NSLocaleCurrencyCode, currencyCode)
+    return rawName?.capitalizeWords() ?: currencyCode
 }

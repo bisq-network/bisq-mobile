@@ -72,3 +72,5 @@ expect fun getDecimalSeparator(): Char
 expect fun getGroupingSeparator(): Char
 
 expect fun String.toDoubleOrNullLocaleAware(): Double?
+
+expect fun getLocaleCurrencyName(currencyCode: String): String

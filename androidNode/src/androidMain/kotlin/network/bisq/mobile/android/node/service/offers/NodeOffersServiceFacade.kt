@@ -452,7 +452,7 @@ class NodeOffersServiceFacade(
                 channel.market.baseCurrencyName,
                 channel.market.quoteCurrencyName,
             )
-            MarketListItem(marketVO, channel.chatMessages.size)
+            MarketListItem(marketVO, channel.chatMessages.size, "")
         }
         itemsFlow.value = initialItems
 

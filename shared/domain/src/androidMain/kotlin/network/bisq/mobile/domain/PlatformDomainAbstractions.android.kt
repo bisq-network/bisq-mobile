@@ -16,6 +16,7 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
+import network.bisq.mobile.domain.utils.StringUtils.capitalizeWords
 import java.io.ByteArrayOutputStream
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -23,6 +24,7 @@ import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
+import java.util.Currency
 import java.util.Date
 import java.util.Locale
 import java.util.Properties
@@ -163,4 +165,12 @@ actual fun String.toDoubleOrNullLocaleAware(): Double? {
     } catch (e: Exception) {
         null
     }
+}
+
+actual fun getLocaleCurrencyName(currencyCode: String): String {
+    val javaLocale = Locale.getDefault()
+    val currency = Currency.getInstance(currencyCode)
+    val currencyDisplayName = currency.getDisplayName(javaLocale)
+
+    return currencyDisplayName.capitalizeWords()
 }

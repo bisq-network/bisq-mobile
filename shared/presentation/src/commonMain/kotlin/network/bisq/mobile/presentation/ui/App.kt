@@ -12,6 +12,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
@@ -95,6 +96,7 @@ fun App() {
     val rootNavController = rememberNavController()
     val tabNavController = rememberNavController()
     var isNavControllerSet by remember { mutableStateOf(false) }
+
     RememberPresenterLifecycle(presenter, {
         presenter.navController = rootNavController
         presenter.tabNavController = tabNavController
@@ -105,6 +107,7 @@ fun App() {
     val showAnimation by presenter.showAnimation.collectAsState()
 
     I18nSupport.initialize(languageCode)
+    setDefaultLocale(languageCode)
 
     SafeInsetsContainer {
         BisqTheme(darkTheme = true) {
