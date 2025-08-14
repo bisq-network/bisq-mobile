@@ -28,7 +28,6 @@ class AndroidImageUtilTest {
     @Test
     fun `test getImageByPath valid path`() {
         val context = ApplicationProvider.getApplicationContext<Context>()
-        // TODO couldn't get it to test with sample test asset so had to use a path for a real one
         val assetPath =
             "composeResources/bisqapps.shared.presentation.generated.resources/drawable/bisq_logo.png"
         val bitmap = AndroidImageUtil.getImageByPath(context, AndroidImageUtil.PATH_TO_DRAWABLE, assetPath)

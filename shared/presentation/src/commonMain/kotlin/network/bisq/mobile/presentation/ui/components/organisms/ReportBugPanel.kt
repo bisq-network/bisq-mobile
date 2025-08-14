@@ -93,7 +93,6 @@ fun ReportBugPanel(
             BisqButton(
                 text = "support.reports.title".i18n(),
                 onClick = {
-                    // TODO: In systemCrash case, doing `exitApp()` here, stops navigation from happening!
                     clipboardManager.setText(buildAnnotatedString { append(errorMessage) })
                     presenter.navigateToReportError()
                     if (!isUncaughtException)

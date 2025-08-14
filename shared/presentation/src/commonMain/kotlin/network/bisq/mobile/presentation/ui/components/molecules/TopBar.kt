@@ -171,9 +171,6 @@ fun TopBar(
                     extraActions()
                 }
 
-//                TODO implement full feature after MVP
-//                BellIcon()
-
                 if (showUserAvatar) {
                     val userIconModifier = Modifier
                         .size(BisqUIConstants.topBarAvatarSize)

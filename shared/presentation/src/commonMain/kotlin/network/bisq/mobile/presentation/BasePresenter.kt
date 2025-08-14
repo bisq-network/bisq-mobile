@@ -423,7 +423,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         this.dependants!!.add(child)
     }
 
-    // TODO we need to test to find what are exactly the best places to register/unregister
     protected fun unregisterChild(child: BasePresenter) {
         if (!isRoot()) {
             throw IllegalStateException("You can't unregister from a non root presenter")

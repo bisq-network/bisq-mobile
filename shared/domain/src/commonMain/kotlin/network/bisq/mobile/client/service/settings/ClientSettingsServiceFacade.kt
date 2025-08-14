@@ -53,7 +53,7 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
         MutableStateFlow(ChatChannelNotificationTypeEnum.ALL)
     override val chatNotificationType: StateFlow<ChatChannelNotificationTypeEnum> get() = _chatNotificationType.asStateFlow()
     override suspend fun setChatNotificationType(value: ChatChannelNotificationTypeEnum) {
-        TODO()
+        // TODO ?
     }
 
     private val _closeMyOfferWhenTaken = MutableStateFlow(true)

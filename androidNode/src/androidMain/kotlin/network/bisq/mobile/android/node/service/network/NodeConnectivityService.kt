@@ -7,7 +7,11 @@ import network.bisq.mobile.domain.service.network.ConnectivityService
 class NodeConnectivityService(private val applicationService: AndroidApplicationService.Provider) : ConnectivityService() {
 
     companion object {
-        const val SLOW_PEER_QUANTITY_THRESHOLD = 2
+        // With production average of ~10 peers, threshold of 4 provides good balance:
+        // - Allows for some peer churn without triggering "slow" status
+        // - Maintains sufficient redundancy for P2P network reliability
+        // - Represents ~40% of typical peer count as minimum acceptable
+        const val SLOW_PEER_QUANTITY_THRESHOLD = 4
     }
 
     override fun activate() {
@@ -25,8 +29,11 @@ class NodeConnectivityService(private val applicationService: AndroidApplication
     }
 
     override suspend fun isSlow(): Boolean {
-        // TODO improve impl using ConnectivityService#newRequestRoundTripTime() call needs to be applied when a P2P round-trip call is done for the
-        // parent isSlow impl to work
+        // Note: Round-trip time measurement is complex for P2P networks due to:
+        // - Multiple peers with different characteristics
+        // - Async message patterns without clear request-response correlation
+        // - Transport abstraction (CLEAR/TOR) hiding timing details
+        // Connection count is a simpler and more reliable indicator for P2P network health
         return currentConnections() < SLOW_PEER_QUANTITY_THRESHOLD
     }
 

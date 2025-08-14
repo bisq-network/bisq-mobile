@@ -96,7 +96,6 @@ class NodeMainPresenter(
 
                     settingsServiceFacade.activate()
 
-                    // TODO might need to apply the delegation to the bootstrap facade
                     log.i { "Start initializing applicationService" }
                     applicationService.initialize()
                         .whenComplete { _: Boolean?, throwable: Throwable? ->
@@ -106,6 +105,7 @@ class NodeMainPresenter(
                                 activateServices(skipSettings = true)
                             } else {
                                 log.e("Initializing applicationService failed", throwable)
+                                handleInitializationError(throwable, "Application service initialization")
                             }
                         }
                     applicationServiceCreated = true
@@ -113,9 +113,8 @@ class NodeMainPresenter(
                     log.d { "Application service created, monitoring connectivity.." }
                 }
             }.onFailure { e ->
-                // TODO give user feedback (we could have a general error screen covering usual
-                //  issues like connection issues and potential solutions)
                 log.e("Error at onViewAttached", e)
+                handleInitializationError(e, "Node initialization")
             }
         }
     }
@@ -179,7 +178,8 @@ class NodeMainPresenter(
 
             // Stop UserIdentityService
             provider.applicationService.identityService.shutdown().join()
-            // TODO need to implement ? Stop AuthenticatedDataStorageService (part of persistence service)
+            // TODO this needs to be addressed if we ever implement a Live Notifications Whilst App is Killed feature
+            // IMPORTANT: need to implement ? Stop AuthenticatedDataStorageService (part of persistence service)
 //            provider.applicationService.persistenceService.shutdown().join()
             // Stop PeerExchangeService (part of network service)
             // This is already covered by networkService.shutdown() but we'll be explicit
@@ -226,4 +226,5 @@ class NodeMainPresenter(
 
         profileStatsServiceFacade.deactivate()
     }
+
 }

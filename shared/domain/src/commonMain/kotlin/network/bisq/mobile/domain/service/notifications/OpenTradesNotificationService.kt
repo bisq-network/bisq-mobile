@@ -34,7 +34,6 @@ class OpenTradesNotificationService(
 
     fun stopNotificationService() {
         notificationServiceController.unregisterObserver(tradesServiceFacade.openTradeItems)
-        // TODO unregister all ?
         notificationServiceController.stopService()
     }
 

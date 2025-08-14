@@ -53,8 +53,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> get() = _selectedUserProfile.asStateFlow()
 
-    // TODO: Performance test for 100s of users and 1000s of offers
-    private val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf<String, PlatformImage?>()
+    private val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf()
     private val avatarMapMutex = Mutex()
 
     // Misc

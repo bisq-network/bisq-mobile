@@ -122,9 +122,8 @@ open class ClientMainPresenter(
 
             profileStatsServiceFacade.activate()
         }.onFailure { e ->
-            // TODO give user feedback (we could have a general error screen covering usual
-            //  issues like connection issues and potential solutions)
             log.e("Error activating services", e)
+            handleInitializationError(e, "Service activation")
         }
     }
 

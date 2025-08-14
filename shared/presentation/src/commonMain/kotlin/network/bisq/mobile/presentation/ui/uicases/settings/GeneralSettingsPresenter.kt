@@ -71,7 +71,6 @@ open class GeneralSettingsPresenter(
         launchUI {
             try {
                 _chatNotification.value = value
-                // settingsServiceFacade.setChatNotificationType(value)
             } finally {
                 enableInteractive()
             }

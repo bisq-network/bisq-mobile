@@ -29,6 +29,8 @@ actual class NotificationServiceController (private val appForegroundController:
         const val SERVICE_NAME = "Bisq Service"
         const val DISMISS_NOTIFICATION_ACTION = "DISMISS_NOTIFICATION"
         const val DISMISS_PENDING_INTENT_FLAGS = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        // NOTE: to avoid referencing dep Routes.TabOpenTradeList.name
+        const val MY_TRADES_TAB = "tab_my_trades"
     }
 
     private val context = appForegroundController.context
@@ -37,9 +39,9 @@ actual class NotificationServiceController (private val appForegroundController:
     private val serviceScope = CoroutineScope(SupervisorJob())
     private val observerJobs = mutableMapOf<StateFlow<*>, Job>()
     private var isRunning = false
+    private var defaultDestination = MY_TRADES_TAB
 
     var activityClassForIntents = context::class.java
-    var defaultDestination = "tab_my_trades" // TODO minor refactor move this hardcode out of here and into client leaf code    }
 
     /**
      * Starts the service in the appropiate mode based on the current device running Android API
@@ -63,9 +65,9 @@ actual class NotificationServiceController (private val appForegroundController:
         }
     }
 
-    // TODO provide an access for this
     actual override fun stopService() {
-        // TODO we need to leave the service running if the user is ok with it
+        // TODO if we ever implement Live notifications even if app was killed
+        //  we need to leave the service running if the user is ok with it
         if (isRunning) {
             val intent = Intent(context, BisqForegroundService::class.java)
             context.stopService(intent)
@@ -91,7 +93,6 @@ actual class NotificationServiceController (private val appForegroundController:
         observerJobs.remove(stateFlow)
     }
 
-    // TODO support for on click and decide if we block on foreground
     actual fun pushNotification(title: String, message: String) {
         log.i { "pushNotification called - title: '$title', message: '$message', isAppInForeground: ${isAppInForeground()}" }
 

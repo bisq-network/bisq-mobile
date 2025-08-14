@@ -1,7 +1,6 @@
 package network.bisq.mobile.client.service.settings
 
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
-import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.settings.ApiVersionSettingsVO
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.utils.Logging
@@ -45,14 +44,6 @@ class SettingsApiGateway(
         return webSocketApiClient.patch(
             basePath,
             SettingsChangeRequest(supportedLanguageCodes = value)
-        )
-    }
-
-    suspend fun setChatNotificationType(value: ChatChannelNotificationTypeEnum): Result<Unit> {
-        // TODO: @Henrik: This is probably wrong. Can you please give me some hints
-        return webSocketApiClient.patch(
-            basePath,
-            SettingsChangeRequest(chatNotificationType = value)
         )
     }
 

@@ -44,10 +44,6 @@ class TrustedNodeService(private val webSocketClientProvider: WebSocketClientPro
         }
     }
 
-    suspend fun disconnect() {
-        // TODO
-    }
-
     suspend fun await() = webSocketClientProvider.get().await()
 
     private fun observeConnectivity() {

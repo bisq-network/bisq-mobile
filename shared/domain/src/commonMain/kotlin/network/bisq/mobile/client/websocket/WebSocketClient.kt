@@ -68,7 +68,6 @@ class WebSocketClient(
 ) : Logging {
 
     companion object {
-        // TODO we might want to make this configurable
         const val CONNECT_TIMEOUT = 10000L
         const val DEMO_URL = "ws://demo.bisq:21"
         const val DELAY_TO_RECONNECT = 3000L
@@ -404,7 +403,7 @@ class WebSocketClient(
         }
     }
 
-    // TODO refactor our of websocket client
+    // TODO refactor out of websocket client
     // Example fake data
     object FakeSubscriptionData {
         val marketPrice = mapOf(

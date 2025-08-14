@@ -84,18 +84,14 @@ open class SplashPresenter(
                     // only fetch profile with connectivity
                     val hasProfile: Boolean = userProfileService.hasUserProfile()
 
-                    // Scenario 1: All good and setup for both androidNode and xClients
                     if (user != null && hasProfile) {
-                        // TODO:
-                        // 1) Is this the right condition?
-                        // 2a) androidNode being able to connect with other peers and
-                        // 2b) xClients being able to connect with remote instance happening successfuly as part of services init?
+                        // Scenario 1: All good and setup for both androidNode and xClients
                         navigateToHome()
-                        // Scenario 2: Loading up for first time for both androidNode and xClients
                     } else if (deviceSettings.firstLaunch) {
+                        // Scenario 2: Loading up for first time for both androidNode and xClients
                         navigateToOnboarding()
-                        // Scenario 3: Handle others based on app type
                     } else {
+                        // Scenario 3: Handle others based on app type
                         doCustomNavigationLogic(deviceSettings, hasProfile)
                     }
                 }
@@ -149,7 +145,7 @@ open class SplashPresenter(
         when {
             settings.bisqApiUrl.isEmpty() -> navigateToTrustedNodeSetup()
             settings.bisqApiUrl.isNotEmpty() && hasProfile -> navigateToCreateProfile()
-            else -> navigateToHome() // TODO: Ideally this shouldn't happen here
+            else -> navigateToHome()
         }
         return true
     }

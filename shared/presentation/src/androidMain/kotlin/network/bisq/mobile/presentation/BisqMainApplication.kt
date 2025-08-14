@@ -32,7 +32,6 @@ abstract class BisqMainApplication : Application(), Logging {
      * This blocks verbose System.out.println() calls from Bisq2 JARs that bypass the logging framework.
      */
     private fun setupSystemOutFiltering() {
-        // TODO isDebugBuild could be false if the build is debug but TOR non dev network mode is used
         SystemOutFilter.setupSystemOutFiltering(
             isDebugBuild = isDebug(),
             completeBlockInRelease = true

@@ -58,15 +58,6 @@ fun AgreementScreen() {
                     fullWidth = true,
                     onClick = { presenter.onAcceptClick() }
                 )
-
-                /**
-                 * TODO: Mobile apps don't generally have a Exit button
-                BisqButton(
-                    "Reject and quit Bisq",
-                    type = BisqButtonType.Outline,
-                    fullWidth = true,
-                )
-                */
             }
         }
     ) {
