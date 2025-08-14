@@ -1,20 +1,26 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import androidx.compose.runtime.Composable
+import kotlinx.collections.immutable.persistentListOf
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.molecules.ToggleTab
 
 @Composable
 fun DirectionToggle(
-    directions: List<DirectionEnum>,
-    initialDirection: DirectionEnum,
+    selectedDirection: DirectionEnum,
     onStateChange: (DirectionEnum) -> Unit
 ) {
+    // Offers are mirrored to what user wants. E.g. I want to buy Bitcoin using a sell offer
+    val directions = persistentListOf(
+        DirectionEnum.SELL,
+        DirectionEnum.BUY,
+    )
+
     ToggleTab(
         options = directions,
-        initialOption = initialDirection,
-        onStateChange = onStateChange,
+        selectedOption = selectedDirection,
+        onOptionSelected = onStateChange,
         singleLine = true,
         getDisplayString = {
             if (it == DirectionEnum.BUY) {

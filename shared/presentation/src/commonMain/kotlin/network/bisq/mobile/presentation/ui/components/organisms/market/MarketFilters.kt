@@ -6,6 +6,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import kotlinx.collections.immutable.toImmutableList
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqSegmentButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -13,15 +14,15 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookMarketPresenter
 import org.koin.compose.koinInject
 
-enum class MarketSortBy(val displayName: String) {
-    MostOffers("Most Offers"),
-    NameAZ("Name A-Z"),
-    NameZA("Name Z-A")
+enum class MarketSortBy {
+    MostOffers,
+    NameAZ,
+    NameZA,
 }
 
-enum class MarketFilter(val displayName: String) {
-    WithOffers("With Offers"),
-    All("All")
+enum class MarketFilter {
+    WithOffers,
+    All
 }
 
 fun MarketSortBy.getDisplayName(): String {
@@ -51,10 +52,10 @@ fun MarketFilters() {
 
         BisqSegmentButton(
             label = "mobile.components.marketFilter.sortBy".i18n(),
-            value = sortBy.name,
-            items = MarketSortBy.entries.map { it.name to it.getDisplayName() },
+            value = sortBy,
+            items = MarketSortBy.entries.map { it to it.getDisplayName() }.toImmutableList(),
             onValueChange = { pair ->
-                presenter.setSortBy(MarketSortBy.valueOf(pair.first))
+                presenter.setSortBy(pair.first)
             },
         )
 
@@ -62,10 +63,10 @@ fun MarketFilters() {
 
         BisqSegmentButton(
             label = "mobile.components.marketFilter.showMarkets".i18n(),
-            items = MarketFilter.entries.map { it.name to it.getDisplayName() },
-            value = filter.name,
+            items = MarketFilter.entries.map { it to it.getDisplayName() }.toImmutableList(),
+            value = filter,
             onValueChange = { pair ->
-                presenter.setFilter(MarketFilter.valueOf(pair.first))
+                presenter.setFilter(pair.first)
             },
         )
 

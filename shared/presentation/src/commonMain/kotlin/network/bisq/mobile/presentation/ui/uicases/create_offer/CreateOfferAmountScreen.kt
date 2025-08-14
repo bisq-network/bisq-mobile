@@ -75,9 +75,9 @@ fun CreateOfferAmountSelectorScreen() {
         BisqGap.V2()
 
         ToggleTab(
-            options = AmountType.entries,
-            initialOption = amountType,
-            onStateChange = { value ->
+            options = presenter.amountTypes,
+            selectedOption = amountType,
+            onOptionSelected = { value ->
                 presenter.onSelectAmountType(value)
             },
             getDisplayString = { direction ->
