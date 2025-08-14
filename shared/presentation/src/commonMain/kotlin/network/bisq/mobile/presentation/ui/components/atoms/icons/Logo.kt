@@ -8,6 +8,7 @@ import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.bisq_logo
 import bisqapps.shared.presentation.generated.resources.bisq_logo_circle
+import bisqapps.shared.presentation.generated.resources.bisq_logo_mark_grey
 import bisqapps.shared.presentation.generated.resources.bisq_logo_small
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import org.jetbrains.compose.resources.painterResource
@@ -25,6 +26,11 @@ fun BisqLogoSmall(modifier: Modifier = Modifier) {
 @Composable
 fun BisqLogoCircle(modifier: Modifier = Modifier) {
     Image(painterResource(Res.drawable.bisq_logo_circle), "Bisq Logo circle", modifier = modifier)
+}
+
+@Composable
+fun BisqLogoMarkGrey(modifier: Modifier = Modifier.size(50.dp)) {
+    Image(painterResource(Res.drawable.bisq_logo_mark_grey), "Bisq Logo mark midsize", modifier = modifier)
 }
 
 @Composable
