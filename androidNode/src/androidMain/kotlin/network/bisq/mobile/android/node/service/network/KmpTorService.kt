@@ -274,7 +274,7 @@ class KmpTorService : ServiceFacade(), Logging {
         }
     }
 
-    private fun writeExternalTorConfig(socksPort: Int, controlPort: Int) {
+    private suspend fun writeExternalTorConfig(socksPort: Int, controlPort: Int) {
         try {
             val cookieFile = File(getTorDir(), "control_auth_cookie")
             val configContent = buildString {
@@ -300,10 +300,10 @@ class KmpTorService : ServiceFacade(), Logging {
         }
     }
 
-    private fun verifyControlPortAccessible(controlPort: Int) {
+    private suspend fun verifyControlPortAccessible(controlPort: Int) {
         try {
             // Give Tor a moment to fully initialize the control port
-            Thread.sleep(500)
+            delay(500)
 
             java.net.Socket().use { socket ->
                 socket.connect(java.net.InetSocketAddress("127.0.0.1", controlPort), 5000)
