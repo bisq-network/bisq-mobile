@@ -200,7 +200,7 @@ class ClientTradesServiceFacade(
             modificationType == ModificationType.ADDED
         ) {
             payload.forEach { item ->
-                val tradeModel = TradeItemPresentationModel(item)
+                val tradeModel = TradeItemPresentationModel.from(item)
                 _openTradeItems.update { it + tradeModel }
 
                 applyPendingTradeProperties(tradeModel)

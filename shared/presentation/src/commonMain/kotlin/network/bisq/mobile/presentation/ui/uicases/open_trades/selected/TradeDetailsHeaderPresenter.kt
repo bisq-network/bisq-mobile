@@ -82,19 +82,16 @@ class TradeDetailsHeaderPresenter(
                 .flatMapLatest { tradesServiceFacade.selectedTrade }
                 .filterNotNull()
                 .collect {
-                    val formatted = it.reformat()
-                    _selectedTrade.value = formatted
-
                     if (it.bisqEasyTradeModel.isSeller) {
-                        _leftAmount.value = formatted.formattedBaseAmount
-                        _leftCode.value = formatted.baseCurrencyCode
-                        _rightAmount.value = formatted.formattedQuoteAmount
-                        _rightCode.value = formatted.quoteCurrencyCode
+                        _leftAmount.value = it.formattedBaseAmount
+                        _leftCode.value = it.baseCurrencyCode
+                        _rightAmount.value = it.formattedQuoteAmount
+                        _rightCode.value = it.quoteCurrencyCode
                     } else {
-                        _leftAmount.value = formatted.formattedQuoteAmount
-                        _leftCode.value = formatted.quoteCurrencyCode
-                        _rightAmount.value = formatted.formattedBaseAmount
-                        _rightCode.value = formatted.baseCurrencyCode
+                        _leftAmount.value = it.formattedQuoteAmount
+                        _leftCode.value = it.quoteCurrencyCode
+                        _rightAmount.value = it.formattedBaseAmount
+                        _rightCode.value = it.baseCurrencyCode
                     }
                 }
         }

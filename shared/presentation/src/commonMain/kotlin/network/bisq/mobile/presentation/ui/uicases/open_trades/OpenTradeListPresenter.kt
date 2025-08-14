@@ -7,8 +7,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.formatters.NumberFormatter
-import network.bisq.mobile.domain.formatters.PriceSpecFormatter
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -42,20 +40,13 @@ class OpenTradeListPresenter(
         tradesServiceFacade.resetSelectedTradeToNull()
 
         launchUI {
-            // todo: investigate if mutating here is a good idea (it.apply)
             combine(
                 mainPresenter.tradesWithUnreadMessages, tradesServiceFacade.openTradeItems, mainPresenter.languageCode
             ) { unreadMessages, openTrades, _ ->
                 Pair(unreadMessages, openTrades)
             }.collect { (unreadMessages, openTrades) ->
                 _tradesWithUnreadMessages.value = unreadMessages
-                _sortedOpenTradeItems.value = openTrades.map {
-                    it.apply {
-                        quoteAmountWithCode = "${NumberFormatter.format(it.quoteAmount.toDouble() / 10000.0)} ${it.quoteCurrencyCode}"
-                        formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(it.bisqEasyOffer.priceSpec, true)
-                        formattedBaseAmount = NumberFormatter.btcFormat(it.baseAmount)
-                    }
-                }.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
+                _sortedOpenTradeItems.value = openTrades.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
             }
         }
 
