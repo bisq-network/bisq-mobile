@@ -45,7 +45,7 @@ class WebSocketApiClient(
         return request<T>("DELETE", path)
     }
 
-    suspend inline fun <reified T, reified  R> delete(path: String, requestBody: R): Result<T> {
+    suspend inline fun <reified T, reified R> delete(path: String, requestBody: R): Result<T> {
         val bodyAsJson = json.encodeToString(requestBody)
         return request<T>("DELETE", path, bodyAsJson)
     }
@@ -129,14 +129,17 @@ class WebSocketApiClient(
                     val decodeFromString = json.decodeFromString<T>(body)
                     return Result.success(decodeFromString)
                 }
-            } else {
-                val decodeFromString = json.decodeFromString<Map<String, String>>(body)
+            } else if (body.startsWith("{") || body.startsWith("[")) {
+                // TODO Not sure if we expect any json error messages.
                 try {
+                    val decodeFromString = json.decodeFromString<Map<String, String>>(body)
                     val errorMessage = decodeFromString["error"]!!
                     return Result.failure(WebSocketRestApiException(response.httpStatusCode, errorMessage))
                 } catch (e: Exception) {
                     return Result.failure(WebSocketRestApiException(response.httpStatusCode, body))
                 }
+            } else {
+                return Result.failure(WebSocketRestApiException(response.httpStatusCode, body))
             }
         } catch (e: CancellationException) {
             // no log on cancellation

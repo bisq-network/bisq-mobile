@@ -17,6 +17,7 @@ import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.hexToByteArray
 import okio.ByteString.Companion.decodeBase64
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.max
 import kotlin.math.min
@@ -43,7 +44,17 @@ class ClientUserProfileServiceFacade(
         super<ServiceFacade>.activate()
 
         serviceScope.launch(Dispatchers.Default) {
-            _selectedUserProfile.value = getSelectedUserProfile()
+            runCatching {
+                getSelectedUserProfile()
+            }.onSuccess { profile ->
+                _selectedUserProfile.value = profile
+            }.onFailure { e ->
+                if (e is CancellationException) {
+                    throw e
+                }
+                // Expected at first run
+                log.d("Error getting user profile: ${e.message}")
+            }
         }
     }
 

@@ -2,7 +2,6 @@ package network.bisq.mobile.client.service.user_profile
 
 import io.ktor.http.encodeURLPath
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
-import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 class UserProfileApiGateway(
