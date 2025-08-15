@@ -12,6 +12,24 @@ plugins {
     alias(libs.plugins.protobuf).apply(false)
 }
 
+// Configure all subprojects to run generateResourceBundles before compilation
+subprojects {
+    afterEvaluate {
+        // Only apply to projects that have the generateResourceBundles task
+        tasks.findByName("generateResourceBundles")?.let { generateTask ->
+            // Make all compile-related tasks depend on generateResourceBundles
+            tasks.matching { task ->
+                task.name.contains("compile", ignoreCase = true) ||
+                task.name.contains("build", ignoreCase = true) ||
+                task.name.startsWith("assemble") ||
+                task.name.startsWith("bundle")
+            }.configureEach {
+                dependsOn(generateTask)
+            }
+        }
+    }
+}
+
 // ios versioning linking
 tasks.register("updatePlist") {
     doLast {

@@ -281,6 +281,21 @@ tasks.register<GenerateResourceBundlesTask>("generateResourceBundles") {
     outputDir.set(layout.projectDirectory.dir("src/commonMain/kotlin/network/bisq/mobile/i18n"))
 }
 
+// Make all compile tasks depend on generateResourceBundles
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    dependsOn("generateResourceBundles")
+}
+
+// For Android compilation tasks
+tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {
+    dependsOn("generateResourceBundles")
+}
+
+// For general compilation tasks
+tasks.matching { it.name.contains("compile", ignoreCase = true) }.configureEach {
+    dependsOn("generateResourceBundles")
+}
+
 fun findTomlVersion(versionName: String): String {
     val tomlFile = file("../../gradle/libs.versions.toml")
     val tomlContent = tomlFile.readText()

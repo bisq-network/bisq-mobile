@@ -107,3 +107,19 @@ android {
 kotlin.sourceSets.commonMain {
     kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
 }
+
+// Ensure generateResourceBundles runs before compilation
+afterEvaluate {
+    val generateResourceBundlesTask = project(":shared:domain").tasks.findByName("generateResourceBundles")
+    if (generateResourceBundlesTask != null) {
+        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+            dependsOn(generateResourceBundlesTask)
+        }
+        tasks.matching { task ->
+            task.name.contains("compile", ignoreCase = true) ||
+            task.name.contains("build", ignoreCase = true)
+        }.configureEach {
+            dependsOn(generateResourceBundlesTask)
+        }
+    }
+}
