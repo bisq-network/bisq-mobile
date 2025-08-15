@@ -3,7 +3,6 @@ package network.bisq.mobile.domain.service.user_profile
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 interface UserProfileServiceFacade : LifeCycleAware {
@@ -12,6 +11,7 @@ interface UserProfileServiceFacade : LifeCycleAware {
     }
 
     val selectedUserProfile: StateFlow<UserProfileVO?>
+    val hasIgnoredUsers: StateFlow<Boolean>
 
     /**
      * Returns true if there is a user identity already created.
@@ -108,5 +108,5 @@ interface UserProfileServiceFacade : LifeCycleAware {
     /**
      * Returns the current snapshot of ignored profile IDs.
      */
-    suspend fun getIgnoredUserProfileIds(): List<String>
+    suspend fun getIgnoredUserProfileIds(): Set<String>
 }
