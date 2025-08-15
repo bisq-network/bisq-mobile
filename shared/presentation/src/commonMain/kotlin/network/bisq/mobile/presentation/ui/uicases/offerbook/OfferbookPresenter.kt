@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -76,6 +77,7 @@ class OfferbookPresenter(
     )
     val avatarMap: StateFlow<Map<String, PlatformImage?>> get() = _avatarMap.asStateFlow()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun onViewAttached() {
         super.onViewAttached()
 
@@ -403,8 +405,12 @@ class OfferbookPresenter(
     }
 
     private suspend fun isOfferFromIgnoredUser(offer: BisqEasyOfferVO): Boolean {
-        val makersUserProfileId = offer.makerNetworkId.pubKey.id
-
-        return userProfileServiceFacade.isUserIgnored(makersUserProfileId)
+        val makerUserProfileId = offer.makerNetworkId.pubKey.id
+        return try {
+            userProfileServiceFacade.isUserIgnored(makerUserProfileId)
+        } catch (e: Exception) {
+            log.w("isUserIgnored failed for $makerUserProfileId", e)
+            false
+        }
     }
 }
