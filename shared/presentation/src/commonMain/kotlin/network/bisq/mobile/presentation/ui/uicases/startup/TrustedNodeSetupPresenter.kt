@@ -8,12 +8,16 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.utils.NetworkUtils.isValidIp
+import network.bisq.mobile.domain.utils.NetworkUtils.isValidPort
+import network.bisq.mobile.domain.utils.NetworkUtils.isValidTorV3Address
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -25,29 +29,46 @@ class TrustedNodeSetupPresenter(
     private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider
-) : BasePresenter(mainPresenter), ITrustedNodeSetupPresenter {
+) : BasePresenter(mainPresenter) {
 
     companion object {
         const val SAFEGUARD_TEST_TIMEOUT = 20000L
     }
 
-    private val _isBisqApiUrlValid = MutableStateFlow(true)
-    override val isBisqApiUrlValid: StateFlow<Boolean> get() = _isBisqApiUrlValid.asStateFlow()
+    enum class NetworkType(val displayString: String) {
+        LAN("mobile.trustedNodeSetup.networkType.lan".i18n()),
+        TOR("mobile.trustedNodeSetup.networkType.tor".i18n())
+    }
+
+    private val _isApiUrlValid = MutableStateFlow(true)
+    val isApiUrlValid: StateFlow<Boolean> get() = _isApiUrlValid.asStateFlow()
 
     private val _isBisqApiVersionValid = MutableStateFlow(true)
-    override val isBisqApiVersionValid: StateFlow<Boolean> get() = _isBisqApiVersionValid.asStateFlow()
+    val isBisqApiVersionValid: StateFlow<Boolean> get() = _isBisqApiVersionValid.asStateFlow()
 
-    private val _bisqApiUrl = MutableStateFlow("ws://10.0.2.2:8090")
-    override val bisqApiUrl: StateFlow<String> get() = _bisqApiUrl.asStateFlow()
+    private val _host = MutableStateFlow("")
+    val host: StateFlow<String> get() = _host.asStateFlow()
+
+    private val _port = MutableStateFlow("8090")
+    val port: StateFlow<String> get() = _port.asStateFlow()
+
+    private val _hostPrompt = MutableStateFlow("10.0.2.2")
+    val hostPrompt: StateFlow<String> get() = _hostPrompt.asStateFlow()
 
     private val _trustedNodeVersion = MutableStateFlow("")
-    override val trustedNodeVersion: StateFlow<String> get() = _trustedNodeVersion.asStateFlow()
+    val trustedNodeVersion: StateFlow<String> get() = _trustedNodeVersion.asStateFlow()
+
+    private val _status = MutableStateFlow("")
+    val status: StateFlow<String> get() = _status.asStateFlow()
 
     private val _isConnected = MutableStateFlow(false)
-    override val isConnected: StateFlow<Boolean> get() = _isConnected.asStateFlow()
+    val isConnected: StateFlow<Boolean> get() = _isConnected.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
-    override val isLoading: StateFlow<Boolean> get() = _isLoading.asStateFlow()
+    val isLoading: StateFlow<Boolean> get() = _isLoading.asStateFlow()
+
+    private val _selectedNetworkType = MutableStateFlow(NetworkType.LAN)
+    val selectedNetworkType: StateFlow<NetworkType> get() = _selectedNetworkType.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -57,15 +78,20 @@ class TrustedNodeSetupPresenter(
     private fun initialize() {
         log.i { "View attached to Trusted node presenter" }
 
+        updateHostPrompt()
+        if (BuildConfig.IS_DEBUG) {
+            _host.value = "10.0.2.2"
+        }
+
         launchUI {
             try {
                 val data = withContext(IODispatcher) {
                     settingsRepository.fetch()
                 }
                 data?.let {
-                    updateBisqApiUrl(
-                        if (it.bisqApiUrl.isBlank() && !_bisqApiUrl.value.isBlank())
-                            _bisqApiUrl.value
+                    onHostChanged(
+                        if (it.bisqApiUrl.isBlank() && _host.value.isNotBlank())
+                            _host.value
                         else it.bisqApiUrl
                     )
                     validateVersion()
@@ -76,36 +102,35 @@ class TrustedNodeSetupPresenter(
         }
     }
 
-    override fun updateBisqApiUrl(newUrl: String) {
-        _bisqApiUrl.value = newUrl
-        _isBisqApiUrlValid.value = validateWsUrl(newUrl) == null
+    fun onHostChanged(host: String) {
+        _host.value = host
+        validateApiUrl()
     }
 
-    override fun isNewTrustedNodeUrl(): Boolean {
+    fun onPortChanged(port: String) {
+        _port.value = port
+        validateApiUrl()
+    }
+
+    fun onNetworkType(value: NetworkType) {
+        _selectedNetworkType.value = value
+        updateHostPrompt()
+        validateApiUrl()
+    }
+
+    fun isNewApiUrl(): Boolean {
         return runBlocking {
-            var isNewTrustedNode = false
+            var isNewApiUrl = false
             settingsRepository.fetch()?.let {
-                if (it.bisqApiUrl.isNotBlank() && it.bisqApiUrl != _bisqApiUrl.value) {
-                    isNewTrustedNode = true
+                if (it.bisqApiUrl.isNotBlank() && it.bisqApiUrl != _host.value) {
+                    isNewApiUrl = true
                 }
             }
-            return@runBlocking isNewTrustedNode
+            return@runBlocking isNewApiUrl
         }
     }
 
-    override fun validateWsUrl(url: String): String? {
-        val wsUrlPattern =
-            """^(ws|wss):\/\/(([a-zA-Z0-9.-]+\.[a-zA-Z]{2,}|localhost)|(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))(:\d{1,5})$""".toRegex()
-        if (url.isEmpty()) {
-            return "mobile.trustedNodeSetup.wsURL.cannotBeEmpty".i18n()
-        }
-        if (!wsUrlPattern.matches(url)) {
-            return "mobile.trustedNodeSetup.wsURL.invalid".i18n()
-        }
-        return null
-    }
-
-    override fun testConnection(isWorkflow: Boolean) {
+    fun testConnection(isWorkflow: Boolean) {
         if (!isWorkflow) {
             // TODO implement feature to allow changing from settings
             // this is not trivial from UI perspective, its making NavGraph related code to crash when
@@ -114,27 +139,22 @@ class TrustedNodeSetupPresenter(
             return
         }
         _isLoading.value = true
-        log.d { "Test: ${_bisqApiUrl.value} isWorkflow $isWorkflow" }
+        _status.value = "mobile.trustedNodeSetup.status.connecting".i18n()
+        log.d { "Test: ${_host.value} isWorkflow $isWorkflow" }
 
         val connectionJob = launchUI {
             try {
-                val parsedUri = WebSocketClientProvider.parseUri(_bisqApiUrl.value)
-                if (parsedUri == null) {
-                    throw RuntimeException("Failed to parse uri")
-                }
-                val (host, port) = parsedUri
-
                 // Add a timeout to prevent indefinite waiting
                 val success = withTimeout(15000) { // 15 second timeout
                     withContext(IODispatcher) {
-                        return@withContext webSocketClientProvider.testClient(host, port)
+                        return@withContext webSocketClientProvider.testClient(host.value, port.value.toInt())
                     }
                 }
 
                 if (success) {
                     val previousUrl = settingsRepository.fetch()?.bisqApiUrl
                     val isCompatibleVersion = withContext(IODispatcher) {
-                        updateTrustedNodeSettings()
+                        updateSettings()
                         delay(DEFAULT_DELAY)
                         webSocketClientProvider.get().await()
                         validateVersion()
@@ -142,15 +162,15 @@ class TrustedNodeSetupPresenter(
 
                     if (isCompatibleVersion) {
                         _isConnected.value = true
+                        _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
 
-                        if (previousUrl != _bisqApiUrl.value) {
-                            log.d { "user setup a new trusted node ${_bisqApiUrl.value}" }
+                        if (previousUrl != _host.value) {
+                            log.d { "user setup a new trusted node ${_host.value}" }
                             withContext(IODispatcher) {
                                 userRepository.fetch()?.let {
                                     userRepository.delete(it)
                                 }
                             }
-                            navigateToNextScreen(isWorkflow)
                         } else if (!isWorkflow) {
                             navigateBack()
                         }
@@ -159,24 +179,28 @@ class TrustedNodeSetupPresenter(
                         log.d { "Invalid version cannot connect" }
                         showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.incompatible".i18n())
                         _isConnected.value = false
+                        _status.value = "mobile.trustedNodeSetup.status.invalidVersion".i18n()
                     }
                 } else {
-                    showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.couldNotConnect".i18n(_bisqApiUrl.value))
+                    showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.couldNotConnect".i18n(_host.value))
                     _isConnected.value = false
+                    _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
                 }
             } catch (e: TimeoutCancellationException) {
                 log.e(e) { "Connection test timed out after 15 seconds" }
                 showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionTimedOut".i18n())
                 _isConnected.value = false
+                _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
             } catch (e: Exception) {
                 log.e(e) { "Error testing connection: ${e.message}" }
-                if(e.message != null) {
+                if (e.message != null) {
                     showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(e.message!!))
                 } else {
                     showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.unknownError".i18n())
                 }
 
                 _isConnected.value = false
+                _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
             } finally {
                 _isLoading.value = false
             }
@@ -188,53 +212,26 @@ class TrustedNodeSetupPresenter(
                 log.w { "Force stopping connection test after 20 seconds" }
                 connectionJob.cancel()
                 _isLoading.value = false
+                _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
                 showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionTookTooLong".i18n())
             }
         }
     }
 
-    private suspend fun updateTrustedNodeSettings() {
+    private suspend fun updateSettings() {
         val currentSettings = settingsRepository.fetch()
-        val updatedSettings = (currentSettings ?: Settings()).apply {
-            bisqApiUrl = _bisqApiUrl.value
+        val updatedSettings = Settings().apply {
+            bisqApiUrl = _host.value + ":" + _port.value
+            firstLaunch = currentSettings?.firstLaunch ?: true
         }
         settingsRepository.update(updatedSettings)
     }
 
-    override fun navigateToNextScreen(isWorkflow: Boolean) {
-        // access to profile setup should be handled by splash
-        log.d { "Navigating to next screen (Workflow: $isWorkflow" }
-        // TODO handle also user scheduled to be deleted when we implement settings change trusted node
-        launchUI {
-            val user = withContext(IODispatcher) { userRepository.fetch() }
-            val settings = withContext(IODispatcher) { settingsRepository.fetch() }
-
-            if (isWorkflow) {
-                // Check firstLaunch flag instead of just user existence to avoid re-showing onboarding
-                if (settings?.firstLaunch == true) {
-                    log.d { "First launch detected, navigating to onboarding" }
-                    navigateTo(Routes.Onboarding)
-                } else {
-                    // User has completed onboarding before, skip it
-                    if (user == null) {
-                        log.d { "Onboarding completed but no user profile, navigating to create profile" }
-                        navigateTo(Routes.CreateProfile)
-                    } else {
-                        log.d { "User and onboarding complete, navigating to main app" }
-                        navigateTo(Routes.TabContainer)
-                    }
-                }
-            } else {
-                navigateTo(Routes.TabContainer)
-            }
-        }
+    fun navigateToCreateProfile() {
+        launchUI { navigateTo(Routes.CreateProfile) }
     }
 
-    override fun goBackToSetupScreen() {
-        navigateBack()
-    }
-
-    override suspend fun validateVersion(): Boolean {
+    private suspend fun validateVersion(): Boolean {
         _trustedNodeVersion.value = settingsServiceFacade.getTrustedNodeVersion()
         if (settingsServiceFacade.isApiCompatible()) {
             _isBisqApiVersionValid.value = true
@@ -243,5 +240,47 @@ class TrustedNodeSetupPresenter(
             _isBisqApiVersionValid.value = false
             return false
         }
+    }
+
+    private fun updateHostPrompt() {
+        if (selectedNetworkType.value == NetworkType.LAN) {
+            if (BuildConfig.IS_DEBUG) {
+                _hostPrompt.value = "10.0.2.2"
+            } else {
+                _hostPrompt.value = "127.0.0.1"
+            }
+        } else {
+            _hostPrompt.value = "mobile.trustedNodeSetup.host.prompt".i18n()
+        }
+    }
+
+    fun validateHost(value: String): String? {
+        if (value.isEmpty()) {
+            "mobile.trustedNodeSetup.host.ip.invalid.empty".i18n()
+        }
+        if (selectedNetworkType.value == NetworkType.LAN) {
+            if (!value.isValidIp()) {
+                return "mobile.trustedNodeSetup.host.ip.invalid".i18n()
+            }
+        } else if (!value.isValidTorV3Address()) {
+            return "mobile.trustedNodeSetup.host.onion.invalid".i18n()
+        }
+
+        return null
+    }
+
+    fun validatePort(value: String): String? {
+        if (value.isEmpty()) {
+            "mobile.trustedNodeSetup.host.ip.invalid.empty".i18n()
+        }
+        if (!value.isValidPort()) {
+            return "mobile.trustedNodeSetup.port.invalid".i18n()
+        }
+        return null
+    }
+
+    private fun validateApiUrl() {
+        _isApiUrlValid.value = validateHost(host.value) == null &&
+                validatePort(port.value) == null
     }
 }

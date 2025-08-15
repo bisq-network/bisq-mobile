@@ -11,6 +11,8 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.NetworkUtils.isValidIp
+import network.bisq.mobile.domain.utils.NetworkUtils.isValidPort
 import kotlin.concurrent.Volatile
 
 /**
@@ -20,30 +22,22 @@ class WebSocketClientProvider(
     private val defaultHost: String,
     private val defaultPort: Int,
     private val settingsRepository: SettingsRepository,
-    private val clientFactory: (String, Int) -> WebSocketClient) : Logging {
+    private val clientFactory: (String, Int) -> WebSocketClient
+) : Logging {
     private var observeSettingsJob: Job? = null
     private val mutex = Mutex()
 
     companion object {
-
-        /**
-         * Returns a pair of host and port only if the uri is in the format of "scheme://host:port"
-         */
-        fun parseUri(uri: String): Pair<String,Int>? {
-            return uri.split("//").let { parts ->
-                parts.getOrNull(1)?.let { hostAndPort ->
-                    hostAndPort.split(":").let { it
-                        if (it.size >= 2) {
-                            val host = it[0]
-                            val port = it[1].toIntOrNull()
-                            if (host.isNotBlank() && port != null && port > 0) {
-                                return Pair(host, port)
-                            }
-                       }
-                        return null
-                    }
+        fun parseUri(uri: String): Pair<String, Int>? {
+            val hostAndPort = uri.split(":")
+            if (hostAndPort.size >= 2) {
+                val host = hostAndPort[0]
+                val port = hostAndPort[1]
+                if (host.isValidIp() && port.isValidPort()) {
+                    return host to port.toInt()
                 }
             }
+            return null
         }
     }
 
@@ -80,8 +74,8 @@ class WebSocketClientProvider(
         return clientFactory(host, port)
     }
 
-    // UI usages of this call will have the currentClient avail so
-    // no need to make it suspend as its used from IO curroutines
+    // UI usages of this call will have the currentClient available so
+    // no need to make it suspend as its used from IO coroutines
     // to be safe never call this method from UI thread
     fun get(): WebSocketClient {
         if (currentClient == null) {
@@ -93,7 +87,7 @@ class WebSocketClientProvider(
         }
         return currentClient!!
     }
-    
+
     /**
      * Initialize the client with saved settings if available, otherwise use defaults
      */
@@ -102,11 +96,11 @@ class WebSocketClientProvider(
             if (currentClient == null) {
                 // Fetch settings first
                 val settings = settingsRepository.fetch()
-                
+
                 // Determine host and port from settings or defaults
                 var host = defaultHost
                 var port = defaultPort
-                
+
                 settings?.bisqApiUrl?.takeIf { it.isNotBlank() }?.let { url ->
                     val parsedUri = parseUri(url);
                     if (parsedUri != null) {
@@ -122,11 +116,11 @@ class WebSocketClientProvider(
                 log.d { "Websocket client initialized with url $host:$port" }
 
                 val connected = try {
-                   currentClient?.connect()
-                   true
+                    currentClient?.connect()
+                    true
                 } catch (e: Exception) {
-                   log.e(e) { "Failed to connect to trusted node at $host:$port" }
-                   false
+                    log.e(e) { "Failed to connect to trusted node at $host:$port" }
+                    false
                 }
 
                 if (connected && !connectionReady.isCompleted) {
@@ -173,11 +167,11 @@ class WebSocketClientProvider(
                                     }
                                 } else {
                                     if (currentClient?.isConnected() == true) {
-                                        log.v { "skip url update, no change"}
+                                        log.v { "skip url update, no change" }
                                     } else {
-                                        log.v { "url update: no change but found client disconnected"}
+                                        log.v { "url update: no change but found client disconnected" }
                                         currentClient?.let {
-                                            log.v { "url update: connecting with existing setup client"}
+                                            log.v { "url update: connecting with existing setup client" }
                                             it.connect()
                                             if (!connectionReady.isCompleted) {
                                                 connectionReady.complete(true)
