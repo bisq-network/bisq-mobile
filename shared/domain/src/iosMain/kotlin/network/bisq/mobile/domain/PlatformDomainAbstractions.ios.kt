@@ -10,7 +10,6 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
-import network.bisq.mobile.domain.utils.StringUtils.capitalizeWords
 import platform.Foundation.*
 import platform.UIKit.UIApplication
 import platform.UIKit.UIDevice

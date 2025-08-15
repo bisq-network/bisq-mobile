@@ -5,10 +5,13 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 
 class ClientApplicationBootstrapFacade(
     private val settingsRepository: SettingsRepository,
+    private val settingsServiceFacade: SettingsServiceFacade,
     private val trustedNodeService: TrustedNodeService
 ) : ApplicationBootstrapFacade() {
 
@@ -20,6 +23,11 @@ class ClientApplicationBootstrapFacade(
         if (isActive) {
             return
         }
+
+        // Make sure i18n is ready
+        I18nSupport.initialize(settingsServiceFacade.languageCode.value)
+
+
         setState("mobile.clientApplicationBootstrap.bootstrapping".i18n())
         setProgress(0f)
 
