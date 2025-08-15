@@ -9,7 +9,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -27,17 +26,11 @@ interface IOnboardingPresenter : ViewPresenter {
     
     val buttonText: StateFlow<String>
 
-    val pages: List<PagerViewItem>
-
     val filteredPages: List<PagerViewItem>
 
     val indexesToShow: List<Int>
 
     fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState)
-
-    fun mainButtonText(deviceSettings: Settings?): String
-
-    fun doCustomNavigationLogic(isBisqUrlSet: Boolean, hasProfile: Boolean)
 }
 
 @Composable
@@ -47,7 +40,7 @@ fun OnBoardingScreen() {
 
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { presenter.filteredPages.size })
-    val mainButtonText by presenter.buttonText.collectAsState()
+    val buttonText by presenter.buttonText.collectAsState()
 
     BisqScrollScaffold {
         BisqGap.VHalf()
@@ -60,7 +53,7 @@ fun OnBoardingScreen() {
 
         BisqButton(
             text = if (pagerState.currentPage == presenter.indexesToShow.lastIndex)
-                mainButtonText
+                buttonText
             else
                 "action.next".i18n(),
             onClick = { presenter.onNextButtonClick(coroutineScope, pagerState) }

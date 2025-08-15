@@ -27,7 +27,7 @@ class ClientOnBoardingPresenter(
         }
     }
 
-    override fun mainButtonText(deviceSettings: Settings?): String {
+    override fun evaluateButtonText(deviceSettings: Settings?): String {
         return if (deviceSettings?.bisqApiUrl?.isNotEmpty() == true)
             "mobile.onboarding.createProfile".i18n()
         else

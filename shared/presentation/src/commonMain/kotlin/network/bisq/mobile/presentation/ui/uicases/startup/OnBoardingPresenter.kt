@@ -28,7 +28,7 @@ abstract class OnBoardingPresenter(
     private val _buttonText = MutableStateFlow("")
     override val buttonText: StateFlow<String> get() = _buttonText.asStateFlow()
 
-    override val pages = listOf(
+    private val pages = listOf(
         PagerViewItem(
             title = "mobile.onboarding.teaserHeadline1".i18n(),
             image = Res.drawable.img_bisq_Easy,
@@ -60,7 +60,7 @@ abstract class OnBoardingPresenter(
         launchIO {
             settingsRepository.fetch()
             val deviceSettings: Settings? = settingsRepository.data.value
-            _buttonText.value = mainButtonText(deviceSettings)
+            _buttonText.value = evaluateButtonText(deviceSettings)
         }
     }
 
@@ -93,4 +93,8 @@ abstract class OnBoardingPresenter(
     protected fun navigateToCreateProfile() {
         navigateTo(Routes.CreateProfile)
     }
+
+    abstract fun doCustomNavigationLogic(notEmpty: Boolean, hasProfile: Boolean)
+
+    abstract fun evaluateButtonText(deviceSettings: Settings?): String
 }

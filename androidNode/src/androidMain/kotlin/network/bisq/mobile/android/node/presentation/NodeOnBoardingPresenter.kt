@@ -22,7 +22,7 @@ class NodeOnBoardingPresenter(
         navigateToCreateProfile()
     }
 
-    override fun mainButtonText(deviceSettings: Settings?): String {
+    override fun evaluateButtonText(deviceSettings: Settings?): String {
         return "mobile.onboarding.createProfile".i18n()
     }
 }
