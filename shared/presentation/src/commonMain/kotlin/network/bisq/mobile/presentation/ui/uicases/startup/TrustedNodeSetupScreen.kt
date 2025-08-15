@@ -69,7 +69,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     )
 
     var isNewApiUrl by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
+    LaunchedEffect(host, port, selectedNetworkType) {
         isNewApiUrl = presenter.isNewApiUrl()
     }
 
@@ -103,7 +103,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     value = host,
                     placeholder = hostPrompt,
                     keyboardType = if (selectedNetworkType == NetworkType.LAN) {
-                        KeyboardType.Number
+                        KeyboardType.Decimal
                     } else {
                         KeyboardType.Text
                     },
@@ -116,7 +116,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     onValueChange = { port, _ -> presenter.onPortChanged(port) },
                     value = port,
                     placeholder = "8090",
-                    keyboardType = KeyboardType.Number,
+                    keyboardType = KeyboardType.Decimal,
                     disabled = isLoading,
                     validation = { return@BisqTextField presenter.validatePort(it) }
                 )
@@ -175,7 +175,10 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         modifier = Modifier.animateItem(),
                         text = if (isWorkflow) "mobile.trustedNodeSetup.createProfile".i18n() else "action.save".i18n(),
                         color = BisqTheme.colors.light_grey10,
-                        onClick = { presenter.navigateToCreateProfile() },
+                        onClick = {
+                            if (isWorkflow) presenter.navigateToCreateProfile()
+                            else presenter.onSave()
+                        },
                         padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
                     )
                 }
