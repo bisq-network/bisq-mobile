@@ -22,6 +22,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatfo
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
@@ -61,7 +62,10 @@ fun CreateProfileScreen(
         BisqGap.V3()
 
         if (generateKeyPairInProgress) {
-            CircularProgressIndicator(modifier = Modifier.size(botSize))
+            CircularProgressIndicator(
+                modifier = Modifier.size(botSize),
+                color = BisqTheme.colors.primary
+            )
         } else {
             profileIcon?.let { profileIcon ->
                 val painter = rememberPlatformImagePainter(profileIcon)
