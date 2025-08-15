@@ -81,7 +81,9 @@ fun BisqTextField(
     numberWithTwoDecimals: Boolean = false,
     modifier: Modifier = Modifier,
     textStyle: TextStyle = TextStyle(
-        color = color, fontSize = 18.sp, textDecoration = TextDecoration.None
+        color = color,
+        fontSize = 18.sp,
+        textDecoration = TextDecoration.None
     ),
     textFieldAlignment: Alignment = Alignment.TopStart,
     enableAnimation: Boolean = LocalAnimationsEnabled.current,
@@ -199,30 +201,34 @@ fun BisqTextField(
 
             BisqGap.VQuarter()
         }
-        Box(modifier = Modifier.fillMaxWidth()
-            .clip(shape = RoundedCornerShape(topStart = finalBorderRadius, topEnd = finalBorderRadius))
-            .background(color = finalBackgroundColor).drawBehind {
-                if (!isSearch) {
-                    val strokeWidth = 4.dp.toPx()
-                    val y = size.height
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(shape = RoundedCornerShape(topStart = finalBorderRadius, topEnd = finalBorderRadius))
+                .background(color = finalBackgroundColor)
+                .drawBehind {
+                    if (!isSearch) {
+                        val strokeWidth = 4.dp.toPx()
+                        val y = size.height
 
-                    drawLine(
-                        color = finalIndicatorColor,
-                        start = Offset(0f, y),
-                        end = Offset(size.width, y),
-                        strokeWidth = strokeWidth
-                    )
-
-                    if (animatedLineProgress > 0f) {
                         drawLine(
-                            color = indicatorColor,
+                            color = finalIndicatorColor,
                             start = Offset(0f, y),
-                            end = Offset(size.width * animatedLineProgress, y),
+                            end = Offset(size.width, y),
                             strokeWidth = strokeWidth
                         )
+
+                        if (animatedLineProgress > 0f) {
+                            drawLine(
+                                color = indicatorColor,
+                                start = Offset(0f, y),
+                                end = Offset(size.width * animatedLineProgress, y),
+                                strokeWidth = strokeWidth
+                            )
+                        }
                     }
                 }
-            }) {
+        ) {
             BasicTextField(value = finalValue,
                 onValueChange = {
                     val processedValue = processText(
