@@ -38,12 +38,16 @@ class ClientUserProfileServiceFacade(
     private var ignoredUserIdsCache: Set<String>? = null
     private val ignoredUserIdsMutex = Mutex()
 
+    private val _hasIgnoredUsers: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    override val hasIgnoredUsers: StateFlow<Boolean> get() = _hasIgnoredUsers.asStateFlow()
+
     // Misc
     override fun activate() {
         super<ServiceFacade>.activate()
 
         serviceScope.launch(Dispatchers.Default) {
             _selectedUserProfile.value = getSelectedUserProfile()
+            getIgnoredUserProfileIds()
         }
     }
 
@@ -190,6 +194,7 @@ class ClientUserProfileServiceFacade(
             apiGateway.ignoreUser(profileId).getOrThrow()
             ignoredUserIdsMutex.withLock {
                 ignoredUserIdsCache = (ignoredUserIdsCache ?: emptySet()) + profileId
+                _hasIgnoredUsers.value = (ignoredUserIdsCache?.isNotEmpty() == true)
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to ignore user id: $profileId" }
@@ -202,6 +207,7 @@ class ClientUserProfileServiceFacade(
             apiGateway.undoIgnoreUser(profileId).getOrThrow()
             ignoredUserIdsMutex.withLock {
                 ignoredUserIdsCache = (ignoredUserIdsCache ?: emptySet()) - profileId
+                _hasIgnoredUsers.value = (ignoredUserIdsCache?.isNotEmpty() == true)
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to undo ignore user id: $profileId" }
@@ -210,24 +216,18 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun isUserIgnored(profileId: String): Boolean {
-        val cached = ignoredUserIdsMutex.withLock { ignoredUserIdsCache }
-        if (cached != null) return profileId in cached
-
-        val fresh = apiGateway.getIgnoredUserIds().getOrThrow().toSet()
-        return ignoredUserIdsMutex.withLock {
-            ignoredUserIdsCache = fresh
-            profileId in fresh
-        }
+        return profileId in getIgnoredUserProfileIds()
     }
 
-    override suspend fun getIgnoredUserProfileIds(): List<String> {
+    override suspend fun getIgnoredUserProfileIds(): Set<String> {
         val cached = ignoredUserIdsMutex.withLock { ignoredUserIdsCache }
-        if (cached != null) return cached.toList()
+        if (cached != null) return cached
         try {
             val fetched: Set<String> = apiGateway.getIgnoredUserIds().getOrThrow().toSet()
             return ignoredUserIdsMutex.withLock {
                 ignoredUserIdsCache = fetched
-                fetched.toList()
+                _hasIgnoredUsers.value = fetched.isNotEmpty()
+                fetched
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch ignored user IDs" }

@@ -34,6 +34,7 @@ fun OfferbookMarketScreen() {
     var showFilterDialog by remember { mutableStateOf(false) }
     val searchText by presenter.searchText.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
+    val hasIgnoredUsers by presenter.hasIgnoredUsers.collectAsState()
 
     val marketItems by presenter.marketListItemWithNumOffers.collectAsState()
     val filter by presenter.filter.collectAsState()
@@ -69,7 +70,8 @@ fun OfferbookMarketScreen() {
         LazyColumn {
             items(marketItems) { item ->
                 CurrencyCard(
-                    item,
+                    item = item,
+                    hasIgnoredUsers = hasIgnoredUsers,
                     onClick = { presenter.onSelectMarket(item) }
                 )
             }

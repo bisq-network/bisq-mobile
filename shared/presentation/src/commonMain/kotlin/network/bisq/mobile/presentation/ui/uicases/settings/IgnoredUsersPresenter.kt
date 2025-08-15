@@ -36,7 +36,7 @@ class IgnoredUsersPresenter(
     private fun loadIgnoredUsers() {
         launchIO {
             try {
-                val ignoredUserIds = userProfileService.getIgnoredUserProfileIds()
+                val ignoredUserIds = userProfileService.getIgnoredUserProfileIds().toList()
 
                 val userProfiles = userProfileService.findUserProfiles(ignoredUserIds)
 

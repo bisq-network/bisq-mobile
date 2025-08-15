@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -20,13 +21,16 @@ import network.bisq.mobile.presentation.ui.uicases.market.MarketFilterUtil
 class OfferbookMarketPresenter(
     mainPresenter: MainPresenter,
     private val offersServiceFacade: OffersServiceFacade,
-    private val marketPriceServiceFacade: MarketPriceServiceFacade
+    private val marketPriceServiceFacade: MarketPriceServiceFacade,
+    private val userProfileServiceFacade: UserProfileServiceFacade
 ) : BasePresenter(mainPresenter) {
 
     private var mainCurrencies = OffersServiceFacade.mainCurrencies
 
     // flag to force market update trigger when needed
     private val _marketPriceUpdated = MutableStateFlow(false)
+
+    val hasIgnoredUsers: StateFlow<Boolean> get() = userProfileServiceFacade.hasIgnoredUsers
 
     private val _sortBy = MutableStateFlow(MarketSortBy.MostOffers)
     val sortBy: StateFlow<MarketSortBy> get() = _sortBy.asStateFlow()
