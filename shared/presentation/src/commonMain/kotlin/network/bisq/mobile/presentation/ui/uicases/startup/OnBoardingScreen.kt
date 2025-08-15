@@ -22,12 +22,14 @@ import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
 interface IOnboardingPresenter : ViewPresenter {
-
+    val headline: String
+    
     val buttonText: StateFlow<String>
 
-    val onBoardingData: List<PagerViewItem>
+    val filteredPages: List<PagerViewItem>
 
-    val indexesToShow: List<Number>
+    val indexesToShow: List<Int>
+
     fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState)
 }
 
@@ -37,24 +39,21 @@ fun OnBoardingScreen() {
     RememberPresenterLifecycle(presenter)
 
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(pageCount = { presenter.indexesToShow.size })
-    val mainButtonText by presenter.buttonText.collectAsState()
-
-    val finalPages = presenter.onBoardingData.filterIndexed { index, _ ->
-        presenter.indexesToShow.contains(index)
-    }
+    val pagerState = rememberPagerState(pageCount = { presenter.filteredPages.size })
+    val buttonText by presenter.buttonText.collectAsState()
 
     BisqScrollScaffold {
+        BisqGap.VHalf()
         BisqLogo()
         BisqGap.V2()
-        BisqText.h1LightGrey("onboarding.bisq2.headline".i18n(), textAlign = TextAlign.Center)
+        BisqText.h2Light(presenter.headline, textAlign = TextAlign.Center)
         BisqGap.V2()
-        BisqPagerView(pagerState, finalPages)
+        BisqPagerView(pagerState, presenter.filteredPages)
         BisqGap.V2()
 
         BisqButton(
             text = if (pagerState.currentPage == presenter.indexesToShow.lastIndex)
-                mainButtonText
+                buttonText
             else
                 "action.next".i18n(),
             onClick = { presenter.onNextButtonClick(coroutineScope, pagerState) }
