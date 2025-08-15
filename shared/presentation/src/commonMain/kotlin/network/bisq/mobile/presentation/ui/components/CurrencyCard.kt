@@ -32,6 +32,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 fun CurrencyCard(
     item: MarketListItem,
     isSelected: Boolean = false,
+    hasIgnoredUsers: Boolean = false,
     onClick: () -> Unit
 ) {
     val interactionSource = remember { MutableInteractionSource() }
@@ -94,7 +95,8 @@ fun CurrencyCard(
             }
         }
         BisqText.baseRegular(
-            text = "mobile.components.currencyCard.numberOfOffers".i18n(numOffers),
+            text = (if (hasIgnoredUsers && numOffers > 0) "~" else "") +
+                    "mobile.components.currencyCard.numberOfOffers".i18n(numOffers),
             color = BisqTheme.colors.primary,
             textAlign = TextAlign.End,
             modifier = Modifier.weight(1.0f),
