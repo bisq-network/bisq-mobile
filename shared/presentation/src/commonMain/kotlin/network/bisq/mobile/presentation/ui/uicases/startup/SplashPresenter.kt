@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.model.Settings
@@ -15,7 +16,6 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import kotlin.coroutines.cancellation.CancellationException
 
 open class SplashPresenter(
     mainPresenter: MainPresenter,
