@@ -5,7 +5,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.shared.BuildConfig
@@ -118,16 +117,14 @@ class TrustedNodeSetupPresenter(
         validateApiUrl()
     }
 
-    fun isNewApiUrl(): Boolean {
-        return runBlocking {
-            var isNewApiUrl = false
-            settingsRepository.fetch()?.let {
-                if (it.bisqApiUrl.isNotBlank() && it.bisqApiUrl != _host.value) {
-                    isNewApiUrl = true
-                }
+    suspend fun isNewApiUrl(): Boolean {
+        var isNewApiUrl = false
+        settingsRepository.fetch()?.let {
+            if (it.bisqApiUrl.isNotBlank() && it.bisqApiUrl != _host.value) {
+                isNewApiUrl = true
             }
-            return@runBlocking isNewApiUrl
         }
+        return isNewApiUrl
     }
 
     fun testConnection(isWorkflow: Boolean) {
