@@ -137,14 +137,10 @@ open class SplashPresenter(
         }
     }
 
-    /**
-     * Default implementation in shared is for xClients. Override on node to avoid this.
-     * @return true if handled, false otherwise
-     */
     open fun doCustomNavigationLogic(settings: Settings, hasProfile: Boolean): Boolean {
         when {
             settings.bisqApiUrl.isEmpty() -> navigateToTrustedNodeSetup()
-            settings.bisqApiUrl.isNotEmpty() && hasProfile -> navigateToCreateProfile()
+            settings.bisqApiUrl.isNotEmpty() && !hasProfile -> navigateToCreateProfile()
             else -> navigateToHome()
         }
         return true

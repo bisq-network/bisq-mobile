@@ -63,7 +63,6 @@ import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsP
 import network.bisq.mobile.presentation.ui.uicases.startup.AgreementPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IAgreementPresenter
-import network.bisq.mobile.presentation.ui.uicases.startup.ITrustedNodeSetupPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferAmountPresenter
@@ -75,7 +74,26 @@ import org.koin.dsl.module
 
 val presentationModule = module {
     single<MainPresenter> {
-        ClientMainPresenter(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get(),get())
+        ClientMainPresenter(
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get()
+        )
     } bind AppPresenter::class
 
     single<TopBarPresenter> { TopBarPresenter(get(), get(), get(), get()) } bind ITopBarPresenter::class
@@ -121,15 +139,7 @@ val presentationModule = module {
         )
     }
 
-    factory {
-        TrustedNodeSetupPresenter(
-            get(),
-            get(),
-            settingsRepository = get(),
-            get(),
-            get()
-        )
-    } bind ITrustedNodeSetupPresenter::class
+    single<TrustedNodeSetupPresenter> { TrustedNodeSetupPresenter(get(), get(), get(), get(), get()) }
 
     factory { GeneralSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 

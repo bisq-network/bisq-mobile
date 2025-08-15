@@ -136,6 +136,7 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
         val trustedNodeApiVersion = apiGateway.getApiVersion().getOrThrow().version
         log.d { "required trusted node api version is $appApiRequiredVersion and current is $trustedNodeApiVersion" }
         // return false // (for debug)
+        //todo lexical order nto safe here
         return trustedNodeApiVersion >= appApiRequiredVersion
     }
 
