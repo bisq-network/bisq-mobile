@@ -8,11 +8,14 @@ import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import java.io.File
@@ -197,6 +200,8 @@ class KmpTorService : ServiceFacade(), Logging {
                 disposeControlPortFileObserver()
                 writeExternalTorConfig(socksPort, controlPort)
                 torDaemonStarted.await()
+
+                verifyControlPortAccessible(controlPort)
                 // _startupCompleted.value = true
                 configCompleted.takeIf { !it.isCompleted }?.complete(true)
             } catch (error: Exception) {
@@ -286,16 +291,15 @@ class KmpTorService : ServiceFacade(), Logging {
             }
 
             val configFile = File(getTorDir(), "external_tor.config")
-            @Suppress("BlockingMethodInNonBlockingContext") // already called from IO context
-            FileOutputStream(configFile).use { fos ->
-                fos.write(configContent.toByteArray())
-                fos.fd.sync() // ensures data is flushed to disk
+            withContext(Dispatchers.IO) {
+                runInterruptible {
+                    FileOutputStream(configFile).use { fos ->
+                        fos.write(configContent.toByteArray())
+                        fos.fd.sync()
+                    }
+                }
             }
-
             log.i { "Wrote external_tor.config to ${configFile.absolutePath}\n\n$configContent\n\n" }
-
-            verifyControlPortAccessible(controlPort)
-
         } catch (error: Exception) {
             handleError("Failed to write external_tor.config: $error")
         }
@@ -306,10 +310,18 @@ class KmpTorService : ServiceFacade(), Logging {
             // Give Tor a moment to fully initialize the control port
             delay(500)
 
-            java.net.Socket().use { socket ->
-                socket.connect(java.net.InetSocketAddress("127.0.0.1", controlPort), 5000)
-                log.i { "Verified control port $controlPort is accessible" }
+            repeat(3) { attempt ->
+                try {
+                    java.net.Socket().use { socket ->
+                        socket.connect(java.net.InetSocketAddress("127.0.0.1", controlPort), 1000)
+                        log.i { "Verified control port $controlPort is accessible" }
+                        return
+                    }
+                } catch (e: Exception) {
+                    if (attempt < 2) delay(250)
+                }
             }
+            log.w { "Control port $controlPort not yet accessible, but continuing anyway" }
         } catch (e: Exception) {
             log.w(e) { "Control port $controlPort not yet accessible, but continuing anyway" }
         }
