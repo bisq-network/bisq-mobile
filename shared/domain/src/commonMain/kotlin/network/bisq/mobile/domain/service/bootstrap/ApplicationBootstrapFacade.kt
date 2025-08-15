@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.service.ServiceFacade
+import network.bisq.mobile.i18n.I18nSupport
 
 @Suppress("RedundantOverride")
 abstract class ApplicationBootstrapFacade : ServiceFacade() {
@@ -81,5 +82,13 @@ abstract class ApplicationBootstrapFacade : ServiceFacade() {
     open fun extendTimeout() {
         log.i { "Bootstrap: Extending timeout (default implementation)" }
         setTimeoutDialogVisible(false)
+    }
+
+    protected fun makeSureI18NIsReady(languageCode: String) {
+        runCatching {
+            I18nSupport.initialize(languageCode)
+        }.onFailure { e ->
+            log.w(e) { "Bootstrap: i18n initialization failed; continuing with defaults" }
+        }
     }
 }

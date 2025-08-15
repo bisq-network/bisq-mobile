@@ -39,8 +39,7 @@ class NodeApplicationBootstrapFacade(
         log.i { "Bootstrap: activate() called - isActive: $isActive" }
 
         // TODO not working for the first translation requested, but avoids crash at least using default
-        // Make sure i18n is ready
-        I18nSupport.initialize(settingsServiceFacade.languageCode.value)
+        makeSureI18NIsReady(settingsServiceFacade.languageCode.value)
 
         if (isActive) {
             log.d { "Bootstrap already active, forcing reset" }

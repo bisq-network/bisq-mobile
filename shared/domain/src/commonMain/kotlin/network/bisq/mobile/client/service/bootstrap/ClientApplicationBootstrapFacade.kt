@@ -24,9 +24,7 @@ class ClientApplicationBootstrapFacade(
             return
         }
 
-        // Make sure i18n is ready
-        I18nSupport.initialize(settingsServiceFacade.languageCode.value)
-
+        makeSureI18NIsReady(settingsServiceFacade.languageCode.value)
 
         setState("mobile.clientApplicationBootstrap.bootstrapping".i18n())
         setProgress(0f)
