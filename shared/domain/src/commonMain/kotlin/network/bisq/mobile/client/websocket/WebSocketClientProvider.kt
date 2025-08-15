@@ -13,6 +13,7 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidIp
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidPort
+import network.bisq.mobile.domain.utils.NetworkUtils.isValidTorV3Address
 import kotlin.concurrent.Volatile
 
 /**
@@ -29,12 +30,28 @@ class WebSocketClientProvider(
 
     companion object {
         fun parseUri(uri: String): Pair<String, Int>? {
-            val hostAndPort = uri.split(":")
-            if (hostAndPort.size >= 2) {
-                val host = hostAndPort[0]
-                val port = hostAndPort[1]
-                if (host.isValidIp() && port.isValidPort()) {
-                    return host to port.toInt()
+            val trimmed = uri.trim()
+            // Bracketed IPv6: [::1]:9999
+            if (trimmed.startsWith("[")) {
+                val end = trimmed.indexOf(']')
+                if (end > 0) {
+                    val host = trimmed.substring(1, end)
+                    val portStr = trimmed.substring(end + 1).removePrefix(":")
+                    if (host.isValidIp() && portStr.isValidPort()) {
+                        return host to portStr.toInt()
+                    }
+                    return null
+                }
+            }
+
+            // IPv4 or Tor v3 onion: host:port
+            val parts = trimmed.split(":")
+            if (parts.size == 2) {
+                val host = parts[0]
+                val portStr = parts[1]
+                val hostOk = host.isValidIp() || host.isValidTorV3Address()
+                if (hostOk && portStr.isValidPort()) {
+                    return host to portStr.toInt()
                 }
             }
             return null
