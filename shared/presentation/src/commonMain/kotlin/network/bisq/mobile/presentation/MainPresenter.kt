@@ -83,8 +83,6 @@ open class MainPresenter(
         super.onViewAttached()
 
         languageCode.filter { it.isNotEmpty() }.onEach {
-            // I18nSupport.initialize(it) // Done in App.kt, before view initializes
-            setDefaultLocale(it)
             settingsService.setLanguageCode(it)
         }.take(1).launchIn(presenterScope)
 

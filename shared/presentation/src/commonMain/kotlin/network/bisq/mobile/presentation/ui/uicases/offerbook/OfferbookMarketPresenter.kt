@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFilter
@@ -49,8 +50,9 @@ class OfferbookMarketPresenter(
         _filter,
         _searchText,
         _sortBy,
-        _marketPriceUpdated
-    ) { filter: MarketFilter, searchText: String, sortBy: MarketSortBy, forceTrigger: Boolean ->
+        _marketPriceUpdated,
+        mainPresenter.languageCode,
+    ) { filter: MarketFilter, searchText: String, sortBy: MarketSortBy, forceTrigger: Boolean, _ ->
         Triple(filter, searchText, sortBy)
     }.combine(offersServiceFacade.offerbookMarketItems) { params, items ->
         computeMarketList(params.first, params.second, params.third, items)
@@ -68,8 +70,12 @@ class OfferbookMarketPresenter(
     ): List<MarketListItem> {
         log.d { "Offerbook computing market list - input: ${items.size} markets, filter: $filter, search: '$searchText', sort: $sortBy" }
 
-        val marketsWithPriceData = MarketFilterUtil.filterMarketsWithPriceData(items, marketPriceServiceFacade)
-        log.d { "Offerbook after price filtering: ${marketsWithPriceData.size}/${items.size} markets have price data" }
+        val translatedMarketItems = items.map { item ->
+            item.copy(localeFiatCurrencyName = CurrencyUtils.getLocaleFiatCurrencyName(item.market.quoteCurrencyCode, item.market.quoteCurrencyName))
+        }
+
+        val marketsWithPriceData = MarketFilterUtil.filterMarketsWithPriceData(translatedMarketItems, marketPriceServiceFacade)
+        log.d { "Offerbook after price filtering: ${marketsWithPriceData.size}/${translatedMarketItems.size} markets have price data" }
 
         val afterOfferFilter = marketsWithPriceData.filter { item ->
             when (filter) {
@@ -94,8 +100,8 @@ class OfferbookMarketPresenter(
                 .thenByDescending { mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
                 .thenBy {
                     when (sortBy) {
-                        MarketSortBy.NameAZ -> it.market.quoteCurrencyName
-                        MarketSortBy.NameZA -> it.market.quoteCurrencyName
+                        MarketSortBy.NameAZ -> it.localeFiatCurrencyName
+                        MarketSortBy.NameZA -> it.localeFiatCurrencyName
                         else -> null
                     }
                 }

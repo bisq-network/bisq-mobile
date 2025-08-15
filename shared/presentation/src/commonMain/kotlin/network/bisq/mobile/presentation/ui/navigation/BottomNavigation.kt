@@ -11,8 +11,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.FontSize
+import network.bisq.mobile.presentation.ui.components.atoms.FontWeight
 import network.bisq.mobile.presentation.ui.components.atoms.animations.AnimatedBadge
 import network.bisq.mobile.presentation.ui.composeModels.BottomNavigationItem
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -78,9 +82,14 @@ fun BottomNavigation(
                     }
                 },
                 label = {
-                    BisqText.baseRegular(
+                    AutoResizeText(
                         text = navigationItem.title.i18n(),
                         color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else BisqTheme.colors.white,
+                        fontSize = FontSize.BASE,
+                        fontWeight = FontWeight.REGULAR,
+                        textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        minimumFontSize = 8.sp
                     )
                 }
             )

@@ -222,6 +222,21 @@ android {
     setProperty("archivesBaseName", getArtifactName(defaultConfig))
 }
 
+// Ensure generateResourceBundles runs before Android build tasks
+afterEvaluate {
+    val generateResourceBundlesTask = project(":shared:domain").tasks.findByName("generateResourceBundles")
+    if (generateResourceBundlesTask != null) {
+        tasks.matching { task ->
+            task.name.startsWith("compile") ||
+            task.name.startsWith("assemble") ||
+            task.name.startsWith("bundle") ||
+            task.name.contains("Build")
+        }.configureEach {
+            dependsOn(generateResourceBundlesTask)
+        }
+    }
+}
+
 // Compatible with macOS on Apple Silicon
 val archSuffix = if (Os.isFamily(Os.FAMILY_MAC)) ":osx-x86_64" else ""
 

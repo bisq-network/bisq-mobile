@@ -63,11 +63,6 @@ jobs:
           echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
           echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
 
-      - name: Generate i18n bundles
-        env:
-          CI: true
-        run: ./gradlew generateResourceBundles
-
       - name: Run androidClient Tests
         env:
           CI: true
@@ -142,11 +137,6 @@ jobs:
           echo "CLI_KEY_ALIAS=yourCliKeyAlias" >> local.properties
           echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
           echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
-
-      - name: Generate i18n bundles
-        env:
-          CI: true
-        run: ./gradlew generateResourceBundles
 
       - name: Build Node Project with Maven Secrets
         run: |

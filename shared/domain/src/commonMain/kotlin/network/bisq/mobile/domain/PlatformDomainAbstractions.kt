@@ -72,3 +72,9 @@ expect fun getDecimalSeparator(): Char
 expect fun getGroupingSeparator(): Char
 
 expect fun String.toDoubleOrNullLocaleAware(): Double?
+
+/**
+ * Returns the localized display name for the given ISO 4217 currency code using the current default locale.
+ * Must never throw; return currencyCode if unavailable/unknown so callers can fall back.
+ */
+expect fun getLocaleCurrencyName(currencyCode: String): String

@@ -86,7 +86,7 @@ fun CurrencyCard(
             BisqGap.HHalf()
             Column {
                 BisqText.baseRegular(
-                    text = item.market.quoteCurrencyName,
+                    text = item.localeFiatCurrencyName,
                     singleLine = true
                 )
                 Spacer(modifier = Modifier.height(0.dp))

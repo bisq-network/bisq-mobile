@@ -140,3 +140,18 @@ fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.Default
 //    val date = SimpleDateFormat("yyyyMMdd").format(Date())
     return "BisqConnect-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 }
+
+// Ensure generateResourceBundles runs before Android build tasks
+afterEvaluate {
+    val generateResourceBundlesTask = project(":shared:domain").tasks.findByName("generateResourceBundles")
+    if (generateResourceBundlesTask != null) {
+        tasks.matching { task ->
+            task.name.startsWith("compile") ||
+            task.name.startsWith("assemble") ||
+            task.name.startsWith("bundle") ||
+            task.name.contains("Build")
+        }.configureEach {
+            dependsOn(generateResourceBundlesTask)
+        }
+    }
+}

@@ -20,7 +20,8 @@ class MarketFilterUtilTest {
     private fun createTestMarketListItem(quoteCurrency: String, numOffers: Int = 0, quoteCurrencyName: String = "${quoteCurrency} Name"): MarketListItem {
         return MarketListItem(
             market = createTestMarket(quoteCurrency, quoteCurrencyName),
-            numOffers = numOffers
+            numOffers = numOffers,
+            ""
         )
     }
 

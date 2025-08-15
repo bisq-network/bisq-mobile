@@ -140,7 +140,7 @@ val clientModule = module {
         }
     }
 
-    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get()) }
+    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get(), get()) }
 
     single { EnvironmentController() }
     single(named("ApiHost")) { get<EnvironmentController>().getApiHost() }

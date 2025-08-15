@@ -8,5 +8,4 @@ object StringUtils {
             this
         }
     }
-
 }

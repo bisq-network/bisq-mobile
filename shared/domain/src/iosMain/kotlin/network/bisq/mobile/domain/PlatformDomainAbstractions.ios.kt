@@ -211,3 +211,8 @@ actual fun String.toDoubleOrNullLocaleAware(): Double? {
     val number = formatter.numberFromString(this)
     return number?.doubleValue?.toDouble()
 }
+
+actual fun getLocaleCurrencyName(currencyCode: String): String {
+    val rawName = defaultLocale.displayNameForKey(NSLocaleCurrencyCode, currencyCode)
+    return rawName ?: currencyCode
+}

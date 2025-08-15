@@ -21,9 +21,10 @@ import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 /**
  * Provides data for offerbook market list items
  */
-data class MarketListItem(val market: MarketVO, val numOffers: Int) {
+data class MarketListItem(val market: MarketVO, val numOffers: Int, val localeFiatCurrencyName: String) {
     override fun toString(): String {
         return "MarketListItem(market=$market, " +
-                "numOffers=$numOffers"
+                "numOffers=$numOffers, " +
+                "localeFiatCurrencyName=$localeFiatCurrencyName)"
     }
 }

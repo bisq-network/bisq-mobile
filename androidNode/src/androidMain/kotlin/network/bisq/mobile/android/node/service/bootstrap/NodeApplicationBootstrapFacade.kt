@@ -12,10 +12,13 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.service.network.KmpTorService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 
 class NodeApplicationBootstrapFacade(
     private val applicationService: AndroidApplicationService.Provider,
+    private val settingsServiceFacade: SettingsServiceFacade,
     private val connectivityService: ConnectivityService,
     private val kmpTorService: KmpTorService,
 ) : ApplicationBootstrapFacade() {
@@ -34,6 +37,9 @@ class NodeApplicationBootstrapFacade(
 
     override fun activate() {
         log.i { "Bootstrap: activate() called - isActive: $isActive" }
+
+        // TODO not working for the first translation requested, but avoids crash at least using default
+        makeSureI18NIsReady(settingsServiceFacade.languageCode.value)
 
         if (isActive) {
             log.d { "Bootstrap already active, forcing reset" }

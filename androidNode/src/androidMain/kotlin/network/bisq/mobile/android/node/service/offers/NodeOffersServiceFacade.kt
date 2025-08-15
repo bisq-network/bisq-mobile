@@ -50,6 +50,7 @@ import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.utils.CurrencyUtils
 import java.util.Date
 import java.util.Optional
 
@@ -137,15 +138,15 @@ class NodeOffersServiceFacade(
         log.d { "Selecting offerbook market: ${marketListItem.market.quoteCurrencyCode}, current offers count: ${_offerbookListItems.value.size}" }
         val market = Mappings.MarketMapping.toBisq2Model(marketListItem.market)
         val channelOptional = bisqEasyOfferbookChannelService.findChannel(market)
-        
+
         if (!channelOptional.isPresent) {
             log.e { "No channel found for market ${market.marketCodes}" }
             return
         }
-        
+
         val channel = channelOptional.get()
         log.d { "Found channel for market ${market.marketCodes}, chat messages count: ${channel.chatMessages.size}" }
-        
+
         bisqEasyOfferbookChannelSelectionService.selectChannel(channel)
         marketPriceServiceFacade.selectMarket(marketListItem)
     }
@@ -334,7 +335,7 @@ class NodeOffersServiceFacade(
         log.d { "Setting up selected channel observer" }
         selectedChannelPin?.unbind()
         log.d { "Previous selectedChannelPin unbound: $selectedChannelPin" }
-        
+
         selectedChannelPin = bisqEasyOfferbookChannelSelectionService.selectedChannel.addObserver { channel ->
             if (channel == null) {
                 log.d { "Selected channel is null" }
@@ -353,7 +354,7 @@ class NodeOffersServiceFacade(
                     clearOfferMessages()
                     addChatMessagesObservers(channel)
                 }
-                
+
                 log.d { "After channel selection, offers count: ${_offerbookListItems.value.size}" }
             } else {
                 log.w { "Selected channel is not a BisqEasyOfferbookChannel: ${channel::class.simpleName}" }
@@ -376,17 +377,17 @@ class NodeOffersServiceFacade(
         log.d { "Adding chat message observers for channel: ${channel.id}, market: ${channel.market.marketCodes}" }
         chatMessagesPin?.unbind()
         log.d { "Previous chatMessagesPin unbound" }
-        
+
         // Only clear the list, not the map (map is cleared before this method is called)
         _offerbookListItems.value = emptyList()
 
         val chatMessages: ObservableSet<BisqEasyOfferbookMessage> = channel.chatMessages
         log.d { "Initial chat messages count for ${channel.market.marketCodes}: ${chatMessages.size}" }
-        
+
         if (chatMessages.isEmpty()) {
             log.w { "Channel ${channel.market.marketCodes} has no chat messages/offers" }
         }
-        
+
         chatMessagesPin =
             chatMessages.addObserver(object : CollectionObserver<BisqEasyOfferbookMessage> {
                 override fun add(message: BisqEasyOfferbookMessage) {
@@ -420,7 +421,7 @@ class NodeOffersServiceFacade(
                     launchIO { clearOfferMessages() }
                 }
             })
-        
+
         log.d { "Chat messages observer added for ${channel.market.marketCodes}, pin: $chatMessagesPin" }
     }
 
@@ -452,7 +453,14 @@ class NodeOffersServiceFacade(
                 channel.market.baseCurrencyName,
                 channel.market.quoteCurrencyName,
             )
-            MarketListItem(marketVO, channel.chatMessages.size)
+            MarketListItem(
+                marketVO,
+                channel.chatMessages.size,
+                CurrencyUtils.getLocaleFiatCurrencyName(
+                    marketVO.quoteCurrencyCode,
+                    marketVO.quoteCurrencyName
+                )
+            )
         }
         itemsFlow.value = initialItems
 

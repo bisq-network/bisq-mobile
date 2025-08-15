@@ -23,6 +23,7 @@ import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
+import java.util.Currency
 import java.util.Date
 import java.util.Locale
 import java.util.Properties
@@ -162,5 +163,15 @@ actual fun String.toDoubleOrNullLocaleAware(): Double? {
         NumberFormat.getInstance(javaLocale).parse(this)?.toDouble()
     } catch (e: Exception) {
         null
+    }
+}
+
+actual fun getLocaleCurrencyName(currencyCode: String): String {
+    val javaLocale = Locale.getDefault()
+    return runCatching {
+        Currency.getInstance(currencyCode).getDisplayName(javaLocale)
+    }.getOrElse {
+        // Fallback gracefully when currency code is not recognized by the platform
+        currencyCode
     }
 }

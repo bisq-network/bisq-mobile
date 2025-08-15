@@ -29,9 +29,10 @@ abstract class OffersServiceFacade : ServiceFacade(), LifeCycleAware {
 
     val sortedOfferbookMarketItems: StateFlow<List<MarketListItem>> = offerbookMarketItems.map { list -> list.sortedWith(
         compareByDescending<MarketListItem> { it.numOffers }
-            .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.lowercase()) }
+            .thenByDescending { OffersServiceFacade.mainCurrencies.contains(it.market.quoteCurrencyCode.uppercase()) }
             .thenBy { item ->
-                if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.lowercase())) item.market.quoteCurrencyName
+                if (!OffersServiceFacade.mainCurrencies.contains(item.market.quoteCurrencyCode.uppercase()))
+                    item.localeFiatCurrencyName.ifBlank { item.market.quoteCurrencyName }
                 else null
             }
     )}.stateIn(
