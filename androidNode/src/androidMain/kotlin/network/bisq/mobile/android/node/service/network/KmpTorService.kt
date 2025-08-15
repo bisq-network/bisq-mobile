@@ -286,6 +286,7 @@ class KmpTorService : ServiceFacade(), Logging {
             }
 
             val configFile = File(getTorDir(), "external_tor.config")
+            @Suppress("BlockingMethodInNonBlockingContext") // already called from IO context
             FileOutputStream(configFile).use { fos ->
                 fos.write(configContent.toByteArray())
                 fos.fd.sync() // ensures data is flushed to disk
@@ -296,7 +297,7 @@ class KmpTorService : ServiceFacade(), Logging {
             verifyControlPortAccessible(controlPort)
 
         } catch (error: Exception) {
-            handleError("Failed to write external_tor.config. {$error}")
+            handleError("Failed to write external_tor.config: $error")
         }
     }
 
