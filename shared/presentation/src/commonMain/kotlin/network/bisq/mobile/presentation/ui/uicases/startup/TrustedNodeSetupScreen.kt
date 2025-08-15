@@ -16,10 +16,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
@@ -65,6 +67,11 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
         NetworkType.LAN,
         NetworkType.TOR
     )
+
+    var isNewApiUrl by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        isNewApiUrl = presenter.isNewApiUrl()
+    }
 
     BisqScrollScaffold(snackbarHostState = presenter.getSnackState()) {
         Column(
@@ -155,7 +162,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         text = "mobile.trustedNodeSetup.testConnection".i18n(),
                         color = if (host.isEmpty()) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
                         onClick = {
-                            if (presenter.isNewApiUrl()) {
+                            if (isNewApiUrl) {
                                 showConfirmDialog.value = true
                             } else {
                                 presenter.testConnection(isWorkflow)
