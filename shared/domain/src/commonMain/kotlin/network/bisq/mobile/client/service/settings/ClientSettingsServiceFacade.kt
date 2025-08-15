@@ -8,6 +8,7 @@ import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannel
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.utils.SemanticVersion
 
 class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : ServiceFacade(), SettingsServiceFacade {
     // Properties
@@ -132,12 +133,10 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
     }
 
     override suspend fun isApiCompatible(): Boolean {
-        val appApiRequiredVersion = BuildConfig.BISQ_API_VERSION
-        val trustedNodeApiVersion = apiGateway.getApiVersion().getOrThrow().version
-        log.d { "required trusted node api version is $appApiRequiredVersion and current is $trustedNodeApiVersion" }
-        // return false // (for debug)
-        //todo lexical order nto safe here
-        return trustedNodeApiVersion >= appApiRequiredVersion
+        val requiredVersion = BuildConfig.BISQ_API_VERSION
+        val nodeApiVersion = apiGateway.getApiVersion().getOrThrow().version
+        log.d { "required trusted node api version is $requiredVersion and current is $nodeApiVersion" }
+        return SemanticVersion.from(nodeApiVersion) >= SemanticVersion.from(requiredVersion)
     }
 
     override suspend fun getTrustedNodeVersion(): String {
