@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.service.user_profile
 
 import io.ktor.util.decodeBase64Bytes
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,7 +44,17 @@ class ClientUserProfileServiceFacade(
         super<ServiceFacade>.activate()
 
         serviceScope.launch(Dispatchers.Default) {
-            _selectedUserProfile.value = getSelectedUserProfile()
+            runCatching {
+                getSelectedUserProfile()
+            }.onSuccess { profile ->
+                _selectedUserProfile.value = profile
+            }.onFailure { e ->
+                if (e is CancellationException) {
+                    throw e
+                }
+                // Expected at first run
+                log.d("Error getting user profile: ${e.message}")
+            }
         }
     }
 
