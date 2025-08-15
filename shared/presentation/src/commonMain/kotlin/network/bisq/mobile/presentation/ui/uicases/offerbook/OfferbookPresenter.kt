@@ -17,6 +17,7 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.FixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMaxAmount
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMinAmount
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
@@ -24,9 +25,8 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -99,7 +99,7 @@ class OfferbookPresenter(
                 .mapLatest { (offers, direction) ->
                     offers
                         .filter { it.bisqEasyOffer.direction.mirror == direction }
-                        .filter { offer -> isOfferNotFromIgnoredUser(offer.bisqEasyOffer) }
+                        .filter { offer -> !isOfferFromIgnoredUser(offer.bisqEasyOffer) }
                 }
                 .collectLatest { filtered ->
                 _sortedFilteredOffers.value = processAllOffers(filtered).sortedWith(
@@ -402,18 +402,9 @@ class OfferbookPresenter(
         canTakeOffer(item)
     }
 
-    private suspend fun isOfferNotFromIgnoredUser(offer: BisqEasyOfferVO): Boolean {
+    private suspend fun isOfferFromIgnoredUser(offer: BisqEasyOfferVO): Boolean {
         val makersUserProfileId = offer.makerNetworkId.pubKey.id
 
-        // Check if the maker's user profile exists and is not banned/ignored
-        val makerUserProfile = userProfileServiceFacade.findUserProfile(makersUserProfileId)
-        if (makerUserProfile == null) {
-            return false
-        }
-        if (userProfileServiceFacade.isUserIgnored(makersUserProfileId)) {
-            return false
-        }
-
-        return true
+        return userProfileServiceFacade.isUserIgnored(makersUserProfileId)
     }
 }
