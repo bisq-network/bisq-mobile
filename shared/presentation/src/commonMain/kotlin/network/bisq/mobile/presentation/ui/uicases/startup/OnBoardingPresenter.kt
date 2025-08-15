@@ -70,11 +70,8 @@ abstract class OnBoardingPresenter(
                 settingsRepository.fetch()
                 val deviceSettings: Settings? = settingsRepository.data.value
 
-                // to ensure event propagation, probably need to change settings equals definition to avoid this
-                val updatedSettings = Settings().apply {
-                    bisqApiUrl = deviceSettings?.bisqApiUrl ?: ""
-                    firstLaunch = false
-                }
+                val updatedSettings = deviceSettings?.copy(firstLaunch = false)
+                    ?: Settings().apply { firstLaunch = false }
                 settingsRepository.update(updatedSettings)
 
                 val remoteBisqUrl = deviceSettings?.bisqApiUrl ?: ""

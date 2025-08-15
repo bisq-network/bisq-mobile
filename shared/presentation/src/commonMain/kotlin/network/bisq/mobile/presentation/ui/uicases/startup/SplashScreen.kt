@@ -12,7 +12,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
@@ -23,7 +22,8 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoCircle
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants.ScreenPadding4X
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants.ScreenPaddingHalfQuarter
 import org.koin.compose.koinInject
 
 @Composable
@@ -60,8 +60,10 @@ fun SplashScreen() {
                     BisqButton(
                         text = "bootstrap.restart".i18n(),
                         onClick = { presenter.onRestart() },
-                        modifier = Modifier.padding(BisqUIConstants.ScreenPadding4X)
-                            .scale(1.2f)
+                        modifier = Modifier.padding(
+                            horizontal = ScreenPadding4X,
+                            vertical = ScreenPaddingHalfQuarter
+                        )
                     )
                 }
 
