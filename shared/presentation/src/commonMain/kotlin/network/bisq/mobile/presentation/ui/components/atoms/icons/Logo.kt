@@ -30,7 +30,7 @@ fun BisqLogoCircle(modifier: Modifier = Modifier) {
 
 @Composable
 fun BisqLogoMarkGrey(modifier: Modifier = Modifier.size(50.dp)) {
-    Image(painterResource(Res.drawable.bisq_logo_mark_grey), "Bisq Logo mark", modifier = modifier)
+    Image(painterResource(Res.drawable.bisq_logo_mark_grey), "Bisq Logo mark grey", modifier = modifier)
 }
 
 @Composable

@@ -14,7 +14,7 @@ import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.utils.NetworkUtils.isValidIp
+import network.bisq.mobile.domain.utils.NetworkUtils.isValidIpv4
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidPort
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidTorV3Address
 import network.bisq.mobile.i18n.i18n
@@ -120,7 +120,8 @@ class TrustedNodeSetupPresenter(
     suspend fun isNewApiUrl(): Boolean {
         var isNewApiUrl = false
         settingsRepository.fetch()?.let {
-            if (it.bisqApiUrl.isNotBlank() && it.bisqApiUrl != _host.value) {
+            val newApiUrl = _host.value + ":" + _port.value
+            if (it.bisqApiUrl.isNotBlank() && it.bisqApiUrl != newApiUrl) {
                 isNewApiUrl = true
             }
         }
@@ -144,7 +145,8 @@ class TrustedNodeSetupPresenter(
                 // Add a timeout to prevent indefinite waiting
                 val success = withTimeout(15000) { // 15 second timeout
                     withContext(IODispatcher) {
-                        return@withContext webSocketClientProvider.testClient(host.value, port.value.toInt())
+                        val portValue = port.value.toIntOrNull() ?: return@withContext false
+                        return@withContext webSocketClientProvider.testClient(host.value, portValue)
                     }
                 }
 
@@ -161,8 +163,9 @@ class TrustedNodeSetupPresenter(
                         _isConnected.value = true
                         _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
 
-                        if (previousUrl != _host.value) {
-                            log.d { "user setup a new trusted node ${_host.value}" }
+                        val newApiUrl = _host.value + ":" + _port.value
+                        if (previousUrl != newApiUrl) {
+                            log.d { "user setup a new trusted node $newApiUrl" }
                             withContext(IODispatcher) {
                                 userRepository.fetch()?.let {
                                     userRepository.delete(it)
@@ -228,6 +231,13 @@ class TrustedNodeSetupPresenter(
         launchUI { navigateTo(Routes.CreateProfile) }
     }
 
+    fun onSave() {
+        launchUI {
+            updateSettings()
+            navigateBack()
+        }
+    }
+
     private suspend fun validateVersion(): Boolean {
         _trustedNodeVersion.value = settingsServiceFacade.getTrustedNodeVersion()
         if (settingsServiceFacade.isApiCompatible()) {
@@ -244,7 +254,7 @@ class TrustedNodeSetupPresenter(
             if (BuildConfig.IS_DEBUG) {
                 _hostPrompt.value = "10.0.2.2"
             } else {
-                _hostPrompt.value = "127.0.0.1"
+                _hostPrompt.value = "192.168.1.10"
             }
         } else {
             _hostPrompt.value = "mobile.trustedNodeSetup.host.prompt".i18n()
@@ -253,10 +263,11 @@ class TrustedNodeSetupPresenter(
 
     fun validateHost(value: String): String? {
         if (value.isEmpty()) {
-            "mobile.trustedNodeSetup.host.ip.invalid.empty".i18n()
+            return "mobile.trustedNodeSetup.host.invalid.empty".i18n()
         }
         if (selectedNetworkType.value == NetworkType.LAN) {
-            if (!value.isValidIp()) {
+            // We only support IPv4 as we only support LAN addresses
+            if (!value.isValidIpv4()) {
                 return "mobile.trustedNodeSetup.host.ip.invalid".i18n()
             }
         } else if (!value.isValidTorV3Address()) {
@@ -268,7 +279,7 @@ class TrustedNodeSetupPresenter(
 
     fun validatePort(value: String): String? {
         if (value.isEmpty()) {
-            "mobile.trustedNodeSetup.host.ip.invalid.empty".i18n()
+            return "mobile.trustedNodeSetup.host.invalid.empty".i18n()
         }
         if (!value.isValidPort()) {
             return "mobile.trustedNodeSetup.port.invalid".i18n()

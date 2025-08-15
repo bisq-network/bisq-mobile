@@ -27,6 +27,10 @@ object NetworkUtils {
         return ipv4Regex.matches(this) || ipv6Regex.matches(this)
     }
 
+    fun String.isValidIpv4(): Boolean {
+        return ipv4Regex.matches(this)
+    }
+
     fun String.isValidTorV3Address(): Boolean {
         return onionV3Regex.matches(this)
     }
