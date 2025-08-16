@@ -91,9 +91,9 @@ fun DashboardScreen() {
             )
         } else {
             DashBoardCard(
-                title = "mobile.dashboard.tradeGuild.headline".i18n(),
+                title = "mobile.dashboard.tradeGuide.headline".i18n(),
                 bulletPoints = listOf(
-                    Pair("mobile.dashboard.tradeGuild.bulletPoint1".i18n(), Res.drawable.thumbs_up),
+                    Pair("mobile.dashboard.tradeGuide.bulletPoint1".i18n(), Res.drawable.thumbs_up),
                     Pair("bisqEasy.onboarding.top.content2".i18n(), Res.drawable.icon_payment),
                     Pair("bisqEasy.onboarding.top.content3".i18n(), Res.drawable.icon_chat)
                 ),
