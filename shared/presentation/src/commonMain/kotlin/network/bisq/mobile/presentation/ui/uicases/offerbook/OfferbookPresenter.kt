@@ -96,16 +96,20 @@ class OfferbookPresenter(
                 mainPresenter.languageCode
             ) { offers, direction, _ ->
                 offers to direction
-                // offers.filter { it.bisqEasyOffer.direction.mirror == direction }
             }
-                .mapLatest { (offers, direction) ->
-                    offers
-                        .filter { it.bisqEasyOffer.direction.mirror == direction }
-                        .filter { offer -> !isOfferFromIgnoredUser(offer.bisqEasyOffer) }
+            .mapLatest { (offers, direction) ->
+                val filtered = mutableListOf<OfferItemPresentationModel>()
+                for (item in offers) {
+                    if (item.bisqEasyOffer.direction.mirror == direction &&
+                        !isOfferFromIgnoredUser(item.bisqEasyOffer)) {
+                        filtered += item
+                    }
                 }
-                .collectLatest { filtered ->
-                _sortedFilteredOffers.value = processAllOffers(filtered).sortedWith(
-                    compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
+                filtered
+            }
+            .collectLatest { filtered ->
+            _sortedFilteredOffers.value = processAllOffers(filtered).sortedWith(
+                compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
             }
         }
     }
