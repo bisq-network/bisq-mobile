@@ -37,13 +37,12 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun <T> ToggleTab(
     options: List<T>,
-    initialOption: T,
-    onStateChange: (T) -> Unit,
+    selectedOption: T,
+    onOptionSelected: (T) -> Unit,
     getDisplayString: (T) -> String,// Custom function to display the label for each option
     singleLine: Boolean = false,
     modifier: Modifier = Modifier
 ) {
-    var selectedOption by remember { mutableStateOf(initialOption) }
     val hPadding = BisqUIConstants.ScreenPadding
     val vPadding = BisqUIConstants.ScreenPadding
 
@@ -127,8 +126,7 @@ fun <T> ToggleTab(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
                                 onClick = {
-                                    selectedOption = option
-                                    onStateChange(selectedOption)
+                                    onOptionSelected(option)
                                 }
                             )
                             .padding(horizontal = hPadding, vertical = vPadding)

@@ -8,8 +8,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.TradeReadState
@@ -71,14 +69,6 @@ class OpenTradePresenter(
 
     init {
         _selectedTrade.value = tradesServiceFacade.selectedTrade.value
-        launchUI {
-            mainPresenter.languageCode
-                .flatMapLatest { tradesServiceFacade.selectedTrade }
-                .filterNotNull()
-                .collect {
-                    _selectedTrade.value = it.reformat()
-                }
-        }
     }
 
     override fun onViewAttached() {

@@ -7,26 +7,20 @@ import androidx.compose.material3.SegmentedButtonColors
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
-fun BisqSegmentButton(
+fun <T> BisqSegmentButton(
     label: String = "",
     disabled: Boolean = false,
-    value: String,
-    items: List<Pair<String, String>>,
-    onValueChange: ((Pair<String, String>) -> Unit)? = null,
+    value: T,
+    items: List<Pair<T, String>>,
+    onValueChange: ((Pair<T, String>) -> Unit)? = null,
     modifier: Modifier = Modifier.fillMaxWidth(),
 ) {
-    var selectedIndex by remember { mutableIntStateOf(
-        items.indexOfFirst{ it.first == value }
-    ) }
+    val selectedIndex = items.indexOfFirst{ it.first == value }.coerceAtLeast(0)
 
     Column(modifier = modifier) {
         if (label.isNotEmpty()) {
@@ -43,10 +37,7 @@ fun BisqSegmentButton(
                         count = items.size
                     ),
                     onClick = {
-                        selectedIndex = index
-                        if (onValueChange != null) {
-                            onValueChange(items[selectedIndex])
-                        }
+                        onValueChange?.invoke(items[index])
                     },
                     selected = index == selectedIndex,
                     enabled = !disabled,

@@ -77,8 +77,8 @@ fun CreateOfferTradePriceSelectorScreen() {
         ) {
             ToggleTab(
                 options = presenter.priceTypes,
-                initialOption = priceType,
-                onStateChange = { priceType -> presenter.onSelectPriceType(priceType) },
+                selectedOption = priceType,
+                onOptionSelected = { priceType -> presenter.onSelectPriceType(priceType) },
                 getDisplayString = { presenter.getPriceTypeDisplayString(it) },
                 modifier = Modifier.align(Alignment.CenterHorizontally)
             )

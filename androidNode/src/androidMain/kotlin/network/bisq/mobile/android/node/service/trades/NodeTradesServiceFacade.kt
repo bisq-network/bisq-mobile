@@ -530,7 +530,7 @@ class NodeTradesServiceFacade(
         }
 
         val tradeItemPresentationVO = TradeItemPresentationDtoFactory.create(trade, channel, userProfileService, reputationService)
-        val openTradeItem = TradeItemPresentationModel(tradeItemPresentationVO)
+        val openTradeItem = TradeItemPresentationModel.from(tradeItemPresentationVO)
         _openTradeItems.update { it + openTradeItem }
 
         val tradeId = trade.id

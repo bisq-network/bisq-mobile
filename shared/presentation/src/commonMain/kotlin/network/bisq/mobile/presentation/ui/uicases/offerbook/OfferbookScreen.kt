@@ -12,7 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -31,12 +30,6 @@ import org.koin.compose.koinInject
 fun OfferbookScreen() {
     val presenter: OfferbookPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
-
-    // Offers are mirrored to what user wants. E.g. I want to buy Bitcoin using a sell offer
-    val offerDirections: List<DirectionEnum> = listOf(
-        DirectionEnum.SELL,
-        DirectionEnum.BUY
-    )
 
     val sortedFilteredOffers by presenter.sortedFilteredOffers.collectAsState()
     val selectedDirection by presenter.selectedDirection.collectAsState()
@@ -63,7 +56,6 @@ fun OfferbookScreen() {
         shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog
     ) {
         DirectionToggle(
-            offerDirections,
             selectedDirection,
             onStateChange = { direction -> presenter.onSelectDirection(direction) }
         )

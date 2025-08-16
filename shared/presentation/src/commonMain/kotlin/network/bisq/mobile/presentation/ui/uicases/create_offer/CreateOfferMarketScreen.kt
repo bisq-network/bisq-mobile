@@ -11,6 +11,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -29,6 +30,7 @@ fun CreateOfferCurrencySelectorScreen() {
     val searchText by presenter.searchText.collectAsState()
     val filteredMarketList by presenter.marketListItemWithNumOffers.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
+    val selectedMarketItem by presenter.selectedMarketItem.collectAsState()
 
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.tradeWizard.market.title".i18n(),
@@ -63,10 +65,10 @@ fun CreateOfferCurrencySelectorScreen() {
                 modifier = Modifier.fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
             ) {
-                items(filteredMarketList) { item ->
+                items(filteredMarketList, key = { it.market.marketCodes }) { item ->
                     CurrencyCard(
                         item,
-                        isSelected = presenter.market == item.market,
+                        isSelected = selectedMarketItem?.market == item.market,
                         onClick = { presenter.onSelectMarket(item) }
                     )
                 }
