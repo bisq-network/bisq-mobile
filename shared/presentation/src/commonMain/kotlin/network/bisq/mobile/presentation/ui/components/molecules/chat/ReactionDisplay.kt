@@ -3,13 +3,19 @@ package network.bisq.mobile.presentation.ui.components.molecules.chat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -29,14 +35,14 @@ fun ReactionDisplay(
     modifier: Modifier = Modifier
 ) {
     val reactions by message.chatReactions.collectAsState()
-    val groupedReactions = reactions.groupBy { it.reactionId }
+    val groupedReactions = remember(reactions) { reactions.groupBy { it.reactionId }.entries.toList() }
 
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
         modifier = modifier
     ) {
-        items(groupedReactions.entries.toList()) { (reactionId, group) ->
+        items(groupedReactions, key = { it.key }) { (reactionId, group) ->
             val firstReaction = group.first()
             val myReaction = group.firstOrNull { message.isMyChatReaction(it) }
             val count = group.size

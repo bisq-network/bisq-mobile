@@ -25,8 +25,10 @@ class CreateOfferMarketPresenter(
 ) : BasePresenter(mainPresenter) {
 
     var headline: String
-    var market: MarketVO? = null
-    private var marketListItem: MarketListItem? = null
+    private val _selectedMarket = MutableStateFlow<MarketVO?>(null)
+    val selectedMarket: StateFlow<MarketVO?> = _selectedMarket.asStateFlow()
+
+    private var selectedMarketListItem: MarketListItem? = null
 
     private var _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> get() = _searchText.asStateFlow()
@@ -80,7 +82,7 @@ class CreateOfferMarketPresenter(
 
     init {
         val createOfferModel = createOfferPresenter.createOfferModel
-        market = createOfferModel.market
+        _selectedMarket.value = createOfferModel.market
 
         headline = if (createOfferModel.direction.isBuy)
             "mobile.bisqEasy.tradeWizard.market.headline.buyer".i18n()
@@ -93,9 +95,9 @@ class CreateOfferMarketPresenter(
          }*/
     }
 
-    fun onSelectMarket(_marketListItem: MarketListItem) {
-        marketListItem = _marketListItem
-        market = _marketListItem.market
+    fun onSelectMarket(item: MarketListItem) {
+        selectedMarketListItem = item
+        _selectedMarket.value = item.market
         navigateNext()
     }
 
@@ -124,13 +126,13 @@ class CreateOfferMarketPresenter(
     private fun commitToModel() {
         if (isValid()) {
             runCatching {
-                createOfferPresenter.commitMarket(market!!)
-                offersServiceFacade.selectOfferbookMarket(marketListItem!!)
+                createOfferPresenter.commitMarket(_selectedMarket.value!!)
+                offersServiceFacade.selectOfferbookMarket(selectedMarketListItem!!)
             }.onFailure {
                 log.e(it) { "Failed to comit to model ${it.message}" }
             }
         }
     }
 
-    private fun isValid() = market != null && marketListItem != null
+    private fun isValid() = _selectedMarket.value != null && selectedMarketListItem != null
 }
