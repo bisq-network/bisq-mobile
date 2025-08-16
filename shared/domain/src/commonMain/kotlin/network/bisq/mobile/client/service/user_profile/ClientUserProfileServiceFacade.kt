@@ -39,26 +39,59 @@ class ClientUserProfileServiceFacade(
     private var ignoredUserIdsCache: Set<String>? = null
     private val ignoredUserIdsMutex = Mutex()
 
+    // Track initialization state to prevent race conditions
+    private var isIgnoredUsersCacheInitialized = false
+    private val initializationMutex = Mutex()
+
+    private val _hasIgnoredUsers: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    override val hasIgnoredUsers: StateFlow<Boolean> get() = _hasIgnoredUsers.asStateFlow()
+
     // Misc
     override fun activate() {
         super<ServiceFacade>.activate()
 
         serviceScope.launch(Dispatchers.Default) {
-            runCatching {
-                getSelectedUserProfile()
-            }.onSuccess { profile ->
-                _selectedUserProfile.value = profile
-            }.onFailure { e ->
-                if (e is CancellationException) {
-                    throw e
-                }
-                // Expected at first run
-                log.d("Error getting user profile: ${e.message}")
-            }
+<         // Initialize selected user profile with proper error handling
+          runCatching {
+              getSelectedUserProfile()
+          }.onSuccess { profile ->
+              _selectedUserProfile.value = profile
+          }.onFailure { e ->
+              if (e is CancellationException) {
+                  throw e
+              }
+              // Expected at first run
+              log.d("Error getting user profile: ${e.message}")
+          }
+
+          // Ensure ignored users cache is initialized before any hot-path calls
+          try {
+              getIgnoredUserProfileIds()
+              initializationMutex.withLock {
+                  isIgnoredUsersCacheInitialized = true
+              }
+              log.d { "Ignored users cache initialized successfully" }
+          } catch (e: Exception) {
+              log.e(e) { "Failed to initialize ignored users cache during activation" }
+              // Set empty cache to prevent repeated network calls
+              ignoredUserIdsMutex.withLock {
+                  ignoredUserIdsCache = emptySet()
+                  isIgnoredUsersCacheInitialized = true
+              }
+          }
         }
     }
 
     override fun deactivate() {
+        // Clear cache state on deactivation
+        serviceScope.launch {
+            ignoredUserIdsMutex.withLock {
+                ignoredUserIdsCache = null
+            }
+            initializationMutex.withLock {
+                isIgnoredUsersCacheInitialized = false
+            }
+        }
         super<ServiceFacade>.deactivate()
     }
 
@@ -201,6 +234,11 @@ class ClientUserProfileServiceFacade(
             apiGateway.ignoreUser(profileId).getOrThrow()
             ignoredUserIdsMutex.withLock {
                 ignoredUserIdsCache = (ignoredUserIdsCache ?: emptySet()) + profileId
+                _hasIgnoredUsers.value = (ignoredUserIdsCache?.isNotEmpty() == true)
+            }
+            // Ensure cache is marked as initialized after successful update
+            initializationMutex.withLock {
+                isIgnoredUsersCacheInitialized = true
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to ignore user id: $profileId" }
@@ -213,6 +251,11 @@ class ClientUserProfileServiceFacade(
             apiGateway.undoIgnoreUser(profileId).getOrThrow()
             ignoredUserIdsMutex.withLock {
                 ignoredUserIdsCache = (ignoredUserIdsCache ?: emptySet()) - profileId
+                _hasIgnoredUsers.value = (ignoredUserIdsCache?.isNotEmpty() == true)
+            }
+            // Ensure cache is marked as initialized after successful update
+            initializationMutex.withLock {
+                isIgnoredUsersCacheInitialized = true
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to undo ignore user id: $profileId" }
@@ -221,29 +264,47 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun isUserIgnored(profileId: String): Boolean {
-        val cached = ignoredUserIdsMutex.withLock { ignoredUserIdsCache }
-        if (cached != null) return profileId in cached
+        return profileId in getIgnoredUserProfileIds()
+    }
 
-        val fresh = apiGateway.getIgnoredUserIds().getOrThrow().toSet()
-        return ignoredUserIdsMutex.withLock {
-            ignoredUserIdsCache = fresh
-            profileId in fresh
+    /**
+     * Fast, non-suspending check for ignored users using only the in-memory cache.
+     * This method is safe to call from hot paths like offer filtering.
+     *
+     * @param profileId The user profile ID to check
+     * @return true if user is ignored (based on cache), false if not ignored or cache not initialized
+     */
+    fun isUserIgnoredCached(profileId: String): Boolean {
+        // Fast path: check if cache is initialized and contains the user
+        val cache = ignoredUserIdsCache
+        return if (cache != null && isIgnoredUsersCacheInitialized) {
+            profileId in cache
+        } else {
+            // Cache not initialized yet, assume not ignored to avoid blocking
+            // The cache will be initialized during activate() and subsequent calls will be accurate
+            log.v { "isUserIgnoredCached called before cache initialization for $profileId, returning false" }
+            false
         }
     }
 
-    override suspend fun getIgnoredUserProfileIds(): List<String> {
+    override suspend fun getIgnoredUserProfileIds(): Set<String> {
         val cached = ignoredUserIdsMutex.withLock { ignoredUserIdsCache }
-        if (cached != null) return cached.toList()
+        if (cached != null) return cached
         try {
             val fetched: Set<String> = apiGateway.getIgnoredUserIds().getOrThrow().toSet()
-            return ignoredUserIdsMutex.withLock {
+            val result = ignoredUserIdsMutex.withLock {
                 ignoredUserIdsCache = fetched
-                fetched.toList()
+                _hasIgnoredUsers.value = fetched.isNotEmpty()
+                fetched
             }
+            // Mark cache as initialized after successful fetch
+            initializationMutex.withLock {
+                isIgnoredUsersCacheInitialized = true
+            }
+            return result
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch ignored user IDs" }
             throw e
         }
-
     }
 }

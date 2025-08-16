@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +18,7 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.FixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMaxAmount
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVOExtensions.getFixedOrMinAmount
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
@@ -24,9 +26,8 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
+import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -76,6 +77,7 @@ class OfferbookPresenter(
     )
     val avatarMap: StateFlow<Map<String, PlatformImage?>> get() = _avatarMap.asStateFlow()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun onViewAttached() {
         super.onViewAttached()
 
@@ -91,19 +93,48 @@ class OfferbookPresenter(
             combine(
                 offersServiceFacade.offerbookListItems,
                 selectedDirection,
+                offersServiceFacade.selectedOfferbookMarket,
                 mainPresenter.languageCode
-            ) { offers, direction, _ ->
-                offers to direction
-                // offers.filter { it.bisqEasyOffer.direction.mirror == direction }
+            ) { offers, direction, selectedMarket, _ ->
+                Triple(offers, direction, selectedMarket)
             }
-                .mapLatest { (offers, direction) ->
-                    offers
-                        .filter { it.bisqEasyOffer.direction.mirror == direction }
-                        .filter { offer -> isOfferNotFromIgnoredUser(offer.bisqEasyOffer) }
+            .mapLatest { (offers, direction, selectedMarket) ->
+                log.d { "OfferbookPresenter filtering - Selected market: ${selectedMarket.market.quoteCurrencyCode}, Direction: $direction, Input offers: ${offers.size}" }
+
+                val filtered = mutableListOf<OfferItemPresentationModel>()
+                var directionFilteredCount = 0
+                var ignoredUserFilteredCount = 0
+
+                for (item in offers) {
+                    val offerCurrency = item.bisqEasyOffer.market.quoteCurrencyCode
+                    val offerDirection = item.bisqEasyOffer.direction.mirror
+                    val isIgnoredUser = isOfferFromIgnoredUserCached(item.bisqEasyOffer)
+
+                    log.v { "Offer ${item.offerId} - Currency: $offerCurrency, Direction: $offerDirection, IsIgnored: $isIgnoredUser" }
+
+                    if (offerDirection == direction) {
+                        directionFilteredCount++
+                        if (!isIgnoredUser) {
+                            filtered += item
+                            log.v { "Offer ${item.offerId} included - Currency: $offerCurrency, Amount: ${item.formattedQuoteAmount}" }
+                        } else {
+                            ignoredUserFilteredCount++
+                            log.v { "Offer ${item.offerId} filtered out (ignored user)" }
+                        }
+                    } else {
+                        log.v { "Offer ${item.offerId} filtered out (wrong direction: $offerDirection != $direction)" }
+                    }
                 }
-                .collectLatest { filtered ->
-                _sortedFilteredOffers.value = processAllOffers(filtered).sortedWith(
+
+                log.d { "OfferbookPresenter filtering results - Market: ${selectedMarket.market.quoteCurrencyCode}, Direction matches: $directionFilteredCount, Ignored users filtered: $ignoredUserFilteredCount, Final count: ${filtered.size}" }
+                filtered
+            }
+            .collectLatest { filtered ->
+                val processed = processAllOffers(filtered)
+                val sorted = processed.sortedWith(
                     compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
+                _sortedFilteredOffers.value = sorted
+                log.d { "OfferbookPresenter final result - ${sorted.size} offers displayed for market" }
             }
         }
     }
@@ -402,18 +433,38 @@ class OfferbookPresenter(
         canTakeOffer(item)
     }
 
-    private suspend fun isOfferNotFromIgnoredUser(offer: BisqEasyOfferVO): Boolean {
-        val makersUserProfileId = offer.makerNetworkId.pubKey.id
-
-        // Check if the maker's user profile exists and is not banned/ignored
-        val makerUserProfile = userProfileServiceFacade.findUserProfile(makersUserProfileId)
-        if (makerUserProfile == null) {
-            return false
+    private suspend fun isOfferFromIgnoredUser(offer: BisqEasyOfferVO): Boolean {
+        val makerUserProfileId = offer.makerNetworkId.pubKey.id
+        return try {
+            val isIgnored = userProfileServiceFacade.isUserIgnored(makerUserProfileId)
+            if (isIgnored) {
+                log.v { "Offer ${offer.id} from ignored user $makerUserProfileId" }
+            }
+            isIgnored
+        } catch (e: Exception) {
+            log.w("isUserIgnored failed for $makerUserProfileId", e)
+            false
         }
-        if (userProfileServiceFacade.isUserIgnored(makersUserProfileId)) {
-            return false
-        }
+    }
 
-        return true
+    /**
+     * Fast, non-suspending check for ignored users using cached data.
+     * This method is safe to call from hot paths like offer filtering.
+     */
+    private fun isOfferFromIgnoredUserCached(offer: BisqEasyOfferVO): Boolean {
+        val makerUserProfileId = offer.makerNetworkId.pubKey.id
+        return try {
+            // Use cached check for hot path performance
+            val isIgnored = (userProfileServiceFacade as? network.bisq.mobile.client.service.user_profile.ClientUserProfileServiceFacade)
+                ?.isUserIgnoredCached(makerUserProfileId) ?: false
+
+            if (isIgnored) {
+                log.v { "Offer ${offer.id} from ignored user $makerUserProfileId (cached)" }
+            }
+            isIgnored
+        } catch (e: Exception) {
+            log.w("isUserIgnoredCached failed for $makerUserProfileId", e)
+            false
+        }
     }
 }

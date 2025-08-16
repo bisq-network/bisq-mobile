@@ -51,12 +51,16 @@ class ClientOffersServiceFacade(
 
     // API
     override fun selectOfferbookMarket(marketListItem: MarketListItem) {
+        log.d { "Selecting offerbook market - Currency: ${marketListItem.market.quoteCurrencyCode}, Name: ${marketListItem.market.quoteCurrencyName}, NumOffers: ${marketListItem.numOffers}" }
+
         marketPriceServiceFacade.selectMarket(marketListItem)
         _selectedOfferbookMarket.value = OfferbookMarket(marketListItem.market)
 
         if (hasSubscribedToOffers.compareAndSet(expect = false, update = true)) {
+            log.d { "First time subscribing to offers for market ${marketListItem.market.quoteCurrencyCode}" }
             subscribeOffers()
         } else {
+            log.d { "Already subscribed to offers, applying filters for market ${marketListItem.market.quoteCurrencyCode}" }
             applyOffersToSelectedMarket()
         }
     }
@@ -190,22 +194,30 @@ class ClientOffersServiceFacade(
                     webSocketEvent
                 )
                 val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
+                log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
+
                 if (webSocketEvent.modificationType == ModificationType.REPLACE || webSocketEvent.modificationType == ModificationType.ADDED) {
                     payload.forEach { item ->
                         val model = OfferItemPresentationModel(item)
                         val quoteCurrencyCode = item.bisqEasyOffer.market.quoteCurrencyCode
                         offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }[model.offerId] = model
+                        log.v { "${webSocketEvent.modificationType} offer ${model.offerId} for market $quoteCurrencyCode" }
                     }
+                    log.d { "After ${webSocketEvent.modificationType} - Markets with offers: ${offerbookListItemsByMarket.mapValues { it.value.size }}" }
                 } else if (webSocketEvent.modificationType == ModificationType.REMOVED) {
                     payload.forEach { item ->
-                        offerbookListItemsByMarket[item.bisqEasyOffer.market.quoteCurrencyCode]?.let { map ->
+                        val quoteCurrencyCode = item.bisqEasyOffer.market.quoteCurrencyCode
+                        offerbookListItemsByMarket[quoteCurrencyCode]?.let { map ->
                             val model = OfferItemPresentationModel(item)
                             map.remove(model.offerId)
+                            log.v { "REMOVED offer ${model.offerId} from market $quoteCurrencyCode" }
                             if (map.isEmpty()) {
-                                offerbookListItemsByMarket.remove(item.bisqEasyOffer.market.quoteCurrencyCode)
+                                offerbookListItemsByMarket.remove(quoteCurrencyCode)
+                                log.d { "Removed empty market $quoteCurrencyCode from cache" }
                             }
                         }
                     }
+                    log.d { "After REMOVED - Markets with offers: ${offerbookListItemsByMarket.mapValues { it.value.size }}" }
                 }
                 applyOffersToSelectedMarket()
             }
@@ -213,7 +225,21 @@ class ClientOffersServiceFacade(
     }
 
     private fun applyOffersToSelectedMarket() {
-        val list = offerbookListItemsByMarket[selectedOfferbookMarket.value.market.quoteCurrencyCode]?.values?.toList()
+        val selectedCurrency = selectedOfferbookMarket.value.market.quoteCurrencyCode
+        val availableMarkets = offerbookListItemsByMarket.keys.toList()
+        val offersForMarket = offerbookListItemsByMarket[selectedCurrency]
+        val list = offersForMarket?.values?.toList()
+
+        log.d { "Applying offers to selected market - Selected: $selectedCurrency" }
+        log.d { "Available markets in cache: $availableMarkets" }
+        log.d { "Offers found for $selectedCurrency: ${list?.size ?: 0}" }
+
+        if (!list.isNullOrEmpty()) {
+            log.d { "Offers for $selectedCurrency: ${list.map { "${it.offerId} (${it.bisqEasyOffer.market.quoteCurrencyCode})" }}" }
+        } else {
+            log.w { "No offers found for selected market $selectedCurrency. Available markets: $availableMarkets" }
+        }
+
         _offerbookListItems.value = list ?: emptyList()
     }
 
