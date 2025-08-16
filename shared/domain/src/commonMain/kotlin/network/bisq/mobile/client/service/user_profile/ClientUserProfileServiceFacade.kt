@@ -182,10 +182,10 @@ class ClientUserProfileServiceFacade(
 
     override suspend fun applySelectedUserProfile(): Triple<String?, String?, String?> {
         val userProfile = getSelectedUserProfile()
-        return Triple(userProfile.nickName, userProfile.nym, userProfile.id)
+        return Triple(userProfile?.nickName, userProfile?.nym, userProfile?.id)
     }
 
-    override suspend fun getSelectedUserProfile(): UserProfileVO {
+    override suspend fun getSelectedUserProfile(): UserProfileVO? {
         try {
             val apiResult = apiGateway.getSelectedUserProfile()
             if (apiResult.isFailure) {

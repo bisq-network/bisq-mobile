@@ -34,9 +34,11 @@ class TrustedNodeSetupPresenter(
         const val SAFEGUARD_TEST_TIMEOUT = 20000L
     }
 
-    enum class NetworkType(val displayString: String) {
-        LAN("mobile.trustedNodeSetup.networkType.lan".i18n()),
-        TOR("mobile.trustedNodeSetup.networkType.tor".i18n())
+    enum class NetworkType(val i18nKey: String) {
+        LAN("mobile.trustedNodeSetup.networkType.lan"),
+        TOR("mobile.trustedNodeSetup.networkType.tor");
+
+        val displayString: String get() = i18nKey.i18n()
     }
 
     private val _isApiUrlValid = MutableStateFlow(true)
