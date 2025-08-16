@@ -192,9 +192,10 @@ class TrustedNodeSetupPresenter(
                 _isConnected.value = false
                 _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
             } catch (e: Exception) {
-                log.e(e) { "Error testing connection: ${e.message}" }
-                if (e.message != null) {
-                    showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(e.message!!))
+                val errorMessage = e.message
+                log.e(e) { "Error testing connection: $errorMessage" }
+                if (errorMessage != null) {
+                    showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(errorMessage))
                 } else {
                     showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.unknownError".i18n())
                 }

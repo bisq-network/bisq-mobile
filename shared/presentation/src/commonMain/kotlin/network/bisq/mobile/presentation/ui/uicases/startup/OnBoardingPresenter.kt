@@ -91,7 +91,7 @@ abstract class OnBoardingPresenter(
         navigateTo(Routes.CreateProfile)
     }
 
-    abstract fun doCustomNavigationLogic(notEmpty: Boolean, hasProfile: Boolean)
+    abstract fun doCustomNavigationLogic(isBisqUrlSet: Boolean, hasProfile: Boolean)
 
     abstract fun evaluateButtonText(deviceSettings: Settings?): String
 }
