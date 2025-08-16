@@ -24,9 +24,11 @@ object MarketFilterUtil : Logging {
     ): List<MarketListItem> {
         return markets.filter { marketListItem ->
             val hasPriceData = marketPriceServiceFacade.findMarketPriceItem(marketListItem.market) != null
-//            if (!hasPriceData) {
-//                log.v { "Filtering out market ${marketListItem.market.marketCodes} - no price data available" }
-//            }
+            if (!hasPriceData) {
+                log.d { "Filtering out market ${marketListItem.market.quoteCurrencyCode} (${marketListItem.market.quoteCurrencyName}) - no price data available" }
+            } else {
+                log.v { "Market ${marketListItem.market.quoteCurrencyCode} has price data - keeping" }
+            }
             hasPriceData
         }
     }
