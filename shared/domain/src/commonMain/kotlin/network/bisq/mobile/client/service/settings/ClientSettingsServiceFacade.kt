@@ -134,9 +134,15 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
 
     override suspend fun isApiCompatible(): Boolean {
         val requiredVersion = BuildConfig.BISQ_API_VERSION
-        val nodeApiVersion = apiGateway.getApiVersion().getOrThrow().version
-        log.d { "required trusted node api version is $requiredVersion and current is $nodeApiVersion" }
-        return SemanticVersion.from(nodeApiVersion) >= SemanticVersion.from(requiredVersion)
+        val result = apiGateway.getApiVersion()
+        if (result.isSuccess) {
+            val nodeApiVersion = apiGateway.getApiVersion().getOrThrow().version
+            log.d { "required trusted node api version is $requiredVersion and current is $nodeApiVersion" }
+            return SemanticVersion.from(nodeApiVersion) >= SemanticVersion.from(requiredVersion)
+        } else {
+            log.w { "Could not read trusted node API version; assuming incompatible." }
+            return false
+        }
     }
 
     override suspend fun getTrustedNodeVersion(): String {
