@@ -18,11 +18,11 @@ open class AgreementPresenter(
     override val isAccepted: StateFlow<Boolean> get() = _accepted.asStateFlow()
 
 
-    override fun onAccept(accepted: Boolean) {
+    override fun onAccepted(accepted: Boolean) {
         _accepted.value = accepted
     }
 
-    override fun onAcceptClick() {
+    override fun onAcceptTerms() {
         launchUI {
             try {
                 settingsServiceFacade.confirmTacAccepted(true)
@@ -40,20 +40,4 @@ open class AgreementPresenter(
             it.popUpTo(Routes.Agreement.name) { inclusive = true }
         }
     }
-
-    override val terms =
-        "mobile.terms.point1".i18n() +
-
-        "mobile.terms.point2".i18n() +
-
-        "mobile.terms.point3".i18n() +
-
-        "mobile.terms.point4".i18n() +
-
-        "mobile.terms.point5".i18n() +
-
-        "mobile.terms.point6".i18n()
-
-    override val rules = "mobile.rules".i18n()
-
 }
