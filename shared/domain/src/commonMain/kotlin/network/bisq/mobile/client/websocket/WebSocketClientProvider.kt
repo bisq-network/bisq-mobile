@@ -35,8 +35,8 @@ class WebSocketClientProvider(
             // IPv4 or Tor v3 onion: host:port
             val parts = trimmed.split(":")
             if (parts.size == 2) {
-                val host = parts[0]
-                val portStr = parts[1]
+                val host = parts[0].trim()
+                val portStr = parts[1].trim()
                 val hostOk = host.isValidIpv4() || host.isValidTorV3Address()
                 if (hostOk && portStr.isValidPort()) {
                     return AddressVO(host, portStr.toInt())
