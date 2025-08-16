@@ -18,7 +18,6 @@ import network.bisq.mobile.android.node.service.market_price.NodeMarketPriceServ
 import network.bisq.mobile.android.node.service.mediation.NodeMediationServiceFacade
 import network.bisq.mobile.android.node.service.network.KmpTorService
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
-import network.bisq.mobile.android.node.service.network_stats.NodeProfileStatsServiceFacade
 import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
 import network.bisq.mobile.android.node.service.reputation.NodeReputationServiceFacade
 import network.bisq.mobile.android.node.service.settings.NodeSettingsServiceFacade
@@ -34,7 +33,6 @@ import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
-import network.bisq.mobile.domain.service.network_stats.ProfileStatsServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -92,15 +90,12 @@ val androidNodeModule = module {
 
     single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
 
-    single<ProfileStatsServiceFacade> { NodeProfileStatsServiceFacade(get()) }
-
     single { NodeConnectivityService(get()) } bind ConnectivityService::class
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 
     single<MainPresenter> {
         NodeMainPresenter(
-            get(),
             get(),
             get(),
             get(),
