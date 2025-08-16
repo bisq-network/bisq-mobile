@@ -11,6 +11,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
+import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -24,7 +26,9 @@ import kotlin.math.min
 import kotlin.random.Random
 
 class ClientUserProfileServiceFacade(
-    private val apiGateway: UserProfileApiGateway, private val clientCatHashService: ClientCatHashService<PlatformImage>
+    private val apiGateway: UserProfileApiGateway,
+    private val clientCatHashService: ClientCatHashService<PlatformImage>,
+    private val json: Json
 ) : ServiceFacade(), UserProfileServiceFacade {
 
     private var keyMaterialResponse: KeyMaterialResponse? = null
@@ -32,6 +36,9 @@ class ClientUserProfileServiceFacade(
     // Properties
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> get() = _selectedUserProfile.asStateFlow()
+
+    private val _numUserProfiles = MutableStateFlow(0)
+    override val numUserProfiles: StateFlow<Int> get() = _numUserProfiles.asStateFlow()
 
     private val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf<String, PlatformImage?>()
     private val avatarMapMutex = Mutex()
@@ -80,6 +87,8 @@ class ClientUserProfileServiceFacade(
               }
           }
         }
+
+        observeNumUserProfiles()
     }
 
     override fun deactivate() {
@@ -187,7 +196,6 @@ class ClientUserProfileServiceFacade(
             log.e(e) { "Failed to get selected user profile from service facade" }
             throw e
         }
-
     }
 
     override suspend fun findUserProfile(profileId: String): UserProfileVO? {
@@ -305,6 +313,24 @@ class ClientUserProfileServiceFacade(
         } catch (e: Exception) {
             log.e(e) { "Failed to fetch ignored user IDs" }
             throw e
+        }
+    }
+
+    private fun observeNumUserProfiles() {
+        serviceScope.launch {
+            try {
+                val observer = apiGateway.subscribeNumUserProfiles()
+                observer.webSocketEvent.collect { webSocketEvent ->
+                    if (webSocketEvent?.deferredPayload == null) {
+                        return@collect
+                    }
+
+                    val webSocketEventPayload: WebSocketEventPayload<Int> = WebSocketEventPayload.from(json, webSocketEvent)
+                    _numUserProfiles.value = webSocketEventPayload.payload
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Failed to subscribe to numUserProfiles" }
+            }
         }
     }
 }

@@ -1,6 +1,7 @@
 package network.bisq.mobile.android.node.service.user_profile
 
 import bisq.common.encoding.Hex
+import bisq.common.observable.Pin
 import bisq.security.DigestUtil
 import bisq.security.SecurityService
 import bisq.security.pow.ProofOfWork
@@ -45,7 +46,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     // Dependencies
     private val securityService: SecurityService by lazy { applicationService.securityService.get() }
     private val userService: UserService by lazy { applicationService.userService.get() }
-    private val userProfileService: UserProfileService by lazy { applicationService.userProfileService.get() }
+    private val userProfileService: UserProfileService by lazy { userService.userProfileService }
     private val catHashService: AndroidNodeCatHashService by lazy { applicationService.androidCatHashService.get() }
 
     private val _hasIgnoredUsers: MutableStateFlow<Boolean> = MutableStateFlow( false)
@@ -55,13 +56,16 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> get() = _selectedUserProfile.asStateFlow()
 
+    private val _numUserProfiles = MutableStateFlow(0)
+    override val numUserProfiles: StateFlow<Int> get() = _numUserProfiles.asStateFlow()
+
     private val avatarMap = ConcurrentHashMap<String, PlatformImage?>()
 
     // Misc
     private var pubKeyHash: ByteArray? = null
     private var keyPair: KeyPair? = null
     private var proofOfWork: ProofOfWork? = null
-
+    private var numUserProfilesPin: Pin? = null
 
     override fun activate() {
         super<ServiceFacade>.activate()
@@ -72,9 +76,15 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
                 getIgnoredUserProfileIds()
             }
         }
+
+        numUserProfilesPin = userProfileService.numUserProfiles.addObserver { numUserProfiles ->
+            _numUserProfiles.value = numUserProfiles ?: 0
+        }
     }
 
     override fun deactivate() {
+        numUserProfilesPin?.unbind()
+        numUserProfilesPin = null
         avatarMap.clear()
         super<ServiceFacade>.deactivate()
     }

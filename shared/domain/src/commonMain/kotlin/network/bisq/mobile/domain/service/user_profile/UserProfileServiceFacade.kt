@@ -6,12 +6,10 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 interface UserProfileServiceFacade : LifeCycleAware {
-    companion object {
-         internal const val DEFAULT_SIZE = 120.0
-    }
-
     val selectedUserProfile: StateFlow<UserProfileVO?>
     val hasIgnoredUsers: StateFlow<Boolean>
+
+    val numUserProfiles: StateFlow<Int>
 
     /**
      * Returns true if there is a user identity already created.
