@@ -24,6 +24,7 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -31,10 +32,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
-import kotlinx.coroutines.TimeoutCancellationException
-import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.time.Duration.Companion.minutes
-import kotlin.time.Duration.Companion.seconds
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
@@ -50,9 +47,11 @@ import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
-import network.bisq.mobile.domain.utils.CurrencyUtils
 import java.util.Date
 import java.util.Optional
+import java.util.concurrent.ConcurrentLinkedQueue
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.Duration.Companion.seconds
 
 
 class NodeOffersServiceFacade(
@@ -453,13 +452,9 @@ class NodeOffersServiceFacade(
                 channel.market.baseCurrencyName,
                 channel.market.quoteCurrencyName,
             )
-            MarketListItem(
+            MarketListItem.from(
                 marketVO,
                 channel.chatMessages.size,
-                CurrencyUtils.getLocaleFiatCurrencyName(
-                    marketVO.quoteCurrencyCode,
-                    marketVO.quoteCurrencyName
-                )
             )
         }
         itemsFlow.value = initialItems

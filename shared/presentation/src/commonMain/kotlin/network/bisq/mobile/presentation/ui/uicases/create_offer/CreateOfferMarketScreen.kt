@@ -30,7 +30,7 @@ fun CreateOfferCurrencySelectorScreen() {
     val searchText by presenter.searchText.collectAsState()
     val filteredMarketList by presenter.marketListItemWithNumOffers.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
-    val selectedMarket by presenter.selectedMarket.collectAsState()
+    val selectedMarketItem by presenter.selectedMarketItem.collectAsState()
 
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.tradeWizard.market.title".i18n(),
@@ -68,7 +68,7 @@ fun CreateOfferCurrencySelectorScreen() {
                 items(filteredMarketList, key = { it.market.marketCodes }) { item ->
                     CurrencyCard(
                         item,
-                        isSelected = selectedMarket == item.market,
+                        isSelected = selectedMarketItem?.market == item.market,
                         onClick = { presenter.onSelectMarket(item) }
                     )
                 }

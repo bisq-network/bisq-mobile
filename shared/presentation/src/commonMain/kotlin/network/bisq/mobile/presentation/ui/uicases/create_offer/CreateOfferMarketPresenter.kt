@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -25,10 +24,8 @@ class CreateOfferMarketPresenter(
 ) : BasePresenter(mainPresenter) {
 
     var headline: String
-    private val _selectedMarket = MutableStateFlow<MarketVO?>(null)
-    val selectedMarket: StateFlow<MarketVO?> = _selectedMarket.asStateFlow()
-
-    private var selectedMarketListItem: MarketListItem? = null
+    private val _selectedMarketItem = MutableStateFlow<MarketListItem?>(null)
+    val selectedMarketItem: StateFlow<MarketListItem?> = _selectedMarketItem.asStateFlow()
 
     private var _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> get() = _searchText.asStateFlow()
@@ -82,7 +79,9 @@ class CreateOfferMarketPresenter(
 
     init {
         val createOfferModel = createOfferPresenter.createOfferModel
-        _selectedMarket.value = createOfferModel.market
+        _selectedMarketItem.value = createOfferModel.market?.let {
+            MarketListItem.from(it)
+        }
 
         headline = if (createOfferModel.direction.isBuy)
             "mobile.bisqEasy.tradeWizard.market.headline.buyer".i18n()
@@ -96,8 +95,7 @@ class CreateOfferMarketPresenter(
     }
 
     fun onSelectMarket(item: MarketListItem) {
-        selectedMarketListItem = item
-        _selectedMarket.value = item.market
+        _selectedMarketItem.value = item
         navigateNext()
     }
 
@@ -125,14 +123,15 @@ class CreateOfferMarketPresenter(
 
     private fun commitToModel() {
         if (isValid()) {
+            val marketItem = _selectedMarketItem.value!!
             runCatching {
-                createOfferPresenter.commitMarket(_selectedMarket.value!!)
-                offersServiceFacade.selectOfferbookMarket(selectedMarketListItem!!)
+                createOfferPresenter.commitMarket(marketItem.market)
+                offersServiceFacade.selectOfferbookMarket(marketItem)
             }.onFailure {
                 log.e(it) { "Failed to comit to model ${it.message}" }
             }
         }
     }
 
-    private fun isValid() = _selectedMarket.value != null && selectedMarketListItem != null
+    private fun isValid() = _selectedMarketItem.value != null
 }

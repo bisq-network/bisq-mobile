@@ -4,7 +4,6 @@ import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertTrue
 
 class MarketFilterUtilTest {
 
@@ -18,10 +17,9 @@ class MarketFilterUtilTest {
     }
 
     private fun createTestMarketListItem(quoteCurrency: String, numOffers: Int = 0, quoteCurrencyName: String = "${quoteCurrency} Name"): MarketListItem {
-        return MarketListItem(
+        return MarketListItem.from(
             market = createTestMarket(quoteCurrency, quoteCurrencyName),
             numOffers = numOffers,
-            ""
         )
     }
 
