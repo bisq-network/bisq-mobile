@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -78,6 +79,7 @@ fun DashboardScreen() {
             }
         }
 
+        Spacer(modifier = Modifier.fillMaxHeight().weight(0.1f))
         if (tradeRulesConfirmed) {
             DashBoardCard(
                 title = "mobile.dashboard.startTrading.headline".i18n(),
@@ -101,9 +103,9 @@ fun DashboardScreen() {
                 buttonHandler = { presenter.onOpenTradeGuide() }
             )
         }
+        Spacer(modifier = Modifier.fillMaxHeight().weight(0.2f))
     }
 }
-
 
 @Composable
 fun DashBoardCard(
