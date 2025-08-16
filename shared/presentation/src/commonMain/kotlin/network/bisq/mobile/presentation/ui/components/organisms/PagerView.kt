@@ -28,7 +28,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.composeModels.PagerViewItem
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.ExperimentalResourceApi
 import org.jetbrains.compose.resources.painterResource
@@ -43,7 +42,7 @@ fun BisqPagerView(pagerState: PagerState, pageItems: List<PagerViewItem>) {
         ) {
             HorizontalPager(
                 pageSpacing = 56.dp,
-                contentPadding = PaddingValues(horizontal = 36.dp),
+                contentPadding = PaddingValues(horizontal = 18.dp),
                 pageSize = PageSize.Fill,
                 verticalAlignment = Alignment.CenterVertically,
                 state = pagerState
@@ -81,22 +80,18 @@ fun PagerSingleItem(
             .height(420.dp)
             .clip(RoundedCornerShape(18.dp))
             .background(color = BisqTheme.colors.dark_grey30)
-            .padding(vertical = 56.dp)
+            .padding(vertical = 30.dp, horizontal = 10.dp)
     ) {
-        Image(painterResource(image), title, modifier = Modifier.size(120.dp))
-        BisqGap.V4()
-        Column(
-            Modifier.padding(PaddingValues(horizontal = BisqUIConstants.ScreenPaddingHalf)),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            BisqText.h4Regular(title, textAlign = TextAlign.Center)
-            BisqGap.V2()
-            BisqText.largeRegularGrey(
-                text = desc,
-                modifier = Modifier.padding(horizontal = 16.dp),
-                textAlign = TextAlign.Center,
-            )
-        }
+        BisqGap.VHalf()
+        Image(painterResource(image), title, modifier = Modifier.size(110.dp))
+        BisqGap.V2()
+        BisqText.h2Light(title, textAlign = TextAlign.Center)
+        BisqText.h6Light(
+            text = desc,
+            color = BisqTheme.colors.mid_grey20,
+            textAlign = TextAlign.Center,
+        )
+        BisqGap.VHalf()
     }
 }
 

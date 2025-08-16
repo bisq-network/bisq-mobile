@@ -2,12 +2,11 @@ package network.bisq.mobile.android.node.di
 
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.presentation.NodeAboutPresenter
-import network.bisq.mobile.android.node.presentation.NodeDashboardPresenter
 import network.bisq.mobile.android.node.presentation.NodeGeneralSettingsPresenter
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
+import network.bisq.mobile.android.node.presentation.NodeOnBoardingPresenter
 import network.bisq.mobile.android.node.presentation.NodeSettingsPresenter
 import network.bisq.mobile.android.node.presentation.NodeSplashPresenter
-import network.bisq.mobile.android.node.presentation.OnBoardingNodePresenter
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.android.node.service.accounts.NodeAccountsServiceFacade
@@ -43,7 +42,6 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
-import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.AboutPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IAboutPresenter
@@ -136,15 +134,11 @@ val androidNodeModule = module {
         )
     }
 
-    single<DashboardPresenter> {
-        NodeDashboardPresenter(get(), get(), get(), get())
-    }
-
     single<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get()) } bind ISettingsPresenter::class
 
     single<AboutPresenter> { NodeAboutPresenter(get()) } bind IAboutPresenter::class
 
     factory<GeneralSettingsPresenter> { NodeGeneralSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
-    single<IOnboardingPresenter> { OnBoardingNodePresenter(get(), get(), get()) } bind IOnboardingPresenter::class
+    single<IOnboardingPresenter> { NodeOnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
 }

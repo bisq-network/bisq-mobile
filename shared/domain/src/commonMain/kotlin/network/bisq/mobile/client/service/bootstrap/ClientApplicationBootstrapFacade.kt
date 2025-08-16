@@ -43,7 +43,7 @@ class ClientApplicationBootstrapFacade(
                 setState("bootstrap.connectedToTrustedNode".i18n())
                 setProgress(1.0f)
             } else if (url == null) {
-                // fresh install escenario, let it proceed to onboarding
+                // fresh install scenario, let it proceed to onboarding
                 setState("bootstrap.connectedToTrustedNode".i18n())
                 setProgress(1.0f)
             } else {

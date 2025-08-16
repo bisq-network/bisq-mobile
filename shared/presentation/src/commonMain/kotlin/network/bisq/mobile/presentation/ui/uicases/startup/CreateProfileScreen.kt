@@ -13,6 +13,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
@@ -22,6 +23,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatfo
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
@@ -37,13 +39,13 @@ fun CreateProfileScreen(
     val nickNameValid by presenter.nickNameValid.collectAsState()
     val profileIcon by presenter.profileIcon.collectAsState()
     val nym by presenter.nym.collectAsState()
-    val botSize = BisqUIConstants.ScreenPadding8X
+    val iconSize = 140.dp
 
     BisqScrollScaffold {
         BisqGap.V2()
-        BisqText.h1LightGrey("onboarding.createProfile.headline".i18n())
-        BisqGap.V1()
-        BisqText.baseRegularGrey(
+        BisqText.h1Light("onboarding.createProfile.headline".i18n())
+        BisqGap.V2()
+        BisqText.baseLightGrey(
             text = "onboarding.createProfile.subTitle".i18n(),
             modifier = Modifier.padding(horizontal = BisqUIConstants.ScreenPadding2X),
             textAlign = TextAlign.Center,
@@ -61,7 +63,10 @@ fun CreateProfileScreen(
         BisqGap.V3()
 
         if (generateKeyPairInProgress) {
-            CircularProgressIndicator(modifier = Modifier.size(botSize))
+            CircularProgressIndicator(
+                modifier = Modifier.size(iconSize),
+                color = BisqTheme.colors.primary
+            )
         } else {
             profileIcon?.let { profileIcon ->
                 val painter = rememberPlatformImagePainter(profileIcon)
@@ -77,7 +82,7 @@ fun CreateProfileScreen(
                     Image(
                         painter = painter,
                         contentDescription = "mobile.createProfile.iconGenerated".i18n(),
-                        modifier = Modifier.size(botSize)
+                        modifier = Modifier.size(iconSize)
                     )
                 }
             }
@@ -89,8 +94,9 @@ fun CreateProfileScreen(
             nym
         }
 
-        BisqGap.V3()
-        BisqText.baseRegular(nymText)
+        BisqGap.V1()
+        BisqText.baseLightGrey("onboarding.createProfile.nym".i18n())
+        BisqText.baseRegularGrey(nymText)
         BisqGap.V3()
         BisqButton(
             text = "onboarding.createProfile.regenerate".i18n(),
@@ -99,7 +105,7 @@ fun CreateProfileScreen(
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding5X, vertical = BisqUIConstants.ScreenPadding),
             onClick = { presenter.onGenerateKeyPair() }
         )
-        BisqGap.V3()
+        BisqGap.V1()
         BisqButton(
             "action.next".i18n(),
             onClick = { presenter.onCreateAndPublishNewUserProfile() },
