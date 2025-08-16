@@ -51,7 +51,7 @@ class ClientUserProfileServiceFacade(
         super<ServiceFacade>.activate()
 
         serviceScope.launch(Dispatchers.Default) {
-<         // Initialize selected user profile with proper error handling
+          // Initialize selected user profile with proper error handling
           runCatching {
               getSelectedUserProfile()
           }.onSuccess { profile ->
