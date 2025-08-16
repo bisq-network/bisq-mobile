@@ -35,7 +35,9 @@ fun ReactionDisplay(
     modifier: Modifier = Modifier
 ) {
     val reactions by message.chatReactions.collectAsState()
-    val groupedReactions = remember(reactions) { reactions.groupBy { it.reactionId }.entries.toList() }
+    val groupedReactions = remember(reactions) {
+        reactions.groupBy { it.reactionId }.entries.sortedBy { it.key }.toList()
+    }
 
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -58,23 +60,25 @@ fun ReactionDisplay(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .background(BisqTheme.colors.dark_grey30)
+                        .background(
+                            BisqTheme.colors.dark_grey30,
+                            shape = RoundedCornerShape(BisqUIConstants.ScreenPadding2X),
+                        )
                         .border(
                             1.dp,
                             BisqTheme.colors.mid_grey10,
-                            RoundedCornerShape(BisqUIConstants.ScreenPadding)
+                            RoundedCornerShape(BisqUIConstants.ScreenPadding2X)
                         )
                         .padding(all = BisqUIConstants.ScreenPaddingHalfQuarter)
                 ) {
                     DynamicImage(
                         firstReaction.imagePath(),
                         modifier = Modifier.size(24.dp)
-                            .offset(y = (-3).dp)
                     )
                     if (count > 1) {
                         BisqText.baseLight(
                             text = count.toString(),
-                            modifier = Modifier.offset(x = 2.dp, y = (-3).dp),
+                            modifier = Modifier.offset(x = 2.dp),
                         )
                     }
                 }
