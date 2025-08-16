@@ -42,7 +42,6 @@ import bisq.settings.SettingsService
 import bisq.support.SupportService
 import bisq.trade.TradeService
 import bisq.user.UserService
-import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import lombok.Getter
 import lombok.Setter
@@ -103,8 +102,6 @@ class AndroidApplicationService(
             Supplier { applicationService.contractService }
         var userService: Supplier<UserService> =
             Supplier { applicationService.userService }
-        var userProfileService: Supplier<UserProfileService> =
-            Supplier { applicationService.userProfileService }
         var chatService: Supplier<ChatService> =
             Supplier { applicationService.chatService }
         var settingsService: Supplier<SettingsService> =
@@ -175,11 +172,6 @@ class AndroidApplicationService(
         identityService,
         networkService,
         bondedRolesService
-    )
-    val userProfileService = UserProfileService(
-        persistenceService,
-        securityService,
-        networkService,
     )
     val chatService: ChatService
     val settingsService = SettingsService(persistenceService)

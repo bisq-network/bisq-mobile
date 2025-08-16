@@ -8,10 +8,10 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.icon_home
-import bisqapps.shared.presentation.generated.resources.icon_market
-import bisqapps.shared.presentation.generated.resources.icon_settings
-import bisqapps.shared.presentation.generated.resources.icon_trades
+import bisqapps.shared.presentation.generated.resources.nav_dashboard
+import bisqapps.shared.presentation.generated.resources.nav_markets
+import bisqapps.shared.presentation.generated.resources.nav_settings
+import bisqapps.shared.presentation.generated.resources.nav_trades
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
@@ -26,10 +26,10 @@ import network.bisq.mobile.presentation.ui.navigation.graph.TabNavGraph
 import org.koin.compose.koinInject
 
 val navigationListItem = listOf(
-    BottomNavigationItem("mobile.bottomNavigation.home", Routes.TabHome.name, Res.drawable.icon_home),
-    BottomNavigationItem("mobile.bottomNavigation.offerbook", Routes.TabOfferbook.name, Res.drawable.icon_market),
-    BottomNavigationItem("mobile.bottomNavigation.myTrades", Routes.TabOpenTradeList.name, Res.drawable.icon_trades),
-    BottomNavigationItem("mobile.bottomNavigation.settings", Routes.TabSettings.name, Res.drawable.icon_settings),
+    BottomNavigationItem("mobile.bottomNavigation.home", Routes.TabHome.name, Res.drawable.nav_dashboard),
+    BottomNavigationItem("mobile.bottomNavigation.offerbook", Routes.TabOfferbook.name, Res.drawable.nav_markets),
+    BottomNavigationItem("mobile.bottomNavigation.myTrades", Routes.TabOpenTradeList.name, Res.drawable.nav_trades),
+    BottomNavigationItem("mobile.bottomNavigation.settings", Routes.TabSettings.name, Res.drawable.nav_settings),
 )
 
 interface ITabContainerPresenter : ViewPresenter {

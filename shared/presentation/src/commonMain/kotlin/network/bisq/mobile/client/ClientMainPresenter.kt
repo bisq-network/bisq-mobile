@@ -14,7 +14,6 @@ import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
-import network.bisq.mobile.domain.service.network_stats.ProfileStatsServiceFacade
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -43,7 +42,6 @@ open class ClientMainPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     openTradesNotificationService: OpenTradesNotificationService,
     private val tradeReadStateRepository: TradeReadStateRepository,
-    private val profileStatsServiceFacade: ProfileStatsServiceFacade,
     private val webSocketClientProvider: WebSocketClientProvider,
     urlLauncher: UrlLauncher
 ) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, tradeReadStateRepository, urlLauncher) {
@@ -119,8 +117,6 @@ open class ClientMainPresenter(
             explorerServiceFacade.activate()
             mediationServiceFacade.activate()
             reputationServiceFacade.activate()
-
-            profileStatsServiceFacade.activate()
         }.onFailure { e ->
             // Roll back any partially activated services
             deactivateServicesBestEffort()
@@ -143,13 +139,10 @@ open class ClientMainPresenter(
         explorerServiceFacade.deactivate()
         mediationServiceFacade.deactivate()
         reputationServiceFacade.deactivate()
-
-        profileStatsServiceFacade.deactivate()
     }
 
     private fun deactivateServicesBestEffort() {
         val steps: List<Pair<String, () -> Unit>> = listOf(
-            "profileStatsService" to { profileStatsServiceFacade.deactivate() },
             "reputationService" to { reputationServiceFacade.deactivate() },
             "mediationService" to { mediationServiceFacade.deactivate() },
             "explorerService" to { explorerServiceFacade.deactivate() },

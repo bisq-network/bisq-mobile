@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.service.user_profile
 
 import io.ktor.util.decodeBase64Bytes
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -10,6 +11,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.datetime.Clock
+import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -23,7 +26,9 @@ import kotlin.math.min
 import kotlin.random.Random
 
 class ClientUserProfileServiceFacade(
-    private val apiGateway: UserProfileApiGateway, private val clientCatHashService: ClientCatHashService<PlatformImage>
+    private val apiGateway: UserProfileApiGateway,
+    private val clientCatHashService: ClientCatHashService<PlatformImage>,
+    private val json: Json
 ) : ServiceFacade(), UserProfileServiceFacade {
 
     private var keyMaterialResponse: KeyMaterialResponse? = null
@@ -31,6 +36,9 @@ class ClientUserProfileServiceFacade(
     // Properties
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
     override val selectedUserProfile: StateFlow<UserProfileVO?> get() = _selectedUserProfile.asStateFlow()
+
+    private val _numUserProfiles = MutableStateFlow(0)
+    override val numUserProfiles: StateFlow<Int> get() = _numUserProfiles.asStateFlow()
 
     private val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf<String, PlatformImage?>()
     private val avatarMapMutex = Mutex()
@@ -43,8 +51,20 @@ class ClientUserProfileServiceFacade(
         super<ServiceFacade>.activate()
 
         serviceScope.launch(Dispatchers.Default) {
-            _selectedUserProfile.value = getSelectedUserProfile()
+            runCatching {
+                getSelectedUserProfile()
+            }.onSuccess { profile ->
+                _selectedUserProfile.value = profile
+            }.onFailure { e ->
+                if (e is CancellationException) {
+                    throw e
+                }
+                // Expected at first run
+                log.d("Error getting user profile: ${e.message}")
+            }
         }
+
+        observeNumUserProfiles()
     }
 
     override fun deactivate() {
@@ -129,10 +149,10 @@ class ClientUserProfileServiceFacade(
 
     override suspend fun applySelectedUserProfile(): Triple<String?, String?, String?> {
         val userProfile = getSelectedUserProfile()
-        return Triple(userProfile.nickName, userProfile.nym, userProfile.id)
+        return Triple(userProfile?.nickName, userProfile?.nym, userProfile?.id)
     }
 
-    override suspend fun getSelectedUserProfile(): UserProfileVO {
+    override suspend fun getSelectedUserProfile(): UserProfileVO? {
         try {
             val apiResult = apiGateway.getSelectedUserProfile()
             if (apiResult.isFailure) {
@@ -143,7 +163,6 @@ class ClientUserProfileServiceFacade(
             log.e(e) { "Failed to get selected user profile from service facade" }
             throw e
         }
-
     }
 
     override suspend fun findUserProfile(profileId: String): UserProfileVO? {
@@ -233,6 +252,23 @@ class ClientUserProfileServiceFacade(
             log.e(e) { "Failed to fetch ignored user IDs" }
             throw e
         }
+    }
 
+    private fun observeNumUserProfiles() {
+        serviceScope.launch {
+            try {
+                val observer = apiGateway.subscribeNumUserProfiles()
+                observer.webSocketEvent.collect { webSocketEvent ->
+                    if (webSocketEvent?.deferredPayload == null) {
+                        return@collect
+                    }
+
+                    val webSocketEventPayload: WebSocketEventPayload<Int> = WebSocketEventPayload.from(json, webSocketEvent)
+                    _numUserProfiles.value = webSocketEventPayload.payload
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Failed to subscribe to numUserProfiles" }
+            }
+        }
     }
 }

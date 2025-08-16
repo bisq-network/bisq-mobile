@@ -3,15 +3,12 @@ package network.bisq.mobile.domain.service.user_profile
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 interface UserProfileServiceFacade : LifeCycleAware {
-    companion object {
-         internal const val DEFAULT_SIZE = 120.0
-    }
-
     val selectedUserProfile: StateFlow<UserProfileVO?>
+
+    val numUserProfiles: StateFlow<Int>
 
     /**
      * Returns true if there is a user identity already created.
