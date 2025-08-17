@@ -195,9 +195,8 @@ class TrustedNodeSetupPresenter(
 
     private suspend fun updateTrustedNodeSettings() {
         val currentSettings = settingsRepository.fetch()
-        val updatedSettings = Settings().apply {
+        val updatedSettings = (currentSettings ?: Settings()).apply {
             bisqApiUrl = _bisqApiUrl.value
-            firstLaunch = currentSettings?.firstLaunch ?: true
         }
         settingsRepository.update(updatedSettings)
     }
@@ -208,11 +207,22 @@ class TrustedNodeSetupPresenter(
         // TODO handle also user scheduled to be deleted when we implement settings change trusted node
         launchUI {
             val user = withContext(IODispatcher) { userRepository.fetch() }
+            val settings = withContext(IODispatcher) { settingsRepository.fetch() }
+
             if (isWorkflow) {
-                if (user == null) {
+                // Check firstLaunch flag instead of just user existence to avoid re-showing onboarding
+                if (settings?.firstLaunch == true) {
+                    log.d { "First launch detected, navigating to onboarding" }
                     navigateTo(Routes.Onboarding)
                 } else {
-                    navigateTo(Routes.TabContainer)
+                    // User has completed onboarding before, skip it
+                    if (user == null) {
+                        log.d { "Onboarding completed but no user profile, navigating to create profile" }
+                        navigateTo(Routes.CreateProfile)
+                    } else {
+                        log.d { "User and onboarding complete, navigating to main app" }
+                        navigateTo(Routes.TabContainer)
+                    }
                 }
             } else {
                 navigateTo(Routes.TabContainer)
