@@ -147,7 +147,7 @@ fun MultiScreenWizardScaffold(
                                 horizontal = BisqUIConstants.ScreenPaddingHalf,
                                 vertical = BisqUIConstants.ScreenPaddingHalf
                             ),
-                            disabled = prevOnClick == null || prevDisabled,
+                            disabled = prevOnClick == null || prevDisabled || !isInteractive || confirmClose.visible,
                             modifier = Modifier.weight(1.0F).fillMaxHeight()
                         )
                         BisqGap.H1()
@@ -162,7 +162,7 @@ fun MultiScreenWizardScaffold(
                                 horizontal = BisqUIConstants.ScreenPaddingHalf,
                                 vertical = BisqUIConstants.ScreenPaddingHalf
                             ),
-                            disabled = nextOnClick == null || nextDisabled,
+                            disabled = nextOnClick == null || nextDisabled || !isInteractive || confirmClose.visible,
                             modifier = Modifier.weight(1.0F).fillMaxHeight()
                         )
                     }
