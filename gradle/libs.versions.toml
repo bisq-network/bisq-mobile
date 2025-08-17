@@ -11,7 +11,6 @@ kotlinTestJunit = "2.0.20"
 kotlinx = "1.9.0" # latest stable
 kotlinxDatetime = "0.4.0" # latest stable
 kotlinxSerialization = "1.7.3"
-kotlinxCollectionImmutable = "0.4.0"
 serializationPlugin = "2.0.20"
 ksp = "2.0.20-1.0.25"
 
@@ -101,7 +100,6 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kotlinx-datetime = { module = "org.jetbrains.kotlinx:kotlinx-datetime", version.ref = "kotlinxDatetime" }
 kotlinx-serialization-core = { module = "org.jetbrains.kotlinx:kotlinx-serialization-core", version.ref = "kotlinxSerialization" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerialization" }
-kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "kotlinxCollectionImmutable" }
 ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktorClient" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktorClient" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktorClient" }
