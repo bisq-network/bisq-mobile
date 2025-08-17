@@ -19,7 +19,6 @@ import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.utils.CurrencyUtils
 
 class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -245,14 +244,7 @@ class ClientOffersServiceFacade(
 
     private fun fillMarketListItems(markets: List<MarketVO>) {
         val marketListItems = markets.map { marketVO ->
-            MarketListItem(
-                marketVO,
-                0,
-                CurrencyUtils.getLocaleFiatCurrencyName(
-                    marketVO.quoteCurrencyCode,
-                    marketVO.quoteCurrencyName
-                )
-            )
+            MarketListItem.from(marketVO)
         }
 
         _offerbookMarketItems.value = marketListItems

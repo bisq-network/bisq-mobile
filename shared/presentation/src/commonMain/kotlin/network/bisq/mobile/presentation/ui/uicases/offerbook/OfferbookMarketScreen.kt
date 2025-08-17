@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.presentation.ui.components.CurrencyCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
@@ -68,7 +69,7 @@ fun OfferbookMarketScreen() {
         BisqGap.V1()
 
         LazyColumn {
-            items(marketItems) { item ->
+            items(marketItems, key = { it.market.marketCodes }) { item ->
                 CurrencyCard(
                     item = item,
                     hasIgnoredUsers = hasIgnoredUsers,
