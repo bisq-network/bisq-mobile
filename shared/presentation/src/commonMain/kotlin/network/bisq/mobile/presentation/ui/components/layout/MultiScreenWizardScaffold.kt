@@ -15,6 +15,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -135,34 +141,53 @@ fun MultiScreenWizardScaffold(
                         modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
+                        // Lock controls when global interactivity is off or confirm dialog is open.
+                        val controlsLocked = !isInteractive || confirmClose.visible
+                        var clickLocked by remember { mutableStateOf(false) }
+                        // Always reset when we switch wizard steps to avoid sticky locks across steps.
+                        LaunchedEffect(stepIndex) { clickLocked = false }
+                        // Auto-unlock throttle when UI is globally interactive (no modal/overlay).
+                        LaunchedEffect(clickLocked, controlsLocked) {
+                            if (clickLocked && !controlsLocked) {
+                                delay(400)
+                                clickLocked = false
+                            }
+                        }
+                        // Also unlock once the UI becomes interactive again after a modal/overlay.
+                        LaunchedEffect(controlsLocked) {
+                            if (!controlsLocked) clickLocked = false
+                        }
+
                         BisqButton(
                             text = prevButtonText,
                             type = BisqButtonType.Grey,
                             onClick = {
-                                if (prevOnClick != null) {
+                                if (prevOnClick != null && !controlsLocked && !clickLocked) {
+                                    clickLocked = true
                                     prevOnClick()
                                 }
-                                      },
+                            },
                             padding = PaddingValues(
                                 horizontal = BisqUIConstants.ScreenPaddingHalf,
                                 vertical = BisqUIConstants.ScreenPaddingHalf
                             ),
-                            disabled = prevOnClick == null || prevDisabled || !isInteractive || confirmClose.visible,
+                            disabled = prevOnClick == null || prevDisabled || controlsLocked,
                             modifier = Modifier.weight(1.0F).fillMaxHeight()
                         )
                         BisqGap.H1()
                         BisqButton(
                             text = nextButtonText,
                             onClick = {
-                                if (nextOnClick != null) {
+                                if (nextOnClick != null && !controlsLocked && !clickLocked) {
+                                    clickLocked = true
                                     nextOnClick()
                                 }
-                                      },
+                            },
                             padding = PaddingValues(
                                 horizontal = BisqUIConstants.ScreenPaddingHalf,
                                 vertical = BisqUIConstants.ScreenPaddingHalf
                             ),
-                            disabled = nextOnClick == null || nextDisabled || !isInteractive || confirmClose.visible,
+                            disabled = nextOnClick == null || nextDisabled || controlsLocked,
                             modifier = Modifier.weight(1.0F).fillMaxHeight()
                         )
                     }
