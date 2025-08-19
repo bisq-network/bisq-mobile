@@ -26,13 +26,17 @@ import bisqapps.shared.presentation.generated.resources.icon_payment
 import bisqapps.shared.presentation.generated.resources.reputation
 import bisqapps.shared.presentation.generated.resources.thumbs_up
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.FontSize
+import network.bisq.mobile.presentation.ui.components.atoms.FontWeight
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.components.molecules.AmountWithCurrency
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
@@ -118,7 +122,16 @@ fun DashBoardCard(
         padding = BisqUIConstants.ScreenPadding2X,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
     ) {
-        BisqText.h1Light(title)
+//        BisqText.h1Light(title)
+        AutoResizeText(title, maxLines = 1,
+            fontSize = FontSize.H1,
+            fontWeight = FontWeight.LIGHT,
+            color = BisqTheme.colors.white,
+            textAlign = TextAlign.Start,
+//            lineHeight = lineHeight,
+//            overflow = overflow,
+//            modifier = modifier
+        )
 
         Column {
             bulletPoints.forEach { (pointKey, icon) ->
