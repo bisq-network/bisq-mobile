@@ -79,8 +79,10 @@ class CreateOfferMarketPresenter(
 
     init {
         val createOfferModel = createOfferPresenter.createOfferModel
-        _selectedMarketItem.value = createOfferModel.market?.let {
-            MarketListItem.from(it)
+        _selectedMarketItem.value = createOfferModel.market?.let { modelMarket ->
+            // Prefer the canonical instance from the current list if available
+            marketListItemWithNumOffers.value
+                .firstOrNull { it.market == modelMarket } ?: MarketListItem.from(modelMarket)
         }
 
         headline = if (createOfferModel.direction.isBuy)
@@ -128,7 +130,7 @@ class CreateOfferMarketPresenter(
                 createOfferPresenter.commitMarket(marketItem.market)
                 offersServiceFacade.selectOfferbookMarket(marketItem)
             }.onFailure {
-                log.e(it) { "Failed to comit to model ${it.message}" }
+                log.e(it) { "Failed to commit to model ${it.message}" }
             }
         }
     }
