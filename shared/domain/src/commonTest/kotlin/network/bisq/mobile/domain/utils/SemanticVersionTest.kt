@@ -67,5 +67,13 @@ class SemanticVersionTest {
         assertFailsWith<IllegalArgumentException> { SemanticVersion.parse("1.0") }
         assertFailsWith<IllegalArgumentException> { SemanticVersion.parse("1.0.0-alpha..1") }
         assertFailsWith<IllegalArgumentException> { SemanticVersion.parse("a.b.c") }
+        assertFailsWith<IllegalArgumentException> { SemanticVersion.parse("1.0.0-01") }
+    }
+
+    @Test
+    fun buildMetadataAllowsLeadingZeros() {
+        // Per SemVer 2.0.0, build metadata may contain numeric identifiers with leading zeros
+        val version = SemanticVersion.parse("1.0.0+001")
+        assertEquals(listOf("001"), version.build)
     }
 }

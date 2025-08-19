@@ -37,6 +37,6 @@ object NetworkUtils {
 
     fun String.isValidPort(): Boolean {
         val num = toIntOrNull() ?: return false
-        return num in 0..65535
+        return num in 1..65535
     }
 }

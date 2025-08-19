@@ -82,6 +82,7 @@ class TrustedNodeSetupPresenter(
         updateHostPrompt()
         if (BuildConfig.IS_DEBUG) {
             _host.value = "10.0.2.2"
+            validateApiUrl()
         }
 
         launchUI {
@@ -90,11 +91,15 @@ class TrustedNodeSetupPresenter(
                     settingsRepository.fetch()
                 }
                 data?.let {
-                    onHostChanged(
-                        if (it.bisqApiUrl.isBlank() && _host.value.isNotBlank())
-                            _host.value
-                        else it.bisqApiUrl
-                    )
+                    if (it.bisqApiUrl.isBlank()) {
+                        if (_host.value.isNotBlank()) onHostChanged(_host.value)
+                    } else {
+                        val parts = it.bisqApiUrl.split(':', limit = 2)
+                        val savedHost = parts.getOrNull(0)?.trim().orEmpty()
+                        val savedPort = parts.getOrNull(1)?.trim().orEmpty()
+                        onHostChanged(savedHost)
+                        if (savedPort.isNotBlank()) onPortChanged(savedPort)
+                    }
                     validateVersion()
                 }
             } catch (e: Exception) {
@@ -153,15 +158,14 @@ class TrustedNodeSetupPresenter(
                 }
 
                 if (success) {
-                    val previousUrl = settingsRepository.fetch()?.bisqApiUrl
+                    val previousUrl = withContext(IODispatcher) { settingsRepository.fetch()?.bisqApiUrl }
                     val isCompatibleVersion = withContext(IODispatcher) {
-                        updateSettings()
-                        delay(DEFAULT_DELAY)
                         webSocketClientProvider.get().await()
                         validateVersion()
                     }
 
                     if (isCompatibleVersion) {
+                        withContext(IODispatcher) { updateSettings() }
                         _isConnected.value = true
                         _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
 
@@ -184,7 +188,8 @@ class TrustedNodeSetupPresenter(
                         _status.value = "mobile.trustedNodeSetup.status.invalidVersion".i18n()
                     }
                 } else {
-                    showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.couldNotConnect".i18n(_host.value))
+                    val endpoint = "${_host.value}:${_port.value}"
+                    showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.couldNotConnect".i18n(endpoint))
                     _isConnected.value = false
                     _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
                 }
@@ -223,10 +228,9 @@ class TrustedNodeSetupPresenter(
 
     private suspend fun updateSettings() {
         val currentSettings = settingsRepository.fetch()
-        val updatedSettings = Settings().apply {
-            bisqApiUrl = _host.value + ":" + _port.value
-            firstLaunch = currentSettings?.firstLaunch ?: true
-        }
+        val newUrl = _host.value + ":" + _port.value
+        val updatedSettings = currentSettings?.copy(bisqApiUrl = newUrl)
+            ?: Settings(bisqApiUrl = newUrl)
         settingsRepository.update(updatedSettings)
     }
 
@@ -235,6 +239,10 @@ class TrustedNodeSetupPresenter(
     }
 
     fun onSave() {
+        if (!_isApiUrlValid.value) {
+            showSnackbar("mobile.trustedNodeSetup.status.failed".i18n())
+            return
+        }
         launchUI {
             updateSettings()
             navigateBack()
@@ -242,14 +250,11 @@ class TrustedNodeSetupPresenter(
     }
 
     private suspend fun validateVersion(): Boolean {
-        _trustedNodeVersion.value = settingsServiceFacade.getTrustedNodeVersion()
-        if (settingsServiceFacade.isApiCompatible()) {
-            _isBisqApiVersionValid.value = true
-            return true
-        } else {
-            _isBisqApiVersionValid.value = false
-            return false
-        }
+        val version = withContext(IODispatcher) { settingsServiceFacade.getTrustedNodeVersion() }
+        val compatible = withContext(IODispatcher) { settingsServiceFacade.isApiCompatible() }
+        _trustedNodeVersion.value = version
+        _isBisqApiVersionValid.value = compatible
+        return compatible
     }
 
     private fun updateHostPrompt() {
@@ -282,7 +287,7 @@ class TrustedNodeSetupPresenter(
 
     fun validatePort(value: String): String? {
         if (value.isEmpty()) {
-            return "mobile.trustedNodeSetup.host.invalid.empty".i18n()
+            return "mobile.trustedNodeSetup.port.invalid.empty".i18n()
         }
         if (!value.isValidPort()) {
             return "mobile.trustedNodeSetup.port.invalid".i18n()

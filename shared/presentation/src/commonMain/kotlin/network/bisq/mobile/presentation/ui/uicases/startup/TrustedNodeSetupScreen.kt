@@ -58,14 +58,16 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val selectedNetworkType by presenter.selectedNetworkType.collectAsState()
     val hostPrompt by presenter.hostPrompt.collectAsState()
     val status by presenter.status.collectAsState()
+    val isApiUrlValid by presenter.isApiUrlValid.collectAsState()
 
     // Add state for dialog
     val showConfirmDialog = remember { mutableStateOf(false) }
 
-    val networkType: List<NetworkType> = listOf(
-        NetworkType.LAN,
-        NetworkType.TOR
-    )
+    val networkType: List<NetworkType> = if (BuildConfig.IS_DEBUG) {
+        listOf(NetworkType.LAN, NetworkType.TOR)
+    } else {
+        listOf(NetworkType.LAN)
+    }
 
     val isNewApiUrl by produceState(initialValue = false, host, port, selectedNetworkType) {
         value = presenter.isNewApiUrl()
@@ -159,6 +161,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         modifier = Modifier.animateItem(),
                         text = "mobile.trustedNodeSetup.testConnection".i18n(),
                         color = if (host.isEmpty()) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
+                        disabled = isLoading || !isApiUrlValid,
                         onClick = {
                             if (isNewApiUrl) {
                                 showConfirmDialog.value = true

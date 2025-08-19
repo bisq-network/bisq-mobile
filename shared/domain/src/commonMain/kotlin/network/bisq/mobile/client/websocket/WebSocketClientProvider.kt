@@ -32,17 +32,30 @@ class WebSocketClientProvider(
     companion object {
         fun toAddress(uri: String): AddressVO? {
             val trimmed = uri.trim()
+            if (trimmed.isBlank()) return null
+
             // IPv4 or Tor v3 onion: host:port
-            val parts = trimmed.split(":")
-            if (parts.size == 2) {
-                val host = parts[0].trim()
-                val portStr = parts[1].trim()
-                val hostOk = host.isValidIpv4() || host.isValidTorV3Address()
-                if (hostOk && portStr.isValidPort()) {
-                    return AddressVO(host, portStr.toInt())
-                }
+            val parts = trimmed.split(":", limit = 2)
+            if (parts.size != 2) return null
+
+            val rawHost = parts[0].trim()
+            val portStr = parts[1].trim()
+
+            if (rawHost.isBlank() || portStr.isBlank()) return null
+
+            val host = if (rawHost.endsWith(".onion")) {
+                rawHost.lowercase()
+            } else {
+                rawHost
             }
-            return null
+
+            val hostOk = host.isValidIpv4() || host.isValidTorV3Address()
+            if (!hostOk) return null
+
+            val port = portStr.toIntOrNull() ?: return null
+            if (port !in 1..65535) return null
+
+            return AddressVO(host, port)
         }
     }
 

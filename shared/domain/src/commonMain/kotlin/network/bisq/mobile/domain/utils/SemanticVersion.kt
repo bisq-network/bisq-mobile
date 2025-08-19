@@ -58,28 +58,30 @@ data class SemanticVersion(
 
         /** Simple creator from MAJOR.MINOR.PATCH only (no validation for semver extras) */
         fun from(version: String): SemanticVersion {
-            val parts = version.split(".")
+            val v = version.trim()
+            val parts = v.split(".")
             require(parts.size == 3) { "Version must have format MAJOR.MINOR.PATCH" }
-            require(parts.all { corePattern.matches(it) }) { "Invalid version format: $version" }
+            require(parts.all { corePattern.matches(it) }) { "Invalid version format: $v" }
             return SemanticVersion(parts[0].toInt(), parts[1].toInt(), parts[2].toInt())
         }
 
         fun parse(input: String): SemanticVersion {
-            require(input.isNotBlank()) { "Version string cannot be blank" }
-            val (coreAndPre, buildMeta) = input.split("+", limit = 2).let {
+            val s = input.trim()
+            require(s.isNotBlank()) { "Version string cannot be blank" }
+            val (coreAndPre, buildMeta) = s.split("+", limit = 2).let {
                 it[0] to it.getOrNull(1)
             }
-            val build = buildMeta?.splitAndValidate("build") ?: emptyList()
+            val build = buildMeta?.splitBuild() ?: emptyList()
 
             val (core, pre) = coreAndPre.split("-", limit = 2).let {
                 it[0] to it.getOrNull(1)
             }
-            val preRelease = pre?.splitAndValidate("pre-release") ?: emptyList()
+            val preRelease = pre?.splitPreRelease() ?: emptyList()
 
             val coreParts = core.split(".")
             require(coreParts.size == 3 &&
                     coreParts.all { corePattern.matches(it) }
-            ) { "Invalid core version: $input" }
+            ) { "Invalid core version: $s" }
 
             return SemanticVersion(
                 major = coreParts[0].toInt(),
@@ -97,17 +99,22 @@ data class SemanticVersion(
         fun compare(a: String, b: String): Int =
             parse(a).compareTo(parse(b))
 
-        private fun String.splitAndValidate(label: String): List<String> {
-            return split(".").map {
-                require(idPattern.matches(it)) { "Invalid $label identifier: $it" }
+        private fun String.splitPreRelease(): List<String> =
+            split(".").map {
+                require(idPattern.matches(it)) { "Invalid pre-release identifier: $it" }
                 if (numericPattern.matches(it) && it.length > 1 && it.startsWith("0")) {
                     throw IllegalArgumentException(
-                        "Numeric $label identifier must not have leading zeros: $it"
+                        "Numeric pre-release identifier must not have leading zeros: $it"
                     )
                 }
                 it
             }
-        }
+
+        private fun String.splitBuild(): List<String> =
+            split(".").map {
+                require(idPattern.matches(it)) { "Invalid build identifier: $it" }
+                it
+            }
 
         private fun String.isNumeric(): Boolean =
             numericPattern.matches(this)

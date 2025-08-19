@@ -45,7 +45,7 @@ open class SplashPresenter(
         }
         
         collectUI(progress) { value ->
-            if (value == 1.0f && !hasNavigatedAway) {
+            if (value >= 1.0f && !hasNavigatedAway) {
                 hasNavigatedAway = true
                 navigateToNextScreen()
             }

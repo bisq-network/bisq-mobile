@@ -77,14 +77,20 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             }
         }
 
-        numUserProfilesPin = userProfileService.numUserProfiles.addObserver { numUserProfiles ->
-            _numUserProfiles.value = numUserProfiles ?: 0
+        numUserProfilesPin = userProfileService.numUserProfiles.addObserver { num ->
+            serviceScope.launch {
+                val value = num ?: 0
+                if (_numUserProfiles.value != value) {
+                    _numUserProfiles.value = value
+                }
+            }
         }
     }
 
     override fun deactivate() {
         numUserProfilesPin?.unbind()
         numUserProfilesPin = null
+        _numUserProfiles.value = 0
         avatarMap.clear()
         super<ServiceFacade>.deactivate()
     }
