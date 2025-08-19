@@ -100,7 +100,10 @@ actual fun loadProperties(fileName: String): Map<String, String> {
     val classLoader = Thread.currentThread().contextClassLoader
     val resource = classLoader?.getResourceAsStream(fileName)
         ?: throw IllegalArgumentException("Resource not found: $fileName")
-    properties.load(resource)
+    // Read .properties using UTF-8 to support non-ASCII characters consistently
+    resource.reader(Charsets.UTF_8).use { reader ->
+        properties.load(reader)
+    }
 
     return properties.entries.associate { it.key.toString() to it.value.toString() }
 }

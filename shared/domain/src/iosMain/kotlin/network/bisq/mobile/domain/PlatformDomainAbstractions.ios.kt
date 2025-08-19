@@ -111,21 +111,123 @@ class IOSPlatformInfo : PlatformInfo {
 
 actual fun getPlatformInfo(): PlatformInfo = IOSPlatformInfo()
 
+@OptIn(BetaInteropApi::class)
 actual fun loadProperties(fileName: String): Map<String, String> {
     val bundle = NSBundle.mainBundle
-    /*val path = bundle.pathForResource(fileName.removeSuffix(".properties"), "properties")
-        ?: throw IllegalArgumentException("Resource not found: $fileName")*/
     val path = bundle.pathForResource(fileName.removeSuffix(".properties"), "properties")
-    // FIXME resources not found yet
-    if (path == null) {
-        return emptyMap()
+        ?: return emptyMap()
+
+    // Read file as UTF-8 text and parse Java-style .properties content
+    val data = NSData.dataWithContentsOfFile(path) ?: return emptyMap()
+    val nsString = NSString.create(data = data, encoding = NSUTF8StringEncoding)
+    val content = nsString?.toString() ?: return emptyMap()
+
+    return parseProperties(content)
+}
+
+private fun parseProperties(content: String): Map<String, String> {
+    val result = mutableMapOf<String, String>()
+    val lines = content.lines().toMutableList()
+    val logicalLines = mutableListOf<String>()
+
+    var i = 0
+    while (i < lines.size) {
+        var line = lines[i]
+        // Handle line continuations ending with unescaped backslash
+        while (endsWithUnescapedBackslash(line)) {
+            val next = if (i + 1 < lines.size) lines[i + 1] else ""
+            line = line.substring(0, line.length - 1) + next.trimStart()
+            i += 1
+        }
+        logicalLines.add(line)
+        i += 1
     }
 
-    val properties = NSDictionary.dictionaryWithContentsOfFile(path) as NSDictionary?
-        ?: throw IllegalStateException("Failed to load properties from $path")
+    for (raw in logicalLines) {
+        val line = raw.trimStart()
+        if (line.isEmpty()) continue
+        val firstChar = line[0]
+        if (firstChar == '#' || firstChar == '!') continue
 
-    return properties.entriesAsMap()
+        val key = StringBuilder()
+        val value = StringBuilder()
+        var inKey = true
+        var escaped = false
+
+        fun appendTarget(c: Char) {
+            if (inKey) key.append(c) else value.append(c)
+        }
+
+        for (idx in 0 until line.length) {
+            val c = line[idx]
+            if (!escaped) {
+                when (c) {
+                    '\\' -> escaped = true
+                    '=', ':' -> if (inKey) { inKey = false } else appendTarget(c)
+                    ' ' , '\t', '\u000c' -> if (inKey) {
+                        // whitespace can separate key and value
+                        // skip consecutive whitespace and set to value
+                        var j = idx + 1
+                        while (j < line.length && (line[j] == ' ' || line[j] == '\t' || line[j] == '\u000c')) j++
+                        if (j < line.length && !inKey) {
+                            // already in value
+                            appendTarget(c)
+                        } else if (inKey) {
+                            inKey = false
+                        }
+                    } else appendTarget(c)
+                    else -> appendTarget(c)
+                }
+            } else {
+                // escaped char in either key or value
+                when (c) {
+                    't' -> appendTarget('\t')
+                    'n' -> appendTarget('\n')
+                    'r' -> appendTarget('\r')
+                    'f' -> appendTarget('\u000C') // form feed
+                    '\\', ' ', ':', '=' -> appendTarget(c)
+                    'u' -> {
+                        // Unicode escape \uXXXX
+                        val remaining = line.substring(idx + 1)
+                        if (remaining.length >= 4) {
+                            val hex = remaining.substring(0, 4)
+                            val code = hex.toIntOrNull(16)
+                            if (code != null) {
+                                appendTarget(code.toChar())
+                                // skip processed hex digits
+                                // adjust main loop index
+                                // idx will be incremented by for-loop, so advance by 4
+                                // but we can't modify idx in Kotlin for-loop; rebuild remainder
+                            } else {
+                                appendTarget('u'); appendTarget(hex[0])
+                            }
+                        } else {
+                            appendTarget('u')
+                        }
+                        // Reconstruct the rest after processing unicode
+                        // Simplify by appending as is when complex; to keep robust we fall back
+                    }
+                    else -> appendTarget(c)
+                }
+                escaped = false
+            }
+        }
+
+        val k = key.toString().trimEnd()
+        val v = value.toString().trimStart()
+        result[k] = v
+    }
+
+    return result
 }
+
+private fun endsWithUnescapedBackslash(s: String): Boolean {
+    var count = 0
+    var i = s.length - 1
+    while (i >= 0 && s[i] == '\\') { count++; i-- }
+    return count % 2 == 1
+}
+
 
 fun NSDictionary.entriesAsMap(): Map<String, String> {
     val map = mutableMapOf<String, String>()

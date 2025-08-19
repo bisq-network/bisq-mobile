@@ -236,7 +236,36 @@ abstract class GenerateResourceBundlesTask : DefaultTask() {
                     }
                 }
 
-                val map = properties.entries.associate { it.key.toString() to it.value.toString() }
+                // Attempt to repair known mojibake in Spanish files at generation time (idempotent, up to 3 passes)
+                fun markerScore(s: String): Int = listOf("Ã", "Â", "ï¿½", "�").sumOf { token ->
+                    if (s.isEmpty()) 0 else s.split(token).size - 1
+                }
+                fun recodeOnce(s: String): String = String(s.toByteArray(Charsets.ISO_8859_1), Charsets.UTF_8)
+                fun repairMojibake(s: String): String {
+                    var curr = s
+                    var prev = markerScore(curr)
+                    var i = 0
+                    while (i < 3) {
+                        val next = recodeOnce(curr)
+                        val score = markerScore(next)
+                        if (score < prev) {
+                            curr = next
+                            prev = score
+                            i++
+                        } else break
+                    }
+                    return curr
+                }
+
+                val rawMap = properties.entries.associate { it.key.toString() to it.value.toString() }
+                val map = if (languageCode.lowercase() == "es") {
+                    rawMap.mapValues { (_, v) ->
+                        if (v.any { it.code == 0x00C2 } || v.contains("Ã") || v.contains("Â") || v.contains("ï¿½") || v.contains("�")) {
+                            repairMojibake(v)
+                        } else v
+                    }
+                } else rawMap
+
                 ResourceBundle(map, bundleName, languageCode)
             }
         }
