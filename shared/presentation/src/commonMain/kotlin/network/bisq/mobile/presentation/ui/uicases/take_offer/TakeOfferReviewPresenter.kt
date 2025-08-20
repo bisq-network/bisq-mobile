@@ -30,19 +30,19 @@ class TakeOfferReviewPresenter(
     private val takeOfferPresenter: TakeOfferPresenter,
 ) : BasePresenter(mainPresenter) {
 
-    lateinit var headLine: String
-    lateinit var quoteSidePaymentMethodDisplayString: String
-    lateinit var baseSidePaymentMethodDisplayString: String
-    lateinit var amountToPay: String
-    lateinit var amountToReceive: String
-    lateinit var fee: String
-    lateinit var feeDetails: String
-    lateinit var price: String
-    lateinit var marketCodes: String
+    var headLine: String
+    var quoteSidePaymentMethodDisplayString: String
+    var baseSidePaymentMethodDisplayString: String
+    var amountToPay: String
+    var amountToReceive: String
+    var fee: String
+    var feeDetails: String
+    var price: String
+    var marketCodes: String
+    var takersDirection: DirectionEnum
     lateinit var priceDetails: String
-    lateinit var takersDirection: DirectionEnum
 
-    private lateinit var takeOfferModel: TakeOfferPresenter.TakeOfferModel
+    private var takeOfferModel: TakeOfferPresenter.TakeOfferModel
 
     // We pass that to the domain, which updates the state while take offer is in progress, so that we can show the status
     // or error to the user
@@ -84,7 +84,7 @@ class TakeOfferReviewPresenter(
         val formattedQuoteAmount = AmountFormatter.formatAmount(takeOfferModel.quoteAmount, true, true)
         val formattedBaseAmount = AmountFormatter.formatAmount(takeOfferModel.baseAmount, false, false)
 
-        headLine = "${takersDirection.name.uppercase()} Bitcoin"
+        headLine = "${translatedDirection()} Bitcoin"
 
         if (takersDirection.isBuy) {
             amountToPay = formattedQuoteAmount
@@ -172,6 +172,14 @@ class TakeOfferReviewPresenter(
                     "bisqEasy.tradeWizard.review.priceDetails.fix".i18n(percentagePrice, aboveOrBelow, priceWithCode)
                 }
             }
+        }
+    }
+
+    private fun translatedDirection(): String {
+        return when (takersDirection.name.uppercase()) {
+            "BUY" -> "offer.buy".i18n().uppercase()
+            "SELL" -> "offer.sell".i18n().uppercase()
+            else -> "Unknown direction"
         }
     }
 

@@ -16,6 +16,8 @@
  */
 package network.bisq.mobile.domain.data.replicated.offer
 
+import network.bisq.mobile.i18n.i18n
+
 
 object DirectionEnumExtensions {
     val DirectionEnum.isBuy: Boolean
@@ -30,5 +32,8 @@ object DirectionEnumExtensions {
 
     val DirectionEnum.mirror get(): DirectionEnum = if (isBuy) DirectionEnum.SELL else DirectionEnum.BUY
 
-    val DirectionEnum.displayString get(): String = if (isBuy) "Buy" else "Sell" // todo use i18n
+    val DirectionEnum.displayString get(): String = when {
+        isSell -> "offer.sell".i18n()
+        else -> "offer.buy".i18n()
+    }.replaceFirstChar { it.uppercase() }
 }
