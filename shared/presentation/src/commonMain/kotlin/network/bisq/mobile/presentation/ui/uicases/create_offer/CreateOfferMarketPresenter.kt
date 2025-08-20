@@ -25,7 +25,7 @@ class CreateOfferMarketPresenter(
 
     var headline: String
     private val _selectedMarketItem = MutableStateFlow<MarketListItem?>(null)
-    val selectedMarketItem: StateFlow<MarketListItem?> = _selectedMarketItem.asStateFlow()
+    val selectedMarketItem: StateFlow<MarketListItem?> get() = _selectedMarketItem.asStateFlow()
 
     private var _searchText = MutableStateFlow("")
     val searchText: StateFlow<String> get() = _searchText.asStateFlow()
