@@ -100,14 +100,15 @@ data class SemanticVersion(
             parse(a).compareTo(parse(b))
 
         private fun String.splitPreRelease(): List<String> =
-            split(".").map {
-                require(idPattern.matches(it)) { "Invalid pre-release identifier: $it" }
-                if (numericPattern.matches(it) && it.length > 1 && it.startsWith("0")) {
+            split(".").map { token ->
+                require(idPattern.matches(token)) { "Invalid pre-release identifier: $token" }
+                // For pre-release identifiers: digits-only tokens must not have leading zeros (SemVer 2.0.0, §9)
+                if (token.length > 1 && token[0] == '0' && token.all { ch -> ch in '0'..'9' }) {
                     throw IllegalArgumentException(
-                        "Numeric pre-release identifier must not have leading zeros: $it"
+                        "Numeric pre-release identifier must not have leading zeros: $token"
                     )
                 }
-                it
+                token
             }
 
         private fun String.splitBuild(): List<String> =
