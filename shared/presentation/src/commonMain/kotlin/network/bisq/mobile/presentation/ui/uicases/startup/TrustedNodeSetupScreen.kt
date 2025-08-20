@@ -94,8 +94,8 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
             ToggleTab(
                 options = networkType,
-                initialOption = selectedNetworkType,
-                onStateChange = { presenter.onNetworkType(it) },
+                selectedOption = selectedNetworkType,
+                onOptionSelected = { presenter.onNetworkType(it) },
                 singleLine = true,
                 getDisplayString = { it.displayString }
             )
