@@ -127,7 +127,7 @@ fun OfferCard(
                     BisqGap.HHalf()
 
                     BisqText.baseRegularHighlight(
-                        text = userName.truncate(13),
+                        text = userName.truncate(11),
                         color = directionalLabelColor,
                     )
                 }

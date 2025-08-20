@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.trade_bitcoin_confirmation
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -154,6 +155,9 @@ fun BuyerStateMainChain3b(
             BisqGap.V1()
             BisqButton(
                 text = buttonText,
+                textComponent = {
+                    AutoResizeText(buttonText)
+                },
                 type = if (skip) BisqButtonType.Grey else BisqButtonType.Default,
                 onClick = { presenter.onCompleteTrade() },
             )
