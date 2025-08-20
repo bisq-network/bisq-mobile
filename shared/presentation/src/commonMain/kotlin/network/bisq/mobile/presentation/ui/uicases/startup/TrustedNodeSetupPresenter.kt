@@ -273,7 +273,7 @@ class TrustedNodeSetupPresenter(
             return
         }
         launchUI {
-            updateSettings()
+            withContext(IODispatcher) { updateSettings() }
             navigateBack()
         }
     }
