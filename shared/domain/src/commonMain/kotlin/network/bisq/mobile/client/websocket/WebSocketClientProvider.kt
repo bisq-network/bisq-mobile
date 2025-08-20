@@ -70,21 +70,21 @@ class WebSocketClientProvider(
      */
     suspend fun testClient(host: String, port: Int): Boolean {
         val client = createClient(host, port)
-        // not including path websocket will get connection refused
         val url = "ws://$host:$port/websocket"
         return try {
             if (client.isDemo()) {
                 ApplicationBootstrapFacade.isDemo = true
                 return true
             }
-            // if connection is refused, catch will execute returning false
+            // Connect and wait a moment to ensure connection is stable
             client.connect(true)
-            return true
+            kotlinx.coroutines.delay(500) // Wait 500ms to ensure connection is stable
+            true
         } catch (e: Exception) {
             log.e("Error testing connection to $url: ${e.message}")
             false
         } finally {
-            client.disconnect(true) // Ensure the client is closed to free resources
+            client.disconnect(true)
         }
     }
 

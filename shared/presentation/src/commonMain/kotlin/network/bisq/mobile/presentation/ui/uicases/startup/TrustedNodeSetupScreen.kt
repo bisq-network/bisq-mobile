@@ -35,6 +35,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.ToggleTab
+import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.helpers.spaceBetweenWithMin
@@ -73,13 +74,20 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
         value = presenter.isNewApiUrl()
     }
 
-    BisqScrollScaffold(snackbarHostState = presenter.getSnackState()) {
+    BisqScrollScaffold(
+        topBar = if (!isWorkflow) {
+            { TopBar(title = "mobile.trustedNodeSetup.title".i18n()) }
+        } else null,
+        snackbarHostState = presenter.getSnackState()
+    ) {
         Column(
             verticalArrangement = Arrangement.SpaceBetween,
             modifier = Modifier.fillMaxSize().padding(horizontal = 0.dp)
         ) {
-            BisqText.h2Light("mobile.trustedNodeSetup.title".i18n(), textAlign = TextAlign.Center)
-            BisqGap.V2()
+            if (isWorkflow) {
+                BisqText.h2Light("mobile.trustedNodeSetup.title".i18n(), textAlign = TextAlign.Center)
+                BisqGap.V2()
+            }
 
             BisqText.largeRegular(text = "mobile.trustedNodeSetup.info".i18n())
             BisqGap.V2()

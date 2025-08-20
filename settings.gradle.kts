@@ -31,7 +31,7 @@ dependencyResolutionManagement {
         if (isCi && mavenUrl != null) {
             // Use the remote Maven repository for CI builds
             maven {
-                url = uri(mavenUrl);
+                url = uri(mavenUrl)
                 isAllowInsecureProtocol = true
                 credentials {
                     username = System.getenv("MAVEN_USERNAME")

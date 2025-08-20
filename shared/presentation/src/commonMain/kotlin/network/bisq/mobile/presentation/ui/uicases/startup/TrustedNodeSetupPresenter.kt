@@ -22,6 +22,9 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
+/**
+ * Presenter for the Trusted Node Setup screen.
+ */
 class TrustedNodeSetupPresenter(
     mainPresenter: MainPresenter,
     private val userRepository: UserRepository,
@@ -31,13 +34,12 @@ class TrustedNodeSetupPresenter(
 ) : BasePresenter(mainPresenter) {
 
     companion object {
-        const val SAFEGUARD_TEST_TIMEOUT = 20000L
+        const val SAFEGUARD_TEST_TIMEOUT = 10000L
     }
 
-    enum class NetworkType(val i18nKey: String) {
+    enum class NetworkType(private val i18nKey: String) {
         LAN("mobile.trustedNodeSetup.networkType.lan"),
         TOR("mobile.trustedNodeSetup.networkType.tor");
-
         val displayString: String get() = i18nKey.i18n()
     }
 
@@ -73,6 +75,8 @@ class TrustedNodeSetupPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
+        // Reset connection state when view is attached to ensure proper initial state
+        _isConnected.value = false
         initialize()
     }
 
@@ -140,6 +144,7 @@ class TrustedNodeSetupPresenter(
             // TODO implement feature to allow changing from settings
             // this is not trivial from UI perspective, its making NavGraph related code to crash when
             // landing back in the TabContainer Home.
+            // We could warn the user and do an app restart (but we need a consistent solution for iOS too)
             showSnackbar("mobile.trustedNodeSetup.testConnection.message".i18n())
             return
         }
@@ -153,7 +158,7 @@ class TrustedNodeSetupPresenter(
                 val success = withTimeout(15000) { // 15 second timeout
                     withContext(IODispatcher) {
                         val portValue = port.value.toIntOrNull() ?: return@withContext false
-                        return@withContext webSocketClientProvider.testClient(host.value, portValue)
+                        webSocketClientProvider.testClient(host.value, portValue)
                     }
                 }
 
@@ -177,7 +182,19 @@ class TrustedNodeSetupPresenter(
                                     userRepository.delete(it)
                                 }
                             }
-                        } else if (!isWorkflow) {
+                        }
+
+                        if (isWorkflow) {
+                            // Compare current host/port with saved settings to decide navigation
+                            val currentApiUrl = "${_host.value}:${_port.value}"
+                            if (previousUrl.isNullOrBlank() || previousUrl != currentApiUrl) {
+                                // No saved URL or different URL -> create profile
+                                navigateToCreateProfile()
+                            } else {
+                                // Same URL as saved -> go to home
+                                navigateToHome()
+                            }
+                        } else {
                             navigateBack()
                         }
                     } else {
@@ -215,9 +232,9 @@ class TrustedNodeSetupPresenter(
         }
 
         launchUI {
-            delay(SAFEGUARD_TEST_TIMEOUT) // 20 seconds as a fallback
+            delay(SAFEGUARD_TEST_TIMEOUT) // 10 seconds as a fallback
             if (_isLoading.value) {
-                log.w { "Force stopping connection test after 20 seconds" }
+                log.w { "Force stopping connection test after 10 seconds" }
                 connectionJob.cancel()
                 _isLoading.value = false
                 _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
@@ -235,7 +252,19 @@ class TrustedNodeSetupPresenter(
     }
 
     fun navigateToCreateProfile() {
-        launchUI { navigateTo(Routes.CreateProfile) }
+        launchUI {
+            navigateTo(Routes.CreateProfile) {
+                it.popUpTo(Routes.TrustedNodeSetup.name) { inclusive = true }
+            }
+        }
+    }
+
+    private fun navigateToHome() {
+        launchUI {
+            navigateTo(Routes.TabContainer) {
+                it.popUpTo(Routes.TrustedNodeSetup.name) { inclusive = true }
+            }
+        }
     }
 
     fun onSave() {
