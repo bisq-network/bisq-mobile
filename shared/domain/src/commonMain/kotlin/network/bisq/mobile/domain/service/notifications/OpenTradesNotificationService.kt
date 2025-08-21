@@ -49,20 +49,34 @@ class OpenTradesNotificationService(
         log.d { "Current trade state for ${trade.shortTradeId}: $currentState" }
         handleTradeStateNotification(trade, currentState, isInitialState = true)
 
-        // Then register observer for future state changes
-        notificationServiceController.registerObserver(trade.bisqEasyTradeModel.tradeState) { newState ->
-            log.d { "Trade State Changed to: $newState for trade ${trade.shortTradeId}" }
-            handleTradeStateNotification(trade, newState, isInitialState = false)
+        // Then all observers:
+        observeFutureStateChanges(trade)
+        observePaymentAccountData(trade)
+        observeBitcoinPaymentData(trade)
+    }
 
-            // Unregister observer when trade concludes
-            if (OffersServiceFacade.isTerminalState(newState)) {
-                notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.tradeState)
-                notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.paymentAccountData)
-                notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.bitcoinPaymentData)
+    private fun observeBitcoinPaymentData(trade: TradeItemPresentationModel) {
+        notificationServiceController.registerObserver(trade.bisqEasyTradeModel.bitcoinPaymentData) { bitcoinData ->
+            log.d { "Bitcoin payment data changed for trade ${trade.shortTradeId}: ${bitcoinData?.isNotEmpty()}" }
+            if (!bitcoinData.isNullOrEmpty()) {
+                // Determine if user sent or received bitcoin info based on trade role
+                val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isBuyer) {
+                    // User is buyer -> they sent bitcoin info
+                    "mobile.openTradeNotifications.bitcoinInfoSent.title" to "mobile.openTradeNotifications.bitcoinInfoSent.message"
+                } else {
+                    // User is seller -> they received bitcoin info
+                    "mobile.openTradeNotifications.bitcoinInfoReceived.title" to "mobile.openTradeNotifications.bitcoinInfoReceived.message"
+                }
+
+                notificationServiceController.pushNotification(
+                    titleKey.i18n(trade.shortTradeId),
+                    messageKey.i18n(trade.peersUserName)
+                )
             }
         }
+    }
 
-        // Register observer for payment account data (seller sends payment info)
+    private fun observePaymentAccountData(trade: TradeItemPresentationModel) {
         notificationServiceController.registerObserver(trade.bisqEasyTradeModel.paymentAccountData) { paymentData ->
             log.d { "Payment account data changed for trade ${trade.shortTradeId}: ${paymentData?.isNotEmpty()}" }
             if (!paymentData.isNullOrEmpty()) {
@@ -81,24 +95,18 @@ class OpenTradesNotificationService(
                 )
             }
         }
+    }
 
-        // Register observer for bitcoin payment data (buyer sends bitcoin address)
-        notificationServiceController.registerObserver(trade.bisqEasyTradeModel.bitcoinPaymentData) { bitcoinData ->
-            log.d { "Bitcoin payment data changed for trade ${trade.shortTradeId}: ${bitcoinData?.isNotEmpty()}" }
-            if (!bitcoinData.isNullOrEmpty()) {
-                // Determine if user sent or received bitcoin info based on trade role
-                val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isBuyer) {
-                    // User is buyer -> they sent bitcoin info
-                    "mobile.openTradeNotifications.bitcoinInfoSent.title" to "mobile.openTradeNotifications.bitcoinInfoSent.message"
-                } else {
-                    // User is seller -> they received bitcoin info
-                    "mobile.openTradeNotifications.bitcoinInfoReceived.title" to "mobile.openTradeNotifications.bitcoinInfoReceived.message"
-                }
+    private fun observeFutureStateChanges(trade: TradeItemPresentationModel) {
+        notificationServiceController.registerObserver(trade.bisqEasyTradeModel.tradeState) { newState ->
+            log.d { "Trade State Changed to: $newState for trade ${trade.shortTradeId}" }
+            handleTradeStateNotification(trade, newState, isInitialState = false)
 
-                notificationServiceController.pushNotification(
-                    titleKey.i18n(trade.shortTradeId),
-                    messageKey.i18n(trade.peersUserName)
-                )
+            // Unregister observer when trade concludes
+            if (OffersServiceFacade.isTerminalState(newState)) {
+                notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.tradeState)
+                notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.paymentAccountData)
+                notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.bitcoinPaymentData)
             }
         }
     }
