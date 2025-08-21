@@ -17,11 +17,16 @@ class OpenTradesNotificationService(
     val notificationServiceController: NotificationServiceController,
     private val tradesServiceFacade: TradesServiceFacade): Logging {
 
+    private val observedTradeIds = mutableSetOf<String>()
+    private val notifiedPaymentInfo = mutableSetOf<String>()
+    private val notifiedBitcoinInfo = mutableSetOf<String>()
+
     fun launchNotificationService() {
         notificationServiceController.startService()
         runCatching {
             notificationServiceController.registerObserver(tradesServiceFacade.openTradeItems) { newValue ->
                 log.d { "open trades in total: ${newValue.size}" }
+                cleanupOrphanedTrades()
                 newValue.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
                     .forEach { trade ->
                         onTradeUpdate(trade)
@@ -35,6 +40,32 @@ class OpenTradesNotificationService(
     fun stopNotificationService() {
         notificationServiceController.unregisterObserver(tradesServiceFacade.openTradeItems)
         notificationServiceController.stopService()
+
+        // Clear all tracking sets to prevent memory leaks
+        observedTradeIds.clear()
+        notifiedPaymentInfo.clear()
+        notifiedBitcoinInfo.clear()
+        log.d { "OpenTradesNotificationService stopped and all tracking sets cleared" }
+    }
+
+    /**
+     * Clean up orphaned trade IDs that are no longer in the active trades list.
+     * This prevents memory leaks from trades that were removed from the system.
+     */
+    private fun cleanupOrphanedTrades() {
+        val currentTradeIds = tradesServiceFacade.openTradeItems.value.map { it.shortTradeId }.toSet()
+
+        val orphanedObserved = observedTradeIds - currentTradeIds
+        val orphanedPayment = notifiedPaymentInfo - currentTradeIds
+        val orphanedBitcoin = notifiedBitcoinInfo - currentTradeIds
+
+        if (orphanedObserved.isNotEmpty() || orphanedPayment.isNotEmpty() || orphanedBitcoin.isNotEmpty()) {
+            observedTradeIds.removeAll(orphanedObserved)
+            notifiedPaymentInfo.removeAll(orphanedPayment)
+            notifiedBitcoinInfo.removeAll(orphanedBitcoin)
+
+            log.d { "Cleaned up orphaned trades - observed: $orphanedObserved, payment: $orphanedPayment, bitcoin: $orphanedBitcoin" }
+        }
     }
 
     /**
@@ -50,15 +81,19 @@ class OpenTradesNotificationService(
         handleTradeStateNotification(trade, currentState, isInitialState = true)
 
         // Then all observers:
-        observeFutureStateChanges(trade)
-        observePaymentAccountData(trade)
-        observeBitcoinPaymentData(trade)
+        if (observedTradeIds.add(trade.shortTradeId)) {
+            observeFutureStateChanges(trade)
+            observePaymentAccountData(trade)
+            observeBitcoinPaymentData(trade)
+        } else {
+            log.d { "Observers already registered for trade ${trade.shortTradeId}" }
+        }
     }
 
     private fun observeBitcoinPaymentData(trade: TradeItemPresentationModel) {
         notificationServiceController.registerObserver(trade.bisqEasyTradeModel.bitcoinPaymentData) { bitcoinData ->
             log.d { "Bitcoin payment data changed for trade ${trade.shortTradeId}: ${bitcoinData?.isNotEmpty()}" }
-            if (!bitcoinData.isNullOrEmpty()) {
+            if (!bitcoinData.isNullOrEmpty() && notifiedBitcoinInfo.add(trade.shortTradeId)) {
                 // Determine if user sent or received bitcoin info based on trade role
                 val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isBuyer) {
                     // User is buyer -> they sent bitcoin info
@@ -79,7 +114,7 @@ class OpenTradesNotificationService(
     private fun observePaymentAccountData(trade: TradeItemPresentationModel) {
         notificationServiceController.registerObserver(trade.bisqEasyTradeModel.paymentAccountData) { paymentData ->
             log.d { "Payment account data changed for trade ${trade.shortTradeId}: ${paymentData?.isNotEmpty()}" }
-            if (!paymentData.isNullOrEmpty()) {
+            if (!paymentData.isNullOrEmpty() && notifiedPaymentInfo.add(trade.shortTradeId)) {
                 // Determine if user sent or received payment info based on trade role
                 val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isSeller) {
                     // User is seller -> they sent payment info
@@ -107,6 +142,10 @@ class OpenTradesNotificationService(
                 notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.tradeState)
                 notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.paymentAccountData)
                 notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.bitcoinPaymentData)
+                observedTradeIds.remove(trade.shortTradeId)
+                notifiedPaymentInfo.remove(trade.shortTradeId)
+                notifiedBitcoinInfo.remove(trade.shortTradeId)
+                log.d { "Trade ${trade.shortTradeId} completed and unregistered for notification updates" }
             }
         }
     }
