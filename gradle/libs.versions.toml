@@ -19,7 +19,8 @@ agp = "8.5.0"
 android-compileSdk = "35"
 android-targetSdk = "35"
 android-minSdk = "24"
-android-node-minSdk = "31"
+# TODO analyse lowering back to API 31 when Bisq2 full J17 support is returned and we can get rid of desugaring
+android-node-minSdk = "33"
 
 # AndroidX Core Libraries
 androidx-core = "1.13.1"
