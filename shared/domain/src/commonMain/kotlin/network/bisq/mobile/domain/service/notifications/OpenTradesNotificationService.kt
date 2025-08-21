@@ -66,9 +66,18 @@ class OpenTradesNotificationService(
         notificationServiceController.registerObserver(trade.bisqEasyTradeModel.paymentAccountData) { paymentData ->
             log.d { "Payment account data changed for trade ${trade.shortTradeId}: ${paymentData?.isNotEmpty()}" }
             if (!paymentData.isNullOrEmpty()) {
+                // Determine if user sent or received payment info based on trade role
+                val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isSeller) {
+                    // User is seller -> they sent payment info
+                    "mobile.openTradeNotifications.paymentInfoSent.title" to "mobile.openTradeNotifications.paymentInfoSent.message"
+                } else {
+                    // User is buyer -> they received payment info
+                    "mobile.openTradeNotifications.paymentInfoReceived.title" to "mobile.openTradeNotifications.paymentInfoReceived.message"
+                }
+
                 notificationServiceController.pushNotification(
-                    "mobile.openTradeNotifications.paymentInfoReceived.title".i18n(trade.shortTradeId),
-                    "mobile.openTradeNotifications.paymentInfoReceived.message".i18n(trade.peersUserName)
+                    titleKey.i18n(trade.shortTradeId),
+                    messageKey.i18n(trade.peersUserName)
                 )
             }
         }
@@ -77,9 +86,18 @@ class OpenTradesNotificationService(
         notificationServiceController.registerObserver(trade.bisqEasyTradeModel.bitcoinPaymentData) { bitcoinData ->
             log.d { "Bitcoin payment data changed for trade ${trade.shortTradeId}: ${bitcoinData?.isNotEmpty()}" }
             if (!bitcoinData.isNullOrEmpty()) {
+                // Determine if user sent or received bitcoin info based on trade role
+                val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isBuyer) {
+                    // User is buyer -> they sent bitcoin info
+                    "mobile.openTradeNotifications.bitcoinInfoSent.title" to "mobile.openTradeNotifications.bitcoinInfoSent.message"
+                } else {
+                    // User is seller -> they received bitcoin info
+                    "mobile.openTradeNotifications.bitcoinInfoReceived.title" to "mobile.openTradeNotifications.bitcoinInfoReceived.message"
+                }
+
                 notificationServiceController.pushNotification(
-                    "mobile.openTradeNotifications.bitcoinInfoReceived.title".i18n(trade.shortTradeId),
-                    "mobile.openTradeNotifications.bitcoinInfoReceived.message".i18n(trade.peersUserName)
+                    titleKey.i18n(trade.shortTradeId),
+                    messageKey.i18n(trade.peersUserName)
                 )
             }
         }
@@ -135,14 +153,23 @@ class OpenTradesNotificationService(
                 }
             }
 
-            // States where payment account info is received
+            // States where payment account info is exchanged
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA,
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS_,
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_RECEIVED_ACCOUNT_DATA -> {
                 if (!isInitialState) { // Only notify on state changes, not initial discovery
+                    // Determine if user sent or received payment info based on trade role
+                    val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isSeller) {
+                        // User is seller -> they sent payment info
+                        "mobile.openTradeNotifications.paymentInfoSent.title" to "mobile.openTradeNotifications.paymentInfoSent.message"
+                    } else {
+                        // User is buyer -> they received payment info
+                        "mobile.openTradeNotifications.paymentInfoReceived.title" to "mobile.openTradeNotifications.paymentInfoReceived.message"
+                    }
+
                     notificationServiceController.pushNotification(
-                        "mobile.openTradeNotifications.paymentInfoReceived.title".i18n(trade.shortTradeId),
-                        "mobile.openTradeNotifications.paymentInfoReceived.message".i18n(trade.peersUserName)
+                        titleKey.i18n(trade.shortTradeId),
+                        messageKey.i18n(trade.peersUserName)
                     )
                 }
             }
