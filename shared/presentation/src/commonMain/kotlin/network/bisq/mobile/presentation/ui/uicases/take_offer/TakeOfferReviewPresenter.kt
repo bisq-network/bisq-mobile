@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.displayString
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
@@ -176,11 +177,7 @@ class TakeOfferReviewPresenter(
     }
 
     private fun translatedDirection(): String {
-        return when (takersDirection.name.uppercase()) {
-            "BUY" -> "offer.buy".i18n().uppercase()
-            "SELL" -> "offer.sell".i18n().uppercase()
-            else -> "Unknown direction"
-        }
+        return takersDirection.displayString.uppercase()
     }
 
 }

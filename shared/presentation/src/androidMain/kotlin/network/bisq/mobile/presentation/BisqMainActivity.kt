@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -111,8 +112,7 @@ abstract class BisqMainActivity : ComponentActivity() {
                 // Permission granted, proceed with posting notifications
             } else {
                 // Permission denied, show a message to the user
-                // TODO i18n
-                Toast.makeText(this, "Permission denied. Notifications won't be sent.", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "mobile.main.permissionDenied".i18n(), Toast.LENGTH_SHORT).show()
             }
         }
 

@@ -144,7 +144,6 @@ fun OfferCard(
                 text = "@ " + item.formattedPriceSpec,
                 fontSize = FontSize.SMALL,
                 fontWeight = FontWeight.REGULAR,
-                textAlign = TextAlign.Center,
                 maxLines = 1,
             )
 

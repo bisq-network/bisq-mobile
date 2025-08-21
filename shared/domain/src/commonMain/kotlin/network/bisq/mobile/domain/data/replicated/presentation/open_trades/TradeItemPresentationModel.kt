@@ -7,6 +7,7 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.formatters.PriceSpecFormatter
+import network.bisq.mobile.i18n.i18n
 
 /**
  * This model is used in the UI and will get the mutual fields updated from domain services.
@@ -20,7 +21,12 @@ data class TradeItemPresentationModel(
     // Delegates of tradeItemPresentationVO
     val makerUserProfile: UserProfileVO get() = tradeItemPresentationDto.makerUserProfile
     val takerUserProfile: UserProfileVO get() = tradeItemPresentationDto.takerUserProfile
-    val directionalTitle: String get() = tradeItemPresentationDto.directionalTitle
+
+    val directionalTitle: String get() = when {
+        tradeItemPresentationDto.directionalTitle.uppercase().contains("SELLING") -> "bisqEasy.openTrades.table.direction.seller"
+        else -> "bisqEasy.openTrades.table.direction.buyer"
+    }.i18n().uppercase()
+
     val formattedDate: String get() = tradeItemPresentationDto.formattedDate
     val formattedTime: String get() = tradeItemPresentationDto.formattedTime
     val market: String get() = tradeItemPresentationDto.market

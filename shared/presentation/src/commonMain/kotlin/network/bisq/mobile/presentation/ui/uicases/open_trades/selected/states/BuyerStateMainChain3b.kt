@@ -3,12 +3,14 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.trade_bitcoin_confirmation
@@ -156,7 +158,12 @@ fun BuyerStateMainChain3b(
             BisqButton(
                 text = buttonText,
                 textComponent = {
-                    AutoResizeText(buttonText)
+                    val contentColor = LocalContentColor.current
+                    AutoResizeText(
+                       text = buttonText,
+                       color = contentColor,
+                       textAlign = TextAlign.Center
+                    )
                 },
                 type = if (skip) BisqButtonType.Grey else BisqButtonType.Default,
                 onClick = { presenter.onCompleteTrade() },
