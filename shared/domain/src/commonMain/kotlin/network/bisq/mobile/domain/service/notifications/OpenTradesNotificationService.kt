@@ -143,8 +143,19 @@ class OpenTradesNotificationService(
                 )
             }
 
-            // Early trade states that might be missed
+            // Early trade states that might be missed - offer taking notifications
             BisqEasyTradeStateEnum.TAKER_SENT_TAKE_OFFER_REQUEST -> {
+                if (!isInitialState) { // Only notify on state changes, not initial discovery
+                    notificationServiceController.pushNotification(
+                        "mobile.openTradeNotifications.offerTaken.title".i18n(trade.shortTradeId),
+                        "mobile.openTradeNotifications.offerTaken.message".i18n(trade.peersUserName)
+                    )
+                }
+            }
+
+            // Maker states - when someone takes the user's offer (user is maker)
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA -> {
                 if (!isInitialState) { // Only notify on state changes, not initial discovery
                     notificationServiceController.pushNotification(
                         "mobile.openTradeNotifications.offerTaken.title".i18n(trade.shortTradeId),
@@ -173,17 +184,28 @@ class OpenTradesNotificationService(
                     )
                 }
             }
-
             else -> {
-                // Check if it's a terminal state
                 if (OffersServiceFacade.isTerminalState(state)) {
-                    // Trade is actually completed
+                    val translatedState = translatedI18N(state)
                     notificationServiceController.pushNotification(
                         "mobile.openTradeNotifications.tradeCompleted.title".i18n(trade.shortTradeId),
-                        "mobile.openTradeNotifications.tradeCompleted.message".i18n(trade.peersUserName, state)
+                        "mobile.openTradeNotifications.tradeCompleted.message".i18n(trade.peersUserName, translatedState)
                     )
                 }
             }
         }
+    }
+
+    private fun translatedI18N(state: BisqEasyTradeStateEnum): String {
+        return when (state) {
+            BisqEasyTradeStateEnum.BTC_CONFIRMED -> "mobile.tradeState.completed".i18n()
+            BisqEasyTradeStateEnum.REJECTED -> "mobile.tradeState.rejected".i18n()
+            BisqEasyTradeStateEnum.PEER_REJECTED -> "mobile.tradeState.peerRejected".i18n()
+            BisqEasyTradeStateEnum.CANCELLED -> "mobile.tradeState.cancelled".i18n()
+            BisqEasyTradeStateEnum.PEER_CANCELLED -> "mobile.tradeState.peerCancelled".i18n()
+            BisqEasyTradeStateEnum.FAILED -> "mobile.tradeState.failed".i18n()
+            BisqEasyTradeStateEnum.FAILED_AT_PEER -> "mobile.tradeState.failedAtPeer".i18n()
+            else -> state.toString() // Fallback to raw state if no translation available
+        }.replaceFirstChar { it.titlecase() }
     }
 }
