@@ -8,9 +8,10 @@ import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannel
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.SemanticVersion
 
-class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : ServiceFacade(), SettingsServiceFacade {
+class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : ServiceFacade(), SettingsServiceFacade, Logging {
     // Properties
 
     private val _isTacAccepted: MutableStateFlow<Boolean?> = MutableStateFlow(null)
@@ -34,9 +35,28 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("")
     override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()
     override suspend fun setLanguageCode(value: String) {
-        val result = apiGateway.setLanguageCode(value)
-        if (result.isSuccess) {
-            _languageCode.value = value
+        try {
+            log.i { "KMP: Client attempting to set language code to: $value" }
+
+            // For languages that the backend doesn't support (like "pcm"),
+            // we handle them locally without calling the API
+            if (value == "pcm") {
+                log.i { "KMP: Client handling PCM language locally (not supported by backend)" }
+                _languageCode.value = value
+                log.i { "KMP: Client successfully set language code to: $value (local handling)" }
+            } else {
+                // For languages supported by the backend, use the normal API flow
+                val result = apiGateway.setLanguageCode(value)
+                if (result.isSuccess) {
+                    _languageCode.value = value
+                    log.i { "KMP: Client successfully set language code to: $value (via API)" }
+                } else {
+                    log.e { "KMP: Client API call failed for language code: $value" }
+                }
+            }
+        } catch (e: Exception) {
+            log.e(e) { "KMP: Client failed to set language code to: $value" }
+            throw e
         }
     }
 
@@ -118,15 +138,25 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
     override suspend fun getSettings(): Result<SettingsVO> {
         val result = apiGateway.getSettings()
         if (result.isSuccess) {
-            result.getOrThrow().let {
-                _isTacAccepted.value = it.isTacAccepted
-                _tradeRulesConfirmed.value = it.tradeRulesConfirmed
-                _languageCode.value = it.languageCode
-                _maxTradePriceDeviation.value = it.maxTradePriceDeviation
-                _supportedLanguageCodes.value = it.supportedLanguageCodes
-                _closeMyOfferWhenTaken.value = it.closeMyOfferWhenTaken
-                _useAnimations.value = it.useAnimations
-                _numDaysAfterRedactingTradeData.value = it.numDaysAfterRedactingTradeData
+            result.getOrThrow().let { settings ->
+                _isTacAccepted.value = settings.isTacAccepted
+                _tradeRulesConfirmed.value = settings.tradeRulesConfirmed
+
+                // Only update language code from API if we're not using a locally-handled language
+                if (_languageCode.value != "pcm") {
+                    _languageCode.value = settings.languageCode
+                }
+
+                _maxTradePriceDeviation.value = settings.maxTradePriceDeviation
+                _supportedLanguageCodes.value = settings.supportedLanguageCodes
+                _closeMyOfferWhenTaken.value = settings.closeMyOfferWhenTaken
+                _useAnimations.value = settings.useAnimations
+                _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData
+
+                // If we're using a locally-handled language, override the returned settings
+                val actualLanguageCode = if (_languageCode.value == "pcm") "pcm" else settings.languageCode
+                val correctedSettings = settings.copy(languageCode = actualLanguageCode)
+                return Result.success(correctedSettings)
             }
         }
         return result

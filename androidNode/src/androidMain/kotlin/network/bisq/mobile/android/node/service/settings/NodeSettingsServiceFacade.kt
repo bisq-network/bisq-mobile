@@ -13,9 +13,10 @@ import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannel
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
+import network.bisq.mobile.domain.utils.Logging
 import java.util.Locale
 
-class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), SettingsServiceFacade {
+class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), SettingsServiceFacade, Logging {
     private val languageToLocaleMap = mapOf(
         "af-ZA" to Locale("af", "ZA"),
         "cs" to Locale("cs", "CZ"),
@@ -47,10 +48,29 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("")
     override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()
     override suspend fun setLanguageCode(value: String) {
-        settingsService.setLanguageCode(value)
-        val locale = languageToLocaleMap[value] ?: Locale("en", "US")
-        LocaleRepository.setDefaultLocale(locale)
-        _languageCode.value = value
+        try {
+            log.i { "KMP: Attempting to set language code to: $value" }
+
+            // For languages that Bisq2 core doesn't support (like "pcm"),
+            // we handle them locally without calling the Bisq2 settings service
+            if (value == "pcm") {
+                log.i { "KMP: Handling PCM language locally (not supported by Bisq2 core)" }
+                val locale = languageToLocaleMap[value] ?: Locale("en", "US")
+                LocaleRepository.setDefaultLocale(locale)
+                _languageCode.value = value
+                log.i { "KMP: Successfully set language code to: $value (local handling)" }
+            } else {
+                // For languages supported by Bisq2 core, use the normal flow
+                settingsService.setLanguageCode(value)
+                val locale = languageToLocaleMap[value] ?: Locale("en", "US")
+                LocaleRepository.setDefaultLocale(locale)
+                _languageCode.value = value
+                log.i { "KMP: Successfully set language code to: $value (via Bisq2 core)" }
+            }
+        } catch (e: Exception) {
+            log.e(e) { "KMP: Failed to set language code to: $value" }
+            throw e
+        }
     }
 
     private val _supportedLanguageCodes: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
@@ -115,7 +135,10 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     override fun activate() {
         super<ServiceFacade>.activate()
         settingsService.languageCode.addObserver { code ->
-            _languageCode.value = code
+            // Only update from Bisq2 core if we're not using a locally-handled language
+            if (_languageCode.value != "pcm") {
+                _languageCode.value = code
+            }
         }
         tradeRulesConfirmedPin = settingsService.isTacAccepted.addObserver { isTacAccepted ->
             _isTacAccepted.value = isTacAccepted
@@ -152,7 +175,11 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     // API
     override suspend fun getSettings(): Result<SettingsVO> {
         return try {
-            Result.success(Mappings.SettingsMapping.from(settingsService))
+            val settings = Mappings.SettingsMapping.from(settingsService)
+            // If we're using a locally-handled language (like "pcm"), override the language code
+            val actualLanguageCode = if (_languageCode.value == "pcm") "pcm" else settings.languageCode
+            val correctedSettings = settings.copy(languageCode = actualLanguageCode)
+            Result.success(correctedSettings)
         } catch (e: Exception) {
             Result.failure(e)
         }
