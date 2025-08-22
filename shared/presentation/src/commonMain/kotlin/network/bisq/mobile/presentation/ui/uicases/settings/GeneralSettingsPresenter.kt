@@ -31,7 +31,9 @@ open class GeneralSettingsPresenter(
         disableInteractive()
         launchUI {
             try {
-                println("i18n :: GeneralSettingsPresenter :: setLanguageCode :: $langCode")
+                // Mark this as a user-initiated change to prevent fetchSettings from overriding
+                isUserInitiatedLanguageChange = true
+
                 setDefaultLocale(langCode) // update lang in app's context
                 settingsServiceFacade.setLanguageCode(langCode) // Update lang in bisq2 lib / WS
                 // Doing this to reload all bundles of the newly selected language,
@@ -180,9 +182,15 @@ open class GeneralSettingsPresenter(
 
     private var jobs: MutableSet<Job> = mutableSetOf()
 
+    private var isUserInitiatedLanguageChange = false
+
     init {
         collectUI(mainPresenter.languageCode.drop(1)) {
-            fetchSettings()
+            // Only fetch settings if this is not a user-initiated language change
+            if (!isUserInitiatedLanguageChange) {
+                fetchSettings()
+            }
+            isUserInitiatedLanguageChange = false
         }
     }
 
@@ -201,7 +209,18 @@ open class GeneralSettingsPresenter(
 
     private suspend fun fetchSettings() {
         val settings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
-        _languageCode.value = settings.languageCode
+        val langCode = settings.languageCode
+
+        // Wait for language pairs to be loaded if they're empty
+        var i18nPairs = languageServiceFacade.i18nPairs.value
+        var retryCount = 0
+        while (i18nPairs.isEmpty() && retryCount < 10) {
+            kotlinx.coroutines.delay(100) // Wait 100ms
+            i18nPairs = languageServiceFacade.i18nPairs.value
+            retryCount++
+        }
+
+        _languageCode.value = langCode
         _supportedLanguageCodes.value = if (settings.supportedLanguageCodes.isNotEmpty())
             settings.supportedLanguageCodes
         else

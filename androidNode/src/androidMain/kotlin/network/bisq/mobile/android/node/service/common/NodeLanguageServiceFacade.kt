@@ -20,23 +20,30 @@ class NodeLanguageServiceFacade : ServiceFacade(), LanguageServiceFacade {
     override fun activate() {
         super<ServiceFacade>.activate()
 
-        // To keep "en" the only language for language lists
-        val langCode = LanguageRepository.getDefaultLanguage() ?: "en"
-        LanguageRepository.setDefaultLanguage("en")
+        // Use consistent language codes that match NodeSettingsServiceFacade
+        _i18nPairs.value = listOf(
+            "af-ZA" to "Afrikaans (Afrikaans)",
+            "cs" to "Czech (\u010de\u0161tina)",
+            "de" to "German (Deutsch)",
+            "en" to "English",
+            "es" to "Spanish (Espa\u00f1ol)",
+            "it" to "Italian (Italiano)",
+            "pcm" to "Pidgin (Naij\u00e1)",
+            "pt-BR" to "Portuguese (Portugu\u00eas)",
+            "ru" to "Russian (\u0440\u0443\u0441\u0441\u043a\u0438\u0439)"
+        )
 
-        val displayTextList = mutableListOf<String>()
-        for (code in LanguageRepository.I18N_CODES) {
-            displayTextList.add(LanguageRepository.getDisplayString(code))
-        }
-        _i18nPairs.value = LanguageRepository.I18N_CODES.zip(displayTextList)
-
-        displayTextList.clear()
-        for (code in LanguageRepository.CODES) {
-            displayTextList.add(LanguageRepository.getDisplayString(code))
-        }
-        _allPairs.value = LanguageRepository.CODES.zip(displayTextList)
-
-        LanguageRepository.setDefaultLanguage(langCode)
+        _allPairs.value = listOf(
+            "af-ZA" to "Afrikaans (Afrikaans)",
+            "cs" to "Czech (\u010de\u0161tina)",
+            "de" to "German (Deutsch)",
+            "en" to "English",
+            "es" to "Spanish (espa\u00f1ol)",
+            "it" to "Italian (italiano)",
+            "pcm" to "Pidgin (Naij\u00e1)",
+            "pt-BR" to "Portuguese (portugu\u00eas)",
+            "ru" to "Russian (\u0440\u0443\u0441\u0441\u043a\u0438\u0439)"
+        )
     }
 
     override fun deactivate() {

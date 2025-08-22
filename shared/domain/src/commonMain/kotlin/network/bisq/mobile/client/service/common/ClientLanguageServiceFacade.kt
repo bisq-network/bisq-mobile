@@ -28,19 +28,19 @@ class ClientLanguageServiceFacade : ServiceFacade(), LanguageServiceFacade {
         serviceScope.launch(Dispatchers.Default) {
 
             _i18nPairs.value = listOf(
-                "en" to "English (English)",
+                "af-ZA" to "Afrikaans (Afrikaans)",
+                "cs" to "Czech (\u010de\u0161tina)",
                 "de" to "German (Deutsch)",
-                "es" to "Spanish (español)",
-                "it" to "Italian (italiano)",
-                "pt-BR" to "Portuguese (português (Brasil))",
-                "cs" to "Czech (čeština)",
-                "pcm" to "Nigerian Pidgin (Naijíriá Píjin)",
-                "ru" to "Russian (русский)",
-                "af-ZA" to "Afrikaans (Afrikaans (Suid-Afrika))",
+                "en" to "English",
+                "es" to "Spanish (Espa\u00f1ol)",
+                "it" to "Italian (Italiano)",
+                "pcm" to "Pidgin (Naij\u00e1)",
+                "pt-BR" to "Portuguese (Portugu\u00eas)",
+                "ru" to "Russian (\u0440\u0443\u0441\u0441\u043a\u0438\u0439)"
             )
 
             _allPairs.value = listOf(
-                "af" to "Afrikaans (Afrikaans)",
+                "af-ZA" to "Afrikaans (Afrikaans)",
                 "sq" to "Albanian (shqip)",
                 "am" to "Amharic (አማርኛ)",
                 "ar" to "Arabic (العربية)",
@@ -95,7 +95,7 @@ class ClientLanguageServiceFacade : ServiceFacade(), LanguageServiceFacade {
                 "ps" to "Pashto (پښتو)",
                 "fa" to "Persian (فارسی)",
                 "pl" to "Polish (polski)",
-                "pt" to "Portuguese (português)",
+                "pt-BR" to "Portuguese (português)",
                 "ro" to "Romanian (română)",
                 "ru" to "Russian (русский)",
                 "sm" to "Samoan (Samoan)",
