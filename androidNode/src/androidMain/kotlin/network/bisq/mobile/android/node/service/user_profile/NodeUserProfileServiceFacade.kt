@@ -8,6 +8,9 @@ import bisq.security.pow.ProofOfWork
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
 import bisq.user.profile.UserProfileService
+import kotlinx.collections.immutable.PersistentSet
+import kotlinx.collections.immutable.persistentHashSetOf
+import kotlinx.collections.immutable.toPersistentHashSet
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,8 +52,10 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     private val userProfileService: UserProfileService by lazy { userService.userProfileService }
     private val catHashService: AndroidNodeCatHashService by lazy { applicationService.androidCatHashService.get() }
 
-    private val _hasIgnoredUsers: MutableStateFlow<Boolean> = MutableStateFlow( false)
-    override val hasIgnoredUsers: StateFlow<Boolean> get() = _hasIgnoredUsers.asStateFlow()
+    private val _ignoredUserIds: MutableStateFlow<PersistentSet<String>> = MutableStateFlow(
+        persistentHashSetOf()
+    )
+    override val ignoredUserIds: StateFlow<PersistentSet<String>> get() = _ignoredUserIds.asStateFlow()
 
     // Properties
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
@@ -221,7 +226,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
 
         userProfileService.ignoreUserProfile(userProfile)
-        getIgnoredUserProfileIds() // updates hasIgnoredUsers
+        getIgnoredUserProfileIds() // updates ignoredUsers
     }
 
     override suspend fun undoIgnoreUserProfile(profileId: String) {
@@ -230,7 +235,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
 
         userProfileService.undoIgnoreUserProfile(userProfile)
-        getIgnoredUserProfileIds() // updates hasIgnoredUsers
+        getIgnoredUserProfileIds() // updates ignoredUsers
     }
 
     override suspend fun isUserIgnored(profileId: String): Boolean {
@@ -239,7 +244,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     override suspend fun getIgnoredUserProfileIds(): Set<String> {
         val ids = userProfileService.ignoredUserProfileIds
-        _hasIgnoredUsers.value = ids.isNotEmpty()
+        _ignoredUserIds.value = ids.toPersistentHashSet()
         return ids
     }
 }

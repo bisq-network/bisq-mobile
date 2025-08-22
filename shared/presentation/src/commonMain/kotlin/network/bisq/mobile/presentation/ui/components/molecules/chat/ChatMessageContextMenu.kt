@@ -14,6 +14,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ClosedEyeIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CopyIcon
+import network.bisq.mobile.presentation.ui.components.atoms.icons.EyeIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ReplyIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
@@ -28,7 +29,9 @@ fun ChatMessageContextMenu(
     onReply: () -> Unit = {},
     onCopy: () -> Unit = {},
     onIgnoreUser: () -> Unit = {},
-    onReportUser: () -> Unit = {}
+    onUndoIgnoreUser: () -> Unit = {},
+    onReportUser: () -> Unit = {},
+    isIgnored: Boolean,
 ) {
     val isPeersMessage = !message.isMyMessage
     Surface {
@@ -71,14 +74,26 @@ fun ChatMessageContextMenu(
                 }
             )
             if (isPeersMessage) {
-                DropdownMenuItem(
-                    text = { BisqText.smallRegular("chat.message.contextMenu.ignoreUser".i18n()) },
-                    leadingIcon = { ClosedEyeIcon() },
-                    onClick = {
-                        onIgnoreUser()
-                        onSetShowMenu(false)
-                    }
-                )
+                if (isIgnored) {
+                    DropdownMenuItem(
+                        text = { BisqText.smallRegular("user.profileCard.userActions.undoIgnore".i18n()) },
+                        leadingIcon = { EyeIcon() },
+                        onClick = {
+                            onUndoIgnoreUser()
+                            onSetShowMenu(false)
+                        }
+                    )
+                } else {
+                    DropdownMenuItem(
+                        text = { BisqText.smallRegular("chat.message.contextMenu.ignoreUser".i18n()) },
+                        leadingIcon = { ClosedEyeIcon() },
+                        onClick = {
+                            onIgnoreUser()
+                            onSetShowMenu(false)
+                        }
+                    )
+                }
+
 //              TODO: To be implemented in future release
 //                DropdownMenuItem(
 //                    text = { BisqText.smallRegular("chat.message.contextMenu.reportUser".i18n()) },

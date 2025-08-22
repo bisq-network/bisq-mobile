@@ -8,7 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -27,12 +26,12 @@ import network.bisq.mobile.presentation.ui.components.molecules.chat.private_mes
 import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.ProtocolLogMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.TradePeerLeftMessageBox
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatPresenter
 
 @Composable
 fun ChatMessageList(
     messages: List<BisqEasyOpenTradeMessageModel>,
-    presenter: TradeChatPresenter,
+    ignoredUserIds: Set<String>,
+    showChatRulesWarnBox: Boolean,
     scrollState: LazyListState,
     avatarMap: Map<String, PlatformImage?> = emptyMap(),
     modifier: Modifier = Modifier,
@@ -41,17 +40,22 @@ fun ChatMessageList(
     onReply: (BisqEasyOpenTradeMessageModel) -> Unit = {},
     onCopy: (BisqEasyOpenTradeMessageModel) -> Unit = {},
     onIgnoreUser: (String) -> Unit = {},
+    onUndoIgnoreUser: (String) -> Unit = {},
     onReportUser: (BisqEasyOpenTradeMessageModel) -> Unit = {},
+    onOpenChatRules: () -> Unit = {},
+    onDontShowAgainChatRulesWarningBox: () -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
-    val showChatRulesWarnBox by presenter.showChatRulesWarnBox.collectAsState()
 
     Box(modifier = modifier) {
         Column(
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
         ) {
             if (showChatRulesWarnBox) {
-                ChatRulesWarningMessageBox(presenter)
+                ChatRulesWarningMessageBox(
+                    onOpenChatRules,
+                    onDontShowAgainChatRulesWarningBox,
+                )
             }
 
             LazyColumn(
@@ -82,7 +86,9 @@ fun ChatMessageList(
                             onReply = { onReply(message) },
                             onCopy = { onCopy(message) },
                             onIgnoreUser = { onIgnoreUser(message.senderUserProfileId) },
+                            onUndoIgnoreUser = { onUndoIgnoreUser(message.senderUserProfileId) },
                             onReportUser = { onReportUser(message) },
+                            isIgnored = ignoredUserIds.contains(message.senderUserProfileId),
                         )
                     }
                 }

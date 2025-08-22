@@ -37,8 +37,8 @@ class TradeChatPresenter(
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
-    private val _chatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(listOf())
-    val chatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> get() = _chatMessages.asStateFlow()
+    private val _sortedChatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(listOf())
+    val sortedChatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> get() = _sortedChatMessages.asStateFlow()
 
     private val _quotedMessage: MutableStateFlow<BisqEasyOpenTradeMessageModel?> = MutableStateFlow(null)
     val quotedMessage: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _quotedMessage.asStateFlow()
@@ -52,6 +52,11 @@ class TradeChatPresenter(
     private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
     val ignoreUserId: StateFlow<String> get() = _ignoreUserId.asStateFlow()
 
+    private val _undoIgnoreUserId: MutableStateFlow<String> = MutableStateFlow("")
+    val undoIgnoreUserId: StateFlow<String> get() = _undoIgnoreUserId.asStateFlow()
+
+    val ignoredUserIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredUserIds
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -61,7 +66,7 @@ class TradeChatPresenter(
             val settings = withContext(IODispatcher) { settingsRepository.fetch() }
             settings?.let { _showChatRulesWarnBox.value = it.showChatRulesWarnBox }
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
-            val ignoredUserIds = userProfileServiceFacade.getIgnoredUserProfileIds().toSet()
+            val ignoredUserIds = ignoredUserIds.value
 
             bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
 
@@ -69,7 +74,7 @@ class TradeChatPresenter(
                     !ignoredUserIds.contains(message.senderUserProfileId)
                 }
 
-                _chatMessages.value = filteredMessages.toList()
+                _sortedChatMessages.value = filteredMessages.toList().sortedBy { it.date }
 
                 messages.toList().forEach { message ->
                     withContext(IODispatcher) {
@@ -85,7 +90,7 @@ class TradeChatPresenter(
 
                 withContext(IODispatcher) {
                     val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
-                    readState[selectedTrade.tradeId] = _chatMessages.value.size
+                    readState[selectedTrade.tradeId] = _sortedChatMessages.value.size
                     tradeReadStateRepository.update(TradeReadState().apply { map = readState })
                 }
             }
@@ -138,6 +143,14 @@ class TradeChatPresenter(
         _ignoreUserId.value = ""
     }
 
+    fun showUndoIgnoreUserPopup(id: String) {
+        _undoIgnoreUserId.value = id
+    }
+
+    fun hideUndoIgnoreUserPopup() {
+        _undoIgnoreUserId.value = ""
+    }
+
     fun onConfirmedIgnoreUser(id: String) {
         launchIO {
             disableInteractive()
@@ -152,8 +165,26 @@ class TradeChatPresenter(
         }
     }
 
+    fun onConfirmedUndoIgnoreUser(id: String) {
+        launchIO {
+            disableInteractive()
+            try {
+                userProfileServiceFacade.undoIgnoreUserProfile(id)
+                hideUndoIgnoreUserPopup()
+            } catch (e: Exception) {
+                log.e(e) { "Failed to undo ignore user $id" }
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
     fun onDismissIgnoreUser() {
         this.hideIgnoreUserPopup();
+    }
+
+    fun onDismissUndoIgnoreUser() {
+        this.hideUndoIgnoreUserPopup();
     }
 
     fun onReportUser(message: BisqEasyOpenTradeMessageModel) {

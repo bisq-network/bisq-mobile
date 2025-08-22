@@ -1,5 +1,6 @@
 package network.bisq.mobile.domain.service.user_profile
 
+import kotlinx.collections.immutable.PersistentSet
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.PlatformImage
@@ -7,7 +8,7 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 interface UserProfileServiceFacade : LifeCycleAware {
     val selectedUserProfile: StateFlow<UserProfileVO?>
-    val hasIgnoredUsers: StateFlow<Boolean>
+    val ignoredUserIds: StateFlow<PersistentSet<String>>
 
     val numUserProfiles: StateFlow<Int>
 
