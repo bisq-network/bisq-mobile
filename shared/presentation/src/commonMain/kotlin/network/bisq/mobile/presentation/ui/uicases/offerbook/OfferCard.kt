@@ -81,6 +81,7 @@ fun OfferCard(
     }
     
     val height = 150.dp
+    val maxUsernameChars = 24
 
     Row(
         modifier = Modifier
@@ -137,7 +138,7 @@ fun OfferCard(
 //                        color = directionalLabelColor,
 //                    )
                     AutoResizeText(
-                        userName,
+                        userName.truncate(maxUsernameChars),
                         color = directionalLabelColor,
                         fontSize = FontSize.SMALL,
                         fontWeight = FontWeight.REGULAR,
