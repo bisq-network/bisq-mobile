@@ -38,6 +38,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqVDivider
 import network.bisq.mobile.presentation.ui.components.molecules.PaymentMethods
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfile
+import network.bisq.mobile.presentation.ui.theme.BisqModifier
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -79,7 +80,7 @@ fun OfferCard(
         else -> BisqTheme.colors.dark_grey50.copy(alpha = 0.9f)
     }
     
-    val height = 140.dp
+    val height = 150.dp
 
     Row(
         modifier = Modifier
@@ -112,23 +113,40 @@ fun OfferCard(
         Column(
             modifier = Modifier.weight(3.0F).fillMaxHeight()
         ) {
-            Row {
+            Row(
+                modifier = Modifier.height(32.dp) // Fixed height to prevent pushing content down
+            ) {
                 if (isMyOffer) {
                     BisqText.baseRegular(
                         text = directionalLabel,
-                        color = directionalLabelColor
+                        color = directionalLabelColor,
+                        singleLine = true,
+                        modifier = Modifier.align(Alignment.CenterVertically)
                     )
                 } else {
                     BisqText.baseRegular(
                         text = directionalLabel,
-                        color = directionalLabelColor
+                        color = directionalLabelColor,
+                        modifier = Modifier.align(Alignment.CenterVertically)
                     )
 
                     BisqGap.HHalf()
 
-                    BisqText.baseRegularHighlight(
-                        text = userName.truncate(11),
+//                    BisqText.baseRegularHighlight(
+//                        text = userName.truncate(11),
+//                        color = directionalLabelColor,
+//                    )
+                    AutoResizeText(
+                        userName,
                         color = directionalLabelColor,
+                        fontSize = FontSize.SMALL,
+                        fontWeight = FontWeight.REGULAR,
+                        maxLines = 2,
+                        modifier = BisqModifier
+                            .textHighlight(BisqTheme.colors.dark_grey10
+                                .copy(alpha = 0.4f),  BisqTheme.colors.mid_grey10)
+                            .padding(top = 4.dp, bottom = 2.dp)
+                            .align(Alignment.CenterVertically),
                     )
                 }
             }
