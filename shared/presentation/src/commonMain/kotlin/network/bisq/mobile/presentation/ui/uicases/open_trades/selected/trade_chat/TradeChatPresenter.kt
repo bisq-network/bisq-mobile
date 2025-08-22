@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat
 
 import androidx.compose.foundation.lazy.LazyListState
+import kotlinx.collections.immutable.PersistentSet
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -55,7 +56,7 @@ class TradeChatPresenter(
     private val _undoIgnoreUserId: MutableStateFlow<String> = MutableStateFlow("")
     val undoIgnoreUserId: StateFlow<String> get() = _undoIgnoreUserId.asStateFlow()
 
-    val ignoredUserIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredUserIds
+    val ignoredUserIds: StateFlow<PersistentSet<String>> get() = userProfileServiceFacade.ignoredUserIds
 
     override fun onViewAttached() {
         super.onViewAttached()

@@ -108,7 +108,7 @@ kotlin {
             implementation(libs.logging.kermit)
             implementation(libs.okio)
             implementation(libs.kotlinx.datetime)
-            implementation(libs.kotlinx.collections.immutable)
+            api(libs.kotlinx.collections.immutable)
             implementation(libs.bignum)
 
             implementation(libs.ktor.client.core)
