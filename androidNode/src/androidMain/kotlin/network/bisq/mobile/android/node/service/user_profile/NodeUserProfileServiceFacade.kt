@@ -226,7 +226,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
 
         userProfileService.ignoreUserProfile(userProfile)
-        getIgnoredUserProfileIds() // updates ignoredUsers
+        getIgnoredUserProfileIds() // updates ignoredUserIds
     }
 
     override suspend fun undoIgnoreUserProfile(profileId: String) {
@@ -235,7 +235,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
 
         userProfileService.undoIgnoreUserProfile(userProfile)
-        getIgnoredUserProfileIds() // updates ignoredUsers
+        getIgnoredUserProfileIds() // updates ignoredUserIds
     }
 
     override suspend fun isUserIgnored(profileId: String): Boolean {
