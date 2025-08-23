@@ -6,10 +6,13 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -21,6 +24,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.PlatformImage
@@ -28,11 +32,14 @@ import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.molecules.JumpToBottomFloatingButton
 import network.bisq.mobile.presentation.ui.components.molecules.chat.TextMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.private_messages.ChatRulesWarningMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.ProtocolLogMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.TradePeerLeftMessageBox
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
@@ -56,25 +63,32 @@ fun ChatMessageList(
 ) {
     val scope = rememberCoroutineScope()
     var jumpToBottomVisible by remember { mutableStateOf(false) }
-    val scrollState = rememberLazyListState()
-    val canScrollBackward by remember {
+    val unreadCount = remember(messages, readCount) {
+        messages.size - readCount
+    }
+    val scrollState = rememberLazyListState(
+        initialFirstVisibleItemIndex = unreadCount
+    )
+    val canScrollDown by remember {
         derivedStateOf { scrollState.canScrollBackward }
     }
     val firstVisibleItemIndex by remember {
         derivedStateOf { scrollState.firstVisibleItemIndex }
     }
 
-    val unreadCount = remember(messages, readCount) {
-        if (messages.isNotEmpty()) {
-            messages.size - readCount
+    var initialReadCount by remember { mutableStateOf(readCount) }
+
+    val unreadMarkerIndex = remember(messages,initialReadCount, canScrollDown) {
+        if (canScrollDown) {
+            messages.size - initialReadCount
         } else {
             0
         }
     }
 
-    LaunchedEffect(canScrollBackward) {
-        // effect will be cancelled as canScrollBackward changes
-        if (canScrollBackward) {
+    LaunchedEffect(canScrollDown) {
+        // effect will be cancelled as canScrollDown changes
+        if (canScrollDown) {
             delay(400)
             jumpToBottomVisible = true
         } else {
@@ -85,10 +99,14 @@ fun ChatMessageList(
     LaunchedEffect(firstVisibleItemIndex, unreadCount) {
         // firstVisibleItemIndex starts from 1 for our messages
         // because we have an extra item for padding at the start of the list
-        if (firstVisibleItemIndex <= unreadCount) {
+        if (firstVisibleItemIndex == 0) {
+            initialReadCount = messages.size
+            onUpdateReadCount(messages.size)
+        } else if (firstVisibleItemIndex < unreadCount) {
             // what this does is that it will mark messages as read 1 by 1
             // as user scrolls down or new messages arrive
-            onUpdateReadCount(readCount + (unreadCount - firstVisibleItemIndex))
+            val newReadCount = readCount + (unreadCount - firstVisibleItemIndex)
+            onUpdateReadCount(newReadCount)
         }
     }
 
@@ -121,7 +139,30 @@ fun ChatMessageList(
             ) {
                 item { }
 
-                items(messages, key = { it.id }) { message ->
+                itemsIndexed(
+                    items = messages,
+                    key = { i, m -> m.id },
+                    contentType = { i, m -> m.chatMessageType },
+                ) { i, message ->
+                    if (unreadMarkerIndex > 0 && i == unreadMarkerIndex) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            HorizontalDivider(
+                                modifier = Modifier.weight(1f).padding(vertical = BisqUIConstants.ScreenPadding),
+                                thickness = 2.dp,
+                                color = BisqTheme.colors.primary
+                            )
+                            BisqText.baseRegular(
+                                text = "mobile.chat.unreadMessages".i18n(),
+                                color = BisqTheme.colors.primary,
+                                modifier = Modifier.padding(horizontal = BisqUIConstants.ScreenPaddingHalf)
+                            )
+                            HorizontalDivider(
+                                modifier = Modifier.weight(1f).padding(vertical = BisqUIConstants.ScreenPadding),
+                                thickness = 2.dp,
+                                color = BisqTheme.colors.primary
+                            )
+                        }
+                    }
                     when (message.chatMessageType) {
                         ChatMessageTypeEnum.PROTOCOL_LOG_MESSAGE -> {
                             ProtocolLogMessageBox(
@@ -184,9 +225,18 @@ fun ChatMessageList(
 
         JumpToBottomFloatingButton(
             visible = jumpToBottomVisible,
-            onClicked = { scope.launch { scrollState.animateScrollToItem(0) } },
+            onClicked = {
+                scope.launch {
+                    if (scrollState.firstVisibleItemIndex == unreadMarkerIndex) {
+                        scrollState.animateScrollToItem(0)
+                    } else {
+                        scrollState.animateScrollToItem(unreadMarkerIndex)
+                    }
+                }
+            },
+            jumpOffset = 12,
             badgeCount = unreadCount,
-            modifier = Modifier.align(Alignment.BottomEnd)
+            modifier = Modifier.align(Alignment.BottomEnd),
         )
     }
 }

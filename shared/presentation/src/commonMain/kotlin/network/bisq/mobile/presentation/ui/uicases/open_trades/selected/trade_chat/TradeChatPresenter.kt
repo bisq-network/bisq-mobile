@@ -63,12 +63,12 @@ class TradeChatPresenter(
         if (trade?.tradeId != null && readState != null) {
             readState.map.getOrElse(trade.tradeId) { 0 }
         } else {
-            0
+            -1
         }
     }.stateIn(
         scope = presenterScope,
         started = SharingStarted.Lazily,
-        initialValue = 0,
+        initialValue = -1,
     )
 
     private val updateMutex = Mutex()
