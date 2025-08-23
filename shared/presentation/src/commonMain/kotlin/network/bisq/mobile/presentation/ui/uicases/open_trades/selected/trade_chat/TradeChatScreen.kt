@@ -1,10 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat
 
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
@@ -25,13 +23,10 @@ fun TradeChatScreen() {
     val presenter: TradeChatPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val scrollState = rememberLazyListState()
-    val scope = rememberCoroutineScope() // TODO: How scopes are to be used?
     val isInteractive by presenter.isInteractive.collectAsState()
     val selectedTrade by presenter.selectedTrade.collectAsState()
-    val chatMessages by presenter.chatMessages.collectAsState()
+    val sortedChatMessages by presenter.sortedChatMessages.collectAsState()
     val quotedMessage by presenter.quotedMessage.collectAsState()
-    val sortedChatMessages = chatMessages.sortedBy { it.date }
     val userAvatarMap by presenter.avatarMap.collectAsState()
     val ignoredUserIds by presenter.ignoredUserIds.collectAsState()
     val ignoreUserId by presenter.ignoreUserId.collectAsState()
@@ -51,7 +46,6 @@ fun TradeChatScreen() {
             ignoredUserIds = ignoredUserIds,
             presenter = presenter,
             modifier = Modifier.weight(1f),
-            scrollState = scrollState,
             avatarMap = userAvatarMap,
             onAddReaction = presenter::onAddReaction,
             onRemoveReaction = presenter::onRemoveReaction,
@@ -64,9 +58,7 @@ fun TradeChatScreen() {
         ChatInputField(
             quotedMessage = quotedMessage,
             placeholder = "chat.message.input.prompt".i18n(),
-            onMessageSent = { text ->
-                presenter.sendChatMessage(text, scope, scrollState)
-            },
+            onMessageSent = presenter::sendChatMessage,
             onCloseReply = { presenter.onReply(null) }
         )
 

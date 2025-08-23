@@ -87,7 +87,7 @@ fun BisqScrollLayout(
 
         if (showJumpToBottom) {
             JumpToBottomFloatingButton(
-                enabled = jumpToBottomButtonEnabled,
+                visible = jumpToBottomButtonEnabled,
                 onClicked = { scope.launch { scrollState.animateScrollTo(scrollState.maxValue) } },
                 modifier = Modifier.align(Alignment.BottomCenter)
             )

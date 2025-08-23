@@ -17,9 +17,9 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
-fun TradePeerLeftMessageBox(message: BisqEasyOpenTradeMessageModel) {
+fun TradePeerLeftMessageBox(message: BisqEasyOpenTradeMessageModel, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .background(BisqTheme.colors.dark_grey30)
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
