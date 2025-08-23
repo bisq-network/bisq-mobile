@@ -60,13 +60,13 @@ fun ChatInputField(
             rightSuffix = {
                 BisqIconButton(
                     onClick = {
-                        if (text.isNotEmpty() && isTextValid) {
+                        if (text.isNotBlank() && isTextValid) {
                             onMessageSent(text)
                             resetScroll()
                             text = ""
                         }
                     },
-                    disabled = text.isEmpty() || !isTextValid
+                    disabled = text.isBlank() || !isTextValid
                 ) {
                     SendIcon()
                 }
