@@ -1,5 +1,7 @@
 package network.bisq.mobile.i18n
 
+import network.bisq.mobile.client.shared.BuildConfig
+
 // We use non-printing characters as separator. See: https://en.wikipedia.org/wiki/Delimiter#ASCII_delimited_text
 const val ARGS_SEPARATOR: Char = 0x1f.toChar()
 const val PARAM_SEPARATOR: Char = 0x1e.toChar()
@@ -84,8 +86,18 @@ fun has(key: String): Boolean {
 fun String.i18n(): String {
     val result = bundles
         .firstOrNull { it.containsKey(this) }
-        ?.getString(this) ?: "MISSING: [$this]"
+        ?.getString(this) ?: missingI18NPlaceholder(this)
     return result
+}
+
+private fun missingI18NPlaceholder(key: String): String {
+    val missingPlaceholderForKey = "MISSING: [${key.split(PARAM_SEPARATOR).first()}]"
+    val defaultBundles = GeneratedResourceBundles_en.bundles.values
+    return when {
+        // is safe to relay only on this one because all BuildConfig debug are generated equal
+        BuildConfig.IS_DEBUG -> missingPlaceholderForKey
+        else -> defaultBundles.firstOrNull { it.containsKey(key) }?.get(key) ?: missingPlaceholderForKey
+    }
 }
 
 fun String.i18nEncode(vararg arguments: Any): String {
