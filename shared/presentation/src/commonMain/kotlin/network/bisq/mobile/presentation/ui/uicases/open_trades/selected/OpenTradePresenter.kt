@@ -62,12 +62,13 @@ class OpenTradePresenter(
     }
 
     private val msgCount: MutableStateFlow<Int> = MutableStateFlow(0)
-    val newMsgCount = readCount.combine(msgCount) { readCount, msgCount -> msgCount - readCount }
-        .stateIn(
-            scope = presenterScope,
-            started = SharingStarted.Lazily,
-            initialValue = 0,
-        )
+    val newMsgCount = readCount.combine(msgCount) { readCount, msgCount ->
+        (msgCount - readCount).coerceAtLeast(0)
+    }.stateIn(
+        scope = presenterScope,
+        started = SharingStarted.Lazily,
+        initialValue = 0,
+    )
 
     private val _lastChatMsg: MutableStateFlow<BisqEasyOpenTradeMessageModel?> = MutableStateFlow(null)
     val lastChatMsg: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _lastChatMsg.asStateFlow()
