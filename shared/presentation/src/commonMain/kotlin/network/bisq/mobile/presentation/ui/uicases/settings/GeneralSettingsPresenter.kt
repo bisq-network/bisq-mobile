@@ -34,21 +34,21 @@ open class GeneralSettingsPresenter(
                 // Mark this as a user-initiated change to prevent fetchSettings from overriding
                 isUserInitiatedLanguageChange = true
 
-                log.i { "KMP: Setting language code to: $langCode" }
+                log.i { "Setting language code to: $langCode" }
                 setDefaultLocale(langCode) // update lang in app's context
                 settingsServiceFacade.setLanguageCode(langCode) // Update lang in bisq2 lib / WS
                 // Doing this to reload all bundles of the newly selected language,
                 // all String.i18n() across the app gets the text of selected language
                 I18nSupport.initialize(langCode) // update lang for mobile's i18n libs
                 _languageCode.value = langCode
-                log.i { "KMP: Successfully set language code to: $langCode" }
+                log.i { "Successfully set language code to: $langCode" }
 
                 // As per chat with @Henrik Feb 4, it's okay not to translate `supported languages` lists into selected languages, for now.
                 // To update display values in i18Pairs, allLanguagePairs with the new language
                 // languageServiceFacade.setDefaultLanguage(langCode)
                 // languageServiceFacade.sync()
             } catch (e: Exception) {
-                log.e(e) { "KMP: Failed to set language code to: $langCode" }
+                log.e(e) { "Failed to set language code to: $langCode" }
                 // Reset to previous language on error
                 isUserInitiatedLanguageChange = false
                 throw e

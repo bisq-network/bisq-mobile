@@ -49,26 +49,26 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()
     override suspend fun setLanguageCode(value: String) {
         try {
-            log.i { "KMP: Attempting to set language code to: $value" }
+            log.i { "Attempting to set language code to: $value" }
 
             // For languages that Bisq2 core doesn't support (like "pcm"),
             // we handle them locally without calling the Bisq2 settings service
             if (value == "pcm") {
-                log.i { "KMP: Handling PCM language locally (not supported by Bisq2 core)" }
+                log.i { "Handling PCM language locally (not supported by Bisq2 core)" }
                 val locale = languageToLocaleMap[value] ?: Locale("en", "US")
                 LocaleRepository.setDefaultLocale(locale)
                 _languageCode.value = value
-                log.i { "KMP: Successfully set language code to: $value (local handling)" }
+                log.i { "Successfully set language code to: $value (local handling)" }
             } else {
                 // For languages supported by Bisq2 core, use the normal flow
                 settingsService.setLanguageCode(value)
                 val locale = languageToLocaleMap[value] ?: Locale("en", "US")
                 LocaleRepository.setDefaultLocale(locale)
                 _languageCode.value = value
-                log.i { "KMP: Successfully set language code to: $value (via Bisq2 core)" }
+                log.i { "Successfully set language code to: $value (via Bisq2 core)" }
             }
         } catch (e: Exception) {
-            log.e(e) { "KMP: Failed to set language code to: $value" }
+            log.e(e) { "Failed to set language code to: $value" }
             throw e
         }
     }

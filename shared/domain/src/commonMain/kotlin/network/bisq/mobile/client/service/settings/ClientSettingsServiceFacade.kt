@@ -36,26 +36,26 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
     override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()
     override suspend fun setLanguageCode(value: String) {
         try {
-            log.i { "KMP: Client attempting to set language code to: $value" }
+            log.i { "Client attempting to set language code to: $value" }
 
             // For languages that the backend doesn't support (like "pcm"),
             // we handle them locally without calling the API
             if (value == "pcm") {
-                log.i { "KMP: Client handling PCM language locally (not supported by backend)" }
+                log.i { "Client handling PCM language locally (not supported by backend)" }
                 _languageCode.value = value
-                log.i { "KMP: Client successfully set language code to: $value (local handling)" }
+                log.i { "Client successfully set language code to: $value (local handling)" }
             } else {
                 // For languages supported by the backend, use the normal API flow
                 val result = apiGateway.setLanguageCode(value)
                 if (result.isSuccess) {
                     _languageCode.value = value
-                    log.i { "KMP: Client successfully set language code to: $value (via API)" }
+                    log.i { "Client successfully set language code to: $value (via API)" }
                 } else {
-                    log.e { "KMP: Client API call failed for language code: $value" }
+                    log.e { "Client API call failed for language code: $value" }
                 }
             }
         } catch (e: Exception) {
-            log.e(e) { "KMP: Client failed to set language code to: $value" }
+            log.e(e) { "Client failed to set language code to: $value" }
             throw e
         }
     }
