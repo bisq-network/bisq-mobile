@@ -113,6 +113,8 @@ class TradeChatPresenter(
     }
 
     fun sendChatMessage(text: String) {
+        val finalText = text.trim()
+        if (finalText.isEmpty()) return
         val citation = quotedMessage.value?.let { quotedMessage ->
             quotedMessage.text?.let { text ->
                 CitationVO(
@@ -121,7 +123,7 @@ class TradeChatPresenter(
             }
         }
         launchIO {
-            tradeChatMessagesServiceFacade.sendChatMessage(text.trim(), citation)
+            tradeChatMessagesServiceFacade.sendChatMessage(finalText, citation)
             _quotedMessage.value = null
         }
     }
