@@ -33,6 +33,8 @@ fun TradeChatScreen() {
     val undoIgnoreUserId by presenter.undoIgnoreUserId.collectAsState()
     val showIgnoreUserWarnBox = ignoreUserId.isNotBlank()
     val showUndoIgnoreUserWarnBox = undoIgnoreUserId.isNotBlank()
+    val showChatRulesWarnBox by presenter.showChatRulesWarnBox.collectAsState()
+    val readCount by presenter.readCount.collectAsState()
 
     val clipboard = LocalClipboardManager.current
 
@@ -44,9 +46,9 @@ fun TradeChatScreen() {
         ChatMessageList(
             messages = sortedChatMessages,
             ignoredUserIds = ignoredUserIds,
-            presenter = presenter,
-            modifier = Modifier.weight(1f),
+            showChatRulesWarnBox = showChatRulesWarnBox,
             avatarMap = userAvatarMap,
+            readCount = readCount,
             onAddReaction = presenter::onAddReaction,
             onRemoveReaction = presenter::onRemoveReaction,
             onReply = presenter::onReply,
@@ -54,6 +56,10 @@ fun TradeChatScreen() {
             onIgnoreUser = presenter::showIgnoreUserPopup,
             onUndoIgnoreUser = presenter::showUndoIgnoreUserPopup,
             onReportUser = presenter::onReportUser,
+            onOpenChatRules = presenter::onOpenChatRules,
+            onDontShowAgainChatRulesWarningBox = presenter::onDontShowAgainChatRulesWarningBox,
+            onUpdateReadCount = presenter::onUpdateReadCount,
+            modifier = Modifier.weight(1f),
         )
         ChatInputField(
             quotedMessage = quotedMessage,

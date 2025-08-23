@@ -1,9 +1,14 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat
 
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
@@ -54,6 +59,20 @@ class TradeChatPresenter(
 
     val ignoredUserIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredUserIds
 
+    val readCount = selectedTrade.combine(tradeReadStateRepository.data) { trade, readState ->
+        if (trade?.tradeId != null && readState != null) {
+            readState.map.getOrElse(trade.tradeId) { 0 }
+        } else {
+            0
+        }
+    }.stateIn(
+        scope = presenterScope,
+        started = SharingStarted.Lazily,
+        initialValue = 0,
+    )
+
+    private val updateMutex = Mutex()
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -83,12 +102,6 @@ class TradeChatPresenter(
                             _avatarMap.update { it + (userProfile.nym to image) }
                         }
                     }
-                }
-
-                withContext(IODispatcher) {
-                    val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
-                    readState[selectedTrade.tradeId] = _sortedChatMessages.value.size
-                    tradeReadStateRepository.update(TradeReadState().apply { map = readState })
                 }
             }
         }
@@ -199,6 +212,21 @@ class TradeChatPresenter(
             settings?.let {
                 it.showChatRulesWarnBox = false
                 settingsRepository.update(it)
+            }
+        }
+    }
+
+    fun onUpdateReadCount(newValue: Int) {
+        val tradeId = selectedTrade.value?.tradeId
+        if (tradeId == null) return
+        launchIO {
+            updateMutex.withLock {
+                val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
+                val oldValue = readState.getOrElse(tradeId) { 0 }
+                if (newValue > oldValue) {
+                    readState[tradeId] = newValue
+                    tradeReadStateRepository.update(TradeReadState().apply { map = readState })
+                }
             }
         }
     }
