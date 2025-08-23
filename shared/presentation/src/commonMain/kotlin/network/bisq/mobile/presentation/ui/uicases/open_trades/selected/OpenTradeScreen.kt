@@ -2,8 +2,11 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -13,22 +16,28 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
+import network.bisq.mobile.presentation.ui.components.organisms.chat.UndoIgnoreDialog
 import network.bisq.mobile.presentation.ui.components.organisms.trades.CancelTradeDialog
 import network.bisq.mobile.presentation.ui.components.organisms.trades.CloseTradeDialog
 import network.bisq.mobile.presentation.ui.components.organisms.trades.InvalidAddressConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.organisms.trades.InvalidPaymentProofConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.organisms.trades.OpenMediationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.helpers.spaceBetweenWithMin
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.BuyerState1aPresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.BuyerState4Presenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.SellerState3aPresenter
@@ -60,10 +69,11 @@ fun OpenTradeScreen() {
     val tradeCloseType by headerPresenter.tradeCloseType.collectAsState()
     val showInterruptionConfirmationDialog by headerPresenter.showInterruptionConfirmationDialog.collectAsState()
     val showMediationConfirmationDialog by headerPresenter.showMediationConfirmationDialog.collectAsState()
+    val showUndoIgnoreDialog by presenter.showUndoIgnoreDialog.collectAsState()
     val newMsgCount by presenter.newMsgCount.collectAsState()
     val lastChatMsg by presenter.lastChatMsg.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
-    val isIgnoredUser by presenter.ignoredUser.collectAsState()
+    val isIgnoredUser by presenter.isUserIgnored.collectAsState()
 
     val buyerState1aAddressFieldType by buyerState1aPresenter.bitcoinLnAddressFieldType.collectAsState()
     val buyerState1aShowInvalidAddressDialog by buyerState1aPresenter.showInvalidAddressDialog.collectAsState()
@@ -79,7 +89,8 @@ fun OpenTradeScreen() {
                     buyerState1aShowInvalidAddressDialog ||
                     sellerState3aShowInvalidAddressDialog ||
                     buyerState4ShowCloseTradeDialog ||
-                    sellerState4ShowCloseTradeDialog
+                    sellerState4ShowCloseTradeDialog ||
+                    showUndoIgnoreDialog
         }
     }
 
@@ -107,10 +118,25 @@ fun OpenTradeScreen() {
 
                     if (isIgnoredUser) {
                         BisqGap.V2()
-                        BisqText.baseRegular(
-                            "mobile.bisqEasy.openTrades.warnIgnoredUser".i18n(),
-                            color = BisqTheme.colors.warning
-                        )
+                        Row(
+                            horizontalArrangement = Arrangement.spaceBetweenWithMin(BisqUIConstants.ScreenPadding),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            BisqText.baseRegular(
+                                modifier = Modifier.weight(1f),
+                                text = "mobile.bisqEasy.openTrades.warnIgnoredUser".i18n(),
+                                color = BisqTheme.colors.warning
+                            )
+                            BisqButton(
+                                text = "user.profileCard.userActions.undoIgnore".i18n(),
+                                type = BisqButtonType.GreyOutline,
+                                padding = PaddingValues(
+                                    horizontal = BisqUIConstants.ScreenPaddingHalf,
+                                    vertical = BisqUIConstants.ScreenPaddingHalf,
+                                ),
+                                onClick = presenter::onOpenUndoIgnoreDialog
+                            )
+                        }
                     }
 
                     if (isInMediation) {
@@ -184,6 +210,13 @@ fun OpenTradeScreen() {
         CloseTradeDialog(
             onDismiss = sellerState4Presenter::onDismissCloseTrade,
             onConfirm = sellerState4Presenter::onConfirmCloseTrade,
+        )
+    }
+
+    if (showUndoIgnoreDialog) {
+        UndoIgnoreDialog(
+            onConfirm = presenter::onConfirmedUndoIgnoreUser,
+            onDismiss = presenter::hideUndoIgnoreDialog,
         )
     }
 

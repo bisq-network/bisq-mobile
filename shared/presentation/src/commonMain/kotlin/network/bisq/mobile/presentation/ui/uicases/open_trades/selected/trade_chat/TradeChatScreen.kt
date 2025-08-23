@@ -15,6 +15,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.chat.ChatInputField
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.organisms.chat.ChatMessageList
+import network.bisq.mobile.presentation.ui.components.organisms.chat.UndoIgnoreDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
@@ -84,14 +85,7 @@ fun TradeChatScreen() {
         }
 
         if (showUndoIgnoreUserWarnBox) {
-            ConfirmationDialog(
-                headline = "error.warning".i18n(),
-                headlineColor = BisqTheme.colors.warning,
-                headlineLeftIcon = { WarningIcon() },
-                message = "mobile.chat.undoIgnoreUserWarn".i18n(),
-                confirmButtonText = "user.profileCard.userActions.undoIgnore".i18n(),
-                dismissButtonText = "action.cancel".i18n(),
-                verticalButtonPlacement = true,
+            UndoIgnoreDialog(
                 onConfirm = { presenter.onConfirmedUndoIgnoreUser(undoIgnoreUserId) },
                 onDismiss = { presenter.onDismissUndoIgnoreUser() }
             )

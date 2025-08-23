@@ -6,8 +6,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.model.TradeReadState
@@ -58,8 +61,16 @@ class OpenTradePresenter(
 
     private val _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
 
-    private val _ignoredUser: MutableStateFlow<Boolean> = MutableStateFlow(false)
-    val ignoredUser: StateFlow<Boolean> get() = _ignoredUser.asStateFlow()
+    val isUserIgnored = selectedTrade.combine(userProfileServiceFacade.ignoredUserIds) { trade, ignoredIds ->
+        trade?.peersUserProfile?.id?.let { ignoredIds.contains(it) } ?: false
+    }.stateIn(
+        scope = presenterScope,
+        started = SharingStarted.Eagerly,
+        initialValue = false,
+    )
+
+    private val _showUndoIgnoreDialog = MutableStateFlow(false)
+    val showUndoIgnoreDialog: StateFlow<Boolean> get() = _showUndoIgnoreDialog.asStateFlow()
 
     private var _coroutineScope: CoroutineScope? = null
 
@@ -80,11 +91,6 @@ class OpenTradePresenter(
         }
         val openTradeItemModel = selectedTrade
         var initReadCount : Int? = null
-
-        launchIO {
-            val ignoredIds = userProfileServiceFacade.getIgnoredUserProfileIds()
-            _ignoredUser.value = ignoredIds.contains(selectedTrade.peersUserProfile.id)
-        }
 
         collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) { tradeState ->
             tradeStateChanged(tradeState)
@@ -206,5 +212,32 @@ class OpenTradePresenter(
 
     fun setUIScope(scope: CoroutineScope) {
         _coroutineScope = scope
+    }
+
+    fun onOpenUndoIgnoreDialog() {
+        _showUndoIgnoreDialog.value = true
+    }
+
+
+    fun hideUndoIgnoreDialog() {
+        _showUndoIgnoreDialog.value = false
+    }
+
+    fun onConfirmedUndoIgnoreUser() {
+        val id = selectedTrade.value?.peersUserProfile?.id
+        launchIO {
+            disableInteractive()
+            try {
+                if (id == null) {
+                    throw IllegalStateException("expected user profile id to not be null, but was null")
+                }
+                userProfileServiceFacade.undoIgnoreUserProfile(id)
+                hideUndoIgnoreDialog()
+            } catch (e: Exception) {
+                log.e(e) { "Failed to undo ignore user $id" }
+            } finally {
+                enableInteractive()
+            }
+        }
     }
 }
