@@ -223,11 +223,13 @@ class TradeChatPresenter(
         if (tradeId == null) return
         launchIO {
             updateMutex.withLock {
-                val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
-                val oldValue = readState.getOrElse(tradeId) { 0 }
+                val current = tradeReadStateRepository.fetch() ?: TradeReadState()
+                val map = current.map.toMutableMap()
+                val oldValue = map.getOrElse(tradeId) { 0 }
                 if (newValue > oldValue) {
-                    readState[tradeId] = newValue
-                    tradeReadStateRepository.update(TradeReadState().apply { map = readState })
+                    map[tradeId] = newValue
+                    current.map = map
+                    tradeReadStateRepository.update(current)
                 }
             }
         }
