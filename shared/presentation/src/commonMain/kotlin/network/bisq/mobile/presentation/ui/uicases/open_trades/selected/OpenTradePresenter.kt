@@ -13,7 +13,6 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -53,8 +52,22 @@ class OpenTradePresenter(
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> get() = _isInMediation.asStateFlow()
 
-    private val _newMsgCount: MutableStateFlow<Int> = MutableStateFlow(0)
-    val newMsgCount: StateFlow<Int> get() = _newMsgCount.asStateFlow()
+
+    private val readCount = _selectedTrade.combine(tradeReadStateRepository.data) { trade, readState ->
+        if (trade?.tradeId != null && readState != null) {
+            readState.map.getOrElse(trade.tradeId) { 0 }
+        } else {
+            0
+        }
+    }
+
+    private val msgCount: MutableStateFlow<Int> = MutableStateFlow(0)
+    val newMsgCount = readCount.combine(msgCount) { readCount, msgCount -> msgCount - readCount }
+        .stateIn(
+            scope = presenterScope,
+            started = SharingStarted.Lazily,
+            initialValue = 0,
+        )
 
     private val _lastChatMsg: MutableStateFlow<BisqEasyOpenTradeMessageModel?> = MutableStateFlow(null)
     val lastChatMsg: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _lastChatMsg.asStateFlow()
@@ -90,20 +103,13 @@ class OpenTradePresenter(
             return
         }
         val openTradeItemModel = selectedTrade
-        var initReadCount : Int? = null
 
         collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) { tradeState ->
             tradeStateChanged(tradeState)
         }
 
         collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.chatMessages) {
-            val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
-            readState[openTradeItemModel.tradeId] = it.size
-            tradeReadStateRepository.update(TradeReadState().apply { map = readState })
-            if (initReadCount == null) {
-                initReadCount = readState[openTradeItemModel.tradeId]
-            }
-            _newMsgCount.update { _ -> it.size - initReadCount!! }
+            msgCount.update { _ -> it.size }
             _lastChatMsg.update { _ -> it.maxByOrNull { msg -> msg.date } }
         }
 

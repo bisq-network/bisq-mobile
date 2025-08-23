@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -35,15 +34,14 @@ import network.bisq.mobile.presentation.ui.components.molecules.chat.private_mes
 import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.ProtocolLogMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.TradePeerLeftMessageBox
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatPresenter
 
 @Composable
 fun ChatMessageList(
     messages: List<BisqEasyOpenTradeMessageModel>,
     ignoredUserIds: Set<String>,
-    presenter: TradeChatPresenter,
+    showChatRulesWarnBox: Boolean,
+    readCount: Int,
     avatarMap: Map<String, PlatformImage?> = emptyMap(),
-    modifier: Modifier = Modifier,
     onAddReaction: (BisqEasyOpenTradeMessageModel, ReactionEnum) -> Unit = { message: BisqEasyOpenTradeMessageModel, reaction: ReactionEnum -> },
     onRemoveReaction: (BisqEasyOpenTradeMessageModel, BisqEasyOpenTradeMessageReactionVO) -> Unit = { message: BisqEasyOpenTradeMessageModel, reaction: BisqEasyOpenTradeMessageReactionVO -> },
     onReply: (BisqEasyOpenTradeMessageModel) -> Unit = {},
@@ -51,20 +49,31 @@ fun ChatMessageList(
     onIgnoreUser: (String) -> Unit = {},
     onUndoIgnoreUser: (String) -> Unit = {},
     onReportUser: (BisqEasyOpenTradeMessageModel) -> Unit = {},
+    onOpenChatRules: () -> Unit = {},
+    onDontShowAgainChatRulesWarningBox: () -> Unit = {},
+    onUpdateReadCount: (Int) -> Unit = {},
+    modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
-    val showChatRulesWarnBox by presenter.showChatRulesWarnBox.collectAsState()
-    // need to be replaced later with actual implementation if functionality is provided by bisq
-    var lastReadCount by remember { mutableStateOf(messages.size) }
     var jumpToBottomVisible by remember { mutableStateOf(false) }
     val scrollState = rememberLazyListState()
     val canScrollBackward by remember {
         derivedStateOf { scrollState.canScrollBackward }
     }
+    val firstVisibleItemIndex by remember {
+        derivedStateOf { scrollState.firstVisibleItemIndex }
+    }
+
+    val unreadCount = remember(messages, readCount) {
+        if (messages.isNotEmpty()) {
+            messages.size - readCount
+        } else {
+            0
+        }
+    }
 
     LaunchedEffect(canScrollBackward) {
         // effect will be cancelled as canScrollBackward changes
-        // so we can keep this simple by having two launched effects
         if (canScrollBackward) {
             delay(400)
             jumpToBottomVisible = true
@@ -73,9 +82,13 @@ fun ChatMessageList(
         }
     }
 
-    LaunchedEffect(messages, canScrollBackward) {
-        if (!canScrollBackward) {
-            lastReadCount = messages.size
+    LaunchedEffect(firstVisibleItemIndex, unreadCount) {
+        // firstVisibleItemIndex starts from 1 for our messages
+        // because we have an extra item for padding at the start of the list
+        if (firstVisibleItemIndex <= unreadCount) {
+            // what this does is that it will mark messages as read 1 by 1
+            // as user scrolls down or new messages arrive
+            onUpdateReadCount(readCount + (unreadCount - firstVisibleItemIndex))
         }
     }
 
@@ -84,7 +97,10 @@ fun ChatMessageList(
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
         ) {
             if (showChatRulesWarnBox) {
-                ChatRulesWarningMessageBox(presenter)
+                ChatRulesWarningMessageBox(
+                    onOpenChatRules = onOpenChatRules,
+                    onDontShowAgainChatRulesWarningBox = onDontShowAgainChatRulesWarningBox,
+                )
             }
 
             val placementAnimSpec: FiniteAnimationSpec<IntOffset> = tween(
@@ -169,7 +185,7 @@ fun ChatMessageList(
         JumpToBottomFloatingButton(
             visible = jumpToBottomVisible,
             onClicked = { scope.launch { scrollState.animateScrollToItem(0) } },
-            badgeCount = messages.size - lastReadCount,
+            badgeCount = unreadCount,
             modifier = Modifier.align(Alignment.BottomEnd)
         )
     }

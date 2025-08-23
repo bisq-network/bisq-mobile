@@ -20,11 +20,13 @@ import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIconLightGrey
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatPresenter
 
 // todo we could use also a banner style instead of the style similar to ProtocolLogMessageBox
 @Composable
-fun ChatRulesWarningMessageBox(presenter: TradeChatPresenter) {
+fun ChatRulesWarningMessageBox(
+    onOpenChatRules: () -> Unit,
+    onDontShowAgainChatRulesWarningBox: () -> Unit,
+) {
     Row(
         modifier = Modifier
             .background(BisqTheme.colors.dark_grey30)
@@ -52,14 +54,14 @@ fun ChatRulesWarningMessageBox(presenter: TradeChatPresenter) {
                 text = "action.learnMore".i18n(),
                 link = "",
                 padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding),
-                onClick = {presenter.onOpenChatRules()},
+                onClick = onOpenChatRules,
                 openConfirmation = false,
             )
 
             BisqButton(
                 type = BisqButtonType.Grey,
                 text = "action.dontShowAgain".i18n(),
-                onClick = { presenter.onDontShowAgainChatRulesWarningBox() }
+                onClick = onDontShowAgainChatRulesWarningBox,
             )
 
             // We dont need  the learn more button for mobile IMO
