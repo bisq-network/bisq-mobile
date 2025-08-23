@@ -194,7 +194,8 @@ fun ChatMessageList(
                                     val index = messages.indexOfFirst { it.id == id }
                                     if (index >= 0) {
                                         scope.launch {
-                                            scrollState.animateScrollToItem(index, -50)
+                                            // +1 accounts for the spacer at index 0
+                                            scrollState.animateScrollToItem(index + 1, -50)
                                         }
                                     }
                                 },
