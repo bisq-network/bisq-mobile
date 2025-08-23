@@ -90,7 +90,10 @@ fun ChatMessageList(
         // effect will be cancelled as canScrollDown changes
         if (canScrollDown) {
             delay(400)
-            jumpToBottomVisible = true
+            // 1 is to account for spacer
+            if (scrollState.firstVisibleItemIndex > 1) {
+                jumpToBottomVisible = true
+            }
         } else {
             jumpToBottomVisible = false
         }
