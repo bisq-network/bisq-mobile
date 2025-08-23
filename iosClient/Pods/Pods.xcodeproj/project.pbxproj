@@ -32,81 +32,78 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
-		1734FCCB537EA87643128B08C98D49E0 /* Pods-Bisq Connect Debug-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 536DC00BE1D1184DBF5DE98C8BAAE1CD /* Pods-Bisq Connect Debug-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
-		BCF08F0CC8E6FF6AA18E8BE1AB40D6F4 /* Pods-Bisq Connect-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 80CF126C2F080F85B434A12881B3E717 /* Pods-Bisq Connect-dummy.m */; };
-		C94A6CBA345F1B3652D134728D7DE2DA /* Pods-Bisq Connect-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BE1FBE3EC8D9149905AFEA7EC71D53D /* Pods-Bisq Connect-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		1734FCCB537EA87643128B08C98D49E0 /* Pods-Bisq Connect Debug-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = F023820F41C485E096DC31347A6CFF0F /* Pods-Bisq Connect Debug-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		BCF08F0CC8E6FF6AA18E8BE1AB40D6F4 /* Pods-Bisq Connect-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 4A32D336971ABF4AD180393044B67F80 /* Pods-Bisq Connect-dummy.m */; };
+		C94A6CBA345F1B3652D134728D7DE2DA /* Pods-Bisq Connect-umbrella.h in Headers */ = {isa = PBXBuildFile; fileRef = 767C5EFDD6EA94B1973D8BECA38003F8 /* Pods-Bisq Connect-umbrella.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		EE3CC40806F5CF8130289EFDB67572A9 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384DDA2CB25005BD6479B5987C619DD4 /* Foundation.framework */; };
 		EFCB346ED6937EC775AD519897164B93 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 384DDA2CB25005BD6479B5987C619DD4 /* Foundation.framework */; };
-		F54D21F0690BB722C9620FE5E5395227 /* Pods-Bisq Connect Debug-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = 58FE8E1AAEE48B7CA461E5A6AE051CC3 /* Pods-Bisq Connect Debug-dummy.m */; };
+		F54D21F0690BB722C9620FE5E5395227 /* Pods-Bisq Connect Debug-dummy.m in Sources */ = {isa = PBXBuildFile; fileRef = B6F489D9DB901EA017BB7276FA530882 /* Pods-Bisq Connect Debug-dummy.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
-		3678B7BC5A47B83BD71A087C820489E7 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = BFDFE7DC352907FC980B868725387E98 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 9FA10608F377AE5B47F00969C58A08B0;
-			remoteInfo = domain;
-		};
-		72168B1625BB1A8CCECEC59448B2F60D /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = BFDFE7DC352907FC980B868725387E98 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 9FA10608F377AE5B47F00969C58A08B0;
-			remoteInfo = domain;
-		};
-		7EDDB3E40B3C289406F4396079BE734F /* PBXContainerItemProxy */ = {
+		05962C5E96B3318B580387E15BB57859 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BFDFE7DC352907FC980B868725387E98 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = CA23A621E427291AD7AAC241FE14977E;
 			remoteInfo = presentation;
 		};
-		E274C072B3A95A0D63150D53181C7AED /* PBXContainerItemProxy */ = {
+		102349585F5B7D0B866B1A0C7572F8DA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BFDFE7DC352907FC980B868725387E98 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9FA10608F377AE5B47F00969C58A08B0;
+			remoteInfo = domain;
+		};
+		2F47FA955D6F7E1F869E9F437041C7EA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BFDFE7DC352907FC980B868725387E98 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = CA23A621E427291AD7AAC241FE14977E;
 			remoteInfo = presentation;
+		};
+		C7A9D41310C0A961FB5D853DFDD7C3EC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BFDFE7DC352907FC980B868725387E98 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9FA10608F377AE5B47F00969C58A08B0;
+			remoteInfo = domain;
 		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		06EE84ACA374DF35BF07825F39F5F3AA /* domain.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = domain.framework; path = build/cocoapods/framework/domain.framework; sourceTree = "<group>"; };
-		0EA7CF67448469445E455A6C947163D6 /* Pods-Bisq Connect Debug-acknowledgements.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-Bisq Connect Debug-acknowledgements.plist"; sourceTree = "<group>"; };
-		0F7C5A418C49A182111B584501A6295B /* Pods-Bisq Connect-resources.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-Bisq Connect-resources.sh"; sourceTree = "<group>"; };
-		0FA93F66F1576ED8F77B10C3F4E91129 /* Pods-Bisq Connect.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = "Pods-Bisq Connect.modulemap"; sourceTree = "<group>"; };
-		17CA31CA816E15A8389FE4189BDC38A7 /* Pods-Bisq Connect Debug.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-Bisq Connect Debug.release.xcconfig"; sourceTree = "<group>"; };
-		1988F8AF6C5C1D94B016F4A93CCC7792 /* Pods-Bisq Connect Debug-resources.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-Bisq Connect Debug-resources.sh"; sourceTree = "<group>"; };
-		1B6A59ABDA04808037BDDBFAD08B9F96 /* Pods-Bisq Connect Debug-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-Bisq Connect Debug-frameworks.sh"; sourceTree = "<group>"; };
-		1E14C96F2DEE79963DB15A6E9C1A0291 /* Pods-Bisq Connect Debug.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-Bisq Connect Debug.debug.xcconfig"; sourceTree = "<group>"; };
-		204E5861AA89F6485AE0E7BE7CC61EB9 /* presentation.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = presentation.release.xcconfig; sourceTree = "<group>"; };
-		2A70854C3C67F7B7C4969BD687710548 /* Pods-Bisq Connect.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-Bisq Connect.release.xcconfig"; sourceTree = "<group>"; };
-		2BE1FBE3EC8D9149905AFEA7EC71D53D /* Pods-Bisq Connect-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-Bisq Connect-umbrella.h"; sourceTree = "<group>"; };
+		2228D16B78B836C45E8F09B70A837804 /* Pods-Bisq Connect Debug-acknowledgements.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-Bisq Connect Debug-acknowledgements.plist"; sourceTree = "<group>"; };
+		2A2B7A55D704129CBC2423E339D6B5F6 /* Pods-Bisq Connect Debug-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-Bisq Connect Debug-acknowledgements.markdown"; sourceTree = "<group>"; };
+		2AD6FF187AFECD53A6791CC478A7D211 /* Pods-Bisq Connect.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-Bisq Connect.debug.xcconfig"; sourceTree = "<group>"; };
+		3770C623849D385AC45A8F3765361642 /* domain.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = domain.release.xcconfig; sourceTree = "<group>"; };
 		384DDA2CB25005BD6479B5987C619DD4 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS18.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
-		4715C744F81BF0169105E9E721D8AA1A /* Pods-Bisq Connect-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-Bisq Connect-acknowledgements.markdown"; sourceTree = "<group>"; };
-		4AAF1B0BB5C923912BF8947076BB504A /* presentation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = presentation.framework; path = build/cocoapods/framework/presentation.framework; sourceTree = "<group>"; };
-		536DC00BE1D1184DBF5DE98C8BAAE1CD /* Pods-Bisq Connect Debug-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-Bisq Connect Debug-umbrella.h"; sourceTree = "<group>"; };
-		58FE8E1AAEE48B7CA461E5A6AE051CC3 /* Pods-Bisq Connect Debug-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-Bisq Connect Debug-dummy.m"; sourceTree = "<group>"; };
-		5A26C0DDD7E60552EA9CE3D345B42D71 /* Pods-Bisq Connect Debug.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = "Pods-Bisq Connect Debug.modulemap"; sourceTree = "<group>"; };
-		5DFC61305F7C7A7FA04A9B34A240BD64 /* Pods-Bisq Connect-acknowledgements.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-Bisq Connect-acknowledgements.plist"; sourceTree = "<group>"; };
-		74ED85F89A4112470D68D97319C810B5 /* domain.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; path = domain.podspec; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
-		7A38B72D5E0BE6D357B673E01DDD9683 /* Pods-Bisq Connect Debug-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-Bisq Connect Debug-Info.plist"; sourceTree = "<group>"; };
-		804065BB4F007C057F539031BA89C4D2 /* domain.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = domain.debug.xcconfig; sourceTree = "<group>"; };
-		80CF126C2F080F85B434A12881B3E717 /* Pods-Bisq Connect-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-Bisq Connect-dummy.m"; sourceTree = "<group>"; };
-		8EA548F0CBB66C825F5F196469AE443C /* presentation.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = presentation.debug.xcconfig; sourceTree = "<group>"; };
+		3D02BC197417FC1764EB9B715166A6A2 /* presentation.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = presentation.debug.xcconfig; sourceTree = "<group>"; };
+		4460BDECE83811576389C60D6405D41B /* Pods-Bisq Connect-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-Bisq Connect-Info.plist"; sourceTree = "<group>"; };
+		4A32D336971ABF4AD180393044B67F80 /* Pods-Bisq Connect-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-Bisq Connect-dummy.m"; sourceTree = "<group>"; };
+		5599083C2382E23D403F97B7B74E2FB0 /* Pods-Bisq Connect Debug.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = "Pods-Bisq Connect Debug.modulemap"; sourceTree = "<group>"; };
+		56B22603DC9993AA110545D6F9455EB3 /* Pods-Bisq Connect-acknowledgements.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-Bisq Connect-acknowledgements.plist"; sourceTree = "<group>"; };
+		6D4B2AC887B8ABF437E8D344EED75467 /* presentation.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = presentation.release.xcconfig; sourceTree = "<group>"; };
+		6F3CA6F7E694F36337849952A66DA1AB /* presentation-copy-dsyms.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "presentation-copy-dsyms.sh"; sourceTree = "<group>"; };
+		713D21ADA4423AE6A9FCEE76E97A3EFF /* Pods-Bisq Connect.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-Bisq Connect.release.xcconfig"; sourceTree = "<group>"; };
+		767C5EFDD6EA94B1973D8BECA38003F8 /* Pods-Bisq Connect-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-Bisq Connect-umbrella.h"; sourceTree = "<group>"; };
+		7E7631A17833BF8365B772E812AD0320 /* domain.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = domain.debug.xcconfig; sourceTree = "<group>"; };
+		7FE1ACE830830C9E1D914B198DB0379D /* Pods-Bisq Connect Debug-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-Bisq Connect Debug-Info.plist"; sourceTree = "<group>"; };
+		8C1FF52CAE6586C87EFAF579B002C275 /* domain.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; path = domain.podspec; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		967E5AF6D7F1FB5896AE627B2ACA9FFA /* Pods-Bisq Connect Debug.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-Bisq Connect Debug.release.xcconfig"; sourceTree = "<group>"; };
 		9D940727FF8FB9C785EB98E56350EF41 /* Podfile */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; name = Podfile; path = ../Podfile; sourceTree = SOURCE_ROOT; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
-		AEA83CBE2A148E5936D097BCBDF1C34D /* presentation.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; path = presentation.podspec; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		9DA5EC97E23BE4C8034423AD26EAB023 /* Pods-Bisq Connect-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-Bisq Connect-acknowledgements.markdown"; sourceTree = "<group>"; };
+		9E7E55A4CBD5CE3AA4A209D08937A357 /* Pods-Bisq Connect Debug.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-Bisq Connect Debug.debug.xcconfig"; sourceTree = "<group>"; };
 		B1C5627400158C78601F686014EDABA5 /* Pods-Bisq Connect */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Pods-Bisq Connect"; path = Pods_Bisq_Connect.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		B5D0E05ECBD73AEB2967FEAE3F18AAE6 /* Pods-Bisq Connect.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = "Pods-Bisq Connect.debug.xcconfig"; sourceTree = "<group>"; };
-		B8811E7A4961A94821478BB978DD207B /* presentation-copy-dsyms.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "presentation-copy-dsyms.sh"; sourceTree = "<group>"; };
+		B6F489D9DB901EA017BB7276FA530882 /* Pods-Bisq Connect Debug-dummy.m */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.objc; path = "Pods-Bisq Connect Debug-dummy.m"; sourceTree = "<group>"; };
+		BFEF2AD9D5D5FBA2D3B314FDE9CE488E /* Pods-Bisq Connect Debug-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-Bisq Connect Debug-frameworks.sh"; sourceTree = "<group>"; };
 		C258CD2A908537B059C965D80DFDABA2 /* Pods-Bisq Connect Debug */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Pods-Bisq Connect Debug"; path = Pods_Bisq_Connect_Debug.framework; sourceTree = BUILT_PRODUCTS_DIR; };
-		DA1AD272BC5CBE1D4ED4240B2689D453 /* domain.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; path = domain.release.xcconfig; sourceTree = "<group>"; };
-		DB9AD2EB2BE754A9D246FE31F44164B6 /* Pods-Bisq Connect-Info.plist */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.plist.xml; path = "Pods-Bisq Connect-Info.plist"; sourceTree = "<group>"; };
-		F231893C4D5780B817721642C6269BE5 /* Pods-Bisq Connect Debug-acknowledgements.markdown */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = "Pods-Bisq Connect Debug-acknowledgements.markdown"; sourceTree = "<group>"; };
-		F44E744210E5DAAB94EC2830E78ECA9E /* compose-resources */ = {isa = PBXFileReference; includeInIndex = 1; name = "compose-resources"; path = "build/compose/cocoapods/compose-resources"; sourceTree = "<group>"; };
-		F4B9BE9B07F2F9C9E103610D844B0407 /* domain-copy-dsyms.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "domain-copy-dsyms.sh"; sourceTree = "<group>"; };
-		FA03BD87155EB28386C51E8280EF3AFB /* Pods-Bisq Connect-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-Bisq Connect-frameworks.sh"; sourceTree = "<group>"; };
+		C7346E7D79A1D940524AF329881D092B /* presentation.podspec */ = {isa = PBXFileReference; explicitFileType = text.script.ruby; includeInIndex = 1; indentWidth = 2; lastKnownFileType = text; path = presentation.podspec; sourceTree = "<group>"; tabWidth = 2; xcLanguageSpecificationIdentifier = xcode.lang.ruby; };
+		CB2F28842C215F24DC04137EB8AA2148 /* domain-copy-dsyms.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "domain-copy-dsyms.sh"; sourceTree = "<group>"; };
+		CE69445C5950FB4F7EFD387448D9DD21 /* Pods-Bisq Connect.modulemap */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.module; path = "Pods-Bisq Connect.modulemap"; sourceTree = "<group>"; };
+		D5F9DA0A65B59C71C1DE98CE89169677 /* Pods-Bisq Connect-frameworks.sh */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.script.sh; path = "Pods-Bisq Connect-frameworks.sh"; sourceTree = "<group>"; };
+		D7E9DF509989D83CD8F8A3FCD24F0F21 /* presentation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = presentation.framework; path = build/cocoapods/framework/presentation.framework; sourceTree = "<group>"; };
+		E757DD235115CA9BB07976B811D39BBA /* domain.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = domain.framework; path = build/cocoapods/framework/domain.framework; sourceTree = "<group>"; };
+		F023820F41C485E096DC31347A6CFF0F /* Pods-Bisq Connect Debug-umbrella.h */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.c.h; path = "Pods-Bisq Connect Debug-umbrella.h"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -129,119 +126,104 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		0270ADE7A32AD194B140875F0E996225 /* Support Files */ = {
+		0C8906B30322F4CDAF8D260241AF86C8 /* Pod */ = {
 			isa = PBXGroup;
 			children = (
-				B8811E7A4961A94821478BB978DD207B /* presentation-copy-dsyms.sh */,
-				8EA548F0CBB66C825F5F196469AE443C /* presentation.debug.xcconfig */,
-				204E5861AA89F6485AE0E7BE7CC61EB9 /* presentation.release.xcconfig */,
+				C7346E7D79A1D940524AF329881D092B /* presentation.podspec */,
 			);
-			name = "Support Files";
-			path = "../../iosClient/Pods/Target Support Files/presentation";
+			name = Pod;
 			sourceTree = "<group>";
 		};
-		0669EB3E0447E93C3AD4E522E46537EB /* Frameworks */ = {
+		5FA46147AF951365030DACA2D0779251 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				06EE84ACA374DF35BF07825F39F5F3AA /* domain.framework */,
+				D7E9DF509989D83CD8F8A3FCD24F0F21 /* presentation.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		2F877B6D57848ABDF029B10DEB5A7ED0 /* domain */ = {
+		65C6293E1EC6B5B8EC292011842E26D3 /* Support Files */ = {
 			isa = PBXGroup;
 			children = (
-				0669EB3E0447E93C3AD4E522E46537EB /* Frameworks */,
-				E9FF437E9B7237DA2D4C60336C9890D7 /* Pod */,
-				9F086AEBB4A58E09382FEE0EDFAFEE8B /* Support Files */,
-			);
-			name = domain;
-			path = ../../shared/domain;
-			sourceTree = "<group>";
-		};
-		6C678AAD6B0A674144E640F44A74EC4F /* Pods-Bisq Connect Debug */ = {
-			isa = PBXGroup;
-			children = (
-				5A26C0DDD7E60552EA9CE3D345B42D71 /* Pods-Bisq Connect Debug.modulemap */,
-				F231893C4D5780B817721642C6269BE5 /* Pods-Bisq Connect Debug-acknowledgements.markdown */,
-				0EA7CF67448469445E455A6C947163D6 /* Pods-Bisq Connect Debug-acknowledgements.plist */,
-				58FE8E1AAEE48B7CA461E5A6AE051CC3 /* Pods-Bisq Connect Debug-dummy.m */,
-				1B6A59ABDA04808037BDDBFAD08B9F96 /* Pods-Bisq Connect Debug-frameworks.sh */,
-				7A38B72D5E0BE6D357B673E01DDD9683 /* Pods-Bisq Connect Debug-Info.plist */,
-				1988F8AF6C5C1D94B016F4A93CCC7792 /* Pods-Bisq Connect Debug-resources.sh */,
-				536DC00BE1D1184DBF5DE98C8BAAE1CD /* Pods-Bisq Connect Debug-umbrella.h */,
-				1E14C96F2DEE79963DB15A6E9C1A0291 /* Pods-Bisq Connect Debug.debug.xcconfig */,
-				17CA31CA816E15A8389FE4189BDC38A7 /* Pods-Bisq Connect Debug.release.xcconfig */,
-			);
-			name = "Pods-Bisq Connect Debug";
-			path = "Target Support Files/Pods-Bisq Connect Debug";
-			sourceTree = "<group>";
-		};
-		798AF89870E05967424BE0463729D788 /* Pods-Bisq Connect */ = {
-			isa = PBXGroup;
-			children = (
-				0FA93F66F1576ED8F77B10C3F4E91129 /* Pods-Bisq Connect.modulemap */,
-				4715C744F81BF0169105E9E721D8AA1A /* Pods-Bisq Connect-acknowledgements.markdown */,
-				5DFC61305F7C7A7FA04A9B34A240BD64 /* Pods-Bisq Connect-acknowledgements.plist */,
-				80CF126C2F080F85B434A12881B3E717 /* Pods-Bisq Connect-dummy.m */,
-				FA03BD87155EB28386C51E8280EF3AFB /* Pods-Bisq Connect-frameworks.sh */,
-				DB9AD2EB2BE754A9D246FE31F44164B6 /* Pods-Bisq Connect-Info.plist */,
-				0F7C5A418C49A182111B584501A6295B /* Pods-Bisq Connect-resources.sh */,
-				2BE1FBE3EC8D9149905AFEA7EC71D53D /* Pods-Bisq Connect-umbrella.h */,
-				B5D0E05ECBD73AEB2967FEAE3F18AAE6 /* Pods-Bisq Connect.debug.xcconfig */,
-				2A70854C3C67F7B7C4969BD687710548 /* Pods-Bisq Connect.release.xcconfig */,
-			);
-			name = "Pods-Bisq Connect";
-			path = "Target Support Files/Pods-Bisq Connect";
-			sourceTree = "<group>";
-		};
-		7FE2964569AA9C78E0467803AB681451 /* Development Pods */ = {
-			isa = PBXGroup;
-			children = (
-				2F877B6D57848ABDF029B10DEB5A7ED0 /* domain */,
-				A78386AA759B2EE3C5BDD9857BA9D1EE /* presentation */,
-			);
-			name = "Development Pods";
-			sourceTree = "<group>";
-		};
-		8BA4032B807452A8EF4F59995B59D6CA /* Targets Support Files */ = {
-			isa = PBXGroup;
-			children = (
-				798AF89870E05967424BE0463729D788 /* Pods-Bisq Connect */,
-				6C678AAD6B0A674144E640F44A74EC4F /* Pods-Bisq Connect Debug */,
-			);
-			name = "Targets Support Files";
-			sourceTree = "<group>";
-		};
-		8FC429D699515EEC801C87D568796AC0 /* Frameworks */ = {
-			isa = PBXGroup;
-			children = (
-				4AAF1B0BB5C923912BF8947076BB504A /* presentation.framework */,
-			);
-			name = Frameworks;
-			sourceTree = "<group>";
-		};
-		9F086AEBB4A58E09382FEE0EDFAFEE8B /* Support Files */ = {
-			isa = PBXGroup;
-			children = (
-				F4B9BE9B07F2F9C9E103610D844B0407 /* domain-copy-dsyms.sh */,
-				804065BB4F007C057F539031BA89C4D2 /* domain.debug.xcconfig */,
-				DA1AD272BC5CBE1D4ED4240B2689D453 /* domain.release.xcconfig */,
+				CB2F28842C215F24DC04137EB8AA2148 /* domain-copy-dsyms.sh */,
+				7E7631A17833BF8365B772E812AD0320 /* domain.debug.xcconfig */,
+				3770C623849D385AC45A8F3765361642 /* domain.release.xcconfig */,
 			);
 			name = "Support Files";
 			path = "../../iosClient/Pods/Target Support Files/domain";
 			sourceTree = "<group>";
 		};
-		A78386AA759B2EE3C5BDD9857BA9D1EE /* presentation */ = {
+		79544BB6A19AADAE63DB1A0C7E427BF0 /* domain */ = {
 			isa = PBXGroup;
 			children = (
-				F44E744210E5DAAB94EC2830E78ECA9E /* compose-resources */,
-				8FC429D699515EEC801C87D568796AC0 /* Frameworks */,
-				C41DF30C84618B09D78DA0AE3695EC86 /* Pod */,
-				0270ADE7A32AD194B140875F0E996225 /* Support Files */,
+				88EF694D4FBCFFF4860BE41730F234F4 /* Frameworks */,
+				A50EE8B8238C5BAAEECE1C0E600D3D62 /* Pod */,
+				65C6293E1EC6B5B8EC292011842E26D3 /* Support Files */,
+			);
+			name = domain;
+			path = ../../shared/domain;
+			sourceTree = "<group>";
+		};
+		7C4B40A1BDF52E0C06CDC358418FF8DB /* Targets Support Files */ = {
+			isa = PBXGroup;
+			children = (
+				88D70DCCBF2D24D2FE82CB89D97702DA /* Pods-Bisq Connect */,
+				D2A1EB8803BB4855D6843B712A948C02 /* Pods-Bisq Connect Debug */,
+			);
+			name = "Targets Support Files";
+			sourceTree = "<group>";
+		};
+		809EDEF56B9A7EA76A4B6A650B066D53 /* presentation */ = {
+			isa = PBXGroup;
+			children = (
+				5FA46147AF951365030DACA2D0779251 /* Frameworks */,
+				0C8906B30322F4CDAF8D260241AF86C8 /* Pod */,
+				FF2EE6570632578A8C47AD1686988650 /* Support Files */,
 			);
 			name = presentation;
 			path = ../../shared/presentation;
+			sourceTree = "<group>";
+		};
+		88D70DCCBF2D24D2FE82CB89D97702DA /* Pods-Bisq Connect */ = {
+			isa = PBXGroup;
+			children = (
+				CE69445C5950FB4F7EFD387448D9DD21 /* Pods-Bisq Connect.modulemap */,
+				9DA5EC97E23BE4C8034423AD26EAB023 /* Pods-Bisq Connect-acknowledgements.markdown */,
+				56B22603DC9993AA110545D6F9455EB3 /* Pods-Bisq Connect-acknowledgements.plist */,
+				4A32D336971ABF4AD180393044B67F80 /* Pods-Bisq Connect-dummy.m */,
+				D5F9DA0A65B59C71C1DE98CE89169677 /* Pods-Bisq Connect-frameworks.sh */,
+				4460BDECE83811576389C60D6405D41B /* Pods-Bisq Connect-Info.plist */,
+				767C5EFDD6EA94B1973D8BECA38003F8 /* Pods-Bisq Connect-umbrella.h */,
+				2AD6FF187AFECD53A6791CC478A7D211 /* Pods-Bisq Connect.debug.xcconfig */,
+				713D21ADA4423AE6A9FCEE76E97A3EFF /* Pods-Bisq Connect.release.xcconfig */,
+			);
+			name = "Pods-Bisq Connect";
+			path = "Target Support Files/Pods-Bisq Connect";
+			sourceTree = "<group>";
+		};
+		88EF694D4FBCFFF4860BE41730F234F4 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				E757DD235115CA9BB07976B811D39BBA /* domain.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A50EE8B8238C5BAAEECE1C0E600D3D62 /* Pod */ = {
+			isa = PBXGroup;
+			children = (
+				8C1FF52CAE6586C87EFAF579B002C275 /* domain.podspec */,
+			);
+			name = Pod;
+			sourceTree = "<group>";
+		};
+		B233B0B324C7AA7246C0CAB7DB83BE93 /* Development Pods */ = {
+			isa = PBXGroup;
+			children = (
+				79544BB6A19AADAE63DB1A0C7E427BF0 /* domain */,
+				809EDEF56B9A7EA76A4B6A650B066D53 /* presentation */,
+			);
+			name = "Development Pods";
 			sourceTree = "<group>";
 		};
 		BBF55C67347A02659B11B239F76AD4DA /* Products */ = {
@@ -253,22 +235,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
-		C41DF30C84618B09D78DA0AE3695EC86 /* Pod */ = {
-			isa = PBXGroup;
-			children = (
-				AEA83CBE2A148E5936D097BCBDF1C34D /* presentation.podspec */,
-			);
-			name = Pod;
-			sourceTree = "<group>";
-		};
 		CF1408CF629C7361332E53B88F7BD30C = {
 			isa = PBXGroup;
 			children = (
 				9D940727FF8FB9C785EB98E56350EF41 /* Podfile */,
-				7FE2964569AA9C78E0467803AB681451 /* Development Pods */,
+				B233B0B324C7AA7246C0CAB7DB83BE93 /* Development Pods */,
 				D210D550F4EA176C3123ED886F8F87F5 /* Frameworks */,
 				BBF55C67347A02659B11B239F76AD4DA /* Products */,
-				8BA4032B807452A8EF4F59995B59D6CA /* Targets Support Files */,
+				7C4B40A1BDF52E0C06CDC358418FF8DB /* Targets Support Files */,
 			);
 			sourceTree = "<group>";
 		};
@@ -280,6 +254,23 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		D2A1EB8803BB4855D6843B712A948C02 /* Pods-Bisq Connect Debug */ = {
+			isa = PBXGroup;
+			children = (
+				5599083C2382E23D403F97B7B74E2FB0 /* Pods-Bisq Connect Debug.modulemap */,
+				2A2B7A55D704129CBC2423E339D6B5F6 /* Pods-Bisq Connect Debug-acknowledgements.markdown */,
+				2228D16B78B836C45E8F09B70A837804 /* Pods-Bisq Connect Debug-acknowledgements.plist */,
+				B6F489D9DB901EA017BB7276FA530882 /* Pods-Bisq Connect Debug-dummy.m */,
+				BFEF2AD9D5D5FBA2D3B314FDE9CE488E /* Pods-Bisq Connect Debug-frameworks.sh */,
+				7FE1ACE830830C9E1D914B198DB0379D /* Pods-Bisq Connect Debug-Info.plist */,
+				F023820F41C485E096DC31347A6CFF0F /* Pods-Bisq Connect Debug-umbrella.h */,
+				9E7E55A4CBD5CE3AA4A209D08937A357 /* Pods-Bisq Connect Debug.debug.xcconfig */,
+				967E5AF6D7F1FB5896AE627B2ACA9FFA /* Pods-Bisq Connect Debug.release.xcconfig */,
+			);
+			name = "Pods-Bisq Connect Debug";
+			path = "Target Support Files/Pods-Bisq Connect Debug";
+			sourceTree = "<group>";
+		};
 		E4801F62A6B08CD9B5410329F1A18FDE /* iOS */ = {
 			isa = PBXGroup;
 			children = (
@@ -288,12 +279,15 @@
 			name = iOS;
 			sourceTree = "<group>";
 		};
-		E9FF437E9B7237DA2D4C60336C9890D7 /* Pod */ = {
+		FF2EE6570632578A8C47AD1686988650 /* Support Files */ = {
 			isa = PBXGroup;
 			children = (
-				74ED85F89A4112470D68D97319C810B5 /* domain.podspec */,
+				6F3CA6F7E694F36337849952A66DA1AB /* presentation-copy-dsyms.sh */,
+				3D02BC197417FC1764EB9B715166A6A2 /* presentation.debug.xcconfig */,
+				6D4B2AC887B8ABF437E8D344EED75467 /* presentation.release.xcconfig */,
 			);
-			name = Pod;
+			name = "Support Files";
+			path = "../../iosClient/Pods/Target Support Files/presentation";
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -330,8 +324,8 @@
 			buildRules = (
 			);
 			dependencies = (
-				49369B004685A594DC9540B51A8CD63E /* PBXTargetDependency */,
-				9960C3B3E830CA09B6DBC329BCEB11C4 /* PBXTargetDependency */,
+				870EE6B6DC3B375D54C904DB770804D7 /* PBXTargetDependency */,
+				F32FB52A528EBE78F28479989759FCB8 /* PBXTargetDependency */,
 			);
 			name = "Pods-Bisq Connect Debug";
 			productName = Pods_Bisq_Connect_Debug;
@@ -350,8 +344,8 @@
 			buildRules = (
 			);
 			dependencies = (
-				36B522FEE73BB62B530FEBE25151CD12 /* PBXTargetDependency */,
-				1444BDE6078CBC30878366212B19B62B /* PBXTargetDependency */,
+				9BA195501A6C3235DBC05EA7F0B5C9BA /* PBXTargetDependency */,
+				A65B5DCBD829FD28EF7BB253F8D043B7 /* PBXTargetDependency */,
 			);
 			name = "Pods-Bisq Connect";
 			productName = Pods_Bisq_Connect;
@@ -484,29 +478,29 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
-		1444BDE6078CBC30878366212B19B62B /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			name = presentation;
-			target = CA23A621E427291AD7AAC241FE14977E /* presentation */;
-			targetProxy = E274C072B3A95A0D63150D53181C7AED /* PBXContainerItemProxy */;
-		};
-		36B522FEE73BB62B530FEBE25151CD12 /* PBXTargetDependency */ = {
+		870EE6B6DC3B375D54C904DB770804D7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = domain;
 			target = 9FA10608F377AE5B47F00969C58A08B0 /* domain */;
-			targetProxy = 3678B7BC5A47B83BD71A087C820489E7 /* PBXContainerItemProxy */;
+			targetProxy = 102349585F5B7D0B866B1A0C7572F8DA /* PBXContainerItemProxy */;
 		};
-		49369B004685A594DC9540B51A8CD63E /* PBXTargetDependency */ = {
+		9BA195501A6C3235DBC05EA7F0B5C9BA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = domain;
 			target = 9FA10608F377AE5B47F00969C58A08B0 /* domain */;
-			targetProxy = 72168B1625BB1A8CCECEC59448B2F60D /* PBXContainerItemProxy */;
+			targetProxy = C7A9D41310C0A961FB5D853DFDD7C3EC /* PBXContainerItemProxy */;
 		};
-		9960C3B3E830CA09B6DBC329BCEB11C4 /* PBXTargetDependency */ = {
+		A65B5DCBD829FD28EF7BB253F8D043B7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			name = presentation;
 			target = CA23A621E427291AD7AAC241FE14977E /* presentation */;
-			targetProxy = 7EDDB3E40B3C289406F4396079BE734F /* PBXContainerItemProxy */;
+			targetProxy = 05962C5E96B3318B580387E15BB57859 /* PBXContainerItemProxy */;
+		};
+		F32FB52A528EBE78F28479989759FCB8 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = presentation;
+			target = CA23A621E427291AD7AAC241FE14977E /* presentation */;
+			targetProxy = 2F47FA955D6F7E1F869E9F437041C7EA /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -575,7 +569,7 @@
 		};
 		437EA4C44DE0B4C7DCDF7777DED031FA /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8EA548F0CBB66C825F5F196469AE443C /* presentation.debug.xcconfig */;
+			baseConfigurationReference = 3D02BC197417FC1764EB9B715166A6A2 /* presentation.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -593,7 +587,7 @@
 		};
 		48F2FDB6889B575B7DB16DE30260C86D /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 204E5861AA89F6485AE0E7BE7CC61EB9 /* presentation.release.xcconfig */;
+			baseConfigurationReference = 6D4B2AC887B8ABF437E8D344EED75467 /* presentation.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -612,7 +606,7 @@
 		};
 		8B86B8E2822DE6951DA01E3EB8733D7C /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 1E14C96F2DEE79963DB15A6E9C1A0291 /* Pods-Bisq Connect Debug.debug.xcconfig */;
+			baseConfigurationReference = 9E7E55A4CBD5CE3AA4A209D08937A357 /* Pods-Bisq Connect Debug.debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				CLANG_ENABLE_OBJC_WEAK = NO;
@@ -651,7 +645,7 @@
 		};
 		94A06190EA0D60D6E5536375F3ED52DD /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = B5D0E05ECBD73AEB2967FEAE3F18AAE6 /* Pods-Bisq Connect.debug.xcconfig */;
+			baseConfigurationReference = 2AD6FF187AFECD53A6791CC478A7D211 /* Pods-Bisq Connect.debug.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				CLANG_ENABLE_OBJC_WEAK = NO;
@@ -690,7 +684,7 @@
 		};
 		BB4E7E65FBEA09C32CB5D628824BD960 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 2A70854C3C67F7B7C4969BD687710548 /* Pods-Bisq Connect.release.xcconfig */;
+			baseConfigurationReference = 713D21ADA4423AE6A9FCEE76E97A3EFF /* Pods-Bisq Connect.release.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				CLANG_ENABLE_OBJC_WEAK = NO;
@@ -730,7 +724,7 @@
 		};
 		D347EF77A9147218FFD617F7E00D9870 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = DA1AD272BC5CBE1D4ED4240B2689D453 /* domain.release.xcconfig */;
+			baseConfigurationReference = 3770C623849D385AC45A8F3765361642 /* domain.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -749,7 +743,7 @@
 		};
 		D40B03719A3747DFD4CBA474DB412803 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 17CA31CA816E15A8389FE4189BDC38A7 /* Pods-Bisq Connect Debug.release.xcconfig */;
+			baseConfigurationReference = 967E5AF6D7F1FB5896AE627B2ACA9FFA /* Pods-Bisq Connect Debug.release.xcconfig */;
 			buildSettings = {
 				ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES = NO;
 				CLANG_ENABLE_OBJC_WEAK = NO;
@@ -855,7 +849,7 @@
 		};
 		F6743C549671A6AE48C5AF30AA7C423A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 804065BB4F007C057F539031BA89C4D2 /* domain.debug.xcconfig */;
+			baseConfigurationReference = 7E7631A17833BF8365B772E812AD0320 /* domain.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;

@@ -33,7 +33,7 @@
 		609CE23ED65204A4441A4BA8 /* KoinHelper.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = KoinHelper.swift; sourceTree = "<group>"; };
 		63CAEC3A75A79BA86188716E /* Pods-Bisq Connect Debug.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Bisq Connect Debug.debug.xcconfig"; path = "Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug.debug.xcconfig"; sourceTree = "<group>"; };
 		74831B7B2D5088E600B729F4 /* Bisq Connect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Bisq Connect.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		74831B7C2D5088E600B729F4 /* iosClient/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "iosClient/Info.plist"; path = "/Users/rodvar/Projects/bisq-mobile/iosClient/iosClient/Info.plist"; sourceTree = "<absolute>"; };
+		74831B7C2D5088E600B729F4 /* iosClient/Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = iosClient/Info.plist; path = "/Users/rodvar/Projects/bisq-mobile/iosClient/iosClient/Info.plist"; sourceTree = "<absolute>"; };
 		749C8F4D2CCB978300AE196D /* LifecycleAwareComposeViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LifecycleAwareComposeViewController.swift; sourceTree = "<group>"; };
 		7555FF7B242A565900829871 /* Bisq Connect.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Bisq Connect.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		7555FF82242A565900829871 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -151,7 +151,6 @@
 				74831B712D5088E600B729F4 /* Frameworks */,
 				74831B732D5088E600B729F4 /* Resources */,
 				74831B762D5088E600B729F4 /* [CP] Embed Pods Frameworks */,
-				061C87B901FCD568F3D373E8 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -172,7 +171,6 @@
 				B92378962B6B1156000C7307 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
 				3281115E126FA938007845C3 /* [CP] Embed Pods Frameworks */,
-				71458055B2BE9DD67D93C083 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -240,23 +238,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		061C87B901FCD568F3D373E8 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 		2F2A98D842CF884E9E4EADA4 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -294,23 +275,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		71458055B2BE9DD67D93C083 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		74831B6A2D5088E600B729F4 /* [CP] Check Pods Manifest.lock */ = {
@@ -432,7 +396,7 @@
 					"$(inherited)",
 					"$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)\n$(SRCROOT)/../androidClient/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
 				);
-				INFOPLIST_FILE = "iosClient/Info.plist";
+				INFOPLIST_FILE = iosClient/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.3;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -469,7 +433,7 @@
 					"$(inherited)",
 					"$(SRCROOT)/../shared/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)\n$(SRCROOT)/../androidClient/build/xcode-frameworks/$(CONFIGURATION)/$(SDK_NAME)",
 				);
-				INFOPLIST_FILE = "iosClient/Info.plist";
+				INFOPLIST_FILE = iosClient/Info.plist;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.3;
 				LD_RUNPATH_SEARCH_PATHS = (
