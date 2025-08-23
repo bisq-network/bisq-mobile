@@ -56,7 +56,7 @@ fun JumpToBottomFloatingButton(
                 shape = FloatingActionButtonDefaults.largeShape,
                 containerColor = BisqTheme.colors.light_grey10,
             ) {
-                ArrowDownIconDark(Modifier.size(18.dp))
+                ArrowDownIconDark(Modifier.size(18.dp).offset(y=1.dp))
             }
         }
     }
