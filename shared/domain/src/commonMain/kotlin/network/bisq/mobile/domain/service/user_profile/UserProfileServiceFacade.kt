@@ -7,7 +7,7 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 interface UserProfileServiceFacade : LifeCycleAware {
     val selectedUserProfile: StateFlow<UserProfileVO?>
-    val hasIgnoredUsers: StateFlow<Boolean>
+    val ignoredUserIds: StateFlow<Set<String>>
 
     val numUserProfiles: StateFlow<Int>
 

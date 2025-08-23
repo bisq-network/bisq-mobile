@@ -11,8 +11,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.domain.PlatformImage
@@ -33,7 +37,9 @@ fun TextMessageBox(
     onReply: () -> Unit = {},
     onCopy: () -> Unit = {},
     onIgnoreUser: () -> Unit = {},
-    onReportUser: () -> Unit = {}
+    onUndoIgnoreUser: () -> Unit = {},
+    onReportUser: () -> Unit = {},
+    isIgnored: Boolean,
 ) {
     val isMyMessage = message.isMyMessage
     val chatAlign = if (isMyMessage) Alignment.End else Alignment.Start
@@ -135,7 +141,9 @@ fun TextMessageBox(
             onReply = onReply,
             onCopy = onCopy,
             onIgnoreUser = onIgnoreUser,
+            onUndoIgnoreUser = onUndoIgnoreUser,
             onReportUser = onReportUser,
+            isIgnored = isIgnored,
         )
     }
 }

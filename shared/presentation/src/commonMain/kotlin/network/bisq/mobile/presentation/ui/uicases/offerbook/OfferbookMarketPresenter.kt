@@ -5,6 +5,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -30,7 +31,13 @@ class OfferbookMarketPresenter(
     // flag to force market update trigger when needed
     private val _marketPriceUpdated = MutableStateFlow(false)
 
-    val hasIgnoredUsers: StateFlow<Boolean> get() = userProfileServiceFacade.hasIgnoredUsers
+    val hasIgnoredUsers: StateFlow<Boolean> = userProfileServiceFacade.ignoredUserIds
+        .map { it.isNotEmpty() }
+        .stateIn(
+            presenterScope,
+            SharingStarted.Lazily,
+            false,
+        )
 
     private val _sortBy = MutableStateFlow(MarketSortBy.MostOffers)
     val sortBy: StateFlow<MarketSortBy> get() = _sortBy.asStateFlow()

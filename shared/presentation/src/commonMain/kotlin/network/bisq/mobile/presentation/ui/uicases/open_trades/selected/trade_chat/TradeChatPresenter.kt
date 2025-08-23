@@ -52,6 +52,11 @@ class TradeChatPresenter(
     private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
     val ignoreUserId: StateFlow<String> get() = _ignoreUserId.asStateFlow()
 
+    private val _undoIgnoreUserId: MutableStateFlow<String> = MutableStateFlow("")
+    val undoIgnoreUserId: StateFlow<String> get() = _undoIgnoreUserId.asStateFlow()
+
+    val ignoredUserIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredUserIds
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -61,7 +66,7 @@ class TradeChatPresenter(
             val settings = withContext(IODispatcher) { settingsRepository.fetch() }
             settings?.let { _showChatRulesWarnBox.value = it.showChatRulesWarnBox }
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
-            val ignoredUserIds = userProfileServiceFacade.getIgnoredUserProfileIds().toSet()
+            val ignoredUserIds = ignoredUserIds.value
 
             bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
 
@@ -138,6 +143,14 @@ class TradeChatPresenter(
         _ignoreUserId.value = ""
     }
 
+    fun showUndoIgnoreUserPopup(id: String) {
+        _undoIgnoreUserId.value = id
+    }
+
+    fun hideUndoIgnoreUserPopup() {
+        _undoIgnoreUserId.value = ""
+    }
+
     fun onConfirmedIgnoreUser(id: String) {
         launchIO {
             disableInteractive()
@@ -152,8 +165,26 @@ class TradeChatPresenter(
         }
     }
 
+    fun onConfirmedUndoIgnoreUser(id: String) {
+        launchIO {
+            disableInteractive()
+            try {
+                userProfileServiceFacade.undoIgnoreUserProfile(id)
+                hideUndoIgnoreUserPopup()
+            } catch (e: Exception) {
+                log.e(e) { "Failed to undo ignore user $id" }
+            } finally {
+                enableInteractive()
+            }
+        }
+    }
+
     fun onDismissIgnoreUser() {
         this.hideIgnoreUserPopup();
+    }
+
+    fun onDismissUndoIgnoreUser() {
+        this.hideUndoIgnoreUserPopup();
     }
 
     fun onReportUser(message: BisqEasyOpenTradeMessageModel) {

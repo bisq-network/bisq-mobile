@@ -32,6 +32,7 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_ch
 @Composable
 fun ChatMessageList(
     messages: List<BisqEasyOpenTradeMessageModel>,
+    ignoredUserIds: Set<String>,
     presenter: TradeChatPresenter,
     scrollState: LazyListState,
     avatarMap: Map<String, PlatformImage?> = emptyMap(),
@@ -41,6 +42,7 @@ fun ChatMessageList(
     onReply: (BisqEasyOpenTradeMessageModel) -> Unit = {},
     onCopy: (BisqEasyOpenTradeMessageModel) -> Unit = {},
     onIgnoreUser: (String) -> Unit = {},
+    onUndoIgnoreUser: (String) -> Unit = {},
     onReportUser: (BisqEasyOpenTradeMessageModel) -> Unit = {},
 ) {
     val scope = rememberCoroutineScope()
@@ -82,7 +84,9 @@ fun ChatMessageList(
                             onReply = { onReply(message) },
                             onCopy = { onCopy(message) },
                             onIgnoreUser = { onIgnoreUser(message.senderUserProfileId) },
+                            onUndoIgnoreUser = { onUndoIgnoreUser(message.senderUserProfileId) },
                             onReportUser = { onReportUser(message) },
+                            isIgnored = ignoredUserIds.contains(message.senderUserProfileId),
                         )
                     }
                 }

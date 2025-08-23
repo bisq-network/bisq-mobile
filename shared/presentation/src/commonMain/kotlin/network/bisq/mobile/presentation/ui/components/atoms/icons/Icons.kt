@@ -23,6 +23,7 @@ import bisqapps.shared.presentation.generated.resources.icon_chat_outlined
 import bisqapps.shared.presentation.generated.resources.icon_closed_eye
 import bisqapps.shared.presentation.generated.resources.icon_copy
 import bisqapps.shared.presentation.generated.resources.icon_exclamation_red
+import bisqapps.shared.presentation.generated.resources.icon_eye
 import bisqapps.shared.presentation.generated.resources.icon_flag
 import bisqapps.shared.presentation.generated.resources.icon_flash_light
 import bisqapps.shared.presentation.generated.resources.icon_gallery
@@ -42,8 +43,8 @@ import bisqapps.shared.presentation.generated.resources.icon_star_green
 import bisqapps.shared.presentation.generated.resources.icon_star_grey_hollow
 import bisqapps.shared.presentation.generated.resources.icon_star_half_green
 import bisqapps.shared.presentation.generated.resources.icon_warning
-import bisqapps.shared.presentation.generated.resources.icon_warning_light_grey
 import bisqapps.shared.presentation.generated.resources.icon_warning_grey
+import bisqapps.shared.presentation.generated.resources.icon_warning_light_grey
 import bisqapps.shared.presentation.generated.resources.icon_warning_white
 import bisqapps.shared.presentation.generated.resources.leave_chat_green
 import bisqapps.shared.presentation.generated.resources.remove_offer
@@ -71,6 +72,11 @@ fun CloseIcon(modifier: Modifier = Modifier.size(24.dp), color: Color = Color.Wh
 @Composable
 fun ExclamationRedIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_exclamation_red), "Exclamation red icon", modifier = modifier)
+}
+
+@Composable
+fun EyeIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_eye), "Eye icon", modifier = modifier)
 }
 
 @Composable

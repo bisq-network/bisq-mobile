@@ -49,8 +49,10 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     private val userProfileService: UserProfileService by lazy { userService.userProfileService }
     private val catHashService: AndroidNodeCatHashService by lazy { applicationService.androidCatHashService.get() }
 
-    private val _hasIgnoredUsers: MutableStateFlow<Boolean> = MutableStateFlow( false)
-    override val hasIgnoredUsers: StateFlow<Boolean> get() = _hasIgnoredUsers.asStateFlow()
+    private val _ignoredUserIds: MutableStateFlow<Set<String>> = MutableStateFlow(
+        emptySet()
+    )
+    override val ignoredUserIds: StateFlow<Set<String>> get() = _ignoredUserIds.asStateFlow()
 
     // Properties
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
@@ -221,7 +223,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
 
         userProfileService.ignoreUserProfile(userProfile)
-        getIgnoredUserProfileIds() // updates hasIgnoredUsers
+        getIgnoredUserProfileIds() // updates ignoredUserIds
     }
 
     override suspend fun undoIgnoreUserProfile(profileId: String) {
@@ -230,7 +232,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
             .orElseThrow { IllegalArgumentException("User profile not found for id: $profileId") }
 
         userProfileService.undoIgnoreUserProfile(userProfile)
-        getIgnoredUserProfileIds() // updates hasIgnoredUsers
+        getIgnoredUserProfileIds() // updates ignoredUserIds
     }
 
     override suspend fun isUserIgnored(profileId: String): Boolean {
@@ -239,7 +241,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     override suspend fun getIgnoredUserProfileIds(): Set<String> {
         val ids = userProfileService.ignoredUserProfileIds
-        _hasIgnoredUsers.value = ids.isNotEmpty()
+        _ignoredUserIds.value = ids.toSet() // to create a new set to trigger updates correctly
         return ids
     }
 }
