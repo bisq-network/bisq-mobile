@@ -1,12 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat
 
-import androidx.compose.foundation.lazy.LazyListState
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
@@ -37,8 +34,8 @@ class TradeChatPresenter(
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
-    private val _chatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(listOf())
-    val chatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> get() = _chatMessages.asStateFlow()
+    private val _sortedChatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(listOf())
+    val sortedChatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> get() = _sortedChatMessages.asStateFlow()
 
     private val _quotedMessage: MutableStateFlow<BisqEasyOpenTradeMessageModel?> = MutableStateFlow(null)
     val quotedMessage: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _quotedMessage.asStateFlow()
@@ -74,7 +71,7 @@ class TradeChatPresenter(
                     !ignoredUserIds.contains(message.senderUserProfileId)
                 }
 
-                _chatMessages.value = filteredMessages.toList()
+                _sortedChatMessages.value = filteredMessages.toList().sortedByDescending { it.date }
 
                 messages.toList().forEach { message ->
                     withContext(IODispatcher) {
@@ -90,7 +87,7 @@ class TradeChatPresenter(
 
                 withContext(IODispatcher) {
                     val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
-                    readState[selectedTrade.tradeId] = _chatMessages.value.size
+                    readState[selectedTrade.tradeId] = _sortedChatMessages.value.size
                     tradeReadStateRepository.update(TradeReadState().apply { map = readState })
                 }
             }
@@ -102,7 +99,7 @@ class TradeChatPresenter(
         super.onViewUnattaching()
     }
 
-    fun sendChatMessage(text: String, scope: CoroutineScope, scrollState: LazyListState) {
+    fun sendChatMessage(text: String) {
         val citation = quotedMessage.value?.let { quotedMessage ->
             quotedMessage.text?.let { text ->
                 CitationVO(
@@ -110,11 +107,8 @@ class TradeChatPresenter(
                 )
             }
         }
-        launchUI {
-            withContext(IODispatcher) {
-                tradeChatMessagesServiceFacade.sendChatMessage(text, citation)
-            }
-            scope.launch { scrollState.animateScrollToItem(Int.MAX_VALUE) }
+        launchIO {
+            tradeChatMessagesServiceFacade.sendChatMessage(text.trim(), citation)
             _quotedMessage.value = null
         }
     }

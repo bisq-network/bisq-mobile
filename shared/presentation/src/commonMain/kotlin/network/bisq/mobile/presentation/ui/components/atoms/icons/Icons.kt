@@ -17,6 +17,7 @@ import bisqapps.shared.presentation.generated.resources.exchange_v_arrow
 import bisqapps.shared.presentation.generated.resources.field_add_white
 import bisqapps.shared.presentation.generated.resources.icon_add
 import bisqapps.shared.presentation.generated.resources.icon_arrow_down
+import bisqapps.shared.presentation.generated.resources.icon_arrow_down_dark
 import bisqapps.shared.presentation.generated.resources.icon_arrow_right
 import bisqapps.shared.presentation.generated.resources.icon_bell
 import bisqapps.shared.presentation.generated.resources.icon_chat_outlined
@@ -97,6 +98,11 @@ fun AddCircleIcon(modifier: Modifier = Modifier.size(16.dp)) {
 @Composable
 fun ArrowDownIcon(modifier: Modifier = Modifier.size(12.dp)) {
     Image(painterResource(Res.drawable.icon_arrow_down), "Down arrow icon", modifier = modifier)
+}
+
+@Composable
+fun ArrowDownIconDark(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_arrow_down_dark), "Down arrow icon", modifier = modifier)
 }
 
 @Composable

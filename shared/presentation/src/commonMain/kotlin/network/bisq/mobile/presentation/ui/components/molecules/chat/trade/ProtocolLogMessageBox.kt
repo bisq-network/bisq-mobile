@@ -15,9 +15,9 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
-fun ProtocolLogMessageBox(message: BisqEasyOpenTradeMessageModel) {
+fun ProtocolLogMessageBox(message: BisqEasyOpenTradeMessageModel, modifier: Modifier = Modifier) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .background(BisqTheme.colors.dark_grey30)
             .fillMaxWidth(),
         horizontalArrangement = Arrangement.Center
