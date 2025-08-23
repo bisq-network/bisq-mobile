@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -43,24 +44,31 @@ fun TradeChatScreen() {
         isInteractive = isInteractive,
     ) {
 
-        ChatMessageList(
-            messages = sortedChatMessages,
-            ignoredUserIds = ignoredUserIds,
-            showChatRulesWarnBox = showChatRulesWarnBox,
-            avatarMap = userAvatarMap,
-            readCount = readCount,
-            onAddReaction = presenter::onAddReaction,
-            onRemoveReaction = presenter::onRemoveReaction,
-            onReply = presenter::onReply,
-            onCopy = { message -> clipboard.setText(buildAnnotatedString { append(message.textString) }) },
-            onIgnoreUser = presenter::showIgnoreUserPopup,
-            onUndoIgnoreUser = presenter::showUndoIgnoreUserPopup,
-            onReportUser = presenter::onReportUser,
-            onOpenChatRules = presenter::onOpenChatRules,
-            onDontShowAgainChatRulesWarningBox = presenter::onDontShowAgainChatRulesWarningBox,
-            onUpdateReadCount = presenter::onUpdateReadCount,
-            modifier = Modifier.weight(1f),
-        )
+        if (readCount == -1) {
+            // empty placeholder until we know the readCount
+            // this helps simplify logic inside the ChatMessageList
+            // for providing better UX
+            Box(modifier = Modifier.weight(1f))
+        } else {
+            ChatMessageList(
+                messages = sortedChatMessages,
+                ignoredUserIds = ignoredUserIds,
+                showChatRulesWarnBox = showChatRulesWarnBox,
+                avatarMap = userAvatarMap,
+                readCount = readCount,
+                onAddReaction = presenter::onAddReaction,
+                onRemoveReaction = presenter::onRemoveReaction,
+                onReply = presenter::onReply,
+                onCopy = { message -> clipboard.setText(buildAnnotatedString { append(message.textString) }) },
+                onIgnoreUser = presenter::showIgnoreUserPopup,
+                onUndoIgnoreUser = presenter::showUndoIgnoreUserPopup,
+                onReportUser = presenter::onReportUser,
+                onOpenChatRules = presenter::onOpenChatRules,
+                onDontShowAgainChatRulesWarningBox = presenter::onDontShowAgainChatRulesWarningBox,
+                onUpdateReadCount = presenter::onUpdateReadCount,
+                modifier = Modifier.weight(1f),
+            )
+        }
         ChatInputField(
             quotedMessage = quotedMessage,
             placeholder = "chat.message.input.prompt".i18n(),
