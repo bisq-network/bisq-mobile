@@ -30,8 +30,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.FontSize
-import network.bisq.mobile.presentation.ui.components.atoms.FontWeight
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.components.molecules.AmountWithCurrency
@@ -123,9 +121,9 @@ fun DashBoardCard(
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
     ) {
 //        BisqText.h1Light(title)
-        AutoResizeText(title, maxLines = 1,
-            fontSize = FontSize.H1,
-            fontWeight = FontWeight.LIGHT,
+        AutoResizeText(
+            title, maxLines = 1,
+            textStyle = BisqTheme.typography.h1Light,
             color = BisqTheme.colors.white,
             textAlign = TextAlign.Start,
 //            lineHeight = lineHeight,

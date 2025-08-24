@@ -20,12 +20,12 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
-import network.bisq.mobile.presentation.ui.components.atoms.FontSize
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressField
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofField
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
@@ -45,7 +45,8 @@ fun SellerState3a(
         "bisqEasy.tradeState.info.seller.phase3a.bitcoinPayment.description.$paymentMethod".i18n()
     val paymentProofDescription =
         "bisqEasy.tradeState.info.seller.phase3a.paymentProof.description.$paymentMethod".i18n()
-    val paymentProofPrompt = "bisqEasy.tradeState.info.seller.phase3a.paymentProof.prompt.$paymentMethod".i18n()
+    val paymentProofPrompt =
+        "bisqEasy.tradeState.info.seller.phase3a.paymentProof.prompt.$paymentMethod".i18n()
 
     val bitcoinPaymentData by trade.bisqEasyTradeModel.bitcoinPaymentData.collectAsState()
     val isLightning by presenter.isLightning.collectAsState()
@@ -63,7 +64,9 @@ fun SellerState3a(
             )
             BisqText.baseRegularGrey(
                 // I confirmed to have received {0}
-                "bisqEasy.tradeState.info.seller.phase3a.fiatPaymentReceivedCheckBox".i18n(quoteAmount),
+                "bisqEasy.tradeState.info.seller.phase3a.fiatPaymentReceivedCheckBox".i18n(
+                    quoteAmount
+                ),
             )
         }
 
@@ -73,7 +76,7 @@ fun SellerState3a(
         // BisqText.h5Light("bisqEasy.tradeState.info.seller.phase3a.sendBtc".i18n(baseAmount))
         Row {
             BisqText.h5Light("mobile.bisqEasy.tradeState.info.seller.phase3a.send".i18n() + " ")
-            BtcSatsText(baseAmount, fontSize = FontSize.H5)
+            BtcSatsText(baseAmount, textStyle = BisqTheme.typography.h5Regular)
         }
         BisqText.h5Light("mobile.bisqEasy.tradeState.info.seller.phase3a.toTheBuyer".i18n())
 

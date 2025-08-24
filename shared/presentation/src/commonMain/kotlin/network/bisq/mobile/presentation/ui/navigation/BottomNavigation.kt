@@ -3,7 +3,10 @@ package network.bisq.mobile.presentation.ui.navigation
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.*
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemColors
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -15,8 +18,6 @@ import androidx.compose.ui.unit.sp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.FontSize
-import network.bisq.mobile.presentation.ui.components.atoms.FontWeight
 import network.bisq.mobile.presentation.ui.components.atoms.animations.AnimatedBadge
 import network.bisq.mobile.presentation.ui.composeModels.BottomNavigationItem
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -85,8 +86,7 @@ fun BottomNavigation(
                     AutoResizeText(
                         text = navigationItem.title.i18n(),
                         color = if (navigationItem.route == currentRoute) BisqTheme.colors.primary else BisqTheme.colors.white,
-                        fontSize = FontSize.BASE,
-                        fontWeight = FontWeight.LIGHT,
+                        textStyle = BisqTheme.typography.baseLight,
                         textAlign = TextAlign.Center,
                         maxLines = 1,
                         minimumFontSize = 8.sp
