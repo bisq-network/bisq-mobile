@@ -12,7 +12,6 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
-import network.bisq.mobile.presentation.ui.components.atoms.FontSize
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
@@ -22,6 +21,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxCurr
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
@@ -62,12 +62,15 @@ fun CreateOfferReviewOfferScreen() {
                         valueComposable = {
                             Row {
                                 BtcSatsText(
-                                    presenter.formattedBaseRangeMinAmount,
+                                    formattedBtcAmountValue = presenter.formattedBaseRangeMinAmount,
                                     noCode = true,
-                                    fontSize = FontSize.H6
+                                    textStyle = BisqTheme.typography.h6Regular,
                                 )
                                 BisqText.baseLight(" - ")
-                                BtcSatsText(presenter.formattedBaseRangeMaxAmount, fontSize = FontSize.H6)
+                                BtcSatsText(
+                                    formattedBtcAmountValue = presenter.formattedBaseRangeMaxAmount,
+                                    textStyle = BisqTheme.typography.h6Regular,
+                                )
                             }
                         }
                     )
@@ -83,10 +86,13 @@ fun CreateOfferReviewOfferScreen() {
                                 BtcSatsText(
                                     presenter.formattedBaseRangeMinAmount,
                                     noCode = true,
-                                    fontSize = FontSize.H6
+                                    textStyle = BisqTheme.typography.h6Regular,
                                 )
                                 BisqText.baseLight(" - ")
-                                BtcSatsText(presenter.formattedBaseRangeMaxAmount, fontSize = FontSize.H6)
+                                BtcSatsText(
+                                    presenter.formattedBaseRangeMaxAmount,
+                                    textStyle = BisqTheme.typography.h6Regular,
+                                )
                             }
                         }
                     )

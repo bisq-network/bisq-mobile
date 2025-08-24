@@ -1,13 +1,16 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.foundation.text.BasicText
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -61,9 +64,9 @@ fun NoteText(
                 LinkAnnotation.Clickable(
                     tag = "custom_action",
                     styles = TextLinkStyles(
-                    style = SpanStyle(
-                        color = BisqTheme.colors.primary,
-                        textDecoration = TextDecoration.Underline
+                        style = SpanStyle(
+                            color = BisqTheme.colors.primary,
+                            textDecoration = TextDecoration.Underline
                         )
                     )
                 ) {
@@ -102,9 +105,8 @@ fun NoteText(
 
     BasicText(
         text = annotatedString,
-        style = TextStyle(
+        style = BisqTheme.typography.smallRegular.copy(
             color = BisqTheme.colors.mid_grey20,
-            fontSize = FontSize.SMALL.size,
             textAlign = textAlign
         )
     )

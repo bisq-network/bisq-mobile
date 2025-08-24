@@ -1,9 +1,11 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -12,10 +14,9 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
-import androidx.compose.ui.unit.TextUnit
-import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.getDecimalSeparator
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -31,7 +32,7 @@ enum class BtcSatsStyle {
 fun BtcSatsText(
     formattedBtcAmountValue: String, // Expect this to be in btc format (Eg: 0.001112222)
     label: String? = null,
-    fontSize: FontSize = FontSize.BASE,
+    textStyle: TextStyle = BisqTheme.typography.baseRegular,
     style: BtcSatsStyle = BtcSatsStyle.Default,
     noCode: Boolean = false
 ) {
@@ -39,7 +40,6 @@ fun BtcSatsText(
         return
 
     val formattedValue = formatSatsToDisplay(formattedBtcAmountValue, noCode)
-    val finalFontSize = fontSize
 
     if (style == BtcSatsStyle.Default) {
         Row(
@@ -47,12 +47,10 @@ fun BtcSatsText(
             verticalAlignment = Alignment.CenterVertically
         ) {
             // BtcLogo()
-            Text(
+
+            BisqText.styledText(
                 text = formattedValue,
-                fontSize = finalFontSize.size,
-                fontFamily = BisqText.fontFamilyRegular(),
-                lineHeight = TextUnit(finalFontSize.size.times(1.15).value, TextUnitType.Sp),
-                color = BisqTheme.colors.white,
+                style = textStyle
             )
         }
     } else if (style == BtcSatsStyle.TextField) {
@@ -82,12 +80,9 @@ fun BtcSatsText(
                 .padding(BisqUIConstants.ScreenPadding),
         ) {
             // BtcLogo()
-            Text(
+            BisqText.styledText(
                 text = formattedValue,
-                fontSize = finalFontSize.size,
-                fontFamily = BisqText.fontFamilyRegular(),
-                lineHeight = TextUnit(finalFontSize.size.times(1.15).value, TextUnitType.Sp),
-                color = BisqTheme.colors.white,
+                style = textStyle
             )
         }
     }

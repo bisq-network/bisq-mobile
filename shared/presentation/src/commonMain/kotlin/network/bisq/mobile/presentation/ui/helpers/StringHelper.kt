@@ -7,7 +7,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
-import network.bisq.mobile.presentation.ui.components.atoms.FontSize
+import network.bisq.mobile.presentation.ui.theme.FontSize
 
 object StringHelper {
     @Composable
