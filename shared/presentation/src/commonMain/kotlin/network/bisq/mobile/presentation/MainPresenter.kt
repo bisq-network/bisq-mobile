@@ -17,14 +17,12 @@ import kotlinx.coroutines.flow.take
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
-import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -173,13 +171,13 @@ open class MainPresenter(
                     Triple(tradeList, chatSizes, selectedTrade)
                 }
             }.flatMapLatest { it }.collect { (tradeList, chatSizes, _) ->
-                val readState = tradeReadStateRepository.fetch() ?: TradeReadState()
-                _readMessageCountsByTrade.value = readState.map
+                val readStateMap = tradeReadStateRepository.fetchAll().associate { it.tradeId to it.readCount }
+                _readMessageCountsByTrade.value = readStateMap
                 _tradesWithUnreadMessages.value = tradeList.associate { trade ->
                     val chatSize = chatSizes[trade.tradeId] ?: 0
                     trade.tradeId to chatSize
                 }.filter { (tradeId, chatSize) ->
-                    val recordedSize = readState.map[tradeId]
+                    val recordedSize = readStateMap[tradeId]
                     recordedSize == null || recordedSize < chatSize
                 }
 
