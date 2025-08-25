@@ -1,10 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat
 
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
@@ -25,19 +24,18 @@ fun TradeChatScreen() {
     val presenter: TradeChatPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val scrollState = rememberLazyListState()
-    val scope = rememberCoroutineScope() // TODO: How scopes are to be used?
     val isInteractive by presenter.isInteractive.collectAsState()
     val selectedTrade by presenter.selectedTrade.collectAsState()
-    val chatMessages by presenter.chatMessages.collectAsState()
+    val sortedChatMessages by presenter.sortedChatMessages.collectAsState()
     val quotedMessage by presenter.quotedMessage.collectAsState()
-    val sortedChatMessages = chatMessages.sortedBy { it.date }
     val userAvatarMap by presenter.avatarMap.collectAsState()
     val ignoredUserIds by presenter.ignoredUserIds.collectAsState()
     val ignoreUserId by presenter.ignoreUserId.collectAsState()
     val undoIgnoreUserId by presenter.undoIgnoreUserId.collectAsState()
     val showIgnoreUserWarnBox = ignoreUserId.isNotBlank()
     val showUndoIgnoreUserWarnBox = undoIgnoreUserId.isNotBlank()
+    val showChatRulesWarnBox by presenter.showChatRulesWarnBox.collectAsState()
+    val readCount by presenter.readCount.collectAsState()
 
     val clipboard = LocalClipboardManager.current
 
@@ -46,27 +44,35 @@ fun TradeChatScreen() {
         isInteractive = isInteractive,
     ) {
 
-        ChatMessageList(
-            messages = sortedChatMessages,
-            ignoredUserIds = ignoredUserIds,
-            presenter = presenter,
-            modifier = Modifier.weight(1f),
-            scrollState = scrollState,
-            avatarMap = userAvatarMap,
-            onAddReaction = presenter::onAddReaction,
-            onRemoveReaction = presenter::onRemoveReaction,
-            onReply = presenter::onReply,
-            onCopy = { message -> clipboard.setText(buildAnnotatedString { append(message.textString) }) },
-            onIgnoreUser = presenter::showIgnoreUserPopup,
-            onUndoIgnoreUser = presenter::showUndoIgnoreUserPopup,
-            onReportUser = presenter::onReportUser,
-        )
+        if (readCount == -1) {
+            // empty placeholder until we know the readCount
+            // this helps simplify logic inside the ChatMessageList
+            // for providing better UX
+            Box(modifier = Modifier.weight(1f))
+        } else {
+            ChatMessageList(
+                messages = sortedChatMessages,
+                ignoredUserIds = ignoredUserIds,
+                showChatRulesWarnBox = showChatRulesWarnBox,
+                avatarMap = userAvatarMap,
+                readCount = readCount,
+                onAddReaction = presenter::onAddReaction,
+                onRemoveReaction = presenter::onRemoveReaction,
+                onReply = presenter::onReply,
+                onCopy = { message -> clipboard.setText(buildAnnotatedString { append(message.textString) }) },
+                onIgnoreUser = presenter::showIgnoreUserPopup,
+                onUndoIgnoreUser = presenter::showUndoIgnoreUserPopup,
+                onReportUser = presenter::onReportUser,
+                onOpenChatRules = presenter::onOpenChatRules,
+                onDontShowAgainChatRulesWarningBox = presenter::onDontShowAgainChatRulesWarningBox,
+                onUpdateReadCount = presenter::onUpdateReadCount,
+                modifier = Modifier.weight(1f),
+            )
+        }
         ChatInputField(
             quotedMessage = quotedMessage,
             placeholder = "chat.message.input.prompt".i18n(),
-            onMessageSent = { text ->
-                presenter.sendChatMessage(text, scope, scrollState)
-            },
+            onMessageSent = presenter::sendChatMessage,
             onCloseReply = { presenter.onReply(null) }
         )
 

@@ -54,9 +54,7 @@ abstract class State4Presenter(
                 }
 
                 result.isSuccess -> {
-                    val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
-                    readState.remove(tradeId)
-                    tradeReadStateRepository.update(TradeReadState().apply { map = readState })
+                    tradeReadStateRepository.delete(TradeReadState(tradeId))
                     _showCloseTradeDialog.value = false
                     navigateBack()
                 }

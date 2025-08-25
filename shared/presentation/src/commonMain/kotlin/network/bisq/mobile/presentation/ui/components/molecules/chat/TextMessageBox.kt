@@ -40,6 +40,7 @@ fun TextMessageBox(
     onUndoIgnoreUser: () -> Unit = {},
     onReportUser: () -> Unit = {},
     isIgnored: Boolean,
+    modifier: Modifier = Modifier,
 ) {
     val isMyMessage = message.isMyMessage
     val chatAlign = if (isMyMessage) Alignment.End else Alignment.Start
@@ -55,7 +56,7 @@ fun TextMessageBox(
     }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalAlignment = chatAlign,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter)
     ) {

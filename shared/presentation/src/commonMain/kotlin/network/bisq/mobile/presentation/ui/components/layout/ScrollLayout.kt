@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -18,9 +19,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.components.molecules.JumpToBottomFloatingButton
@@ -39,11 +38,8 @@ fun BisqScrollLayout(
 ) {
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
-    val jumpThreshold = with(LocalDensity.current) {
-        JumpToBottomThreshold.toPx()
-    }
 
-    val jumpToBottomButtonEnabled by remember {
+    val jumpToBottomVisible by remember {
         derivedStateOf {
             scrollState.maxValue - scrollState.value > 50
         }
@@ -87,12 +83,11 @@ fun BisqScrollLayout(
 
         if (showJumpToBottom) {
             JumpToBottomFloatingButton(
-                enabled = jumpToBottomButtonEnabled,
+                visible = jumpToBottomVisible,
                 onClicked = { scope.launch { scrollState.animateScrollTo(scrollState.maxValue) } },
-                modifier = Modifier.align(Alignment.BottomCenter)
+                modifier = Modifier.align(Alignment.BottomEnd).offset(x = -BisqUIConstants.ScreenPadding),
+                jumpOffset = 90,
             )
         }
     }
 }
-
-private val JumpToBottomThreshold = 16.dp

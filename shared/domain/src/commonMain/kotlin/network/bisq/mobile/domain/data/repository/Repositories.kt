@@ -11,7 +11,7 @@ import network.bisq.mobile.domain.data.persistance.KeyValueStorage
 // this way of defining supports both platforms
 // add your repositories here and then in your DI module call this classes for instanciation
 open class SettingsRepository(keyValueStorage: KeyValueStorage<Settings>) : SingleObjectRepository<Settings>(keyValueStorage, Settings())
-open class TradeReadStateRepository(keyValueStorage: KeyValueStorage<TradeReadState>) : SingleObjectRepository<TradeReadState>(keyValueStorage, TradeReadState())
+open class TradeReadStateRepository(keyValueStorage: KeyValueStorage<TradeReadState>) : MultiObjectRepository<TradeReadState>(keyValueStorage, TradeReadState("0"))
 
 open class UserRepository(keyValueStorage: KeyValueStorage<User>) : SingleObjectRepository<User>(keyValueStorage, User()) {
     suspend fun updateLastActivity(): User? {
