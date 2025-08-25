@@ -112,11 +112,11 @@ class OpenTradePresenter(
         }
 
         collectUI(
-            isUserIgnored.combine(openTradeItemModel.bisqEasyOpenTradeChannelModel.chatMessages) { isIgnored, messages  ->
+            isUserIgnored.combine(openTradeItemModel.bisqEasyOpenTradeChannelModel.chatMessages) { isIgnored, messages ->
                 if (isIgnored) {
                     messages.filter {
                         when (it.chatMessageType) {
-                            ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> false
+                            ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> it.senderUserProfileId != openTradeItemModel.peersUserProfile.id
                             else -> true
                         }
                     }
