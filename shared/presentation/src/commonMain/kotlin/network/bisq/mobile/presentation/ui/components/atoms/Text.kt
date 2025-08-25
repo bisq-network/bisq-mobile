@@ -4,88 +4,64 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
-import androidx.compose.ui.unit.sp
-import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_bold
-import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_light
-import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_medium
-import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_regular
 import network.bisq.mobile.presentation.ui.theme.BisqModifier
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-import org.jetbrains.compose.resources.Font
-
-enum class FontWeight {
-    LIGHT,
-    REGULAR,
-    MEDIUM,
-    BOLD,
-}
-
-enum class FontSize(val size: TextUnit) {
-    XSMALL(12.sp),
-    SMALL(14.sp),
-    BASE(16.sp),
-    LARGE(18.sp),
-    H6(20.sp),
-    H5(22.sp),
-    H4(24.sp),
-    H3(27.sp),
-    H2(30.sp),
-    H1(34.sp);
-}
 
 object BisqText {
 
-    @Composable
-    fun fontFamilyLight(): FontFamily {
-        return FontFamily(Font(Res.font.ibm_plex_sans_light))
-    }
+    fun getDefaultLineHeight(fontSize: TextUnit) =
+        TextUnit(fontSize.times(1.15).value, TextUnitType.Sp)
+
+    private val defaultColor = BisqTheme.colors.white
+    private val defaultTextAlign = TextAlign.Start
+    private val defaultTextOverflow = TextOverflow.Clip
 
     @Composable
-    fun fontFamilyRegular(): FontFamily {
-        return FontFamily(Font(Res.font.ibm_plex_sans_regular))
-    }
+    fun styledText(
+        text: AnnotatedString,
+        color: Color = defaultColor,
+        textAlign: TextAlign = defaultTextAlign,
+        style: TextStyle = BisqTheme.typography.baseRegular,
+        lineHeight: TextUnit = getDefaultLineHeight(style.fontSize),
+        maxLines: Int = Int.MAX_VALUE,
+        overflow: TextOverflow = defaultTextOverflow,
+        modifier: Modifier = Modifier,
+    ) {
 
-    @Composable
-    fun fontFamilyMedium(): FontFamily {
-        return FontFamily(Font(Res.font.ibm_plex_sans_medium))
-    }
-
-    @Composable
-    fun fontFamilyBold(): FontFamily {
-        return FontFamily(Font(Res.font.ibm_plex_sans_bold))
+        return Text(
+            text = text,
+            color = color,
+            style = style,
+            textAlign = textAlign,
+            lineHeight = lineHeight,
+            maxLines = maxLines,
+            overflow = overflow,
+            modifier = modifier,
+        )
     }
 
     @Composable
     fun styledText(
         text: String,
-        color: Color = BisqTheme.colors.white,
-        fontSize: FontSize = FontSize.BASE,
-        fontWeight: FontWeight = FontWeight.REGULAR,
-        textAlign: TextAlign = TextAlign.Start,
-        lineHeight: TextUnit = TextUnit(fontSize.size.times(1.15).value, TextUnitType.Sp),
+        color: Color = defaultColor,
+        textAlign: TextAlign = defaultTextAlign,
+        style: TextStyle = BisqTheme.typography.baseRegular,
+        lineHeight: TextUnit = getDefaultLineHeight(style.fontSize),
         maxLines: Int = Int.MAX_VALUE,
-        overflow: TextOverflow = TextOverflow.Clip,
+        overflow: TextOverflow = defaultTextOverflow,
         modifier: Modifier = Modifier,
     ) {
-
-        val fontFamily = when (fontWeight) {
-            FontWeight.LIGHT -> fontFamilyLight()
-            FontWeight.REGULAR -> fontFamilyRegular()
-            FontWeight.MEDIUM -> fontFamilyMedium()
-            FontWeight.BOLD -> fontFamilyBold()
-        }
 
         return Text(
             text = text,
             color = color,
-            fontSize = fontSize.size,
-            fontFamily = fontFamily,
+            style = style,
             textAlign = textAlign,
             lineHeight = lineHeight,
             maxLines = maxLines,
@@ -103,8 +79,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.XSMALL,
-            fontWeight = FontWeight.LIGHT,
+            style = BisqTheme.typography.xsmallLight,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -117,10 +92,8 @@ object BisqText {
         textAlign: TextAlign = TextAlign.Start,
         modifier: Modifier = Modifier,
     ) {
-        styledText(
+        xsmallLight(
             text = text,
-            fontSize = FontSize.XSMALL,
-            fontWeight = FontWeight.LIGHT,
             color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             modifier = modifier,
@@ -136,8 +109,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.XSMALL,
-            fontWeight = FontWeight.REGULAR,
+            style = BisqTheme.typography.xsmallRegular,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -167,8 +139,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.XSMALL,
-            fontWeight = FontWeight.MEDIUM,
+            style = BisqTheme.typography.xsmallMedium,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -184,8 +155,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.XSMALL,
-            fontWeight = FontWeight.BOLD,
+            style = BisqTheme.typography.xsmallBold,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -202,8 +172,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.SMALL,
-            fontWeight = FontWeight.LIGHT,
+            style = BisqTheme.typography.smallLight,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -233,8 +202,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.SMALL,
-            fontWeight = FontWeight.REGULAR,
+            style = BisqTheme.typography.smallRegular,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -264,8 +232,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.SMALL,
-            fontWeight = FontWeight.MEDIUM,
+            style = BisqTheme.typography.smallMedium,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -281,8 +248,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.SMALL,
-            fontWeight = FontWeight.BOLD,
+            style = BisqTheme.typography.smallBold,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -313,8 +279,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.BASE,
-            fontWeight = FontWeight.LIGHT,
+            style = BisqTheme.typography.baseLight,
             color = color,
             textAlign = textAlign,
             maxLines = if (singleLine) 1 else Int.MAX_VALUE,
@@ -333,8 +298,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.BASE,
-            fontWeight = FontWeight.REGULAR,
+            style = BisqTheme.typography.baseRegular,
             color = color,
             textAlign = textAlign,
             maxLines = if (singleLine) 1 else Int.MAX_VALUE,
@@ -388,8 +352,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.BASE,
-            fontWeight = FontWeight.MEDIUM,
+            style = BisqTheme.typography.baseMedium,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -404,7 +367,7 @@ object BisqText {
     ) {
         baseMedium(
             text = text,
-            color =  BisqTheme.colors.mid_grey20,
+            color = BisqTheme.colors.mid_grey20,
             textAlign = textAlign,
             modifier = modifier,
         )
@@ -419,8 +382,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.BASE,
-            fontWeight = FontWeight.BOLD,
+            style = BisqTheme.typography.baseBold,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -437,8 +399,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.LARGE,
-            fontWeight = FontWeight.LIGHT,
+            style = BisqTheme.typography.largeLight,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -469,8 +430,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.LARGE,
-            fontWeight = FontWeight.REGULAR,
+            style = BisqTheme.typography.largeRegular,
             color = color,
             textAlign = textAlign,
             maxLines = if (singleLine) 1 else Int.MAX_VALUE,
@@ -504,8 +464,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.LARGE,
-            fontWeight = FontWeight.MEDIUM,
+            style = BisqTheme.typography.largeMedium,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -521,8 +480,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.LARGE,
-            fontWeight = FontWeight.BOLD,
+            style = BisqTheme.typography.largeBold,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -539,8 +497,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H6,
-            fontWeight = FontWeight.LIGHT,
+            style = BisqTheme.typography.h6Light,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -556,8 +513,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H6,
-            fontWeight = FontWeight.REGULAR,
+            style = BisqTheme.typography.h6Regular,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -573,8 +529,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H6,
-            fontWeight = FontWeight.MEDIUM,
+            style = BisqTheme.typography.h6Medium,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -590,8 +545,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H6,
-            fontWeight = FontWeight.BOLD,
+            style = BisqTheme.typography.h6Bold,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -608,8 +562,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H5,
-            fontWeight = FontWeight.LIGHT,
+            style = BisqTheme.typography.h5Light,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -625,8 +578,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H5,
-            fontWeight = FontWeight.REGULAR,
+            style = BisqTheme.typography.h5Regular,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -656,8 +608,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H5,
-            fontWeight = FontWeight.MEDIUM,
+            style = BisqTheme.typography.h5Medium,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -673,8 +624,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H5,
-            fontWeight = FontWeight.BOLD,
+            style = BisqTheme.typography.h5Bold,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -691,8 +641,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H4,
-            fontWeight = FontWeight.LIGHT,
+            style = BisqTheme.typography.h4Light,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -722,8 +671,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H4,
-            fontWeight = FontWeight.REGULAR,
+            style = BisqTheme.typography.h4Regular,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -739,8 +687,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H4,
-            fontWeight = FontWeight.MEDIUM,
+            style = BisqTheme.typography.h4Medium,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -756,8 +703,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H4,
-            fontWeight = FontWeight.BOLD,
+            style = BisqTheme.typography.h4Bold,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -774,8 +720,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H3,
-            fontWeight = FontWeight.LIGHT,
+            style = BisqTheme.typography.h3Light,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -791,8 +736,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H3,
-            fontWeight = FontWeight.REGULAR,
+            style = BisqTheme.typography.h3Regular,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -808,8 +752,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H3,
-            fontWeight = FontWeight.MEDIUM,
+            style = BisqTheme.typography.h3Medium,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -825,8 +768,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H3,
-            fontWeight = FontWeight.BOLD,
+            style = BisqTheme.typography.h3Bold,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -843,8 +785,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H2,
-            fontWeight = FontWeight.LIGHT,
+            style = BisqTheme.typography.h2Light,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -860,8 +801,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H2,
-            fontWeight = FontWeight.REGULAR,
+            style = BisqTheme.typography.h2Regular,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -877,8 +817,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H2,
-            fontWeight = FontWeight.MEDIUM,
+            style = BisqTheme.typography.h2Medium,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -894,8 +833,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H2,
-            fontWeight = FontWeight.BOLD,
+            style = BisqTheme.typography.h2Bold,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -911,8 +849,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H1,
-            fontWeight = FontWeight.LIGHT,
+            style = BisqTheme.typography.h1Light,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -942,8 +879,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H1,
-            fontWeight = FontWeight.REGULAR,
+            style = BisqTheme.typography.h1Regular,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -959,8 +895,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H1,
-            fontWeight = FontWeight.MEDIUM,
+            style = BisqTheme.typography.h1Medium,
             color = color,
             textAlign = textAlign,
             modifier = modifier,
@@ -976,8 +911,7 @@ object BisqText {
     ) {
         styledText(
             text = text,
-            fontSize = FontSize.H1,
-            fontWeight = FontWeight.BOLD,
+            style = BisqTheme.typography.h1Bold,
             color = color,
             textAlign = textAlign,
             modifier = modifier,

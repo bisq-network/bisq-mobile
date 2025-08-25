@@ -38,8 +38,6 @@ import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.BackHandler
 import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.FontSize
-import network.bisq.mobile.presentation.ui.components.atoms.FontWeight
 import network.bisq.mobile.presentation.ui.components.atoms.animations.ShineOverlay
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
@@ -143,8 +141,7 @@ fun TopBar(
                         // because the rest will be clipped by TopBar
                         AutoResizeText(
                             text = title,
-                            fontSize = FontSize.H5,
-                            fontWeight = FontWeight.REGULAR,
+                            textStyle = BisqTheme.typography.h5Regular,
                             color = BisqTheme.colors.white,
                         )
                     }
@@ -152,8 +149,7 @@ fun TopBar(
                     // we will allow overflow to 2 lines here, for better accessibility
                     AutoResizeText(
                         text = title,
-                        fontSize = FontSize.H4,
-                        fontWeight = FontWeight.REGULAR,
+                        textStyle = BisqTheme.typography.h4Regular,
                         color = BisqTheme.colors.white,
                         maxLines = 2,
                     )

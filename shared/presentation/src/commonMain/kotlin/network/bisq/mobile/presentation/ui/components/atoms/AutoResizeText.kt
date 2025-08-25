@@ -10,14 +10,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText.fontFamilyBold
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText.fontFamilyLight
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText.fontFamilyMedium
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText.fontFamilyRegular
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 /**
@@ -28,8 +25,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 fun AutoResizeText(
     text: String,
     color: Color = BisqTheme.colors.white,
-    fontSize: FontSize = FontSize.BASE,
-    fontWeight: FontWeight = FontWeight.REGULAR,
+    textStyle: TextStyle = BisqTheme.typography.baseRegular,
     textAlign: TextAlign = TextAlign.Start,
     lineHeight: TextUnit = TextUnit.Unspecified,
     maxLines: Int = 1,
@@ -37,8 +33,12 @@ fun AutoResizeText(
     minimumFontSize: TextUnit = 10.sp,
     modifier: Modifier = Modifier,
 ) {
-    var readyToDraw by remember(text, fontSize, maxLines, overflow) { mutableStateOf(false) }
-    var determinedFontSize by remember(text, fontSize)  { mutableStateOf(fontSize.size) }
+    var readyToDraw by remember(text, textStyle.fontSize, maxLines, overflow) {
+        mutableStateOf(false)
+    }
+    var determinedFontSize by remember(text, textStyle.fontSize) {
+        mutableStateOf(textStyle.fontSize)
+    }
     val determinedLineHeight by remember {
         derivedStateOf {
             if (lineHeight == TextUnit.Unspecified) {
@@ -49,21 +49,13 @@ fun AutoResizeText(
         }
     }
 
-    val fontFamily = when (fontWeight) {
-        FontWeight.LIGHT -> fontFamilyLight()
-        FontWeight.REGULAR -> fontFamilyRegular()
-        FontWeight.MEDIUM -> fontFamilyMedium()
-        FontWeight.BOLD -> fontFamilyBold()
-    }
-
     Text(
         text = text,
         modifier = modifier.drawWithContent {
             if (readyToDraw) drawContent()
         },
         color = color,
-        fontSize = determinedFontSize,
-        fontFamily = fontFamily,
+        style = textStyle.copy(fontSize = determinedFontSize),
         textAlign = textAlign,
         lineHeight = determinedLineHeight,
         maxLines = maxLines,

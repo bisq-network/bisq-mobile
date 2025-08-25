@@ -20,7 +20,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.displayString
@@ -31,8 +30,6 @@ import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.FontSize
-import network.bisq.mobile.presentation.ui.components.atoms.FontWeight
 import network.bisq.mobile.presentation.ui.components.atoms.icons.RemoveOfferIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqVDivider
@@ -140,8 +137,7 @@ fun OfferCard(
                     AutoResizeText(
                         userName.truncate(maxUsernameChars),
                         color = directionalLabelColor,
-                        fontSize = FontSize.SMALL,
-                        fontWeight = FontWeight.REGULAR,
+                        textStyle = BisqTheme.typography.smallRegular,
                         maxLines = 2,
                         modifier = BisqModifier
                             .textHighlight(BisqTheme.colors.dark_grey10
@@ -160,8 +156,7 @@ fun OfferCard(
 
             AutoResizeText(
                 text = "@ " + item.formattedPriceSpec,
-                fontSize = FontSize.SMALL,
-                fontWeight = FontWeight.LIGHT,
+                textStyle = BisqTheme.typography.smallLight,
                 maxLines = 1,
             )
 
