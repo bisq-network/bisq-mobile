@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.TradeReadState
+import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
@@ -59,9 +60,9 @@ class TradeChatPresenter(
 
     val ignoredUserIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredUserIds
 
-    val readCount = selectedTrade.combine(tradeReadStateRepository.data) { trade, readState ->
-        if (trade?.tradeId != null && readState != null) {
-            readState.map.getOrElse(trade.tradeId) { 0 }
+    val readCount = selectedTrade.combine(tradeReadStateRepository.dataMap) { trade, readStates ->
+        if (trade?.tradeId != null) {
+            readStates[trade.tradeId]?.readCount ?: 0
         } else {
             -1
         }
@@ -82,17 +83,17 @@ class TradeChatPresenter(
             val settings = withContext(IODispatcher) { settingsRepository.fetch() }
             settings?.let { _showChatRulesWarnBox.value = it.showChatRulesWarnBox }
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
-            val ignoredUserIds = ignoredUserIds.value
 
-            bisqEasyOpenTradeChannelModel.chatMessages.collect { messages ->
-
-                val filteredMessages = messages.filter { message ->
-                    !ignoredUserIds.contains(message.senderUserProfileId)
-                }
-
-                _sortedChatMessages.value = filteredMessages.toList().sortedByDescending { it.date }
-
-                messages.toList().forEach { message ->
+            collectUI(ignoredUserIds.combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
+                messages.filter { message ->
+                    when (message.chatMessageType) {
+                        ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> !ignoredIds.contains(message.senderUserProfileId)
+                        else -> true
+                    }
+                }.toList().sortedByDescending { it.date }
+            }) { messages ->
+                _sortedChatMessages.value = messages
+                messages.forEach { message ->
                     withContext(IODispatcher) {
                         val userProfile = message.senderUserProfile
                         if (_avatarMap.value[userProfile.nym] == null) {
@@ -104,6 +105,7 @@ class TradeChatPresenter(
                     }
                 }
             }
+
         }
     }
 
@@ -134,7 +136,10 @@ class TradeChatPresenter(
         }
     }
 
-    fun onRemoveReaction(message: BisqEasyOpenTradeMessageModel, reaction: BisqEasyOpenTradeMessageReactionVO) {
+    fun onRemoveReaction(
+        message: BisqEasyOpenTradeMessageModel,
+        reaction: BisqEasyOpenTradeMessageReactionVO
+    ) {
         launchIO {
             tradeChatMessagesServiceFacade.removeChatMessageReaction(message.id, reaction)
         }
@@ -223,14 +228,7 @@ class TradeChatPresenter(
         if (tradeId == null) return
         launchIO {
             updateMutex.withLock {
-                val current = tradeReadStateRepository.fetch() ?: TradeReadState()
-                val map = current.map.toMutableMap()
-                val oldValue = map.getOrElse(tradeId) { 0 }
-                if (newValue > oldValue) {
-                    map[tradeId] = newValue
-                    current.map = map
-                    tradeReadStateRepository.update(current)
-                }
+                tradeReadStateRepository.update(TradeReadState(tradeId, newValue))
             }
         }
     }

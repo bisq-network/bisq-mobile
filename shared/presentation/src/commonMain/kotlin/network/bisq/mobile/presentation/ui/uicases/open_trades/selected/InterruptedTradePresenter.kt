@@ -147,11 +147,10 @@ class InterruptedTradePresenter(
     }
 
     fun onCloseTrade() {
-        if (selectedTrade.value != null) {
+        val trade = selectedTrade.value
+        if (trade != null) {
             launchUI {
-                val readState = tradeReadStateRepository.fetch()?.map.orEmpty().toMutableMap()
-                readState.remove(selectedTrade.value!!.tradeId)
-                tradeReadStateRepository.update(TradeReadState().apply { map = readState })
+                tradeReadStateRepository.delete(TradeReadState(trade.tradeId))
                 withContext(IODispatcher) {
                     tradesServiceFacade.closeTrade()
                 }

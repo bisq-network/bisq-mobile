@@ -5,6 +5,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -53,9 +55,9 @@ class OpenTradePresenter(
     val isInMediation: StateFlow<Boolean> get() = _isInMediation.asStateFlow()
 
 
-    private val readCount = _selectedTrade.combine(tradeReadStateRepository.data) { trade, readState ->
-        if (trade?.tradeId != null && readState != null) {
-            readState.map.getOrElse(trade.tradeId) { 0 }
+    private val readCount: Flow<Int> = _selectedTrade.combine(tradeReadStateRepository.dataMap) { trade, readStates ->
+        if (trade?.tradeId != null) {
+            readStates[trade.tradeId]?.readCount ?: 0
         } else {
             0
         }
@@ -109,7 +111,20 @@ class OpenTradePresenter(
             tradeStateChanged(tradeState)
         }
 
-        collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.chatMessages) {
+        collectUI(
+            isUserIgnored.combine(openTradeItemModel.bisqEasyOpenTradeChannelModel.chatMessages) { isIgnored, messages  ->
+                if (isIgnored) {
+                    messages.filter {
+                        when (it.chatMessageType) {
+                            ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> false
+                            else -> true
+                        }
+                    }
+                } else {
+                    messages
+                }
+            }
+        ) {
             msgCount.update { _ -> it.size }
             _lastChatMsg.update { _ -> it.maxByOrNull { msg -> msg.date } }
         }

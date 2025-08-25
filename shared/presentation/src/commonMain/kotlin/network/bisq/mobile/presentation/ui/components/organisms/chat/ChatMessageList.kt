@@ -64,10 +64,10 @@ fun ChatMessageList(
     val scope = rememberCoroutineScope()
     var jumpToBottomVisible by remember { mutableStateOf(false) }
     val unreadCount = remember(messages, readCount) {
-        messages.size - readCount
+        (messages.size - readCount).coerceAtLeast(0)
     }
     val scrollState = rememberLazyListState(
-        initialFirstVisibleItemIndex = unreadCount
+        initialFirstVisibleItemIndex = unreadCount.coerceIn(0, messages.size)
     )
     val canScrollDown by remember {
         derivedStateOf { scrollState.canScrollBackward }
@@ -80,7 +80,7 @@ fun ChatMessageList(
 
     val unreadMarkerIndex = remember(messages,initialReadCount, canScrollDown) {
         if (canScrollDown) {
-            messages.size - initialReadCount
+            (messages.size - initialReadCount).coerceIn(0, messages.size)
         } else {
             0
         }
