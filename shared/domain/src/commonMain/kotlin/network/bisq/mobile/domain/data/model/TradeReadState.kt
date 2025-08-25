@@ -4,11 +4,12 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 open class TradeReadState(
-    val tradeId: String = "",
+    val tradeId: String,
     val readCount: Int = 0,
 ): BaseModel() {
     init {
         require(tradeId.isNotBlank()) { "TradeReadState must have a non-blank tradeId" }
+        require(readCount >= 0) { "TradeReadState.readCount must be >= 0" }
         id = tradeId
     }
 
@@ -19,9 +20,9 @@ open class TradeReadState(
     }
 
     override fun hashCode(): Int {
-        var result = super.hashCode()
-        result = 31 * result + readCount
+        var result = 17
         result = 31 * result + tradeId.hashCode()
+        result = 31 * result + readCount
         return result
     }
 }
