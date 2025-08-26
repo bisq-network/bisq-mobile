@@ -36,10 +36,11 @@ open class TradeReadStateRepository(keyValueStorage: KeyValueStorage<TradeReadSt
      */
     suspend fun setReadCount(tradeId: String, count: Int) {
         updateMutex.withLock {
+            if (count < 0) return@withLock
             val current = fetch() ?: TradeReadState()
             val updatedMap = current.map.toMutableMap()
             updatedMap[tradeId] = count
-            val updated = TradeReadState().apply { map = updatedMap }
+            val updated = current.also { it.map = updatedMap }
             update(updated)
         }
     }
@@ -71,12 +72,13 @@ open class TradeReadStateRepository(keyValueStorage: KeyValueStorage<TradeReadSt
      */
     suspend fun updateReadCountIfGreater(tradeId: String, newCount: Int): Boolean {
         return updateMutex.withLock {
+            if (newCount < 0) return@withLock false
             val current = fetch() ?: TradeReadState()
             val currentCount = current.map[tradeId] ?: 0
             if (newCount > currentCount) {
                 val updatedMap = current.map.toMutableMap()
                 updatedMap[tradeId] = newCount
-                val updated = TradeReadState().apply { map = updatedMap }
+                val updated = current.copy(map = updatedMap)
                 update(updated)
                 true
             } else {

@@ -44,15 +44,15 @@ class KeyValueStorage<T : BaseModel>(
      * @throws IllegalArgumentException if no object found with that key
      */
     override suspend fun get(prototype: T): T? {
-        return mutex.withLock {
-            val searchKey = generateKey(prototype)
-            try {
-                val key = settings.keys.firstOrNull { it == searchKey }
-                key?.let { deserializer(settings.getStringOrNull(it)!!) }
-            } catch (e: Exception) {
-                getLogger("KeyValueStorage").e { "No saved object with id $searchKey" }
-                null
-            }
+        val searchKey = generateKey(prototype)
+        val serialized = mutex.withLock {
+                settings.getStringOrNull(searchKey)
+            } ?: return null
+        return try {
+            deserializer(serialized)
+        } catch (e: Exception) {
+            getLogger("KeyValueStorage").e { "Failed to deserialize object with key $searchKey" }
+            null
         }
     }
 

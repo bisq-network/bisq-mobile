@@ -6,6 +6,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.data.persistance.PersistenceSource
@@ -38,7 +39,7 @@ abstract class MultiObjectRepository<out T : BaseModel>(
         if (data.id.isBlank()) {
             throw IllegalArgumentException("Cannot create an object with a blank ID")
         }
-        _dataMap.value += (data.id to data)
+        _dataMap.update { it + (data.id to data) }
         persistenceSource?.save(data)
     }
 
@@ -50,7 +51,7 @@ abstract class MultiObjectRepository<out T : BaseModel>(
         if (data.id.isBlank()) {
             throw IllegalArgumentException("Cannot update an object with a blank ID")
         }
-        _dataMap.value += (data.id to data)
+        _dataMap.update { it + (data.id to data) }
         persistenceSource?.save(data)
     }
 
@@ -62,7 +63,7 @@ abstract class MultiObjectRepository<out T : BaseModel>(
         if (data.id.isBlank()) {
             throw IllegalArgumentException("Cannot delete an object with a blank ID")
         }
-        _dataMap.value -= data.id
+        _dataMap.update { it - data.id }
         persistenceSource?.delete(data)
     }
 
@@ -77,7 +78,7 @@ abstract class MultiObjectRepository<out T : BaseModel>(
         }
 
         val newEntries = itemsWithValidIds.associateBy { it.id }
-        _dataMap.value += newEntries
+        _dataMap.update { it + newEntries }
         persistenceSource?.let { source ->
             itemsWithValidIds.forEach { source.save(it) }
         }
@@ -89,7 +90,7 @@ abstract class MultiObjectRepository<out T : BaseModel>(
      */
     suspend fun deleteAll(items: List<@UnsafeVariance T>) {
         val idsToRemove = items.map { it.id }.filter { it.isNotBlank() }
-        _dataMap.value -= idsToRemove.toSet()
+        _dataMap.update { it - idsToRemove.toSet() }
         persistenceSource?.let { source ->
             items.forEach { source.delete(it) }
         }
@@ -103,7 +104,7 @@ abstract class MultiObjectRepository<out T : BaseModel>(
         if (_dataMap.value.isEmpty() && persistenceSource != null && prototype != null) {
             val items = persistenceSource.getAll(prototype)
             val newMap = items.associateBy { it.id }
-            _dataMap.value = newMap
+            _dataMap.update { newMap }
         }
         return _dataMap.value.values.toList()
     }
@@ -132,7 +133,7 @@ abstract class MultiObjectRepository<out T : BaseModel>(
         } catch (e: Exception) {
             log.e("Failed to cancel repository coroutine scope", e)
         } finally {
-            _dataMap.value = emptyMap()
+            _dataMap.update { emptyMap() }
         }
     }
 }
