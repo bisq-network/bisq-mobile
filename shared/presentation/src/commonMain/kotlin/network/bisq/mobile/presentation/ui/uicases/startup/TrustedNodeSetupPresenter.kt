@@ -35,6 +35,8 @@ class TrustedNodeSetupPresenter(
 
     companion object {
         const val SAFEGUARD_TEST_TIMEOUT = 10000L
+        const val LOCALHOST = "localhost"
+        const val ANDROID_LOCALHOST = "10.0.2.2"
     }
 
     enum class NetworkType(private val i18nKey: String) {
@@ -55,7 +57,7 @@ class TrustedNodeSetupPresenter(
     private val _port = MutableStateFlow("8090")
     val port: StateFlow<String> get() = _port.asStateFlow()
 
-    private val _hostPrompt = MutableStateFlow("10.0.2.2")
+    private val _hostPrompt = MutableStateFlow(localHost())
     val hostPrompt: StateFlow<String> get() = _hostPrompt.asStateFlow()
 
     private val _trustedNodeVersion = MutableStateFlow("")
@@ -85,7 +87,7 @@ class TrustedNodeSetupPresenter(
 
         updateHostPrompt()
         if (BuildConfig.IS_DEBUG) {
-            _host.value = "10.0.2.2"
+            _host.value = localHost()
             validateApiUrl()
         }
 
@@ -289,7 +291,7 @@ class TrustedNodeSetupPresenter(
     private fun updateHostPrompt() {
         if (selectedNetworkType.value == NetworkType.LAN) {
             if (BuildConfig.IS_DEBUG) {
-                _hostPrompt.value = "10.0.2.2"
+                _hostPrompt.value = localHost()
             } else {
                 _hostPrompt.value = "192.168.1.10"
             }
@@ -304,6 +306,7 @@ class TrustedNodeSetupPresenter(
         }
         if (selectedNetworkType.value == NetworkType.LAN) {
             // We only support IPv4 as we only support LAN addresses
+            if (value == localHost()) return null
             if (!value.isValidIpv4()) {
                 return "mobile.trustedNodeSetup.host.ip.invalid".i18n()
             }
@@ -327,5 +330,9 @@ class TrustedNodeSetupPresenter(
     private fun validateApiUrl() {
         _isApiUrlValid.value = validateHost(host.value) == null &&
                 validatePort(port.value) == null
+    }
+
+    private fun localHost(): String {
+        return if (isIOS()) LOCALHOST else ANDROID_LOCALHOST
     }
 }
