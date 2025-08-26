@@ -38,11 +38,7 @@ abstract class MultiObjectRepository<out T : BaseModel>(
         if (data.id.isBlank()) {
             throw IllegalArgumentException("Cannot create an object with a blank ID")
         }
-        
-        val currentMap = _dataMap.value.toMutableMap()
-        currentMap[data.id] = data
-        _dataMap.value = currentMap
-        
+        _dataMap.value += (data.id to data)
         persistenceSource?.save(data)
     }
 
@@ -54,11 +50,7 @@ abstract class MultiObjectRepository<out T : BaseModel>(
         if (data.id.isBlank()) {
             throw IllegalArgumentException("Cannot update an object with a blank ID")
         }
-        
-        val currentMap = _dataMap.value.toMutableMap()
-        currentMap[data.id] = data
-        _dataMap.value = currentMap
-        
+        _dataMap.value += (data.id to data)
         persistenceSource?.save(data)
     }
 
@@ -70,12 +62,37 @@ abstract class MultiObjectRepository<out T : BaseModel>(
         if (data.id.isBlank()) {
             throw IllegalArgumentException("Cannot delete an object with a blank ID")
         }
-        
-        val currentMap = _dataMap.value.toMutableMap()
-        currentMap.remove(data.id)
-        _dataMap.value = currentMap
-        
+        _dataMap.value -= data.id
         persistenceSource?.delete(data)
+    }
+
+    /**
+     * Creates multiple objects in the repository in a single operation.
+     * @param items The objects to create
+     */
+    suspend fun createAll(items: List<@UnsafeVariance T>) {
+        val itemsWithValidIds = items.filter { it.id.isNotBlank() }
+        if (itemsWithValidIds.size != items.size) {
+            throw IllegalArgumentException("Cannot create objects with blank IDs")
+        }
+
+        val newEntries = itemsWithValidIds.associateBy { it.id }
+        _dataMap.value += newEntries
+        persistenceSource?.let { source ->
+            itemsWithValidIds.forEach { source.save(it) }
+        }
+    }
+
+    /**
+     * Deletes multiple objects from the repository in a single operation.
+     * @param items The objects to delete
+     */
+    suspend fun deleteAll(items: List<@UnsafeVariance T>) {
+        val idsToRemove = items.map { it.id }.filter { it.isNotBlank() }
+        _dataMap.value -= idsToRemove.toSet()
+        persistenceSource?.let { source ->
+            items.forEach { source.delete(it) }
+        }
     }
 
     /**
