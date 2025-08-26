@@ -6,6 +6,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.data.model.Trade
+import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.persistance.KeyValueStorage
 import network.bisq.mobile.domain.data.persistance.PersistenceSource
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -43,6 +44,15 @@ val testModule = module {
             settings = get(),
             serializer = { Json.encodeToString(it) },
             deserializer = { Json.decodeFromString<network.bisq.mobile.domain.data.model.Settings>(it) }
+        )
+    }
+
+    // Specific persistence source for TradeReadState
+    single<PersistenceSource<TradeReadState>>(qualifier = named("tradeReadStateStorage")) {
+        KeyValueStorage(
+            settings = get(),
+            serializer = { Json.encodeToString(it) },
+            deserializer = { Json.decodeFromString<TradeReadState>(it) }
         )
     }
 
