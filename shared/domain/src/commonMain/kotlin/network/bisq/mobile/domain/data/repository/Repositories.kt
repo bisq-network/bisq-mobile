@@ -15,6 +15,8 @@ import network.bisq.mobile.domain.data.persistance.KeyValueStorage
 open class SettingsRepository(keyValueStorage: KeyValueStorage<Settings>) : SingleObjectRepository<Settings>(keyValueStorage, Settings())
 open class TradeReadStateRepository(keyValueStorage: KeyValueStorage<TradeReadState>) : MultiObjectRepository<TradeReadState>(keyValueStorage, TradeReadState("prototype", 0)) {
 
+    private val updateMutex = Mutex()
+
     /**
      * Thread-safe method to get the read count for a specific trade.
      * @param tradeId The ID of the trade
@@ -32,13 +34,15 @@ open class TradeReadStateRepository(keyValueStorage: KeyValueStorage<TradeReadSt
     suspend fun setReadCount(tradeId: String, count: Int) {
         if (count < 0) return
 
-        val tradeReadState = TradeReadState(tradeId, count)
-        val existing = fetchById(tradeId)
+        updateMutex.withLock {
+            val tradeReadState = TradeReadState(tradeId, count)
+            val existing = fetchById(tradeId)
 
-        if (existing != null) {
-            update(tradeReadState)
-        } else {
-            create(tradeReadState)
+            if (existing != null) {
+                update(tradeReadState)
+            } else {
+                create(tradeReadState)
+            }
         }
     }
 
@@ -48,10 +52,19 @@ open class TradeReadStateRepository(keyValueStorage: KeyValueStorage<TradeReadSt
      * @return The new read count after incrementing
      */
     suspend fun incrementReadCount(tradeId: String): Int {
-        val currentCount = getReadCount(tradeId)
-        val newCount = currentCount + 1
-        setReadCount(tradeId, newCount)
-        return newCount
+        return updateMutex.withLock {
+            val currentCount = fetchById(tradeId)?.readCount ?: 0
+            val newCount = currentCount + 1
+            val tradeReadState = TradeReadState(tradeId, newCount)
+            val existing = fetchById(tradeId)
+
+            if (existing != null) {
+                update(tradeReadState)
+            } else {
+                create(tradeReadState)
+            }
+            newCount
+        }
     }
 
     /**
@@ -64,12 +77,21 @@ open class TradeReadStateRepository(keyValueStorage: KeyValueStorage<TradeReadSt
     suspend fun updateReadCountIfGreater(tradeId: String, newCount: Int): Boolean {
         if (newCount < 0) return false
 
-        val currentCount = getReadCount(tradeId)
-        return if (newCount > currentCount) {
-            setReadCount(tradeId, newCount)
-            true
-        } else {
-            false
+        return updateMutex.withLock {
+            val currentCount = fetchById(tradeId)?.readCount ?: 0
+            if (newCount > currentCount) {
+                val tradeReadState = TradeReadState(tradeId, newCount)
+                val existing = fetchById(tradeId)
+
+                if (existing != null) {
+                    update(tradeReadState)
+                } else {
+                    create(tradeReadState)
+                }
+                true
+            } else {
+                false
+            }
         }
     }
 
@@ -78,9 +100,11 @@ open class TradeReadStateRepository(keyValueStorage: KeyValueStorage<TradeReadSt
      * @param tradeId The ID of the trade
      */
     suspend fun clearReadState(tradeId: String) {
-        val existing = fetchById(tradeId)
-        if (existing != null) {
-            delete(existing)
+        updateMutex.withLock {
+            val existing = fetchById(tradeId)
+            if (existing != null) {
+                delete(existing)
+            }
         }
     }
 }
