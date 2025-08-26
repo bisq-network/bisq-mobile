@@ -342,7 +342,11 @@ class WebSocketClient(
                         //todo add input validation
                         log.d { "Received raw text $message" }
                         val webSocketMessage: WebSocketMessage =
-                            json.decodeFromString<WebSocketMessage>(message)
+                            runCatching {
+                                json.decodeFromString<WebSocketMessage>(message)
+                            }.onFailure {
+                                log.w(it) { "Failed to decode WS message; dropping frame. Raw=$message" }
+                            }.getOrNull() ?: continue
                         log.i { "Received webSocketMessage $webSocketMessage" }
                         if (webSocketMessage is WebSocketResponse) {
                             onWebSocketResponse(webSocketMessage)
