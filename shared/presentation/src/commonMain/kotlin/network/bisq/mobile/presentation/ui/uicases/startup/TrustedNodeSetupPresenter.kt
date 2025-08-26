@@ -37,6 +37,7 @@ class TrustedNodeSetupPresenter(
         const val SAFEGUARD_TEST_TIMEOUT = 10000L
         const val LOCALHOST = "localhost"
         const val ANDROID_LOCALHOST = "10.0.2.2"
+        const val IPV4_EXAMPLE = "192.168.1.10"
     }
 
     enum class NetworkType(private val i18nKey: String) {
@@ -57,7 +58,9 @@ class TrustedNodeSetupPresenter(
     private val _port = MutableStateFlow("8090")
     val port: StateFlow<String> get() = _port.asStateFlow()
 
-    private val _hostPrompt = MutableStateFlow(localHost())
+    private val _hostPrompt = MutableStateFlow(
+        if (BuildConfig.IS_DEBUG) localHost() else IPV4_EXAMPLE
+    )
     val hostPrompt: StateFlow<String> get() = _hostPrompt.asStateFlow()
 
     private val _trustedNodeVersion = MutableStateFlow("")
@@ -293,7 +296,7 @@ class TrustedNodeSetupPresenter(
             if (BuildConfig.IS_DEBUG) {
                 _hostPrompt.value = localHost()
             } else {
-                _hostPrompt.value = "192.168.1.10"
+                _hostPrompt.value = IPV4_EXAMPLE
             }
         } else {
             _hostPrompt.value = "mobile.trustedNodeSetup.host.prompt".i18n()
@@ -306,7 +309,11 @@ class TrustedNodeSetupPresenter(
         }
         if (selectedNetworkType.value == NetworkType.LAN) {
             // We only support IPv4 as we only support LAN addresses
-            if (value == localHost()) return null
+            // Accept "localhost" on any platform; on Android, normalize it to 10.0.2.2 (emulator host).
+            val normalized = if (value.equals(LOCALHOST, ignoreCase = true) && !isIOS()) {
+                ANDROID_LOCALHOST
+            } else value
+            if (normalized.equals(localHost(), ignoreCase = true)) return null
             if (!value.isValidIpv4()) {
                 return "mobile.trustedNodeSetup.host.ip.invalid".i18n()
             }
