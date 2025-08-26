@@ -342,7 +342,7 @@ class WebSocketClient(
                         //todo add input validation
                         log.d { "Received raw text $message" }
                         val webSocketMessage: WebSocketMessage =
-                            json.decodeFromString(WebSocketMessage.serializer(), message)
+                            json.decodeFromString<WebSocketMessage>(message)
                         log.i { "Received webSocketMessage $webSocketMessage" }
                         if (webSocketMessage is WebSocketResponse) {
                             onWebSocketResponse(webSocketMessage)
