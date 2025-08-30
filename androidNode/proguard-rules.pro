@@ -184,13 +184,24 @@
 # Keep KMP Framework Class Names
 -keep class kotlinx.** { *; }
 
-# Keep Compose Compiler Intrinsics
--keep class androidx.compose.** { *; }
+# Keep Compose Compiler Intrinsics - More specific rules to avoid lock verification issues
+-keep class androidx.compose.runtime.** { *; }
+-keep class androidx.compose.runtime.snapshots.** { *; }
+-keep class androidx.compose.ui.** { *; }
 
 # Keep all classes annotated with @Composable
 -keep class * {
     @androidx.compose.runtime.Composable *;
 }
+
+# Prevent lock verification issues with Compose state management
+-keep class androidx.compose.runtime.snapshots.SnapshotStateList {
+    public <methods>;
+}
+
+# Keep Compose compiler generated classes
+-keep class **.*ComposableSingletons* { *; }
+-keep class **.*LiveLiterals* { *; }
 
 # Keep Composer Intrinsics
 -keep class androidx.compose.runtime.internal.ComposableLambdaImpl { *; }

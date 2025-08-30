@@ -68,6 +68,12 @@ android {
     namespace = "network.bisq.mobile.node"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
+    // Java compatibility for performance s/ using desugaring
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+
     signingConfigs {
         create("release") {
             if (localProperties["KEYSTORE_PATH"] != null) {
@@ -192,6 +198,10 @@ android {
 
             // Keep standard heap in debug for leak detection
             manifestPlaceholders["largeHeap"] = "false"
+
+            // Disable minification in debug to avoid lock verification issues
+            isMinifyEnabled = false
+            isShrinkResources = false
         }
     }
     applicationVariants.all {
