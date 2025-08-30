@@ -11,17 +11,11 @@ class MainActivity : BisqMainActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Install splash screen before super.onCreate to prevent UI blocking
-        val splashScreen = installSplashScreen()
-
-        // Keep splash screen visible while heavy initialization happens
-        splashScreen.setKeepOnScreenCondition {
-            // This will be controlled by the bootstrap process
-            false
-        }
-
+        installSplashScreen()
         super.onCreate(savedInstanceState)
 
-        // Enable hardware acceleration for better graphics performance
+        // Enforce enable hardware acceleration for better graphics performance
+        // tested with better results than manifest flag
         window.setFlags(
             android.view.WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
             android.view.WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED

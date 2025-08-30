@@ -10,15 +10,11 @@ import bisq.common.facades.android.AndroidGuavaFacade
 import bisq.common.facades.android.AndroidJdkFacade
 import bisq.common.network.clear_net_address_types.AndroidEmulatorAddressTypeFacade
 import bisq.common.network.clear_net_address_types.LANAddressTypeFacade
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.di.androidNodeModule
 import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.di.serviceModule
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -39,8 +35,6 @@ class MainApplication : BisqMainApplication(), ComponentCallbacks2 {
 
     // Lazy inject to avoid circular dependencies during app startup
     private val nodeOffersServiceFacade: OffersServiceFacade? by inject()
-    private val job = Job()
-    private val scope = CoroutineScope(job + IODispatcher)
 
     companion object {
         private val nodeModules = listOf(domainModule, serviceModule, presentationModule, androidNodeModule)
@@ -95,7 +89,6 @@ class MainApplication : BisqMainApplication(), ComponentCallbacks2 {
     }
 
     @SuppressLint("WrongConstant")
-    @Deprecated("Deprecated in Java")
     override fun onLowMemory() {
         super.onLowMemory()
         log.w { "System low memory callback" }

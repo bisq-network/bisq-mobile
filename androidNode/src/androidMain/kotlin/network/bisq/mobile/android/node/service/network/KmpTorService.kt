@@ -46,6 +46,7 @@ class KmpTorService : ServiceFacade(), Logging {
     private var deferredSocksPort = CompletableDeferred<Int>()
     private var torDaemonStarted = CompletableDeferred<Boolean>()
     private var controlPortFileObserverJob: Job? = null
+    private var configJob: Job? = null
 
     private val _startupFailure: MutableStateFlow<KmpTorException?> = MutableStateFlow(null)
     val startupFailure: StateFlow<KmpTorException?> get() = _startupFailure.asStateFlow()
@@ -65,6 +66,12 @@ class KmpTorService : ServiceFacade(), Logging {
             { error ->
                 resetAndDispose()
                 handleError("Starting tor daemon failed: $error")
+                torStartupCompleted.takeIf { !it.isCompleted }?.completeExceptionally(
+                    KmpTorException("Starting tor daemon failed: $error")
+                )
+                // Cancel the running config coroutine
+                configJob?.cancel()
+                configJob = null
             },
             {
                 log.i("Tor daemon started")
@@ -193,7 +200,7 @@ class KmpTorService : ServiceFacade(), Logging {
 
     private fun configTor(): CompletableDeferred<Boolean> {
         val configCompleted = CompletableDeferred<Boolean>()
-        launchIO {
+        configJob = launchIO {
             try {
                 val socksPort = deferredSocksPort.await()
                 val controlPort = readControlPort().await()
@@ -210,6 +217,8 @@ class KmpTorService : ServiceFacade(), Logging {
                 log.e(error) { "Configuring tor failed" }
                 handleError("Configuring tor failed: $error")
                 configCompleted.takeIf { !it.isCompleted }?.completeExceptionally(error)
+            } finally {
+                if (configJob?.isActive != true) configJob = null
             }
         }
         return configCompleted
@@ -338,7 +347,7 @@ class KmpTorService : ServiceFacade(), Logging {
             }
         } catch (error: Exception) {
             log.e(error) { "external_tor.config validation failed" }
-            throw KmpTorException("external_tor.config validation failed: ${error.message}")
+            throw KmpTorException("external_tor.config validation failed: ${error.message}", error)
         }
     }
 
@@ -394,6 +403,8 @@ class KmpTorService : ServiceFacade(), Logging {
     private fun resetAndDispose() {
         deferredSocksPort = CompletableDeferred()
         torDaemonStarted = CompletableDeferred()
+        configJob?.cancel()
+        configJob = null
         disposeControlPortFileObserver()
         _startupFailure.value = null
     }

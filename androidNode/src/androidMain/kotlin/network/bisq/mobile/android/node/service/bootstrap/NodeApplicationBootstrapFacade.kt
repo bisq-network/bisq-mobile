@@ -6,9 +6,11 @@ import bisq.common.observable.Observable
 import bisq.common.observable.Pin
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.service.network.KmpTorService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -114,7 +116,11 @@ class NodeApplicationBootstrapFacade(
     }
 
     private fun onTorInitializationFail() {
-        val errorMessage = kmpTorService.startupFailure.value?.message ?: "Unknown Tor error"
+        val failure = kmpTorService.startupFailure.value
+        val errorMessage = listOfNotNull(
+            failure?.message,
+            failure?.cause?.message
+        ).firstOrNull() ?: "Unknown Tor error"
         setState("bootstrap.torError".i18n() + ": $errorMessage")
         setProgress(0f)
         cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
@@ -197,6 +203,7 @@ class NodeApplicationBootstrapFacade(
         if (isTorSupported()) {
             log.i { "Bootstrap: Waiting for Tor initialization to complete..." }
             torInitializationCompleted.await()
+            // Wait briefly for Bisq2 to write external_tor.config to avoid false negatives
             checkForTorConfigFile()
             log.i { "Bootstrap: Tor initialization wait completed" }
         } else {
@@ -204,20 +211,26 @@ class NodeApplicationBootstrapFacade(
         }
     }
 
-    private suspend fun checkForTorConfigFile() {
+    private suspend fun checkForTorConfigFile(
+        maxWaitMs: Long = 5_000,
+        pollMs: Long = 100
+    ) {
         try {
             val baseDir = applicationService.applicationService.config.baseDir!!
-            val torDir = File(baseDir.toFile(), "tor")
-            val configFile = File(torDir, "external_tor.config")
+            val configFile = File(File(baseDir.toFile(), "tor"), "external_tor.config")
 
-            if (!configFile.exists()) {
-                log.w { "Bootstrap: external_tor.config not found after Tor initialization" }
-                throw RuntimeException("external_tor.config not found")
+            withTimeout(maxWaitMs) {
+                while (!configFile.exists()) {
+                    delay(pollMs)
+                }
             }
 
-            // Give Bisq2 a moment to detect the external config
+            // Small grace period for downstream detection
             delay(200)
-            log.i { "Bootstrap: Tor configuration verified and ready" }
+            log.i { "Bootstrap: Tor configuration verified and ready (${configFile.absolutePath})" }
+        } catch (e: TimeoutCancellationException) {
+            log.e { "Bootstrap: external_tor.config not detected within ${maxWaitMs}ms" }
+            throw RuntimeException("external_tor.config not found within ${maxWaitMs}ms timeout")
         } catch (e: Exception) {
             log.e(e) { "Bootstrap: Error verifying Tor configuration" }
             throw e
@@ -354,7 +367,9 @@ class NodeApplicationBootstrapFacade(
         if (isTorSupported()) {
             log.i { "Bootstrap: Stopping Tor daemon for retry" }
             try {
-                kmpTorService.stopTor(true).await()
+                withTimeout(10_000) {
+                    kmpTorService.stopTor(true).await()
+                }
                 torWasStartedBefore = false
                 log.i { "Bootstrap: Tor daemon stopped successfully" }
             } catch (e: Exception) {
@@ -379,7 +394,10 @@ class NodeApplicationBootstrapFacade(
             // Check if it's a Tor-related error
             val torFailure = kmpTorService.startupFailure.value
             if (torFailure != null) {
-                "bootstrap.torError".i18n() + ": ${torFailure.message}"
+                "bootstrap.torError".i18n() + ": " + listOfNotNull(
+                    torFailure.message,
+                    torFailure.cause?.message
+                ).firstOrNull()
             } else {
                 // Check if it's a network configuration issue
                 val applicationServiceInstance = applicationService.applicationService

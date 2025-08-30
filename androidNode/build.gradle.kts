@@ -68,12 +68,6 @@ android {
     namespace = "network.bisq.mobile.node"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
 
-    // Java compatibility for performance s/ using desugaring
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_21
-        targetCompatibility = JavaVersion.VERSION_21
-    }
-
     signingConfigs {
         create("release") {
             if (localProperties["KEYSTORE_PATH"] != null) {
