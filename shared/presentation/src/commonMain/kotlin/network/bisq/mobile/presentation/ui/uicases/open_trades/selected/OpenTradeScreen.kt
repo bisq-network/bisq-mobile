@@ -27,6 +27,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
 import network.bisq.mobile.presentation.ui.components.organisms.chat.UndoIgnoreDialog
 import network.bisq.mobile.presentation.ui.components.organisms.trades.CancelTradeDialog
@@ -69,6 +70,7 @@ fun OpenTradeScreen() {
     val tradeCloseType by headerPresenter.tradeCloseType.collectAsState()
     val showInterruptionConfirmationDialog by headerPresenter.showInterruptionConfirmationDialog.collectAsState()
     val showMediationConfirmationDialog by headerPresenter.showMediationConfirmationDialog.collectAsState()
+    val mediationError by headerPresenter.mediationError.collectAsState()
     val showUndoIgnoreDialog by presenter.showUndoIgnoreDialog.collectAsState()
     val newMsgCount by presenter.newMsgCount.collectAsState()
     val lastChatMsg by presenter.lastChatMsg.collectAsState()
@@ -86,6 +88,7 @@ fun OpenTradeScreen() {
         derivedStateOf {
             showInterruptionConfirmationDialog ||
                     showMediationConfirmationDialog ||
+                    mediationError.isNotBlank() ||
                     buyerState1aShowInvalidAddressDialog ||
                     sellerState3aShowInvalidAddressDialog ||
                     buyerState4ShowCloseTradeDialog ||
@@ -180,6 +183,15 @@ fun OpenTradeScreen() {
         OpenMediationDialog(
             onCancelConfirm = headerPresenter::onOpenMediation,
             onDismiss = headerPresenter::onCloseMediationConfirmationDialog,
+        )
+    }
+
+    if (mediationError.isNotBlank()) {
+        WarningConfirmationDialog(
+            message = mediationError,
+            dismissButtonText = "",
+            onConfirm = headerPresenter::onCloseMediationErrorDialog,
+            onDismiss = headerPresenter::onCloseMediationErrorDialog
         )
     }
 

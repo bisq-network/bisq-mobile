@@ -68,6 +68,9 @@ class TradeDetailsHeaderPresenter(
     private val _isInMediation: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isInMediation: StateFlow<Boolean> get() = this._isInMediation.asStateFlow()
 
+    private val _mediationError = MutableStateFlow("")
+    val mediationError: StateFlow<String> get() = _mediationError.asStateFlow()
+
     private val _peerAvatar: MutableStateFlow<PlatformImage?> = MutableStateFlow(null)
     val peerAvatar: StateFlow<PlatformImage?> get() = _peerAvatar.asStateFlow()
 
@@ -300,15 +303,29 @@ class TradeDetailsHeaderPresenter(
         _showMediationConfirmationDialog.value = false
         launchIO {
             try {
-                mediationServiceFacade.reportToMediator(selectedTrade.value!!)
+                val result = mediationServiceFacade.reportToMediator(selectedTrade.value!!)
+                if (result.isFailure) {
+                    val err = result.exceptionOrNull()
+                    if (err != null && err.message == "No mediator found") { // Should be a NoMediatorException
+                        // With support chats in mobile:
+                        // bisqEasy.takeOffer.noMediatorAvailable.warning // =There is no mediator available. You have to use the support chat instead.
+                        _mediationError.value = "mobile.takeOffer.noMediatorAvailable.warning".i18n()
+                    } else {
+                        _mediationError.value = "mobile.bisqEasy.tradeState.mediationFailed".i18n()
+                    }
+                    log.e(err) { "Failed to proceed to report to mediation - ${err?.message}" }
+                }
             } catch (e: Exception) {
-                // TODO we probably want a UI for this
-                showSnackbar("mobile.bisqEasy.tradeState.mediationFailed".i18n())
+                _mediationError.value = "mobile.bisqEasy.tradeState.mediationFailed".i18n()
                 log.e(e) { "Failed to proceed to report to mediation - ${e.message}" }
             } finally {
                 enableInteractive()
             }
         }
+    }
+
+    fun onCloseMediationErrorDialog() {
+        _mediationError.value = ""
     }
 
     fun onToggleHeader() {

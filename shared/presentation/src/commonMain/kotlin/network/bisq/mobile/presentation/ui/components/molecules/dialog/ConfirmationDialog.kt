@@ -56,35 +56,45 @@ fun ConfirmationDialog(
         }
         if (verticalButtonPlacement) {
             Column {
-                BisqButton(
-                    text = confirmButtonText,
-                    onClick = onConfirm,
-                    fullWidth = true
-                )
-                BisqGap.VHalf()
-                BisqButton(
-                    text = dismissButtonText,
-                    type = BisqButtonType.Grey,
-                    onClick = onDismiss,
-                    fullWidth = true
-                )
+                if (confirmButtonText.isNotBlank()) {
+                    BisqButton(
+                        text = confirmButtonText,
+                        onClick = onConfirm,
+                        fullWidth = true
+                    )
+                }
+                if (confirmButtonText.isNotBlank() && dismissButtonText.isNotBlank()) {
+                    BisqGap.VHalf()
+                }
+                if (dismissButtonText.isNotBlank()) {
+                    BisqButton(
+                        text = dismissButtonText,
+                        type = BisqButtonType.Grey,
+                        onClick = onDismiss,
+                        fullWidth = true
+                    )
+                }
             }
         } else {
             Row(
                 modifier = Modifier.height(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
             ) {
-                BisqButton(
-                    modifier = Modifier.weight(1.0F).fillMaxHeight(),
-                    text = confirmButtonText,
-                    onClick = onConfirm,
-                )
-                BisqButton(
-                    modifier = Modifier.weight(1.0F).fillMaxHeight(),
-                    text = dismissButtonText,
-                    type = BisqButtonType.Grey,
-                    onClick = onDismiss,
-                )
+                if (confirmButtonText.isNotBlank()) {
+                    BisqButton(
+                        modifier = Modifier.weight(1.0F).fillMaxHeight(),
+                        text = confirmButtonText,
+                        onClick = onConfirm,
+                    )
+                }
+                if (dismissButtonText.isNotBlank()) {
+                    BisqButton(
+                        modifier = Modifier.weight(1.0F).fillMaxHeight(),
+                        text = dismissButtonText,
+                        type = BisqButtonType.Grey,
+                        onClick = onDismiss,
+                    )
+                }
             }
         }
     }
