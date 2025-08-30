@@ -4,6 +4,7 @@ import bisq.application.State
 import bisq.common.network.TransportType
 import bisq.common.observable.Observable
 import bisq.common.observable.Pin
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
@@ -13,8 +14,8 @@ import network.bisq.mobile.android.node.service.network.KmpTorService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import java.io.File
 
 class NodeApplicationBootstrapFacade(
     private val applicationService: AndroidApplicationService.Provider,
@@ -113,13 +114,14 @@ class NodeApplicationBootstrapFacade(
     }
 
     private fun onTorInitializationFail() {
-        setState("bootstrap.torFailed".i18n())
+        val errorMessage = kmpTorService.startupFailure.value?.message ?: "Unknown Tor error"
+        setState("bootstrap.torError".i18n() + ": $errorMessage")
         setProgress(0f)
         cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
         setBootstrapFailed(true)
         // Complete Tor initialization even on failure so we can proceed
         torInitializationCompleted.complete(Unit)
-        log.w { "Bootstrap: Tor initialization failed - showing retry option to user" }
+        log.w { "Bootstrap: Tor initialization failed - $errorMessage" }
     }
 
     private fun setupApplicationStateObserver() {
@@ -180,10 +182,12 @@ class NodeApplicationBootstrapFacade(
                 }
 
                 State.FAILED -> {
-                    setState("splash.applicationServiceState.FAILED".i18n())
+                    val errorMessage = getDetailedErrorMessage()
+                    setState(errorMessage)
                     setProgress(0f)
                     cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
                     setBootstrapFailed(true)
+                    log.e { "Bootstrap: Application service failed - $errorMessage" }
                 }
             }
         }
@@ -193,9 +197,30 @@ class NodeApplicationBootstrapFacade(
         if (isTorSupported()) {
             log.i { "Bootstrap: Waiting for Tor initialization to complete..." }
             torInitializationCompleted.await()
+            checkForTorConfigFile()
             log.i { "Bootstrap: Tor initialization wait completed" }
         } else {
             log.d { "Bootstrap: CLEARNET configuration - no Tor wait required" }
+        }
+    }
+
+    private suspend fun checkForTorConfigFile() {
+        try {
+            val baseDir = applicationService.applicationService.config.baseDir!!
+            val torDir = File(baseDir.toFile(), "tor")
+            val configFile = File(torDir, "external_tor.config")
+
+            if (!configFile.exists()) {
+                log.w { "Bootstrap: external_tor.config not found after Tor initialization" }
+                throw RuntimeException("external_tor.config not found")
+            }
+
+            // Give Bisq2 a moment to detect the external config
+            delay(200)
+            log.i { "Bootstrap: Tor configuration verified and ready" }
+        } catch (e: Exception) {
+            log.e(e) { "Bootstrap: Error verifying Tor configuration" }
+            throw e
         }
     }
 
@@ -229,13 +254,41 @@ class NodeApplicationBootstrapFacade(
             val networkService = applicationServiceInstance.networkService
             val supportedTransportTypes = networkService.supportedTransportTypes
             val torSupported = supportedTransportTypes.contains(TransportType.TOR)
+
             log.i { "Bootstrap: Checking Tor support in configuration" }
             log.i { "Supported transport types: $supportedTransportTypes" }
             log.i { "Tor supported: $torSupported" }
+
+            // Validate configuration consistency
+            if (torSupported) {
+                validateTorConfiguration(applicationServiceInstance)
+            }
+
             torSupported
         } catch (e: Exception) {
             log.w(e) { "Bootstrap: Could not check Tor support, defaulting to true" }
             true
+        }
+    }
+
+    private fun validateTorConfiguration(applicationService: AndroidApplicationService) {
+        try {
+            // Check if we have both CLEAR and TOR configured (which could cause issues)
+            val networkServiceConfig = applicationService.networkServiceConfig
+            val supportedTransportTypes = networkServiceConfig.supportedTransportTypes
+            if (supportedTransportTypes.contains(TransportType.CLEAR) &&
+                supportedTransportTypes.contains(TransportType.TOR)) {
+                log.w { "Bootstrap: Both CLEAR and TOR transports are configured - this may cause initialization issues" }
+            }
+
+            // Check if external Tor is properly configured
+            val torConfig = networkServiceConfig.configByTransportType[TransportType.TOR]
+            if (torConfig != null) {
+                log.i { "Bootstrap: Tor configuration found - assuming external Tor is configured" }
+                // Note: We can't easily access the useExternalTor property here, but the config file shows it's set to true
+            }
+        } catch (e: Exception) {
+            log.w(e) { "Bootstrap: Error validating Tor configuration" }
         }
     }
 
@@ -260,7 +313,11 @@ class NodeApplicationBootstrapFacade(
                     setTimeoutDialogVisible(true)
                 }
             } catch (e: Exception) {
-                log.e(e) { "Bootstrap: Timeout job cancelled for stage: $stageName" }
+                if (e is CancellationException) {
+                    log.d { "Bootstrap: Timeout job cancelled for stage: $stageName" }
+                } else {
+                    log.e(e) { "Bootstrap: Error in Timeout job, cancelled for stage: $stageName" }
+                }
             }
         }
     }
@@ -295,13 +352,18 @@ class NodeApplicationBootstrapFacade(
 
         // Kill Tor process if it was started
         if (isTorSupported()) {
-            log.i { "Bootstrap: Stopping Tor daemon" }
-            kmpTorService.stopTor(true).await()
-            torWasStartedBefore = false
+            log.i { "Bootstrap: Stopping Tor daemon for retry" }
+            try {
+                kmpTorService.stopTor(true).await()
+                torWasStartedBefore = false
+                log.i { "Bootstrap: Tor daemon stopped successfully" }
+            } catch (e: Exception) {
+                log.w(e) { "Bootstrap: Error stopping Tor daemon, continuing with retry" }
+            }
         }
 
         // Purposely fail the bootstrap to show failed state
-        setState("splash.applicationServiceState.FAILED".i18n())
+        setState("bootstrap.retryReady".i18n())
         setProgress(0f)
         setBootstrapFailed(true)
         setTimeoutDialogVisible(false)
@@ -310,6 +372,30 @@ class NodeApplicationBootstrapFacade(
         torInitializationCompleted = CompletableDeferred()
 
         log.i { "Bootstrap: Stopped and ready for retry" }
+    }
+
+    private fun getDetailedErrorMessage(): String {
+        return try {
+            // Check if it's a Tor-related error
+            val torFailure = kmpTorService.startupFailure.value
+            if (torFailure != null) {
+                "bootstrap.torError".i18n() + ": ${torFailure.message}"
+            } else {
+                // Check if it's a network configuration issue
+                val applicationServiceInstance = applicationService.applicationService
+                val networkService = applicationServiceInstance.networkService
+                val supportedTransportTypes = networkService.supportedTransportTypes
+
+                if (supportedTransportTypes.contains(TransportType.TOR)) {
+                    "bootstrap.networkTorError".i18n()
+                } else {
+                    "bootstrap.networkError".i18n()
+                }
+            }
+        } catch (e: Exception) {
+            log.w(e) { "Bootstrap: Error getting detailed error message" }
+            "splash.applicationServiceState.FAILED".i18n()
+        }
     }
 
 

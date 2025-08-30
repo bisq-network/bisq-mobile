@@ -198,14 +198,18 @@ class KmpTorService : ServiceFacade(), Logging {
                 val socksPort = deferredSocksPort.await()
                 val controlPort = readControlPort().await()
                 disposeControlPortFileObserver()
+
                 writeExternalTorConfig(socksPort, controlPort)
                 torDaemonStarted.await()
-
                 verifyControlPortAccessible(controlPort)
-                // _startupCompleted.value = true
+                delay(100L)
+
+                log.i { "Tor configuration completed successfully" }
                 configCompleted.takeIf { !it.isCompleted }?.complete(true)
             } catch (error: Exception) {
+                log.e(error) { "Configuring tor failed" }
                 handleError("Configuring tor failed: $error")
+                configCompleted.takeIf { !it.isCompleted }?.completeExceptionally(error)
             }
         }
         return configCompleted
@@ -299,9 +303,42 @@ class KmpTorService : ServiceFacade(), Logging {
                     }
                 }
             }
+
+            // Validate that the config file was written correctly and is readable
+            validateExternalTorConfig(configFile, socksPort, controlPort)
+
             log.i { "Wrote external_tor.config to ${configFile.absolutePath}\n\n$configContent\n\n" }
         } catch (error: Exception) {
             handleError("Failed to write external_tor.config: $error")
+            throw error
+        }
+    }
+
+    private suspend fun validateExternalTorConfig(configFile: File, expectedSocksPort: Int, expectedControlPort: Int) {
+        try {
+            withContext(Dispatchers.IO) {
+                runInterruptible {
+                    if (!configFile.exists()) {
+                        throw KmpTorException("external_tor.config file does not exist after writing")
+                    }
+
+                    val content = configFile.readText()
+                    if (!content.contains("UseExternalTor 1")) {
+                        throw KmpTorException("external_tor.config missing UseExternalTor directive")
+                    }
+                    if (!content.contains("SocksPort 127.0.0.1:$expectedSocksPort")) {
+                        throw KmpTorException("external_tor.config missing or incorrect SocksPort")
+                    }
+                    if (!content.contains("ControlPort 127.0.0.1:$expectedControlPort")) {
+                        throw KmpTorException("external_tor.config missing or incorrect ControlPort")
+                    }
+
+                    log.i { "external_tor.config validation successful" }
+                }
+            }
+        } catch (error: Exception) {
+            log.e(error) { "external_tor.config validation failed" }
+            throw KmpTorException("external_tor.config validation failed: ${error.message}")
         }
     }
 
