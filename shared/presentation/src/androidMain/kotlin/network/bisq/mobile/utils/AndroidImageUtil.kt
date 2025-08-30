@@ -13,6 +13,8 @@ import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 
 /**
  * Android images utility functions
@@ -28,15 +30,29 @@ object AndroidImageUtil : Logging {
         width: Int,
         height: Int
     ): ImageBitmap {
-        val resultBitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        // Use more efficient bitmap configuration for better performance
+        val resultBitmap = createBitmap(width, height)
         val canvas = Canvas(resultBitmap)
-        val paint = Paint()
+        val paint = Paint().apply {
+            isAntiAlias = false // Disable anti-aliasing for better performance
+            isFilterBitmap = false // Disable bitmap filtering for better performance
+        }
 
         paths.forEach { path ->
             val bitmap = getImageByPath(context, basePath, path)
             if (bitmap != null) {
-                val scaledBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)
+                // Only scale if necessary to avoid unnecessary operations
+                val scaledBitmap = if (bitmap.width != width || bitmap.height != height) {
+                    bitmap.scale(width, height, false) // Use faster scaling
+                } else {
+                    bitmap
+                }
                 canvas.drawBitmap(scaledBitmap, 0f, 0f, paint)
+
+                // Recycle scaled bitmap if it's different from original to free memory
+                if (scaledBitmap != bitmap) {
+                    scaledBitmap.recycle()
+                }
             }
         }
 

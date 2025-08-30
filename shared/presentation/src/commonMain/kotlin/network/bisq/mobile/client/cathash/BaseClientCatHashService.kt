@@ -8,17 +8,19 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.pubKeyHashAsByteArray
+import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.base64ToByteArray
 import network.bisq.mobile.domain.utils.concat
 import network.bisq.mobile.domain.utils.toHex
 import okio.FileSystem
+import okio.Path
 import okio.Path.Companion.toPath
 import okio.SYSTEM
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 abstract class BaseClientCatHashService(private val baseDirPath: String) :
-    ClientCatHashService<PlatformImage?>, Logging {
+    ServiceFacade(), ClientCatHashService<PlatformImage?>, Logging {
     companion object {
         const val SIZE_OF_CACHED_ICONS = 60
         const val MAX_CACHE_SIZE = 5000
@@ -87,22 +89,33 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
             val buckets = BucketEncoder.encode(catHashInput, bucketSizes)
             val paths: Array<String?> = BucketEncoder.toPaths(buckets, bucketConfig.pathTemplates)
             val pathsList: Array<String> = paths.filterNotNull().toTypedArray()
+
+            // Generate image with optimized size for better performance
             val image = composeImage(pathsList, SIZE_OF_CACHED_ICONS * 2)
 
             val passed = Clock.System.now().toEpochMilliseconds() - ts
-            log.i("Creating user profile icon for $userProfileId took $passed ms.")
+            if (passed > 100) { // Only log if it takes more than 100ms
+                log.i("Creating user profile icon for $userProfileId took $passed ms.")
+            }
+
             if (image != null && useCache && cache.size < MAX_CACHE_SIZE) {
                 cache[catHashInput] = image
-                try {
-                    writeRawImage(image, iconFilePath.toString())
-                } catch (e: Exception) {
-                    log.e("Error writing image", e)
-                }
+                writeAsync(image, iconFilePath)
             }
             return image
         } catch (e: Exception) {
             log.e { e.toString() }
             throw e
+        }
+    }
+
+    private fun writeAsync(image: PlatformImage, iconFilePath: Path) {
+        launchIO {
+            try {
+                writeRawImage(image, iconFilePath.toString())
+            } catch (e: Exception) {
+                log.e("Error writing image", e)
+            }
         }
     }
 

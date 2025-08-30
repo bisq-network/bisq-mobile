@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
@@ -189,17 +190,28 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
         val key = userProfile.nym
-        return avatarMap.computeIfAbsent(key) {
-            try {
-                catHashService.getImage(
-                    Base64.getDecoder().decode(userProfile.networkId.pubKey.hash),
-                    Base64.getDecoder().decode(userProfile.proofOfWork.solutionEncoded),
-                    userProfile.avatarVersion,
-                    DEFAULT_SIZE
-                )
-            } catch (e: Exception) {
-                log.e(e) { "Avatar generation failed for ${userProfile.nym}" }
-                null
+        avatarMap[key]?.let { return it }
+        return generateCatHash(key, userProfile)
+    }
+
+    private suspend fun generateCatHash(
+        key: String,
+        userProfile: UserProfileVO
+    ): PlatformImage? {
+        return withContext(Dispatchers.IO) {
+            avatarMap.computeIfAbsent(key) {
+                try {
+                    log.d { "Generating avatar for ${userProfile.nym} on background thread" }
+                    catHashService.getImage(
+                        Base64.getDecoder().decode(userProfile.networkId.pubKey.hash),
+                        Base64.getDecoder().decode(userProfile.proofOfWork.solutionEncoded),
+                        userProfile.avatarVersion,
+                        DEFAULT_SIZE
+                    )
+                } catch (e: Exception) {
+                    log.e(e) { "Avatar generation failed for ${userProfile.nym}" }
+                    null
+                }
             }
         }
     }
