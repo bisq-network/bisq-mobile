@@ -2,13 +2,8 @@ package network.bisq.mobile.domain.service
 
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.IODispatcher
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.Logging
-import org.koin.core.component.KoinComponent
-import org.koin.core.component.inject
 
 /**
  * Base class for lifecycle-aware service components that require coroutine-based background execution.
@@ -24,19 +19,10 @@ import org.koin.core.component.inject
  * - Launch coroutines via `launchIO()` or `collectIO()`
  * - Call `deactivate()` to cancel all coroutines and release resources
  *
- *
- * TODO refactor to have a BaseService that both ServiceFacade and other services can leverage
  */
-abstract class ServiceFacade : LifeCycleAware, KoinComponent, Logging {
+abstract class ServiceFacade : BaseService(), LifeCycleAware {
 
     private var isActivated = atomic(false)
-    
-    // we use KoinCompoent inject to avoid having to pass the manager as parameter on every single service
-    protected val jobsManager: CoroutineJobsManager by inject()
-    
-    // Provide access to the IO scope from the jobsManager
-    protected val serviceScope: CoroutineScope
-        get() = jobsManager.getIOScope()
 
     override fun activate() {
         require(!isActivated.value) { "activate called on ${this::class.simpleName} while service is already activated" }
@@ -59,14 +45,5 @@ abstract class ServiceFacade : LifeCycleAware, KoinComponent, Logging {
     protected fun reactivate() {
         deactivate()
         activate()
-    }
-    
-    // Helper methods for launching coroutines with the jobsManager
-    protected fun launchIO(block: suspend CoroutineScope.() -> Unit): Job {
-        return jobsManager.launchIO(block)
-    }
-    
-    protected fun <T> collectIO(flow: Flow<T>, collector: suspend (T) -> Unit): Job {
-        return jobsManager.collectIO(flow, collector)
     }
 }

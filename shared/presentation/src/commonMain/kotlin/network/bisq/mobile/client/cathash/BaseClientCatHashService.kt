@@ -8,6 +8,7 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.pubKeyHashAsByteArray
+import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.base64ToByteArray
@@ -20,7 +21,7 @@ import okio.SYSTEM
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 abstract class BaseClientCatHashService(private val baseDirPath: String) :
-    ServiceFacade(), ClientCatHashService<PlatformImage?>, Logging {
+    BaseService(), ClientCatHashService<PlatformImage?>, Logging {
     companion object {
         const val SIZE_OF_CACHED_ICONS = 60
         const val MAX_CACHE_SIZE = 5000

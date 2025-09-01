@@ -50,8 +50,11 @@ object AndroidImageUtil : Logging {
                 canvas.drawBitmap(scaledBitmap, 0f, 0f, paint)
 
                 // Recycle scaled bitmap if it's different from original to free memory
-                if (scaledBitmap != bitmap) {
+                if (scaledBitmap !== bitmap) {
                     scaledBitmap.recycle()
+                    bitmap.recycle()
+                } else {
+                    bitmap.recycle()
                 }
             }
         }

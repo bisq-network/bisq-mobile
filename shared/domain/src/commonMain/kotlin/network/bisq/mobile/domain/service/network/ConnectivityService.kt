@@ -1,8 +1,6 @@
 package network.bisq.mobile.domain.service.network
 
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,14 +10,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
-import network.bisq.mobile.domain.data.IODispatcher
-import network.bisq.mobile.domain.service.ServiceFacade
+import network.bisq.mobile.domain.service.BaseService
 
 /**
  * Base definition for the connectivity service. Each app type should implement / override the default
  * based on its network type.
  */
-abstract class ConnectivityService : ServiceFacade() {
+abstract class ConnectivityService : BaseService() {
     companion object {
         const val TIMEOUT = 5000L
         const val PERIOD = 5000L // default check every 5 sec

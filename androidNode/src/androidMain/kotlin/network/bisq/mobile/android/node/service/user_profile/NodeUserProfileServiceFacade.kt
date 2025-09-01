@@ -189,7 +189,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? {
-        val key = userProfile.nym
+        val key = "${userProfile.id}-v${userProfile.avatarVersion}"
         avatarMap[key]?.let { return it }
         return generateCatHash(key, userProfile)
     }

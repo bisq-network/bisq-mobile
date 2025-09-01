@@ -7,14 +7,6 @@ import network.bisq.mobile.domain.utils.Logging
 class ClientConnectivityService(
     private val webSocketClientProvider: WebSocketClientProvider
 ) : ConnectivityService(), Logging {
-    override fun activate() {
-        super.activate()
-    }
-
-    override fun deactivate() {
-        super.deactivate()
-    }
-
     override fun isConnected(): Boolean {
         return webSocketClientProvider.get().isConnected()
     }

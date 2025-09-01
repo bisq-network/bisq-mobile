@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.service.ServiceFacade
+import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.utils.Logging
 import java.io.File
 import java.io.FileOutputStream
@@ -39,7 +39,7 @@ import kotlin.io.path.absolutePathString
  *    The bisq 2 tor lib will detect the external tor and use that.
  *
  */
-class KmpTorService : ServiceFacade(), Logging {
+class KmpTorService : BaseService(), Logging {
 
     private lateinit var baseDir: Path
     private var torRuntime: TorRuntime? = null
