@@ -1,10 +1,10 @@
 package network.bisq.mobile.domain.data.repository
 
 import androidx.datastore.core.DataStore
+import androidx.datastore.core.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.datetime.Clock
-import kotlinx.io.IOException
 import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.utils.Logging
 

@@ -148,14 +148,16 @@ class UserProfileSettingsPresenter(
         setShowLoading(true)
         launchUI {
             try {
+                val safeStatement = statement.value.takeUnless { it == DEFAULT_UNKNOWN_VALUE } ?: ""
+                val safeTerms = tradeTerms.value.takeUnless { it == DEFAULT_UNKNOWN_VALUE } ?: ""
                 val result = withContext(IODispatcher) {
                     userProfileServiceFacade.updateAndPublishUserProfile(
-                        statement.value,
-                        tradeTerms.value
+                        safeStatement,
+                        safeTerms
                     )
                 }
                 if (result.isSuccess) {
-                    userRepository.updateLastActivity()
+                    withContext(IODispatcher) { userRepository.updateLastActivity() }
                     showSnackbar("mobile.settings.userProfile.saveSuccess".i18n(), isError = false)
                 } else {
                     showSnackbar("mobile.settings.userProfile.saveFailure".i18n(), isError = true)

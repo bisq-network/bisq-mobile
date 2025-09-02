@@ -72,7 +72,9 @@ abstract class OnBoardingPresenter(
 
                 val remoteBisqUrl = deviceSettings.bisqApiUrl
                 val hasProfile: Boolean = userProfileService.hasUserProfile()
-                doCustomNavigationLogic(remoteBisqUrl.isNotEmpty(), hasProfile)
+                launchUI {
+                    doCustomNavigationLogic(remoteBisqUrl.isNotEmpty(), hasProfile)
+                }
             } else {
                 // Let the UI handle the animation in the composable
                 // This is safe because we're using the coroutineScope passed from the composable

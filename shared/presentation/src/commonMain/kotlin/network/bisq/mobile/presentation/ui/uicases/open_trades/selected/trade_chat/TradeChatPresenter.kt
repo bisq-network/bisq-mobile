@@ -45,8 +45,8 @@ class TradeChatPresenter(
     private val _quotedMessage: MutableStateFlow<BisqEasyOpenTradeMessageModel?> =
         MutableStateFlow(null)
     val quotedMessage: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _quotedMessage.asStateFlow()
-    val showChatRulesWarnBox: StateFlow<Boolean>
-        get() = settingsRepository.data.map { it.showChatRulesWarnBox }.stateIn(
+    val showChatRulesWarnBox: StateFlow<Boolean> =
+        settingsRepository.data.map { it.showChatRulesWarnBox }.stateIn(
             presenterScope,
             SharingStarted.Lazily, false
         )

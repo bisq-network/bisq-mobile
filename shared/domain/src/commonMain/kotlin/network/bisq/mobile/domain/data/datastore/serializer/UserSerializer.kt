@@ -1,26 +1,33 @@
 package network.bisq.mobile.domain.data.datastore.serializer
 
+import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.okio.OkioSerializer
-import kotlinx.serialization.json.Json.Default.decodeFromString
-import kotlinx.serialization.json.Json.Default.encodeToString
+import kotlinx.serialization.SerializationException
+import network.bisq.mobile.domain.data.datastore.dataStoreJson
 import network.bisq.mobile.domain.data.model.User
 import okio.BufferedSink
 import okio.BufferedSource
 
-object UserSerializer: OkioSerializer<User> {
+object UserSerializer : OkioSerializer<User> {
     override val defaultValue: User
         get() = User()
 
     override suspend fun readFrom(source: BufferedSource): User {
-        return if (source.exhausted()) defaultValue
-        else decodeFromString(
-            User.serializer(),
-            source.readUtf8()
-        )
+        if (source.exhausted()) return defaultValue
+        return try {
+            dataStoreJson.decodeFromString(
+                User.serializer(),
+                source.readUtf8()
+            )
+        } catch (e: SerializationException) {
+            throw CorruptionException("Cannot deserialize User", e)
+        } catch (e: IllegalArgumentException) {
+            throw CorruptionException("Cannot read User", e)
+        }
     }
 
     override suspend fun writeTo(t: User, sink: BufferedSink) {
-        val json = encodeToString(User.serializer(), t)
-        sink.writeUtf8(json)
+        val payload = dataStoreJson.encodeToString(User.serializer(), t)
+        sink.writeUtf8(payload)
     }
 }
