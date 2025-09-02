@@ -5,14 +5,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
-import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
@@ -40,16 +38,21 @@ class TradeChatPresenter(
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
-    private val _sortedChatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(listOf())
+    private val _sortedChatMessages: MutableStateFlow<List<BisqEasyOpenTradeMessageModel>> =
+        MutableStateFlow(listOf())
     val sortedChatMessages: StateFlow<List<BisqEasyOpenTradeMessageModel>> get() = _sortedChatMessages.asStateFlow()
 
-    private val _quotedMessage: MutableStateFlow<BisqEasyOpenTradeMessageModel?> = MutableStateFlow(null)
+    private val _quotedMessage: MutableStateFlow<BisqEasyOpenTradeMessageModel?> =
+        MutableStateFlow(null)
     val quotedMessage: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _quotedMessage.asStateFlow()
+    val showChatRulesWarnBox: StateFlow<Boolean>
+        get() = settingsRepository.data.map { it.showChatRulesWarnBox }.stateIn(
+            presenterScope,
+            SharingStarted.Lazily, false
+        )
 
-    private val _showChatRulesWarnBox: MutableStateFlow<Boolean> = MutableStateFlow(true)
-    val showChatRulesWarnBox: StateFlow<Boolean> get() = _showChatRulesWarnBox.asStateFlow()
-
-    private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
+    private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> =
+        MutableStateFlow(emptyMap())
     val avatarMap: StateFlow<Map<String, PlatformImage?>> get() = _avatarMap.asStateFlow()
 
     private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
@@ -60,19 +63,18 @@ class TradeChatPresenter(
 
     val ignoredUserIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredUserIds
 
-    val readCount = selectedTrade.combine(tradeReadStateRepository.dataMap) { trade, readStates ->
-        if (trade?.tradeId != null) {
-            readStates[trade.tradeId]?.readCount ?: 0
-        } else {
-            -1
-        }
-    }.stateIn(
-        scope = presenterScope,
-        started = SharingStarted.Lazily,
-        initialValue = -1,
-    )
-
-    private val updateMutex = Mutex()
+    val readCount =
+        selectedTrade.combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
+            if (trade?.tradeId != null) {
+                readStates.getOrElse(trade.tradeId) { 0 }
+            } else {
+                -1
+            }
+        }.stateIn(
+            scope = presenterScope,
+            started = SharingStarted.Lazily,
+            initialValue = -1,
+        )
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -80,14 +82,15 @@ class TradeChatPresenter(
         val selectedTrade = tradesServiceFacade.selectedTrade.value!!
 
         launchUI {
-            val settings = withContext(IODispatcher) { settingsRepository.fetch() }
-            settings?.let { _showChatRulesWarnBox.value = it.showChatRulesWarnBox }
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
 
             collectUI(ignoredUserIds.combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
                 messages.filter { message ->
                     when (message.chatMessageType) {
-                        ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> !ignoredIds.contains(message.senderUserProfileId)
+                        ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> !ignoredIds.contains(
+                            message.senderUserProfileId
+                        )
+
                         else -> true
                     }
                 }.toList().sortedByDescending { it.date }
@@ -209,17 +212,8 @@ class TradeChatPresenter(
     }
 
     fun onDontShowAgainChatRulesWarningBox() {
-        _showChatRulesWarnBox.value = false
-
         launchUI {
-            val settings = withContext(IODispatcher) {
-                settingsRepository.fetch()
-            }
-
-            settings?.let {
-                it.showChatRulesWarnBox = false
-                settingsRepository.update(it)
-            }
+            settingsRepository.setShowChatRulesWarnBox(false)
         }
     }
 
@@ -227,9 +221,7 @@ class TradeChatPresenter(
         val tradeId = selectedTrade.value?.tradeId
         if (tradeId == null) return
         launchIO {
-            updateMutex.withLock {
-                tradeReadStateRepository.update(TradeReadState(tradeId, newValue))
-            }
+            tradeReadStateRepository.setCount(tradeId, newValue)
         }
     }
 }

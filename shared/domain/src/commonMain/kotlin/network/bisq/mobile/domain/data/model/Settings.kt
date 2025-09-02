@@ -4,8 +4,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Settings (
-    var bisqApiUrl: String = "",
-    var firstLaunch: Boolean = true,
-    var showChatRulesWarnBox: Boolean = true,
-    var selectedMarketCode: String = "BTC/USD"
-) : BaseModel()
+    val bisqApiUrl: String = "",
+    val firstLaunch: Boolean = true,
+    val showChatRulesWarnBox: Boolean = true,
+    val selectedMarketCode: String = "BTC/USD"
+)

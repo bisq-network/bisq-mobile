@@ -2,7 +2,6 @@
 
 package network.bisq.mobile.domain
 
-import com.russhwolf.settings.Settings
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -11,10 +10,9 @@ import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import org.koin.core.scope.Scope
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
-
-expect fun getPlatformSettings(): Settings
 
 interface PlatformInfo {
     val name: String
@@ -78,3 +76,10 @@ expect fun String.toDoubleOrNullLocaleAware(): Double?
  * Must never throw; return currencyCode if unavailable/unknown so callers can fall back.
  */
 expect fun getLocaleCurrencyName(currencyCode: String): String
+
+// Scope is Koin's scope
+// This is to allow getting androidContext in implementation
+/**
+ * careful to only call this inside a Koin context on android
+ */
+expect fun Scope.getStorageDir(): String

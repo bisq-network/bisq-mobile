@@ -11,11 +11,12 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.net.toUri
-import com.russhwolf.settings.Settings
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.scope.Scope
 import java.io.ByteArrayOutputStream
 import java.net.URLEncoder
 import java.nio.charset.StandardCharsets
@@ -38,10 +39,6 @@ actual fun formatDateTime(dateTime: LocalDateTime): String {
 
 actual fun encodeURIParam(param: String): String {
     return URLEncoder.encode(param, StandardCharsets.UTF_8.toString())
-}
-
-actual fun getPlatformSettings(): Settings {
-    return Settings()
 }
 
 actual fun getDeviceLanguageCode(): String {
@@ -177,4 +174,9 @@ actual fun getLocaleCurrencyName(currencyCode: String): String {
         // Fallback gracefully when currency code is not recognized by the platform
         currencyCode
     }
+}
+
+
+actual fun Scope.getStorageDir(): String {
+    return androidContext().filesDir.absolutePath
 }

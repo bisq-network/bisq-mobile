@@ -1,38 +1,61 @@
 package network.bisq.mobile.domain.di
 
-import com.russhwolf.settings.Settings
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import network.bisq.mobile.domain.data.persistance.KeyValueStorage
+import androidx.datastore.core.DataStore
+import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
+import network.bisq.mobile.domain.data.datastore.createDataStore
+import network.bisq.mobile.domain.data.datastore.serializer.SettingsSerializer
+import network.bisq.mobile.domain.data.datastore.serializer.TradeReadStateMapSerializer
+import network.bisq.mobile.domain.data.datastore.serializer.UserSerializer
+import network.bisq.mobile.domain.data.model.Settings
+import network.bisq.mobile.domain.data.model.TradeReadStateMap
+import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.data.repository.TradeRepository
+import network.bisq.mobile.domain.data.repository.SettingsRepositoryImpl
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
+import network.bisq.mobile.domain.data.repository.TradeReadStateRepositoryImpl
 import network.bisq.mobile.domain.data.repository.UserRepository
-import network.bisq.mobile.domain.getPlatformSettings
+import network.bisq.mobile.domain.data.repository.UserRepositoryImpl
+import network.bisq.mobile.domain.getStorageDir
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
+import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
-import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
+import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
 val domainModule = module {
-    // Data
-    single<Settings> { getPlatformSettings() }
 
-    // Provide PersistenceSource
-    single<KeyValueStorage<*>> {
-        KeyValueStorage(
-            settings = get(),
-            serializer = { Json.encodeToString(it) },
-            deserializer = { Json.decodeFromString(it) }
+    single<DataStore<Settings>>(named("Settings")) {
+        createDataStore(
+            "Settings",
+            getStorageDir(),
+            SettingsSerializer,
+            ReplaceFileCorruptionHandler { Settings() },
+        )
+    }
+
+    single<DataStore<User>>(named("User")) {
+        createDataStore(
+            "User",
+            getStorageDir(),
+            UserSerializer,
+            ReplaceFileCorruptionHandler { User() },
+        )
+    }
+
+    single<DataStore<TradeReadStateMap>>(named("TradeReadStateMap")) {
+        createDataStore(
+            "TradeReadStateMap",
+            getStorageDir(),
+            TradeReadStateMapSerializer,
+            ReplaceFileCorruptionHandler { TradeReadStateMap() },
         )
     }
 
     // Repositories
-    single<SettingsRepository> { SettingsRepository(get()) }
-    single<UserRepository> { UserRepository(get()) }
-    single<TradeRepository> { TradeRepository(get()) }
-    single<TradeReadStateRepository> { TradeReadStateRepository(get()) }
+    single<SettingsRepository> { SettingsRepositoryImpl(get(named("Settings"))) }
+    single<UserRepository> { UserRepositoryImpl(get(named("User"))) }
+    single<TradeReadStateRepository> { TradeReadStateRepositoryImpl(get(named("TradeReadStateMap"))) }
 
     // Services
     single<OpenTradesNotificationService> { OpenTradesNotificationService(get(), get()) }

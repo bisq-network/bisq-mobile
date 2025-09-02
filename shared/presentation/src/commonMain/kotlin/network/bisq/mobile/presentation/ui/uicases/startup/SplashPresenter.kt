@@ -4,7 +4,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.model.Settings
-import network.bisq.mobile.domain.data.model.User
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
@@ -75,8 +74,7 @@ open class SplashPresenter(
 
             runCatching {
                 val profileSettings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
-                val deviceSettings: Settings = settingsRepository.fetch() ?: Settings()
-                val user: User? = userRepository.fetch()
+                val deviceSettings: Settings = settingsRepository.fetch()
 
                 if (!profileSettings.isTacAccepted) {
                     navigateToAgreement()
@@ -84,7 +82,7 @@ open class SplashPresenter(
                     // only fetch profile with connectivity
                     val hasProfile: Boolean = userProfileService.hasUserProfile()
 
-                    if (user != null && hasProfile) {
+                    if (hasProfile) {
                         // Scenario 1: All good and setup for both androidNode and xClients
                         navigateToHome()
                     } else if (deviceSettings.firstLaunch) {

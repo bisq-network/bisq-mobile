@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -55,9 +56,9 @@ class OpenTradePresenter(
     val isInMediation: StateFlow<Boolean> get() = _isInMediation.asStateFlow()
 
 
-    private val readCount: Flow<Int> = _selectedTrade.combine(tradeReadStateRepository.dataMap) { trade, readStates ->
+    private val readCount: Flow<Int> = _selectedTrade.combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
         if (trade?.tradeId != null) {
-            readStates[trade.tradeId]?.readCount ?: 0
+            readStates.getOrElse(trade.tradeId) { 0 }
         } else {
             0
         }

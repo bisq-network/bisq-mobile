@@ -10,7 +10,6 @@ import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.IODispatcher
-import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -183,9 +182,7 @@ class TrustedNodeSetupPresenter(
                         if (previousUrl != newApiUrl) {
                             log.d { "user setup a new trusted node $newApiUrl" }
                             withContext(IODispatcher) {
-                                userRepository.fetch()?.let {
-                                    userRepository.delete(it)
-                                }
+                                userRepository.clear()
                             }
                         }
 
@@ -249,11 +246,8 @@ class TrustedNodeSetupPresenter(
     }
 
     private suspend fun updateSettings() {
-        val currentSettings = settingsRepository.fetch()
         val newUrl = _host.value + ":" + _port.value
-        val updatedSettings = currentSettings?.copy(bisqApiUrl = newUrl)
-            ?: Settings(bisqApiUrl = newUrl)
-        settingsRepository.update(updatedSettings)
+        settingsRepository.setBisqApiUrl(newUrl)
     }
 
     fun navigateToCreateProfile() {

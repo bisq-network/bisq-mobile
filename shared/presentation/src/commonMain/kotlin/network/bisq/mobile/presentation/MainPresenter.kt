@@ -4,15 +4,16 @@ import androidx.annotation.CallSuper
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
@@ -52,11 +53,30 @@ open class MainPresenter(
 
     final override val languageCode: StateFlow<String> get() = settingsService.languageCode
 
-    private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
-    override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> get() = _tradesWithUnreadMessages.asStateFlow()
-
-    private val _readMessageCountsByTrade = MutableStateFlow(emptyMap<String, Int>())
-    override val readMessageCountsByTrade: StateFlow<Map<String, Int>> get() = _readMessageCountsByTrade.asStateFlow()
+    // TODO: refactor when TradeItemPresentationModel is completely immutable
+    override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> =
+        tradesServiceFacade.openTradeItems
+            .map { openTradeItems ->
+                // For each trade, create a flow for its chatMessages count
+                openTradeItems.map { trade ->
+                    trade.bisqEasyOpenTradeChannelModel.chatMessages
+                        .map { messages -> trade.tradeId to messages.size }
+                }
+            }
+            .flatMapLatest { tradeFlows ->
+                // Combine all chatMessages flows into one flow emitting a list of Pair(tradeId, count)
+                combine(tradeFlows) { pairs -> pairs.toList() }
+            }
+            .combine(tradeReadStateRepository.data.map { it.map }) { tradeMessageCounts, tradeReadStates ->
+                tradeMessageCounts
+                    .associate { it }
+                    .filter { tradeReadStates.getOrElse(it.key) { 0 } < it.value }
+            }
+            .stateIn(
+                presenterScope,
+                SharingStarted.Lazily,
+                emptyMap(),
+            )
 
     override val showAnimation: StateFlow<Boolean> get() = settingsService.useAnimations
 
@@ -71,8 +91,6 @@ open class MainPresenter(
         log.i { "Device language code: $localeCode" }
         log.i { "Screen width: $screenWidth" }
         log.i { "Small screen: ${_isSmallScreen.value}" }
-
-        observeNotifications()
     }
 
 
@@ -149,43 +167,6 @@ open class MainPresenter(
 
     override fun isDemo(): Boolean = false
 
-    private fun observeNotifications() {
-        launchIO {
-            combine(
-                tradesServiceFacade.openTradeItems, tradesServiceFacade.selectedTrade
-            ) { tradeList, selectedTrade ->
-                // Combine all chatMessages StateFlows from each trade
-                val combinedChatMessages = if (tradeList.isNotEmpty()) {
-                    combine(tradeList.map { trade ->
-                        trade.bisqEasyOpenTradeChannelModel.chatMessages.map { messages ->
-                            trade.tradeId to messages.size
-                        }
-                    }) { tradeIdSizePairs ->
-                        tradeIdSizePairs.toMap()
-                    }
-                } else {
-                    flowOf(emptyMap<String, Int>())
-                }
-
-                combinedChatMessages.map { chatSizes ->
-                    Triple(tradeList, chatSizes, selectedTrade)
-                }
-            }.flatMapLatest { it }.collect { (tradeList, chatSizes, _) ->
-                val readStateMap = tradeReadStateRepository.fetchAll().associate { it.tradeId to it.readCount }
-                _readMessageCountsByTrade.value = readStateMap
-                _tradesWithUnreadMessages.value = tradeList.associate { trade ->
-                    val chatSize = chatSizes[trade.tradeId] ?: 0
-                    trade.tradeId to chatSize
-                }.filter { (tradeId, chatSize) ->
-                    val recordedSize = readStateMap[tradeId]
-                    recordedSize == null || recordedSize < chatSize
-                }
-
-            }
-
-        }
-    }
-
     /**
      * Common error handling method for initialization and service activation errors.
      * Provides user-friendly error messages with contextual guidance.
@@ -193,12 +174,16 @@ open class MainPresenter(
      * @param exception The exception that occurred
      * @param context Additional context about where the error occurred (e.g., "Node initialization", "Service activation")
      */
-    protected fun handleInitializationError(exception: Throwable, context: String = "Initialization") {
+    protected fun handleInitializationError(
+        exception: Throwable,
+        context: String = "Initialization"
+    ) {
         // Use the existing error handling infrastructure
         launchUI {
             GenericErrorHandler.handleGenericError(
                 "Initialization process failed during: $context",
-                exception)
+                exception
+            )
         }
     }
 

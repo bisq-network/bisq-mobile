@@ -10,23 +10,16 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
+import org.koin.core.scope.Scope
 import platform.Foundation.*
 import platform.UIKit.UIApplication
 import platform.UIKit.UIDevice
 import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation
-import platform.posix.memcpy
-import kotlin.collections.set
-
-import platform.Foundation.NSException
-import platform.Foundation.NSSetUncaughtExceptionHandler
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
+import platform.posix.memcpy
 import kotlin.experimental.ExperimentalNativeApi
-import platform.Foundation.NSCharacterSet
-import platform.Foundation.NSString
-import platform.Foundation.create
-import platform.Foundation.stringByAddingPercentEncodingWithAllowedCharacters
 
 actual fun formatDateTime(dateTime: LocalDateTime): String {
     val formatter = NSDateFormatter().apply {
@@ -317,4 +310,13 @@ actual fun String.toDoubleOrNullLocaleAware(): Double? {
 actual fun getLocaleCurrencyName(currencyCode: String): String {
     val rawName = defaultLocale.displayNameForKey(NSLocaleCurrencyCode, currencyCode)
     return rawName ?: currencyCode
+}
+
+actual fun Scope.getStorageDir(): String {
+    val paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, true)
+    val documentsDirectory = paths.firstOrNull() as? String
+        ?: throw IllegalStateException("Could not get documents directory")
+
+    // println("documentsDirectory="+documentsDirectory)
+    return documentsDirectory
 }

@@ -5,18 +5,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.data.persistance.KeyValueStorage
-import network.bisq.mobile.domain.data.persistance.PersistenceSource
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.di.testModule
-import org.koin.core.context.startKoin
+import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
 import org.koin.core.context.stopKoin
-import org.koin.core.qualifier.named
 import org.koin.test.KoinTest
-import org.koin.test.inject
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -27,15 +21,10 @@ import kotlin.test.assertTrue
 class GlobalPriceUpdateTest : KoinTest {
 
     private lateinit var settingsRepository: SettingsRepository
-    private val persistenceSource: PersistenceSource<Settings> by inject(qualifier = named("settingsStorage"))
 
     @BeforeTest
     fun setup() {
-        startKoin {
-            modules(testModule)
-        }
-        settingsRepository = SettingsRepository(persistenceSource as KeyValueStorage<Settings>)
-        runBlocking { settingsRepository.create(Settings()) }
+        settingsRepository = SettingsRepositoryMock()
     }
 
     @AfterTest

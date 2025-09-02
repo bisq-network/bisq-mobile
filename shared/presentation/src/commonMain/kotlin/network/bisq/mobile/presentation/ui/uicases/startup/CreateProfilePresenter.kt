@@ -74,14 +74,11 @@ open class CreateProfilePresenter(
 
     init {
         // if this presenter gets to work, it means there is no profile saved
-        launchIO {
-            userRepository.create(User())
-        }
     }
 
     fun validateNickname(nickname: String): String? {
         return when {
-            nickname.length < 1 -> "mobile.createProfile.nickname.minLength".i18n()
+            nickname.isEmpty() -> "mobile.createProfile.nickname.minLength".i18n()
             nickname.length > 100 -> "mobile.createProfile.nickname.maxLength".i18n()
             else -> null
         }.also {
@@ -118,7 +115,10 @@ open class CreateProfilePresenter(
                     }
                     enableInteractive()
                 }.onFailure { e ->
-                    GenericErrorHandler.handleGenericError("Creating and publishing new user profile failed.", e)
+                    GenericErrorHandler.handleGenericError(
+                        "Creating and publishing new user profile failed.",
+                        e
+                    )
                     _createAndPublishInProgress.value = false
                     enableInteractive()
                 }
@@ -151,10 +151,12 @@ open class CreateProfilePresenter(
                 }
 
                 withContext(IODispatcher) {
-                    userRepository.update(User().apply {
-                        uniqueAvatar = profileIcon.value
-                        lastActivity = Clock.System.now().toEpochMilliseconds()
-                    })
+                    userRepository.update(
+                        User().copy(
+                            uniqueAvatar = profileIcon.value,
+                            lastActivity = Clock.System.now().toEpochMilliseconds()
+                        )
+                    )
                 }
 
                 _generateKeyPairInProgress.value = false

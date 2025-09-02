@@ -117,10 +117,10 @@ kotlin {
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.ktor.client.websockets)
 
-            implementation(libs.multiplatform.settings)
-
             implementation(libs.atomicfu)
             implementation(libs.kotlin.reflect)
+
+            implementation(libs.androidx.datastore.okio)
 
             configurations.all {
                 exclude(group = "org.slf4j", module = "slf4j-api")
@@ -129,7 +129,6 @@ kotlin {
 
         commonTest.dependencies {
             implementation(libs.kotlin.test)
-            implementation(libs.multiplatform.settings.test)
             implementation(libs.kotlinx.coroutines.test)
             implementation(libs.koin.test)
         }

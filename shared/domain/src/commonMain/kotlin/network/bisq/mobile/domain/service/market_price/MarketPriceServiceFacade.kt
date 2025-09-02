@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
@@ -41,7 +40,6 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
     protected fun persistSelectedMarketToSettings(marketListItem: MarketListItem) {
         launchIO {
             try {
-                val settings = settingsRepository.fetch() ?: Settings()
                 val baseCurrencyCode = marketListItem.market.baseCurrencyCode
                 val quoteCurrencyCode = marketListItem.market.quoteCurrencyCode
                 if (baseCurrencyCode.isBlank() || quoteCurrencyCode.isBlank()) {
@@ -49,8 +47,7 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
                     return@launchIO
                 }
                 val marketCode = "$baseCurrencyCode/$quoteCurrencyCode"
-                val updatedSettings = settings.copy(selectedMarketCode = marketCode)
-                settingsRepository.update(updatedSettings)
+                settingsRepository.setSelectedMarketCode(marketCode)
             } catch (e: Exception) {
                 log.e("Failed to save selected market", e)
             }
@@ -60,8 +57,7 @@ abstract class MarketPriceServiceFacade(private val settingsRepository: Settings
     protected fun restoreSelectedMarketFromSettings(onMarketRestored: (MarketVO) -> Unit) {
         launchIO {
             try {
-                val settings = settingsRepository.fetch()
-                settings?.selectedMarketCode?.let { marketCode ->
+                settingsRepository.fetch().selectedMarketCode.let { marketCode ->
                     // Parse the market code to get base and quote currency
                     val parts = marketCode.split("/")
                     if (parts.size == 2) {

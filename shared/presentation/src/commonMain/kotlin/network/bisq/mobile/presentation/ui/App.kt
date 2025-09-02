@@ -49,7 +49,6 @@ interface AppPresenter : ViewPresenter {
     val isSmallScreen: StateFlow<Boolean>
 
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>>
-    val readMessageCountsByTrade: StateFlow<Map<String, Int>>
 
     val showAnimation: StateFlow<Boolean>
 

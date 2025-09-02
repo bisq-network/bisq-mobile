@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
-import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.replicated.contract.RoleEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -150,7 +149,7 @@ class InterruptedTradePresenter(
         val trade = selectedTrade.value
         if (trade != null) {
             launchUI {
-                tradeReadStateRepository.delete(TradeReadState(trade.tradeId))
+                tradeReadStateRepository.clearId(trade.tradeId)
                 withContext(IODispatcher) {
                     tradesServiceFacade.closeTrade()
                 }

@@ -6,7 +6,6 @@ import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 
 class ClientApplicationBootstrapFacade(
@@ -30,8 +29,7 @@ class ClientApplicationBootstrapFacade(
         setProgress(0f)
 
         bootstrapJob = serviceScope.launch {
-            settingsRepository.fetch()
-            val url = settingsRepository.data.value?.bisqApiUrl
+            val url = settingsRepository.fetch().bisqApiUrl
             log.d { "Settings url $url" }
 
             if (trustedNodeService.isDemo()) {
@@ -42,7 +40,7 @@ class ClientApplicationBootstrapFacade(
             if (trustedNodeService.isConnected) {
                 setState("bootstrap.connectedToTrustedNode".i18n())
                 setProgress(1.0f)
-            } else if (url == null) {
+            } else if (url.isBlank()) {
                 // fresh install scenario, let it proceed to onboarding
                 setState("bootstrap.connectedToTrustedNode".i18n())
                 setProgress(1.0f)

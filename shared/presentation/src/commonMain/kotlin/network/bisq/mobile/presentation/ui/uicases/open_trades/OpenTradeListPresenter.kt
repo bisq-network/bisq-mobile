@@ -28,9 +28,7 @@ class OpenTradeListPresenter(
 
     private val _tradeGuideVisible = MutableStateFlow(false)
     val tradeGuideVisible: StateFlow<Boolean> get() = _tradeGuideVisible.asStateFlow()
-
-    private val _tradesWithUnreadMessages: MutableStateFlow<Map<String, Int>> = MutableStateFlow(emptyMap())
-    val tradesWithUnreadMessages: StateFlow<Map<String, Int>> get() = _tradesWithUnreadMessages.asStateFlow()
+    val tradesWithUnreadMessages: StateFlow<Map<String, Int>> get() = mainPresenter.tradesWithUnreadMessages
 
     private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
     val avatarMap: StateFlow<Map<String, PlatformImage?>> get() = _avatarMap.asStateFlow()
@@ -45,7 +43,6 @@ class OpenTradeListPresenter(
             ) { unreadMessages, openTrades, _ ->
                 Pair(unreadMessages, openTrades)
             }.collect { (unreadMessages, openTrades) ->
-                _tradesWithUnreadMessages.value = unreadMessages
                 _sortedOpenTradeItems.value = openTrades.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
             }
         }
@@ -54,15 +51,8 @@ class OpenTradeListPresenter(
     }
 
     override fun onViewUnattaching() {
-        _tradesWithUnreadMessages.value = emptyMap()
         _avatarMap.update { emptyMap() }
         super.onViewUnattaching()
-    }
-
-    fun isRead(trade: TradeItemPresentationModel): Boolean {
-        val latestChatCount = trade.bisqEasyOpenTradeChannelModel.chatMessages.value.size
-        val chatCount = mainPresenter.readMessageCountsByTrade.value[trade.tradeId]
-        return chatCount != null && chatCount == latestChatCount
     }
 
     fun onOpenTradeGuide() {

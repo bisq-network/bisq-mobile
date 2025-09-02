@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
-import network.bisq.mobile.domain.data.model.TradeReadState
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -54,7 +53,7 @@ abstract class State4Presenter(
                 }
 
                 result.isSuccess -> {
-                    tradeReadStateRepository.delete(TradeReadState(tradeId))
+                    tradeReadStateRepository.clearId(tradeId)
                     _showCloseTradeDialog.value = false
                     navigateBack()
                 }
