@@ -160,33 +160,73 @@ class OpenTradesNotificationService(
         when (state) {
             // Payment related states
             BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION -> {
+                val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isBuyer) {
+                    // User is buyer -> they confirmed sending payment
+                    "mobile.openTradeNotifications.fiatSent.title" to "mobile.openTradeNotifications.fiatSent.message"
+                } else {
+                    // User is seller -> they received confirmation that buyer sent payment
+                    "mobile.openTradeNotifications.fiatSentReceived.title" to "mobile.openTradeNotifications.fiatSentReceived.message"
+                }
+
                 notificationServiceController.pushNotification(
-                    "mobile.openTradeNotifications.fiatSent.title".i18n(trade.shortTradeId),
-                    "mobile.openTradeNotifications.fiatSent.message".i18n(trade.peersUserName)
+                    titleKey.i18n(trade.shortTradeId),
+                    messageKey.i18n(trade.peersUserName)
                 )
             }
             BisqEasyTradeStateEnum.SELLER_RECEIVED_FIAT_SENT_CONFIRMATION -> {
+                val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isSeller) {
+                    // User is seller -> they received confirmation that buyer sent payment
+                    "mobile.openTradeNotifications.fiatSentReceived.title" to "mobile.openTradeNotifications.fiatSentReceived.message"
+                } else {
+                    // User is buyer -> seller received their payment confirmation
+                    "mobile.openTradeNotifications.fiatSent.title" to "mobile.openTradeNotifications.fiatSent.message"
+                }
+
                 notificationServiceController.pushNotification(
-                    "mobile.openTradeNotifications.fiatSentReceived.title".i18n(trade.shortTradeId),
-                    "mobile.openTradeNotifications.fiatSentReceived.message".i18n(trade.peersUserName)
+                    titleKey.i18n(trade.shortTradeId),
+                    messageKey.i18n(trade.peersUserName)
                 )
             }
             BisqEasyTradeStateEnum.SELLER_CONFIRMED_FIAT_RECEIPT -> {
+                val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isBuyer) {
+                    // User is buyer -> they confirmed sending payment
+                    "mobile.openTradeNotifications.fiatSent.title" to "mobile.openTradeNotifications.fiatSent.message"
+                } else {
+                    // User is seller -> they confirmed receiving payment
+                    "mobile.openTradeNotifications.fiatReceived.title" to "mobile.openTradeNotifications.fiatReceived.message"
+                }
+
                 notificationServiceController.pushNotification(
-                    "mobile.openTradeNotifications.fiatReceived.title".i18n(trade.shortTradeId),
-                    "mobile.openTradeNotifications.fiatReceived.message".i18n(trade.peersUserName)
+                    titleKey.i18n(trade.shortTradeId),
+                    messageKey.i18n(trade.peersUserName)
                 )
             }
             BisqEasyTradeStateEnum.SELLER_SENT_BTC_SENT_CONFIRMATION -> {
+                val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isSeller) {
+                    // User is seller -> they confirmed sending Bitcoin
+                    "mobile.openTradeNotifications.btcSent.title" to "mobile.openTradeNotifications.btcSent.message"
+                } else {
+                    // User is buyer -> they received confirmation that seller sent Bitcoin
+                    "mobile.openTradeNotifications.btcSentReceived.title" to "mobile.openTradeNotifications.btcSentReceived.message"
+                }
+
                 notificationServiceController.pushNotification(
-                    "mobile.openTradeNotifications.btcSent.title".i18n(trade.shortTradeId),
-                    "mobile.openTradeNotifications.btcSent.message".i18n(trade.peersUserName)
+                    titleKey.i18n(trade.shortTradeId),
+                    messageKey.i18n(trade.peersUserName)
                 )
             }
             BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION -> {
+                val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isBuyer) {
+                    // User is buyer -> they received confirmation that seller sent Bitcoin
+                    "mobile.openTradeNotifications.btcSentReceived.title" to "mobile.openTradeNotifications.btcSentReceived.message"
+                } else {
+                    // User is seller -> buyer received their Bitcoin confirmation
+                    "mobile.openTradeNotifications.btcSent.title" to "mobile.openTradeNotifications.btcSent.message"
+                }
+
                 notificationServiceController.pushNotification(
-                    "mobile.openTradeNotifications.btcSentReceived.title".i18n(trade.shortTradeId),
-                    "mobile.openTradeNotifications.btcSentReceived.message".i18n(trade.peersUserName)
+                    titleKey.i18n(trade.shortTradeId),
+                    messageKey.i18n(trade.peersUserName)
                 )
             }
 
