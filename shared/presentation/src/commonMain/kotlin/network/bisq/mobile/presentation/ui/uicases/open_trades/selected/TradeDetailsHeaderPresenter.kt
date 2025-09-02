@@ -13,6 +13,7 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
+import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
@@ -26,6 +27,18 @@ class TradeDetailsHeaderPresenter(
     var mediationServiceFacade: MediationServiceFacade,
     val userProfileServiceFacade: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
+
+    companion object {
+
+        /**
+         * Determines if a throwable should be treated as a "no mediator available" error.
+         * This centralizes the logic for identifying mediator-related errors.
+         */
+        fun isMediatorError(throwable: Throwable): Boolean {
+            return throwable is MediatorNotAvailableException ||
+                    throwable.message?.contains("no mediator", ignoreCase = true) == true
+        }
+    }
 
     enum class TradeCloseType {
         REJECT,
@@ -306,7 +319,7 @@ class TradeDetailsHeaderPresenter(
                 val result = mediationServiceFacade.reportToMediator(selectedTrade.value!!)
                 if (result.isFailure) {
                     val err = result.exceptionOrNull()
-                    if (err != null && err.message == "No mediator found") { // Should be a NoMediatorException
+                    if (err != null && isMediatorError(err)) {
                         // With support chats in mobile:
                         // bisqEasy.takeOffer.noMediatorAvailable.warning // =There is no mediator available. You have to use the support chat instead.
                         _mediationError.value = "mobile.takeOffer.noMediatorAvailable.warning".i18n()

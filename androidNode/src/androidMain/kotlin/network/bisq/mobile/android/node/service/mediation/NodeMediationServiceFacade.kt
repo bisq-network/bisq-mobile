@@ -9,6 +9,7 @@ import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
+import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 
 class NodeMediationServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), MediationServiceFacade {
     // Dependencies
@@ -37,7 +38,7 @@ class NodeMediationServiceFacade(applicationService: AndroidApplicationService.P
                 mediationRequestService.requestMediation(channel, contract)
                 return Result.success(Unit)
             } else {
-                return Result.failure(RuntimeException("No mediator found"))
+                return Result.failure(MediatorNotAvailableException("No mediator found"))
             }
         } else {
             return Result.failure(RuntimeException("No channel found for trade ID $tradeId"))

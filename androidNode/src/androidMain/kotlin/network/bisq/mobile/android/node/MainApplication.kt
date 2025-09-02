@@ -89,6 +89,7 @@ class MainApplication : BisqMainApplication(), ComponentCallbacks2 {
     }
 
     @SuppressLint("WrongConstant")
+    @Deprecated("onLowMemory is deprecated in favor of onTrimMemory")
     override fun onLowMemory() {
         super.onLowMemory()
         log.w { "System low memory callback" }
