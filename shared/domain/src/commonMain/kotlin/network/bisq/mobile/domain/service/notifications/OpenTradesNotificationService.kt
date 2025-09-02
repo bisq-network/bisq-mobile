@@ -162,10 +162,10 @@ class OpenTradesNotificationService(
             BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION -> {
                 val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isBuyer) {
                     // User is buyer -> they confirmed sending payment
-                    "mobile.openTradeNotifications.fiatSent.title" to "mobile.openTradeNotifications.fiatSent.message"
+                    "mobile.openTradeNotifications.youSentFiat.title" to "mobile.openTradeNotifications.youSentFiat.message"
                 } else {
-                    // User is seller -> they received confirmation that buyer sent payment
-                    "mobile.openTradeNotifications.fiatSentReceived.title" to "mobile.openTradeNotifications.fiatSentReceived.message"
+                    // User is seller -> peer (buyer) confirmed sending payment
+                    "mobile.openTradeNotifications.peerSentFiat.title" to "mobile.openTradeNotifications.peerSentFiat.message"
                 }
 
                 notificationServiceController.pushNotification(
@@ -176,10 +176,10 @@ class OpenTradesNotificationService(
             BisqEasyTradeStateEnum.SELLER_RECEIVED_FIAT_SENT_CONFIRMATION -> {
                 val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isSeller) {
                     // User is seller -> they received confirmation that buyer sent payment
-                    "mobile.openTradeNotifications.fiatSentReceived.title" to "mobile.openTradeNotifications.fiatSentReceived.message"
+                    "mobile.openTradeNotifications.youReceivedFiatConfirmation.title" to "mobile.openTradeNotifications.youReceivedFiatConfirmation.message"
                 } else {
-                    // User is buyer -> seller received their payment confirmation
-                    "mobile.openTradeNotifications.fiatSent.title" to "mobile.openTradeNotifications.fiatSent.message"
+                    // User is buyer -> seller received their payment confirmation (from buyer's perspective, they sent it)
+                    "mobile.openTradeNotifications.youSentFiat.title" to "mobile.openTradeNotifications.youSentFiat.message"
                 }
 
                 notificationServiceController.pushNotification(
@@ -189,11 +189,11 @@ class OpenTradesNotificationService(
             }
             BisqEasyTradeStateEnum.SELLER_CONFIRMED_FIAT_RECEIPT -> {
                 val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isBuyer) {
-                    // User is buyer -> they confirmed sending payment
-                    "mobile.openTradeNotifications.fiatSent.title" to "mobile.openTradeNotifications.fiatSent.message"
+                    // User is buyer -> they confirmed sending payment (this state means seller confirmed receipt, but from buyer's perspective they sent it)
+                    "mobile.openTradeNotifications.youSentFiat.title" to "mobile.openTradeNotifications.youSentFiat.message"
                 } else {
                     // User is seller -> they confirmed receiving payment
-                    "mobile.openTradeNotifications.fiatReceived.title" to "mobile.openTradeNotifications.fiatReceived.message"
+                    "mobile.openTradeNotifications.youReceivedFiat.title" to "mobile.openTradeNotifications.youReceivedFiat.message"
                 }
 
                 notificationServiceController.pushNotification(
@@ -204,10 +204,10 @@ class OpenTradesNotificationService(
             BisqEasyTradeStateEnum.SELLER_SENT_BTC_SENT_CONFIRMATION -> {
                 val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isSeller) {
                     // User is seller -> they confirmed sending Bitcoin
-                    "mobile.openTradeNotifications.btcSent.title" to "mobile.openTradeNotifications.btcSent.message"
+                    "mobile.openTradeNotifications.youSentBtc.title" to "mobile.openTradeNotifications.youSentBtc.message"
                 } else {
-                    // User is buyer -> they received confirmation that seller sent Bitcoin
-                    "mobile.openTradeNotifications.btcSentReceived.title" to "mobile.openTradeNotifications.btcSentReceived.message"
+                    // User is buyer -> peer (seller) confirmed sending Bitcoin
+                    "mobile.openTradeNotifications.peerSentBtc.title" to "mobile.openTradeNotifications.peerSentBtc.message"
                 }
 
                 notificationServiceController.pushNotification(
@@ -218,10 +218,10 @@ class OpenTradesNotificationService(
             BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION -> {
                 val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isBuyer) {
                     // User is buyer -> they received confirmation that seller sent Bitcoin
-                    "mobile.openTradeNotifications.btcSentReceived.title" to "mobile.openTradeNotifications.btcSentReceived.message"
+                    "mobile.openTradeNotifications.youReceivedBtc.title" to "mobile.openTradeNotifications.youReceivedBtc.message"
                 } else {
-                    // User is seller -> buyer received their Bitcoin confirmation
-                    "mobile.openTradeNotifications.btcSent.title" to "mobile.openTradeNotifications.btcSent.message"
+                    // User is seller -> buyer received their Bitcoin confirmation (from seller's perspective, they sent it)
+                    "mobile.openTradeNotifications.youSentBtc.title" to "mobile.openTradeNotifications.youSentBtc.message"
                 }
 
                 notificationServiceController.pushNotification(
