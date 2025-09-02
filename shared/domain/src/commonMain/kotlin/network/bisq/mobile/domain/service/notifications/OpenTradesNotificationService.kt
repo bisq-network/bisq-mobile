@@ -1,6 +1,7 @@
 package network.bisq.mobile.domain.service.notifications
 
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.data.replicated.trade.TradeRoleEnum
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -294,5 +295,53 @@ class OpenTradesNotificationService(
             BisqEasyTradeStateEnum.FAILED_AT_PEER -> "mobile.tradeState.failedAtPeer".i18n()
             else -> state.toString() // Fallback to raw state if no translation available
         }.replaceFirstChar { it.titlecase() }
+    }
+
+    /**
+     * Public method for testing the notification key selection logic
+     * Returns the title and message keys that would be used for a given state and user role
+     */
+    fun getNotificationKeysForTesting(userRole: TradeRoleEnum, state: BisqEasyTradeStateEnum): Pair<String, String>? {
+        val isBuyer = userRole.isBuyer
+        val isSeller = !userRole.isBuyer
+
+        return when (state) {
+            BisqEasyTradeStateEnum.BUYER_SENT_FIAT_SENT_CONFIRMATION -> {
+                if (isBuyer) {
+                    "mobile.openTradeNotifications.youSentFiat.title" to "mobile.openTradeNotifications.youSentFiat.message"
+                } else {
+                    "mobile.openTradeNotifications.peerSentFiat.title" to "mobile.openTradeNotifications.peerSentFiat.message"
+                }
+            }
+            BisqEasyTradeStateEnum.SELLER_RECEIVED_FIAT_SENT_CONFIRMATION -> {
+                if (isSeller) {
+                    "mobile.openTradeNotifications.youReceivedFiatConfirmation.title" to "mobile.openTradeNotifications.youReceivedFiatConfirmation.message"
+                } else {
+                    "mobile.openTradeNotifications.youSentFiat.title" to "mobile.openTradeNotifications.youSentFiat.message"
+                }
+            }
+            BisqEasyTradeStateEnum.SELLER_CONFIRMED_FIAT_RECEIPT -> {
+                if (isBuyer) {
+                    "mobile.openTradeNotifications.youSentFiat.title" to "mobile.openTradeNotifications.youSentFiat.message"
+                } else {
+                    "mobile.openTradeNotifications.youReceivedFiat.title" to "mobile.openTradeNotifications.youReceivedFiat.message"
+                }
+            }
+            BisqEasyTradeStateEnum.SELLER_SENT_BTC_SENT_CONFIRMATION -> {
+                if (isSeller) {
+                    "mobile.openTradeNotifications.youSentBtc.title" to "mobile.openTradeNotifications.youSentBtc.message"
+                } else {
+                    "mobile.openTradeNotifications.peerSentBtc.title" to "mobile.openTradeNotifications.peerSentBtc.message"
+                }
+            }
+            BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION -> {
+                if (isBuyer) {
+                    "mobile.openTradeNotifications.youReceivedBtc.title" to "mobile.openTradeNotifications.youReceivedBtc.message"
+                } else {
+                    "mobile.openTradeNotifications.youSentBtc.title" to "mobile.openTradeNotifications.youSentBtc.message"
+                }
+            }
+            else -> null
+        }
     }
 }
