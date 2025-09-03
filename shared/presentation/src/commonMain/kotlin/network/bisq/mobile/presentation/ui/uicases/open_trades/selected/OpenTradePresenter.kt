@@ -56,15 +56,17 @@ class OpenTradePresenter(
     val isInMediation: StateFlow<Boolean> get() = _isInMediation.asStateFlow()
 
 
-    private val readCount: Flow<Int?> =
-        _selectedTrade.combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
-            trade?.tradeId?.let { id -> readStates[id] } // null => no prior baseline
+    private val readCount: Flow<Int> = _selectedTrade.combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
+        if (trade?.tradeId != null) {
+            readStates.getOrElse(trade.tradeId) { 0 }
+        } else {
+            0
         }
+    }
 
     private val msgCount: MutableStateFlow<Int> = MutableStateFlow(0)
-    val newMsgCount = readCount.combine(msgCount) { storedReadCount, currentMsgCount ->
-        if (storedReadCount == null) 0
-        else (currentMsgCount - storedReadCount).coerceAtLeast(0)
+    val newMsgCount = readCount.combine(msgCount) { readCount, msgCount ->
+        (msgCount - readCount).coerceAtLeast(0)
     }.stateIn(
         scope = presenterScope,
         started = SharingStarted.Lazily,
