@@ -32,7 +32,7 @@ enum class BtcSatsStyle {
 fun BtcSatsText(
     formattedBtcAmountValue: String, // Expect this to be in btc format (Eg: 0.001112222)
     label: String? = null,
-    textStyle: TextStyle = BisqTheme.typography.baseRegular,
+    textStyle: TextStyle = BisqTheme.typography.baseLight,
     style: BtcSatsStyle = BtcSatsStyle.Default,
     noCode: Boolean = false
 ) {

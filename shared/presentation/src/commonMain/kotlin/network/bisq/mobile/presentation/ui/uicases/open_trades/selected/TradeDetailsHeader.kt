@@ -42,6 +42,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxCurrency
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxStyle
+import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxValueType
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -192,17 +193,14 @@ fun TradeDetailsHeader() {
                             InfoBox(
                                 label = "bisqEasy.openTrades.table.price".i18n(),
                                 value = item.formattedPrice,
-                                style = InfoBoxStyle.Style2,
                             )
                             BisqGap.V1()
                             InfoBox(
                                 label = "bisqEasy.openTrades.tradeDetails.tradeDate".i18n(),
                                 value = "${item.formattedDate} ${item.formattedTime}",
-                                style = InfoBoxStyle.Style2,
                             )
                         } else {
                             InfoRow(
-                                style = InfoBoxStyle.Style2,
                                 label1 = "bisqEasy.openTrades.table.price".i18n(),
                                 value1 = item.formattedPrice,
                                 label2 = "bisqEasy.openTrades.tradeDetails.tradeDate".i18n(),
@@ -213,11 +211,17 @@ fun TradeDetailsHeader() {
                         BisqGap.V1()
 
                         InfoRow(
-                            style = InfoBoxStyle.Style2,
                             label1 = "bisqEasy.offerbook.offerList.table.columns.settlementMethod".i18n(),
                             value1 = "${item.fiatPaymentMethodDisplayString} / ${item.bitcoinSettlementMethodDisplayString}",
                             label2 = "bisqEasy.tradeState.header.tradeId".i18n(),
                             value2 = item.shortTradeId,
+                        )
+
+                        BisqGap.V1()
+
+                        InfoBox(
+                            label = "bisqEasy.mediator".i18n(),
+                            value = item.mediatorUserName ?: "",
                         )
 
                         val showInterruptTradeButton = interruptTradeButtonText.isNotEmpty()

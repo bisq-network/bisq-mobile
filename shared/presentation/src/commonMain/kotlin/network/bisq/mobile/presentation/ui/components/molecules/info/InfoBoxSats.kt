@@ -9,7 +9,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 fun InfoBoxSats(
     label: String,
     value: String,
-    textStyle: TextStyle = BisqTheme.typography.h6Regular,
+    textStyle: TextStyle = BisqTheme.typography.h6Light,
     rightAlign: Boolean = false,
 ) {
     InfoBox(

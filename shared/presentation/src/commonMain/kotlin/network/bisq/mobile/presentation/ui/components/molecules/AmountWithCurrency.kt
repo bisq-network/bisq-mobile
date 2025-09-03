@@ -44,7 +44,7 @@ private fun SingleAmountWithCurrency(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.Bottom,
     ) {
-        BisqText.largeRegular(text = value)
+        BisqText.h6Light(text = value)
 
         if(priceFragments.size == 2) {
             BisqGap.HHalf()

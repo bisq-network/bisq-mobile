@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.navigation.graph
 
 import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.core.animateSizeAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -152,6 +153,7 @@ fun NavGraphBuilder.addScreen(
 ) {
     composable(
         route = route,
+        // 'enter' animation for the 'destination' screen
         enterTransition = {
             when (navAnimation) {
                 NavAnimation.SLIDE_IN_FROM_RIGHT -> slideIntoContainer(
@@ -162,11 +164,11 @@ fun NavGraphBuilder.addScreen(
                     AnimatedContentTransitionScope.SlideDirection.Up,
                     animationSpec = tween(300)
                 )
-                NavAnimation.FADE_IN -> fadeIn(animationSpec = tween(150))
+                NavAnimation.FADE_IN -> fadeIn(animationSpec = tween(300))
             }
         },
         exitTransition = {
-            // When a new screen is pushed over current screen, don't do exit animation
+            // When a 'new' screen is pushed over 'current' screen, don't do exit animation for 'current' screen
             null
         },
         popEnterTransition = {
@@ -183,7 +185,7 @@ fun NavGraphBuilder.addScreen(
                     AnimatedContentTransitionScope.SlideDirection.Down,
                     animationSpec = tween(300)
                 )
-                NavAnimation.FADE_IN -> fadeOut(animationSpec = tween(150))
+                NavAnimation.FADE_IN -> fadeOut(animationSpec = tween(300))
             }
         }
 

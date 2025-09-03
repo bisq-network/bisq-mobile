@@ -160,7 +160,7 @@ fun PaymentAccountSettingsScreen() {
             },
             label = "user.paymentAccounts.accountData".i18n(),
             isTextArea = true,
-            minLines = 2,
+            minLines = 4,
             validation = {
 
                 if (it.length < 3) {
