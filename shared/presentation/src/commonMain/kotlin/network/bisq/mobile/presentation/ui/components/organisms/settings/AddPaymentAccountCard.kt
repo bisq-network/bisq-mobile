@@ -26,6 +26,8 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.helpers.spaceBetweenWithMin
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
+private const val MAX_ACCOUNT_FIELD_LENGTH = 1024
+
 @Composable
 fun AppPaymentAccountCard(
     onConfirm: (String, String) -> Unit,
@@ -67,9 +69,9 @@ fun AppPaymentAccountCard(
                     return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.isMandatory".i18n()
                 }
                 if (it.length < 3) {
-                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.minLength=".i18n()
+                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.minLength".i18n()
                 }
-                if (it.length > 256) {
+                if (it.length > MAX_ACCOUNT_FIELD_LENGTH) {
                     return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.maxLength".i18n()
                 }
                 return@BisqTextField null
@@ -92,7 +94,7 @@ fun AppPaymentAccountCard(
                 if (it.length < 3) {
                     return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.accountData.minLength".i18n()
                 }
-                if (it.length > 256) {
+                if (it.length > MAX_ACCOUNT_FIELD_LENGTH) {
                     return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.accountData.maxLength".i18n()
                 }
                 return@BisqTextField null
@@ -112,7 +114,7 @@ fun AppPaymentAccountCard(
             BisqButton(
                 modifier = Modifier.fillMaxHeight(),
                 text = "action.save".i18n(),
-                onClick = { onConfirm(accountName, accountDescription) },
+                onClick = { onConfirm(accountName.trim(), accountDescription.trim()) },
                 padding = PaddingValues(horizontal = 64.dp, vertical = 12.dp),
                 disabled = !accountNameValid || !accountDescriptionValid
             )

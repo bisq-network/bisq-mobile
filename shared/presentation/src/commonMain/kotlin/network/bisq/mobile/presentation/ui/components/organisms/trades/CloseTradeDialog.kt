@@ -15,7 +15,7 @@ fun CloseTradeDialog(
         dismissButtonText = "action.cancel".i18n(),
         confirmButtonText = "bisqEasy.openTrades.confirmCloseTrade".i18n(),
         onConfirm = onConfirm,
-        onDismiss = { onDismiss },
+        onDismiss = { _ -> onDismiss() },
         verticalButtonPlacement = true
     )
 }

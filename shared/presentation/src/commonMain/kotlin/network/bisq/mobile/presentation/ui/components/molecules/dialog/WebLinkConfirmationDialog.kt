@@ -36,7 +36,6 @@ fun WebLinkConfirmationDialog(
             onConfirm.invoke()
         },
         onDismiss = { toCopy ->
-            println("WebLinkConfirmationDialog :: $toCopy")
             if (toCopy) {
                 clipboardManager.setText(buildAnnotatedString { append(link) })
             }

@@ -1,7 +1,9 @@
 package network.bisq.mobile.presentation.ui.components.organisms.offer
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -18,14 +20,16 @@ fun TakeOfferSuccessDialog(
     BisqDialog(dismissOnClickOutside = false) {
         BisqText.h4Light(
             text = "bisqEasy.takeOffer.review.takeOfferSuccess.headline".i18n(),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
 
         BisqGap.V2()
 
         BisqText.baseLight(
             text = "bisqEasy.tradeWizard.review.takeOfferSuccess.subTitle".i18n(),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
 
         BisqGap.V2()

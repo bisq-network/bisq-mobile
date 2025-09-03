@@ -217,12 +217,14 @@ fun TradeDetailsHeader() {
                             value2 = item.shortTradeId,
                         )
 
-                        BisqGap.V1()
+                        if (!item.mediatorUserName.isNullOrBlank()) {
+                            BisqGap.V1()
 
-                        InfoBox(
-                            label = "bisqEasy.mediator".i18n(),
-                            value = item.mediatorUserName ?: "",
-                        )
+                            InfoBox(
+                                label = "bisqEasy.mediator".i18n(),
+                                value = item.mediatorUserName ?: "",
+                            )
+                        }
 
                         val showInterruptTradeButton = interruptTradeButtonText.isNotEmpty()
                         val showMediationButton = !isInMediation && openMediationButtonText.isNotEmpty()

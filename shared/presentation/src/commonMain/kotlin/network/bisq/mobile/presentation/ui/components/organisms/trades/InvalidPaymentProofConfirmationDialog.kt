@@ -23,7 +23,7 @@ fun InvalidPaymentProofConfirmationDialog(
         dismissButtonText = "action.close".i18n(),
         confirmButtonText = "bisqEasy.takeOffer.bitcoinPaymentData.warning.proceed".i18n(),
         onConfirm = onConfirm,
-        onDismiss = { onDismiss() },
+        onDismiss = onDismiss,
         horizontalAlignment = Alignment.Start,
         verticalButtonPlacement = true,
     )

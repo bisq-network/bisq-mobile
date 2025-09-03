@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.components.organisms.offer
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -29,20 +30,22 @@ fun TakeOfferProgressDialog() {
             )
             Image(
                 painterResource(Res.drawable.bisq_easy),
-                contentDescription = "",
+                contentDescription = null,
                 modifier = Modifier.size(imageSize)
             )
         }
         BisqText.h4Light(
             text = "bisqEasy.takeOffer.review.sendTakeOfferMessageFeedback.headline".i18n(),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
 
         BisqGap.V2()
 
         BisqText.baseLight(
             text = "bisqEasy.takeOffer.review.sendTakeOfferMessageFeedback.subTitle".i18n(),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
 
         BisqGap.V1()
@@ -50,6 +53,7 @@ fun TakeOfferProgressDialog() {
         BisqText.baseLightGrey(
             text = "bisqEasy.takeOffer.review.sendTakeOfferMessageFeedback.info".i18n(),
             textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }

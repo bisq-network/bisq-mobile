@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.components.atoms.layout
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width

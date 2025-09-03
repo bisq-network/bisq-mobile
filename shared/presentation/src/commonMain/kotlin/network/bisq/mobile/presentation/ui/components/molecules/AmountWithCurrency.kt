@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 
@@ -25,7 +26,7 @@ fun AmountWithCurrency(
         Row(verticalAlignment = Alignment.CenterVertically) {
             SingleAmountWithCurrency(priceRange[0].trim())
             BisqGap.HHalf()
-            BisqText.largeRegular(text = "-")
+            BisqText.h6Light(text = "-")
             BisqGap.HHalf()
             SingleAmountWithCurrency(priceRange[1].trim())
         }
@@ -44,11 +45,11 @@ private fun SingleAmountWithCurrency(
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.Bottom,
     ) {
-        BisqText.h6Light(text = value)
+        BisqText.h6Light(text = value, modifier = Modifier.alignByBaseline())
 
         if(priceFragments.size == 2) {
             BisqGap.HHalf()
-            BisqText.baseRegularGrey(priceFragments[1])
+            BisqText.baseRegularGrey(priceFragments[1], modifier = Modifier.alignByBaseline())
         }
     }
 }
