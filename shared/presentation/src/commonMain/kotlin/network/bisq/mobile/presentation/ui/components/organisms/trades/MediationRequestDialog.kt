@@ -33,13 +33,13 @@ fun MediationRequestDialog(
         Row {
             InfoIcon()
             BisqGap.H1()
-            BisqText.h6Regular(
+            BisqText.h6Light(
                 text = "bisqEasy.tradeState.requestMediation".i18n(),
                 color = BisqTheme.colors.primary
             )
         }
         BisqGap.V1()
-        BisqText.baseRegular(
+        BisqText.baseLight(
             text = "bisqEasy.mediation.request.confirm.msg".i18n(),
             textAlign = TextAlign.Center
         )

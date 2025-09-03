@@ -33,21 +33,21 @@ fun TakeOfferProgressDialog() {
                 modifier = Modifier.size(imageSize)
             )
         }
-        BisqText.h4Regular(
+        BisqText.h4Light(
             text = "bisqEasy.takeOffer.review.sendTakeOfferMessageFeedback.headline".i18n(),
             textAlign = TextAlign.Center
         )
 
         BisqGap.V2()
 
-        BisqText.baseRegular(
+        BisqText.baseLight(
             text = "bisqEasy.takeOffer.review.sendTakeOfferMessageFeedback.subTitle".i18n(),
             textAlign = TextAlign.Center
         )
 
         BisqGap.V1()
 
-        BisqText.baseRegularGrey(
+        BisqText.baseLightGrey(
             text = "bisqEasy.takeOffer.review.sendTakeOfferMessageFeedback.info".i18n(),
             textAlign = TextAlign.Center,
         )

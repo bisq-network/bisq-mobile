@@ -34,7 +34,7 @@ fun SellerReputationWarningDialog(
 
         BisqGap.V1()
 
-        BisqText.baseRegular(
+        BisqText.baseLight(
             "bisqEasy.tradeWizard.directionAndMarket.feedback.subTitle1".i18n() + "\n\n" +
                     "bisqEasy.tradeWizard.directionAndMarket.feedback.subTitle2".i18n() + "\n\n" +
                     "bisqEasy.tradeWizard.directionAndMarket.feedback.subTitle3".i18n()

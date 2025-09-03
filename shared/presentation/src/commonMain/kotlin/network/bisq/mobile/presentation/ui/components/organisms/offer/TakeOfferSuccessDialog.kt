@@ -16,14 +16,14 @@ fun TakeOfferSuccessDialog(
 ) {
 
     BisqDialog(dismissOnClickOutside = false) {
-        BisqText.h4Regular(
+        BisqText.h4Light(
             text = "bisqEasy.takeOffer.review.takeOfferSuccess.headline".i18n(),
             textAlign = TextAlign.Center
         )
 
         BisqGap.V2()
 
-        BisqText.baseRegular(
+        BisqText.baseLight(
             text = "bisqEasy.tradeWizard.review.takeOfferSuccess.subTitle".i18n(),
             textAlign = TextAlign.Center
         )
