@@ -1,11 +1,13 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
@@ -47,8 +49,9 @@ class UserProfileSettingsPresenter(
             null,
         )
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override val reputation: StateFlow<String> =
-        selectedUserProfile.map {
+        selectedUserProfile.mapLatest {
             it?.let { profile ->
                 withContext(IODispatcher) {
                     reputationServiceFacade.getReputation(profile.id)
@@ -69,16 +72,17 @@ class UserProfileSettingsPresenter(
                 getLocalizedNA(),
             )
 
-    override val profileAge: StateFlow<String> = selectedUserProfile.map {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    override val profileAge: StateFlow<String> = selectedUserProfile.mapLatest {
         it?.let { profile ->
             withContext(IODispatcher) {
                 reputationServiceFacade.getProfileAge(profile.id)
                     .getOrNull()
             }
         }
-    }.map {
-        if (it != null) {
-            DateUtils.formatProfileAge(it)
+    }.map { age ->
+        if (age != null) {
+            DateUtils.formatProfileAge(age)
         } else {
             null
         }
@@ -148,8 +152,9 @@ class UserProfileSettingsPresenter(
         setShowLoading(true)
         launchUI {
             try {
-                val safeStatement = statement.value.takeUnless { it == DEFAULT_UNKNOWN_VALUE } ?: ""
-                val safeTerms = tradeTerms.value.takeUnless { it == DEFAULT_UNKNOWN_VALUE } ?: ""
+                val defaultNotAvailableValue = "data.na".i18n()
+                val safeStatement = statement.value.takeUnless { it == defaultNotAvailableValue } ?: ""
+                val safeTerms = tradeTerms.value.takeUnless { it == defaultNotAvailableValue } ?: ""
                 val result = withContext(IODispatcher) {
                     userProfileServiceFacade.updateAndPublishUserProfile(
                         safeStatement,
