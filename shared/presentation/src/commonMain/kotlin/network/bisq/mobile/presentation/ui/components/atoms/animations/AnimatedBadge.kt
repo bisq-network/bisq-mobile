@@ -20,7 +20,6 @@ fun AnimatedBadge(
 ) {
 
     val scale: Float
-    val rotateX: Float
 
     if (showAnimation) {
         val transition = rememberInfiniteTransition(label = "badgePulse")
@@ -37,23 +36,8 @@ fun AnimatedBadge(
                 repeatMode = RepeatMode.Restart
             ), label = "scale"
         ).value
-
-        rotateX = transition.animateFloat(
-            initialValue = 0f,
-            targetValue = 10f,
-            animationSpec = infiniteRepeatable(
-                animation = keyframes {
-                    durationMillis = 5600 // 600ms pulse + 5000ms delay
-                    10f at 300 // halfway scale up
-                    0f at 600 // back to normal (end of pulse)
-                    0f at 5600 // hold until next repeat
-                },
-                repeatMode = RepeatMode.Restart
-            ), label = "rotateX"
-        ).value
     } else {
         scale = 1f
-        rotateX = 0f
     }
 
     Badge(
@@ -64,7 +48,6 @@ fun AnimatedBadge(
             .graphicsLayer {
                 scaleX = scale
                 scaleY = scale
-                rotationZ = rotateX
             }
     ) {
         content()
