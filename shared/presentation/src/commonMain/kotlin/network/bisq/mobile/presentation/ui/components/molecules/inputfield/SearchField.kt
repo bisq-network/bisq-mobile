@@ -13,6 +13,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.SearchIcon
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap.BisqGapHFill
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
@@ -53,7 +54,7 @@ fun BisqSearchField(
                     // right suffix which is a button usually in our case
                     // to the end of the row to look better and
                     // also prevent it from moving when our clear button is added
-                    Spacer(Modifier.weight(1f))
+                    BisqGapHFill()
                 }
 
                 if (rightSuffix != null) {

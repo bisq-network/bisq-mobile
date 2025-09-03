@@ -21,6 +21,6 @@ fun UndoIgnoreDialog(
         dismissButtonText = "action.cancel".i18n(),
         verticalButtonPlacement = true,
         onConfirm = onConfirm,
-        onDismiss = onDismiss,
+        onDismiss = { onDismiss() },
     )
 }

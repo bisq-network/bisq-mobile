@@ -8,8 +8,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.buildAnnotatedString
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.WebLinkConfirmationDialog
@@ -30,7 +28,6 @@ fun LinkButton(
     modifier: Modifier = Modifier,
 ) {
 
-    val clipboardManager = LocalClipboardManager.current
     var showConfirmDialog by remember { mutableStateOf(false) }
 
     BisqButton(
@@ -59,7 +56,6 @@ fun LinkButton(
                 showConfirmDialog = false
             },
             onDismiss = {
-                clipboardManager.setText(buildAnnotatedString { append(link) })
                 showConfirmDialog = false
             }
         )

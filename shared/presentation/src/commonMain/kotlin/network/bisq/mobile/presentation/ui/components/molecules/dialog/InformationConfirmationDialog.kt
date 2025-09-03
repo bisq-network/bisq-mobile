@@ -28,7 +28,7 @@ fun InformationConfirmationDialog(
         confirmButtonText = confirmButtonText,
         dismissButtonText = dismissButtonText,
         onConfirm = onConfirm,
-        onDismiss = onDismiss,
+        onDismiss = { onDismiss() },
         marginTop = marginTop,
         horizontalAlignment = horizontalAlignment,
         verticalButtonPlacement = verticalButtonPlacement

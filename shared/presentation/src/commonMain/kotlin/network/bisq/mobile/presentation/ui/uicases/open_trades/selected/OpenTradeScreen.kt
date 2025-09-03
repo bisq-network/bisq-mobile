@@ -191,7 +191,7 @@ fun OpenTradeScreen() {
             message = mediationError,
             dismissButtonText = "",
             onConfirm = headerPresenter::onCloseMediationErrorDialog,
-            onDismiss = headerPresenter::onCloseMediationErrorDialog
+            onDismiss = { headerPresenter.onCloseMediationErrorDialog() },
         )
     }
 

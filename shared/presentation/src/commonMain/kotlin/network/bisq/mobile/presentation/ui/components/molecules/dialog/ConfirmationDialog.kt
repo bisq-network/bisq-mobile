@@ -15,7 +15,9 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.button.CloseIconButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap.BisqGapHFill
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -27,25 +29,30 @@ fun ConfirmationDialog(
     message: String = "",
     confirmButtonText: String = "confirmation.yes".i18n(),
     dismissButtonText: String = "confirmation.no".i18n(),
+    closeButton: Boolean = false,
     marginTop: Dp = BisqUIConstants.ScreenPadding8X,
     horizontalAlignment: Alignment.Horizontal = Alignment.CenterHorizontally,
     verticalButtonPlacement: Boolean = false,
     onConfirm: () -> Unit,
-    onDismiss: () -> Unit,
+    onDismiss: (Boolean) -> Unit = {}   // true on dismiss button click; false on bg click dismiss
 ) {
     BisqDialog(
         horizontalAlignment = horizontalAlignment,
         marginTop = marginTop,
-        onDismissRequest = onDismiss
+        onDismissRequest = { onDismiss(false) }
     ) {
         if (headline.isNotEmpty()) {
-            if (headlineLeftIcon == null) {
+            if (headlineLeftIcon == null && !closeButton) {
                 BisqText.h6Regular(headline, color = headlineColor)
             } else {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    headlineLeftIcon()
+                    headlineLeftIcon?.invoke()
                     BisqGap.H1()
                     BisqText.h6Regular(headline, color = headlineColor)
+                    BisqGapHFill()
+                    if (closeButton) {
+                        CloseIconButton(onClick = { onDismiss(false) })
+                    }
                 }
             }
             BisqGap.V2()
@@ -70,7 +77,7 @@ fun ConfirmationDialog(
                     BisqButton(
                         text = dismissButtonText,
                         type = BisqButtonType.Grey,
-                        onClick = onDismiss,
+                        onClick = { onDismiss(true) },
                         fullWidth = true
                     )
                 }
@@ -92,7 +99,7 @@ fun ConfirmationDialog(
                         modifier = Modifier.weight(1.0F).fillMaxHeight(),
                         text = dismissButtonText,
                         type = BisqButtonType.Grey,
-                        onClick = onDismiss,
+                        onClick = { onDismiss(true) },
                     )
                 }
             }
