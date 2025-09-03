@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.Dp
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIcon
+import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIconFilled
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -23,7 +23,7 @@ fun WarningConfirmationDialog(
     ConfirmationDialog(
         headline = headline,
         headlineColor = BisqTheme.colors.warning,
-        headlineLeftIcon = { WarningIcon() },
+        headlineLeftIcon = { WarningIconFilled() },
         message = message,
         confirmButtonText = confirmButtonText,
         dismissButtonText = dismissButtonText,

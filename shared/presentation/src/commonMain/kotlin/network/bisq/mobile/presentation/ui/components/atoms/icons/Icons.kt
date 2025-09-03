@@ -44,6 +44,7 @@ import bisqapps.shared.presentation.generated.resources.icon_star_green
 import bisqapps.shared.presentation.generated.resources.icon_star_grey_hollow
 import bisqapps.shared.presentation.generated.resources.icon_star_half_green
 import bisqapps.shared.presentation.generated.resources.icon_warning
+import bisqapps.shared.presentation.generated.resources.icon_warning_filled
 import bisqapps.shared.presentation.generated.resources.icon_warning_grey
 import bisqapps.shared.presentation.generated.resources.icon_warning_light_grey
 import bisqapps.shared.presentation.generated.resources.icon_warning_white
@@ -244,6 +245,11 @@ fun UpIcon(modifier: Modifier = Modifier.size(30.dp)) {
 @Composable
 fun WarningIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_warning), "Warning icon", modifier = modifier)
+}
+
+@Composable
+fun WarningIconFilled(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_warning_filled), "Filled Warning icon", modifier = modifier)
 }
 
 @Composable
