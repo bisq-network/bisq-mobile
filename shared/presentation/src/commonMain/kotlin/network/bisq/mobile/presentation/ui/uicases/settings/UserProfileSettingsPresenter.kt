@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -38,8 +39,8 @@ class UserProfileSettingsPresenter(
         fun getLocalizedNA(): String = "data.na".i18n()
     }
 
-    private val selectedUserProfile: Flow<UserProfileVO?> =
-        userProfileServiceFacade.selectedUserProfile.map { it }
+    private val selectedUserProfile: Flow<UserProfileVO?> get() =
+        userProfileServiceFacade.selectedUserProfile
 
 
     override val uniqueAvatar: StateFlow<PlatformImage?> =
@@ -53,12 +54,12 @@ class UserProfileSettingsPresenter(
     override val reputation: StateFlow<String> =
         selectedUserProfile.mapLatest {
             it?.let { profile ->
-                withContext(IODispatcher) {
-                    reputationServiceFacade.getReputation(profile.id)
-                        .getOrNull()?.totalScore?.toString()
-                }
+                reputationServiceFacade.getReputation(profile.id)
+                    .getOrNull()?.totalScore?.toString()
             }
-        }.map { it ?: getLocalizedNA() }.stateIn(
+        }
+            .flowOn(IODispatcher)
+            .map { it ?: getLocalizedNA() }.stateIn(
             presenterScope,
             SharingStarted.Lazily,
             getLocalizedNA(),
@@ -75,12 +76,12 @@ class UserProfileSettingsPresenter(
     @OptIn(ExperimentalCoroutinesApi::class)
     override val profileAge: StateFlow<String> = selectedUserProfile.mapLatest {
         it?.let { profile ->
-            withContext(IODispatcher) {
-                reputationServiceFacade.getProfileAge(profile.id)
-                    .getOrNull()
-            }
+            reputationServiceFacade.getProfileAge(profile.id)
+                .getOrNull()
         }
-    }.map { age ->
+    }
+        .flowOn(IODispatcher)
+        .map { age ->
         if (age != null) {
             DateUtils.formatProfileAge(age)
         } else {
@@ -141,9 +142,9 @@ class UserProfileSettingsPresenter(
         setShowLoading(true)
         launchUI {
             try {
-                val defaultNotAvailableValue = "data.na".i18n()
-                val safeStatement = statement.value.takeUnless { it == defaultNotAvailableValue } ?: ""
-                val safeTerms = tradeTerms.value.takeUnless { it == defaultNotAvailableValue } ?: ""
+                val na = getLocalizedNA()
+                val safeStatement = statement.value.takeUnless { it == na } ?: ""
+                val safeTerms = tradeTerms.value.takeUnless { it == na } ?: ""
                 val result = withContext(IODispatcher) {
                     userProfileServiceFacade.updateAndPublishUserProfile(
                         safeStatement,
