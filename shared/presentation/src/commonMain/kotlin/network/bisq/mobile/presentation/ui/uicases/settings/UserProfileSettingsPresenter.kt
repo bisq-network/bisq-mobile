@@ -116,21 +116,10 @@ class UserProfileSettingsPresenter(
                 getLocalizedNA(),
             )
 
-    override val tradeTerms: StateFlow<String> =
-        selectedUserProfile.map { it?.terms ?: "" }
-            .stateIn(
-                presenterScope,
-                SharingStarted.Lazily,
-                "",
-            )
-
-    override val statement: StateFlow<String> =
-        selectedUserProfile.map { it?.statement ?: "" }
-            .stateIn(
-                presenterScope,
-                SharingStarted.Lazily,
-                "",
-            )
+    private val _tradeTerms = MutableStateFlow("")
+    override val tradeTerms: StateFlow<String> get() = _tradeTerms.asStateFlow()
+    private val _statement = MutableStateFlow("")
+    override val statement: StateFlow<String> get() = _statement.asStateFlow()
 
 
     private val _showLoading = MutableStateFlow(false)
@@ -177,15 +166,11 @@ class UserProfileSettingsPresenter(
     }
 
     override fun updateTradeTerms(it: String) {
-        launchIO {
-            userRepository.updateTerms(it)
-        }
+        _tradeTerms.value = it
     }
 
     override fun updateStatement(it: String) {
-        launchIO {
-            userRepository.updateStatement(it)
-        }
+        _statement.value = it
     }
 
     private fun setShowLoading(show: Boolean = true) {
