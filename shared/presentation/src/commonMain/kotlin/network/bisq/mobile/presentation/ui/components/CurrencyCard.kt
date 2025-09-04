@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -96,7 +97,7 @@ fun CurrencyCard(
         }
         BisqText.baseLight(
             text = (if (hasIgnoredUsers && numOffers > 0) "~" else "") +
-                    "mobile.components.currencyCard.numberOfOffers".i18n(numOffers),
+                    "mobile.components.currencyCard.numberOfOffers".i18nPlural(numOffers),
             color = BisqTheme.colors.primary,
             textAlign = TextAlign.End,
             modifier = Modifier.weight(1.0f),

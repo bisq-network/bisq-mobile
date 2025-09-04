@@ -125,13 +125,7 @@ class UserProfileSettingsPresenter(
 
     private fun setProfileAge(profileAgeTimestamp: Long?) {
         if (profileAgeTimestamp != null) {
-            _profileAge.value = DateUtils.periodFrom(profileAgeTimestamp).let {
-                listOfNotNull(
-                    if (it.first > 0) "${it.first} years" else null,
-                    if (it.second > 0) "${it.second} months" else null,
-                    if (it.third > 0) "${it.third} days" else null
-                ).ifEmpty { listOf("less than a day") }.joinToString(", ")
-            }
+            _profileAge.value = DateUtils.formatProfileAge(profileAgeTimestamp)
         } else {
             _profileAge.value = DEFAULT_UNKNOWN_VALUE
         }

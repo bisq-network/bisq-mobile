@@ -8,6 +8,7 @@ import kotlinx.datetime.toLocalDateTime
 import kotlinx.datetime.until
 import network.bisq.mobile.domain.formatDateTime
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.i18n.i18nPlural
 
 object DateUtils {
 
@@ -57,5 +58,26 @@ object DateUtils {
         val instant = Instant.fromEpochMilliseconds(epochMillis)
         val localDateTime = instant.toLocalDateTime(timeZone)
         return formatDateTime(localDateTime)
+    }
+
+    /**
+     * Format profile age with proper i18n and pluralization
+     * @param profileAgeTimestamp The timestamp in milliseconds since epoch
+     * @return Formatted string like "2 years, 3 months, 5 days" or "less than a day"
+     */
+    fun formatProfileAge(profileAgeTimestamp: Long): String {
+        val (years, months, days) = periodFrom(profileAgeTimestamp)
+
+        val parts = listOfNotNull(
+            if (years > 0) "temporal.year".i18nPlural(years) else null,
+            if (months > 0) "temporal.month".i18nPlural(months) else null,
+            if (days > 0) "temporal.day".i18nPlural(days) else null
+        )
+
+        return if (parts.isEmpty()) {
+            "temporal.lessThanADay".i18n()
+        } else {
+            parts.joinToString(", ")
+        }
     }
 }
