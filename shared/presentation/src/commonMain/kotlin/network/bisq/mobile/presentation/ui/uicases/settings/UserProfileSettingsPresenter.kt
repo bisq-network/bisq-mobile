@@ -175,8 +175,6 @@ class UserProfileSettingsPresenter(
     }
 
     private fun setShowLoading(show: Boolean = true) {
-        launchUI {
-            _showLoading.value = show
-        }
+        _showLoading.value = show
     }
 }
