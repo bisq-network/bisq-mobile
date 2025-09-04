@@ -34,23 +34,23 @@ object DateUtils {
     }
 
     /**
-     * Calculate and format the time elapsed since the given timestamp
+     * Calculate and format the time elapsed since the given timestamp with proper i18n
      * @param epochMillis The timestamp in milliseconds since epoch
      * @return Formatted string like "3 min ago", "2 hours ago", etc.
      */
     fun lastSeen(epochMillis: Long): String {
         val lastActivityInstant = Instant.fromEpochMilliseconds(epochMillis)
         val currentInstant = Clock.System.now()
-        
+
         val durationInSeconds = lastActivityInstant.until(currentInstant, DateTimeUnit.SECOND)
-        
+
         return when {
-            durationInSeconds < 60 -> "$durationInSeconds sec ago"
-            durationInSeconds < 3600 -> "${durationInSeconds / 60} min ago"
-            durationInSeconds < 86400 -> "${durationInSeconds / 3600} hours ago"
-            durationInSeconds < 2592000 -> "${durationInSeconds / 86400} days ago" // ~30 days
-            durationInSeconds < 31536000 -> "${durationInSeconds / 2592000} months ago" // ~365 days
-            else -> "${durationInSeconds / 31536000} years ago"
+            durationInSeconds < 60 -> "temporal.second".i18nPlural(durationInSeconds.toInt())
+            durationInSeconds < 3600 -> "temporal.minute".i18nPlural((durationInSeconds / 60).toInt())
+            durationInSeconds < 86400 -> "temporal.hour".i18nPlural((durationInSeconds / 3600).toInt())
+            durationInSeconds < 2592000 -> "temporal.dayAgo".i18nPlural((durationInSeconds / 86400).toInt()) // ~30 days
+            durationInSeconds < 31536000 -> "temporal.monthAgo".i18nPlural((durationInSeconds / 2592000).toInt()) // ~365 days
+            else -> "temporal.yearAgo".i18nPlural((durationInSeconds / 31536000).toInt())
         }
     }
 
