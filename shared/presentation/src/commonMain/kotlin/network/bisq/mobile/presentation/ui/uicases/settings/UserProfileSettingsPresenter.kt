@@ -28,6 +28,7 @@ class UserProfileSettingsPresenter(
 ) : BasePresenter(mainPresenter), IUserProfileSettingsPresenter {
 
     companion object {
+        @Deprecated("Use getLocalizedNA() for localized fallback")
         const val DEFAULT_UNKNOWN_VALUE = "N/A"
 
         /**
@@ -83,13 +84,14 @@ class UserProfileSettingsPresenter(
                 val profileAge = withContext(IODispatcher) { reputationServiceFacade.getProfileAge(it.id) }
                 setProfileAge(profileAge.getOrNull())
             }
-            val reputationProfileId = userProfile?.id ?: getLocalizedNA()
-            val reputation = withContext(IODispatcher) { reputationServiceFacade.getReputation(reputationProfileId) }
+            val reputation = if (userProfile != null) {
+                withContext(IODispatcher) { reputationServiceFacade.getReputation(userProfile.id) }
+            } else null
                 user?.let {
                 setAvatar(it)
                 setLastActivity(it)
             }
-            reputation.getOrNull()?.let {
+            reputation?.getOrNull()?.let {
                 setReputation(it)
             }
         }
@@ -150,9 +152,9 @@ class UserProfileSettingsPresenter(
                 }
                 if (result.isSuccess) {
                     userRepository.updateLastActivity()?.let { setLastActivity(it) }
-                    showSnackbar("mobile.settings.userProfile.saveSuccess".i18n())
+                    showSnackbar("mobile.settings.userProfile.saveSuccess".i18n(), isError = false)
                 } else {
-                    showSnackbar("mobile.settings.userProfile.saveFailure".i18n())
+                    showSnackbar("mobile.settings.userProfile.saveFailure".i18n(), isError = true)
                 }
             } catch (e: Exception) {
                 log.e(e) { "Failed to save user profile settings" }

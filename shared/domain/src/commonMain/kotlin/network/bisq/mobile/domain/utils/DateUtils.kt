@@ -12,7 +12,10 @@ import network.bisq.mobile.i18n.i18nPlural
 
 object DateUtils {
 
-    fun now() = Clock.System.now().toEpochMilliseconds()
+    // Allow clock injection for testing
+    internal var clock: Clock = Clock.System
+
+    fun now() = clock.now().toEpochMilliseconds()
 
     /**
      * @return years, months, days past since timestamp
@@ -20,7 +23,7 @@ object DateUtils {
     fun periodFrom(timetamp: Long): Triple<Int, Int, Int> {
         val creationInstant = Instant.fromEpochMilliseconds(timetamp)
         val creationDate = creationInstant.toLocalDateTime(TimeZone.currentSystemDefault()).date
-        val currentDate = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val currentDate = clock.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
 
         // Calculate the difference
         val period = creationDate.until(currentDate, DateTimeUnit.DAY)
@@ -40,17 +43,22 @@ object DateUtils {
      */
     fun lastSeen(epochMillis: Long): String {
         val lastActivityInstant = Instant.fromEpochMilliseconds(epochMillis)
-        val currentInstant = Clock.System.now()
+        val currentInstant = clock.now()
 
-        val durationInSeconds = lastActivityInstant.until(currentInstant, DateTimeUnit.SECOND)
+        val durationInSeconds = lastActivityInstant
+            .until(currentInstant, DateTimeUnit.SECOND)
+            .coerceAtLeast(0)
+
+        // Treat "now" as online instead of "0 sec ago"
+        if (durationInSeconds == 0L) return "temporal.online".i18n()
 
         return when {
-            durationInSeconds < 60 -> "temporal.second".i18nPlural(durationInSeconds.toInt())
-            durationInSeconds < 3600 -> "temporal.minute".i18nPlural((durationInSeconds / 60).toInt())
-            durationInSeconds < 86400 -> "temporal.hour".i18nPlural((durationInSeconds / 3600).toInt())
-            durationInSeconds < 2592000 -> "temporal.dayAgo".i18nPlural((durationInSeconds / 86400).toInt()) // ~30 days
-            durationInSeconds < 31536000 -> "temporal.monthAgo".i18nPlural((durationInSeconds / 2592000).toInt()) // ~365 days
-            else -> "temporal.yearAgo".i18nPlural((durationInSeconds / 31536000).toInt())
+            durationInSeconds < 60L -> "temporal.second".i18nPlural(durationInSeconds.toInt())
+            durationInSeconds < 3_600L -> "temporal.minute".i18nPlural((durationInSeconds / 60).toInt())
+            durationInSeconds < 86_400L -> "temporal.hour".i18nPlural((durationInSeconds / 3_600).toInt())
+            durationInSeconds < 2_592_000L -> "temporal.dayAgo".i18nPlural((durationInSeconds / 86_400).toInt()) // ~30 days
+            durationInSeconds < 31_536_000L -> "temporal.monthAgo".i18nPlural((durationInSeconds / 2_592_000).toInt()) // ~365 days
+            else -> "temporal.yearAgo".i18nPlural((durationInSeconds / 31_536_000).toInt())
         }
     }
 
