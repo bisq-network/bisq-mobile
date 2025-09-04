@@ -151,7 +151,7 @@ class UserProfileSettingsPresenter(
                 }
                 if (result.isSuccess) {
                     userRepository.updateLastActivity()?.let { setLastActivity(it) }
-                    showSnackbar("mobile.settings.userProfile.saveSucess".i18n())
+                    showSnackbar("mobile.settings.userProfile.saveSuccess".i18n())
                 } else {
                     showSnackbar("mobile.settings.userProfile.saveFailure".i18n())
                 }
