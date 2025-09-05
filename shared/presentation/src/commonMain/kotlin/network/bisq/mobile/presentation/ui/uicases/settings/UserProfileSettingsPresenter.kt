@@ -152,8 +152,13 @@ class UserProfileSettingsPresenter(
                     )
                 }
                 if (result.isSuccess) {
-                    withContext(IODispatcher) { userRepository.updateLastActivity() }
+                    val updatedLastActivity = withContext(IODispatcher) {
+                        runCatching { userRepository.updateLastActivity() }.isSuccess
+                    }
                     showSnackbar("mobile.settings.userProfile.saveSuccess".i18n(), isError = false)
+                    if (!updatedLastActivity) {
+                        log.w { "updateLastActivity failed after successful profile save" }
+                    }
                 } else {
                     showSnackbar("mobile.settings.userProfile.saveFailure".i18n(), isError = true)
                 }
