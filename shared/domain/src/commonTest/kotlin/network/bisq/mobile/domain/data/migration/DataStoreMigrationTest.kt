@@ -1,5 +1,6 @@
 package network.bisq.mobile.domain.data.migration
 
+import io.ktor.util.date.getTimeMillis
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.User
@@ -191,7 +192,7 @@ class DataStoreMigrationTest {
         val originalUser = User(
             tradeTerms = "My trading terms",
             statement = "My statement",
-            lastActivity = System.currentTimeMillis()
+            lastActivity = getTimeMillis()
         )
 
         val originalSettings = Settings(

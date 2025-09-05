@@ -15,6 +15,7 @@ import network.bisq.mobile.domain.data.model.User
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertTrue
 
 class UserRepositoryImplTest {
 
@@ -91,8 +92,10 @@ class UserRepositoryImplTest {
         val afterUpdate = Clock.System.now().toEpochMilliseconds()
 
         // Allow for small time difference due to test execution
-        assert(updatedUser.lastActivity!! >= beforeUpdate)
-        assert(updatedUser.lastActivity!! <= afterUpdate)
+         assertTrue(
+                    updatedUser.lastActivity!! in beforeUpdate..afterUpdate,
+                    "lastActivity should be set to the current timestamp range"
+         )
 
         // Verify other fields are preserved
         assertEquals("existing terms", updatedUser.tradeTerms)
