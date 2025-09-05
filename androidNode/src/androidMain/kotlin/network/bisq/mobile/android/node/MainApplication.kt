@@ -105,24 +105,22 @@ class MainApplication : BisqMainApplication(), ComponentCallbacks2 {
         return BuildNodeConfig.IS_DEBUG
     }
 
-    private suspend fun setupBisqCoreStatics() {
-        withContext(Dispatchers.IO) {
-            val isEmulator = isEmulator()
-            val clearNetFacade = if (isEmulator) {
-                AndroidEmulatorAddressTypeFacade()
-            } else {
-                LANAddressTypeFacade()
-            }
-            FacadeProvider.setClearNetAddressTypeFacade(clearNetFacade)
-            FacadeProvider.setJdkFacade(AndroidJdkFacade(Process.myPid()))
-            FacadeProvider.setGuavaFacade(AndroidGuavaFacade())
-
-            // Androids default BC version does not support all algorithms we need, thus we remove
-            // it and add our BC provider
-            Security.removeProvider("BC")
-            Security.addProvider(BouncyCastleProvider())
-            log.d { "Configured bisq2 for Android${if (isEmulator) " emulator" else ""}" }
+    private fun setupBisqCoreStatics() {
+        val isEmulator = isEmulator()
+        val clearNetFacade = if (isEmulator) {
+            AndroidEmulatorAddressTypeFacade()
+        } else {
+            LANAddressTypeFacade()
         }
+        FacadeProvider.setClearNetAddressTypeFacade(clearNetFacade)
+        FacadeProvider.setJdkFacade(AndroidJdkFacade(Process.myPid()))
+        FacadeProvider.setGuavaFacade(AndroidGuavaFacade())
+
+        // Androids default BC version does not support all algorithms we need, thus we remove
+        // it and add our BC provider
+        Security.removeProvider("BC")
+        Security.addProvider(BouncyCastleProvider())
+        log.d { "Configured bisq2 for Android${if (isEmulator) " emulator" else ""}" }
     }
 
     private fun isEmulator(): Boolean {
