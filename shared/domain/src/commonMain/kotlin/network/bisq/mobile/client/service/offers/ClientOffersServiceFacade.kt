@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
@@ -188,42 +189,70 @@ class ClientOffersServiceFacade(
                     return@collect
                 }
 
-                offersSequenceNumber.value = webSocketEvent.sequenceNumber
-                val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> = WebSocketEventPayload.from(
-                    json,
-                    webSocketEvent
-                )
-                val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
-                log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
-
-                offersMutex.withLock {
-                    if (webSocketEvent.modificationType == ModificationType.REPLACE || webSocketEvent.modificationType == ModificationType.ADDED) {
-                        payload.forEach { item ->
-                            val model = OfferItemPresentationModel(item)
-                            val quoteCurrencyCode = item.bisqEasyOffer.market.quoteCurrencyCode
-                            offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }[model.offerId] = model
-                            log.v { "${webSocketEvent.modificationType} offer ${model.offerId} for market $quoteCurrencyCode" }
-                        }
-                        log.d { "After ${webSocketEvent.modificationType} - Markets with offers: ${offerbookListItemsByMarket.mapValues { it.value.size }}" }
-                    } else if (webSocketEvent.modificationType == ModificationType.REMOVED) {
-                        payload.forEach { item ->
-                            val quoteCurrencyCode = item.bisqEasyOffer.market.quoteCurrencyCode
-                            offerbookListItemsByMarket[quoteCurrencyCode]?.let { map ->
-                                val model = OfferItemPresentationModel(item)
-                                map.remove(model.offerId)
-                                log.v { "REMOVED offer ${model.offerId} from market $quoteCurrencyCode" }
-                                if (map.isEmpty()) {
-                                    offerbookListItemsByMarket.remove(quoteCurrencyCode)
-                                    log.d { "Removed empty market $quoteCurrencyCode from cache" }
-                                }
-                            }
-                        }
-                        log.d { "After REMOVED - Markets with offers: ${offerbookListItemsByMarket.mapValues { it.value.size }}" }
-                    }
+                runCatching {
+                    val webSocketEventPayload: WebSocketEventPayload<List<OfferItemPresentationDto>> = WebSocketEventPayload.from(
+                        json,
+                        webSocketEvent
+                    )
+                    val payload: List<OfferItemPresentationDto> = webSocketEventPayload.payload
+                    log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
+                    updateOffersByMarket(webSocketEvent, payload)
+                    applyOffersToSelectedMarket()
+                }.onSuccess {
+                    offersSequenceNumber.value = webSocketEvent.sequenceNumber
+                }.onFailure { e ->
+                    log.e(e) { "Error processing offers WebSocket event (seq=${webSocketEvent.sequenceNumber})" }
                 }
-                applyOffersToSelectedMarket()
             }
         }
+    }
+
+    private suspend fun updateOffersByMarket(
+        webSocketEvent: WebSocketEvent,
+        payload: List<OfferItemPresentationDto>
+    ) {
+        val modelsByMarket = payload.groupBy { it.bisqEasyOffer.market.quoteCurrencyCode }
+            .mapValues { (_, items) ->
+                items.associate { item ->
+                    val model = OfferItemPresentationModel(item)
+                    model.offerId to model
+                }
+            }
+
+        offersMutex.withLock {
+            when (webSocketEvent.modificationType) {
+                ModificationType.REPLACE, ModificationType.ADDED -> {
+                    modelsByMarket.forEach { (quoteCurrencyCode, models) ->
+                        if (webSocketEvent.modificationType == ModificationType.REPLACE) {
+                            // Clear only the specific market being replaced, not all markets
+                            offerbookListItemsByMarket[quoteCurrencyCode]?.clear()
+                        }
+
+                        val marketMap = offerbookListItemsByMarket.getOrPut(quoteCurrencyCode) { mutableMapOf() }
+                        marketMap.putAll(models)
+
+                        models.keys.forEach { offerId ->
+                            log.v { "${webSocketEvent.modificationType} offer $offerId for market $quoteCurrencyCode" }
+                        }
+                    }
+                }
+                ModificationType.REMOVED -> {
+                    modelsByMarket.forEach { (quoteCurrencyCode, models) ->
+                        offerbookListItemsByMarket[quoteCurrencyCode]?.let { map ->
+                            models.keys.forEach { offerId ->
+                                map.remove(offerId)
+                                log.v { "REMOVED offer $offerId from market $quoteCurrencyCode" }
+                            }
+                            if (map.isEmpty()) {
+                                offerbookListItemsByMarket.remove(quoteCurrencyCode)
+                                log.d { "Removed empty market $quoteCurrencyCode from cache" }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        log.d { "After ${webSocketEvent.modificationType} - Markets with offers: ${offerbookListItemsByMarket.mapValues { it.value.size }}" }
     }
 
     private suspend fun applyOffersToSelectedMarket() {
