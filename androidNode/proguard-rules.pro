@@ -52,8 +52,16 @@
 # Keep all classes that might be used via reflection
 -keep class * implements java.io.Serializable { *; }
 
-# Keep classes used by kmp persistance
+# Keep classes used by androidx.datastore persistence
 -keep class network.bisq.mobile.domain.data.model.** { *; }
+-keep class network.bisq.mobile.domain.data.datastore.** { *; }
+
+# Keep androidx.datastore classes and serializers
+-keep class androidx.datastore.** { *; }
+-keep class * implements androidx.datastore.core.okio.OkioSerializer { *; }
+-keepclassmembers class * implements androidx.datastore.core.okio.OkioSerializer {
+    public <methods>;
+}
 
 ###########################################
 # Core Bisq Protobuf preservation rules

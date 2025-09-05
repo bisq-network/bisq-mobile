@@ -8,8 +8,16 @@
 ### Avoid removing reflective access needed by Ktor's serialization
 -keepnames class kotlinx.serialization.** { *; }
 
-# Keep classes used by kmp persistance
+# Keep classes used by androidx.datastore persistence
 -keep class network.bisq.mobile.domain.data.model.** { *; }
+-keep class network.bisq.mobile.domain.data.datastore.** { *; }
+
+# Keep androidx.datastore classes and serializers
+-keep class androidx.datastore.** { *; }
+-keep class * implements androidx.datastore.core.okio.OkioSerializer { *; }
+-keepclassmembers class * implements androidx.datastore.core.okio.OkioSerializer {
+    public <methods>;
+}
 
 ### The following were suggested by R8 engine, should be reviewed carefully on release build testing
 -dontwarn java.lang.management.ManagementFactory
