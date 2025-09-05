@@ -6,6 +6,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -39,8 +41,9 @@ class UserProfileSettingsPresenter(
         fun getLocalizedNA(): String = "data.na".i18n()
     }
 
-    private val selectedUserProfile: Flow<UserProfileVO?> get() =
-        userProfileServiceFacade.selectedUserProfile
+    private val selectedUserProfile: Flow<UserProfileVO?>
+        get() =
+            userProfileServiceFacade.selectedUserProfile
 
 
     override val uniqueAvatar: StateFlow<PlatformImage?> =
@@ -51,15 +54,17 @@ class UserProfileSettingsPresenter(
         )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val reputation: StateFlow<String> =
-        selectedUserProfile.mapLatest {
+    override val reputation: StateFlow<String> = selectedUserProfile
+        .distinctUntilChangedBy { it?.id }
+        .mapLatest {
             it?.let { profile ->
                 reputationServiceFacade.getReputation(profile.id)
                     .getOrNull()?.totalScore?.toString()
             }
         }
-            .flowOn(IODispatcher)
-            .map { it ?: getLocalizedNA() }.stateIn(
+        .flowOn(IODispatcher)
+        .catch { emit(null) }
+        .map { it ?: getLocalizedNA() }.stateIn(
             presenterScope,
             SharingStarted.Lazily,
             getLocalizedNA(),
@@ -74,24 +79,27 @@ class UserProfileSettingsPresenter(
             )
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override val profileAge: StateFlow<String> = selectedUserProfile.mapLatest {
-        it?.let { profile ->
-            reputationServiceFacade.getProfileAge(profile.id)
-                .getOrNull()
+    override val profileAge: StateFlow<String> = selectedUserProfile
+        .distinctUntilChangedBy { it?.id }
+        .mapLatest {
+            it?.let { profile ->
+                reputationServiceFacade.getProfileAge(profile.id)
+                    .getOrNull()
+            }
         }
-    }
         .flowOn(IODispatcher)
+        .catch { emit(null) }
         .map { age ->
-        if (age != null) {
-            DateUtils.formatProfileAge(age)
-        } else {
-            null
-        }
-    }.map { it ?: getLocalizedNA() }.stateIn(
-        presenterScope,
-        SharingStarted.Lazily,
-        getLocalizedNA(),
-    )
+            if (age != null) {
+                DateUtils.formatProfileAge(age)
+            } else {
+                null
+            }
+        }.map { it ?: getLocalizedNA() }.stateIn(
+            presenterScope,
+            SharingStarted.Lazily,
+            getLocalizedNA(),
+        )
 
     override val profileId: StateFlow<String> =
         selectedUserProfile.map { it?.id ?: getLocalizedNA() }
