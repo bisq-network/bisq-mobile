@@ -3,7 +3,6 @@ package network.bisq.mobile.client.service.accounts
 import network.bisq.mobile.client.service.offers.AddAccountRequest
 import network.bisq.mobile.client.service.offers.AddAccountResponse
 import network.bisq.mobile.client.service.settings.PaymentAccountChangeRequest
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.encodeURIParam
@@ -11,7 +10,6 @@ import network.bisq.mobile.domain.utils.Logging
 
 class AccountsApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
-    private val webSocketClientProvider: WebSocketClientProvider,
 ) : Logging {
     private val basePath = "payment-accounts"
 

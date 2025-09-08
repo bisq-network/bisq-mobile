@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.utils.Logging
 
@@ -33,6 +34,14 @@ class SettingsRepositoryMock : SettingsRepository, Logging {
     override suspend fun setSelectedMarketCode(value: String) {
         _data.update {
             it.copy(selectedMarketCode = value)
+        }
+    }
+
+    override suspend fun update(transform: suspend (Settings) -> Settings) {
+        _data.update{
+            runBlocking {
+                transform(it)
+            }
         }
     }
 

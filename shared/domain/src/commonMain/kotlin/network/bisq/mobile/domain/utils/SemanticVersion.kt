@@ -59,6 +59,7 @@ data class SemanticVersion(
         /** Simple creator from MAJOR.MINOR.PATCH only (no validation for semver extras) */
         fun from(version: String): SemanticVersion {
             val v = version.trim()
+            require(v.isNotBlank()) { "version cannot be blank" }
             val parts = v.split(".")
             require(parts.size == 3) { "Version must have format MAJOR.MINOR.PATCH" }
             require(parts.all { corePattern.matches(it) }) { "Invalid version format: $v" }

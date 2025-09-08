@@ -91,7 +91,8 @@ val presentationModule = module {
             get(),
             get(),
             get(),
-            get()
+            get(),
+            get(),
         )
     } bind AppPresenter::class
 
@@ -106,7 +107,6 @@ val presentationModule = module {
             get(),
             get(),
             get(),
-            get()
         )
     }
 

@@ -54,7 +54,8 @@ val androidClientModule = module {
             get(),
             get(),
             get(),
-            get()
+            get(),
+            get(),
         )
     } bind AppPresenter::class
 }

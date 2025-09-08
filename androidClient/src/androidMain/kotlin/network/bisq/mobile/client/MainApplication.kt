@@ -3,6 +3,7 @@ package network.bisq.mobile.client
 import android.content.Context
 import network.bisq.mobile.client.di.androidClientModule
 import network.bisq.mobile.client.di.clientModule
+import network.bisq.mobile.client.di.networkModule
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.di.serviceModule
 import network.bisq.mobile.presentation.BisqMainApplication
@@ -17,7 +18,7 @@ import org.koin.core.context.stopKoin
 class MainApplication : BisqMainApplication() {
     
     companion object {
-        private val clientModules = listOf(domainModule, serviceModule, presentationModule, clientModule, androidClientModule)
+        private val clientModules = listOf(domainModule, serviceModule, presentationModule, networkModule, clientModule, androidClientModule)
 
         fun setupKoinDI(appContext: Context) {
             // very important to avoid issues from the abuse of DI single {} singleton instances

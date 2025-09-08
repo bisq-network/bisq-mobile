@@ -46,6 +46,10 @@ class SettingsRepositoryImpl(
         }
     }
 
+    override suspend fun update(transform: suspend (Settings) -> Settings) {
+        settingsStore.updateData(transform)
+    }
+
     override suspend fun clear() {
         settingsStore.updateData {
             Settings()
