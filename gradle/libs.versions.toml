@@ -129,12 +129,14 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 logging-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 kmp-tor-runtime = { module = "io.matthewnelson.kmp-tor:runtime", version.ref = "kmp-tor" }
 kmp-tor-resource-exec = { module = "io.matthewnelson.kmp-tor:resource-exec-tor-gpl", version.ref = "kmp-tor-resource" }
+kmp-tor-resource-noexec = { module = "io.matthewnelson.kmp-tor:resource-noexec-tor-gpl", version.ref = "kmp-tor-resource" }
 bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum-lib" }
 
 # -------------------- Networking --------------------
-ktor-client-cio = { module = "io.ktor:ktor-client-cio", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
 ktor-client-websockets = { module = "io.ktor:ktor-client-websockets", version.ref = "ktor" }
 okio = { module = "com.squareup.okio:okio", version.ref = "okio" }

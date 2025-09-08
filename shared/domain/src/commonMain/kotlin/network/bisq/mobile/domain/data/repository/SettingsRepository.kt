@@ -18,5 +18,7 @@ interface SettingsRepository {
 
     suspend fun setSelectedMarketCode(value: String)
 
+    suspend fun update(transform: suspend (Settings) -> Settings)
+
     suspend fun clear()
 }

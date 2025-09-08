@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -19,7 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -30,6 +30,7 @@ import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
+import network.bisq.mobile.presentation.ui.components.atoms.BisqSwitch
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -60,6 +61,11 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val hostPrompt by presenter.hostPrompt.collectAsState()
     val status by presenter.status.collectAsState()
     val isApiUrlValid by presenter.isApiUrlValid.collectAsState()
+    val isProxyUrlValid by presenter.isProxyUrlValid.collectAsState()
+    val torProxyHost by presenter.proxyHost.collectAsState()
+    val torProxyPort by presenter.proxyPort.collectAsState()
+    val useExternalTorProxy by presenter.useExternalTorProxy.collectAsState()
+    val isNewApiUrl by presenter.isNewApiUrl.collectAsState()
 
     // Add state for dialog
     val showConfirmDialog = remember { mutableStateOf(false) }
@@ -68,10 +74,6 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
         listOf(NetworkType.LAN, NetworkType.TOR)
     } else {
         listOf(NetworkType.LAN)
-    }
-
-    val isNewApiUrl by produceState(initialValue = false, host, port, selectedNetworkType) {
-        value = presenter.isNewApiUrl()
     }
 
     BisqScrollScaffold(
@@ -129,7 +131,42 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     validation = { return@BisqTextField presenter.validatePort(it) }
                 )
             }
-            BisqGap.V3()
+            BisqGap.V1()
+            AnimatedVisibility(selectedNetworkType == NetworkType.TOR) {
+                BisqSwitch(
+                    label = "mobile.settings.network.useExternalTorProxy".i18n(),
+                    checked = useExternalTorProxy,
+                    onSwitch = { presenter.onUseExternalTorProxyChanged(it) }
+                )
+            }
+            AnimatedVisibility(selectedNetworkType == NetworkType.TOR && useExternalTorProxy) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spaceBetweenWithMin(BisqUIConstants.ScreenPadding),
+                ) {
+                    BisqTextField(
+                        modifier = Modifier.weight(0.8f),
+                        label = "mobile.settings.network.proxy.host".i18n(),
+                        onValueChange = { host, _ -> presenter.onTorProxyHostChanged(host) },
+                        value = torProxyHost,
+                        placeholder = "10.0.2.2",
+                        keyboardType = KeyboardType.Decimal,
+                        disabled = isLoading,
+                        validation = presenter::validateProxyHost,
+                    )
+                    BisqTextField(
+                        modifier = Modifier.weight(0.2f),
+                        label = "mobile.trustedNodeSetup.port".i18n(),
+                        onValueChange = { port, _ -> presenter.onTorProxyPortChanged(port) },
+                        value = torProxyPort,
+                        placeholder = "9050",
+                        keyboardType = KeyboardType.Decimal,
+                        disabled = isLoading,
+                        validation = presenter::validatePort,
+                    )
+                }
+            }
+            BisqGap.V2()
             Row(verticalAlignment = Alignment.CenterVertically) {
                 BisqText.largeRegular(
                     status,
@@ -153,7 +190,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             }
         }
 
-        BisqGap.V4()
+        BisqGap.V3()
 
         LazyRow(
             horizontalArrangement = Arrangement.spacedBy(
@@ -169,7 +206,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         modifier = Modifier.animateItem(),
                         text = "mobile.trustedNodeSetup.testConnection".i18n(),
                         color = if (host.isEmpty()) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
-                        disabled = isLoading || !isApiUrlValid,
+                        disabled = isLoading || !isApiUrlValid || !isProxyUrlValid,
                         onClick = {
                             if (isNewApiUrl) {
                                 showConfirmDialog.value = true

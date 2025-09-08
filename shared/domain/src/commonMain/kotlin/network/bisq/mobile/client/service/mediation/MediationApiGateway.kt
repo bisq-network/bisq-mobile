@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.service.mediation
 
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketRestApiException
 import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException

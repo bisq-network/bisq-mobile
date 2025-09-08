@@ -2,13 +2,12 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
@@ -23,8 +22,7 @@ open class SplashPresenter(
     private val userRepository: UserRepository,
     private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
-    private val languageServiceFacade: LanguageServiceFacade,
-    private val webSocketClientProvider: WebSocketClientProvider?,
+    private val webSocketClientService: WebSocketClientService?,
 ) : BasePresenter(mainPresenter) {
 
     val state: StateFlow<String> get() = applicationBootstrapFacade.state
@@ -68,7 +66,7 @@ open class SplashPresenter(
                 return@launchUI
             }
 
-            if (webSocketClientProvider?.get()?.isDemo() == true) {
+            if (webSocketClientService?.isDemo() == true) {
                 ApplicationBootstrapFacade.isDemo = true
             }
 
@@ -125,7 +123,7 @@ open class SplashPresenter(
     }
 
     open suspend fun hasConnectivity(): Boolean {
-        return webSocketClientProvider?.get()?.isConnected() ?: false
+        return webSocketClientService?.isConnected() ?: false
     }
 
     private fun navigateToAgreement() {
