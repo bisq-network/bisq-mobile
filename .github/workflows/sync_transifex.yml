@@ -4,10 +4,9 @@ on:
   pull_request:
     types: [ opened, synchronize, reopened ]
     paths:
-      - '.tx/config'
       - 'shared/domain/src/commonMain/resources/mobile/**.properties'
   workflow_run:
-    workflows: [ Build Bisq 2 ]
+    workflows: [ BisqApps ]
     types: [ completed ]
 
 jobs:
@@ -17,18 +16,20 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       t_matrix: ${{ steps.calculate-pushes.outputs.t_matrix || '{"include":[]}' }}
+    env:
+      COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+          ref: ${{ env.COMMIT_SHA }}
           fetch-depth: 0
 
       - name: Check if the commit is in the main branch
         id: check_commit
         run: |
           git fetch origin main
-          if git merge-base --is-ancestor ${{ github.event.workflow_run.head_sha }} origin/main; then
+          if git merge-base --is-ancestor ${{ env.COMMIT_SHA }} origin/main; then
             echo "commit_in_main=true" >> $GITHUB_OUTPUT
           else
             echo "commit_in_main=false" >> $GITHUB_OUTPUT
@@ -53,48 +54,43 @@ jobs:
           echo "Finding changed files..."
           # We compare the merge commit with its first parent to get the list of files.
           # Note: This is reliable for standard PR merges but may not handle octopus merges.
-          CHANGED_FILES=$(git diff --name-only ${{ github.event.workflow_run.head_sha }}~1 ${{ github.event.workflow_run.head_sha }})
+          CHANGED_FILES=$(git diff --name-only ${{ env.COMMIT_SHA }}~1 ${{ env.COMMIT_SHA }})
           echo "Files changed in the merge:"
           echo "$CHANGED_FILES"
 
           # --- Handle SOURCE file pushes (-s) ---
           s_args=""
-          if echo "${CHANGED_FILES}" | grep -q -x ".tx/config"; then
-            echo "::notice:: .tx/config changed. Pushing all source files."
-            s_args="push -s"
-          else
-            s_resources="" # This will be the comma-separated list
-            CHANGED_SOURCE_FILES=$(echo "${CHANGED_FILES}" | grep -x "shared/domain/src/commonMain/resources/mobile/mobile.properties" -- || true)
-            if [ -n "$CHANGED_SOURCE_FILES" ]; then
-              for file in $CHANGED_SOURCE_FILES; do
-                resource_slug_line=$(awk -v file="$file" '
-                  $0 ~ /^\[o:.*:p:.*:r:.*\]$/ {resource=$0}
-                  $0 ~ ("source_file[[:space:]]*=[[:space:]]*" file "$") {print resource}
-                ' .tx/config)
-                if [[ -n "$resource_slug_line" ]] && [[ "$resource_slug_line" =~ ^\[o:.*:p:(.*):r:(.*)\]$ ]]; then
-                  project_slug="${BASH_REMATCH[1]}"
-                  resource_slug="${BASH_REMATCH[2]}"
-                  full_resource_id="${project_slug}.${resource_slug}"
-                  if [[ -z "$s_resources" ]]; then
-                      s_resources="$full_resource_id"
-                  else
-                      s_resources+=",$full_resource_id"
-                  fi
+          s_resources="" # This will be the comma-separated list
+          CHANGED_SOURCE_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -xF "shared/domain/src/commonMain/resources/mobile/mobile.properties" || true)
+          if [ -n "$CHANGED_SOURCE_FILES" ]; then
+            for file in $CHANGED_SOURCE_FILES; do
+              resource_slug_line=$(awk -v file="$file" '
+                $0 ~ /^\[o:.*:p:.*:r:.*\]$/ {resource=$0}
+                $0 ~ ("source_file[[:space:]]*=[[:space:]]*" file "$") {print resource}
+              ' .tx/config)
+              if [[ -n "$resource_slug_line" ]] && [[ "$resource_slug_line" =~ ^\[o:.*:p:(.*):r:(.*)\]$ ]]; then
+                project_slug="${BASH_REMATCH[1]}"
+                resource_slug="${BASH_REMATCH[2]}"
+                full_resource_id="${project_slug}.${resource_slug}"
+                if [[ -z "$s_resources" ]]; then
+                    s_resources="$full_resource_id"
                 else
-                  echo "::warning::Could not find resource slug for changed source file: $file"
+                    s_resources+=",$full_resource_id"
                 fi
-              done
-            fi
-            # If we found any resources, construct the final args string
-            if [[ -n "$s_resources" ]]; then
-              s_args="push -s -r $s_resources"
-            fi
+              else
+                echo "::warning::Could not find resource slug for changed source file: $file"
+              fi
+            done
+          fi
+          # If we found any resources, construct the final args string
+          if [[ -n "$s_resources" ]]; then
+            s_args="push -s -r $s_resources"
           fi
           echo "s_args=$s_args" >> $GITHUB_OUTPUT
 
           # --- Handle TRANSLATION file pushes (-t) ---
           declare -A lang_resources
-          CHANGED_TRANSLATION_FILES=$(echo "${CHANGED_FILES}" | grep -E 'shared/domain/src/commonMain/resources/mobile/mobile_([a-z]{2}(_[A-Z]{2})?|pcm)\.properties$' -- || true)
+          CHANGED_TRANSLATION_FILES=$(echo "${CHANGED_FILES}" | grep -E '^shared/domain/src/commonMain/resources/mobile/mobile_([a-z]{2}(_[A-Z]{2})?|pcm)\.properties$' -- || true)
           if [ -n "$CHANGED_TRANSLATION_FILES" ]; then
             for file in $CHANGED_TRANSLATION_FILES; do
               lang=$(echo "$file" | sed -E 's/.*_([a-z]{2}(_[A-Z]{2})?|pcm)\.properties$/\1/')
@@ -154,8 +150,8 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v5
         with:
-          # Re-use the same commit as the triggering workflow_run
-          ref: ${{ github.event.workflow_run.head_sha }}
+          # Checkout the commit from the triggering event (pull_request or workflow_run)
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
 
       - name: Push ${{ matrix.lang }} translations
         uses: transifex/cli-action@v2
