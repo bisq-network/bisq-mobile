@@ -1,0 +1,11 @@
+[main]
+host = https://app.transifex.com
+
+[o:bisq:p:bisq-mobile:r:mobileproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/mobile_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/mobile.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = mobile.properties
+replace_edited_strings = false
+keep_translations      = false
