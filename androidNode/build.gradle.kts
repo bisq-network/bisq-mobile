@@ -154,7 +154,14 @@ android {
                 "lib/**/libcrypto.so",
                 "lib/**/libevent*.so",
                 "lib/**/libssl.so",
-                "lib/**/libsqlite*.so"
+                "lib/**/libsqlite*.so",
+                // Data store
+                "lib/**/libdatastore_shared_counter.so",
+            )
+            // Exclude problematic native libraries
+            excludes += listOf(
+                "**/libmagtsync.so",
+                "**/libMEOW*.so"
             )
             // Required for kmp-tor exec resources - helps prevent EOCD corruption
             useLegacyPackaging = true
