@@ -9,3 +9,120 @@ minimum_perc           = 0
 resource_name          = mobile.properties
 replace_edited_strings = false
 keep_translations      = false
+
+[o:bisq:p:bisq-2:r:accountproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/account_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/account.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = account.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-2:r:applicationproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/application_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/application.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = application.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-2:r:authorized_roleproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/authorized_role_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/authorized_role.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = authorized_role.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-2:r:bisq_easyproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/bisq_easy_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/bisq_easy.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = bisq_easy.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-2:r:chatproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/chat_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/chat.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = chat.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-2:r:defaultproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/default_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/default.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = default.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-2:r:networkproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/network_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/network.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = network.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-2:r:reputationproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/reputation_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/reputation.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = reputation.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-2:r:settingsproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/settings_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/settings.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = settings.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-2:r:supportproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/support_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/support.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = support.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-2:r:trade_appsproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/trade_apps_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/trade_apps.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = trade_apps.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-2:r:userproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/user_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/user.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = user.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-2:r:walletproperties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/wallet_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/wallet.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = wallet.properties
+replace_edited_strings = false
+keep_translations      = false
