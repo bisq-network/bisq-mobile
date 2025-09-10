@@ -7,6 +7,5 @@ import network.bisq.mobile.domain.PlatformImage
 data class User(
     val tradeTerms: String? = null,
     val statement: String? = null,
-    val lastActivity: Long? = null,
     val uniqueAvatar: PlatformImage? = null
 )

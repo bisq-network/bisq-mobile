@@ -9,6 +9,8 @@ const val PARAM_SEPARATOR: Char = 0x1e.toChar()
 class I18nSupport {
     companion object {
 
+        var isReady: Boolean = false
+
         fun initialize(languageCode: String = "en") {
             // bundles = BUNDLE_NAMES.map { ResourceBundle.getBundle(it, languageCode) }
             val bundleMapsByName: Map<String, Map<String, String>> = when (languageCode) {
@@ -25,6 +27,7 @@ class I18nSupport {
             }
             val maps: Collection<Map<String, String>> = bundleMapsByName.values
             bundles = maps.map { ResourceBundle(it) }
+            isReady = true
         }
 
         fun has(key: String): Boolean {

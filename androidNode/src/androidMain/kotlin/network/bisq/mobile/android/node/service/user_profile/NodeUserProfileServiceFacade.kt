@@ -88,6 +88,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
                 }
             }
         }
+
     }
 
     override fun deactivate() {
@@ -192,6 +193,14 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         val key = "${userProfile.id}-v${userProfile.avatarVersion}"
         avatarMap[key]?.let { return it }
         return generateCatHash(key, userProfile)
+    }
+
+    override suspend fun getUserPublishDate(): Long {
+        return userService.userIdentityService.selectedUserIdentity.userProfile.publishDate
+    }
+
+    override suspend fun userActivityDetected() {
+        userService.republishUserProfileService.userActivityDetected()
     }
 
     private suspend fun generateCatHash(

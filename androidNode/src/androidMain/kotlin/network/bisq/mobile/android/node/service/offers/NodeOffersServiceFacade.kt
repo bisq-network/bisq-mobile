@@ -43,7 +43,6 @@ import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
-import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -57,7 +56,6 @@ import kotlin.time.Duration.Companion.seconds
 class NodeOffersServiceFacade(
     private val applicationService: AndroidApplicationService.Provider,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
-    private val userRepository: UserRepository
 ) : OffersServiceFacade() {
 
     companion object {
@@ -166,7 +164,6 @@ class NodeOffersServiceFacade(
             if (!broadcastResultNotEmpty) {
                 log.w { "Delete offer message was not broadcast to network. Maybe there are no peers connected." }
             }
-            userRepository.updateLastActivity()
             return Result.success(broadcastResultNotEmpty)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -192,7 +189,6 @@ class NodeOffersServiceFacade(
                 Mappings.PriceSpecMapping.toBisq2Model(priceSpec),
                 ArrayList<String>(supportedLanguageCodes)
             )
-            userRepository.updateLastActivity()
             Result.success(offerId)
         } catch (e: Exception) {
             log.e(e) { "Failed to create offer: ${e.message}" }
@@ -219,7 +215,6 @@ class NodeOffersServiceFacade(
                 Mappings.PriceSpecMapping.toBisq2Model(priceSpec),
                 ArrayList<String>(supportedLanguageCodes)
             )
-            userRepository.updateLastActivity()
             Result.success(offerId)
         } catch (e: Exception) {
             log.e(e) { "Failed to create offer with mediator wait: ${e.message}" }

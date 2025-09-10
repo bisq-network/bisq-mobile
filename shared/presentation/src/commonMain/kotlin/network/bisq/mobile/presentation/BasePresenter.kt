@@ -8,6 +8,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,6 +24,7 @@ import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
@@ -360,6 +362,15 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     override fun onViewAttached() {
         log.i { "Lifecycle: View ${if (view != null) view!!::class.simpleName else ""} attached to presenter ${this::class.simpleName}" }
         enableInteractive()
+
+        // In bisq2, UserActivityDetected is triggered on mouse move and key press events
+        // In bisq-mobile, userActivityDetected is triggered on every screen navigation,
+        // which helps to reset user.publishDate.
+        launchUI {
+            if (I18nSupport.isReady) { // Makes sure bundles are loaded. This fails for Splash
+                rootPresenter?.userProfileServiceFacade?.userActivityDetected()
+            }
+        }
     }
 
     @CallSuper

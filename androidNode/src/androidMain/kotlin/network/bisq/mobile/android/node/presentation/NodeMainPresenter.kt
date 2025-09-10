@@ -41,7 +41,7 @@ class NodeMainPresenter(
     private val reputationServiceFacade: ReputationServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
-    private val userProfileServiceFacade: UserProfileServiceFacade,
+    userProfileServiceFacade: UserProfileServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
@@ -50,6 +50,7 @@ class NodeMainPresenter(
     openTradesNotificationService,
     settingsServiceFacade,
     tradesServiceFacade,
+    userProfileServiceFacade,
     tradeReadStateRepository,
     urlLauncher
 ) {

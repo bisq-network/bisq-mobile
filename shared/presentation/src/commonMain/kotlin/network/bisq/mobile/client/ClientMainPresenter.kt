@@ -39,12 +39,12 @@ open class ClientMainPresenter(
     private val reputationServiceFacade: ReputationServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
-    private val userProfileServiceFacade: UserProfileServiceFacade,
+    userProfileServiceFacade: UserProfileServiceFacade,
     openTradesNotificationService: OpenTradesNotificationService,
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val webSocketClientProvider: WebSocketClientProvider,
     urlLauncher: UrlLauncher
-) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, tradeReadStateRepository, urlLauncher) {
+) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, userProfileServiceFacade, tradeReadStateRepository, urlLauncher, ) {
 
     private var lastConnectedStatus: Boolean? = null
 

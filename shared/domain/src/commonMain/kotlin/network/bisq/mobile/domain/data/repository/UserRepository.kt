@@ -10,8 +10,6 @@ interface UserRepository {
 
     suspend fun fetch() = data.first()
 
-    suspend fun updateLastActivity()
-
     suspend fun updateTerms(value: String)
 
     suspend fun updateStatement(value: String)

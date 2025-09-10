@@ -24,6 +24,7 @@ import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -37,8 +38,9 @@ open class MainPresenter(
     private val openTradesNotificationService: OpenTradesNotificationService,
     private val settingsService: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
+    val userProfileServiceFacade: UserProfileServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
-    private val urlLauncher: UrlLauncher
+    private val urlLauncher: UrlLauncher,
 ) : BasePresenter(null), AppPresenter {
 
     override lateinit var navController: NavHostController

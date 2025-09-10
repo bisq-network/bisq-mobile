@@ -20,7 +20,6 @@ class DataStoreSerializationTest {
         val user = User(
             tradeTerms = "Test terms with special chars: àáâãäåæçèéêë",
             statement = "Test statement with emojis: 🚀💰📈",
-            lastActivity = 1234567890123L
         )
 
         // When - serialize and deserialize
@@ -31,7 +30,6 @@ class DataStoreSerializationTest {
         assertEquals(user, deserialized)
         assertEquals(user.tradeTerms, deserialized.tradeTerms)
         assertEquals(user.statement, deserialized.statement)
-        assertEquals(user.lastActivity, deserialized.lastActivity)
     }
 
     @Test
@@ -45,7 +43,6 @@ class DataStoreSerializationTest {
         // Then - should use default values (null for User model)
         assertEquals("test", deserialized.tradeTerms)
         assertEquals(null, deserialized.statement) // User model defaults to null
-        assertEquals(null, deserialized.lastActivity)
     }
 
     @Test
@@ -118,7 +115,7 @@ class DataStoreSerializationTest {
     @Test
     fun `Serialization should be deterministic`() {
         // Given
-        val user = User(tradeTerms = "test", statement = "statement", lastActivity = 123L)
+        val user = User(tradeTerms = "test", statement = "statement")
 
         // When - serialize multiple times
         val serialized1 = json.encodeToString(User.serializer(), user)
@@ -135,7 +132,6 @@ class DataStoreSerializationTest {
         val largeUser = User(
             tradeTerms = "Large terms: $largeStatement",
             statement = largeStatement,
-            lastActivity = Long.MAX_VALUE
         )
 
         val largeTradeMap = TradeReadStateMap(

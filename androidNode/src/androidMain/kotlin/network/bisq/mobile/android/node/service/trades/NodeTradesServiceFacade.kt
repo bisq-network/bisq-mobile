@@ -39,7 +39,6 @@ import network.bisq.mobile.android.node.mapping.TradeItemPresentationDtoFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -72,7 +71,6 @@ import kotlin.time.Duration.Companion.seconds
  * - Maintains backward compatibility with existing trade flow
  */
 class NodeTradesServiceFacade(
-    private val userRepository: UserRepository,
     applicationService: AndroidApplicationService.Provider
 ) : ServiceFacade(), TradesServiceFacade {
 
@@ -175,7 +173,6 @@ class NodeTradesServiceFacade(
                 takeOfferStatus,
                 takeOfferErrorMessage
             )
-            userRepository.updateLastActivity()
             return Result.success(tradeId)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -193,7 +190,6 @@ class NodeTradesServiceFacade(
             val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.rejected", userName)
             bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).join()
             bisqEasyTradeService.rejectTrade(trade)
-            userRepository.updateLastActivity()
             return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -206,7 +202,6 @@ class NodeTradesServiceFacade(
             val encoded: String = Res.encode("bisqEasy.openTrades.tradeLogMessage.cancelled", userName)
             bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel).join()
             bisqEasyTradeService.cancelTrade(trade)
-            userRepository.updateLastActivity()
             return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -219,7 +214,6 @@ class NodeTradesServiceFacade(
             bisqEasyTradeService.removeTrade(trade)
             leavePrivateChatManager.leaveChannel(channel)
             _selectedTrade.value = null
-            userRepository.updateLastActivity()
             return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -237,7 +231,6 @@ class NodeTradesServiceFacade(
             )
             bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             bisqEasyTradeService.sellerSendsPaymentAccount(trade, paymentAccountData)
-            userRepository.updateLastActivity()
             return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -256,7 +249,6 @@ class NodeTradesServiceFacade(
             )
             bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             bisqEasyTradeService.buyerSendBitcoinPaymentData(trade, bitcoinPaymentData)
-            userRepository.updateLastActivity()
             return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -274,7 +266,6 @@ class NodeTradesServiceFacade(
             )
             bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             bisqEasyTradeService.sellerConfirmFiatReceipt(trade)
-            userRepository.updateLastActivity()
             return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -291,7 +282,6 @@ class NodeTradesServiceFacade(
             )
             bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             bisqEasyTradeService.buyerConfirmFiatSent(trade)
-            userRepository.updateLastActivity()
             return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -322,7 +312,6 @@ class NodeTradesServiceFacade(
 
             bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             bisqEasyTradeService.sellerConfirmBtcSent(trade, Optional.ofNullable(paymentProof))
-            userRepository.updateLastActivity()
             return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(e)
@@ -341,7 +330,6 @@ class NodeTradesServiceFacade(
                 bisqEasyOpenTradeChannelService.sendTradeLogMessage(encoded, channel)
             }
             bisqEasyTradeService.btcConfirmed(trade)
-            userRepository.updateLastActivity()
             return Result.success(Unit)
         } catch (e: Exception) {
             return Result.failure(e)

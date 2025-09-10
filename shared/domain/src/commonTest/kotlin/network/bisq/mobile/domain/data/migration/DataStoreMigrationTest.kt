@@ -26,7 +26,6 @@ class DataStoreMigrationTest {
         {
             "tradeTerms": "Legacy terms",
             "statement": "Legacy statement", 
-            "lastActivity": 1234567890,
             "legacyField": "should be ignored",
             "anotherLegacyField": 42
         }
@@ -38,7 +37,6 @@ class DataStoreMigrationTest {
         // Then - should parse successfully and ignore unknown fields
         assertEquals("Legacy terms", user.tradeTerms)
         assertEquals("Legacy statement", user.statement)
-        assertEquals(1234567890L, user.lastActivity)
     }
 
     @Test
@@ -59,31 +57,6 @@ class DataStoreMigrationTest {
         assertEquals(true, settings.firstLaunch)
         assertEquals(Settings().showChatRulesWarnBox, settings.showChatRulesWarnBox) // default
         assertEquals(Settings().selectedMarketCode, settings.selectedMarketCode) // default
-    }
-
-    @Test
-    fun `should handle different number formats for lastActivity`() {
-        // Given - different ways lastActivity might have been stored
-        val testCases = listOf(
-            """{"lastActivity": 1234567890}""", // Int
-            """{"lastActivity": 1234567890123}""", // Long
-            """{"lastActivity": "1234567890123"}""", // String (shouldn't happen but test anyway)
-        )
-
-        // When & Then
-        testCases.forEachIndexed { index, json ->
-            try {
-                val user = this.json.decodeFromString(User.serializer(), json)
-                when (index) {
-                    0 -> assertEquals(1234567890L, user.lastActivity)
-                    1 -> assertEquals(1234567890123L, user.lastActivity)
-                    // String case might fail, which is acceptable
-                }
-            } catch (e: Exception) {
-                // String parsing failure is acceptable
-                if (index != 2) throw e
-            }
-        }
     }
 
     @Test
@@ -138,7 +111,6 @@ class DataStoreMigrationTest {
         {
             "tradeTerms": null,
             "statement": null,
-            "lastActivity": null
         }
         """.trimIndent()
 
@@ -153,7 +125,6 @@ class DataStoreMigrationTest {
         val user = json.decodeFromString(User.serializer(), userWithNulls)
         assertEquals(null, user.tradeTerms) // User model allows null
         assertEquals(null, user.statement) // User model allows null
-        assertEquals(null, user.lastActivity) // User model allows null
 
         val settings = json.decodeFromString(Settings.serializer(), settingsWithMissingFields)
         assertEquals(Settings().bisqApiUrl, settings.bisqApiUrl) // default
@@ -166,7 +137,6 @@ class DataStoreMigrationTest {
         // Given - various malformed JSON scenarios
         val malformedJsonCases = listOf(
             """{"tradeTerms": "unclosed string""",
-            """{"lastActivity": "not-a-number"}""",
             """{"firstLaunch": "not-a-boolean"}""",
             """{"extraComma": true,}""",
             """{"missingQuotes": value}"""
@@ -192,7 +162,6 @@ class DataStoreMigrationTest {
         val originalUser = User(
             tradeTerms = "My trading terms",
             statement = "My statement",
-            lastActivity = getTimeMillis()
         )
 
         val originalSettings = Settings(

@@ -84,6 +84,10 @@ interface UserProfileServiceFacade : LifeCycleAware {
      */
     suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage?
 
+    suspend fun getUserPublishDate(): Long
+
+    suspend fun userActivityDetected()
+
     /**
      * Marks the given profile as ignored. Implementations must persist this update.
      * Idempotent: calling this for an already-ignored profile is a no-op.

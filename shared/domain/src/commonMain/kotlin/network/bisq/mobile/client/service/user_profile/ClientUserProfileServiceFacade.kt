@@ -231,6 +231,14 @@ class ClientUserProfileServiceFacade(
             return avatarMap[userProfile.nym]
         }
 
+    override suspend fun getUserPublishDate(): Long {
+        return selectedUserProfile.value?.publishDate ?: 0L
+    }
+
+    override suspend fun userActivityDetected() {
+        // TODO: Call to userActivityDetected endpoint
+    }
+
     override suspend fun ignoreUserProfile(profileId: String) {
         try {
             apiGateway.ignoreUser(profileId).getOrThrow()

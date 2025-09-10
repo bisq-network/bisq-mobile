@@ -23,12 +23,6 @@ class UserRepositoryImpl(
                 }
             }
 
-    override suspend fun updateLastActivity() {
-        userStore.updateData {
-            it.copy(lastActivity = Clock.System.now().toEpochMilliseconds())
-        }
-    }
-
     override suspend fun updateTerms(value: String) {
         userStore.updateData {
             it.copy(tradeTerms = value)

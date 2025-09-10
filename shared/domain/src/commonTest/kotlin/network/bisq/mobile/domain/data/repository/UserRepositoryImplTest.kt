@@ -28,7 +28,6 @@ class UserRepositoryImplTest {
         val expectedUser = User(
             tradeTerms = "Test terms",
             statement = "Test statement",
-            lastActivity = 123456789L
         )
         every { mockDataStore.data } returns flowOf(expectedUser)
 
@@ -72,42 +71,12 @@ class UserRepositoryImplTest {
     }
 
     @Test
-    fun `updateLastActivity should update user with current timestamp`() = runTest {
-        // Given
-        val updateSlot = slot<suspend (User) -> User>()
-        coEvery { mockDataStore.updateData(capture(updateSlot)) } returns User()
-        
-        val originalUser = User(tradeTerms = "existing terms")
-        val beforeUpdate = Clock.System.now().toEpochMilliseconds()
-
-        // When
-        repository.updateLastActivity()
-
-        // Then
-        coVerify { mockDataStore.updateData(any()) }
-
-        // Verify the update function sets lastActivity to current time
-        val updatedUser = updateSlot.captured(originalUser)
-        assertNotNull(updatedUser.lastActivity)
-        val afterUpdate = Clock.System.now().toEpochMilliseconds()
-
-        // Allow for small time difference due to test execution
-         assertTrue(
-                    updatedUser.lastActivity!! in beforeUpdate..afterUpdate,
-                    "lastActivity should be set to the current timestamp range"
-         )
-
-        // Verify other fields are preserved
-        assertEquals("existing terms", updatedUser.tradeTerms)
-    }
-
-    @Test
     fun `updateTerms should update user trade terms`() = runTest {
         // Given
         val updateSlot = slot<suspend (User) -> User>()
         coEvery { mockDataStore.updateData(capture(updateSlot)) } returns User()
         
-        val originalUser = User(statement = "existing statement", lastActivity = 123L)
+        val originalUser = User(statement = "existing statement")
         val newTerms = "New trade terms"
 
         // When
@@ -120,7 +89,6 @@ class UserRepositoryImplTest {
         assertEquals(newTerms, updatedUser.tradeTerms)
         // Verify other fields are preserved
         assertEquals("existing statement", updatedUser.statement)
-        assertEquals(123L, updatedUser.lastActivity)
     }
 
     @Test
@@ -129,7 +97,7 @@ class UserRepositoryImplTest {
         val updateSlot = slot<suspend (User) -> User>()
         coEvery { mockDataStore.updateData(capture(updateSlot)) } returns User()
         
-        val originalUser = User(tradeTerms = "existing terms", lastActivity = 456L)
+        val originalUser = User(tradeTerms = "existing terms")
         val newStatement = "New statement"
 
         // When
@@ -142,7 +110,6 @@ class UserRepositoryImplTest {
         assertEquals(newStatement, updatedUser.statement)
         // Verify other fields are preserved
         assertEquals("existing terms", updatedUser.tradeTerms)
-        assertEquals(456L, updatedUser.lastActivity)
     }
 
     @Test
@@ -155,7 +122,6 @@ class UserRepositoryImplTest {
         val newUser = User(
             tradeTerms = "new terms",
             statement = "new statement",
-            lastActivity = 789L
         )
 
         // When
@@ -177,7 +143,6 @@ class UserRepositoryImplTest {
         val originalUser = User(
             tradeTerms = "some terms",
             statement = "some statement",
-            lastActivity = 999L
         )
 
         // When

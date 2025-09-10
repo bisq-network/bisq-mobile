@@ -7,10 +7,12 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChangedBy
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
@@ -22,6 +24,7 @@ import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.DateUtils
+import network.bisq.mobile.domain.utils.TimeUtils
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -71,11 +74,16 @@ class UserProfileSettingsPresenter(
         )
 
     override val lastUserActivity: StateFlow<String> =
-        userRepository.data.map { it.lastActivity?.let { ts -> DateUtils.lastSeen(ts) } }
-            .map { it ?: getLocalizedNA() }.stateIn(
-                presenterScope,
-                SharingStarted.Lazily,
-                getLocalizedNA(),
+        TimeUtils.tickerFlow(1_000L)
+            .onStart { emit(Unit) }
+            .map {
+                val ts: Long = userProfileServiceFacade.getUserPublishDate()
+                if (ts <= 0L) getLocalizedNA() else DateUtils.lastSeen(ts)
+            }
+            .stateIn(
+                scope = presenterScope,
+                started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),
+                initialValue = getLocalizedNA()
             )
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -160,13 +168,7 @@ class UserProfileSettingsPresenter(
                     )
                 }
                 if (result.isSuccess) {
-                    val updatedLastActivity = withContext(IODispatcher) {
-                        runCatching { userRepository.updateLastActivity() }.isSuccess
-                    }
                     showSnackbar("mobile.settings.userProfile.saveSuccess".i18n(), isError = false)
-                    if (!updatedLastActivity) {
-                        log.w { "updateLastActivity failed after successful profile save" }
-                    }
                 } else {
                     showSnackbar("mobile.settings.userProfile.saveFailure".i18n(), isError = true)
                 }
