@@ -57,20 +57,35 @@ open class MainPresenter(
     override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> =
         tradesServiceFacade.openTradeItems
             .map { openTradeItems ->
-                // For each trade, create a flow for its chatMessages count
-                openTradeItems.map { trade ->
+                // For each trade, create a flow for its chatMessages count AND a flow for its trade state
+                val messageFlows = openTradeItems.map { trade ->
                     trade.bisqEasyOpenTradeChannelModel.chatMessages
                         .map { messages -> trade.tradeId to messages.size }
                 }
+                val stateFlows = openTradeItems.map { trade ->
+                    trade.bisqEasyTradeModel.tradeState
+                        .map { state -> trade.tradeId to state }
+                }
+                messageFlows to stateFlows
             }
-            .flatMapLatest { tradeFlows ->
-                // Combine all chatMessages flows into one flow emitting a list of Pair(tradeId, count)
-                combine(tradeFlows) { pairs -> pairs.toList() }
+            .flatMapLatest { (messageFlows, stateFlows) ->
+                // Combine all chatMessages flows and all tradeState flows into single emissions
+                combine(
+                    combine(messageFlows) { pairs -> pairs.toList() },
+                    combine(stateFlows) { pairs -> pairs.toList() }
+                ) { messagePairs, statePairs ->
+                    messagePairs to statePairs
+                }
             }
-            .combine(tradeReadStateRepository.data.map { it.map }) { tradeMessageCounts, tradeReadStates ->
-                tradeMessageCounts
-                    .associate { it }
-                    .filter { tradeReadStates.getOrElse(it.key) { 0 } < it.value }
+            .combine(tradeReadStateRepository.data.map { it.map }) { (tradeMessageCounts, tradeStates), tradeReadStates ->
+                val messageMap = tradeMessageCounts.associate { it }
+                val stateMap = tradeStates.associate { it }
+                messageMap.filter { (tradeId, messageCount) ->
+                    val isFinal = stateMap[tradeId]?.isFinalState == true
+                    if (isFinal) return@filter false
+                    val readCount = tradeReadStates.getOrElse(tradeId) { 0 }
+                    readCount < messageCount
+                }
             }
             .stateIn(
                 presenterScope,
