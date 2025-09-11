@@ -9,9 +9,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.icon_home
+import bisqapps.shared.presentation.generated.resources.icon_offers
 import bisqapps.shared.presentation.generated.resources.icon_settings
 import bisqapps.shared.presentation.generated.resources.icon_trades
-import bisqapps.shared.presentation.generated.resources.nav_markets
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
@@ -27,7 +27,7 @@ import org.koin.compose.koinInject
 
 val navigationListItem = listOf(
     BottomNavigationItem("mobile.bottomNavigation.home", Routes.TabHome.name, Res.drawable.icon_home),
-    BottomNavigationItem("mobile.bottomNavigation.offerbook", Routes.TabOfferbook.name, Res.drawable.nav_markets),
+    BottomNavigationItem("mobile.bottomNavigation.offerbook", Routes.TabOfferbook.name, Res.drawable.icon_offers),
     BottomNavigationItem("mobile.bottomNavigation.myTrades", Routes.TabOpenTradeList.name, Res.drawable.icon_trades),
     BottomNavigationItem("mobile.bottomNavigation.settings", Routes.TabSettings.name, Res.drawable.icon_settings),
 )
