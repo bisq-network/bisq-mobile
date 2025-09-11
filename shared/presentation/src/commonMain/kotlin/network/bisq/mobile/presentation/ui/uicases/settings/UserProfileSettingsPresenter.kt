@@ -80,6 +80,7 @@ class UserProfileSettingsPresenter(
                 val ts: Long = userProfileServiceFacade.getUserPublishDate()
                 if (ts <= 0L) getLocalizedNA() else DateUtils.lastSeen(ts)
             }
+            .catch { emit(getLocalizedNA()) }
             .stateIn(
                 scope = presenterScope,
                 started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),

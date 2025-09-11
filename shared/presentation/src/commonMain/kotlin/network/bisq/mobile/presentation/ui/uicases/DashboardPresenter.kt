@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -19,7 +18,6 @@ open class DashboardPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val offersServiceFacade: OffersServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
-    private val userRepository: UserRepository,
 ) : BasePresenter(mainPresenter) {
     private val _offersOnline = MutableStateFlow(0)
     val offersOnline: StateFlow<Int> get() = _offersOnline.asStateFlow()

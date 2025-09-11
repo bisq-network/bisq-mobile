@@ -110,7 +110,7 @@ class DataStoreMigrationTest {
         val userWithNulls = """
         {
             "tradeTerms": null,
-            "statement": null,
+            "statement": null
         }
         """.trimIndent()
 

@@ -10,6 +10,7 @@ class I18nSupport {
     companion object {
 
         var isReady: Boolean = false
+            private set
 
         fun initialize(languageCode: String = "en") {
             // bundles = BUNDLE_NAMES.map { ResourceBundle.getBundle(it, languageCode) }

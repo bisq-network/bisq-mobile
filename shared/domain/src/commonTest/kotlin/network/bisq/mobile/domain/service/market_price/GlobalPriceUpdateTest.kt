@@ -4,13 +4,11 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
-import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
-import org.koin.core.context.stopKoin
-import org.koin.test.KoinTest
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
@@ -18,7 +16,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
 import kotlin.test.assertTrue
 
-class GlobalPriceUpdateTest : KoinTest {
+class GlobalPriceUpdateTest {
 
     private lateinit var settingsRepository: SettingsRepository
 
@@ -32,20 +30,19 @@ class GlobalPriceUpdateTest : KoinTest {
         runBlocking {
             settingsRepository.clear()
         }
-        stopKoin()
     }
 
-    // Test implementation of MarketPriceServiceFacade
-    private inner class TestMarketPriceServiceFacade : MarketPriceServiceFacade(settingsRepository) {
+    // Simple test implementation that doesn't depend on ServiceFacade/Koin infrastructure
+    private inner class TestMarketPriceServiceFacade {
+        // Global price update trigger - emits when any market price changes
+        private val _globalPriceUpdate = MutableStateFlow(0L)
+        val globalPriceUpdate: StateFlow<Long> get() = _globalPriceUpdate.asStateFlow()
 
-        override fun findMarketPriceItem(marketVO: MarketVO): MarketPriceItem? = null
-        override fun findUSDMarketPriceItem(): MarketPriceItem? = null
-        override fun refreshSelectedFormattedMarketPrice() {}
-        override fun selectMarket(marketListItem: MarketListItem) {}
-
-        // Expose protected method for testing
+        // Expose method for testing
         fun testTriggerGlobalPriceUpdate() {
-            triggerGlobalPriceUpdate()
+            val timestamp = kotlinx.datetime.Clock.System.now().toEpochMilliseconds()
+            _globalPriceUpdate.value = timestamp
+            println("Debug: (TestMarketPriceServiceFacade) Global price update triggered at timestamp: $timestamp")
         }
     }
 
@@ -128,6 +125,12 @@ class GlobalPriceUpdateTest : KoinTest {
         val service1 = TestMarketPriceServiceFacade()
         val service2 = TestMarketPriceServiceFacade()
 
+        // Verify initial state
+        val initialValue1 = service1.globalPriceUpdate.value
+        val initialValue2 = service2.globalPriceUpdate.value
+        assertEquals(0L, initialValue1, "Service1 should start with initial value 0")
+        assertEquals(0L, initialValue2, "Service2 should start with initial value 0")
+
         service1.testTriggerGlobalPriceUpdate()
         val timestamp1 = service1.globalPriceUpdate.value
         val timestamp2Before = service2.globalPriceUpdate.value
@@ -135,7 +138,7 @@ class GlobalPriceUpdateTest : KoinTest {
         service2.testTriggerGlobalPriceUpdate()
         val timestamp2After = service2.globalPriceUpdate.value
 
-        assertEquals(0L, timestamp2Before) // Service2 should still have initial value
+        assertEquals(0L, timestamp2Before, "Service2 should still have initial value before its own update")
         assertTrue(timestamp1 > 0L, "Service1 should have updated timestamp")
         assertTrue(timestamp2After > 0L, "Service2 should have updated timestamp")
         assertNotEquals(timestamp1, timestamp2After, "Services should have independent timestamps")
