@@ -117,26 +117,6 @@ fun GeneralSettingsScreen() {
 
         BisqHDivider()
 
-        /*
-        TODO: Will enable later
-        BisqText.h4Light("settings.notification.options".i18n())
-
-        BisqGap.V1()
-
-        BisqSegmentButton(
-            label = "mobile.settings.chatNotification.label".i18n(),
-            items = listOf(
-                Pair("all", "chat.notificationsSettingsMenu.all".i18n()),
-                Pair("mention", "chat.notificationsSettingsMenu.mention".i18n()),
-                Pair("off", "chat.notificationsSettingsMenu.off".i18n()),
-            ),
-            value = chatNotification, // define at top using `by` keyword later
-            onValueChange = { presenter.setChatNotification(it.first) }
-        )
-
-        BisqHDivider()
-        */
-
         BisqText.h4Light("settings.trade.headline".i18n())
 
         BisqGap.V1()
