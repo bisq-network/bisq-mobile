@@ -181,7 +181,7 @@ fun GeneralSettingsScreen() {
         if (shouldShowPoWAdjustmentFactor) {
             BisqHDivider()
 
-            BisqText.h4Light("settings.network.headline".i18n())
+            BisqText.h4Light("settings.network.difficultyAdjustmentFactor.headline".i18n())
 
             BisqGap.V1()
 
