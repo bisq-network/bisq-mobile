@@ -26,7 +26,7 @@ fun TradeGuideTradeRules() {
     var localUserAgreed by remember(userAgreed) { mutableStateOf(userAgreed) }
     val isInteractive by presenter.isInteractive.collectAsState()
 
-    val title = "bisqEasy.tradeGuide.rules".i18n() + " - " + "bisqEasy.tradeGuide.tabs.headline".i18n()
+    val title = "bisqEasy.tradeGuide.tabs.headline".i18n() + ": " + "bisqEasy.tradeGuide.rules".i18n()
 
     MultiScreenWizardScaffold(
         title = title,

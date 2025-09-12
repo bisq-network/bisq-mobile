@@ -19,7 +19,7 @@ fun TradeGuideSecurity() {
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
-    val title = "bisqEasy.tradeGuide.security".i18n() + " - " + "bisqEasy.tradeGuide.tabs.headline".i18n()
+    val title = "bisqEasy.tradeGuide.tabs.headline".i18n() + ": " + "bisqEasy.tradeGuide.security".i18n()
 
     MultiScreenWizardScaffold(
         title = title,

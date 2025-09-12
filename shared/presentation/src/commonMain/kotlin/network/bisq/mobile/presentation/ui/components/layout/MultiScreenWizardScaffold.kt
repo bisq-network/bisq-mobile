@@ -28,6 +28,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqProgressBar
+import network.bisq.mobile.presentation.ui.components.atoms.BisqStepProgressBar
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.ConfirmCloseAction
 import network.bisq.mobile.presentation.ui.components.molecules.ConfirmCloseOverlay
@@ -115,15 +116,12 @@ fun MultiScreenWizardScaffold(
             Column {
                 TopBar(
                     title,
-                    isFlowScreen = true,
-                    stepText = "$stepIndex/$stepsLength",
                     showUserAvatar = showUserAvatar,
                     extraActions = extraActionsFinal,
                 )
-                BisqProgressBar(
-                    stepIndex.toFloat() / stepsLength.toFloat(),
-                    modifier = Modifier.fillMaxWidth()
-                        .padding(top = BisqUIConstants.ScreenPaddingHalf)
+                BisqStepProgressBar(
+                    stepIndex = stepIndex,
+                    stepsLength = stepsLength,
                 )
             }
         },

@@ -6,6 +6,7 @@ import androidx.compose.ui.unit.dp
 object BisqUIConstants {
     val Zero = 0.dp
     val ScreenPadding1 = 1.dp
+    val ScreenPadding2 = 2.dp
     val ScreenPaddingQuarter = 3.dp
     val ScreenPaddingHalf = 6.dp
     val ScreenPaddingHalfQuarter = 9.dp
