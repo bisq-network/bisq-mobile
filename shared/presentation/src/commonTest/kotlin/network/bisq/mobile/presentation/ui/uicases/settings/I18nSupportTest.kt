@@ -35,6 +35,6 @@ class I18nSupportTest {
         // Test Russian
         I18nSupport.initialize("ru")
         val russianNA = UserProfileSettingsPresenter.getLocalizedNA()
-        assertEquals("Н/Д", russianNA) // Russian translation for N/A
+        assertEquals("Недоступно", russianNA) // Russian translation for N/A
     }
 }
