@@ -18,6 +18,8 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqCheckbox
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.list.OrderedList
+import network.bisq.mobile.presentation.ui.components.atoms.list.UnorderedList
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -84,36 +86,5 @@ fun AgreementScreen() {
                 UnorderedList("mobile.rules5".i18n())
             }
         }
-    }
-}
-
-@Composable
-fun OrderedList(
-    number: String, text: String, modifier: Modifier = Modifier.fillMaxWidth()
-        .padding(bottom = BisqUIConstants.ScreenPadding2X)
-) {
-    Row(modifier = modifier) {
-        BisqText.baseLight(
-            text = number,
-            modifier = Modifier.width(20.dp)
-        )
-        BisqText.baseLight(
-            text = text,
-            modifier = Modifier.weight(1f)
-        )
-    }
-}
-
-@Composable
-fun UnorderedList(text: String) {
-    Row(modifier = Modifier.fillMaxWidth()) {
-        BisqText.baseLight(
-            text = "\u2022",
-            modifier = Modifier.padding(start = 20.dp, end = 10.dp)
-        )
-        BisqText.baseLight(
-            text = text,
-            modifier = Modifier.weight(1f)
-        )
     }
 }
