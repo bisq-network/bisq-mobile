@@ -107,6 +107,7 @@ fun CreateOfferTradePriceSelectorScreen() {
                     BisqTextField(
                         label = presenter.fixPriceDescription,
                         value = formattedPrice,
+                        disabled = true,
                         onValueChange = { it, isValid -> }, // Deactivated
                         indicatorColor = BisqTheme.colors.mid_grey10
                     )
@@ -130,6 +131,7 @@ fun CreateOfferTradePriceSelectorScreen() {
                         label = "bisqEasy.price.percentage.inputBoxText".i18n(),
                         value = formattedPercentagePrice,
                         onValueChange = { it, isValid -> },// Deactivated
+                        disabled = true,
                         indicatorColor = BisqTheme.colors.mid_grey10,
                         valueSuffix = "%",
                     )
