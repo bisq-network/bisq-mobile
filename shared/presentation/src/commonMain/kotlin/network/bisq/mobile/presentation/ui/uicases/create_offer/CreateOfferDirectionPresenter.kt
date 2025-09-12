@@ -14,6 +14,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
+import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class CreateOfferDirectionPresenter(
@@ -25,6 +26,8 @@ class CreateOfferDirectionPresenter(
 
     lateinit var direction: DirectionEnum
     lateinit var headline: String
+    var marketName: String? = null
+    val hasMarket: Boolean get() = marketName != null
     private val _reputation = MutableStateFlow<ReputationScoreVO?>(null)
 
     private val _showSellerReputationWarning = MutableStateFlow(false)
@@ -36,7 +39,15 @@ class CreateOfferDirectionPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         direction = createOfferPresenter.createOfferModel.direction
-        headline = "bisqEasy.tradeWizard.directionAndMarket.headline".i18n()
+        val market = createOfferPresenter.createOfferModel.market
+        headline = if (market != null) {
+            val fiatName = CurrencyUtils.getLocaleFiatCurrencyName(market.quoteCurrencyCode, market.quoteCurrencyName)
+            marketName = fiatName
+            "bisqEasy.tradeWizard.directionAndMarket.headlineWithMarket".i18n(fiatName)
+        } else {
+            marketName = null
+            "bisqEasy.tradeWizard.directionAndMarket.headlineNoMarket".i18n()
+        }
 
         launchIO {
             val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launchIO

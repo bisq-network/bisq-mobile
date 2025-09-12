@@ -18,6 +18,7 @@ import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.Bis
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -86,11 +87,13 @@ class MainPresenterUnreadBadgeTest {
         val readMapFlow = MutableStateFlow(TradeReadStateMap(mapOf("t1" to 0)))
         every { readRepo.data } returns readMapFlow
 
+        val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
         val presenter = MainPresenter(
             connectivityService = connectivity,
             openTradesNotificationService = notifications,
             settingsService = settings,
             tradesServiceFacade = tradesFacade,
+            userProfileServiceFacade = userProfileServiceFacade,
             tradeReadStateRepository = readRepo,
             urlLauncher = urlLauncher
         )
@@ -156,11 +159,13 @@ class MainPresenterUnreadBadgeTest {
         val readMapFlow = MutableStateFlow(TradeReadStateMap(mapOf("t1" to 0)))
         every { readRepo.data } returns readMapFlow
 
+        val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
         val presenter = MainPresenter(
             connectivityService = connectivity,
             openTradesNotificationService = notifications,
             settingsService = settings,
             tradesServiceFacade = tradesFacade,
+            userProfileServiceFacade = userProfileServiceFacade,
             tradeReadStateRepository = readRepo,
             urlLauncher = urlLauncher
         )

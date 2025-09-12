@@ -32,18 +32,31 @@ object BisqText {
         maxLines: Int = Int.MAX_VALUE,
         overflow: TextOverflow = defaultTextOverflow,
         modifier: Modifier = Modifier,
+        autoResize: Boolean = false,
     ) {
-
-        Text(
-            text = text,
-            color = color,
-            style = style,
-            textAlign = textAlign,
-            lineHeight = lineHeight,
-            maxLines = maxLines,
-            overflow = overflow,
-            modifier = modifier,
-        )
+        if (autoResize) {
+            AutoResizeText(
+                text = text,
+                color = color,
+                textStyle = style,
+                textAlign = textAlign,
+                lineHeight = lineHeight,
+                maxLines = maxLines,
+                overflow = overflow,
+                modifier = modifier,
+            )
+        } else {
+            Text(
+                text = text,
+                color = color,
+                style = style,
+                textAlign = textAlign,
+                lineHeight = lineHeight,
+                maxLines = maxLines,
+                overflow = overflow,
+                modifier = modifier,
+            )
+        }
     }
 
     @Composable
