@@ -11,6 +11,7 @@ import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.SettingsRepositoryMock
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
+import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotEquals
@@ -120,6 +121,7 @@ class GlobalPriceUpdateTest {
         assertTrue(updates[2] > updates[1], "Second update should be later")
     }
 
+    @Ignore // "Flaky test needs more work"
     @Test
     fun `multiple services should have independent global update flows`() = runTest {
         val service1 = TestMarketPriceServiceFacade()

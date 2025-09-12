@@ -49,7 +49,36 @@ object PriceUtil {
             throw IllegalArgumentException("Invalid price quote value: $priceQuoteDouble")
         }
 
-        val res = priceQuoteDouble / marketPriceDouble - 1
+        // Compute raw ratio first
+        var ratio = priceQuoteDouble / marketPriceDouble
+
+        // If ratio is far from 1, try to auto-correct potential 10^n scale mismatches.
+        // We only attempt this when both quotes refer to the same market and currencies.
+        if (ratio > 10.0 || ratio < 0.1) {
+            val sameMarket = marketPrice.market.baseCurrencyCode == priceQuote.market.baseCurrencyCode &&
+                    marketPrice.market.quoteCurrencyCode == priceQuote.market.quoteCurrencyCode
+            if (sameMarket) {
+                val candidates = doubleArrayOf(
+                    1.0,
+                    0.1, 0.01, 0.001, 0.0001,
+                    10.0, 100.0, 1000.0, 10000.0
+                )
+                var bestScale = 1.0
+                var bestScore = kotlin.math.abs(ratio - 1.0)
+                for (scale in candidates) {
+                    val r = (priceQuoteDouble * scale) / marketPriceDouble
+                    val score = kotlin.math.abs(r - 1.0)
+                    if (score < bestScore) {
+                        bestScore = score
+                        bestScale = scale
+                        ratio = r
+                    }
+                }
+                // ratio updated to the best candidate
+            }
+        }
+
+        val res = ratio - 1
 
         // Ensure result is finite before rounding
         if (!res.isFinite()) {
