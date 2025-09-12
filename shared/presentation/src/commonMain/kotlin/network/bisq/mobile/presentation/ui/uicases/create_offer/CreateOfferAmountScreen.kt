@@ -156,6 +156,7 @@ fun CreateOfferAmountSelectorScreen() {
                 onDismiss = { presenter.setShowLimitPopup(false) },
                 reputationScore = reputation.toString(),
                 maxSellAmount = reputationBasedMaxSellAmount,
+                onRepLinkClick =  presenter::navigateToReputation,
                 onBuildRepLinkClick = presenter::navigateToBuildReputation
             )
         }
