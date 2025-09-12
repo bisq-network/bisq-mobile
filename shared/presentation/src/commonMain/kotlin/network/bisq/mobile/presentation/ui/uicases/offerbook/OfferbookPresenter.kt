@@ -50,8 +50,7 @@ class OfferbookPresenter(
     private val reputationServiceFacade: ReputationServiceFacade
 ) : BasePresenter(mainPresenter) {
 
-    //todo for dev testing its more convenient
-    private val _selectedDirection = MutableStateFlow(DirectionEnum.SELL)
+    private val _selectedDirection = MutableStateFlow(DirectionEnum.BUY)
     val selectedDirection: StateFlow<DirectionEnum> get() = _selectedDirection.asStateFlow()
 
     private val _sortedFilteredOffers = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())

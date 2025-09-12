@@ -12,8 +12,8 @@ fun DirectionToggle(
 ) {
     // Offers are mirrored to what user wants. E.g. I want to buy Bitcoin using a sell offer
     val directions = listOf(
-        DirectionEnum.SELL,
         DirectionEnum.BUY,
+        DirectionEnum.SELL,
     )
 
     ToggleTab(
