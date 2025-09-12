@@ -3,13 +3,11 @@ package network.bisq.mobile.client.service.settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.utils.Logging
-import network.bisq.mobile.domain.utils.SemanticVersion
 
 class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : ServiceFacade(), SettingsServiceFacade, Logging {
     // Properties
@@ -163,12 +161,12 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
     }
 
     override suspend fun isApiCompatible(): Boolean {
-        val requiredVersion = BuildConfig.BISQ_API_VERSION
+        val requiredVersion = SettingsUtils.getRequiredApiVersion()
         val result = apiGateway.getApiVersion()
         if (result.isSuccess) {
             val nodeApiVersion = apiGateway.getApiVersion().getOrThrow().version
             log.d { "required trusted node api version is $requiredVersion and current is $nodeApiVersion" }
-            return SemanticVersion.from(nodeApiVersion) >= SemanticVersion.from(requiredVersion)
+            return SettingsUtils.isApiCompatible(nodeApiVersion)
         } else {
             log.w { "Could not read trusted node API version; assuming incompatible." }
             return false
