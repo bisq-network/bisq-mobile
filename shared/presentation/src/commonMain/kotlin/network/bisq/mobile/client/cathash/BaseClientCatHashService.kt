@@ -91,8 +91,9 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
             val paths: Array<String?> = BucketEncoder.toPaths(buckets, bucketConfig.pathTemplates)
             val pathsList: Array<String> = paths.filterNotNull().toTypedArray()
 
-            // Generate image with optimized size for better performance
-            val image = composeImage(pathsList, SIZE_OF_CACHED_ICONS * 2)
+            // Generate image at requested size (at least 2x cache size for quality)
+            val targetSize = if (size < SIZE_OF_CACHED_ICONS * 2) SIZE_OF_CACHED_ICONS * 2 else size
+            val image = composeImage(pathsList, targetSize)
 
             val passed = Clock.System.now().toEpochMilliseconds() - ts
             if (passed > 100) { // Only log if it takes more than 100ms

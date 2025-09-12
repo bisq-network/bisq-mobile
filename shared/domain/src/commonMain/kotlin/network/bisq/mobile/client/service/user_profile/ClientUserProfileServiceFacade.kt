@@ -32,6 +32,10 @@ class ClientUserProfileServiceFacade(
     private val json: Json
 ) : ServiceFacade(), UserProfileServiceFacade {
 
+    companion object {
+        const val DEFAULT_HI_QUALITY_SIZE = 512
+    }
+
     private var keyMaterialResponse: KeyMaterialResponse? = null
 
     // Properties
@@ -116,7 +120,7 @@ class ClientUserProfileServiceFacade(
         val pubKeyHash: ByteArray = preparedData.id.hexToByteArray()
         val solutionEncoded = preparedData.proofOfWork.solutionEncoded
         val image: PlatformImage? = clientCatHashService.getImage(
-            pubKeyHash, solutionEncoded.decodeBase64Bytes(), 0, 120
+            pubKeyHash, solutionEncoded.decodeBase64Bytes(), 0, DEFAULT_HI_QUALITY_SIZE
         )
 
         result(preparedData.id, preparedData.nym, image)

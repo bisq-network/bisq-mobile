@@ -41,6 +41,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     companion object {
         private const val AVATAR_VERSION = 0
+        private const val DEFAULT_HI_QUALITY_SIZE = 512.0
         private const val DEFAULT_SIZE = 120.0
     }
 
@@ -118,7 +119,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         val solution = proofOfWork!!.solution
         val nym = NymIdGenerator.generate(pubKeyHash, solution)
         val profileIcon: PlatformImage = catHashService.getImage(
-            pubKeyHash, solution, 0, 120.0
+            pubKeyHash, solution, 0, DEFAULT_HI_QUALITY_SIZE
         )
         result(id!!, nym!!, profileIcon)
     }
