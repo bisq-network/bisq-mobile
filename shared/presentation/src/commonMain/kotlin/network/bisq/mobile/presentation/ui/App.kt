@@ -121,8 +121,8 @@ fun App() {
         }
     }
 
-    SafeInsetsContainer {
-        BisqTheme {
+    BisqTheme {
+        SafeInsetsContainer {
             if (isNavControllerSet) {
                 SwipeBackIOSNavigationHandler(rootNavController) {
                     CompositionLocalProvider(LocalAnimationsEnabled provides showAnimation) {

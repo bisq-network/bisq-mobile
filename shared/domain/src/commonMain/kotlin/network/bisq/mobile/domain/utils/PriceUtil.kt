@@ -11,6 +11,8 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSp
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.utils.MathUtils.roundTo
+import kotlin.math.pow
+
 
 
 object PriceUtil {
@@ -32,7 +34,13 @@ object PriceUtil {
      * @param marketPrice The quote representing the market price
      * @param priceQuote  The quote we want to compare to the market price
      * @return The percentage offset from the market price. Positive value means that quote is above market price.
-     * Result is rounded to precision 4 (2 decimal places at percentage representation)
+     * Result is rounded to precision 4 (2 decimal places at percentage representation).
+     *
+     * Auto-correction note:
+     * If the raw ratio priceQuote/marketPrice falls outside [0.1, 10], we heuristically
+     * attempt a 10^n scale correction (n in [-4, +4]) only when BOTH quotes are for the
+     * same market (same base and quote codes). This protects against accidental extra scaling
+     * of user input while avoiding cross-market interference.
      */
     fun getPercentageToMarketPrice(marketPrice: PriceQuoteVO, priceQuote: PriceQuoteVO): Double {
         require(marketPrice.value > 0) { "marketQuote must be positive" }
@@ -58,19 +66,16 @@ object PriceUtil {
             val sameMarket = marketPrice.market.baseCurrencyCode == priceQuote.market.baseCurrencyCode &&
                     marketPrice.market.quoteCurrencyCode == priceQuote.market.quoteCurrencyCode
             if (sameMarket) {
-                val candidates = doubleArrayOf(
-                    1.0,
-                    0.1, 0.01, 0.001, 0.0001,
-                    10.0, 100.0, 1000.0, 10000.0
-                )
-                var bestScale = 1.0
+                val downScales = (1..4).map { 1 / 10.0.pow(it) }.toDoubleArray()
+                val upScales = (1..4).map { 10.0.pow(it) }.toDoubleArray()
+                val candidates = doubleArrayOf(1.0) + downScales + upScales
+
                 var bestScore = kotlin.math.abs(ratio - 1.0)
                 for (scale in candidates) {
                     val r = (priceQuoteDouble * scale) / marketPriceDouble
                     val score = kotlin.math.abs(r - 1.0)
                     if (score < bestScore) {
                         bestScore = score
-                        bestScale = scale
                         ratio = r
                     }
                 }

@@ -213,5 +213,26 @@ class PriceUtilTest {
         assertEquals(0.0115, result, 0.0001)
     }
 
+    @Test
+    fun `getPercentageToMarketPrice should NOT auto-correct across different markets`() {
+        // Market A: BTC/USD
+        val usdMarket = createTestMarket()
+        val marketPrice = createTestPriceQuote(980503482, usdMarket)
+
+        // Price quote from a different market (e.g., BTC/EUR), intentionally mis-scaled by 100x
+        val eurMarket = MarketVO(
+            baseCurrencyCode = "BTC",
+            quoteCurrencyCode = "EUR",
+            baseCurrencyName = "Bitcoin",
+            quoteCurrencyName = "Euro"
+        )
+        val misScaledDifferentMarket = createTestPriceQuote(99177870000, eurMarket)
+
+        val result = PriceUtil.getPercentageToMarketPrice(marketPrice, misScaledDifferentMarket)
+
+        // Expect raw ratio (no auto-correction across markets): ~100.1499%
+        assertEquals(100.1499, result, 0.01)
+    }
+
 }
 

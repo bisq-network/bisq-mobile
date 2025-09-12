@@ -3,13 +3,13 @@ package network.bisq.mobile.client.cathash
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.Sign
 import kotlinx.datetime.Clock
+import kotlinx.coroutines.sync.Mutex
 import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.pubKeyHashAsByteArray
 import network.bisq.mobile.domain.service.BaseService
-import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.base64ToByteArray
 import network.bisq.mobile.domain.utils.concat
@@ -29,7 +29,10 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
     }
 
     private val fileSystem: FileSystem = FileSystem.SYSTEM
-    private val cache = mutableMapOf<BigInteger, PlatformImage>()
+    // In-memory cache: key by (avatarVersion, catHashInput) to avoid stale reads across version bumps.
+    // Guarded by a non-suspending Mutex tryLock to avoid blocking in non-suspend getImage().
+    private val cacheLock = Mutex()
+    private val cache = mutableMapOf<Pair<Int, BigInteger>, PlatformImage>()
 
     protected abstract fun composeImage(paths: Array<String>, size: Int): PlatformImage?
     protected abstract fun writeRawImage(image: PlatformImage, iconFilePath: String)
@@ -63,8 +66,14 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
 
             val useCache = size <= SIZE_OF_CACHED_ICONS
             if (useCache) {
-                cache[catHashInput]?.let {
-                    return it
+                val cacheKey = avatarVersion to catHashInput
+                // Fast path: attempt non-blocking cache read; if lock is contested, skip cache read
+                if (cacheLock.tryLock()) {
+                    try {
+                        cache[cacheKey]?.let { return it }
+                    } finally {
+                        cacheLock.unlock()
+                    }
                 }
 
                 if (!fileSystem.exists(iconsDir)) {
@@ -74,8 +83,16 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
                 if (fileSystem.exists(iconFilePath)) {
                     try {
                         val image = readRawImage(iconFilePath.toString())
-                        if (image != null && cache.size < MAX_CACHE_SIZE) {
-                            cache[catHashInput] = image
+                        if (image != null) {
+                            if (cacheLock.tryLock()) {
+                                try {
+                                    if (cache.size < MAX_CACHE_SIZE) {
+                                        cache[cacheKey] = image
+                                    }
+                                } finally {
+                                    cacheLock.unlock()
+                                }
+                            }
                         }
                         return image
                     } catch (e: Exception) {
@@ -100,8 +117,17 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
                 log.i("Creating user profile icon for $userProfileId took $passed ms.")
             }
 
-            if (image != null && useCache && cache.size < MAX_CACHE_SIZE) {
-                cache[catHashInput] = image
+            if (image != null && useCache) {
+                val cacheKey = avatarVersion to catHashInput
+                if (cacheLock.tryLock()) {
+                    try {
+                        if (cache.size < MAX_CACHE_SIZE) {
+                            cache[cacheKey] = image
+                        }
+                    } finally {
+                        cacheLock.unlock()
+                    }
+                }
                 writeAsync(image, iconFilePath)
             }
             return image

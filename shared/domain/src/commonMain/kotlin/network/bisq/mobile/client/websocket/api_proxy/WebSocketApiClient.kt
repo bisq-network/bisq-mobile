@@ -137,7 +137,8 @@ class WebSocketApiClient(
                         val asMap = json.decodeFromString<Map<String, String>>(trimmed)
                         val errorMessage = asMap["error"] ?: body
                         Result.failure(WebSocketRestApiException(response.httpStatusCode, errorMessage))
-                    } catch (_: Exception) {
+                    } catch (e: Exception) {
+                        log.e(e) { "Failed to decode error message as json. body=$body" }
                         Result.failure(WebSocketRestApiException(response.httpStatusCode, body))
                     }
                 } else {
