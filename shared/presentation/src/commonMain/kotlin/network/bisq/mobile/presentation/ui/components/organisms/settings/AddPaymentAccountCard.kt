@@ -45,12 +45,12 @@ fun AppPaymentAccountCard(
     ) {
         BisqGap.VQuarter()
         BisqText.h5Light(
-            text = "user.paymentAccounts.createAccount.headline".i18n(),
+            text = "paymentAccounts.legacy.createAccount.headline".i18n(),
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
         BisqText.smallLightGrey(
-            text = "user.paymentAccounts.createAccount.subtitle".i18n(),
+            text = "paymentAccounts.legacy.createAccount.subtitle".i18n(),
             textAlign = TextAlign.Center
         )
 
@@ -62,17 +62,17 @@ fun AppPaymentAccountCard(
                 accountName = it
                 accountNameValid = isValid
             },
-            placeholder = "user.paymentAccounts.createAccount.accountName.prompt".i18n(),
-            label = "user.paymentAccounts.createAccount.accountName".i18n(),
+            placeholder = "paymentAccounts.legacy.createAccount.accountName.prompt".i18n(),
+            label = "paymentAccounts.legacy.createAccount.accountName".i18n(),
             validation = {
                 if (it.isEmpty()) {
-                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.isMandatory".i18n()
+                    return@BisqTextField "paymentAccounts.legacy.createAccount.validations.name.isMandatory".i18n()
                 }
                 if (it.length < 3) {
-                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.minLength".i18n()
+                    return@BisqTextField "paymentAccounts.legacy.createAccount.validations.name.minLength".i18n()
                 }
                 if (it.length > MAX_ACCOUNT_FIELD_LENGTH) {
-                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.name.maxLength".i18n()
+                    return@BisqTextField "paymentAccounts.legacy.createAccount.validations.name.maxLength".i18n()
                 }
                 return@BisqTextField null
             }
@@ -83,19 +83,19 @@ fun AppPaymentAccountCard(
                 accountDescription = it
                 accountDescriptionValid = isValid
             },
-            placeholder = "user.paymentAccounts.createAccount.accountData.prompt".i18n(),
-            label = "user.paymentAccounts.accountData".i18n(),
+            placeholder = "paymentAccounts.legacy.createAccount.accountData.prompt".i18n(),
+            label = "paymentAccounts.legacy.accountData".i18n(),
             isTextArea = true,
             minLines = 2,
             validation = {
                 if (it.isEmpty()) {
-                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.accountData.isMandatory".i18n()
+                    return@BisqTextField "paymentAccounts.legacy.createAccount.validations.accountData.isMandatory".i18n()
                 }
                 if (it.length < 3) {
-                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.accountData.minLength".i18n()
+                    return@BisqTextField "paymentAccounts.legacy.createAccount.validations.accountData.minLength".i18n()
                 }
                 if (it.length > MAX_ACCOUNT_FIELD_LENGTH) {
-                    return@BisqTextField "mobile.user.paymentAccounts.createAccount.validations.accountData.maxLength".i18n()
+                    return@BisqTextField "paymentAccounts.legacy.createAccount.validations.accountData.maxLength".i18n()
                 }
                 return@BisqTextField null
             }

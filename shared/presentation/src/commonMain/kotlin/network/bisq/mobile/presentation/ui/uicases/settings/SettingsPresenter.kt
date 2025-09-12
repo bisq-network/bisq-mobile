@@ -35,7 +35,7 @@ open class SettingsPresenter(
         val defaultList: MutableList<MenuItem> = mutableListOf(
             MenuItem.Leaf(label = "mobile.settings.general".i18n(), route = Routes.GeneralSettings),
             MenuItem.Leaf(label = "user.userProfile".i18n(), route = Routes.UserProfileSettings),
-            MenuItem.Leaf(label = "user.paymentAccounts".i18n(), route = Routes.PaymentAccountSettings),
+            MenuItem.Leaf(label = "paymentAccounts.headline".i18n(), route = Routes.PaymentAccountSettings),
         )
         if (hasIgnored) {
             defaultList.add(

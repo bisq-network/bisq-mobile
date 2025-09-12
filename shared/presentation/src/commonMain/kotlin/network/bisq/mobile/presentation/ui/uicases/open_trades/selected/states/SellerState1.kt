@@ -37,7 +37,7 @@ fun SellerState1(
         BisqGap.V1()
         if (accountPairs.isNotEmpty()) {
             BisqDropDown(
-                label = "user.paymentAccounts".i18n(),
+                label = "paymentAccounts.headline".i18n(),
                 items = accountPairs,
                 value = paymentAccountName,
                 showKey = true,
