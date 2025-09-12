@@ -138,7 +138,7 @@ fun CreateOfferAmountSelectorScreen() {
             }
             NoteText(
                 notes = hintText,
-                linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.more".i18n(),
+                linkText = "bisqEasy.tradeWizard.amount.buyer.limitInfo.learnMore".i18n(),
                 onLinkClick = { presenter.setShowLimitPopup(true) }
             )
         }
