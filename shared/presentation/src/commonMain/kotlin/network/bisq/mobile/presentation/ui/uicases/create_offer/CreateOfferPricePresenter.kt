@@ -267,7 +267,7 @@ class CreateOfferPricePresenter(
                 return 0.0
             }
 
-            return percentagePriceValue * 100
+            return percentagePriceValue
         } catch (e: Exception) {
             log.e(e) { "Failed to calculate percentage for fixed value: ${e.message}" }
             return 0.0

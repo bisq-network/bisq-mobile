@@ -116,7 +116,7 @@ fun CreateOfferTradePriceSelectorScreen() {
                         keyboardType = KeyboardType.Decimal,
                         onValueChange = { it, isValid -> presenter.onFixPriceChanged(it, isValid) },
                         validation = {
-                            val parsedValue = it.toDoubleOrNullLocaleAware()
+                            it.toDoubleOrNullLocaleAware()
                                 ?: return@BisqTextField "mobile.bisqEasy.tradeWizard.price.tradePrice.type.fixed.validation.cannotBeEmpty".i18n()
                             val parsedPercent = presenter.calculatePercentageForFixedValue(it)
                             if (parsedPercent < -10) {
