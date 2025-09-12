@@ -43,10 +43,10 @@ fun BottomNavigation(
                     selectedIndicatorColor = BisqTheme.colors.backgroundColor,
                     selectedIconColor = BisqTheme.colors.primary,
                     selectedTextColor = BisqTheme.colors.primary,
-                    unselectedIconColor = Color.White,
-                    unselectedTextColor = Color.White,
-                    disabledIconColor = Color.Red,
-                    disabledTextColor = Color.Red
+                    unselectedIconColor = BisqTheme.colors.white,
+                    unselectedTextColor = BisqTheme.colors.white,
+                    disabledIconColor = BisqTheme.colors.danger,
+                    disabledTextColor = BisqTheme.colors.danger
                 ),
                 interactionSource = remember { MutableInteractionSource() },
                 selected = currentRoute == navigationItem.route,

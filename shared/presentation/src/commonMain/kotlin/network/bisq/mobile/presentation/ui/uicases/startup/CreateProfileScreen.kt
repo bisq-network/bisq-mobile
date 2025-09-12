@@ -75,7 +75,7 @@ fun CreateProfileScreen(
                     enabled = !generateKeyPairInProgress,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color.Transparent,
-                        contentColor = Color.Black // Or any color you want for the text/icon
+                        contentColor = BisqTheme.colors.backgroundColor
                     ),
                     elevation = ButtonDefaults.buttonElevation(BisqUIConstants.Zero),
                     onClick = { presenter.onGenerateKeyPair() }) {

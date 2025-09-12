@@ -10,6 +10,7 @@ import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.organisms.ReportBugPanel
 import network.bisq.mobile.presentation.ui.components.organisms.TrustedNodeAPIIncompatiblePopup
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
 @Composable
@@ -23,7 +24,7 @@ fun ErrorOverlay() {
         Box(
             Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.5f)) // Dim the background
+                .background(BisqTheme.colors.backgroundColor.copy(alpha = 0.5f)) // Dim the background
         ) {
             // TODO: Should define exception types.
             // For this specific issue, have a type like TRUST_NODE_VERSION_INCOMPATIBLE
