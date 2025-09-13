@@ -1,9 +1,13 @@
 package network.bisq.mobile.android.node.presentation
 
 import android.app.Activity
+import android.content.Intent
+import android.os.Process
 import bisq.common.network.TransportType
 import bisq.network.NetworkServiceConfig
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.android.node.MainActivity
@@ -100,9 +104,9 @@ class NodeMainPresenter(
                     }
                 connectivityService.startMonitoring()
             }.onFailure { e ->
-                log.e("Error at onViewAttached", e)
+                log.e("Error at initializeTorAndServices", e)
                 applicationBootstrapFacade.deactivate()
-                handleInitializationError(e, "Node initialization")
+                handleInitializationError(e, "Bootstrapping")
             }
         }
     }
@@ -144,14 +148,14 @@ class NodeMainPresenter(
             // Create restart intent
             val intent = packageManager.getLaunchIntentForPackage(packageName)
             intent?.let { restartIntent ->
-                restartIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                restartIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                restartIntent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                restartIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                restartIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                restartIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
 
                 // launch process
                 activity.startActivity(restartIntent)
                 // now suicide
-                android.os.Process.killProcess(android.os.Process.myPid())
+                Process.killProcess(Process.myPid())
 //                kotlin.system.exitProcess(0)
             } ?: run {
                 log.e { "Could not create restart intent" }
@@ -167,8 +171,14 @@ class NodeMainPresenter(
             try {
                 log.i { "Starting Tor" }
                 val baseDir = applicationService.config.baseDir!!
-                // This blocks until Tor is ready
-                kmpTorService.startTor(baseDir).await()
+                try {
+                    // We block until Tor is ready, or timeout after 60 sec
+                    withTimeout(60_000) { kmpTorService.startTor(baseDir).await() }
+                } catch (e: TimeoutCancellationException) {
+                    log.e(e) { "Tor initialization not completed after 60 seconds" }
+                    result.completeExceptionally(e)
+                }
+
                 log.i { "Tor successfully started" }
                 result.complete(true)
             } catch (e: Exception) {

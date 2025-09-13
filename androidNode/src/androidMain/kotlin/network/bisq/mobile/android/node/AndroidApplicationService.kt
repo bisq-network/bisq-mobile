@@ -128,7 +128,7 @@ class AndroidApplicationService(
     }
 
     companion object {
-        const val STARTUP_TIMEOUT_SEC: Long = 300
+        const val STARTUP_TIMEOUT_SEC: Long = 120
         const val SHUTDOWN_TIMEOUT_SEC: Long = 10
     }
 
