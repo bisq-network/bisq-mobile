@@ -4,12 +4,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
@@ -105,13 +108,24 @@ private fun OfferbookMarketScreenContent(
 
         BisqGap.V1()
 
-        LazyColumn {
-            items(marketItems, key = { it.market.marketCodes }) { item ->
-                CurrencyCard(
-                    item = item,
-                    hasIgnoredUsers = hasIgnoredUsers,
-                    onClick = { onMarketSelect(item) }
-                )
+        // Give the list a new identity when filter/sort changes so scroll resets to top
+        key(filter, sortBy) {
+            val listState = rememberLazyListState()
+            val firstKey = marketItems.firstOrNull()?.market?.marketCodes
+            // Scroll to top after the new sorted/filtered content is applied
+            LaunchedEffect(firstKey) {
+                if (firstKey != null) {
+                    listState.scrollToItem(0)
+                }
+            }
+            LazyColumn(state = listState) {
+                items(marketItems, key = { it.market.marketCodes }) { item ->
+                    CurrencyCard(
+                        item = item,
+                        hasIgnoredUsers = hasIgnoredUsers,
+                        onClick = { onMarketSelect(item) }
+                    )
+                }
             }
         }
 
