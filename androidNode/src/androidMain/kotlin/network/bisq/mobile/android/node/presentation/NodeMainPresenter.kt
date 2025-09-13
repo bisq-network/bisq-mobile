@@ -96,9 +96,7 @@ class NodeMainPresenter(
                         initializeTor(applicationService).await()
                     }
 
-                    // Wait for Tor to be ready before proceeding (no-op for CLEARNET)
-                    //applicationBootstrapFacade.waitForTor()
-
+                    // TODO that will fail as applicationService is not initialized.
                     settingsServiceFacade.activate()
 
                     log.i { "Start initializing applicationService" }

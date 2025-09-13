@@ -7,7 +7,6 @@ import bisq.common.observable.Pin
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.NonCancellable.isActive
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -24,7 +23,6 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
-import java.io.File
 
 class NodeApplicationBootstrapFacade(
     private val provider: AndroidApplicationService.Provider,
@@ -46,6 +44,7 @@ class NodeApplicationBootstrapFacade(
 
     override fun activate() {
         // TODO not working for the first translation requested, but avoids crash at least using default
+        // TODO that will fail as applicationService is not initialized.
         makeSureI18NIsReady(settingsServiceFacade.languageCode.value)
 
         super.activate()
@@ -186,61 +185,6 @@ class NodeApplicationBootstrapFacade(
         startTimeoutForStage()
     }
 
-    /* private fun initializeTorAndProceed() {
-         launchIO {
-             try {
-                 log.i { "Bootstrap: Starting Tor daemon initialization..." }
-                 // This blocks until Tor is ready
-                 val baseDir = provider.applicationService.config.baseDir!!
-                 kmpTorService.startTor(baseDir).await()
-                 log.i { "Bootstrap: Tor daemon initialized successfully" }
-                 torWasStartedBefore = true
-                 torInitializationCompleted.complete(Unit)
-             } catch (e: Exception) {
-                 log.e(e) { "Bootstrap: Failed to initialize Tor daemon" }
-                 torInitializationCompleted.complete(Unit)
-             }
-         }
-     }*/
-
-    override suspend fun waitForTor() {
-        /* if (isTorSupported()) {
-             log.i { "Bootstrap: Waiting for Tor initialization to complete..." }
-             torInitializationCompleted.await()
-             // Wait briefly for Bisq2 to write external_tor.config to avoid false negatives
-             checkForTorConfigFile()
-             log.i { "Bootstrap: Tor initialization wait completed" }
-         } else {
-             log.d { "Bootstrap: CLEARNET configuration - no Tor wait required" }
-         }*/
-    }
-
-    private suspend fun checkForTorConfigFile(
-        maxWaitMs: Long = 5_000,
-        pollMs: Long = 100
-    ) {
-        try {
-            val baseDir = provider.applicationService.config.baseDir!!
-            val configFile = File(File(baseDir.toFile(), "tor"), "external_tor.config")
-
-            withTimeout(maxWaitMs) {
-                while (!configFile.exists()) {
-                    delay(pollMs)
-                }
-            }
-
-            // Small grace period for downstream detection
-            delay(200)
-            log.i { "Bootstrap: Tor configuration verified and ready (${configFile.absolutePath})" }
-        } catch (e: TimeoutCancellationException) {
-            log.e { "Bootstrap: external_tor.config not detected within ${maxWaitMs}ms" }
-            throw RuntimeException("external_tor.config not found within ${maxWaitMs}ms timeout")
-        } catch (e: Exception) {
-            log.e(e) { "Bootstrap: Error verifying Tor configuration" }
-            throw e
-        }
-    }
-
     private fun stopListeningToBootstrapProcess() {
         applicationServiceStatePin?.unbind()
         applicationServiceStatePin = null
@@ -248,28 +192,6 @@ class NodeApplicationBootstrapFacade(
 
     private fun isTorSupported(): Boolean {
         return provider.applicationService.networkServiceConfig!!.supportedTransportTypes.contains(TransportType.TOR)
-    }
-
-    private fun validateTorConfiguration(applicationService: AndroidApplicationService) {
-        try {
-            // Check if we have both CLEAR and TOR configured (which could cause issues)
-            val networkServiceConfig = applicationService.networkServiceConfig
-            val supportedTransportTypes = networkServiceConfig.supportedTransportTypes
-            if (supportedTransportTypes.contains(TransportType.CLEAR) &&
-                supportedTransportTypes.contains(TransportType.TOR)
-            ) {
-                log.w { "Bootstrap: Both CLEAR and TOR transports are configured - this may cause initialization issues" }
-            }
-
-            // Check if external Tor is properly configured
-            val torConfig = networkServiceConfig.configByTransportType[TransportType.TOR]
-            if (torConfig != null) {
-                log.i { "Bootstrap: Tor configuration found - assuming external Tor is configured" }
-                // Note: We can't easily access the useExternalTor property here, but the config file shows it's set to true
-            }
-        } catch (e: Exception) {
-            log.w(e) { "Bootstrap: Error validating Tor configuration" }
-        }
     }
 
     private fun startTimeoutForStage(stageName: String = state.value, extendedTimeout: Boolean = false) {
