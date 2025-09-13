@@ -43,10 +43,6 @@ class NodeApplicationBootstrapFacade(
     private var torWasStartedBefore = false
 
     override fun activate() {
-        // TODO not working for the first translation requested, but avoids crash at least using default
-        // TODO that will fail as applicationService is not initialized.
-        makeSureI18NIsReady(settingsServiceFacade.languageCode.value)
-
         super.activate()
         log.i { "Bootstrap: super.activate() completed, calling onInitializeAppState()" }
 

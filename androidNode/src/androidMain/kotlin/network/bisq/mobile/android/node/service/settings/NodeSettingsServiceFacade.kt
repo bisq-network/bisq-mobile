@@ -14,6 +14,7 @@ import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.I18nSupport
 import java.util.Locale
 
 class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Provider) : ServiceFacade(), SettingsServiceFacade, Logging {
@@ -67,6 +68,8 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
                 _languageCode.value = value
                 log.i { "Successfully set language code to: $value (via Bisq2 core)" }
             }
+
+            I18nSupport.setLanguage(value)
         } catch (e: Exception) {
             log.e(e) { "Failed to set language code to: $value" }
             throw e

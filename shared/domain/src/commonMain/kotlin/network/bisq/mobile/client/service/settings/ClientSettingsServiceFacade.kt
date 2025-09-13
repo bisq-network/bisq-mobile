@@ -10,6 +10,7 @@ import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.SemanticVersion
+import network.bisq.mobile.i18n.I18nSupport
 
 class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : ServiceFacade(), SettingsServiceFacade, Logging {
     // Properties
@@ -54,6 +55,8 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
                     log.e { "Client API call failed for language code: $value" }
                 }
             }
+
+            I18nSupport.setLanguage(value)
         } catch (e: Exception) {
             log.e(e) { "Client failed to set language code to: $value" }
             throw e
