@@ -89,7 +89,8 @@ class WebSocketClientDemo(
         topic: Topic,
         requestId: String
     ) {
-        TODO("Not yet implemented")
+        log.d { "Demo mode - unsubscribe ignored for topic=$topic, requestId=$requestId" }
+        // no-op, TODO
     }
 
     private fun fakeResponse(webSocketRequest: WebSocketRequest): WebSocketResponse {
