@@ -53,7 +53,7 @@ class NodeApplicationBootstrapFacade(
         log.i { "Bootstrap: super.activate() completed, calling onInitializeAppState()" }
 
         // Set up application state observer FIRST, before any initialization
-        setupApplicationStateObserver()
+        observeApplicationState()
 
         onInitializeAppState()
 
@@ -140,7 +140,7 @@ class NodeApplicationBootstrapFacade(
         log.w { "Bootstrap: Tor initialization failed - $errorMessage" }
     }
 
-    private fun setupApplicationStateObserver() {
+    private fun observeApplicationState() {
         log.i { "Bootstrap: Setting up application state observer" }
         applicationServiceStatePin = applicationServiceState.addObserver { state: State ->
             log.i { "Bootstrap: Application state changed to: $state" }
