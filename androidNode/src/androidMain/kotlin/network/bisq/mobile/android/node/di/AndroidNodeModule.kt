@@ -66,7 +66,7 @@ val androidNodeModule = module {
 
     single<KmpTorService> { KmpTorService() }
 
-    single<ApplicationBootstrapFacade> { NodeApplicationBootstrapFacade(get(), get(), get(), get()) }
+    single<ApplicationBootstrapFacade> { NodeApplicationBootstrapFacade(get(), get(), get()) }
 
     single<MarketPriceServiceFacade> { NodeMarketPriceServiceFacade(get(), get()) }
 
