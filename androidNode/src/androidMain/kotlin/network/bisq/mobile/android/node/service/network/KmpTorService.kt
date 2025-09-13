@@ -218,7 +218,9 @@ class KmpTorService : BaseService(), Logging {
                 handleError("Configuring tor failed: $error")
                 configCompleted.takeIf { !it.isCompleted }?.completeExceptionally(error)
             } finally {
-                if (configJob?.isActive != true) configJob = null
+                if (configJob === this@launchIO) {
+                    configJob = null
+                }
             }
         }
         return configCompleted
@@ -270,6 +272,10 @@ class KmpTorService : BaseService(), Logging {
             } catch (e: Exception) {
                 handleError("Observing file ${controlPortFile.absolutePath} failed: ${e.message}")
                 deferred.completeExceptionally(e)
+            } finally {
+                if (controlPortFileObserverJob === this@launchIO) {
+                    controlPortFileObserverJob = null
+                }
             }
         }
         return deferred
