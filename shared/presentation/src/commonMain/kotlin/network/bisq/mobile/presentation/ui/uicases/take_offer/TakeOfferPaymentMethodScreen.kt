@@ -43,7 +43,10 @@ fun TakeOfferPaymentMethodScreen() {
             BisqGap.V2()
 
             PaymentMethodCard(
-                title = "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.buyer".i18n(presenter.quoteCurrencyCode),
+                title = (if (presenter.isTakerBtcBuyer)
+                    "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.seller"
+                else
+                    "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.buyer").i18n(presenter.quoteCurrencyCode),
                 imagePaths = presenter.getQuoteSidePaymentMethodsImagePaths(),
                 availablePaymentMethods = presenter.quoteSidePaymentMethods,
                 selectedPaymentMethods = quoteSidePaymentMethod,

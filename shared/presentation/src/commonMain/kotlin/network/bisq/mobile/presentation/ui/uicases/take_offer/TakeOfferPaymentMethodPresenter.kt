@@ -5,6 +5,8 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+
 
 class TakeOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter,
@@ -17,6 +19,9 @@ class TakeOfferPaymentMethodPresenter(
     lateinit var baseSidePaymentMethods: List<String>
     val quoteSidePaymentMethod: MutableStateFlow<String?> = MutableStateFlow(null)
     val baseSidePaymentMethod: MutableStateFlow<String?> = MutableStateFlow(null)
+    val isTakerBtcBuyer: Boolean
+        get() = takeOfferModel.offerItemPresentationVO.bisqEasyOffer.direction == DirectionEnum.BUY
+
     lateinit var quoteCurrencyCode: String
 
     private lateinit var takeOfferModel: TakeOfferPresenter.TakeOfferModel
