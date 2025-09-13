@@ -6,7 +6,6 @@ import bisq.common.observable.Observable
 import bisq.common.observable.Pin
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.NonCancellable.isActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
@@ -49,13 +48,15 @@ class NodeApplicationBootstrapFacade(
         observeTorState()
         observeApplicationState()
 
-        onInitializeAppState()
+        setState("splash.applicationServiceState.INITIALIZE_APP".i18n())
+        setProgress(0f)
+        startTimeoutForStage()
     }
 
     override fun deactivate() {
         log.i { "Bootstrap: deactivate() called" }
         cancelTimeout()
-        stopListeningToBootstrapProcess()
+        removeApplicationStateObserver()
 
         super.deactivate()
         log.i { "Bootstrap: deactivate() completed" }
@@ -67,13 +68,13 @@ class NodeApplicationBootstrapFacade(
                 when (newState) {
                     IDLE -> {}
                     STARTING -> {
-                        setState("bootstrap.initializingTor".i18n())
+                        setState("bootstrap.tor.starting".i18n())
                         setProgress(0.1f)
                         startTimeoutForStage()
                     }
 
                     STARTED -> {
-                        setState("bootstrap.torReady".i18n())
+                        setState("bootstrap.tor.started".i18n())
                         setProgress(0.25f)
                     }
 
@@ -104,7 +105,8 @@ class NodeApplicationBootstrapFacade(
             log.i { "Bootstrap: Application state changed to: $state" }
             when (state) {
                 State.INITIALIZE_APP -> {
-                    onInitializeAppState()
+                    startTimeoutForStage()
+                    // state and progress are set at activate and when tor is started
                 }
 
                 State.INITIALIZE_NETWORK -> {
@@ -113,9 +115,7 @@ class NodeApplicationBootstrapFacade(
                     startTimeoutForStage()
                 }
 
-
-                State.INITIALIZE_WALLET -> {
-                }
+                State.INITIALIZE_WALLET -> {}
 
                 State.INITIALIZE_SERVICES -> {
                     setState("splash.applicationServiceState.INITIALIZE_SERVICES".i18n())
@@ -145,11 +145,9 @@ class NodeApplicationBootstrapFacade(
 
                         serviceScope.launch {
                             delay(DEFAULT_CONNECTIVITY_TIMEOUT_MS)
-                            if (!isActive) {
-                                log.w { "Bootstrap: Connectivity timeout - proceeding anyway" }
-                                connectivityJob.cancel()
-                                onInitialized()
-                            }
+                            log.w { "Bootstrap: Connectivity timeout - proceeding anyway" }
+                            connectivityJob.cancel()
+                            onInitialized()
                         }
                     }
                 }
@@ -174,14 +172,8 @@ class NodeApplicationBootstrapFacade(
         log.i { "Bootstrap completed successfully - Tor monitoring will continue" }
     }
 
-    private fun onInitializeAppState() {
-        setState("splash.applicationServiceState.INITIALIZE_APP".i18n())
-        val progress = if (isTorSupported()) 0.25f else 0f
-        setProgress(progress)
-        startTimeoutForStage()
-    }
 
-    private fun stopListeningToBootstrapProcess() {
+    private fun removeApplicationStateObserver() {
         applicationServiceStatePin?.unbind()
         applicationServiceStatePin = null
     }
@@ -206,7 +198,7 @@ class NodeApplicationBootstrapFacade(
         currentTimeoutJob = serviceScope.launch {
             try {
                 delay(timeoutDuration)
-                if (!(isActive && bootstrapSuccessful)) {
+                if (!bootstrapSuccessful) {
                     log.w { "Bootstrap: Timeout reached for stage: $stageName" }
                     setTimeoutDialogVisible(true)
                 }
@@ -244,7 +236,7 @@ class NodeApplicationBootstrapFacade(
 
     override suspend fun stopBootstrapForRetry() {
         log.i { "Bootstrap: User requested to stop bootstrap for retry" }
-        stopListeningToBootstrapProcess()
+        removeApplicationStateObserver()
         // Cancel any ongoing timeouts without showing progress toast
         cancelTimeout(showProgressToast = false)
 
@@ -298,6 +290,4 @@ class NodeApplicationBootstrapFacade(
             "splash.applicationServiceState.FAILED".i18n()
         }
     }
-
-
 }
