@@ -87,4 +87,7 @@ expect fun getLocaleCurrencyName(currencyCode: String): String
  */
 expect fun Scope.getStorageDir(): String
 
+/**
+ * Implementations of this function are expected to handle DNS leak by preventing system dns resolution in case proxy is a tor proxy.
+ */
 expect fun createHttpClient(proxyConfig: BisqProxyConfig? = null, config: HttpClientConfig<*>.() -> Unit = {}): HttpClient
