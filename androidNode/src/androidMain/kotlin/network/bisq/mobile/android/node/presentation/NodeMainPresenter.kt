@@ -1,6 +1,9 @@
 package network.bisq.mobile.android.node.presentation
 
 import android.app.Activity
+import bisq.common.network.TransportType
+import bisq.network.NetworkServiceConfig
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.BuildNodeConfig
@@ -87,10 +90,14 @@ class NodeMainPresenter(
                         )
                     provider.applicationService = applicationService
 
-                    // Bootstrap facade now handles Tor initialization when needed
                     applicationBootstrapFacade.activate()
+
+                    if (isTorSupported(applicationService.networkServiceConfig!!)) {
+                        initializeTor(applicationService).await()
+                    }
+
                     // Wait for Tor to be ready before proceeding (no-op for CLEARNET)
-                    applicationBootstrapFacade.waitForTor()
+                    //applicationBootstrapFacade.waitForTor()
 
                     settingsServiceFacade.activate()
 
@@ -176,6 +183,29 @@ class NodeMainPresenter(
         }
     }
 
+    private fun initializeTor(applicationService: AndroidApplicationService): CompletableDeferred<Boolean> {
+        val result = CompletableDeferred<Boolean>()
+        launchIO {
+            try {
+                log.i { "Starting Tor" }
+                val baseDir = applicationService.config.baseDir!!
+                // This blocks until Tor is ready
+                kmpTorService.startTor(baseDir).await()
+                log.i { "Tor successfully started" }
+                result.complete(true)
+            } catch (e: Exception) {
+                val failure = kmpTorService.startupFailure.value
+                val errorMessage = listOfNotNull(
+                    failure?.message,
+                    failure?.cause?.message
+                ).firstOrNull() ?: "Unknown Tor error"
+                result.complete(false)
+                log.e(e) { "Tor initialization failed - $errorMessage" }
+            }
+        }
+        return result
+    }
+
     private fun activateServices(skipSettings: Boolean = false) {
         if (!skipSettings) {
             settingsServiceFacade.activate()
@@ -209,4 +239,7 @@ class NodeMainPresenter(
         userProfileServiceFacade.deactivate()
     }
 
+    private fun isTorSupported(networkServiceConfig: NetworkServiceConfig): Boolean {
+        return networkServiceConfig.supportedTransportTypes.contains(TransportType.TOR)
+    }
 }
