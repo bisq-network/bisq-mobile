@@ -116,7 +116,8 @@ fun App() {
 
     LaunchedEffect(languageCode) {
         if (languageCode.isNotBlank()) {
-            I18nSupport.initialize(languageCode)
+            // TODO is that needed? We set the language for i18n in the SettingsServiceFacade
+            I18nSupport.setLanguage(languageCode)
             setDefaultLocale(languageCode)
         }
     }

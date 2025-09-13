@@ -48,7 +48,7 @@ object BisqTheme {
         language: String = "en",
         content: @Composable () -> Unit
     ) {
-        I18nSupport.initialize(language)
+        I18nSupport.setLanguage(language)
         BisqTheme {
             content()
         }

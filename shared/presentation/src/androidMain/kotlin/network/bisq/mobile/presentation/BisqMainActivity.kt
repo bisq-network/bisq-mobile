@@ -15,8 +15,10 @@ import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
+import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.App
@@ -55,6 +57,9 @@ abstract class BisqMainActivity : ComponentActivity(), Logging {
 
         // Set up coroutine exception handler after DI is initialized
         GenericErrorHandler.setupCoroutineExceptionHandler(exceptionHandlerSetup)
+
+        // Initialize early with users device language. Later once settings are available we update if user has changed language.
+        I18nSupport.initialize(getDeviceLanguageCode())
 
         presenter.attachView(this)
 
