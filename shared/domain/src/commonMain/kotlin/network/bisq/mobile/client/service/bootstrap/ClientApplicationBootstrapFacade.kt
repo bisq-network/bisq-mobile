@@ -59,7 +59,7 @@ class ClientApplicationBootstrapFacade(
                     } else {
                         log.e(state.error) { "Websocket client was disconnected without error at bootstrap" }
                     }
-                    setState("No connectivity")
+                    setState("bootstrap.noConnectivity".i18n())
                     setProgress(1.0f)
                 } else if (state is ConnectionState.Connected) {
                     setState("bootstrap.connectedToTrustedNode".i18n())
