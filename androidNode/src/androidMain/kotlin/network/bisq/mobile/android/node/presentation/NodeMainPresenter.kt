@@ -1,10 +1,12 @@
 package network.bisq.mobile.android.node.presentation
 
 import android.app.Activity
+import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.android.node.MainActivity
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
+import network.bisq.mobile.android.node.service.network.KmpTorService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -42,9 +44,10 @@ class NodeMainPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
     userProfileServiceFacade: UserProfileServiceFacade,
-    private val tradeReadStateRepository: TradeReadStateRepository,
+    tradeReadStateRepository: TradeReadStateRepository,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
+    private val kmpTorService: KmpTorService
 ) : MainPresenter(
     connectivityService,
     openTradesNotificationService,
@@ -134,7 +137,9 @@ class NodeMainPresenter(
             try {
                 log.i { "Stopping application service, ensuring persistent services stop" }
                 provider.applicationService.shutdown().join()
-                stopPersistentServices()
+
+                runBlocking { kmpTorService.stopTor().await() }
+
                 applicationServiceCreated = false
                 log.i { "Application service stopped successfully" }
             } catch (e: Exception) {
@@ -168,26 +173,6 @@ class NodeMainPresenter(
             }
         } catch (e: Exception) {
             log.e(e) { "Failed to restart app" }
-        }
-    }
-
-    private fun stopPersistentServices() {
-        try {
-            // Explicitly stop services that might continue running
-            val networkService = provider.applicationService.networkService
-            networkService.shutdown().join()
-
-            // Stop UserIdentityService
-            provider.applicationService.identityService.shutdown().join()
-            // TODO this needs to be addressed if we ever implement a Live Notifications Whilst App is Killed feature
-            // IMPORTANT: need to implement ? Stop AuthenticatedDataStorageService (part of persistence service)
-//            provider.applicationService.persistenceService.shutdown().join()
-            // Stop PeerExchangeService (part of network service)
-            // This is already covered by networkService.shutdown() but we'll be explicit
-
-            log.i { "Persistent services stopped successfully" }
-        } catch (e: Exception) {
-            log.e("Error stopping persistent services", e)
         }
     }
 
