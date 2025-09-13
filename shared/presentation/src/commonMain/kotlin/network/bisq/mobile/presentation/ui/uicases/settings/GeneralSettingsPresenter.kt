@@ -11,7 +11,6 @@ import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -37,9 +36,6 @@ open class GeneralSettingsPresenter(
                 log.i { "Setting language code to: $langCode" }
                 setDefaultLocale(langCode) // update lang in app's context
                 settingsServiceFacade.setLanguageCode(langCode) // Update lang in bisq2 lib / WS
-                // Doing this to reload all bundles of the newly selected language,
-                // all String.i18n() across the app gets the text of selected language
-                I18nSupport.initialize(langCode) // update lang for mobile's i18n libs
                 _languageCode.value = langCode
                 log.i { "Successfully set language code to: $langCode" }
 

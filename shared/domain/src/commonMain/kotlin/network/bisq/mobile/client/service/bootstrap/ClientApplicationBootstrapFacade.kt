@@ -19,8 +19,6 @@ class ClientApplicationBootstrapFacade(
     override fun activate() {
         super.activate()
 
-        makeSureI18NIsReady(settingsServiceFacade.languageCode.value)
-
         setState("mobile.clientApplicationBootstrap.bootstrapping".i18n())
         setProgress(0f)
 
