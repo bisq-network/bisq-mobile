@@ -20,12 +20,10 @@ import network.bisq.mobile.android.node.service.network.KmpTorService.State.STOP
 import network.bisq.mobile.android.node.service.network.KmpTorService.State.STOPPING_FAILED
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
-import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
 
 class NodeApplicationBootstrapFacade(
     private val provider: AndroidApplicationService.Provider,
-    private val settingsServiceFacade: SettingsServiceFacade,
     private val connectivityService: ConnectivityService,
     private val kmpTorService: KmpTorService,
 ) : ApplicationBootstrapFacade() {
