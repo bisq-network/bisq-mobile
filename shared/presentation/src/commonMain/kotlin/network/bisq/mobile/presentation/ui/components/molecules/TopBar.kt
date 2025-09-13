@@ -83,9 +83,14 @@ fun TopBar(
     var showBackConfirmationDialog by remember { mutableStateOf(false) }
 
     val currentBackStackEntry by tabNavController.currentBackStackEntryAsState()
-    val currentTab by remember(currentBackStackEntry) {
-        derivedStateOf { currentBackStackEntry?.destination?.route }
-    }
+    val currentTab: String? =
+        if (androidx.compose.ui.platform.LocalInspectionMode.current) {
+            currentBackStackEntry?.destination?.route
+        } else {
+            remember(currentBackStackEntry) {
+                derivedStateOf { currentBackStackEntry?.destination?.route }
+            }.value
+        }
 
     val showBackButton = (customBackButton == null &&
             navController.previousBackStackEntry != null &&

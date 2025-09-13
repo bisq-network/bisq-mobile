@@ -145,17 +145,25 @@ fun MultiScreenWizardScaffold(
                         val controlsLocked = !isInteractive || confirmClose.visible
                         var clickLocked by remember { mutableStateOf(false) }
                         // Always reset when we switch wizard steps to avoid sticky locks across steps.
-                        LaunchedEffect(stepIndex) { clickLocked = false }
+                        if (!androidx.compose.ui.platform.LocalInspectionMode.current) {
+                            LaunchedEffect(stepIndex) { clickLocked = false }
+                        } else {
+                            clickLocked = false
+                        }
                         // Auto-unlock throttle when UI is globally interactive (no modal/overlay).
-                        LaunchedEffect(clickLocked, controlsLocked) {
-                            if (clickLocked && !controlsLocked) {
-                                delay(400)
-                                clickLocked = false
+                        if (!androidx.compose.ui.platform.LocalInspectionMode.current) {
+                            LaunchedEffect(clickLocked, controlsLocked) {
+                                if (clickLocked && !controlsLocked) {
+                                    delay(400)
+                                    clickLocked = false
+                                }
                             }
                         }
                         // Also unlock once the UI becomes interactive again after a modal/overlay.
-                        LaunchedEffect(controlsLocked) {
-                            if (!controlsLocked) clickLocked = false
+                        if (!androidx.compose.ui.platform.LocalInspectionMode.current) {
+                            LaunchedEffect(controlsLocked) {
+                                if (!controlsLocked) clickLocked = false
+                            }
                         }
 
                         BisqButton(

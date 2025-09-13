@@ -100,7 +100,7 @@ class TakeOfferReviewPresenter(
         }
 
         marketCodes = offerListItem.bisqEasyOffer.market.marketCodes
-        price = MarketPriceFormatter.format(takeOfferModel.priceQuote.value, takeOfferModel.priceQuote.market)
+        price = PriceQuoteFormatter.format(takeOfferModel.priceQuote, true, false)
         applyPriceDetails()
     }
 

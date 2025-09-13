@@ -23,8 +23,25 @@ import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowCont
 import network.bisq.mobile.presentation.ui.components.organisms.offer.TakeOfferProgressDialog
 import network.bisq.mobile.presentation.ui.components.organisms.offer.TakeOfferSuccessDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import org.koin.compose.KoinApplication
+import org.koin.dsl.module
+
+import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.presentation.ui.navigation.Routes
+
+import androidx.compose.material3.SnackbarHostState
+
 import org.koin.compose.koinInject
+import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
+
 
 @Composable
 fun TakeOfferReviewTradeScreen() {
@@ -166,5 +183,254 @@ fun TakeOfferReviewTradeScreen() {
             onShowTrades = { presenter.onGoToOpenTrades() }
         )
     }
+}
 
+@Composable
+fun TakeOfferReviewContent(
+    isInteractive: Boolean,
+    showProgressDialog: Boolean,
+    showSuccessDialog: Boolean,
+    isSmallScreen: Boolean,
+    headLine: String,
+    takersIsBuy: Boolean,
+    amountToPay: String,
+    amountToReceive: String,
+    price: String,
+    marketCodes: String,
+    priceDetails: String,
+    quoteSidePaymentMethodDisplayString: String,
+    baseSidePaymentMethodDisplayString: String,
+    fee: String,
+    feeDetails: String,
+    onBack: () -> Unit,
+    onTakeOffer: () -> Unit,
+    onClose: () -> Unit,
+    onGoToOpenTrades: () -> Unit,
+    snackbarHostState: SnackbarHostState,
+) {
+    MultiScreenWizardScaffold(
+        "bisqEasy.takeOffer.progress.review".i18n(),
+        stepIndex = 4,
+        stepsLength = 4,
+        prevOnClick = onBack,
+        nextButtonText = "bisqEasy.takeOffer.review.takeOffer".i18n(),
+        nextOnClick = onTakeOffer,
+        snackbarHostState = snackbarHostState,
+        isInteractive = isInteractive,
+        shouldBlurBg = showProgressDialog || showSuccessDialog,
+        showUserAvatar = false,
+        closeAction = true,
+        onConfirmedClose = onClose
+    ) {
+        BisqGap.V1()
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
+        ) {
+            InfoBox(
+                label = "bisqEasy.tradeState.header.direction".i18n().uppercase(),
+                value = headLine,
+            )
+            if (takersIsBuy) {
+                if (isSmallScreen) {
+                    InfoBoxCurrency(
+                        label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
+                        value = amountToPay,
+                    )
+                    InfoBoxSats(
+                        label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
+                        value = amountToReceive,
+                        rightAlign = true
+                    )
+                } else {
+                    InfoRowContainer {
+                        InfoBoxCurrency(
+                            label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
+                            value = amountToPay,
+                        )
+                        InfoBoxSats(
+                            label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
+                            value = amountToReceive,
+                            rightAlign = true
+                        )
+                    }
+                }
+            } else {
+                if (isSmallScreen) {
+                    InfoBoxSats(
+                        label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
+                        value = amountToPay,
+                    )
+                    InfoBoxCurrency(
+                        label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
+                        value = amountToReceive,
+                        rightAlign = true
+                    )
+                } else {
+                    InfoRowContainer {
+                        InfoBoxSats(
+                            label = "bisqEasy.tradeWizard.review.toPay".i18n().uppercase(),
+                            value = amountToPay,
+                        )
+                        InfoBoxCurrency(
+                            label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
+                            value = amountToReceive,
+                            rightAlign = true
+                        )
+                    }
+                }
+            }
+        }
+
+        BisqHDivider()
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)
+        ) {
+            InfoBox(
+                label = "bisqEasy.tradeWizard.review.priceDescription.taker".i18n(),
+                valueComposable = {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            BisqText.h6Light(price)
+                            BisqGap.HQuarter()
+                            BisqText.baseLightGrey(marketCodes)
+                        }
+                        BisqText.smallLightGrey(priceDetails)
+                    }
+                }
+            )
+
+            InfoBox(
+                label = "bisqEasy.takeOffer.review.method.fiat".i18n(),
+                value = quoteSidePaymentMethodDisplayString,
+            )
+            InfoBox(
+                label = "bisqEasy.takeOffer.review.method.bitcoin".i18n(),
+                value = baseSidePaymentMethodDisplayString,
+            )
+
+            InfoBox(
+                label = "bisqEasy.tradeWizard.review.feeDescription".i18n(),
+                valueComposable = {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.Bottom,
+                            horizontalArrangement = Arrangement.spacedBy(2.dp)
+                        ) {
+                            BisqText.h6Light(fee)
+                        }
+                        BisqText.smallLightGrey(feeDetails)
+                    }
+                }
+            )
+        }
+    }
+
+    if (showProgressDialog) {
+        TakeOfferProgressDialog()
+    }
+
+
+    if (showSuccessDialog) {
+        TakeOfferSuccessDialog(
+            onShowTrades = onGoToOpenTrades
+        )
+    }
+}
+
+/**
+ * TODO the following private objects are for
+ * initialization of the @preview compose.
+ * This would be needed for any big screen so next
+ * step would be to generalise it maybe inside BisqTheme.Preview
+ */
+private object TakeOfferReviewPreviewNav {
+    lateinit var root: NavHostController
+    lateinit var tab: NavHostController
+}
+
+private class PreviewTopBarPresenter : ITopBarPresenter {
+    private val _isInteractive = MutableStateFlow(true)
+    override val isInteractive: StateFlow<Boolean> get() = _isInteractive
+
+    override val uniqueAvatar: StateFlow<PlatformImage?> = MutableStateFlow(null)
+    override val showAnimation: StateFlow<Boolean> = MutableStateFlow(false)
+    override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> =
+        MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED)
+
+    private val snackbar = SnackbarHostState()
+
+    override fun avatarEnabled(currentTab: String?): Boolean = false
+    override fun navigateToUserProfile() {}
+
+    override fun isDemo(): Boolean = false
+    override fun isSmallScreen(): Boolean = false
+    override fun onCloseGenericErrorPanel() {}
+    override fun navigateToReportError() {}
+    override fun isIOS(): Boolean = false
+
+    override fun getRootNavController(): NavHostController = TakeOfferReviewPreviewNav.root
+    override fun getRootTabNavController(): NavHostController = TakeOfferReviewPreviewNav.tab
+
+    override fun getSnackState(): SnackbarHostState = snackbar
+    override fun showSnackbar(message: String, isError: Boolean) {}
+    override fun dismissSnackbar() {}
+    override fun isAtHome(): Boolean = true
+    override fun navigateToTab(
+        destination: Routes,
+        saveStateOnPopUp: Boolean,
+        shouldLaunchSingleTop: Boolean,
+        shouldRestoreState: Boolean
+    ) { }
+    override fun goBack(): Boolean = false
+    override fun onMainBackNavigation() {}
+    override fun onViewAttached() {}
+    override fun onViewUnattaching() {}
+    override fun onDestroying() {}
+}
+
+@Preview
+@Composable
+fun TakeOfferReviewPreview() {
+    BisqTheme.Preview {
+        val root = rememberNavController()
+        val tab = rememberNavController()
+        TakeOfferReviewPreviewNav.root = root
+        TakeOfferReviewPreviewNav.tab = tab
+
+        KoinApplication(application = {
+            modules(
+                module {
+                    single<ITopBarPresenter> { PreviewTopBarPresenter() }
+                }
+            )
+        }) {
+            TakeOfferReviewContent(
+                isInteractive = true,
+                showProgressDialog = false,
+                showSuccessDialog = false,
+                isSmallScreen = false,
+                headLine = "BUY Bitcoin",
+                takersIsBuy = true,
+                amountToPay = "1,000.00 USD",
+                amountToReceive = "0.01000000 BTC",
+                price = "100,000.00",
+                marketCodes = "BTC/USD",
+                priceDetails = "1.0% above market at 99,000.00 USD",
+                quoteSidePaymentMethodDisplayString = "SEPA",
+                baseSidePaymentMethodDisplayString = "On-chain",
+                fee = "Seller pays miner fee",
+                feeDetails = "No trade fees",
+                onBack = {},
+                onTakeOffer = {},
+                onClose = {},
+                onGoToOpenTrades = {},
+                snackbarHostState = SnackbarHostState(),
+            )
+        }
+    }
 }
