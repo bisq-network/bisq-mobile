@@ -20,7 +20,7 @@ import network.bisq.mobile.i18n.i18n
 import java.io.File
 
 class NodeApplicationBootstrapFacade(
-    private val applicationService: AndroidApplicationService.Provider,
+    private val provider: AndroidApplicationService.Provider,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val connectivityService: ConnectivityService,
     private val kmpTorService: KmpTorService,
@@ -31,7 +31,7 @@ class NodeApplicationBootstrapFacade(
         private const val BOOTSTRAP_STAGE_TIMEOUT_MS = 20000L // 20 seconds per stage
     }
 
-    private val applicationServiceState: Observable<State> by lazy { applicationService.state.get() }
+    private val applicationServiceState: Observable<State> by lazy { provider.state.get() }
     private var applicationServiceStatePin: Pin? = null
     private var bootstrapSuccessful = false
     private var torInitializationCompleted = CompletableDeferred<Unit>()
@@ -71,6 +71,16 @@ class NodeApplicationBootstrapFacade(
         }
     }
 
+    override fun deactivate() {
+        log.i { "Bootstrap: deactivate() called" }
+        cancelTimeout()
+        stopListeningToBootstrapProcess()
+
+        isActive = false
+        super.deactivate()
+        log.i { "Bootstrap: deactivate() completed" }
+    }
+
     private fun onInitialized() {
         setState("splash.applicationServiceState.APP_INITIALIZED".i18n())
         setProgress(1f)
@@ -95,7 +105,7 @@ class NodeApplicationBootstrapFacade(
             try {
                 log.i { "Bootstrap: Starting Tor daemon initialization..." }
                 // This blocks until Tor is ready
-                val baseDir = applicationService.applicationService.config.baseDir!!
+                val baseDir = provider.applicationService.config.baseDir!!
                 kmpTorService.startTor(baseDir).await()
                 log.i { "Bootstrap: Tor daemon initialized successfully" }
                 torWasStartedBefore = true
@@ -216,7 +226,7 @@ class NodeApplicationBootstrapFacade(
         pollMs: Long = 100
     ) {
         try {
-            val baseDir = applicationService.applicationService.config.baseDir!!
+            val baseDir = provider.applicationService.config.baseDir!!
             val configFile = File(File(baseDir.toFile(), "tor"), "external_tor.config")
 
             withTimeout(maxWaitMs) {
@@ -237,16 +247,6 @@ class NodeApplicationBootstrapFacade(
         }
     }
 
-    override fun deactivate() {
-        log.i { "Bootstrap: deactivate() called" }
-        cancelTimeout()
-        stopListeningToBootstrapProcess()
-
-        isActive = false
-        super.deactivate()
-        log.i { "Bootstrap: deactivate() completed" }
-    }
-
     private fun stopListeningToBootstrapProcess() {
         applicationServiceStatePin?.unbind()
         applicationServiceStatePin = null
@@ -254,7 +254,7 @@ class NodeApplicationBootstrapFacade(
 
     private fun isTorSupported(): Boolean {
         return try {
-            val applicationServiceInstance = applicationService.applicationService
+            val applicationServiceInstance = provider.applicationService
             val networkService = applicationServiceInstance.networkService
             val supportedTransportTypes = networkService.supportedTransportTypes
             val torSupported = supportedTransportTypes.contains(TransportType.TOR)
@@ -391,7 +391,7 @@ class NodeApplicationBootstrapFacade(
                 ).firstOrNull()
             } else {
                 // Check if it's a network configuration issue
-                val applicationServiceInstance = applicationService.applicationService
+                val applicationServiceInstance = provider.applicationService
                 val networkService = applicationServiceInstance.networkService
                 val supportedTransportTypes = networkService.supportedTransportTypes
 
