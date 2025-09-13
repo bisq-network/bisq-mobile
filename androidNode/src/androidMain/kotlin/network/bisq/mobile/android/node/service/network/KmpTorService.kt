@@ -100,7 +100,7 @@ class KmpTorService : BaseService(), Logging {
             return torStopCompleted
         }
 
-        if (!forceStop && (!torDaemonStarted.isCompleted || !torDaemonStarted.isActive)) {
+        if (!forceStop && !torDaemonStarted.isCompleted) {
             log.i("Tor daemon is still starting, waiting for it to complete before stopping")
             torStopCompleted.complete(true) // Stop was skipped
             return torStopCompleted
