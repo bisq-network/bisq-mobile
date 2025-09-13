@@ -55,6 +55,8 @@ class HttpClientService(
         super.deactivate()
 
         _httpClient.value?.close()
+        _httpClient.value = null
+        lastConfig = null
     }
 
     suspend fun getClient(): HttpClient {
