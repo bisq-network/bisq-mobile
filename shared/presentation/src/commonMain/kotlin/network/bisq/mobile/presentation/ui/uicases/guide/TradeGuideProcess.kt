@@ -45,8 +45,10 @@ fun TradeGuideProcess() {
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.Zero)) {
             OrderedList("1.", "mobile.tradeGuide.process.rules1".i18n())
             OrderedList("2.", "mobile.tradeGuide.process.rules2".i18n())
-            OrderedList("3.", "mobile.tradeGuide.process.rules3".i18n())
+            OrderedList("3.", "mobile.tradeGuide.process.rules3".i18n(), includeBottomPadding = false)
         }
+
+        BisqGap.V1()
 
         LinkButton(
             "action.learnMore".i18n(),

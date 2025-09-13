@@ -74,9 +74,10 @@ fun AgreementScreen() {
             OrderedList("5.", "mobile.terms.point5".i18n())
             OrderedList(
                 "6.", "mobile.terms.point6".i18n(),
-                modifier = Modifier.fillMaxWidth()
-                    .padding(bottom = BisqUIConstants.ScreenPaddingHalf)
+                includeBottomPadding = false
             )
+
+            BisqGap.V1()
 
             Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
                 UnorderedList("mobile.rules1".i18n())

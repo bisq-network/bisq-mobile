@@ -14,11 +14,14 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 fun OrderedList(
     number: String,
     text: String,
-    modifier: Modifier = Modifier
-        .fillMaxWidth()
-        .padding(bottom = BisqUIConstants.ScreenPadding2X)
+    includeBottomPadding: Boolean = true,
+    modifier: Modifier = Modifier.fillMaxWidth()
 ) {
-    Row(modifier = modifier) {
+    val rowModifier = if (includeBottomPadding)
+        modifier.padding(bottom = BisqUIConstants.ScreenPadding2X)
+    else
+        modifier
+    Row(modifier = rowModifier) {
         BisqText.baseLight(
             text = number,
             modifier = Modifier.width(20.dp)

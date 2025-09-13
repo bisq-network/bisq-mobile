@@ -54,8 +54,10 @@ fun TradeGuideTradeRules() {
             OrderedList("3.", "mobile.tradeGuide.rules.rules3".i18n())
             OrderedList("4.", "mobile.tradeGuide.rules.rules4".i18n())
             OrderedList("5.", "mobile.tradeGuide.rules.rules5".i18n())
-            OrderedList("6.", "mobile.tradeGuide.rules.rules6".i18n())
+            OrderedList("6.", "mobile.tradeGuide.rules.rules6".i18n(), includeBottomPadding = false)
         }
+
+        BisqGap.V2()
 
         BisqText.baseLight("mobile.tradeGuide.rules.support".i18n())
 

@@ -42,8 +42,10 @@ fun TradeGuideSecurity() {
             OrderedList("1.", "mobile.tradeGuide.security.rules1".i18n())
             OrderedList("2.", "mobile.tradeGuide.security.rules2".i18n())
             OrderedList("3.", "mobile.tradeGuide.security.rules3".i18n())
-            OrderedList("4.", "mobile.tradeGuide.security.rules4".i18n())
+            OrderedList("4.", "mobile.tradeGuide.security.rules4".i18n(), includeBottomPadding = false)
         }
+
+        BisqGap.V1()
 
         LinkButton(
             "action.learnMore".i18n(),
