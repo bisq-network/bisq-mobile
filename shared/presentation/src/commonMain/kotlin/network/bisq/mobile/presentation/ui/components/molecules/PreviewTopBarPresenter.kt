@@ -1,0 +1,58 @@
+package network.bisq.mobile.presentation.ui.components.molecules
+
+import androidx.navigation.NavHostController
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.presentation.ui.navigation.Routes
+import androidx.compose.material3.SnackbarHostState
+
+/**
+ * Lightweight presenter used ONLY for compose @Preview. Provides the minimum surface
+ * so TopBar and scaffolds can render without real DI/navigation.
+ */
+class PreviewTopBarPresenter(
+    private val rootNav: NavHostController,
+    private val tabNav: NavHostController,
+) : ITopBarPresenter {
+
+    private val _isInteractive = MutableStateFlow(true)
+    override val isInteractive: StateFlow<Boolean> get() = _isInteractive
+
+    override val uniqueAvatar: StateFlow<PlatformImage?> = MutableStateFlow(null)
+    override val showAnimation: StateFlow<Boolean> = MutableStateFlow(false)
+    override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> =
+        MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED)
+
+    private val snackbar = SnackbarHostState()
+
+    override fun avatarEnabled(currentTab: String?): Boolean = false
+    override fun navigateToUserProfile() {}
+
+    override fun isDemo(): Boolean = false
+    override fun isSmallScreen(): Boolean = false
+    override fun onCloseGenericErrorPanel() {}
+    override fun navigateToReportError() {}
+    override fun isIOS(): Boolean = false
+
+    override fun getRootNavController(): NavHostController = rootNav
+    override fun getRootTabNavController(): NavHostController = tabNav
+
+    override fun getSnackState(): SnackbarHostState = snackbar
+    override fun showSnackbar(message: String, isError: Boolean) {}
+    override fun dismissSnackbar() {}
+    override fun isAtHome(): Boolean = true
+    override fun navigateToTab(
+        destination: Routes,
+        saveStateOnPopUp: Boolean,
+        shouldLaunchSingleTop: Boolean,
+        shouldRestoreState: Boolean
+    ) { }
+    override fun goBack(): Boolean = false
+    override fun onMainBackNavigation() {}
+    override fun onViewAttached() {}
+    override fun onViewUnattaching() {}
+    override fun onDestroying() {}
+}
+

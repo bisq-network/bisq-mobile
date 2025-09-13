@@ -23,24 +23,12 @@ import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowCont
 import network.bisq.mobile.presentation.ui.components.organisms.offer.TakeOfferProgressDialog
 import network.bisq.mobile.presentation.ui.components.organisms.offer.TakeOfferSuccessDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.helpers.PreviewEnvironment
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import org.koin.compose.KoinApplication
-import org.koin.dsl.module
-
-import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.service.network.ConnectivityService
-import network.bisq.mobile.presentation.ui.navigation.Routes
-
 import androidx.compose.material3.SnackbarHostState
-
 import org.koin.compose.koinInject
-import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 
 
 @Composable
@@ -343,72 +331,15 @@ fun TakeOfferReviewContent(
 }
 
 /**
- * TODO the following private objects are for
- * initialization of the @preview compose.
- * This would be needed for any big screen so next
- * step would be to generalise it maybe inside BisqTheme.Preview
+ * Preview environment is now provided by PreviewEnvironment helper.
+ * See: network.bisq.mobile.presentation.ui.helpers.PreviewEnvironment
  */
-private object TakeOfferReviewPreviewNav {
-    lateinit var root: NavHostController
-    lateinit var tab: NavHostController
-}
-
-private class PreviewTopBarPresenter : ITopBarPresenter {
-    private val _isInteractive = MutableStateFlow(true)
-    override val isInteractive: StateFlow<Boolean> get() = _isInteractive
-
-    override val uniqueAvatar: StateFlow<PlatformImage?> = MutableStateFlow(null)
-    override val showAnimation: StateFlow<Boolean> = MutableStateFlow(false)
-    override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> =
-        MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED)
-
-    private val snackbar = SnackbarHostState()
-
-    override fun avatarEnabled(currentTab: String?): Boolean = false
-    override fun navigateToUserProfile() {}
-
-    override fun isDemo(): Boolean = false
-    override fun isSmallScreen(): Boolean = false
-    override fun onCloseGenericErrorPanel() {}
-    override fun navigateToReportError() {}
-    override fun isIOS(): Boolean = false
-
-    override fun getRootNavController(): NavHostController = TakeOfferReviewPreviewNav.root
-    override fun getRootTabNavController(): NavHostController = TakeOfferReviewPreviewNav.tab
-
-    override fun getSnackState(): SnackbarHostState = snackbar
-    override fun showSnackbar(message: String, isError: Boolean) {}
-    override fun dismissSnackbar() {}
-    override fun isAtHome(): Boolean = true
-    override fun navigateToTab(
-        destination: Routes,
-        saveStateOnPopUp: Boolean,
-        shouldLaunchSingleTop: Boolean,
-        shouldRestoreState: Boolean
-    ) { }
-    override fun goBack(): Boolean = false
-    override fun onMainBackNavigation() {}
-    override fun onViewAttached() {}
-    override fun onViewUnattaching() {}
-    override fun onDestroying() {}
-}
 
 @Preview
 @Composable
 fun TakeOfferReviewPreview() {
     BisqTheme.Preview {
-        val root = rememberNavController()
-        val tab = rememberNavController()
-        TakeOfferReviewPreviewNav.root = root
-        TakeOfferReviewPreviewNav.tab = tab
-
-        KoinApplication(application = {
-            modules(
-                module {
-                    single<ITopBarPresenter> { PreviewTopBarPresenter() }
-                }
-            )
-        }) {
+        PreviewEnvironment {
             TakeOfferReviewContent(
                 isInteractive = true,
                 showProgressDialog = false,
