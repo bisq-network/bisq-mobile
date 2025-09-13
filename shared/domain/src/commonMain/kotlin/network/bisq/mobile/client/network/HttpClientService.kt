@@ -104,7 +104,7 @@ class HttpClientService(
             "http://$defaultHost:$defaultPort"
         }
         return createHttpClient(proxy) {
-            install(WebSockets.Plugin)
+            install(WebSockets)
             install(ContentNegotiation) {
                 json(jsonConfig)
             }
