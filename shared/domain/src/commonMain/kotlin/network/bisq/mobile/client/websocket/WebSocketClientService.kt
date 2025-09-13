@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
@@ -39,7 +40,6 @@ class WebSocketClientService(
     val connectionState: StateFlow<ConnectionState> get() = _connectionState.asStateFlow()
 
     private var connectionStateJob: Job? = null
-    private var errorJob: Job? = null
     private val updateMutex = Mutex()
 
     override fun activate() {
@@ -61,6 +61,11 @@ class WebSocketClientService(
 
     override fun deactivate() {
         super.deactivate()
+        // TODO: make de/activations suspend?
+        runBlocking { wsClient.value?.disconnect() }
+        connectionStateJob?.cancel()
+        wsClient.value = null
+        _connectionState.value = ConnectionState.Disconnected()
     }
 
     private suspend fun getWsClient(): WebSocketClient {
@@ -92,7 +97,6 @@ class WebSocketClientService(
                 it.disconnect()
             }
             connectionStateJob?.cancel()
-            errorJob?.cancel()
 
             // replace it with new client
             val newWsClient = webSocketClientFactory.createNewClient(
@@ -138,14 +142,16 @@ class WebSocketClientService(
         newProxyPort: Int,
         newUseExternalTorProxy: Boolean,
     ): Throwable? {
+        val tmpClient = httpClientService.createNewInstance(
+            HttpClientSettings(
+                apiUrl = "$newHost:$newPort",
+                proxyUrl = "$newProxyHost:$newProxyPort",
+                isExternalProxyTor = newUseExternalTorProxy,
+            )
+        )
+
         val ws = webSocketClientFactory.createNewClient(
-            httpClientService.createNewInstance(
-                HttpClientSettings(
-                    apiUrl = "$newHost:$newPort",
-                    proxyUrl = "$newProxyHost:$newProxyPort",
-                    isExternalProxyTor = newUseExternalTorProxy,
-                )
-            ),
+            tmpClient,
             newHost,
             newPort,
         )
@@ -159,6 +165,7 @@ class WebSocketClientService(
             error = e
         } finally {
             ws.disconnect()
+            tmpClient.close()
         }
 
         return error
