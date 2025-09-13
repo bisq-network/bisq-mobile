@@ -69,10 +69,6 @@ class NodeMainPresenter(
         initNodeServices()
     }
 
-    override fun isDevMode(): Boolean {
-        return isDemo() || BuildNodeConfig.IS_DEBUG
-    }
-
     private fun initNodeServices() {
         launchIO {
             runCatching {
@@ -148,6 +144,10 @@ class NodeMainPresenter(
         }
 
         super.onDestroying()
+    }
+
+    override fun isDevMode(): Boolean {
+        return isDemo() || BuildNodeConfig.IS_DEBUG
     }
 
     fun restartApp() {
