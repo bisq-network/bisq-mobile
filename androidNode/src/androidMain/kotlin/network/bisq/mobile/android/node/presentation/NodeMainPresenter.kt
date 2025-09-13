@@ -4,7 +4,6 @@ import android.app.Activity
 import bisq.common.network.TransportType
 import bisq.network.NetworkServiceConfig
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.android.node.MainActivity
@@ -61,61 +60,45 @@ class NodeMainPresenter(
     urlLauncher
 ) {
 
-    private var applicationServiceCreated = false
-
     init {
         openTradesNotificationService.notificationServiceController.activityClassForIntents = MainActivity::class.java
     }
 
     override fun onViewAttached() {
         super.onViewAttached()
-        initNodeServices()
+
+        val filesDirsPath = (view as Activity).filesDir.toPath()
+        val applicationContext = (view as Activity).applicationContext
+        val applicationService = AndroidApplicationService(androidMemoryReportService, applicationContext, filesDirsPath)
+        provider.applicationService = applicationService
+
+        initializeTorAndServices(applicationService)
     }
 
-    private fun initNodeServices() {
+    private fun initializeTorAndServices(applicationService: AndroidApplicationService) {
         launchIO {
             runCatching {
-                if (applicationServiceCreated) {
-                    log.d { "Application service already created, ensuring its activated" }
-                    activateServices()
-                } else {
-                    log.d { "Application service not created, creating.." }
-                    val filesDirsPath = (view as Activity).filesDir.toPath()
-                    val applicationContext = (view as Activity).applicationContext
-                    val applicationService =
-                        AndroidApplicationService(
-                            androidMemoryReportService,
-                            applicationContext,
-                            filesDirsPath
-                        )
-                    provider.applicationService = applicationService
+                applicationBootstrapFacade.activate()
 
-                    applicationBootstrapFacade.activate()
-
-                    if (isTorSupported(applicationService.networkServiceConfig!!)) {
-                        initializeTor(applicationService).await()
-                    }
-
-                    // TODO that will fail as applicationService is not initialized.
-                    settingsServiceFacade.activate()
-
-                    log.i { "Start initializing applicationService" }
-                    applicationService.initialize()
-                        .whenComplete { _: Boolean?, throwable: Throwable? ->
-                            if (throwable == null) {
-                                log.i { "ApplicationService initialization completed" }
-                                applicationBootstrapFacade.deactivate()
-                                activateServices(skipSettings = true)
-                            } else {
-                                log.e("Initializing applicationService failed", throwable)
-                                applicationBootstrapFacade.deactivate()
-                                handleInitializationError(throwable, "Application service initialization")
-                            }
-                        }
-                    applicationServiceCreated = true
-                    connectivityService.startMonitoring()
-                    log.d { "Application service created, monitoring connectivity.." }
+                if (isTorSupported(applicationService.networkServiceConfig!!)) {
+                    initializeTor(applicationService).await()
                 }
+
+                log.i { "Start initializing applicationService" }
+                applicationService.initialize()
+                    .whenComplete { _: Boolean?, throwable: Throwable? ->
+                        if (throwable == null) {
+                            log.i { "ApplicationService initialization completed" }
+                            activateServiceFacades()
+                        } else {
+                            log.e("Initializing applicationService failed", throwable)
+                            handleInitializationError(throwable, "Application service initialization")
+                        }
+
+                        // applicationBootstrapFacade life cycle ends here.
+                        applicationBootstrapFacade.deactivate()
+                    }
+                connectivityService.startMonitoring()
             }.onFailure { e ->
                 log.e("Error at onViewAttached", e)
                 applicationBootstrapFacade.deactivate()
@@ -124,31 +107,29 @@ class NodeMainPresenter(
         }
     }
 
-    override fun onViewUnattaching() {
-        launchIO {
-            deactivateServices()
-        }
-        super.onViewUnattaching()
+    override fun onDestroying() {
+        super.onDestroying()
+        log.i { "Destroying NodeMainPresenter" }
+        shutdownServicesAndTor()
     }
 
-    override fun onDestroying() {
-        log.i { "Destroying NodeMainPresenter" }
+    private fun shutdownServicesAndTor() {
+        launchIO {
 
-        if (applicationServiceCreated) {
-            try {
-                log.i { "Stopping application service, ensuring persistent services stop" }
+            runCatching {
+                log.i { "Stopping service facades" }
+                deactivateServiceFacades()
+
+                log.i { "Stopping application service" }
                 provider.applicationService.shutdown().join()
 
-                runBlocking { kmpTorService.stopTor().await() }
-
-                applicationServiceCreated = false
-                log.i { "Application service stopped successfully" }
-            } catch (e: Exception) {
-                log.e("Error stopping application service", e)
+                log.i { "Stopping tor." }
+                kmpTorService.stopTor().await()
+                log.i { "Tor stopped" }
+            }.onFailure { e ->
+                log.e("Error at shutdownServicesAndTor", e)
             }
         }
-
-        super.onDestroying()
     }
 
     override fun isDevMode(): Boolean {
@@ -204,10 +185,8 @@ class NodeMainPresenter(
         return result
     }
 
-    private fun activateServices(skipSettings: Boolean = false) {
-        if (!skipSettings) {
-            settingsServiceFacade.activate()
-        }
+    private fun activateServiceFacades() {
+        settingsServiceFacade.activate()
         offersServiceFacade.activate()
         marketPriceServiceFacade.activate()
         tradesServiceFacade.activate()
@@ -221,7 +200,7 @@ class NodeMainPresenter(
         userProfileServiceFacade.activate()
     }
 
-    private fun deactivateServices() {
+    private fun deactivateServiceFacades() {
         applicationBootstrapFacade.deactivate()
         settingsServiceFacade.deactivate()
         offersServiceFacade.deactivate()
