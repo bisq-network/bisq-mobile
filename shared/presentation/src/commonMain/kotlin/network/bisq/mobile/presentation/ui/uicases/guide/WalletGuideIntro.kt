@@ -14,7 +14,7 @@ fun WalletGuideIntro() {
     val presenter: WalletGuideIntroPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val title = "bisqEasy.walletGuide.intro".i18n() + " - " + "bisqEasy.walletGuide.tabs.headline".i18n()
+    val title = "bisqEasy.walletGuide.tabs.headline".i18n() + ": " + "bisqEasy.walletGuide.intro".i18n()
 
     MultiScreenWizardScaffold(
         title = title,

@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.guide
 
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -13,8 +15,10 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqCheckbox
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.list.OrderedList
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 @Composable
@@ -26,7 +30,7 @@ fun TradeGuideTradeRules() {
     var localUserAgreed by remember(userAgreed) { mutableStateOf(userAgreed) }
     val isInteractive by presenter.isInteractive.collectAsState()
 
-    val title = "bisqEasy.tradeGuide.rules".i18n() + " - " + "bisqEasy.tradeGuide.tabs.headline".i18n()
+    val title = "bisqEasy.tradeGuide.tabs.headline".i18n() + ": " + "bisqEasy.tradeGuide.rules".i18n()
 
     MultiScreenWizardScaffold(
         title = title,
@@ -44,9 +48,20 @@ fun TradeGuideTradeRules() {
 
         BisqGap.V2()
 
-        BisqText.baseLight("bisqEasy.tradeGuide.rules.content".i18n())
+        Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.Zero)) {
+            OrderedList("1.", "mobile.tradeGuide.rules.rules1".i18n())
+            OrderedList("2.", "mobile.tradeGuide.rules.rules2".i18n())
+            OrderedList("3.", "mobile.tradeGuide.rules.rules3".i18n())
+            OrderedList("4.", "mobile.tradeGuide.rules.rules4".i18n())
+            OrderedList("5.", "mobile.tradeGuide.rules.rules5".i18n())
+            OrderedList("6.", "mobile.tradeGuide.rules.rules6".i18n(), includeBottomPadding = false)
+        }
 
         BisqGap.V2()
+
+        BisqText.baseLight("mobile.tradeGuide.rules.support".i18n())
+
+        BisqGap.V1()
 
         LinkButton(
             "action.learnMore".i18n(),

@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
@@ -307,11 +308,20 @@ object BisqText {
         color: Color = BisqTheme.colors.white,
         textAlign: TextAlign = TextAlign.Start,
         singleLine: Boolean = false,
+        underline: Boolean = false,
         modifier: Modifier = Modifier,
     ) {
+        val style = if (underline) {
+            BisqTheme.typography.baseRegular.copy(
+                textDecoration = TextDecoration.Underline
+            )
+        } else {
+            BisqTheme.typography.baseRegular
+        }
+
         styledText(
             text = text,
-            style = BisqTheme.typography.baseRegular,
+            style = style,
             color = color,
             textAlign = textAlign,
             maxLines = if (singleLine) 1 else Int.MAX_VALUE,

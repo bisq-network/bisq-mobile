@@ -32,7 +32,8 @@ enum class BisqButtonType {
     Outline,
     GreyOutline,
     WarningOutline,
-    Clear
+    Clear,
+    Underline
 }
 
 /**
@@ -78,6 +79,7 @@ fun BisqButton(
         BisqButtonType.GreyOutline -> Color.Transparent
         BisqButtonType.WarningOutline -> Color.Transparent
         BisqButtonType.Clear -> Color.Transparent
+        BisqButtonType.Underline -> Color.Transparent
     }
 
     val finalBorder = when (type) {
@@ -88,6 +90,7 @@ fun BisqButton(
         BisqButtonType.GreyOutline -> BorderStroke(1.dp, grey2)
         BisqButtonType.WarningOutline -> BorderStroke(1.dp, if (disabled) BisqTheme.colors.mid_grey10 else BisqTheme.colors.warning)
         BisqButtonType.Clear -> null
+        BisqButtonType.Underline -> null
     }
 
     val finalContentColor = when (type) {
@@ -98,6 +101,7 @@ fun BisqButton(
         BisqButtonType.GreyOutline -> if (disabled) BisqTheme.colors.mid_grey10 else grey2
         BisqButtonType.WarningOutline -> if (disabled) BisqTheme.colors.mid_grey10 else BisqTheme.colors.warning
         BisqButtonType.Clear -> if (disabled) grey2 else color
+        BisqButtonType.Underline -> if (disabled) grey2 else color
     }
 
     Button(
@@ -145,6 +149,7 @@ fun BisqButton(
                         text = text,
                         color = finalContentColor,
                         textAlign = textAlign,
+                        underline = type == BisqButtonType.Underline,
                         modifier = if (fullWidth) Modifier.weight(1f) else Modifier,
                     )
                 }

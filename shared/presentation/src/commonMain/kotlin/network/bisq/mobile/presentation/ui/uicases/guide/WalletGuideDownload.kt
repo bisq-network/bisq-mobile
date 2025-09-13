@@ -22,7 +22,7 @@ fun WalletGuideDownload() {
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
-    val title = "bisqEasy.walletGuide.download".i18n() + " - " + "bisqEasy.walletGuide.tabs.headline".i18n()
+    val title = "bisqEasy.walletGuide.tabs.headline".i18n() + ": " + "bisqEasy.walletGuide.download".i18n()
 
     MultiScreenWizardScaffold(
         title = title,

@@ -5,10 +5,14 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.components.atoms.BisqProgressBar
+import network.bisq.mobile.presentation.ui.components.atoms.BisqStepProgressBar
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 @Composable
@@ -17,14 +21,27 @@ fun TradeGuideOverview() {
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
-    val title = "bisqEasy.tradeGuide.welcome".i18n() + " - " + "bisqEasy.tradeGuide.tabs.headline".i18n()
+
+    TradeGuideOverviewContent(
+        isInteractive = isInteractive,
+        prevClick = presenter::prevClick,
+        nextClick = presenter::overviewNextClick
+    )
+}
+
+@Composable fun TradeGuideOverviewContent(
+    isInteractive: Boolean,
+    prevClick: () -> Unit,
+    nextClick: () -> Unit
+) {
+    val title = "bisqEasy.tradeGuide.tabs.headline".i18n() + ": " + "bisqEasy.tradeGuide.welcome".i18n()
 
     MultiScreenWizardScaffold(
         title = title,
         stepIndex = 1,
         stepsLength = 4,
-        prevOnClick = presenter::prevClick,
-        nextOnClick = presenter::overviewNextClick,
+        prevOnClick = prevClick,
+        nextOnClick = nextClick,
         horizontalAlignment = Alignment.Start,
         isInteractive = isInteractive,
     ) {
@@ -36,3 +53,23 @@ fun TradeGuideOverview() {
     }
 }
 
+@Composable
+private fun TradeGuideOverviewContentPreview(
+    language: String = "en",
+) {
+    BisqTheme.Preview(language = language) {
+        TradeGuideOverviewContent(
+            isInteractive = true,
+            prevClick = {},
+            nextClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TradeGuideOverviewContentPreview_En() = TradeGuideOverviewContentPreview()
+
+@Preview
+@Composable
+private fun TradeGuideOverviewContentPreview_Ru() = TradeGuideOverviewContentPreview(language = "ru")

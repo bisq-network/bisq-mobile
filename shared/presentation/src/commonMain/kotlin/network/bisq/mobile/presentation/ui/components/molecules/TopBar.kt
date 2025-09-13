@@ -68,9 +68,7 @@ fun TopBar(
     customBackButton: @Composable (() -> Unit)? = null,
     backConfirmation: Boolean = false,
     backBehavior: (() -> Unit)? = null,
-    isFlowScreen: Boolean = false,
     showUserAvatar: Boolean = true,
-    stepText: String = "",
     extraActions: @Composable (RowScope.() -> Unit)? = null,
 ) {
     val presenter: ITopBarPresenter = koinInject()
@@ -133,32 +131,13 @@ fun TopBar(
             if (isHome) {
                 BisqLogoSmall(modifier = Modifier.height(34.dp).width(100.dp))
             } else {
-                if (isFlowScreen) {
-                    Column {
-                        BisqText.smallLightGrey(
-                            text = "mobile.components.topBar.step".i18n(stepText),
-                            modifier = Modifier.offset(y = 2.dp)
-                        )
-                        BisqGap.VHalf()
-                        // this reduces accessibility
-                        // so we only use it when really needed
-                        // here we need the title to be exactly 1 line at max
-                        // because the rest will be clipped by TopBar
-                        AutoResizeText(
-                            text = title,
-                            textStyle = BisqTheme.typography.h5Regular,
-                            color = BisqTheme.colors.white,
-                        )
-                    }
-                } else {
-                    // we will allow overflow to 2 lines here, for better accessibility
-                    AutoResizeText(
-                        text = title,
-                        textStyle = BisqTheme.typography.h4Regular,
-                        color = BisqTheme.colors.white,
-                        maxLines = 2,
-                    )
-                }
+                // we will allow overflow to 2 lines here, for better accessibility
+                AutoResizeText(
+                    text = title,
+                    textStyle = BisqTheme.typography.h4Regular,
+                    color = BisqTheme.colors.white,
+                    maxLines = 2,
+                )
             }
         },
         actions = {
