@@ -31,12 +31,12 @@ data class AddressVO(val host: String, val port: Int) {
             }
             val parsed = parseUrl(url)
             if (parsed == null) return null
-            val host = if (parsed.host.endsWith(".onion")) {
-                parsed.host.lowercase()
-            } else {
-                parsed.host
-            }
-            return AddressVO(host, parsed.port)
+            val rawHost = parsed.host
+            if (rawHost.isBlank()) return null
+            val host = if (rawHost.endsWith(".onion")) rawHost.lowercase() else rawHost
+            val port = parsed.port
+            if (port !in 1..65535) return null
+            return AddressVO(host, port)
         }
     }
 }
