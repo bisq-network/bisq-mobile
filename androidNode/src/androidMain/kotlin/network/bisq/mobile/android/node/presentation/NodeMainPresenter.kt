@@ -115,7 +115,6 @@ class NodeMainPresenter(
 
     private fun shutdownServicesAndTor() {
         launchIO {
-
             runCatching {
                 log.i { "Stopping service facades" }
                 deactivateServiceFacades()
@@ -178,7 +177,7 @@ class NodeMainPresenter(
                     failure?.message,
                     failure?.cause?.message
                 ).firstOrNull() ?: "Unknown Tor error"
-                result.complete(false)
+                result.completeExceptionally(e)
                 log.e(e) { "Tor initialization failed - $errorMessage" }
             }
         }
