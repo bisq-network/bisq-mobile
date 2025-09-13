@@ -283,7 +283,7 @@ dependencies {
     implementation(libs.bisq.core.network.network)
     implementation(libs.bisq.core.network.network.identity)
     implementation(libs.bisq.core.network.socks5.socket.channel)
-    implementation(libs.bisq.core.network.i2p)
+    implementation(libs.bisq.core.network.i2p) //todo should not be needed
     implementation(libs.chimp.jsocks)
     implementation(libs.failsafe)
     implementation(libs.apache.httpcomponents.httpclient)
