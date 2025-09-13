@@ -48,7 +48,7 @@ class WebSocketClientImpl(
 ) : WebSocketClient, Logging {
 
     companion object {
-        const val CONNECT_TIMEOUT = 10000L
+        const val CONNECT_TIMEOUT = 15000L
         const val DELAY_TO_RECONNECT = 3000L
         const val MAX_RECONNECT_ATTEMPTS = 5
         const val MAX_RECONNECT_DELAY = 30000L // 30 seconds max delay
@@ -86,7 +86,9 @@ class WebSocketClientImpl(
                 _webSocketClientStatus.value = ConnectionState.Connecting
                 var serverVersion: String?
                 try {
-                    val resp = httpClient.get("/api/v1/settings/version").bodyAsText()
+                    val resp = withTimeout(CONNECT_TIMEOUT) {
+                        httpClient.get("/api/v1/settings/version").bodyAsText()
+                    }
                     serverVersion = json.decodeFromString<Map<String, String>>(resp).getOrElse("version") { null }
                     if (serverVersion.isNullOrBlank()) {
                         throw IllegalStateException("Expected server version to be provided at /api/v1/settings/version, but was not. response: $resp")
