@@ -4,6 +4,7 @@ import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ObjCClass
 import kotlinx.cinterop.getOriginalKotlinClass
 import network.bisq.mobile.client.di.clientModule
+import network.bisq.mobile.client.di.networkModule
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.di.iosClientModule
 import org.koin.core.Koin
@@ -20,7 +21,7 @@ class DependenciesProviderHelper {
     fun initKoin() {
         stopKoin()
         val instance = startKoin {
-            modules(listOf(domainModule, presentationModule, clientModule, iosClientModule, iosPresentationModule))
+            modules(listOf(domainModule, presentationModule, networkModule, clientModule, iosClientModule, iosPresentationModule))
         }
 
         koin = instance.koin
