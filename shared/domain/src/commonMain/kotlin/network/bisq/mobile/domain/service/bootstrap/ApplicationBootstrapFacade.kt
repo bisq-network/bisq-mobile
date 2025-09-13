@@ -48,8 +48,6 @@ abstract class ApplicationBootstrapFacade : ServiceFacade() {
         _shouldShowProgressToast.value = show
     }
 
-    protected var isActive = false
-
     override fun activate() {
         super.activate()
     }

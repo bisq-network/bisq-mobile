@@ -19,10 +19,6 @@ class ClientApplicationBootstrapFacade(
     override fun activate() {
         super.activate()
 
-        if (isActive) {
-            return
-        }
-
         makeSureI18NIsReady(settingsServiceFacade.languageCode.value)
 
         setState("mobile.clientApplicationBootstrap.bootstrapping".i18n())
@@ -60,7 +56,6 @@ class ClientApplicationBootstrapFacade(
             }
         }
 
-        isActive = true
         log.d { "Running bootstrap finished." }
     }
 
@@ -72,7 +67,6 @@ class ClientApplicationBootstrapFacade(
     override fun deactivate() {
         bootstrapJob?.cancel()
         bootstrapJob = null
-        isActive = false
 
         super.deactivate()
     }

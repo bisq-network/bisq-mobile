@@ -6,6 +6,7 @@ import bisq.common.observable.Observable
 import bisq.common.observable.Pin
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable.isActive
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -44,15 +45,8 @@ class NodeApplicationBootstrapFacade(
     private var torWasStartedBefore = false
 
     override fun activate() {
-        log.i { "Bootstrap: activate() called - isActive: $isActive" }
-
         // TODO not working for the first translation requested, but avoids crash at least using default
         makeSureI18NIsReady(settingsServiceFacade.languageCode.value)
-
-        if (isActive) {
-            log.d { "Bootstrap already active, forcing reset" }
-            deactivate()
-        }
 
         super.activate()
         log.i { "Bootstrap: super.activate() completed, calling onInitializeAppState()" }
@@ -68,7 +62,6 @@ class NodeApplicationBootstrapFacade(
         cancelTimeout()
         stopListeningToBootstrapProcess()
 
-        isActive = false
         super.deactivate()
         log.i { "Bootstrap: deactivate() completed" }
     }
@@ -136,7 +129,6 @@ class NodeApplicationBootstrapFacade(
                 }
 
                 State.APP_INITIALIZED -> {
-                    isActive = true
                     log.i { "Bootstrap: Application services initialized successfully" }
                     val isConnected = connectivityService.isConnected()
                     log.i { "Bootstrap: Connectivity check - Connected: $isConnected" }
