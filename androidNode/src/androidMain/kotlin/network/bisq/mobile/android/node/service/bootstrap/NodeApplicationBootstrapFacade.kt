@@ -13,6 +13,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.service.network.KmpTorService
+import network.bisq.mobile.android.node.service.network.KmpTorService.State.IDLE
+import network.bisq.mobile.android.node.service.network.KmpTorService.State.STARTED
+import network.bisq.mobile.android.node.service.network.KmpTorService.State.STARTING
+import network.bisq.mobile.android.node.service.network.KmpTorService.State.STARTING_FAILED
+import network.bisq.mobile.android.node.service.network.KmpTorService.State.STOPPED
+import network.bisq.mobile.android.node.service.network.KmpTorService.State.STOPPING
+import network.bisq.mobile.android.node.service.network.KmpTorService.State.STOPPING_FAILED
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -52,7 +59,7 @@ class NodeApplicationBootstrapFacade(
         super.activate()
         log.i { "Bootstrap: super.activate() completed, calling onInitializeAppState()" }
 
-        // Set up application state observer FIRST, before any initialization
+        observeTorState()
         observeApplicationState()
 
         onInitializeAppState()
@@ -81,63 +88,41 @@ class NodeApplicationBootstrapFacade(
         log.i { "Bootstrap: deactivate() completed" }
     }
 
-    private fun onInitialized() {
-        setState("splash.applicationServiceState.APP_INITIALIZED".i18n())
-        setProgress(1f)
-        bootstrapSuccessful = true
-        cancelTimeout()
-        log.i { "Bootstrap completed successfully - Tor monitoring will continue" }
-    }
+    private fun observeTorState() {
+        serviceScope.launch {
+            kmpTorService.state.collect { newState ->
+                when (newState) {
+                    IDLE -> {}
+                    STARTING -> {
+                        setState("bootstrap.initializingTor".i18n())
+                        setProgress(0.1f)
+                        startTimeoutForStage()
+                    }
 
-    private fun onInitializeAppState() {
-        setState("splash.applicationServiceState.INITIALIZE_APP".i18n())
-        val progress = if (isTorSupported()) 0.25f else 0f
-        setProgress(progress)
-        startTimeoutForStage()
-    }
+                    STARTED -> {
+                        setState("bootstrap.torReady".i18n())
+                        setProgress(0.25f)
+                    }
 
-    private fun initializeTorAndProceed() {
-        setState("bootstrap.initializingTor".i18n())
-        setProgress(0.1f)
-        startTimeoutForStage()
+                    STOPPING -> {}
+                    STOPPED -> {}
+                    STARTING_FAILED -> {
+                        val failure = kmpTorService.startupFailure.value
+                        val errorMessage = listOfNotNull(
+                            failure?.message,
+                            failure?.cause?.message
+                        ).firstOrNull() ?: "Unknown Tor error"
+                        setState("bootstrap.torError".i18n() + ": $errorMessage")
+                        setProgress(0f)
+                        cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
+                        setBootstrapFailed(true)
+                        log.e { "Bootstrap: Tor initialization failed - $errorMessage" }
+                    }
 
-        launchIO {
-            try {
-                log.i { "Bootstrap: Starting Tor daemon initialization..." }
-                // This blocks until Tor is ready
-                val baseDir = provider.applicationService.config.baseDir!!
-                kmpTorService.startTor(baseDir).await()
-                log.i { "Bootstrap: Tor daemon initialized successfully" }
-                torWasStartedBefore = true
-                onTorInitializationSuccess()
-            } catch (e: Exception)  {
-                log.e(e) { "Bootstrap: Failed to initialize Tor daemon" }
-                onTorInitializationFail()
+                    STOPPING_FAILED -> {}
+                }
             }
         }
-    }
-
-    private fun onTorInitializationSuccess() {
-        setState("bootstrap.torReady".i18n())
-        setProgress(0.25f)
-        // Complete Tor initialization
-        torInitializationCompleted.complete(Unit)
-        log.i { "Bootstrap: Tor initialization completed - application state observer already set up" }
-    }
-
-    private fun onTorInitializationFail() {
-        val failure = kmpTorService.startupFailure.value
-        val errorMessage = listOfNotNull(
-            failure?.message,
-            failure?.cause?.message
-        ).firstOrNull() ?: "Unknown Tor error"
-        setState("bootstrap.torError".i18n() + ": $errorMessage")
-        setProgress(0f)
-        cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
-        setBootstrapFailed(true)
-        // Complete Tor initialization even on failure so we can proceed
-        torInitializationCompleted.complete(Unit)
-        log.w { "Bootstrap: Tor initialization failed - $errorMessage" }
     }
 
     private fun observeApplicationState() {
@@ -205,6 +190,38 @@ class NodeApplicationBootstrapFacade(
                     setBootstrapFailed(true)
                     log.e { "Bootstrap: Application service failed - $errorMessage" }
                 }
+            }
+        }
+    }
+
+    private fun onInitialized() {
+        setState("splash.applicationServiceState.APP_INITIALIZED".i18n())
+        setProgress(1f)
+        bootstrapSuccessful = true
+        cancelTimeout()
+        log.i { "Bootstrap completed successfully - Tor monitoring will continue" }
+    }
+
+    private fun onInitializeAppState() {
+        setState("splash.applicationServiceState.INITIALIZE_APP".i18n())
+        val progress = if (isTorSupported()) 0.25f else 0f
+        setProgress(progress)
+        startTimeoutForStage()
+    }
+
+    private fun initializeTorAndProceed() {
+        launchIO {
+            try {
+                log.i { "Bootstrap: Starting Tor daemon initialization..." }
+                // This blocks until Tor is ready
+                val baseDir = provider.applicationService.config.baseDir!!
+                kmpTorService.startTor(baseDir).await()
+                log.i { "Bootstrap: Tor daemon initialized successfully" }
+                torWasStartedBefore = true
+                torInitializationCompleted.complete(Unit)
+            } catch (e: Exception) {
+                log.e(e) { "Bootstrap: Failed to initialize Tor daemon" }
+                torInitializationCompleted.complete(Unit)
             }
         }
     }
@@ -281,7 +298,8 @@ class NodeApplicationBootstrapFacade(
             val networkServiceConfig = applicationService.networkServiceConfig
             val supportedTransportTypes = networkServiceConfig.supportedTransportTypes
             if (supportedTransportTypes.contains(TransportType.CLEAR) &&
-                supportedTransportTypes.contains(TransportType.TOR)) {
+                supportedTransportTypes.contains(TransportType.TOR)
+            ) {
                 log.w { "Bootstrap: Both CLEAR and TOR transports are configured - this may cause initialization issues" }
             }
 
@@ -307,7 +325,7 @@ class NodeApplicationBootstrapFacade(
             BOOTSTRAP_STAGE_TIMEOUT_MS //  Normal timeout (~20s)
         }
 
-        log.i { "Bootstrap: Starting timeout for stage: $stageName (${timeoutDuration/1000}s)" }
+        log.i { "Bootstrap: Starting timeout for stage: $stageName (${timeoutDuration / 1000}s)" }
 
         currentTimeoutJob = serviceScope.launch {
             try {
