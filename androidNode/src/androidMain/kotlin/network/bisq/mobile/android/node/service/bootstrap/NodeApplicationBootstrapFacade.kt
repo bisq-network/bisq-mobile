@@ -86,8 +86,7 @@ class NodeApplicationBootstrapFacade(
                             failure?.message,
                             failure?.cause?.message
                         ).firstOrNull() ?: "Unknown Tor error"
-                        setState("bootstrap.torError".i18n() + ": $errorMessage")
-                        setProgress(0f)
+                        setState("bootstrap.tor.failed".i18n() + ": $errorMessage")
                         cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
                         setBootstrapFailed(true)
                         log.e { "Bootstrap: Tor initialization failed - $errorMessage" }
@@ -153,11 +152,10 @@ class NodeApplicationBootstrapFacade(
                 }
 
                 State.FAILED -> {
-                    val errorMessage = getDetailedErrorMessage()
-                    setState(errorMessage)
-                    setProgress(0f)
+                    setState("splash.applicationServiceState.FAILED".i18n())
                     cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
                     setBootstrapFailed(true)
+                    val errorMessage = provider.applicationService.startupErrorMessage.get()
                     log.e { "Bootstrap: Application service failed - $errorMessage" }
                 }
             }
@@ -262,32 +260,5 @@ class NodeApplicationBootstrapFacade(
         bootstrapSuccessful = false
 
         log.i { "Bootstrap: Stopped and ready for retry" }
-    }
-
-    private fun getDetailedErrorMessage(): String {
-        return try {
-            // Check if it's a Tor-related error
-            val torFailure = kmpTorService.startupFailure.value
-            if (torFailure != null) {
-                "bootstrap.torError".i18n() + ": " + listOfNotNull(
-                    torFailure.message,
-                    torFailure.cause?.message
-                ).firstOrNull()
-            } else {
-                // Check if it's a network configuration issue
-                val applicationServiceInstance = provider.applicationService
-                val networkService = applicationServiceInstance.networkService
-                val supportedTransportTypes = networkService.supportedTransportTypes
-
-                if (supportedTransportTypes.contains(TransportType.TOR)) {
-                    "bootstrap.networkTorError".i18n()
-                } else {
-                    "bootstrap.networkError".i18n()
-                }
-            }
-        } catch (e: Exception) {
-            log.w(e) { "Bootstrap: Error getting detailed error message" }
-            "splash.applicationServiceState.FAILED".i18n()
-        }
     }
 }
