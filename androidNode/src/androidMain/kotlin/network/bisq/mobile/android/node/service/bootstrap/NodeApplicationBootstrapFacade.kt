@@ -6,10 +6,10 @@ import bisq.common.observable.Observable
 import bisq.common.observable.Pin
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.service.network.KmpTorService
@@ -241,15 +241,6 @@ class NodeApplicationBootstrapFacade(
         log.i { "Bootstrap: deactivate() called" }
         cancelTimeout()
         stopListeningToBootstrapProcess()
-
-        // Only stop Tor if we haven't already stopped it for retry
-        if (isTorSupported() && torWasStartedBefore) {
-            log.i { "Bootstrap: Stopping Tor daemon during deactivate" }
-            kmpTorService.stopTor().invokeOnCompletion { t ->
-                if (t != null) log.w(t) { "Bootstrap: Tor stop failed" }
-                else log.i { "Bootstrap: Tor stopped" }
-            }
-        }
 
         isActive = false
         super.deactivate()
