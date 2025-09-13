@@ -53,7 +53,7 @@ class WebSocketClientService(
         collectIO(connectionState) { state ->
             if (state is ConnectionState.Disconnected) {
                 if (state.error !is MaximumRetryReachedException) {
-                    getWsClient().reconnect()
+                    wsClient.value?.reconnect()
                 }
             }
         }
