@@ -43,13 +43,13 @@ private fun SingleAmountWithCurrency(
     val value = priceFragments[0]
     Row(
         horizontalArrangement = Arrangement.Center,
-        verticalAlignment = Alignment.Bottom,
+        verticalAlignment = Alignment.CenterVertically,
     ) {
-        BisqText.h6Light(text = value, modifier = Modifier.alignByBaseline())
+        BisqText.h6Light(text = value)
 
         if(priceFragments.size == 2) {
             BisqGap.HHalf()
-            BisqText.baseRegularGrey(priceFragments[1], modifier = Modifier.alignByBaseline())
+            BisqText.baseRegularGrey(priceFragments[1])
         }
     }
 }

@@ -78,16 +78,14 @@ class CreateOfferReviewPresenter(
         }
         headLine = "${direction.name.uppercase()} Bitcoin"
 
+        fee = "bisqEasy.tradeWizard.review.noTradeFees".i18n()
+        feeDetails = "bisqEasy.tradeWizard.review.sellerPaysMinerFeeLong".i18n()
         if (direction.isBuy) {
             amountToPay = formattedQuoteAmount
             amountToReceive = formattedBaseAmount
-            fee = "bisqEasy.tradeWizard.review.noTradeFees".i18n()
-            feeDetails = "bisqEasy.tradeWizard.review.sellerPaysMinerFeeLong".i18n()
         } else {
             amountToPay = formattedBaseAmount
             amountToReceive = formattedQuoteAmount
-            fee = "bisqEasy.tradeWizard.review.sellerPaysMinerFee".i18n()
-            feeDetails = "bisqEasy.tradeWizard.review.noTradeFeesLong".i18n()
         }
 
         marketCodes = createOfferModel.market!!.marketCodes
@@ -103,7 +101,7 @@ class CreateOfferReviewPresenter(
             priceDetails = "bisqEasy.tradeWizard.review.priceDetails".i18n()
         } else {
             val priceWithCode = PriceQuoteFormatter.format(createOfferModel.originalPriceQuote, true, true)
-            val percentagePrice = PercentageFormatter.format(percentagePriceValue, true)
+            val percentagePrice = PercentageFormatter.format(kotlin.math.abs(percentagePriceValue), true)
             val aboveOrBelow = if (percentagePriceValue > 0)
                 "mobile.general.above".i18n()
             else

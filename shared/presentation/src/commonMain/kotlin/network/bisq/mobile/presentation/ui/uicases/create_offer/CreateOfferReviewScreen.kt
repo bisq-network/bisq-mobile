@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
@@ -60,17 +61,24 @@ fun CreateOfferReviewOfferScreen() {
                     InfoBox(
                         label = "bisqEasy.tradeWizard.review.toReceive".i18n().uppercase(),
                         valueComposable = {
-                            Row {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 BtcSatsText(
                                     formattedBtcAmountValue = presenter.formattedBaseRangeMinAmount,
                                     noCode = true,
                                     textStyle = BisqTheme.typography.h6Regular,
+                                    modifier = Modifier.alignByBaseline(),
                                 )
-                                BisqText.baseLight(" - ")
+                                BisqGap.H1()
+                                BisqText.h6Light("–", modifier = Modifier.alignByBaseline())
+                                BisqGap.H1()
                                 BtcSatsText(
                                     formattedBtcAmountValue = presenter.formattedBaseRangeMaxAmount,
+                                    noCode = true,
                                     textStyle = BisqTheme.typography.h6Regular,
+                                    modifier = Modifier.alignByBaseline(),
                                 )
+                                BisqGap.HHalf()
+                                BisqText.baseRegularGrey("BTC", modifier = Modifier.alignByBaseline())
                             }
                         }
                     )
@@ -82,17 +90,24 @@ fun CreateOfferReviewOfferScreen() {
                     InfoBox(
                         label = "bisqEasy.tradeWizard.review.toSend".i18n().uppercase(),
                         valueComposable = {
-                            Row {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 BtcSatsText(
                                     presenter.formattedBaseRangeMinAmount,
                                     noCode = true,
                                     textStyle = BisqTheme.typography.h6Regular,
+                                    modifier = Modifier.alignByBaseline(),
                                 )
-                                BisqText.baseLight(" - ")
+                                BisqGap.H1()
+                                BisqText.h6Light("–", modifier = Modifier.alignByBaseline())
+                                BisqGap.H1()
                                 BtcSatsText(
                                     presenter.formattedBaseRangeMaxAmount,
+                                    noCode = true,
                                     textStyle = BisqTheme.typography.h6Regular,
+                                    modifier = Modifier.alignByBaseline(),
                                 )
+                                BisqGap.HHalf()
+                                BisqText.baseRegularGrey("BTC", modifier = Modifier.alignByBaseline())
                             }
                         }
                     )
@@ -160,7 +175,6 @@ fun CreateOfferReviewOfferScreen() {
     // Mediator waiting dialog
     if (showMediatorWaitingDialog) {
         InformationConfirmationDialog(
-//            message = "mobile.bisqEasy.createOffer.mediatorWaiting.title".i18n(),
             message = "mobile.bisqEasy.createOffer.mediatorWaiting.message".i18n(),
             onConfirm = { presenter.onDismissMediatorWaitingDialog() },
             onDismiss = { presenter.onDismissMediatorWaitingDialog() }

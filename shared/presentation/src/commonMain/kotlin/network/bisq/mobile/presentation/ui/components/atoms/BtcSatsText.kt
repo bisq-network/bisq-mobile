@@ -34,7 +34,8 @@ fun BtcSatsText(
     label: String? = null,
     textStyle: TextStyle = BisqTheme.typography.baseLight,
     style: BtcSatsStyle = BtcSatsStyle.Default,
-    noCode: Boolean = false
+    noCode: Boolean = false,
+    modifier: Modifier = Modifier,
 ) {
     if (formattedBtcAmountValue.isEmpty())
         return
@@ -50,7 +51,8 @@ fun BtcSatsText(
 
             BisqText.styledText(
                 text = formattedValue,
-                style = textStyle
+                style = textStyle,
+                modifier = modifier,
             )
         }
     } else if (style == BtcSatsStyle.TextField) {
@@ -82,7 +84,8 @@ fun BtcSatsText(
             // BtcLogo()
             BisqText.styledText(
                 text = formattedValue,
-                style = textStyle
+                style = textStyle,
+                modifier = modifier,
             )
         }
     }
