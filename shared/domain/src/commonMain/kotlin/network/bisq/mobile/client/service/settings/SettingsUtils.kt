@@ -9,15 +9,17 @@ object SettingsUtils {
 
     /**
      * Checks if the provided API version is compatible with the required version.
-     * 
+     * Won't throw if the `apiVersion` cannot be parsed.
+     *
      * @param apiVersion The API version string to check (must be a valid semantic version).
-     * @return True if the API version is valid and greater than or equal to the required version.
-     * @throws IllegalArgumentException If the provided version is invalid or not semantically versioned.
+     * @return True if the API version is valid and greater than or equal to the required version
      */
     fun isApiCompatible(apiVersion: String): Boolean {
-        val requiredVersion = getRequiredApiVersion()
-        val apiSemVer = SemanticVersion.from(apiVersion)
-        val requiredSemVer = SemanticVersion.from(requiredVersion)
-        return apiSemVer >= requiredSemVer
+        return runCatching {
+            val requiredVersion = getRequiredApiVersion()
+            val apiSemVer = SemanticVersion.from(apiVersion)
+            val requiredSemVer = SemanticVersion.from(requiredVersion)
+            return apiSemVer >= requiredSemVer
+        }.getOrElse { false }
     }
 }
