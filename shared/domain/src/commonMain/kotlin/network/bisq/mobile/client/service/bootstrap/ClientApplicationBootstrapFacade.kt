@@ -19,12 +19,6 @@ class ClientApplicationBootstrapFacade(
     override fun activate() {
         super.activate()
 
-        if (isActive) {
-            return
-        }
-
-        makeSureI18NIsReady(settingsServiceFacade.languageCode.value)
-
         setState("mobile.clientApplicationBootstrap.bootstrapping".i18n())
         setProgress(0f)
 
@@ -60,19 +54,12 @@ class ClientApplicationBootstrapFacade(
             }
         }
 
-        isActive = true
         log.d { "Running bootstrap finished." }
-    }
-
-    override suspend fun waitForTor() {
-        // Client doesn't use Tor, so this returns immediately
-        log.d { "Client bootstrap: waitForTor() - no Tor required atm, returning immediately" }
     }
 
     override fun deactivate() {
         bootstrapJob?.cancel()
         bootstrapJob = null
-        isActive = false
 
         super.deactivate()
     }

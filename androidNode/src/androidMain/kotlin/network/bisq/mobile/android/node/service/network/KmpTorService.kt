@@ -40,6 +40,15 @@ import kotlin.io.path.absolutePathString
  *
  */
 class KmpTorService : BaseService(), Logging {
+    enum class State {
+        IDLE,
+        STARTING,
+        STARTED,
+        STOPPING,
+        STOPPED,
+        STARTING_FAILED,
+        STOPPING_FAILED
+    }
 
     private lateinit var baseDir: Path
     private var torRuntime: TorRuntime? = null
@@ -51,12 +60,16 @@ class KmpTorService : BaseService(), Logging {
     private val _startupFailure: MutableStateFlow<KmpTorException?> = MutableStateFlow(null)
     val startupFailure: StateFlow<KmpTorException?> get() = _startupFailure.asStateFlow()
 
+    private val _state: MutableStateFlow<State> = MutableStateFlow(State.IDLE)
+    val state: StateFlow<State> get() = _state.asStateFlow()
+
     fun startTor(baseDir: Path): CompletableDeferred<Boolean> {
         this.baseDir = baseDir
         log.i("Start kmp-tor")
         val torStartupCompleted = CompletableDeferred<Boolean>()
 
         require(torRuntime == null) { "torRuntime is expected to be null at startTor" }
+        _state.value = State.STARTING
         setupTorRuntime()
 
         val configCompleted = configTor()
@@ -72,6 +85,7 @@ class KmpTorService : BaseService(), Logging {
                 // Cancel the running config coroutine
                 configJob?.cancel()
                 configJob = null
+                _state.value = State.STARTING_FAILED
             },
             {
                 log.i("Tor daemon started")
@@ -81,6 +95,7 @@ class KmpTorService : BaseService(), Logging {
                     configCompleted.await()
                     log.i("kmp-tor startup completed")
                     torStartupCompleted.takeIf { !it.isCompleted }?.complete(true)
+                    _state.value = State.STARTED
                 }
             }
         )
@@ -93,6 +108,7 @@ class KmpTorService : BaseService(), Logging {
      * @return A deferred that completes when the tor runtime is stopped.
      */
     fun stopTor(forceStop: Boolean = false): CompletableDeferred<Boolean> {
+        _state.value = State.STOPPING
         val torStopCompleted = CompletableDeferred<Boolean>()
         if (torRuntime == null) {
             log.w("Tor runtime is already null, skipping stop")
@@ -100,7 +116,7 @@ class KmpTorService : BaseService(), Logging {
             return torStopCompleted
         }
 
-        if (!forceStop && (!torDaemonStarted.isCompleted || !torDaemonStarted.isActive)) {
+        if (!forceStop && !torDaemonStarted.isCompleted) {
             log.i("Tor daemon is still starting, waiting for it to complete before stopping")
             torStopCompleted.complete(true) // Stop was skipped
             return torStopCompleted
@@ -115,12 +131,14 @@ class KmpTorService : BaseService(), Logging {
                 torStopCompleted.completeExceptionally(
                     Exception("Failed to stop Tor daemon: $error")
                 )
+                _state.value = State.STOPPING_FAILED
             },
             {
                 log.i { "Tor daemon stopped" }
                 resetAndDispose()
                 torRuntime = null
                 torStopCompleted.complete(true)
+                _state.value = State.STOPPED
             }
         )
         return torStopCompleted
@@ -218,7 +236,9 @@ class KmpTorService : BaseService(), Logging {
                 handleError("Configuring tor failed: $error")
                 configCompleted.takeIf { !it.isCompleted }?.completeExceptionally(error)
             } finally {
-                if (configJob?.isActive != true) configJob = null
+                if (configJob === this@launchIO) {
+                    configJob = null
+                }
             }
         }
         return configCompleted
@@ -270,6 +290,10 @@ class KmpTorService : BaseService(), Logging {
             } catch (e: Exception) {
                 handleError("Observing file ${controlPortFile.absolutePath} failed: ${e.message}")
                 deferred.completeExceptionally(e)
+            } finally {
+                if (controlPortFileObserverJob === this@launchIO) {
+                    controlPortFileObserverJob = null
+                }
             }
         }
         return deferred

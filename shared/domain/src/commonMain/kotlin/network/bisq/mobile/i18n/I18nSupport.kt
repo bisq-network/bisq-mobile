@@ -13,6 +13,11 @@ class I18nSupport {
             private set
 
         fun initialize(languageCode: String = "en") {
+            setLanguage(languageCode)
+            isReady = true
+        }
+
+        fun setLanguage(languageCode: String = "en") {
             // bundles = BUNDLE_NAMES.map { ResourceBundle.getBundle(it, languageCode) }
             val bundleMapsByName: Map<String, Map<String, String>> = when (languageCode) {
                 "en" -> GeneratedResourceBundles_en.bundles
@@ -28,7 +33,6 @@ class I18nSupport {
             }
             val maps: Collection<Map<String, String>> = bundleMapsByName.values
             bundles = maps.map { ResourceBundle(it) }
-            isReady = true
         }
 
         fun has(key: String): Boolean {
