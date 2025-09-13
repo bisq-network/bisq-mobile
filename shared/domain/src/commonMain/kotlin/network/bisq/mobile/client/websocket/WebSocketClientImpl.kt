@@ -236,7 +236,8 @@ class WebSocketClientImpl(
     }
 
     override suspend fun unSubscribe(topic: Topic, requestId: String) {
-        TODO("Not yet implemented")
+        log.w { "unSubscribe not yet implemented for topic: $topic, requestId: $requestId" }
+        // TODO: Implement unsubscribe logic
     }
 
     private suspend fun send(message: WebSocketMessage) {
