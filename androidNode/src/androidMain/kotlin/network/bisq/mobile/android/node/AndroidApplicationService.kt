@@ -132,8 +132,8 @@ class AndroidApplicationService(
         const val SHUTDOWN_TIMEOUT_SEC: Long = 10
     }
 
-    private val shutDownErrorMessage = Observable<String>()
-    private val startupErrorMessage = Observable<String>()
+    val shutDownErrorMessage = Observable<String>()
+    val startupErrorMessage = Observable<String>()
 
     val androidCatHashService = AndroidNodeCatHashService(context, config.baseDir)
 
