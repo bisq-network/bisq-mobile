@@ -47,7 +47,7 @@ class NodeMainApplication : MainApplication(), ComponentCallbacks2 {
         runBlocking(Dispatchers.IO) {
             setupBisqCoreStatics()
         }
-        // Note: MainApplication already implements ComponentCallbacks2, so onTrimMemory is automatically called
+        // Note: NodeMainApplication already implements ComponentCallbacks2, so onTrimMemory is automatically called
         // No need to registerComponentCallbacks(this) - that would cause infinite recursion
         // Note: Tor initialization is now handled in NodeApplicationBootstrapFacade
         log.i { "Bisq Node Application Created" }

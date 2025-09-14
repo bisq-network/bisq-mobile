@@ -65,7 +65,7 @@ interface DecimalFormatter {
 
 expect val decimalFormatter: DecimalFormatter
 
-expect fun setDefaultLocale(locale: String)
+expect fun setDefaultLocale(language: String)
 expect fun getDecimalSeparator(): Char
 expect fun getGroupingSeparator(): Char
 
