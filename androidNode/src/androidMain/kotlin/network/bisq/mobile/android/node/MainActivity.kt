@@ -21,9 +21,4 @@ class MainActivity : BisqMainActivity() {
             android.view.WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
         )
     }
-
-    override fun setupKoinDI() {
-        // this is needed here to ensure cleanups in "zombie state"
-        MainApplication.setupKoinDI(applicationContext)
-    }
 }

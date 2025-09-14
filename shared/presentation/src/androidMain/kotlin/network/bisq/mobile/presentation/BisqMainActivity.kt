@@ -15,9 +15,9 @@ import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
-import androidx.core.view.WindowCompat
 import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
+import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
@@ -28,7 +28,7 @@ import org.koin.android.ext.android.inject
 /**
  * Base class for Bisq Android apps Main Activities
  */
-abstract class BisqMainActivity : ComponentActivity() {
+abstract class BisqMainActivity : ComponentActivity(), Logging {
     companion object {
         const val BACKGROUND_COLOR_CODE = 0xFF1C1C1C
     }
@@ -53,9 +53,6 @@ abstract class BisqMainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Initialize dependency injection before presenter attachment
-        setupKoinDI()
-
         // Set up coroutine exception handler after DI is initialized
         GenericErrorHandler.setupCoroutineExceptionHandler(exceptionHandlerSetup)
 
@@ -72,8 +69,6 @@ abstract class BisqMainActivity : ComponentActivity() {
 
         handleDynamicPermissions()
     }
-
-    protected abstract fun setupKoinDI()
 
     override fun onStart() {
         super.onStart()

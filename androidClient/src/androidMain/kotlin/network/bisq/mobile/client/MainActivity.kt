@@ -13,8 +13,4 @@ class MainActivity : BisqMainActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
     }
-    
-    override fun setupKoinDI() {
-        MainApplication.setupKoinDI(applicationContext)
-    }
 }
