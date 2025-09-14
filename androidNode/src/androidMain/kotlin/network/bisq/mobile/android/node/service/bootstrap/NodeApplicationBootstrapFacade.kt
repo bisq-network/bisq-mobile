@@ -1,14 +1,12 @@
 package network.bisq.mobile.android.node.service.bootstrap
 
 import bisq.application.State
-import bisq.common.network.TransportType
 import bisq.common.observable.Observable
 import bisq.common.observable.Pin
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.service.network.KmpTorService
 import network.bisq.mobile.android.node.service.network.KmpTorService.State.IDLE
@@ -30,14 +28,13 @@ class NodeApplicationBootstrapFacade(
 
     companion object {
         private const val DEFAULT_CONNECTIVITY_TIMEOUT_MS = 15000L
-        private const val BOOTSTRAP_STAGE_TIMEOUT_MS = 20000L // 20 seconds per stage
+        private const val BOOTSTRAP_STAGE_TIMEOUT_MS = 60_000L // 60 seconds per stage
     }
 
     private val applicationServiceState: Observable<State> by lazy { provider.state.get() }
     private var applicationServiceStatePin: Pin? = null
     private var bootstrapSuccessful = false
     private var currentTimeoutJob: Job? = null
-    private var torWasStartedBefore = false
 
     override fun activate() {
         super.activate()
@@ -48,7 +45,6 @@ class NodeApplicationBootstrapFacade(
 
         setState("splash.applicationServiceState.INITIALIZE_APP".i18n())
         setProgress(0f)
-        startTimeoutForStage()
     }
 
     override fun deactivate() {
@@ -174,24 +170,27 @@ class NodeApplicationBootstrapFacade(
         applicationServiceStatePin = null
     }
 
-    private fun isTorSupported(): Boolean {
-        return provider.applicationService.networkServiceConfig!!.supportedTransportTypes.contains(TransportType.TOR)
-    }
-
     private fun startTimeoutForStage(stageName: String = state.value, extendedTimeout: Boolean = false) {
         currentTimeoutJob?.cancel()
         setTimeoutDialogVisible(false)
         setCurrentBootstrapStage(stageName)
 
+        if (bootstrapSuccessful) {
+            return
+        }
+
         val timeoutDuration = if (extendedTimeout) {
-            BOOTSTRAP_STAGE_TIMEOUT_MS * 3 // 3x longer for extended wait (~60s)
+            BOOTSTRAP_STAGE_TIMEOUT_MS * 2 // 2x longer for extended wait
         } else {
-            BOOTSTRAP_STAGE_TIMEOUT_MS //  Normal timeout (~20s)
+            BOOTSTRAP_STAGE_TIMEOUT_MS //  Normal timeout
         }
 
         log.i { "Bootstrap: Starting timeout for stage: $stageName (${timeoutDuration / 1000}s)" }
 
         currentTimeoutJob = serviceScope.launch {
+            if (bootstrapSuccessful) {
+                return@launch
+            }
             try {
                 delay(timeoutDuration)
                 if (!bootstrapSuccessful) {
@@ -213,11 +212,7 @@ class NodeApplicationBootstrapFacade(
         currentTimeoutJob = null
 
         // If dialog was visible and we're cancelling due to progress, show toast
-        if (isTimeoutDialogVisible.value && showProgressToast) {
-            setShouldShowProgressToast(true)
-        }
-
-        setTimeoutDialogVisible(false)
+        setTimeoutDialogVisible(isTimeoutDialogVisible.value && showProgressToast && !isBootstrapFailed.value)
     }
 
     override fun extendTimeout() {
@@ -228,35 +223,5 @@ class NodeApplicationBootstrapFacade(
             startTimeoutForStage(currentStage, extendedTimeout = true)
         }
         setTimeoutDialogVisible(false)
-    }
-
-    override suspend fun stopBootstrapForRetry() {
-        log.i { "Bootstrap: User requested to stop bootstrap for retry" }
-        removeApplicationStateObserver()
-        // Cancel any ongoing timeouts without showing progress toast
-        cancelTimeout(showProgressToast = false)
-
-        // Kill Tor process if it was started
-        if (isTorSupported()) {
-            log.i { "Bootstrap: Stopping Tor daemon for retry" }
-            try {
-                withTimeout(10_000) {
-                    kmpTorService.stopTor(true).await()
-                }
-                torWasStartedBefore = false
-                log.i { "Bootstrap: Tor daemon stopped successfully" }
-            } catch (e: Exception) {
-                log.w(e) { "Bootstrap: Error stopping Tor daemon, continuing with retry" }
-            }
-        }
-
-        // Purposely fail the bootstrap to show failed state
-        setState("bootstrap.retryReady".i18n())
-        setProgress(0f)
-        setBootstrapFailed(true)
-        setTimeoutDialogVisible(false)
-        bootstrapSuccessful = false
-
-        log.i { "Bootstrap: Stopped and ready for retry" }
     }
 }
