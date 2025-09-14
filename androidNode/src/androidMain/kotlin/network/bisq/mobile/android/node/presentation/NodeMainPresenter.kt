@@ -47,7 +47,7 @@ class NodeMainPresenter(
     private val explorerServiceFacade: ExplorerServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val mediationServiceFacade: MediationServiceFacade,
-    private val connectivityService: ConnectivityService,
+    connectivityService: ConnectivityService,
     private val offersServiceFacade: OffersServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
@@ -98,8 +98,6 @@ class NodeMainPresenter(
 
                 log.i { "ApplicationService initialization completed" }
                 activateServiceFacades()
-
-                connectivityService.startMonitoring()
             }.onFailure { e ->
                 log.e("Error at initializeTorAndServices", e)
                 applicationBootstrapFacade.handleBootstrapFailure(e)
