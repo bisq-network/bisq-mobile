@@ -18,8 +18,8 @@ import androidx.core.content.ContextCompat
 import network.bisq.mobile.domain.getDeviceLanguageCode
 import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
-import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
@@ -30,8 +30,8 @@ import org.koin.android.ext.android.inject
 /**
  * Base class for Bisq Android apps Main Activities
  */
-abstract class BisqMainActivity : ComponentActivity(), Logging {
-    companion object {
+abstract class MainActivity : ComponentActivity(), Logging {
+    companion object Companion {
         const val BACKGROUND_COLOR_CODE = 0xFF1C1C1C
     }
 
