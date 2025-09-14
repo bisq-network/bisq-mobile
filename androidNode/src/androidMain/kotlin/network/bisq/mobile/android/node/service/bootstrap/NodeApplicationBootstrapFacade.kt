@@ -17,17 +17,14 @@ import network.bisq.mobile.android.node.service.network.KmpTorService.State.STOP
 import network.bisq.mobile.android.node.service.network.KmpTorService.State.STOPPING
 import network.bisq.mobile.android.node.service.network.KmpTorService.State.STOPPING_FAILED
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
-import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.i18n.i18n
 
 class NodeApplicationBootstrapFacade(
     private val provider: AndroidApplicationService.Provider,
-    private val connectivityService: ConnectivityService,
     private val kmpTorService: KmpTorService,
 ) : ApplicationBootstrapFacade() {
 
     companion object {
-        private const val DEFAULT_CONNECTIVITY_TIMEOUT_MS = 15000L
         private const val BOOTSTRAP_STAGE_TIMEOUT_MS = 60_000L // 60 seconds per stage
     }
 
@@ -118,31 +115,7 @@ class NodeApplicationBootstrapFacade(
 
                 State.APP_INITIALIZED -> {
                     log.i { "Bootstrap: Application services initialized successfully" }
-                    val isConnected = connectivityService.isConnected()
-                    log.i { "Bootstrap: Connectivity check - Connected: $isConnected" }
-
-                    if (isConnected) {
-                        log.i { "Bootstrap: All systems ready - completing initialization" }
-                        onInitialized()
-                    } else {
-                        log.w { "Bootstrap: No connectivity detected - waiting for connection" }
-                        setState("bootstrap.noConnectivity".i18n())
-                        setProgress(0.95f)
-                        startTimeoutForStage()
-
-                        val connectivityJob = connectivityService.runWhenConnected {
-                            log.i { "Bootstrap: Connectivity restored, completing initialization" }
-                            onInitialized()
-                        }
-
-
-                        serviceScope.launch {
-                            delay(DEFAULT_CONNECTIVITY_TIMEOUT_MS)
-                            log.w { "Bootstrap: Connectivity timeout - proceeding anyway" }
-                            connectivityJob.cancel()
-                            onInitialized()
-                        }
-                    }
+                    onInitialized()
                 }
 
                 State.FAILED -> {
