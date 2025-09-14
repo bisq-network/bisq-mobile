@@ -6,7 +6,9 @@ import android.os.Process
 import bisq.common.network.TransportType
 import bisq.network.NetworkServiceConfig
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.BuildNodeConfig
@@ -30,6 +32,7 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
+import kotlin.system.exitProcess
 
 /**
  * Node main presenter has a very different setup than the rest of the apps (bisq2 core dependencies)
@@ -85,28 +88,24 @@ class NodeMainPresenter(
                 applicationBootstrapFacade.activate()
 
                 if (isTorSupported(applicationService.networkServiceConfig!!)) {
+                    // Block until tor is ready or a timeout exception is thrown
                     initializeTor(applicationService).await()
                 }
 
                 log.i { "Start initializing applicationService" }
-                applicationService.initialize()
-                    .whenComplete { _: Boolean?, throwable: Throwable? ->
-                        if (throwable == null) {
-                            log.i { "ApplicationService initialization completed" }
-                            activateServiceFacades()
-                        } else {
-                            log.e("Initializing applicationService failed", throwable)
-                            handleInitializationError(throwable, "Application service initialization")
-                        }
+                // Block until applicationService initialization is completed
+                applicationService.initialize().join()
 
-                        // applicationBootstrapFacade life cycle ends here.
-                        applicationBootstrapFacade.deactivate()
-                    }
+                log.i { "ApplicationService initialization completed" }
+                activateServiceFacades()
+
                 connectivityService.startMonitoring()
             }.onFailure { e ->
                 log.e("Error at initializeTorAndServices", e)
+                applicationBootstrapFacade.handleBootstrapFailure(e)
+            }.also {
+                // ApplicationBootstrapFacade life cycle ends here in success and failure case.
                 applicationBootstrapFacade.deactivate()
-                handleInitializationError(e, "Bootstrapping")
             }
         }
     }
@@ -114,24 +113,34 @@ class NodeMainPresenter(
     override fun onDestroying() {
         super.onDestroying()
         log.i { "Destroying NodeMainPresenter" }
-        shutdownServicesAndTor()
+        shutdownServicesAndTorAsync()
+    }
+
+    private fun shutdownServicesAndTorAsync() {
+        launchIO { shutdownServicesAndTor() }
     }
 
     private fun shutdownServicesAndTor() {
-        launchIO {
-            runCatching {
-                log.i { "Stopping service facades" }
-                deactivateServiceFacades()
+        try {
+            log.i { "Stopping service facades" }
+            deactivateServiceFacades()
+        } catch (e: Exception) {
+            log.e("Error at deactivateServiceFacades", e)
+        }
 
-                log.i { "Stopping application service" }
-                provider.applicationService.shutdown().join()
+        try {
+            log.i { "Stopping application service" }
+            provider.applicationService.shutdown().join()
+        } catch (e: Exception) {
+            log.e("Error at applicationService.shutdown", e)
+        }
 
-                log.i { "Stopping tor." }
-                kmpTorService.stopTor().await()
-                log.i { "Tor stopped" }
-            }.onFailure { e ->
-                log.e("Error at shutdownServicesAndTor", e)
-            }
+        try {
+            log.i { "Stopping Tor" }
+            kmpTorService.stopTorSync()
+            log.i { "Tor stopped" }
+        } catch (e: Exception) {
+            log.e("Error at stopTor", e)
         }
     }
 
@@ -140,28 +149,63 @@ class NodeMainPresenter(
     }
 
     fun restartApp() {
-        try {
-            val activity = view as Activity
-            val packageManager = activity.packageManager
-            val packageName = activity.packageName
+        launchIO {
+            runCatching {
+                try {
+                    // Blocking wait until services and tor is shut down
+                    shutdownServicesAndTor()
+                } catch (e: Exception) {
+                    log.e("Error at shutdownServicesAndTor", e)
+                }
+                try {
+                    val activity = view as Activity
+                    withContext(Dispatchers.Main) {
+                        activity.finishAffinity()
+                    }
 
-            // Create restart intent
-            val intent = packageManager.getLaunchIntentForPackage(packageName)
-            intent?.let { restartIntent ->
-                restartIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                restartIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                restartIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                    // Create restart intent
+                    val intent = activity.packageManager.getLaunchIntentForPackage(activity.packageName)
+                    intent?.let { restartIntent ->
+                        restartIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                        restartIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        restartIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
 
-                // launch process
-                activity.startActivity(restartIntent)
-                // now suicide
-                Process.killProcess(Process.myPid())
-//                kotlin.system.exitProcess(0)
-            } ?: run {
-                log.e { "Could not create restart intent" }
+                        // launch process
+                        activity.startActivity(restartIntent)
+                    } ?: run {
+                        log.e { "Could not create restart intent" }
+                    }
+                } catch (e: Exception) {
+                    log.e("Error at shutdownServicesAndTor", e)
+                } finally {
+                    Process.killProcess(Process.myPid())
+                    exitProcess(0) // Guarantees JVM exit
+                }
+            }.onFailure { e ->
+                log.e("Error at restartApp", e)
             }
-        } catch (e: Exception) {
-            log.e(e) { "Failed to restart app" }
+        }
+    }
+
+    fun shutdownApp() {
+        launchIO {
+            try {
+                // Blocking wait until services and tor is shut down
+                shutdownServicesAndTor()
+            } catch (e: Exception) {
+                log.e("Error at shutdownServicesAndTor", e)
+            } finally {
+                // Ensure all UI is finished
+                val activity = view as Activity
+                withContext(Dispatchers.Main) {
+                    activity.finishAffinity()
+                }
+
+                // TODO check handling of BisqForegroundService in that case
+
+                Process.killProcess(Process.myPid())
+                exitProcess(0) // Guarantees JVM exit
+            }
         }
     }
 

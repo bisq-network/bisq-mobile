@@ -56,21 +56,16 @@ abstract class ApplicationBootstrapFacade : ServiceFacade() {
     }
 
     /**
-     * Stop the current bootstrap process and prepare for retry.
-     * This should purposely fail the bootstrap and show the retry button.
-     */
-    open suspend fun stopBootstrapForRetry() {
-        log.i { "Bootstrap: Stopping bootstrap for retry" }
-        setBootstrapFailed(true)
-        setTimeoutDialogVisible(false)
-    }
-
-    /**
      * Extend the current timeout when user chooses to continue waiting.
      * Default implementation just hides the dialog.
      */
     open fun extendTimeout() {
         log.i { "Bootstrap: Extending timeout (default implementation)" }
         setTimeoutDialogVisible(false)
+    }
+
+    fun handleBootstrapFailure(e: Throwable) {
+        setBootstrapFailed(true)
+        setShouldShowProgressToast(false)
     }
 }
