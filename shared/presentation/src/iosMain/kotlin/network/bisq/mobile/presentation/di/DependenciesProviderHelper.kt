@@ -8,7 +8,6 @@ import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.di.iosClientModule
 import org.koin.core.Koin
 import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
 import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.Qualifier
 
@@ -18,7 +17,6 @@ import org.koin.core.qualifier.Qualifier
 class DependenciesProviderHelper {
 
     fun initKoin() {
-        stopKoin()
         val instance = startKoin {
             modules(listOf(domainModule, presentationModule, clientModule, iosClientModule, iosPresentationModule))
         }

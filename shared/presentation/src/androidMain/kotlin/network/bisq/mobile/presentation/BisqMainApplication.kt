@@ -1,9 +1,13 @@
 package network.bisq.mobile.presentation
 
 import android.app.Application
+import android.content.Context
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.SystemOutFilter
+import org.koin.android.ext.koin.androidContext
+import org.koin.core.context.startKoin
+import org.koin.core.module.Module
 
 /**
  * Base class for Bisq Android Applications
@@ -11,14 +15,20 @@ import network.bisq.mobile.domain.utils.SystemOutFilter
 abstract class BisqMainApplication : Application(), Logging {
 
     override fun onCreate() {
-        log.e { "onCreate setupKoinDI" }
         super.onCreate()
         setupSystemOutFiltering()
-        setupKoinDI()
+        setupKoinDI(this)
         onCreated()
     }
 
-    protected abstract fun setupKoinDI()
+    protected fun setupKoinDI(appContext: Context) {
+        startKoin {
+            androidContext(appContext)
+            modules(getKoinModules())
+        }
+    }
+
+    protected abstract fun getKoinModules(): List<Module>
 
     protected open fun onCreated() {
         // default impl

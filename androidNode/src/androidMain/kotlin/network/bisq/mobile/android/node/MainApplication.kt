@@ -2,8 +2,8 @@ package network.bisq.mobile.android.node
 
 import android.annotation.SuppressLint
 import android.content.ComponentCallbacks2
-import android.content.Context
 import android.content.res.Configuration
+import android.os.Build
 import android.os.Process
 import bisq.common.facades.FacadeProvider
 import bisq.common.facades.android.AndroidGuavaFacade
@@ -21,9 +21,7 @@ import network.bisq.mobile.presentation.BisqMainApplication
 import network.bisq.mobile.presentation.di.presentationModule
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.koin.android.ext.android.inject
-import org.koin.android.ext.koin.androidContext
-import org.koin.core.context.startKoin
-import org.koin.core.context.stopKoin
+import org.koin.core.module.Module
 import java.security.Security
 
 /**
@@ -35,23 +33,8 @@ class MainApplication : BisqMainApplication(), ComponentCallbacks2 {
     // Lazy inject to avoid circular dependencies during app startup
     private val nodeOffersServiceFacade: OffersServiceFacade? by inject()
 
-    companion object {
-        private val nodeModules = listOf(domainModule, serviceModule, presentationModule, androidNodeModule)
-
-        fun setupKoinDI(appContext: Context) {
-            System.err.println("setupKoinDI " + appContext)
-            // very important to avoid issues from the abuse of DI single {} singleton instances
-            stopKoin()
-            startKoin {
-                androidContext(appContext)
-                // order is important, last one is picked for each interface/class key
-                modules(nodeModules)
-            }
-        }
-    }
-
-    override fun setupKoinDI() {
-        setupKoinDI(this)
+    override fun getKoinModules(): List<Module> {
+        return listOf(domainModule, serviceModule, presentationModule, androidNodeModule)
     }
 
     override fun onCreated() {
@@ -124,13 +107,13 @@ class MainApplication : BisqMainApplication(), ComponentCallbacks2 {
     }
 
     private fun isEmulator(): Boolean {
-        return android.os.Build.FINGERPRINT.startsWith("generic")
-                || android.os.Build.FINGERPRINT.startsWith("unknown")
-                || android.os.Build.MODEL.contains("google_sdk")
-                || android.os.Build.MODEL.contains("Emulator")
-                || android.os.Build.MODEL.contains("Android SDK built for x86")
-                || android.os.Build.MANUFACTURER.contains("Genymotion")
-                || (android.os.Build.BRAND.startsWith("generic") && android.os.Build.DEVICE.startsWith("generic"))
-                || "google_sdk".equals(android.os.Build.PRODUCT);
+        return Build.FINGERPRINT.startsWith("generic")
+                || Build.FINGERPRINT.startsWith("unknown")
+                || Build.MODEL.contains("google_sdk")
+                || Build.MODEL.contains("Emulator")
+                || Build.MODEL.contains("Android SDK built for x86")
+                || Build.MANUFACTURER.contains("Genymotion")
+                || (Build.BRAND.startsWith("generic") && Build.DEVICE.startsWith("generic"))
+                || "google_sdk".equals(Build.PRODUCT);
     }
 }
