@@ -145,8 +145,8 @@ actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
     }
 }
 
-actual fun setDefaultLocale(locale: String) {
-    Locale.setDefault(Locale(locale))
+actual fun setDefaultLocale(language: String) {
+    Locale.setDefault(Locale(language))
 }
 
 actual fun getDecimalSeparator(): Char {

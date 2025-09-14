@@ -3,8 +3,11 @@ package network.bisq.mobile.presentation
 import android.app.Application
 import android.content.Context
 import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.domain.getDeviceLanguageCode
+import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.SystemOutFilter
+import network.bisq.mobile.i18n.I18nSupport
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -15,6 +18,12 @@ import org.koin.core.module.Module
 abstract class MainApplication : Application(), Logging {
     override fun onCreate() {
         super.onCreate()
+
+        // Initialize early with users device language. Later once settings are available we update if user has changed language.
+        val deviceLanguageCode = getDeviceLanguageCode()
+        I18nSupport.initialize(deviceLanguageCode)
+        setDefaultLocale(deviceLanguageCode)
+
         setupSystemOutFiltering()
         setupKoinDI(this)
         onCreated()
