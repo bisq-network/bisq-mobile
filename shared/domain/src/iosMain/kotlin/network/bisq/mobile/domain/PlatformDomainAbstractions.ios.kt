@@ -304,8 +304,8 @@ actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
 
 private var defaultLocale: NSLocale = NSLocale.currentLocale
 
-actual fun setDefaultLocale(locale: String) {
-    defaultLocale = NSLocale.localeWithLocaleIdentifier(locale)
+actual fun setDefaultLocale(language: String) {
+    defaultLocale = NSLocale.localeWithLocaleIdentifier(language)
 }
 
 actual fun getDecimalSeparator(): Char {
