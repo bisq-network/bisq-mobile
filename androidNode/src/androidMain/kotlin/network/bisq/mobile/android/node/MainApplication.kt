@@ -12,7 +12,6 @@ import bisq.common.network.clear_net_address_types.AndroidEmulatorAddressTypeFac
 import bisq.common.network.clear_net_address_types.LANAddressTypeFacade
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.android.node.di.androidNodeModule
 import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
 import network.bisq.mobile.domain.di.domainModule
@@ -21,11 +20,11 @@ import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.BisqMainApplication
 import network.bisq.mobile.presentation.di.presentationModule
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.koin.android.ext.android.inject
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import java.security.Security
-import org.koin.android.ext.android.inject
 
 /**
  * Bisq Android Node Application definition
@@ -40,6 +39,7 @@ class MainApplication : BisqMainApplication(), ComponentCallbacks2 {
         private val nodeModules = listOf(domainModule, serviceModule, presentationModule, androidNodeModule)
 
         fun setupKoinDI(appContext: Context) {
+            System.err.println("setupKoinDI " + appContext)
             // very important to avoid issues from the abuse of DI single {} singleton instances
             stopKoin()
             startKoin {
@@ -49,7 +49,7 @@ class MainApplication : BisqMainApplication(), ComponentCallbacks2 {
             }
         }
     }
-    
+
     override fun setupKoinDI() {
         setupKoinDI(this)
     }

@@ -9,14 +9,15 @@ import network.bisq.mobile.domain.utils.SystemOutFilter
  * Base class for Bisq Android Applications
  */
 abstract class BisqMainApplication : Application(), Logging {
-    
+
     override fun onCreate() {
+        log.e { "onCreate setupKoinDI" }
         super.onCreate()
         setupSystemOutFiltering()
         setupKoinDI()
         onCreated()
     }
-    
+
     protected abstract fun setupKoinDI()
 
     protected open fun onCreated() {
