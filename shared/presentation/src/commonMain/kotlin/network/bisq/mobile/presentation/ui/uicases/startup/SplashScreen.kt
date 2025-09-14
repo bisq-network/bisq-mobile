@@ -15,15 +15,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqProgressBar
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoCircle
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants.ScreenPadding4X
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants.ScreenPaddingHalfQuarter
 import org.koin.compose.koinInject
 
 @Composable
@@ -54,20 +51,6 @@ fun SplashScreen() {
                     .padding(bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
-                // Restart button when bootstrap fails
-                if (isBootstrapFailed && !isTimeoutDialogVisible) {
-                    BisqButton(
-                        text = "bootstrap.restart".i18n(),
-                        onClick = { presenter.onRestart() },
-                        modifier = Modifier
-                            .padding(
-                                horizontal = ScreenPadding4X,
-                                vertical = ScreenPaddingHalfQuarter
-                            )
-                    )
-                }
-
                 BisqProgressBar(progress)
 
                 BisqText.baseRegularGrey(
@@ -79,14 +62,26 @@ fun SplashScreen() {
         }
 
         // Timeout dialog
-        if (isTimeoutDialogVisible) {
+        if (isTimeoutDialogVisible && !isBootstrapFailed) {
             ConfirmationDialog(
                 headline = "bootstrap.timeout.title".i18n(),
                 message = "bootstrap.timeout.message".i18n(currentBootstrapStage),
-                confirmButtonText = "bootstrap.timeout.stop".i18n(),
+                confirmButtonText = "bootstrap.timeout.restart".i18n(),
                 dismissButtonText = "bootstrap.timeout.continue".i18n(),
-                onConfirm = { presenter.onTimeoutDialogStop() },
+                onConfirm = { presenter.onRestart() },
                 onDismiss = { presenter.onTimeoutDialogContinue() }
+            )
+        }
+
+        // Restart dialog
+        if (isBootstrapFailed) {
+            ConfirmationDialog(
+                headline = "bootstrap.failed.title".i18n(),
+                message = "bootstrap.failed.message".i18n(currentBootstrapStage),
+                confirmButtonText = "bootstrap.failed.restart".i18n(),
+                dismissButtonText = "bootstrap.failed.shutdown".i18n(),
+                onConfirm = { presenter.onRestart() },
+                onDismiss = { presenter.onShutdown() }
             )
         }
     }

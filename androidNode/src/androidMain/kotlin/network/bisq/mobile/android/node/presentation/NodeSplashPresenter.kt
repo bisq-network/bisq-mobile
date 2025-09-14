@@ -48,4 +48,10 @@ class NodeSplashPresenter(
 
         (mainPresenter as NodeMainPresenter).restartApp()
     }
+
+    override fun shutdownApp() {
+        log.i { "User requested app shutdown from failed state" }
+
+        (mainPresenter as NodeMainPresenter).shutdownApp()
+    }
 }

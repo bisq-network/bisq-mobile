@@ -70,12 +70,14 @@ actual class NotificationServiceController (private val appForegroundController:
         // TODO if we ever implement Live notifications even if app was killed
         //  we need to leave the service running if the user is ok with it
         if (isRunning) {
+            log.i { "Stopping BisqForegroundService" }
             val intent = Intent(context, BisqForegroundService::class.java)
             context.stopService(intent)
             deleteNotificationChannel()
             isRunning = false
+            log.i { "BisqForegroundService stopped" }
         } else {
-            log.w { "Service is not running, skipping stop call" }
+            log.i { "BisqForegroundService is not running, skipping stop call" }
         }
     }
 
