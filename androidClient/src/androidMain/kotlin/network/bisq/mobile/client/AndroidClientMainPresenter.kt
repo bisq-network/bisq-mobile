@@ -59,6 +59,6 @@ class AndroidClientMainPresenter(
     urlLauncher
 ) {
     init {
-        openTradesNotificationService.notificationServiceController.activityClassForIntents = MainActivity::class.java
+        openTradesNotificationService.notificationServiceController.activityClassForIntents = ClientMainActivity::class.java
     }
 }

@@ -17,7 +17,7 @@ import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.di.serviceModule
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
-import network.bisq.mobile.presentation.BisqMainApplication
+import network.bisq.mobile.presentation.MainApplication
 import network.bisq.mobile.presentation.di.presentationModule
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.koin.android.ext.android.inject
@@ -28,7 +28,7 @@ import java.security.Security
  * Bisq Android Node Application definition
  * TODO consider uplift ComponentCallbacks2 to shared app to use also in connect apps
  */
-class MainApplication : BisqMainApplication(), ComponentCallbacks2 {
+class NodeMainApplication : MainApplication(), ComponentCallbacks2 {
 
     // Lazy inject to avoid circular dependencies during app startup
     private val nodeOffersServiceFacade: OffersServiceFacade? by inject()

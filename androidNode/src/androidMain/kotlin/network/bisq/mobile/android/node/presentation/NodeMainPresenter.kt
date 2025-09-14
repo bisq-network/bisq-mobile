@@ -12,7 +12,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.BuildNodeConfig
-import network.bisq.mobile.android.node.MainActivity
+import network.bisq.mobile.android.node.NodeMainActivity
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.network.KmpTorService
 import network.bisq.mobile.domain.UrlLauncher
@@ -68,7 +68,7 @@ class NodeMainPresenter(
 ) {
 
     init {
-        openTradesNotificationService.notificationServiceController.activityClassForIntents = MainActivity::class.java
+        openTradesNotificationService.notificationServiceController.activityClassForIntents = NodeMainActivity::class.java
     }
 
     override fun onViewAttached() {
