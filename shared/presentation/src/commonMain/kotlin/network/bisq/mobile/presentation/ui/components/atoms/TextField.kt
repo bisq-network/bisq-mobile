@@ -33,6 +33,12 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants.Zero
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants.textFieldBorderRadius
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+enum class BisqTextFieldType {
+    Default,
+    Transparent,
+}
+
+
 /**
  * TODO:
  * 1. Should have a BisqNumberField with customizations like numberWithTwoDecimals
@@ -61,6 +67,7 @@ fun BisqTextField(
     maxLength: Int = 0,
     disabled: Boolean = false,
     color: Color = BisqTheme.colors.light_grey20,
+    backgroundColor: Color = BisqTheme.colors.secondary,
     showCopy: Boolean = false,
     showPaste: Boolean = false,
     valuePrefix: String? = null,
@@ -76,6 +83,7 @@ fun BisqTextField(
     textFieldAlignment: Alignment = Alignment.TopStart,
     enableAnimation: Boolean = LocalAnimationsEnabled.current,
     onFocus: () -> Unit = {},
+    type: BisqTextFieldType = BisqTextFieldType.Default,
 ) {
     var hasInteracted by remember { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
@@ -113,15 +121,17 @@ fun BisqTextField(
         else -> grey2Color
     }
 
-    val secondaryColor = BisqTheme.colors.secondary
     val secondaryHoverColor = BisqTheme.colors.secondaryHover
     val secondaryDisabledColor = BisqTheme.colors.secondaryDisabled
     val finalBackgroundColor by remember(disabled, isFocused) {
         derivedStateOf {
             when {
                 disabled -> secondaryDisabledColor
-                isFocused -> secondaryHoverColor
-                else -> secondaryColor
+                isFocused -> if (type == BisqTextFieldType.Default)
+                    secondaryHoverColor
+                else
+                    backgroundColor
+                else -> backgroundColor
             }
         }
     }
@@ -235,7 +245,7 @@ fun BisqTextField(
                         )
                         .background(finalBackgroundColor)
                         .drawBehind {
-                            if (!isSearch) {
+                            if (!isSearch && type == BisqTextFieldType.Default) {
                                 val strokeWidth = 4.dp.toPx()
                                 val y = size.height
                                 drawLine(

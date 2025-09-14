@@ -14,10 +14,11 @@ class CreateOfferPaymentMethodPresenter(
 
     lateinit var quoteSideHeadline: String
     lateinit var baseSideHeadline: String
-    lateinit var availableQuoteSidePaymentMethods: List<String>
-    lateinit var availableBaseSidePaymentMethods: List<String>
+    var availableQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow((emptySet()))
+    var availableBaseSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow((emptySet()))
     val selectedQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
     val selectedBaseSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
+    val customPaymentMethodCount: MutableStateFlow<Int> = MutableStateFlow(0)
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
 
@@ -34,9 +35,9 @@ class CreateOfferPaymentMethodPresenter(
         baseSideHeadline = if (isBuy) "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.buyer".i18n()
         else "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.seller".i18n()
 
-        // availableQuoteSidePaymentMethods = createOfferModel.availableQuoteSidePaymentMethods.subList(0, 3)  // for dev testing to avoid scroll
-        availableQuoteSidePaymentMethods = createOfferModel.availableQuoteSidePaymentMethods
-        availableBaseSidePaymentMethods = createOfferModel.availableBaseSidePaymentMethods
+        // availableQuoteSidePaymentMethods.value = createOfferModel.availableQuoteSidePaymentMethods.subList(0, 3).toMutableSet()  // for dev testing to avoid scroll
+        availableQuoteSidePaymentMethods.value = createOfferModel.availableQuoteSidePaymentMethods.toMutableSet()
+        availableBaseSidePaymentMethods.value = createOfferModel.availableBaseSidePaymentMethods.toMutableSet()
 
         selectedQuoteSidePaymentMethods.value = createOfferModel.selectedQuoteSidePaymentMethods.toMutableSet()
         selectedBaseSidePaymentMethods.value = createOfferModel.selectedBaseSidePaymentMethods.toMutableSet()
@@ -48,11 +49,11 @@ class CreateOfferPaymentMethodPresenter(
     }
 
     fun getQuoteSidePaymentMethodsImagePaths(): List<String> {
-        return getPaymentMethodsImagePaths(availableQuoteSidePaymentMethods, "fiat")
+        return getPaymentMethodsImagePaths(availableQuoteSidePaymentMethods.value.toList(), "fiat")
     }
 
     fun getBaseSidePaymentMethodsImagePaths(): List<String> {
-        return getPaymentMethodsImagePaths(availableBaseSidePaymentMethods, "bitcoin")
+        return getPaymentMethodsImagePaths(availableBaseSidePaymentMethods.value.toList(), "bitcoin")
     }
 
     fun onToggleQuoteSidePaymentMethod(value: String) {
@@ -72,6 +73,22 @@ class CreateOfferPaymentMethodPresenter(
             selectedBaseSidePaymentMethods.update { it - value }
         } else {
             selectedBaseSidePaymentMethods.update { it + value }
+        }
+    }
+
+    fun addCustomPayment(value: String) {
+        if (customPaymentMethodCount.value >= 3) {
+            return
+        }
+        availableQuoteSidePaymentMethods.update { it + value }
+        customPaymentMethodCount.update { it + 1 }
+    }
+
+    fun removeCustomPayment(value: String) {
+        availableQuoteSidePaymentMethods.update { it - value }
+        customPaymentMethodCount.update { it - 1 }
+        if (selectedQuoteSidePaymentMethods.value.contains(value)) {
+            selectedQuoteSidePaymentMethods.update { it - value }
         }
     }
 

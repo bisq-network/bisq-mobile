@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -16,6 +18,7 @@ fun CreateOfferSettlementMethodScreen() {
     RememberPresenterLifecycle(presenter)
 
     val selectedBaseSidePaymentMethods = remember { presenter.selectedBaseSidePaymentMethods }
+    val availableBaseSidePaymentMethods by presenter.availableBaseSidePaymentMethods.collectAsState()
 
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.createOffer.progress.baseSidePaymentMethod".i18n(),
@@ -36,7 +39,7 @@ fun CreateOfferSettlementMethodScreen() {
         PaymentMethodCard(
             title = presenter.baseSideHeadline,
             imagePaths = presenter.getBaseSidePaymentMethodsImagePaths(),
-            availablePaymentMethods = presenter.availableBaseSidePaymentMethods,
+            availablePaymentMethods = availableBaseSidePaymentMethods,
             selectedPaymentMethods = selectedBaseSidePaymentMethods,
             onToggle = { selected -> presenter.onToggleBaseSidePaymentMethod(selected) },
         )

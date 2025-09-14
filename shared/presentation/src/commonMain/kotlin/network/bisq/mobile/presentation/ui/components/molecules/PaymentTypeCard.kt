@@ -5,6 +5,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -15,6 +16,8 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
+import network.bisq.mobile.presentation.ui.components.atoms.button.CloseIconButton
+import network.bisq.mobile.presentation.ui.helpers.customPaymentIconIndex
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
@@ -22,10 +25,12 @@ fun PaymentTypeCard(
     image: String,
     title: String,
     onClick: (String) -> Unit,
+    onRemove: ((String) -> Unit)? = null,
     isSelected: Boolean = false,
     index: Int = 1,
     isCustomPaymentMethod: Boolean = false,
 ) {
+    val customIndex = customPaymentIconIndex(title, 6)
     val backgroundColor = if (isSelected) {
         BisqTheme.colors.primaryDim
     } else {
@@ -35,7 +40,8 @@ fun PaymentTypeCard(
     Row(
         modifier = Modifier.fillMaxWidth()
             .clip(shape = RoundedCornerShape(6.dp))
-            .background(backgroundColor).padding(start = 18.dp)
+            .background(backgroundColor)
+            .padding(horizontal = 18.dp)
             .padding(vertical = 10.dp)
             .clickable(
                 onClick = { onClick(title) },
@@ -48,7 +54,7 @@ fun PaymentTypeCard(
         Box {
             DynamicImage(
                 path = image,
-                fallbackPath = "drawable/payment/fiat/custom_payment_${index}.png",
+                fallbackPath = "drawable/payment/fiat/custom_payment_${customIndex}.png",
                 contentDescription =  if (isCustomPaymentMethod) "mobile.components.paymentTypeCard.customPaymentMethod".i18n(title) else title,
                 modifier = Modifier.size(20.dp)
             )
@@ -64,6 +70,13 @@ fun PaymentTypeCard(
                 }
             }
         }
-        BisqText.baseRegular(title)
+        BisqText.baseRegular(title, modifier = Modifier.weight(1.0f))
+        if (isCustomPaymentMethod) {
+            CloseIconButton(
+                onClick = {
+                    onRemove?.invoke(title)
+                }
+            )
+        }
     }
 }

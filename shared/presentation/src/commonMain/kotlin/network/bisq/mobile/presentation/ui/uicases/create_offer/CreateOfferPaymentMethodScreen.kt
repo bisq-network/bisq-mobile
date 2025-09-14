@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.flow.MutableStateFlow
 import network.bisq.mobile.i18n.i18n
@@ -17,6 +19,8 @@ fun CreateOfferPaymentMethodScreen() {
     RememberPresenterLifecycle(presenter)
 
     val selectedQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = remember { presenter.selectedQuoteSidePaymentMethods }
+    val availableQuoteSidePaymentMethods by presenter.availableQuoteSidePaymentMethods.collectAsState()
+    val customPaymentMethodCount by presenter.customPaymentMethodCount.collectAsState()
 
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.createOffer.progress.quoteSidePaymentMethod".i18n(),
@@ -37,9 +41,17 @@ fun CreateOfferPaymentMethodScreen() {
         PaymentMethodCard(
             title = presenter.quoteSideHeadline,
             imagePaths = presenter.getQuoteSidePaymentMethodsImagePaths(),
-            availablePaymentMethods = presenter.availableQuoteSidePaymentMethods,
+            availablePaymentMethods = availableQuoteSidePaymentMethods,
             selectedPaymentMethods = selectedQuoteSidePaymentMethods,
+            customPaymentMethodCount,
             onToggle = { selected -> presenter.onToggleQuoteSidePaymentMethod(selected) },
+            onAddCustomPayment = { customPayment ->
+                presenter.addCustomPayment(customPayment)
+                presenter.onToggleQuoteSidePaymentMethod(customPayment)
+            },
+            onRemoveCustomPayment = { customPayment ->
+                presenter.removeCustomPayment(customPayment)
+            }
         )
     }
 }

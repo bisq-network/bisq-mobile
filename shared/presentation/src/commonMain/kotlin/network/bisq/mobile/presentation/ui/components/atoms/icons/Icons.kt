@@ -15,6 +15,7 @@ import bisqapps.shared.presentation.generated.resources.check_circle
 import bisqapps.shared.presentation.generated.resources.exchange_h_arrow
 import bisqapps.shared.presentation.generated.resources.exchange_v_arrow
 import bisqapps.shared.presentation.generated.resources.field_add_white
+import bisqapps.shared.presentation.generated.resources.add_custom_green
 import bisqapps.shared.presentation.generated.resources.icon_add
 import bisqapps.shared.presentation.generated.resources.icon_arrow_down
 import bisqapps.shared.presentation.generated.resources.icon_arrow_down_dark
@@ -84,6 +85,11 @@ fun EyeIcon(modifier: Modifier = Modifier.size(24.dp)) {
 @Composable
 fun ClosedEyeIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_closed_eye), "Closed eye icon", modifier = modifier)
+}
+
+@Composable
+fun AddSquareIcon(modifier: Modifier = Modifier.size(16.dp)) {
+    Image(painterResource(Res.drawable.add_custom_green), "Square Add icon", modifier = modifier)
 }
 
 @Composable
