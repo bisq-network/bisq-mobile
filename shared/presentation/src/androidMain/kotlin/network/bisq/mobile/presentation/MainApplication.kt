@@ -12,8 +12,7 @@ import org.koin.core.module.Module
 /**
  * Base class for Bisq Android Applications
  */
-abstract class BisqMainApplication : Application(), Logging {
-
+abstract class MainApplication : Application(), Logging {
     override fun onCreate() {
         super.onCreate()
         setupSystemOutFiltering()

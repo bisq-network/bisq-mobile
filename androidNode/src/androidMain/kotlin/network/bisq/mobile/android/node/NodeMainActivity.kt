@@ -2,12 +2,12 @@ package network.bisq.mobile.android.node
 
 import android.os.Bundle
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import network.bisq.mobile.presentation.BisqMainActivity
+import network.bisq.mobile.presentation.MainActivity
 
 /**
  * Bisq Android Node Main Activity
  */
-class MainActivity : BisqMainActivity() {
+class NodeMainActivity : MainActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         // Install splash screen before super.onCreate to prevent UI blocking
