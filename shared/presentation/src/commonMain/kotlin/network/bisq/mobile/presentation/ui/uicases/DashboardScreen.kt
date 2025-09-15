@@ -7,11 +7,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -100,35 +102,57 @@ private fun DashboardContent(
                 text = "dashboard.marketPrice".i18n()
             )
             BisqGap.V1()
-            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-                val cardWidth: Dp = maxWidth / 2  // Each card uses 50%
-                val modifier = Modifier.width(cardWidth)
-                SlidingCards(
-                    listOf(
-                        {
-                            HomeInfoCard(
-                                modifier = modifier,
-                                price = offersOnline.toString(),
-                                text = "dashboard.offersOnline".i18n()
-                            )
-                        },
-                        {
-                            HomeInfoCard(
-                                modifier = modifier,
-                                price = numConnections.toString(),
-                                text = "dashboard.numConnections".i18n()
-                            )
-                        },
-                        {
-                            HomeInfoCard(
-                                modifier = modifier,
-                                price = publishedProfiles.toString(),
-                                text = "dashboard.activeUsers".i18n()
-                            )
-                        }
-                    )
+
+            Row(
+                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
+                horizontalArrangement = Arrangement.spacedBy(padding)
+            ) {
+                HomeInfoCard(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    price = offersOnline.toString(),
+                    text = "dashboard.offersOnline".i18n()
                 )
+                HomeInfoCard(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    price = numConnections.toString(),
+                    text = "dashboard.numConnections".i18n()
+                )
+                /*HomeInfoCard(
+                    modifier = Modifier.weight(1f).fillMaxHeight(),
+                    price = publishedProfiles.toString(),
+                    text = "dashboard.activeUsers".i18n()
+                )*/
             }
+
+            /* BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                 val cardWidth: Dp = maxWidth / 2  // Each card uses 50%
+                 val modifier = Modifier.width(cardWidth)
+               SlidingCards(
+                     listOf(
+                         {
+                             HomeInfoCard(
+                                 modifier = modifier,
+                                 price = offersOnline.toString(),
+                                 text = "dashboard.offersOnline".i18n()
+                             )
+                         },
+                         {
+                             HomeInfoCard(
+                                 modifier = modifier,
+                                 price = numConnections.toString(),
+                                 text = "dashboard.numConnections".i18n()
+                             )
+                         },
+                         {
+                             HomeInfoCard(
+                                 modifier = modifier,
+                                 price = publishedProfiles.toString(),
+                                 text = "dashboard.activeUsers".i18n()
+                             )
+                         }
+                     )
+                 )
+             }*/
         }
 
         Spacer(modifier = Modifier.fillMaxHeight().weight(0.1f))
