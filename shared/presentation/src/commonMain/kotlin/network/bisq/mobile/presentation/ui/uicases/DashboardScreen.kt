@@ -22,7 +22,6 @@ import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.icon_chat
 import bisqapps.shared.presentation.generated.resources.icon_markets
-import bisqapps.shared.presentation.generated.resources.icon_offers
 import bisqapps.shared.presentation.generated.resources.icon_payment
 import bisqapps.shared.presentation.generated.resources.reputation
 import bisqapps.shared.presentation.generated.resources.thumbs_up
@@ -81,7 +80,7 @@ private fun DashboardContent(
         isInteractive = isInteractive,
     ) {
         Column {
-            PriceProfileCard(
+            HomeInfoCard(
                 price = marketPrice,
                 priceText = "dashboard.marketPrice".i18n()
             )
@@ -90,12 +89,12 @@ private fun DashboardContent(
                 modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
                 horizontalArrangement = Arrangement.spacedBy(padding)
             ) {
-                PriceProfileCard(
+                HomeInfoCard(
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     price = offersOnline.toString(),
                     priceText = "dashboard.offersOnline".i18n()
                 )
-                PriceProfileCard(
+                HomeInfoCard(
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     price = publishedProfiles.toString(),
                     priceText = "dashboard.activeUsers".i18n()
@@ -176,7 +175,7 @@ fun DashBoardCard(
 }
 
 @Composable
-fun PriceProfileCard(modifier: Modifier = Modifier, price: String, priceText: String) {
+fun HomeInfoCard(modifier: Modifier = Modifier, price: String, priceText: String) {
     BisqCard(
         modifier = modifier,
         borderRadius = BisqUIConstants.ScreenPaddingQuarter,
