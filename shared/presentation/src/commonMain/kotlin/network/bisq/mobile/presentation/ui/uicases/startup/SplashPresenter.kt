@@ -121,10 +121,6 @@ open class SplashPresenter(
         }
     }
 
-    open suspend fun hasConnectivity(): Boolean {
-        return webSocketClientProvider?.get()?.isConnected() ?: false
-    }
-
     private fun navigateToAgreement() {
         log.d { "Navigating to agreement" }
         navigateTo(Routes.Agreement) {
@@ -144,7 +140,8 @@ open class SplashPresenter(
     // Node overrides that with returning false
     // TODO we should make it abstract and use a ClientSplashPresenter to make the differences more explicit
     open suspend fun isClientAndHasNoConnectivity(): Boolean {
-        if (!hasConnectivity()) {
+        val hasConnectivity = webSocketClientProvider?.get()?.isConnected() ?: false
+        if (!hasConnectivity) {
             log.d { "No connectivity detected, navigating to trusted node setup" }
             navigateToTrustedNodeSetup()
             return true

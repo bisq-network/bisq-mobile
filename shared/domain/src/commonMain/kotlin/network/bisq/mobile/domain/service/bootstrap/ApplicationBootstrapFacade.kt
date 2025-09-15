@@ -5,7 +5,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.service.ServiceFacade
 
-@Suppress("RedundantOverride")
 abstract class ApplicationBootstrapFacade : ServiceFacade() {
     companion object {
         var isDemo = false

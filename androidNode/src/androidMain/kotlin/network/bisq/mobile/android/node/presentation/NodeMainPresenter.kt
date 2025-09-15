@@ -1,10 +1,13 @@
 package network.bisq.mobile.android.node.presentation
 
+import android.app.Activity
 import network.bisq.mobile.android.node.BuildNodeConfig
+import network.bisq.mobile.android.node.NodeApplicationLifecycleController
 import network.bisq.mobile.android.node.NodeMainActivity
+import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
-import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -14,13 +17,13 @@ import network.bisq.mobile.presentation.MainPresenter
 class NodeMainPresenter(
     urlLauncher: UrlLauncher,
     openTradesNotificationService: OpenTradesNotificationService,
-    connectivityService: ConnectivityService,
+    private val connectivityService: NodeConnectivityService,
     settingsServiceFacade: SettingsServiceFacade,
     tradesServiceFacade: TradesServiceFacade,
     userProfileServiceFacade: UserProfileServiceFacade,
     tradeReadStateRepository: TradeReadStateRepository,
+    private val nodeApplicationLifecycleController: NodeApplicationLifecycleController
 ) : MainPresenter(
-    connectivityService,
     openTradesNotificationService,
     settingsServiceFacade,
     tradesServiceFacade,
@@ -33,7 +36,21 @@ class NodeMainPresenter(
         openTradesNotificationService.notificationServiceController.activityClassForIntents = NodeMainActivity::class.java
     }
 
+    override fun onViewAttached() {
+        super.onViewAttached()
+
+        collectUI(connectivityService.status) { status ->
+            _showAllConnectionsLostDialogue.value = ConnectivityStatus.DISCONNECTED == status
+        }
+    }
+
     override fun isDevMode(): Boolean {
         return isDemo() || BuildNodeConfig.IS_DEBUG
+    }
+
+    override fun onRestart() {
+        log.i { "User requested app restart from failed state - restarting application" }
+
+        nodeApplicationLifecycleController.restartApp(view as Activity)
     }
 }

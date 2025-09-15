@@ -77,10 +77,6 @@ class NodeSplashPresenter(
         // Do nothing, only used in client mode
     }
 
-    override suspend fun hasConnectivity(): Boolean {
-        return mainPresenter.isConnected()
-    }
-
     // TODO Would be better if all such code is extracted in a ClientSplashPresenter making such guards not needed
     override fun navigateToTrustedNodeSetup() {
         log.w { "navigateToTrustedNodeSetup called on node app. This should never happen." }

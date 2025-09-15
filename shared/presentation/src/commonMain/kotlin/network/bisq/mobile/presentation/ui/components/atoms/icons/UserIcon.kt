@@ -13,6 +13,10 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bot_image
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.BOOTSTRAPPING
+import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.CONNECTED
+import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.DISCONNECTED
+import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.WARN
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import org.jetbrains.compose.resources.painterResource
 
@@ -36,10 +40,10 @@ fun UserIcon(
 
 @Composable
 fun GlowEffect(connectivityStatus: ConnectivityService.ConnectivityStatus, modifier: Modifier = Modifier) {
-    val name = when (connectivityStatus) {
-        ConnectivityService.ConnectivityStatus.CONNECTED -> "green-small-dot.png"
-        ConnectivityService.ConnectivityStatus.WARN -> "yellow-small-dot.png"
-        ConnectivityService.ConnectivityStatus.DISCONNECTED -> "red-small-dot.png"
+    val icon = when (connectivityStatus) {
+        BOOTSTRAPPING, CONNECTED -> "green-small-dot.png"
+        WARN -> "yellow-small-dot.png"
+        DISCONNECTED -> "red-small-dot.png"
     }
-    DynamicImage("drawable/chat/$name", modifier = modifier.scale(2.0F))
+    DynamicImage("drawable/chat/$icon", modifier = modifier.scale(2.0F))
 }

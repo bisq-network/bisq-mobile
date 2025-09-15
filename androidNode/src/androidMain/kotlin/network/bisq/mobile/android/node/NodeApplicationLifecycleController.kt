@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.network.KmpTorService
+import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -51,7 +52,8 @@ class NodeApplicationLifecycleController(
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val kmpTorService: KmpTorService,
-    private val networkServiceFacade: NetworkServiceFacade
+    private val networkServiceFacade: NetworkServiceFacade,
+    private val connectivityService: NodeConnectivityService
 ) : BaseService() {
 
     init {
@@ -216,6 +218,7 @@ class NodeApplicationLifecycleController(
 
     private fun activateServiceFacades() {
         settingsServiceFacade.activate()
+        connectivityService.activate()
         offersServiceFacade.activate()
         marketPriceServiceFacade.activate()
         tradesServiceFacade.activate()
@@ -230,6 +233,7 @@ class NodeApplicationLifecycleController(
     }
 
     private fun deactivateServiceFacades() {
+        connectivityService.deactivate()
         networkServiceFacade.deactivate()
         applicationBootstrapFacade.deactivate()
         settingsServiceFacade.deactivate()

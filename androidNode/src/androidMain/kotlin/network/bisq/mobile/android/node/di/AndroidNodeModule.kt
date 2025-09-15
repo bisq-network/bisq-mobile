@@ -71,7 +71,7 @@ val androidNodeModule = module {
 
     single<KmpTorService> { KmpTorService() }
 
-    single<ApplicationBootstrapFacade> { NodeApplicationBootstrapFacade(get(), get()) }
+    single { NodeApplicationBootstrapFacade(get(), get()) } bind ApplicationBootstrapFacade::class
 
     single<MarketPriceServiceFacade> { NodeMarketPriceServiceFacade(get(), get()) }
 
@@ -95,12 +95,13 @@ val androidNodeModule = module {
 
     single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
 
-    single<ConnectivityService> { NodeConnectivityService(get()) }
+    single { NodeConnectivityService(get()) } bind ConnectivityService::class
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 
     single<NodeApplicationLifecycleController> {
         NodeApplicationLifecycleController(
+            get(),
             get(),
             get(),
             get(),
@@ -123,6 +124,7 @@ val androidNodeModule = module {
 
     single<MainPresenter> {
         NodeMainPresenter(
+            get(),
             get(),
             get(),
             get(),

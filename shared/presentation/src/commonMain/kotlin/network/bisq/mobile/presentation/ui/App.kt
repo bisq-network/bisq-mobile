@@ -26,9 +26,11 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.SwipeBackIOSNavigationHandler
 import network.bisq.mobile.presentation.ui.components.context.LocalAnimationsEnabled
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -51,10 +53,16 @@ interface AppPresenter : ViewPresenter {
 
     val showAnimation: StateFlow<Boolean>
 
+    val showAllConnectionsLostDialogue: StateFlow<Boolean>
+
     // Actions
     fun toggleContentVisibility()
 
     fun navigateToTrustedNode()
+
+    fun onCloseConnectionLostDialogue()
+
+    fun onRestart()
 }
 
 @Composable
@@ -112,6 +120,7 @@ fun App() {
 
     val languageCode by presenter.languageCode.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
+    val showAllConnectionsLostDialogue by presenter.showAllConnectionsLostDialogue.collectAsState()
 
     LaunchedEffect(languageCode) {
         if (languageCode.isNotBlank()) {
@@ -131,6 +140,16 @@ fun App() {
                 }
             }
             ErrorOverlay()
+
+            if (showAllConnectionsLostDialogue) {
+                WarningConfirmationDialog(
+                    headline = "connectivity.disconnected.title".i18n(),
+                    message = "connectivity.disconnected.message".i18n(),
+                    confirmButtonText = "connectivity.disconnected.restart".i18n(),
+                    onConfirm = { presenter.onRestart() },
+                    onDismiss = { presenter.onCloseConnectionLostDialogue() }
+                )
+            }
         }
     }
 }
