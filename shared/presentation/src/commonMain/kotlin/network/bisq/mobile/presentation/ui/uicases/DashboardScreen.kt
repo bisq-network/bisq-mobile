@@ -1,23 +1,34 @@
 package network.bisq.mobile.presentation.ui.uicases
 
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.icon_chat
@@ -25,6 +36,7 @@ import bisqapps.shared.presentation.generated.resources.icon_markets
 import bisqapps.shared.presentation.generated.resources.icon_payment
 import bisqapps.shared.presentation.generated.resources.reputation
 import bisqapps.shared.presentation.generated.resources.thumbs_up
+import kotlinx.coroutines.delay
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -48,6 +60,7 @@ fun DashboardScreen() {
 
     val offersOnline: Number by presenter.offersOnline.collectAsState()
     val publishedProfiles: Number by presenter.publishedProfiles.collectAsState()
+    val numConnections by presenter.numConnections.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
     val marketPrice by presenter.marketPrice.collectAsState()
     val tradeRulesConfirmed by presenter.tradeRulesConfirmed.collectAsState()
@@ -55,6 +68,7 @@ fun DashboardScreen() {
     DashboardContent(
         offersOnline = offersOnline,
         publishedProfiles = publishedProfiles,
+        numConnections = numConnections,
         isInteractive = isInteractive,
         marketPrice = marketPrice,
         tradeRulesConfirmed = tradeRulesConfirmed,
@@ -67,6 +81,7 @@ fun DashboardScreen() {
 private fun DashboardContent(
     offersOnline: Number,
     publishedProfiles: Number,
+    numConnections: Number,
     isInteractive: Boolean,
     marketPrice: String,
     tradeRulesConfirmed: Boolean,
@@ -82,22 +97,36 @@ private fun DashboardContent(
         Column {
             HomeInfoCard(
                 price = marketPrice,
-                priceText = "dashboard.marketPrice".i18n()
+                text = "dashboard.marketPrice".i18n()
             )
             BisqGap.V1()
-            Row(
-                modifier = Modifier.fillMaxWidth().height(IntrinsicSize.Max),
-                horizontalArrangement = Arrangement.spacedBy(padding)
-            ) {
-                HomeInfoCard(
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                    price = offersOnline.toString(),
-                    priceText = "dashboard.offersOnline".i18n()
-                )
-                HomeInfoCard(
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                    price = publishedProfiles.toString(),
-                    priceText = "dashboard.activeUsers".i18n()
+            BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+                val cardWidth: Dp = maxWidth / 2  // Each card uses 50%
+                val modifier = Modifier.width(cardWidth)
+                SlidingCards(
+                    listOf(
+                        {
+                            HomeInfoCard(
+                                modifier = modifier,
+                                price = offersOnline.toString(),
+                                text = "dashboard.offersOnline".i18n()
+                            )
+                        },
+                        {
+                            HomeInfoCard(
+                                modifier = modifier,
+                                price = numConnections.toString(),
+                                text = "dashboard.numConnections".i18n()
+                            )
+                        },
+                        {
+                            HomeInfoCard(
+                                modifier = modifier,
+                                price = publishedProfiles.toString(),
+                                text = "dashboard.activeUsers".i18n()
+                            )
+                        }
+                    )
                 )
             }
         }
@@ -175,20 +204,96 @@ fun DashBoardCard(
 }
 
 @Composable
-fun HomeInfoCard(modifier: Modifier = Modifier, price: String, priceText: String) {
+fun HomeInfoCard(modifier: Modifier = Modifier, price: String, text: String) {
     BisqCard(
         modifier = modifier,
         borderRadius = BisqUIConstants.ScreenPaddingQuarter,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        AmountWithCurrency(price)
+        AmountWithCurrency(price) // TODO should be generic
         BisqGap.V1()
         BisqText.smallRegularGrey(
-            text = priceText,
+            text = text,
             textAlign = TextAlign.Center,
         )
     }
 }
+
+@Composable
+fun SlidingCards(
+    cards: List<@Composable () -> Unit>,
+    cardSpacing: Dp = BisqUIConstants.ScreenPadding,
+    slideDuration: Int = 600,
+    delayMillis: Int = 5000
+) {
+    require(cards.size >= 3) { "Need at least 3 cards for sliding animation" }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val cardWidth = (maxWidth - cardSpacing) / 2
+        val density = LocalDensity.current
+
+        // Indexes
+        var startIndex by remember { mutableStateOf(0) }
+        val leftIndex = startIndex % cards.size
+        val rightIndex = (startIndex + 1) % cards.size
+        val nextIndex = (startIndex + 2) % cards.size
+
+        val slideAnim = remember { Animatable(0f) }
+
+        LaunchedEffect(startIndex) {
+            delay(delayMillis.toLong()) // Wait before sliding
+            slideAnim.animateTo(
+                targetValue = -with(density) { (cardWidth + cardSpacing).toPx() },
+                animationSpec = tween(durationMillis = slideDuration)
+            )
+            slideAnim.snapTo(0f)
+            startIndex = (startIndex + 1) % cards.size
+        }
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            // Left card
+            Box(
+                modifier = Modifier
+                    .offset { IntOffset(slideAnim.value.toInt(), 0) }
+                    .width(cardWidth)
+                    .fillMaxHeight()
+            ) {
+                cards[leftIndex]()
+            }
+
+            // Right card
+            Box(
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            (slideAnim.value + with(density) { (cardWidth + cardSpacing).toPx() }).toInt(),
+                            0
+                        )
+                    }
+                    .width(cardWidth)
+                    .fillMaxHeight()
+            ) {
+                cards[rightIndex]()
+            }
+
+            // Next card coming from right
+            Box(
+                modifier = Modifier
+                    .offset {
+                        IntOffset(
+                            (slideAnim.value + 2 * with(density) { (cardWidth + cardSpacing).toPx() }).toInt(),
+                            0
+                        )
+                    }
+                    .width(cardWidth)
+                    .fillMaxHeight()
+            ) {
+                cards[nextIndex]()
+            }
+        }
+    }
+}
+
 
 @Composable
 private fun DashboardContentPreview(
@@ -199,6 +304,7 @@ private fun DashboardContentPreview(
         DashboardContent(
             offersOnline = 1,
             publishedProfiles = 2,
+            numConnections = 8,
             isInteractive = true,
             marketPrice = "111247.40 BTC/USD",
             tradeRulesConfirmed = tradeRulesConfirmed,
