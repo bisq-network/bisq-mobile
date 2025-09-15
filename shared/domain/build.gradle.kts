@@ -101,7 +101,7 @@ kotlin {
             //put your multiplatform dependencies here
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.logging.kermit)
+            api(libs.logging.kermit) // api allows other projects use Logging without needing to add this directly
             implementation(libs.okio)
             implementation(libs.kotlinx.datetime)
             implementation(libs.bignum)

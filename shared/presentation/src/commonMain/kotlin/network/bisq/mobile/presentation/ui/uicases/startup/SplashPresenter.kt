@@ -2,11 +2,9 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -15,14 +13,12 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-open class SplashPresenter(
+abstract class SplashPresenter(
     mainPresenter: MainPresenter,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val userProfileService: UserProfileServiceFacade,
-    private val userRepository: UserRepository,
     private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
-    private val webSocketClientService: WebSocketClientService?,
 ) : BasePresenter(mainPresenter) {
 
     val state: StateFlow<String> get() = applicationBootstrapFacade.state
@@ -56,20 +52,9 @@ open class SplashPresenter(
         }
     }
 
-    private fun navigateToNextScreen() {
+    protected open suspend fun navigateToNextScreen() {
         log.d { "Navigating to next screen" }
         launchUI {
-            // Check connectivity first
-            if (!hasConnectivity()) {
-                log.d { "No connectivity detected, navigating to trusted node setup" }
-                navigateToTrustedNodeSetup()
-                return@launchUI
-            }
-
-            if (webSocketClientService?.isDemo() == true) {
-                ApplicationBootstrapFacade.isDemo = true
-            }
-
             runCatching {
                 val profileSettings: SettingsVO = settingsServiceFacade.getSettings().getOrThrow()
                 val deviceSettings: Settings = settingsRepository.fetch()
@@ -98,13 +83,7 @@ open class SplashPresenter(
         }
     }
 
-    private fun navigateToTrustedNodeSetup() {
-        navigateTo(Routes.TrustedNodeSetup) {
-            it.popUpTo(Routes.Splash.name) { inclusive = true }
-        }
-    }
-
-    private fun navigateToOnboarding() {
+    protected fun navigateToOnboarding() {
         navigateTo(Routes.Onboarding) {
             it.popUpTo(Routes.Splash.name) { inclusive = true }
         }
@@ -116,15 +95,13 @@ open class SplashPresenter(
         }
     }
 
-    private fun navigateToHome() {
+    protected fun navigateToHome() {
         navigateTo(Routes.TabContainer) {
             it.popUpTo(Routes.Splash.name) { inclusive = true }
         }
     }
 
-    open suspend fun hasConnectivity(): Boolean {
-        return webSocketClientService?.isConnected() ?: false
-    }
+    abstract suspend fun hasConnectivity(): Boolean
 
     private fun navigateToAgreement() {
         log.d { "Navigating to agreement" }
@@ -133,14 +110,7 @@ open class SplashPresenter(
         }
     }
 
-    open fun doCustomNavigationLogic(settings: Settings, hasProfile: Boolean): Boolean {
-        when {
-            settings.bisqApiUrl.isEmpty() -> navigateToTrustedNodeSetup()
-            settings.bisqApiUrl.isNotEmpty() && !hasProfile -> navigateToCreateProfile()
-            else -> navigateToHome()
-        }
-        return true
-    }
+    abstract fun doCustomNavigationLogic(settings: Settings, hasProfile: Boolean): Boolean
 
     fun onTimeoutDialogStop() {
         log.i { "User requested to stop bootstrap from timeout dialog" }
@@ -159,8 +129,5 @@ open class SplashPresenter(
         restartApp()
     }
 
-    protected open fun restartApp() {
-        // Default implementation - platform-specific implementations will override
-        log.w { "App restart not implemented for this platform" }
-    }
+    protected abstract fun restartApp()
 }

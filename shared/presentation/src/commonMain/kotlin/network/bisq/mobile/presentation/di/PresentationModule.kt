@@ -63,7 +63,6 @@ import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsP
 import network.bisq.mobile.presentation.ui.uicases.startup.AgreementPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IAgreementPresenter
-import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferAmountPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPaymentMethodPresenter
@@ -97,18 +96,6 @@ val presentationModule = module {
     } bind AppPresenter::class
 
     single<TopBarPresenter> { TopBarPresenter(get(), get(), get(), get()) } bind ITopBarPresenter::class
-
-    single<SplashPresenter> {
-        SplashPresenter(
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-            get(),
-        )
-    }
 
     factory<AgreementPresenter> { AgreementPresenter(get(), get()) } bind IAgreementPresenter::class
 
