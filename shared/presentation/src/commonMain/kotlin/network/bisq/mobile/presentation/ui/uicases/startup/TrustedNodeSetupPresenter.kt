@@ -20,6 +20,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import org.koin.core.component.inject
 
 /**
  * Presenter for the Trusted Node Setup screen.
@@ -29,7 +30,6 @@ class TrustedNodeSetupPresenter(
     private val userRepository: UserRepository,
     private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
-    private val webSocketClientProvider: WebSocketClientProvider
 ) : BasePresenter(mainPresenter) {
 
     companion object {
@@ -42,8 +42,14 @@ class TrustedNodeSetupPresenter(
     enum class NetworkType(private val i18nKey: String) {
         LAN("mobile.trustedNodeSetup.networkType.lan"),
         TOR("mobile.trustedNodeSetup.networkType.tor");
+
         val displayString: String get() = i18nKey.i18n()
     }
+
+    // Must not be injected in constructor as node has not defined the WebSocketClientProvider dependency
+    // Better would be that this presenter and screen is only instantiated in client
+    // See https://github.com/bisq-network/bisq-mobile/issues/684
+    private val webSocketClientProvider: WebSocketClientProvider by inject()
 
     private val _isApiUrlValid = MutableStateFlow(true)
     val isApiUrlValid: StateFlow<Boolean> get() = _isApiUrlValid.asStateFlow()
