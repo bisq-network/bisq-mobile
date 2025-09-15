@@ -1,5 +1,6 @@
 package network.bisq.mobile.client
 
+import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
@@ -10,7 +11,6 @@ import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
-import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -29,7 +29,7 @@ class AndroidClientMainPresenter(
     explorerServiceFacade: ExplorerServiceFacade,
     marketPriceServiceFacade: MarketPriceServiceFacade,
     mediationServiceFacade: MediationServiceFacade,
-    connectivityService: ConnectivityService,
+    connectivityService: ClientConnectivityService,
     offersServiceFacade: OffersServiceFacade,
     reputationServiceFacade: ReputationServiceFacade,
     settingsServiceFacade: SettingsServiceFacade,

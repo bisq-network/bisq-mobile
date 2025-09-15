@@ -45,7 +45,6 @@ open class ClientMainPresenter(
     private val webSocketClientProvider: WebSocketClientProvider,
     urlLauncher: UrlLauncher
 ) : MainPresenter(
-    connectivityService,
     openTradesNotificationService,
     settingsServiceFacade,
     tradesServiceFacade,

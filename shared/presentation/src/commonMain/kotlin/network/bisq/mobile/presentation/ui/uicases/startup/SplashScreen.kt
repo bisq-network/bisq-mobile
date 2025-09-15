@@ -19,7 +19,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqProgressBar
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoCircle
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import org.koin.compose.koinInject
 
@@ -63,7 +63,7 @@ fun SplashScreen() {
 
         // Timeout dialog
         if (isTimeoutDialogVisible && !isBootstrapFailed) {
-            ConfirmationDialog(
+            WarningConfirmationDialog(
                 headline = "bootstrap.timeout.title".i18n(),
                 message = "bootstrap.timeout.message".i18n(currentBootstrapStage),
                 confirmButtonText = "bootstrap.timeout.restart".i18n(),
@@ -75,7 +75,7 @@ fun SplashScreen() {
 
         // Restart dialog
         if (isBootstrapFailed) {
-            ConfirmationDialog(
+            WarningConfirmationDialog(
                 headline = "bootstrap.failed.title".i18n(),
                 message = "bootstrap.failed.message".i18n(currentBootstrapStage),
                 confirmButtonText = "bootstrap.failed.restart".i18n(),

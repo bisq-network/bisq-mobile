@@ -20,7 +20,6 @@ import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.getDeviceLanguageCode
-import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -34,7 +33,6 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 open class MainPresenter(
-    private val connectivityService: ConnectivityService,
     private val openTradesNotificationService: OpenTradesNotificationService,
     private val settingsService: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
@@ -52,6 +50,9 @@ open class MainPresenter(
 
     private val _isSmallScreen = MutableStateFlow(false)
     override val isSmallScreen: StateFlow<Boolean> get() = _isSmallScreen.asStateFlow()
+
+    protected val _showAllConnectionsLostDialogue = MutableStateFlow(false)
+    override val showAllConnectionsLostDialogue: StateFlow<Boolean> get() = _showAllConnectionsLostDialogue.asStateFlow()
 
     final override val languageCode: StateFlow<String> get() = settingsService.languageCode
 
@@ -118,7 +119,6 @@ open class MainPresenter(
         languageCode.filter { it.isNotEmpty() }.onEach {
             settingsService.setLanguageCode(it)
         }.take(1).launchIn(presenterScope)
-
     }
 
     override fun onResume() {
@@ -136,10 +136,6 @@ open class MainPresenter(
         // to stop notification service and fully kill app (no zombie mode)
         stopOpenTradeNotificationsService()
         super.onDestroying()
-    }
-
-    fun isConnected(): Boolean {
-        return connectivityService.isConnected()
     }
 
     open fun reactivateServices() {
@@ -178,6 +174,14 @@ open class MainPresenter(
 
     final override fun navigateToUrl(url: String) {
         urlLauncher.openUrl(url)
+    }
+
+    override fun onCloseConnectionLostDialogue() {
+        _showAllConnectionsLostDialogue.value = false
+    }
+
+    override fun onRestart() {
+        //TODO not implemented for client mode yet
     }
 
     override fun isDemo(): Boolean = false

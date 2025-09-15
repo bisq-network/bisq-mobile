@@ -161,7 +161,7 @@ class ClientConnectivityService(
         }
     }
 
-    override fun isConnected(): Boolean {
+    private fun isConnected(): Boolean {
         return webSocketClientProvider.get().isConnected()
     }
 }

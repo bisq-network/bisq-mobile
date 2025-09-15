@@ -4,10 +4,11 @@ import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.network.ConnectivityService
 
 class NodeConnectivityService(
-    private val nodeNetworkServiceFacade: NodeNetworkServiceFacade,
+    private val nodeNetworkServiceFacade: NodeNetworkServiceFacade
 ) : ConnectivityService() {
 
-    init {
+    // We get activated after application service is initialized. At that stage we expect to have at least connections.
+    override fun activate() {
         serviceScope.launch {
             nodeNetworkServiceFacade.numConnections.collect { numConnections ->
                 _status.value = if (numConnections == 0) {
@@ -21,7 +22,5 @@ class NodeConnectivityService(
         }
     }
 
-    override fun isConnected(): Boolean {
-        return nodeNetworkServiceFacade.numConnections.value > 0
-    }
+    override fun deactivate() {}
 }
