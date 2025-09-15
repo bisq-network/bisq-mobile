@@ -2,12 +2,12 @@ package network.bisq.mobile.client.di
 
 import network.bisq.mobile.client.AndroidClientMainPresenter
 import network.bisq.mobile.client.presentation.ClientOnBoardingPresenter
+import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.service.ForegroundDetector
-import network.bisq.mobile.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.presentation.MainPresenter

@@ -11,16 +11,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.domain.LifeCycleAware
-import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 
-class NetworkServiceFacade(private val provider: AndroidApplicationService.Provider) : LifeCycleAware, Logging, Node.Listener {
+class NodeNetworkServiceFacade(private val provider: AndroidApplicationService.Provider) : NetworkServiceFacade, Node.Listener {
     private var defaultNode: Node? = null
     private var serviceNodeStatePin: Pin? = null
 
     // While tor starts up we use -1 to flag as network not available yet
     private val _numConnections = MutableStateFlow(-1)
-    val numConnections: StateFlow<Int> get() = _numConnections.asStateFlow()
+    override val numConnections: StateFlow<Int> get() = _numConnections.asStateFlow()
 
     override fun activate() {
         super.activate()
