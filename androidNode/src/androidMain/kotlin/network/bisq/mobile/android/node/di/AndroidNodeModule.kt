@@ -127,6 +127,7 @@ val androidNodeModule = module {
             get(),
             get(),
             get(),
+            get(),
         )
     }
 
