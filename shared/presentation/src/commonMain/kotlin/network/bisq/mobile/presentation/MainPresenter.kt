@@ -148,11 +148,9 @@ open class MainPresenter(
 
     protected open fun onResumeServices() {
         stopOpenTradeNotificationsService()
-        connectivityService.startMonitoring()
     }
 
     protected open fun onPauseServices() {
-        connectivityService.stopMonitoring()
         openTradesNotificationService.launchNotificationService()
     }
 
