@@ -80,20 +80,20 @@ android {
             java {
                 srcDir("src/main/resources")
                 // Debug build only includes debug proto sources
-                srcDir("${layout.buildDirectory}/generated/source/proto/debug/java")
+                srcDir(project.layout.buildDirectory.dir("generated/source/proto/debug/java").get().asFile)
             }
             proto {
-                srcDir("${layout.buildDirectory}/extracted-include-protos/debug")
+                srcDir(project.layout.buildDirectory.dir("extracted-include-protos/debug").get().asFile)
             }
         }
         getByName("release") {
             java {
                 srcDir("src/release/resources")
                 // Release build only includes release proto sources
-                srcDir("${layout.buildDirectory}/generated/source/proto/release/java")
+                srcDir(project.layout.buildDirectory.dir("generated/source/proto/release/java").get().asFile)
             }
             proto {
-                srcDir("${layout.buildDirectory}/extracted-include-protos/release")
+                srcDir(project.layout.buildDirectory.dir("extracted-include-protos/release").get().asFile)
             }
         }
     }
