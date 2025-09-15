@@ -20,6 +20,7 @@ import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.MainApplication
 import network.bisq.mobile.presentation.di.presentationModule
 import org.bouncycastle.jce.provider.BouncyCastleProvider
+import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.core.module.Module
 import java.security.Security
@@ -47,6 +48,14 @@ class NodeMainApplication : MainApplication(), ComponentCallbacks2 {
         runBlocking(Dispatchers.IO) {
             setupBisqCoreStatics()
         }
+
+        // We start here the initialisation (non blocking) of the core services and tor.
+        // The lifecycle of those is tied to the lifecycle of the Application/Process not to the lifecycle of the MainActivity.
+        // As Android does not provide any callback when the process gets terminated we cannot gracefully shutdown the services and tor.
+        // Only if the user shutdown or restart we can do that.
+        val nodeApplicationLifecycleController: NodeApplicationLifecycleController = get()
+        nodeApplicationLifecycleController.initialize(filesDir.toPath(), applicationContext)
+
         // Note: NodeMainApplication already implements ComponentCallbacks2, so onTrimMemory is automatically called
         // No need to registerComponentCallbacks(this) - that would cause infinite recursion
         // Note: Tor initialization is now handled in NodeApplicationBootstrapFacade
