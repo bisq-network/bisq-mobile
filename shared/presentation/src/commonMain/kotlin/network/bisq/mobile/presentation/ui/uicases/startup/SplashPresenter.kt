@@ -26,10 +26,10 @@ open class SplashPresenter(
     private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
-    private val webSocketClientProvider: WebSocketClientProvider?,
+    private val webSocketClientProvider: WebSocketClientProvider?
 ) : BasePresenter(mainPresenter) {
 
-    val state: StateFlow<String> get() = applicationBootstrapFacade.state
+    open val state: StateFlow<String> get() = applicationBootstrapFacade.state
     val progress: StateFlow<Float> get() = applicationBootstrapFacade.progress
     val isTimeoutDialogVisible: StateFlow<Boolean> get() = applicationBootstrapFacade.isTimeoutDialogVisible
     val isBootstrapFailed: StateFlow<Boolean> get() = applicationBootstrapFacade.isBootstrapFailed

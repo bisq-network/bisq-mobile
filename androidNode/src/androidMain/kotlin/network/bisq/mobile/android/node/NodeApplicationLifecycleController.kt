@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.network.KmpTorService
+import network.bisq.mobile.android.node.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -49,7 +50,8 @@ class NodeApplicationLifecycleController(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val provider: AndroidApplicationService.Provider,
     private val androidMemoryReportService: AndroidMemoryReportService,
-    private val kmpTorService: KmpTorService
+    private val kmpTorService: KmpTorService,
+    private val networkServiceFacade: NetworkServiceFacade
 ) : BaseService() {
 
     init {
@@ -64,6 +66,7 @@ class NodeApplicationLifecycleController(
 
         launchIO {
             runCatching {
+                networkServiceFacade.activate()
                 applicationBootstrapFacade.activate()
 
                 if (isTorSupported(applicationService.networkServiceConfig!!)) {
@@ -227,6 +230,7 @@ class NodeApplicationLifecycleController(
     }
 
     private fun deactivateServiceFacades() {
+        networkServiceFacade.deactivate()
         applicationBootstrapFacade.deactivate()
         settingsServiceFacade.deactivate()
         offersServiceFacade.deactivate()
