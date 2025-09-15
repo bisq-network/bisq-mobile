@@ -1,10 +1,10 @@
 package network.bisq.mobile.domain.di
 
+import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.domain.IOSUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.service.ForegroundDetector
-import network.bisq.mobile.domain.service.network.ClientConnectivityService
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import org.koin.dsl.bind
