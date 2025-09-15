@@ -18,6 +18,7 @@ import network.bisq.mobile.android.node.service.explorer.NodeExplorerServiceFaca
 import network.bisq.mobile.android.node.service.market_price.NodeMarketPriceServiceFacade
 import network.bisq.mobile.android.node.service.mediation.NodeMediationServiceFacade
 import network.bisq.mobile.android.node.service.network.KmpTorService
+import network.bisq.mobile.android.node.service.network.NetworkServiceFacade
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
 import network.bisq.mobile.android.node.service.reputation.NodeReputationServiceFacade
@@ -64,6 +65,8 @@ val androidNodeModule = module {
     }
 
     single { AndroidApplicationService.Provider() }
+
+    single<NetworkServiceFacade> { NetworkServiceFacade(get()) }
 
     single<KmpTorService> { KmpTorService() }
 
@@ -112,6 +115,7 @@ val androidNodeModule = module {
             get(),
             get(),
             get(),
+            get(),
             get()
         )
     }
@@ -130,6 +134,7 @@ val androidNodeModule = module {
 
     single<SplashPresenter> {
         NodeSplashPresenter(
+            get(),
             get(),
             get(),
             get(),
