@@ -9,7 +9,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.network.HttpClientService
 import network.bisq.mobile.client.network.HttpClientSettings
 import network.bisq.mobile.client.network.WebSocketClientFactory
@@ -32,7 +31,8 @@ class WebSocketClientService(
 ) : ServiceFacade() {
 
     companion object {
-        const val TEST_TIMEOUT = 10_000L
+        const val CONNECT_TIMEOUT = 15_000L
+        const val TOR_CONNECT_TIMEOUT = 30_000L
     }
 
     private val wsClient = MutableStateFlow<WebSocketClient?>(null)
@@ -156,17 +156,9 @@ class WebSocketClientService(
             newPort,
         )
 
-        var error: Throwable? = null
-        try {
-            withTimeout(TEST_TIMEOUT) {
-                error = ws.connect()
-            }
-        } catch (e: Throwable) {
-            error = e
-        } finally {
-            ws.disconnect()
-            tmpClient.close()
-        }
+        val error = ws.connect(if (newUseExternalTorProxy) TOR_CONNECT_TIMEOUT else CONNECT_TIMEOUT)
+        ws.disconnect()
+        tmpClient.close()
 
         return error
     }

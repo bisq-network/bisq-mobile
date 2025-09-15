@@ -20,7 +20,7 @@ interface WebSocketClient {
      * Attempts to connect to the websocket server defined by host:port and returns null if successful or already connection.
      * Returns the error otherwise.
      */
-    suspend fun connect(): Throwable?
+    suspend fun connect(timeoutMs: Long = 10000L): Throwable?
 
     /**
      * @param isReconnect true if this was called from a reconnect method

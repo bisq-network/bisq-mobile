@@ -52,7 +52,7 @@ class WebSocketClientDemo(
 
     override fun isDemo(): Boolean = true
 
-    override suspend fun connect(): Throwable? {
+    override suspend fun connect(timeoutMs: Long): Throwable? {
         log.d { "Demo mode detected - skipping actual WebSocket connection" }
         _webSocketClientStatus.value = ConnectionState.Connected
         return null
