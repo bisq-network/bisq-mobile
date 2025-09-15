@@ -1,6 +1,7 @@
 package network.bisq.mobile.client
 
 import kotlinx.coroutines.withContext
+import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.UrlLauncher
@@ -13,7 +14,6 @@ import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
-import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -34,17 +34,25 @@ open class ClientMainPresenter(
     private val explorerServiceFacade: ExplorerServiceFacade,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val mediationServiceFacade: MediationServiceFacade,
-    private val connectivityService: ConnectivityService,
+    private val connectivityService: ClientConnectivityService,
     private val offersServiceFacade: OffersServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val tradesServiceFacade: TradesServiceFacade,
     userProfileServiceFacade: UserProfileServiceFacade,
     openTradesNotificationService: OpenTradesNotificationService,
-    private val tradeReadStateRepository: TradeReadStateRepository,
+    tradeReadStateRepository: TradeReadStateRepository,
     private val webSocketClientProvider: WebSocketClientProvider,
     urlLauncher: UrlLauncher
-) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, userProfileServiceFacade, tradeReadStateRepository, urlLauncher, ) {
+) : MainPresenter(
+    connectivityService,
+    openTradesNotificationService,
+    settingsServiceFacade,
+    tradesServiceFacade,
+    userProfileServiceFacade,
+    tradeReadStateRepository,
+    urlLauncher,
+) {
 
     private var lastConnectedStatus: Boolean? = null
 
@@ -96,6 +104,16 @@ open class ClientMainPresenter(
         log.d { "Reactivating services" }
         deactivateServices()
         activateServices()
+    }
+
+    override fun onResumeServices() {
+        super.onResumeServices()
+        connectivityService.startMonitoring()
+    }
+
+    override fun onPauseServices() {
+        super.onPauseServices()
+        connectivityService.stopMonitoring()
     }
 
     override fun isDevMode(): Boolean {

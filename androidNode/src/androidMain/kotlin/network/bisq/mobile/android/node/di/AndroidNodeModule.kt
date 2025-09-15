@@ -67,7 +67,7 @@ val androidNodeModule = module {
 
     single { AndroidApplicationService.Provider() }
 
-    single<NetworkServiceFacade> { NodeNetworkServiceFacade(get()) }
+    single { NodeNetworkServiceFacade(get()) } bind NetworkServiceFacade::class
 
     single<KmpTorService> { KmpTorService() }
 
@@ -95,7 +95,7 @@ val androidNodeModule = module {
 
     single<ReputationServiceFacade> { NodeReputationServiceFacade(get()) }
 
-    single { NodeConnectivityService(get()) } bind ConnectivityService::class
+    single<ConnectivityService> { NodeConnectivityService(get()) }
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 
