@@ -10,6 +10,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqStepProgressBar
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.ui.helpers.PreviewEnvironment
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -68,7 +69,13 @@ private fun TradeGuideOverviewContentPreview(
 
 @Preview
 @Composable
-private fun TradeGuideOverviewContentPreview_En() = TradeGuideOverviewContentPreview()
+private fun TradeGuideOverviewContentPreview_En() {
+    BisqTheme.Preview {
+        PreviewEnvironment {
+            TradeGuideOverviewContentPreview()
+        }
+    }
+}
 
 @Preview
 @Composable
