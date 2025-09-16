@@ -180,7 +180,11 @@ open class MainPresenter(
         _showAllConnectionsLostDialogue.value = false
     }
 
-    override fun onRestart() {
+    override fun onRestartApp() {
+        //TODO not implemented for client mode yet
+    }
+
+    override fun onTerminateApp() {
         //TODO not implemented for client mode yet
     }
 
@@ -205,5 +209,4 @@ open class MainPresenter(
             )
         }
     }
-
 }

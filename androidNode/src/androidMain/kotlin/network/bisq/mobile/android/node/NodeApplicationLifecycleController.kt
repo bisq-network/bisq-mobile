@@ -175,7 +175,7 @@ class NodeApplicationLifecycleController(
         }
     }
 
-    fun shutdownApp(activity: Activity) {
+    fun terminateApp(activity: Activity) {
         log.e { "NodeApplicationController.shutdownApp" }
         (activity as? MainActivity)?.lifecycle?.addObserver(
             object : DefaultLifecycleObserver {

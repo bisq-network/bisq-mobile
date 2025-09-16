@@ -2,8 +2,6 @@
 
 package network.bisq.mobile.presentation
 
-import platform.UIKit.UIScreen
-import platform.CoreGraphics.CGRectGetWidth
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.painter.Painter
@@ -16,13 +14,16 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.presentation.ui.helpers.IOSCurrentTimeProvider
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import platform.CoreGraphics.CGContextRef
+import platform.CoreGraphics.CGRectGetWidth
 import platform.CoreGraphics.CGRectMake
 import platform.CoreGraphics.CGSize
 import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSData
-import platform.Foundation.NSSelectorFromString
 import platform.Foundation.getBytes
-import platform.UIKit.*
+import platform.UIKit.UIGraphicsBeginImageContextWithOptions
+import platform.UIKit.UIGraphicsEndImageContext
+import platform.UIKit.UIGraphicsGetCurrentContext
+import platform.UIKit.UIScreen
 
 @OptIn(ExperimentalForeignApi::class)
 fun NSData.toByteArray(): ByteArray {
@@ -63,9 +64,10 @@ actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
     }
 }
 
-@OptIn(ExperimentalForeignApi::class)
-actual fun exitApp(view: Any?) {
-    UIApplication.sharedApplication.performSelector(NSSelectorFromString("suspend"))
+actual fun moveAppToBackground(view: Any?) {
+    // NSSelectorFromString("suspend") is a private API, which violates App Store guidelines
+    // UIApplication.sharedApplication.performSelector(NSSelectorFromString("suspend"))
+    // iOS apps are not allowed to programmatically go Home.
 }
 
 actual fun getPlatformCurrentTimeProvider(): TimeProvider = IOSCurrentTimeProvider()

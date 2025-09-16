@@ -8,6 +8,6 @@ expect fun getPlatformPainter(platformImage: PlatformImage): Painter
 
 expect fun getPlatformCurrentTimeProvider(): TimeProvider
 
-expect fun exitApp(view: Any? = null)
+expect fun moveAppToBackground(view: Any?)
 
 expect fun getScreenWidthDp(): Int
