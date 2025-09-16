@@ -6,9 +6,10 @@ import network.bisq.mobile.client.shared.BuildConfig
 const val ARGS_SEPARATOR: Char = 0x1f.toChar()
 const val PARAM_SEPARATOR: Char = 0x1e.toChar()
 
+var bundles: List<ResourceBundle> = GeneratedResourceBundles_en.bundles.values.map { ResourceBundle(it) }
+
 class I18nSupport {
     companion object {
-
         var isReady: Boolean = false
             private set
 
@@ -31,8 +32,7 @@ class I18nSupport {
                 "ru" -> GeneratedResourceBundles_ru.bundles
                 else -> GeneratedResourceBundles_en.bundles
             }
-            val maps: Collection<Map<String, String>> = bundleMapsByName.values
-            bundles = maps.map { ResourceBundle(it) }
+            bundles = bundleMapsByName.values.map { ResourceBundle(it) }
         }
 
         fun has(key: String): Boolean {
@@ -116,5 +116,3 @@ fun String.i18nEncode(vararg arguments: Any): String {
         this + PARAM_SEPARATOR + args
     }
 }
-
-lateinit var bundles: List<ResourceBundle>

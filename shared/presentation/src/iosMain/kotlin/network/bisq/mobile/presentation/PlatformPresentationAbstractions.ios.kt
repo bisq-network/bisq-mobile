@@ -43,7 +43,7 @@ actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
                 val size: CValue<CGSize> = platformImage.image.size
                 return Size(
                     width = size.useContents { this.width.toFloat() },
-                    height = size.useContents { this.width.toFloat() },
+                    height = size.useContents { this.height.toFloat() },
                 )
             }
 
