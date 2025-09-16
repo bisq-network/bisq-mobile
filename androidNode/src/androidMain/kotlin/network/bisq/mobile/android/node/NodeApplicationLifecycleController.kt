@@ -35,6 +35,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainActivity
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.system.exitProcess
 
 /**
@@ -82,7 +83,8 @@ class NodeApplicationLifecycleController(
                 networkServiceFacade.activate()
                 applicationBootstrapFacade.activate()
 
-                if (isTorSupported(applicationService.networkServiceConfig!!)) {
+                val networkServiceConfig: NetworkServiceConfig = applicationService.networkServiceConfig
+                if (isTorSupported(networkServiceConfig)) {
                     // Block until tor is ready or a timeout exception is thrown
                     initializeTor(applicationService).await()
                 }
@@ -238,7 +240,7 @@ class NodeApplicationLifecycleController(
 
             try {
                 log.i { "Starting Tor" }
-                val baseDir = applicationService.config.baseDir!!
+                val baseDir: Path = applicationService.config.baseDir
                 // We block until Tor is ready, or timeout after 60 sec
                 withTimeout(TIMEOUT_SEC * 1000) { kmpTorService.startTor(baseDir).await() }
                 log.i { "Tor successfully started" }
@@ -246,6 +248,9 @@ class NodeApplicationLifecycleController(
             } catch (e: TimeoutCancellationException) {
                 log.e(e) { "Tor initialization not completed after $TIMEOUT_SEC seconds" }
                 result.completeExceptionally(e)
+            } catch (e: CancellationException) {
+                result.cancel(e)
+                throw e
             } catch (e: Exception) {
                 val failure = kmpTorService.startupFailure.value
                 val errorMessage = listOfNotNull(

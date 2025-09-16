@@ -49,10 +49,20 @@ class NodeMainPresenter(
     }
 
     override fun onRestartApp() {
-        nodeApplicationLifecycleController.restartApp(view as Activity)
+        val activity = view as? Activity
+        if (activity == null) {
+            log.e { "onRestartApp: view is not an Activity" }
+            return
+        }
+        nodeApplicationLifecycleController.restartApp(activity)
     }
 
     override fun onTerminateApp() {
-        nodeApplicationLifecycleController.terminateApp(view as Activity)
+        val activity = view as? Activity
+        if (activity == null) {
+            log.e { "onTerminateApp: view is not an Activity" }
+            return
+        }
+        nodeApplicationLifecycleController.terminateApp(activity)
     }
 }

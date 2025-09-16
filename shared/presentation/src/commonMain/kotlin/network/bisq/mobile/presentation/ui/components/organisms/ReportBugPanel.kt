@@ -17,7 +17,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -34,7 +34,7 @@ fun ReportBugPanel(
     isUncaughtException: Boolean,
     onClose: () -> Unit,
 ) {
-    val presenter: MainPresenter = koinInject()
+    val presenter: AppPresenter = koinInject()
     val clipboardManager = LocalClipboardManager.current
     val scrollState = rememberScrollState()
 
@@ -83,7 +83,7 @@ fun ReportBugPanel(
                 text = if (useShutdownButton) "action.shutDown".i18n() else "action.close".i18n(),
                 onClick = {
                     if (useShutdownButton) {
-                        presenter.terminateApp()
+                        presenter.onTerminateApp()
                     } else {
                         onClose.invoke()
                     }
