@@ -96,6 +96,6 @@ class NodeSplashPresenter(
     override fun shutdownApp() {
         log.i { "User requested app shutdown from failed state" }
 
-        nodeApplicationLifecycleController.shutdownApp()
+        nodeApplicationLifecycleController.shutdownApp(view as Activity)
     }
 }
