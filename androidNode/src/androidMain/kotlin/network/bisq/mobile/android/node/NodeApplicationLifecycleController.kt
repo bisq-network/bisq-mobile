@@ -56,6 +56,10 @@ class NodeApplicationLifecycleController(
     private val connectivityService: NodeConnectivityService
 ) : BaseService() {
 
+    companion object {
+        const val TIMEOUT_SEC: Long = 60
+    }
+
     init {
         openTradesNotificationService.notificationServiceController.activityClassForIntents = NodeMainActivity::class.java
     }
@@ -190,19 +194,17 @@ class NodeApplicationLifecycleController(
     private fun initializeTor(applicationService: AndroidApplicationService): CompletableDeferred<Boolean> {
         val result = CompletableDeferred<Boolean>()
         launchIO {
+
             try {
                 log.i { "Starting Tor" }
                 val baseDir = applicationService.config.baseDir!!
-                try {
-                    // We block until Tor is ready, or timeout after 60 sec
-                    withTimeout(60_000) { kmpTorService.startTor(baseDir).await() }
-                } catch (e: TimeoutCancellationException) {
-                    log.e(e) { "Tor initialization not completed after 60 seconds" }
-                    result.completeExceptionally(e)
-                }
-
+                // We block until Tor is ready, or timeout after 60 sec
+                withTimeout(TIMEOUT_SEC * 1000) { kmpTorService.startTor(baseDir).await() }
                 log.i { "Tor successfully started" }
                 result.complete(true)
+            } catch (e: TimeoutCancellationException) {
+                log.e(e) { "Tor initialization not completed after $TIMEOUT_SEC seconds" }
+                result.completeExceptionally(e)
             } catch (e: Exception) {
                 val failure = kmpTorService.startupFailure.value
                 val errorMessage = listOfNotNull(
