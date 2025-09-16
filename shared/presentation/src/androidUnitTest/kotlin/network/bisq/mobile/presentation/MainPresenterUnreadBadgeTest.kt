@@ -287,3 +287,4 @@ class MainPresenterUnreadBadgeTest {
         assertFalse(unread.containsKey("t1"))
     }
 }
+

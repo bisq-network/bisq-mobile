@@ -22,10 +22,12 @@ data class TradeItemPresentationModel(
     val makerUserProfile: UserProfileVO get() = tradeItemPresentationDto.makerUserProfile
     val takerUserProfile: UserProfileVO get() = tradeItemPresentationDto.takerUserProfile
 
-    val directionalTitle: String get() = when {
-        tradeItemPresentationDto.directionalTitle.uppercase().contains("SELLING") -> "bisqEasy.openTrades.table.direction.seller"
-        else -> "bisqEasy.openTrades.table.direction.buyer"
-    }.i18n().uppercase()
+    // Determine direction from the actual trade role instead of parsing a formatted string
+    // This avoids mismatches like showing 'BUYING FROM' while amounts reflect the seller role.
+    val directionalTitle: String get() = if (bisqEasyTradeModel.isSeller)
+        "bisqEasy.openTrades.table.direction.seller".i18n().uppercase()
+    else
+        "bisqEasy.openTrades.table.direction.buyer".i18n().uppercase()
 
     val formattedDate: String get() = tradeItemPresentationDto.formattedDate
     val formattedTime: String get() = tradeItemPresentationDto.formattedTime
