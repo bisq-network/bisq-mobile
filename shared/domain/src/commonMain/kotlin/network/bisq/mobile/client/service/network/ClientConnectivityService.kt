@@ -10,6 +10,7 @@ import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.utils.Logging
+import kotlin.concurrent.Volatile
 
 class ClientConnectivityService(
     private val webSocketClientProvider: WebSocketClientProvider
@@ -23,7 +24,10 @@ class ClientConnectivityService(
         private const val DEFAULT_AVERAGE_TRIP_TIME = -1L // invalid
         const val MIN_REQUESTS_TO_ASSESS_SPEED = 3 // invalid
 
+        @Volatile
         private var sessionTotalRequests = 0L
+
+        @Volatile
         private var averageTripTime = DEFAULT_AVERAGE_TRIP_TIME
 
         fun newRequestRoundTripTime(timeInMs: Long) {
@@ -41,6 +45,7 @@ class ClientConnectivityService(
     }
 
     private var job: Job? = null
+    private val pendingJobs = mutableListOf<Job>()
     private val pendingConnectivityBlocks = mutableListOf<suspend () -> Unit>()
     private val mutex = Mutex()
 
@@ -114,13 +119,16 @@ class ClientConnectivityService(
 
                     blocksToExecute.forEach { block ->
                         // Use service scope intentionally to avoid cancellation
-                        serviceScope.launch {
+                        val job = serviceScope.launch {
                             try {
                                 block()
                             } catch (e: Exception) {
                                 log.e(e) { "Error executing pending connectivity block" }
+                            } finally {
+                                pendingJobs.remove(this.coroutineContext[Job])
                             }
                         }
+                        pendingJobs.add(job)
                     }
                 }
             }
@@ -130,6 +138,8 @@ class ClientConnectivityService(
     fun stopMonitoring() {
         job?.cancel()
         job = null
+        pendingJobs.forEach { it.cancel() }
+        pendingJobs.clear()
         // Clear any pending blocks to prevent memory leaks
         serviceScope.launch {
             mutex.withLock {
