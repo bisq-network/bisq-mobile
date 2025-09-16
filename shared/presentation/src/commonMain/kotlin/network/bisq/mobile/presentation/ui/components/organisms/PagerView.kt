@@ -80,11 +80,10 @@ fun PagerSingleItem(
             .height(420.dp)
             .clip(RoundedCornerShape(18.dp))
             .background(color = BisqTheme.colors.dark_grey30)
-            .padding(vertical = 30.dp, horizontal = 10.dp)
+            .padding(vertical = 20.dp, horizontal = 10.dp)
     ) {
         BisqGap.VHalf()
         Image(painterResource(image), title, modifier = Modifier.size(110.dp))
-        BisqGap.V2()
         BisqText.h2Light(title, textAlign = TextAlign.Center)
         BisqText.h6Light(
             text = desc,
