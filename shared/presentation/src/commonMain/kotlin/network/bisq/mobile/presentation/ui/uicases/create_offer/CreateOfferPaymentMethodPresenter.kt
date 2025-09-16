@@ -80,19 +80,23 @@ class CreateOfferPaymentMethodPresenter(
     fun addCustomPayment(value: String) {
         val normalized = value.trim()
         if (normalized.isEmpty()) return
-        val exists = availableQuoteSidePaymentMethods.value.contains(normalized)
-        if (selectedQuoteSidePaymentMethods.value.size >= 4) {
-            return
-        }
-        if (!exists) {
+        val available = availableQuoteSidePaymentMethods.value
+        val existsIgnoringCase = available.any { it.equals(normalized, ignoreCase = true) }
+
+        if (!existsIgnoringCase && selectedQuoteSidePaymentMethods.value.size >= 4) return
+        if (!existsIgnoringCase) {
             availableQuoteSidePaymentMethods.update { it + normalized }
         }
     }
 
     fun removeCustomPayment(value: String) {
-        availableQuoteSidePaymentMethods.update { it - value }
-        if (selectedQuoteSidePaymentMethods.value.contains(value)) {
-            selectedQuoteSidePaymentMethods.update { it - value }
+        val normalized = value.trim()
+        val target = availableQuoteSidePaymentMethods.value
+            .firstOrNull { it.equals(normalized, ignoreCase = true) }
+            ?: return
+        availableQuoteSidePaymentMethods.update { it - target }
+        if (selectedQuoteSidePaymentMethods.value.contains(target)) {
+            selectedQuoteSidePaymentMethods.update { it - target }
         }
     }
 

@@ -19,7 +19,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.button.CloseIconButt
 import network.bisq.mobile.presentation.ui.helpers.customPaymentIconIndex
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
-val CUSTOM_PAYMENT_ICON_IDS = listOf(
+private val CUSTOM_PAYMENT_ICON_IDS = listOf(
     "custom_payment_1",
     "custom_payment_2",
     "custom_payment_3",
