@@ -48,9 +48,11 @@ class NodeMainPresenter(
         return isDemo() || BuildNodeConfig.IS_DEBUG
     }
 
-    override fun onRestart() {
-        log.i { "User requested app restart from failed state - restarting application" }
-
+    override fun onRestartApp() {
         nodeApplicationLifecycleController.restartApp(view as Activity)
+    }
+
+    override fun onTerminateApp() {
+        nodeApplicationLifecycleController.terminateApp(view as Activity)
     }
 }

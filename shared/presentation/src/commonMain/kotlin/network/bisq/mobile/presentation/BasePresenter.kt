@@ -25,6 +25,7 @@ import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -130,6 +131,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     // For presenters we need a fresh ui scope each as otherwise navigation brings conflicts
     protected val presenterScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     // TODO we can't delegate until all the existing presenters use the new launching coroutine methods
 //    protected val ioScope: CoroutineScope
 //        get() = jobsManager.getIOScope()
@@ -302,7 +304,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         when {
             isAtHome() -> {
                 if (exitWarningShown) {
-                    rootPresenter?.exitApp()
+                    moveAppToBackground()
                     exitWarningShown = false // Reset after action
                 } else {
                     // Show warning first time
@@ -343,7 +345,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
                     if (rootNavigator.currentBackStack.value.size > 1) {
                         wentBack = rootNavigator.popBackStack()
                     } else {
-                        rootPresenter?.exitApp()
+                        moveAppToBackground()
                     }
                 } else {
                     wentBack = rootNavigator.popBackStack()
@@ -491,11 +493,36 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     private fun isRoot() = rootPresenter == null
 
-    fun exitApp() {
-        if (isRoot()) {
-            exitApp(view)
+    fun moveAppToBackground() {
+        if (rootPresenter == null && this is MainPresenter) {
+            moveAppToBackground(view)
+        } else {
+            rootPresenter?.moveAppToBackground()
         }
     }
+
+    fun restartApp() {
+        when {
+            rootPresenter is AppPresenter -> rootPresenter.onRestartApp()
+            this is AppPresenter -> onRestartApp()
+            else -> log.w {
+                "Invalid type. We do not have set the rootPresenter and expect to be the " +
+                        "MainPresenter which implements AppPresenter"
+            }
+        }
+    }
+
+    fun terminateApp() {
+        when {
+            rootPresenter is AppPresenter -> rootPresenter.onTerminateApp()
+            this is AppPresenter -> onTerminateApp()
+            else -> log.w {
+                "Invalid type. We do not have set the rootPresenter and expect to be the " +
+                        "MainPresenter which implements AppPresenter"
+            }
+        }
+    }
+
     open fun navigateToUrl(url: String) {
         disableInteractive()
         rootPresenter?.navigateToUrl(url)
@@ -520,15 +547,15 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     protected fun launchUI(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job {
         return jobsManager.launchUI(context, block)
     }
-    
+
     protected fun launchIO(block: suspend CoroutineScope.() -> Unit): Job {
         return jobsManager.launchIO(block)
     }
-    
+
     protected fun <T> collectUI(flow: Flow<T>, collector: suspend (T) -> Unit): Job {
         return jobsManager.collectUI(flow, collector)
     }
-    
+
     protected fun <T> collectIO(flow: Flow<T>, collector: suspend (T) -> Unit): Job {
         return jobsManager.collectIO(flow, collector)
     }

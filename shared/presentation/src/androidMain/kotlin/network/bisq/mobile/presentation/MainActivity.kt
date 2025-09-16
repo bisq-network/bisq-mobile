@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation
 
+import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -119,12 +120,12 @@ abstract class MainActivity : ComponentActivity(), Logging {
         // Check if the permission is granted
         if (ContextCompat.checkSelfPermission(
                 this,
-                android.Manifest.permission.POST_NOTIFICATIONS
+                Manifest.permission.POST_NOTIFICATIONS
             ) == PackageManager.PERMISSION_GRANTED) {
             // Permission already granted, proceed with posting notifications
         } else {
             // Request permission if not granted
-            requestPermissionLauncher.launch(android.Manifest.permission.POST_NOTIFICATIONS)
+            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
         }
     }
 } 

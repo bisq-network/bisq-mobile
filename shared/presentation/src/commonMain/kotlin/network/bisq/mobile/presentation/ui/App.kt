@@ -62,7 +62,9 @@ interface AppPresenter : ViewPresenter {
 
     fun onCloseConnectionLostDialogue()
 
-    fun onRestart()
+    fun onRestartApp()
+
+    fun onTerminateApp()
 }
 
 @Composable
@@ -146,7 +148,7 @@ fun App() {
                     headline = "connectivity.disconnected.title".i18n(),
                     message = "connectivity.disconnected.message".i18n(),
                     confirmButtonText = "connectivity.disconnected.restart".i18n(),
-                    onConfirm = { presenter.onRestart() },
+                    onConfirm = { presenter.onRestartApp() },
                     onDismiss = { presenter.onCloseConnectionLostDialogue() }
                 )
             }

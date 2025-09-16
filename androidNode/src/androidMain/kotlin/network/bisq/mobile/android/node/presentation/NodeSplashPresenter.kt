@@ -1,6 +1,5 @@
 package network.bisq.mobile.android.node.presentation
 
-import android.app.Activity
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -81,21 +80,5 @@ class NodeSplashPresenter(
     override fun navigateToTrustedNodeSetup() {
         log.w { "navigateToTrustedNodeSetup called on node app. This should never happen." }
         // Ensure we never call TrustedNodeSetup in node mode
-    }
-
-    /**
-     * Use only for corner cases / temporary solutions whilst
-     * investigating a real fix
-     */
-    override fun restartApp() {
-        log.i { "User requested app restart from failed state - restarting application" }
-
-        nodeApplicationLifecycleController.restartApp(view as Activity)
-    }
-
-    override fun shutdownApp() {
-        log.i { "User requested app shutdown from failed state" }
-
-        nodeApplicationLifecycleController.shutdownApp(view as Activity)
     }
 }

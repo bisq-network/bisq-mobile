@@ -81,7 +81,7 @@ fun SplashScreen() {
                 confirmButtonText = "bootstrap.failed.restart".i18n(),
                 dismissButtonText = "bootstrap.failed.shutdown".i18n(),
                 onConfirm = { presenter.onRestart() },
-                onDismiss = { presenter.onShutdown() }
+                onDismiss = { presenter.onTerminateApp() }
             )
         }
     }
