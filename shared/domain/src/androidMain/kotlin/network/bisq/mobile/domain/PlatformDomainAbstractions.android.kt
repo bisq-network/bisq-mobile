@@ -146,7 +146,9 @@ actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {
 }
 
 actual fun setDefaultLocale(language: String) {
-    Locale.setDefault(Locale(language))
+    // Use Locale.forLanguageTag to support BCP‑47 (e.g., "en-US").
+    val locale = runCatching { Locale.forLanguageTag(language) }.getOrElse { Locale(language) }
+    Locale.setDefault(locale)
 }
 
 actual fun getDecimalSeparator(): Char {
