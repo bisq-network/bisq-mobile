@@ -22,8 +22,6 @@ data class TradeItemPresentationModel(
     val makerUserProfile: UserProfileVO get() = tradeItemPresentationDto.makerUserProfile
     val takerUserProfile: UserProfileVO get() = tradeItemPresentationDto.takerUserProfile
 
-    // Determine direction from the actual trade role instead of parsing a formatted string
-    // This avoids mismatches like showing 'BUYING FROM' while amounts reflect the seller role.
     val directionalTitle: String get() = if (bisqEasyTradeModel.isSeller)
         "bisqEasy.openTrades.table.direction.seller".i18n().uppercase()
     else

@@ -16,13 +16,21 @@ import org.koin.dsl.module
  *   BisqTheme.Preview {
  *     PreviewEnvironment { YourContent() }
  *   }
+ *
+ * TODO: WORKAROUND - This is a temporary environment for previewing complex UI Composables
+ *  that depend on navigation and DI.
+ *  **The Long-Term Goal:** Refactor the underlying Composables to be **stateless**.
+ *  A stateless Composable should receive all its data as parameters and expose events
+ *  through lambda functions (e.g., `onClick: () -> Unit`). This makes them easy to
+ *  preview by simply passing static data, eliminating the need for this wrapper.
+ *
  */
 @Composable
 fun PreviewEnvironment(content: @Composable () -> Unit) {
     val root = rememberNavController()
     val tab = rememberNavController()
 
-    // TODO add more modules as needed for different UI Previews
+    // Add more modules as needed for different UI Previews
     KoinApplication(application = {
         modules(
             module {
