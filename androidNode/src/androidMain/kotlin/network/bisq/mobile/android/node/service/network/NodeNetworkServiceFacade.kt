@@ -31,6 +31,7 @@ class NodeNetworkServiceFacade(private val provider: AndroidApplicationService.P
             serviceNodeStatePin = serviceNode.state.addObserver { state ->
                 if (ServiceNode.State.INITIALIZING == state) {
                     defaultNode = serviceNode.defaultNode
+                    requireNotNull(defaultNode) { "defaultNode is not null when state is ServiceNode.State.INITIALIZING" }
                     defaultNode!!.addListener(this)
                     updateNumConnections()
 
