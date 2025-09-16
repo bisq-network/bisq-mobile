@@ -51,8 +51,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 @Composable
-fun TradeDetailsHeader() {
-    val presenter: TradeDetailsHeaderPresenter = koinInject()
+fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()

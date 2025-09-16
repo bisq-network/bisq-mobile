@@ -117,7 +117,7 @@ fun OpenTradeScreen() {
                     .fillMaxSize()
             ) {
                 if (selectedTrade != null) {
-                    TradeDetailsHeader()
+                    TradeDetailsHeader(presenter = headerPresenter)
 
                     if (isIgnoredUser) {
                         BisqGap.V2()
