@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.User
@@ -23,6 +22,14 @@ open class CreateProfilePresenter(
     private val userRepository: UserRepository,
     private val userProfileService: UserProfileServiceFacade
 ) : BasePresenter(mainPresenter) {
+
+    companion object {
+        // The png files used for the image composition are 300 px, thus this is the max size.
+        // The view use 140.dp, which translates with a screen density factor of 2 to 280 px
+        // Most modern phones have rather > 2.5, but size > 300 will not provide better image quality.
+        // The CatHashService also limits to 300px.
+        const val IMAGE_SIZE_IN_PX = 300
+    }
 
     // Properties
     private val _id = MutableStateFlow("")
@@ -139,7 +146,9 @@ open class CreateProfilePresenter(
                 withContext(Dispatchers.Default) {
                     // takes 200 -1000 ms
                     runCatching {
-                        userProfileService.generateKeyPair { id, nym, profileIcon ->
+                        userProfileService.generateKeyPair(
+                            IMAGE_SIZE_IN_PX
+                        ) { id, nym, profileIcon ->
                             setId(id)
                             setNym(nym)
                             setProfileIcon(profileIcon)

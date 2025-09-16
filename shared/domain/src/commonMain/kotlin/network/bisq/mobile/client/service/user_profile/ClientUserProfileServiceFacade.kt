@@ -32,10 +32,6 @@ class ClientUserProfileServiceFacade(
     private val json: Json
 ) : ServiceFacade(), UserProfileServiceFacade {
 
-    companion object {
-        const val DEFAULT_HI_QUALITY_SIZE = 512
-    }
-
     private var keyMaterialResponse: KeyMaterialResponse? = null
 
     // Properties
@@ -61,31 +57,31 @@ class ClientUserProfileServiceFacade(
         super<ServiceFacade>.activate()
 
         serviceScope.launch(Dispatchers.Default) {
-          // Initialize selected user profile with proper error handling
-          runCatching {
-              getSelectedUserProfile()
-          }.onSuccess { profile ->
-              _selectedUserProfile.value = profile
-          }.onFailure { e ->
-              if (e is CancellationException) {
-                  throw e
-              }
-              // Expected at first run
-              log.d("Error getting user profile: ${e.message}")
-          }
+            // Initialize selected user profile with proper error handling
+            runCatching {
+                getSelectedUserProfile()
+            }.onSuccess { profile ->
+                _selectedUserProfile.value = profile
+            }.onFailure { e ->
+                if (e is CancellationException) {
+                    throw e
+                }
+                // Expected at first run
+                log.d("Error getting user profile: ${e.message}")
+            }
 
-          // Ensure ignored users cache is initialized before any hot-path calls
-          try {
-              getIgnoredUserProfileIds()
-              log.d { "Ignored users cache initialized successfully" }
-          } catch (e: Exception) {
-              log.e(e) { "Failed to initialize ignored users cache during activation" }
-              // Set empty cache to prevent repeated network calls
-              ignoredUserIdsMutex.withLock {
-                  _ignoredUserIds.value = emptySet()
-                  isIgnoredUsersCacheInitialized = true
-              }
-          }
+            // Ensure ignored users cache is initialized before any hot-path calls
+            try {
+                getIgnoredUserProfileIds()
+                log.d { "Ignored users cache initialized successfully" }
+            } catch (e: Exception) {
+                log.e(e) { "Failed to initialize ignored users cache during activation" }
+                // Set empty cache to prevent repeated network calls
+                ignoredUserIdsMutex.withLock {
+                    _ignoredUserIds.value = emptySet()
+                    isIgnoredUsersCacheInitialized = true
+                }
+            }
         }
 
         observeNumUserProfiles()
@@ -108,7 +104,7 @@ class ClientUserProfileServiceFacade(
     }
 
     @OptIn(ExperimentalEncodingApi::class)
-    override suspend fun generateKeyPair(result: (String, String, PlatformImage?) -> Unit) {
+    override suspend fun generateKeyPair(imageSize: Int, result: (String, String, PlatformImage?) -> Unit) {
         val ts = Clock.System.now().toEpochMilliseconds()
         val apiResult = apiGateway.getKeyMaterial()
         if (apiResult.isFailure) {
@@ -120,7 +116,7 @@ class ClientUserProfileServiceFacade(
         val pubKeyHash: ByteArray = preparedData.id.hexToByteArray()
         val solutionEncoded = preparedData.proofOfWork.solutionEncoded
         val image: PlatformImage? = clientCatHashService.getImage(
-            pubKeyHash, solutionEncoded.decodeBase64Bytes(), 0, DEFAULT_HI_QUALITY_SIZE
+            pubKeyHash, solutionEncoded.decodeBase64Bytes(), 0, imageSize
         )
 
         result(preparedData.id, preparedData.nym, image)

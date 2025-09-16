@@ -54,7 +54,7 @@ class MainPresenterUnreadBadgeTest {
     fun `trades in final states are excluded from unread badge map`() = runTest {
         // Mock top-level android-specific function called from MainPresenter.init
         mockkStatic("network.bisq.mobile.presentation.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
+        every { ScreenInfo.widthPixels } returns 480
         // Dependencies
         val connectivity = mockk<ConnectivityService>(relaxed = true)
         val notifications = mockk<OpenTradesNotificationService>(relaxed = true)
@@ -126,7 +126,7 @@ class MainPresenterUnreadBadgeTest {
     private fun buildFixture(): Fixture {
         // Mock top-level android-specific function called from MainPresenter.init
         mockkStatic("network.bisq.mobile.presentation.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
+        every { ScreenInfo.widthPixels } returns 480
 
         val connectivity = mockk<ConnectivityService>(relaxed = true)
         val notifications = mockk<OpenTradesNotificationService>(relaxed = true)

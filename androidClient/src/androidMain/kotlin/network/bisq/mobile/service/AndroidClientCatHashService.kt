@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import network.bisq.mobile.client.cathash.BaseClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.utils.AndroidImageUtil
 import network.bisq.mobile.utils.AndroidImageUtil.PATH_TO_DRAWABLE
 import java.io.File
@@ -29,14 +30,18 @@ import java.io.File
 const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
 
 class AndroidClientCatHashService(private val context: Context, filesDir: String) :
-    BaseClientCatHashService("$filesDir/Bisq2_mobile") {
+    BaseClientCatHashService("$filesDir/Bisq2_mobile"), Logging {
     override fun composeImage(paths: Array<String>, size: Int): PlatformImage {
+        if (size > 300) {
+            log.w { "The image size is limited to 300 px, as the png files used for the composition are 300 px." }
+        }
+        val imageSize = minOf(300, size)
         val profileIcon = AndroidImageUtil.composeImage(
             context,
             CAT_HASH_PATH,
             paths,
-            size,
-            size
+            imageSize,
+            imageSize
         )
         return PlatformImage(profileIcon)
     }

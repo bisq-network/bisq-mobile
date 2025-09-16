@@ -7,14 +7,14 @@ import android.graphics.Canvas
 import android.graphics.Paint
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.createBitmap
+import androidx.core.graphics.scale
 import network.bisq.mobile.domain.utils.Logging
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
-import androidx.core.graphics.createBitmap
-import androidx.core.graphics.scale
 
 /**
  * Android images utility functions

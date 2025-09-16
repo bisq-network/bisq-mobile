@@ -79,6 +79,7 @@ actual fun getDeviceLanguageCode(): String {
 }
 
 private var globalOnCrash: ((Throwable) -> Unit)? = null
+
 @OptIn(ExperimentalForeignApi::class, ExperimentalNativeApi::class)
 @Throws(Exception::class)
 actual fun setupUncaughtExceptionHandler(onCrash: (Throwable) -> Unit) {
@@ -182,8 +183,11 @@ private fun parseProperties(content: String): Map<String, String> {
             if (!escaped) {
                 when (c) {
                     '\\' -> escaped = true
-                    '=', ':' -> if (inKey) { inKey = false } else appendTarget(c)
-                    ' ' , '\t', '\u000c' -> if (inKey) {
+                    '=', ':' -> if (inKey) {
+                        inKey = false
+                    } else appendTarget(c)
+
+                    ' ', '\t', '\u000c' -> if (inKey) {
                         // whitespace can separate key and value
                         // skip consecutive whitespace and set to value
                         var j = idx + 1
@@ -195,6 +199,7 @@ private fun parseProperties(content: String): Map<String, String> {
                             inKey = false
                         }
                     } else appendTarget(c)
+
                     else -> appendTarget(c)
                 }
             } else {
@@ -226,6 +231,7 @@ private fun parseProperties(content: String): Map<String, String> {
                         // Reconstruct the rest after processing unicode
                         // Simplify by appending as is when complex; to keep robust we fall back
                     }
+
                     else -> appendTarget(c)
                 }
                 escaped = false
@@ -243,7 +249,9 @@ private fun parseProperties(content: String): Map<String, String> {
 private fun endsWithUnescapedBackslash(s: String): Boolean {
     var count = 0
     var i = s.length - 1
-    while (i >= 0 && s[i] == '\\') { count++; i-- }
+    while (i >= 0 && s[i] == '\\') {
+        count++; i--
+    }
     return count % 2 == 1
 }
 

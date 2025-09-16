@@ -41,8 +41,9 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     companion object {
         private const val AVATAR_VERSION = 0
-        private const val DEFAULT_HI_QUALITY_SIZE = 512.0
-        private const val DEFAULT_SIZE = 120.0
+
+        // Image size > 60px would not get cached
+        private const val DEFAULT_SIZE = 60
     }
 
     // Dependencies
@@ -105,7 +106,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         return userService.userIdentityService.userIdentities.isNotEmpty()
     }
 
-    override suspend fun generateKeyPair(result: (String, String, PlatformImage?) -> Unit) {
+    override suspend fun generateKeyPair(imageSize: Int, result: (String, String, PlatformImage?) -> Unit) {
         keyPair = securityService.keyBundleService.generateKeyPair()
         pubKeyHash = DigestUtil.hash(keyPair!!.public.encoded)
 
@@ -119,7 +120,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         val solution = proofOfWork!!.solution
         val nym = NymIdGenerator.generate(pubKeyHash, solution)
         val profileIcon: PlatformImage = catHashService.getImage(
-            pubKeyHash, solution, 0, DEFAULT_HI_QUALITY_SIZE
+            pubKeyHash, solution, 0, imageSize.toDouble()
         )
         result(id!!, nym!!, profileIcon)
     }
@@ -216,7 +217,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
                         Base64.getDecoder().decode(userProfile.networkId.pubKey.hash),
                         Base64.getDecoder().decode(userProfile.proofOfWork.solutionEncoded),
                         userProfile.avatarVersion,
-                        DEFAULT_SIZE
+                        DEFAULT_SIZE.toDouble()
                     )
                 } catch (e: Exception) {
                     log.e(e) { "Avatar generation failed for ${userProfile.nym}" }
