@@ -4,11 +4,14 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Process
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import bisq.common.network.TransportType
 import bisq.network.NetworkServiceConfig
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
@@ -29,14 +32,16 @@ import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.presentation.MainActivity
 import java.nio.file.Path
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.system.exitProcess
 
 /**
  * Node main presenter has a very different setup than the rest of the apps (bisq2 core dependencies)
  */
 class NodeApplicationLifecycleController(
-    openTradesNotificationService: OpenTradesNotificationService,
+    private val openTradesNotificationService: OpenTradesNotificationService,
     private val accountsServiceFacade: AccountsServiceFacade,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
@@ -53,7 +58,7 @@ class NodeApplicationLifecycleController(
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val kmpTorService: KmpTorService,
     private val networkServiceFacade: NetworkServiceFacade,
-    private val connectivityService: NodeConnectivityService
+    private val connectivityService: NodeConnectivityService,
 ) : BaseService() {
 
     companion object {
@@ -63,6 +68,8 @@ class NodeApplicationLifecycleController(
     init {
         openTradesNotificationService.notificationServiceController.activityClassForIntents = NodeMainActivity::class.java
     }
+
+    private val alreadyKilled = AtomicBoolean(false)
 
     fun initialize(filesDirsPath: Path, applicationContext: Context) {
         log.i { "Initialize core services and Tor" }
@@ -131,45 +138,61 @@ class NodeApplicationLifecycleController(
     fun restartApp(activity: Activity) {
         log.e { "NodeApplicationController.restartApp" }
         launchIO {
-            runCatching {
+            try {
+                // Blocking wait until services and tor is shut down
+                shutdownServicesAndTor()
+            } catch (e: Exception) {
+                log.e("Error at shutdownServicesAndTor", e)
+            } finally {
                 try {
-                    // Blocking wait until services and tor is shut down
-                    shutdownServicesAndTor()
-                } catch (e: Exception) {
-                    log.e("Error at shutdownServicesAndTor", e)
-                }
-                try {
-                    // val activity = view as Activity
-                    withContext(Dispatchers.Main) {
-                        activity.finishAffinity()
-                    }
+                    val restartIntent = activity.packageManager
+                        .getLaunchIntentForPackage(activity.packageName)
+                        ?.apply {
+                            addFlags(
+                                Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                                        Intent.FLAG_ACTIVITY_NEW_TASK or
+                                        Intent.FLAG_ACTIVITY_CLEAR_TASK
+                            )
+                        }
 
-                    // Create restart intent
-                    val intent = activity.packageManager.getLaunchIntentForPackage(activity.packageName)
-                    intent?.let { restartIntent ->
-                        restartIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                        restartIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        restartIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-
-                        // launch process
-                        activity.startActivity(restartIntent)
-                    } ?: run {
+                    if (restartIntent != null) {
+                        withContext(Dispatchers.Main) {
+                            // Start from application context so we don’t depend on dying Activity
+                            activity.applicationContext.startActivity(restartIntent)
+                            activity.finishAffinity()
+                        }
+                    } else {
                         log.e { "Could not create restart intent" }
                     }
                 } catch (e: Exception) {
                     log.e("Error at shutdownServicesAndTor", e)
                 } finally {
-                    Process.killProcess(Process.myPid())
-                    exitProcess(0) // Guarantees JVM exit
+                    // Add a bit of delay to give activity shutdown and start more time.
+                    delay(400)
+                    killProcess()
                 }
-            }.onFailure { e ->
-                log.e("Error at restartApp", e)
             }
         }
     }
 
-    fun shutdownApp() {
+    fun shutdownApp(activity: Activity) {
         log.e { "NodeApplicationController.shutdownApp" }
+        (activity as? MainActivity)?.lifecycle?.addObserver(
+            object : DefaultLifecycleObserver {
+                override fun onDestroy(owner: LifecycleOwner) {
+                    launchIO {
+                        // Add a bit of delay to give activity shutdown more time.
+                        delay(200)
+                        killProcess()
+                    }
+                }
+            }
+        )
+
+        // Stop ForegroundService even it would get stopped by the onDestroy as well, but as that is not guaranteed to be executed,
+        // lets stop early to avoid that its not stopped gracefully and cause warnings or restarts.
+        openTradesNotificationService.stopNotificationService()
+
         launchIO {
             try {
                 // Blocking wait until services and tor is shut down
@@ -178,16 +201,34 @@ class NodeApplicationLifecycleController(
                 log.e("Error at shutdownServicesAndTor", e)
             } finally {
                 // Ensure all UI is finished
-                /*  val activity = view as Activity
-                  withContext(Dispatchers.Main) {
-                      activity.finishAffinity()
-                  }*/
+                withContext(Dispatchers.Main) {
+                    activity.finishAffinity()
+                }
 
-                // TODO check handling of BisqForegroundService in that case
+                // BisqForegroundService is stopped by onDestroy at MainPresenter
 
-                Process.killProcess(Process.myPid())
-                exitProcess(0) // Guarantees JVM exit
+                delay(600)
+                log.w {
+                    "We have called activity.finishAffinity() but our onDestroy callback was not called yet. " +
+                            "We kill the process now even the activity might have still not shut down"
+                }
+
+                // In case we would not get called the DefaultLifecycleObserver.onDestroy we exit after a 1 second delay
+                // We should never reach that point...
+
+                // I case the ForegroundService was not stopped yet we try again
+                openTradesNotificationService.stopNotificationService()
+
+                delay(200)
+                killProcess()
             }
+        }
+    }
+
+    private fun killProcess() {
+        if (alreadyKilled.compareAndSet(false, true)) {
+            Process.killProcess(Process.myPid())
+            exitProcess(0)
         }
     }
 
