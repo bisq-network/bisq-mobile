@@ -29,7 +29,7 @@ import org.koin.android.ext.android.inject
  * Base class for Bisq Android apps Main Activities
  */
 abstract class MainActivity : ComponentActivity(), Logging {
-    companion object Companion {
+    companion object {
         const val BACKGROUND_COLOR_CODE = 0xFF1C1C1C
     }
 
