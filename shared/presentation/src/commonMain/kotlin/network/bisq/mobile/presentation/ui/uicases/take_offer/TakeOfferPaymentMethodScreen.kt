@@ -17,7 +17,6 @@ fun TakeOfferPaymentMethodScreen() {
     RememberPresenterLifecycle(presenter)
 
     val quoteSidePaymentMethod: MutableStateFlow<Set<String>> = remember { MutableStateFlow(emptySet()) }
-    val availableQuoteSidePaymentMethods = remember { presenter.quoteSidePaymentMethods }
 
     LaunchedEffect(Unit) {
         presenter.quoteSidePaymentMethod.collect { value ->
@@ -43,18 +42,16 @@ fun TakeOfferPaymentMethodScreen() {
             BisqGap.V2()
             BisqGap.V2()
 
-            /*
             PaymentMethodCard(
                 title = (if (presenter.isTakerBtcBuyer)
                     "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.seller"
                 else
                     "bisqEasy.takeOffer.paymentMethods.subtitle.fiat.buyer").i18n(presenter.quoteCurrencyCode),
                 imagePaths = presenter.getQuoteSidePaymentMethodsImagePaths(),
-                availablePaymentMethods = availableQuoteSidePaymentMethods,
+                availablePaymentMethods = presenter.quoteSidePaymentMethods.toMutableSet(),
                 selectedPaymentMethods = quoteSidePaymentMethod,
                 onToggle = { selected -> presenter.onQuoteSidePaymentMethodSelected(selected) },
             )
-            */
         }
     }
 

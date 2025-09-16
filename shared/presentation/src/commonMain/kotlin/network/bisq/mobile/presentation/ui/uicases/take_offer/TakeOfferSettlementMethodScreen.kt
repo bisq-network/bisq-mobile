@@ -42,18 +42,16 @@ fun TakeOfferSettlementMethodScreen() {
             BisqGap.V2()
             BisqGap.V2()
 
-            /*
             PaymentMethodCard(
                 title = (if (presenter.isTakerBtcBuyer)
                     "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.seller"
                 else
                     "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.buyer").i18n(),
                 imagePaths = presenter.getBaseSidePaymentMethodsImagePaths(),
-                availablePaymentMethods = presenter.baseSidePaymentMethods,
+                availablePaymentMethods = presenter.baseSidePaymentMethods.toMutableSet(),
                 selectedPaymentMethods = baseSidePaymentMethod,
                 onToggle = { selected -> presenter.onBaseSidePaymentMethodSelected(selected) },
             )
-            */
         }
     }
 

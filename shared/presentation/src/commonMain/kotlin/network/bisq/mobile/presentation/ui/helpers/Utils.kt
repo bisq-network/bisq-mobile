@@ -12,15 +12,14 @@ fun customPaymentIconIndex(
     // 32-byte SHA-256 over the input (multiplatform via Okio)
     val hash = customPaymentMethod.encodeUtf8().sha256().toByteArray()
 
-    // Use the first 4 bytes (big-endian) as an Int
-    val b0 = hash[0].toInt() and 0xFF
-    val b1 = hash[1].toInt() and 0xFF
-    val b2 = hash[2].toInt() and 0xFF
-    val b3 = hash[3].toInt() and 0xFF
-    val raw = (b0 shl 24) or (b1 shl 16) or (b2 shl 8) or b3
+    val i =
+        ((hash[28].toInt() and 0xFF) shl 24) or
+                ((hash[29].toInt() and 0xFF) shl 16) or
+                ((hash[30].toInt() and 0xFF) shl 8)  or
+                ( hash[31].toInt() and 0xFF)
 
-    // Normalize to non-negative (guard against Int.MIN_VALUE)
-    val nonNegative = if (raw == Int.MIN_VALUE) 0 else abs(raw)
+    // Mimic Math.abs(int) (guard MIN_VALUE)
+    val nonNegative = if (i == Int.MIN_VALUE) 0 else abs(i)
 
-    return nonNegative % customPaymentIconLength + 1
+    return nonNegative % customPaymentIconLength
 }

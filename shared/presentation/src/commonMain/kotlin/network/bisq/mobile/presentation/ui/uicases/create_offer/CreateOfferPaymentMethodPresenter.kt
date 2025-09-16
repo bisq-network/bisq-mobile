@@ -18,7 +18,6 @@ class CreateOfferPaymentMethodPresenter(
     var availableBaseSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow((emptySet()))
     val selectedQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
     val selectedBaseSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
-    val customPaymentMethodCount: MutableStateFlow<Int> = MutableStateFlow(0)
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
 
@@ -41,6 +40,8 @@ class CreateOfferPaymentMethodPresenter(
 
         selectedQuoteSidePaymentMethods.value = createOfferModel.selectedQuoteSidePaymentMethods.toMutableSet()
         selectedBaseSidePaymentMethods.value = createOfferModel.selectedBaseSidePaymentMethods.toMutableSet()
+
+        availableQuoteSidePaymentMethods.update { it + selectedQuoteSidePaymentMethods.value }
     }
 
     override fun onViewUnattaching() {
@@ -77,16 +78,14 @@ class CreateOfferPaymentMethodPresenter(
     }
 
     fun addCustomPayment(value: String) {
-        if (customPaymentMethodCount.value >= 3) {
+        if (selectedQuoteSidePaymentMethods.value.size >= 4) {
             return
         }
         availableQuoteSidePaymentMethods.update { it + value }
-        customPaymentMethodCount.update { it + 1 }
     }
 
     fun removeCustomPayment(value: String) {
         availableQuoteSidePaymentMethods.update { it - value }
-        customPaymentMethodCount.update { it - 1 }
         if (selectedQuoteSidePaymentMethods.value.contains(value)) {
             selectedQuoteSidePaymentMethods.update { it - value }
         }

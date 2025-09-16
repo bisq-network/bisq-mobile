@@ -20,7 +20,6 @@ fun CreateOfferPaymentMethodScreen() {
 
     val selectedQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = remember { presenter.selectedQuoteSidePaymentMethods }
     val availableQuoteSidePaymentMethods by presenter.availableQuoteSidePaymentMethods.collectAsState()
-    val customPaymentMethodCount by presenter.customPaymentMethodCount.collectAsState()
 
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.createOffer.progress.quoteSidePaymentMethod".i18n(),
@@ -43,8 +42,8 @@ fun CreateOfferPaymentMethodScreen() {
             imagePaths = presenter.getQuoteSidePaymentMethodsImagePaths(),
             availablePaymentMethods = availableQuoteSidePaymentMethods,
             selectedPaymentMethods = selectedQuoteSidePaymentMethods,
-            customPaymentMethodCount,
             onToggle = { selected -> presenter.onToggleQuoteSidePaymentMethod(selected) },
+            showCustomPayment = true,
             onAddCustomPayment = { customPayment ->
                 presenter.addCustomPayment(customPayment)
                 presenter.onToggleQuoteSidePaymentMethod(customPayment)

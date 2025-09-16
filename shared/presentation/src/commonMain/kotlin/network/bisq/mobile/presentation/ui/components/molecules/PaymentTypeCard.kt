@@ -27,10 +27,20 @@ fun PaymentTypeCard(
     onClick: (String) -> Unit,
     onRemove: ((String) -> Unit)? = null,
     isSelected: Boolean = false,
-    index: Int = 1,
     isCustomPaymentMethod: Boolean = false,
 ) {
-    val customIndex = customPaymentIconIndex(title, 6)
+    val customPaymentIconIds = listOf(
+        "custom_payment_1",
+        "custom_payment_2",
+        "custom_payment_3",
+        "custom_payment_4",
+        "custom_payment_5",
+        "custom_payment_6",
+    );
+    val customIndex = if(isCustomPaymentMethod)
+        customPaymentIconIndex(title, 6)
+    else
+        0
     val backgroundColor = if (isSelected) {
         BisqTheme.colors.primaryDim
     } else {
@@ -54,7 +64,7 @@ fun PaymentTypeCard(
         Box {
             DynamicImage(
                 path = image,
-                fallbackPath = "drawable/payment/fiat/custom_payment_${customIndex}.png",
+                fallbackPath = "drawable/payment/fiat/${customPaymentIconIds[customIndex]}.png",
                 contentDescription =  if (isCustomPaymentMethod) "mobile.components.paymentTypeCard.customPaymentMethod".i18n(title) else title,
                 modifier = Modifier.size(20.dp)
             )
