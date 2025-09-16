@@ -46,9 +46,7 @@ class TradeDetailsHeaderPresenter(
         COMPLETED
     }
 
-    private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> =
-        MutableStateFlow(tradesServiceFacade.selectedTrade.value)
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade.asStateFlow()
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
     var direction: String = ""
     var directionEnum: DirectionEnum = DirectionEnum.BUY

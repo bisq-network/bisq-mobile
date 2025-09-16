@@ -104,14 +104,11 @@ class OpenTradeListPresenter(
 
     private fun navigateToOpenTrade(openTradeItem: TradeItemPresentationModel) {
         try {
-            disableInteractive()
             tradesServiceFacade.selectOpenTrade(openTradeItem.tradeId)
             navigateTo(Routes.OpenTrade)
         } catch (e: Exception) {
             log.e(e) { "Failed to open trade ${openTradeItem.tradeId}" }
             showSnackbar("mobile.bisqEasy.openTrades.failed".i18n(e.message ?: "unknown"))
-        } finally {
-            enableInteractive()
         }
     }
 }
