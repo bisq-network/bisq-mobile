@@ -41,7 +41,7 @@ import kotlin.system.exitProcess
 /**
  * Node main presenter has a very different setup than the rest of the apps (bisq2 core dependencies)
  */
-class NodeApplicationLifecycleController(
+class NodeApplicationLifecycleService(
     private val openTradesNotificationService: OpenTradesNotificationService,
     private val accountsServiceFacade: AccountsServiceFacade,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
@@ -62,7 +62,7 @@ class NodeApplicationLifecycleController(
     private val connectivityService: NodeConnectivityService,
 ) : BaseService() {
 
-    companion object {
+    companion object Companion {
         const val TIMEOUT_SEC: Long = 60
     }
 
@@ -106,13 +106,11 @@ class NodeApplicationLifecycleController(
     }
 
     fun shutdown() {
-        log.e { "NodeMainPresenter.onDestroying" }
         log.i { "Destroying NodeMainPresenter" }
         shutdownServicesAndTor()
     }
 
     private fun shutdownServicesAndTor() {
-        log.e { "NodeApplicationController.shutdownServicesAndTor" }
         try {
             log.i { "Stopping service facades" }
             deactivateServiceFacades()
@@ -138,7 +136,6 @@ class NodeApplicationLifecycleController(
 
 
     fun restartApp(activity: Activity) {
-        log.e { "NodeApplicationController.restartApp" }
         launchIO {
             try {
                 // Blocking wait until services and tor is shut down
@@ -178,7 +175,6 @@ class NodeApplicationLifecycleController(
     }
 
     fun terminateApp(activity: Activity) {
-        log.e { "NodeApplicationController.shutdownApp" }
         (activity as? MainActivity)?.lifecycle?.addObserver(
             object : DefaultLifecycleObserver {
                 override fun onDestroy(owner: LifecycleOwner) {

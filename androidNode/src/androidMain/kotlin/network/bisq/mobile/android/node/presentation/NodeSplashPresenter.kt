@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import network.bisq.mobile.android.node.NodeApplicationLifecycleController
+import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
@@ -26,7 +26,7 @@ class NodeSplashPresenter(
     settingsServiceFacade: SettingsServiceFacade,
     languageServiceFacade: LanguageServiceFacade,
     networkServiceFacade: NetworkServiceFacade,
-    private val nodeApplicationLifecycleController: NodeApplicationLifecycleController
+    private val nodeApplicationLifecycleService: NodeApplicationLifecycleService
 ) : SplashPresenter(
     mainPresenter,
     applicationBootstrapFacade,

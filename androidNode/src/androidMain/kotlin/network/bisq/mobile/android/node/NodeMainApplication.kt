@@ -53,8 +53,8 @@ class NodeMainApplication : MainApplication(), ComponentCallbacks2 {
         // The lifecycle of those is tied to the lifecycle of the Application/Process not to the lifecycle of the MainActivity.
         // As Android does not provide any callback when the process gets terminated we cannot gracefully shutdown the services and tor.
         // Only if the user shutdown or restart we can do that.
-        val nodeApplicationLifecycleController: NodeApplicationLifecycleController = get()
-        nodeApplicationLifecycleController.initialize(filesDir.toPath(), applicationContext)
+        val nodeApplicationLifecycleService: NodeApplicationLifecycleService = get()
+        nodeApplicationLifecycleService.initialize(filesDir.toPath(), applicationContext)
 
         // Note: NodeMainApplication already implements ComponentCallbacks2, so onTrimMemory is automatically called
         // No need to registerComponentCallbacks(this) - that would cause infinite recursion

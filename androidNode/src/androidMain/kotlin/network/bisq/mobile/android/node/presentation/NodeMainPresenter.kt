@@ -2,7 +2,7 @@ package network.bisq.mobile.android.node.presentation
 
 import android.app.Activity
 import network.bisq.mobile.android.node.BuildNodeConfig
-import network.bisq.mobile.android.node.NodeApplicationLifecycleController
+import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.NodeMainActivity
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.UrlLauncher
@@ -22,7 +22,7 @@ class NodeMainPresenter(
     tradesServiceFacade: TradesServiceFacade,
     userProfileServiceFacade: UserProfileServiceFacade,
     tradeReadStateRepository: TradeReadStateRepository,
-    private val nodeApplicationLifecycleController: NodeApplicationLifecycleController
+    private val nodeApplicationLifecycleService: NodeApplicationLifecycleService
 ) : MainPresenter(
     openTradesNotificationService,
     settingsServiceFacade,
@@ -54,7 +54,7 @@ class NodeMainPresenter(
             log.e { "onRestartApp: view is not an Activity" }
             return
         }
-        nodeApplicationLifecycleController.restartApp(activity)
+        nodeApplicationLifecycleService.restartApp(activity)
     }
 
     override fun onTerminateApp() {
@@ -63,6 +63,6 @@ class NodeMainPresenter(
             log.e { "onTerminateApp: view is not an Activity" }
             return
         }
-        nodeApplicationLifecycleController.terminateApp(activity)
+        nodeApplicationLifecycleService.terminateApp(activity)
     }
 }

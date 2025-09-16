@@ -1,7 +1,7 @@
 package network.bisq.mobile.android.node.di
 
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.NodeApplicationLifecycleController
+import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.presentation.NodeAboutPresenter
 import network.bisq.mobile.android.node.presentation.NodeGeneralSettingsPresenter
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
@@ -99,8 +99,8 @@ val androidNodeModule = module {
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 
-    single<NodeApplicationLifecycleController> {
-        NodeApplicationLifecycleController(
+    single<NodeApplicationLifecycleService> {
+        NodeApplicationLifecycleService(
             get(),
             get(),
             get(),
