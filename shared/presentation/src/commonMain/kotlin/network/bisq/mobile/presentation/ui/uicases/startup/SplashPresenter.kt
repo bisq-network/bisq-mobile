@@ -36,8 +36,6 @@ open class SplashPresenter(
     val currentBootstrapStage: StateFlow<String> get() = applicationBootstrapFacade.currentBootstrapStage
     val shouldShowProgressToast: StateFlow<Boolean> get() = applicationBootstrapFacade.shouldShowProgressToast
 
-    private var hasNavigatedAway = false
-
     override fun onViewAttached() {
         super.onViewAttached()
 
@@ -46,8 +44,7 @@ open class SplashPresenter(
         }
 
         collectUI(progress) { value ->
-            if (value >= 1.0f && !hasNavigatedAway) {
-                hasNavigatedAway = true
+            if (value >= 1.0f) {
                 navigateToNextScreen()
             }
         }
