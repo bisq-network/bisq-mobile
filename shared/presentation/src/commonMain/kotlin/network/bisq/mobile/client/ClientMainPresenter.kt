@@ -1,8 +1,9 @@
 package network.bisq.mobile.client
 
 import kotlinx.coroutines.withContext
+import network.bisq.mobile.client.network.HttpClientService
 import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
@@ -42,7 +43,8 @@ open class ClientMainPresenter(
     userProfileServiceFacade: UserProfileServiceFacade,
     openTradesNotificationService: OpenTradesNotificationService,
     private val tradeReadStateRepository: TradeReadStateRepository,
-    private val webSocketClientProvider: WebSocketClientProvider,
+    private val httpClientService: HttpClientService,
+    private val webSocketClientService: WebSocketClientService,
     urlLauncher: UrlLauncher
 ) : MainPresenter(connectivityService, openTradesNotificationService, settingsServiceFacade, tradesServiceFacade, userProfileServiceFacade, tradeReadStateRepository, urlLauncher, ) {
 
@@ -50,6 +52,7 @@ open class ClientMainPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
+        initNetwork()
         validateVersion()
         activateServices()
         listenForConnectivity()
@@ -60,11 +63,21 @@ open class ClientMainPresenter(
         super.onViewUnattaching()
     }
 
+    private fun initNetwork() {
+        runCatching {
+            httpClientService.activate()
+            webSocketClientService.activate()
+        }.onFailure { e ->
+            log.w { "Error initializing network services: ${e.message}" }
+            handleInitializationError(e, "network initializiation")
+        }
+    }
+
     private fun listenForConnectivity() {
         connectivityService.startMonitoring()
         launchUI {
-            webSocketClientProvider.get().webSocketClientStatus.collect {
-                if (webSocketClientProvider.get().isConnected() && lastConnectedStatus != true) {
+            webSocketClientService.connectionState.collect {
+                if (webSocketClientService.isConnected() && lastConnectedStatus != true) {
                     log.d { "connectivity status changed to $it - reconnecting services" }
                     reactivateServices()
                     lastConnectedStatus = true

@@ -38,12 +38,16 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.core)
             implementation(libs.koin.android)
+            implementation(libs.kmp.tor.resource.exec)
+            // FIXME hack to avoid the issue that org.slf4j is not found as we exclude it in shared
+            implementation( libs.ktor.client.okhttp)
         }
         androidUnitTest.dependencies {
             implementation(libs.kotlin.test)
         }
         iosMain.dependencies {
             implementation(compose.runtime)
+            implementation(libs.kmp.tor.resource.noexec)
         }
     }
 }
@@ -129,8 +133,7 @@ android {
 dependencies {
     implementation(project(":shared:presentation"))
     implementation(project(":shared:domain"))
-    // FIXME hack to avoid the issue that org.slf4j is not found as we exclude it in shared
-    implementation(libs.ktor.client.cio)
+    implementation(libs.kmp.tor.runtime)
     debugImplementation(compose.uiTooling)
 
     implementation(libs.androidx.core.splashscreen)

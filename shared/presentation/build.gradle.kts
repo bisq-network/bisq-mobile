@@ -57,13 +57,12 @@ kotlin {
             implementation(libs.compose.material.icons.extended)
             implementation(libs.androidx.lifecycle.viewmodel)
             implementation(libs.androidx.lifecycle.runtime.compose)
-            implementation(libs.logging.kermit)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
             
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
-            implementation(libs.navigation.compose)
+            api(libs.navigation.compose) // because of NavOptionsBuilder
             implementation(libs.bignum)
             implementation(libs.coil.compose)
         }

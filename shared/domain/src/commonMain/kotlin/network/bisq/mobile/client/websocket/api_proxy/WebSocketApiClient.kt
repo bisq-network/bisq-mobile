@@ -1,10 +1,7 @@
 package network.bisq.mobile.client.websocket.api_proxy
 
-import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.accept
-import io.ktor.client.request.patch
-import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
@@ -12,10 +9,11 @@ import io.ktor.http.ContentType
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import io.ktor.http.path
 import kotlinx.coroutines.CancellationException
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.network.HttpClientService
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.domain.service.network.ConnectivityService
@@ -25,11 +23,9 @@ import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class WebSocketApiClient(
-    val httpClient: HttpClient,
-    val webSocketClientProvider: WebSocketClientProvider,
+    val httpClientService: HttpClientService,
+    val webSocketClientService: WebSocketClientService,
     val json: Json,
-    private val defaultHost: String,
-    private val defaultPort: Int
 ) : Logging {
     val apiPath = "/api/v1/"
 
@@ -66,8 +62,10 @@ class WebSocketApiClient(
     suspend inline fun <reified T, reified R> patch(path: String, requestBody: R): Result<T> {
         if (useHttpClient) {
             try {
-                val apiUrl = currentApiUrl()
-                val response: HttpResponse = httpClient.patch(apiUrl + path) {
+                val response: HttpResponse = httpClientService.patch {
+                    url {
+                        path(apiPath + path)
+                    }
                     contentType(ContentType.Application.Json)
                     accept(ContentType.Application.Json)
                     setBody(requestBody)
@@ -85,8 +83,10 @@ class WebSocketApiClient(
     suspend inline fun <reified T, reified R> post(path: String, requestBody: R): Result<T> {
         if (useHttpClient) {
             try {
-                val apiUrl = currentApiUrl()
-                val response: HttpResponse = httpClient.post(apiUrl + path) {
+                val response: HttpResponse = httpClientService.post {
+                    url{
+                        path(apiPath + path)
+                    }
                     contentType(ContentType.Application.Json)
                     accept(ContentType.Application.Json)
                     setBody(requestBody)
@@ -117,7 +117,7 @@ class WebSocketApiClient(
         )
         try {
             val startTime = DateUtils.now()
-            val response = webSocketClientProvider.get().sendRequestAndAwaitResponse(webSocketRestApiRequest)
+            val response = webSocketClientService.sendRequestAndAwaitResponse(webSocketRestApiRequest)
             ConnectivityService.newRequestRoundTripTime(DateUtils.now() - startTime)
             require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
             val body = response.body
@@ -162,12 +162,5 @@ class WebSocketApiClient(
             val errorText = response.bodyAsText()
             Result.failure(WebSocketRestApiException(response.status, errorText))
         }
-    }
-
-    fun currentApiUrl(): String {
-        val wsClient = webSocketClientProvider.get()
-//        var defaultApiUrl = "http://$defaultHost:$defaultPort$apiPath"
-        val apiURL = "http://${wsClient.host}:${wsClient.port}$apiPath"
-        return apiURL
     }
 }

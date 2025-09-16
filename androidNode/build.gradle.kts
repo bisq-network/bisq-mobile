@@ -307,7 +307,6 @@ dependencies {
 
     implementation(libs.koin.core)
     implementation(libs.koin.android)
-    implementation(libs.logging.kermit)
 
     // kmp-tor for embedded Tor support
     implementation(libs.kmp.tor.runtime)

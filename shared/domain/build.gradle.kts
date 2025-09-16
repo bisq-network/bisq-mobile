@@ -97,14 +97,11 @@ kotlin {
     }
 
     sourceSets {
-        androidMain.dependencies {
-            implementation(libs.androidx.activity.compose)
-        }
         commonMain.dependencies {
             //put your multiplatform dependencies here
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.logging.kermit)
+            api(libs.logging.kermit) // api allows other projects use Logging without needing to add this directly
             implementation(libs.okio)
             implementation(libs.kotlinx.datetime)
             implementation(libs.bignum)
@@ -112,7 +109,6 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.kotlinx.serialization.core)
             implementation(libs.ktor.serialization.kotlinx.json)
-            implementation(libs.ktor.client.cio)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.ktor.client.websockets)
@@ -133,10 +129,11 @@ kotlin {
             implementation(libs.koin.test)
         }
         androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.core)
-
             implementation(libs.koin.core)
             implementation(libs.koin.android)
+            implementation( libs.ktor.client.okhttp)
         }
         androidUnitTest.dependencies {
             implementation(libs.mockk)
@@ -154,6 +151,7 @@ kotlin {
 
         iosMain.dependencies {
             implementation(libs.koin.core)
+            implementation(libs.ktor.client.darwin)
         }
     }
 }

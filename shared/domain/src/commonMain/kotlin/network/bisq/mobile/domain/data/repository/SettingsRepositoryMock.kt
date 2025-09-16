@@ -4,12 +4,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.utils.Logging
 
 class SettingsRepositoryMock : SettingsRepository, Logging {
 
     private val _data = MutableStateFlow(Settings())
+    private val mutex = Mutex()
     override val data: StateFlow<Settings> get() = _data.asStateFlow()
 
     override suspend fun setBisqApiUrl(value: String) {
@@ -33,6 +36,12 @@ class SettingsRepositoryMock : SettingsRepository, Logging {
     override suspend fun setSelectedMarketCode(value: String) {
         _data.update {
             it.copy(selectedMarketCode = value)
+        }
+    }
+
+    override suspend fun update(transform: suspend (Settings) -> Settings) {
+        mutex.withLock {
+            _data.value = transform(_data.value)
         }
     }
 

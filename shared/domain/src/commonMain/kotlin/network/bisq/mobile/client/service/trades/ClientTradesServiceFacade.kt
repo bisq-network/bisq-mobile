@@ -6,7 +6,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.json.Json
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Subscription
 import network.bisq.mobile.client.websocket.subscription.Topic
@@ -39,7 +39,7 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
  */
 class ClientTradesServiceFacade(
     private val apiGateway: TradesApiGateway,
-    webSocketClientProvider: WebSocketClientProvider,
+    webSocketClientService: WebSocketClientService,
     json: Json
 ) : ServiceFacade(), TradesServiceFacade {
 
@@ -61,10 +61,10 @@ class ClientTradesServiceFacade(
     // Misc
     private val tradeId get() = selectedTrade.value?.tradeId
     private val openTradesSubscription: Subscription<TradeItemPresentationDto> =
-        Subscription(webSocketClientProvider, json, Topic.TRADES, this::handleTradeItemPresentationChange)
+        Subscription(webSocketClientService, json, Topic.TRADES, this::handleTradeItemPresentationChange)
 
     private val tradePropertiesSubscription: Subscription<Map<String, TradePropertiesDto>> =
-        Subscription(webSocketClientProvider, json, Topic.TRADE_PROPERTIES, this::handleTradePropertiesChange)
+        Subscription(webSocketClientService, json, Topic.TRADE_PROPERTIES, this::handleTradePropertiesChange)
 
     override fun activate() {
         super<ServiceFacade>.activate()
