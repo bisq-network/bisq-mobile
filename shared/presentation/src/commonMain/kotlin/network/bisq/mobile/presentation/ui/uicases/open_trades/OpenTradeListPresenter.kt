@@ -13,6 +13,8 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.i18n.i18n
+
 
 class OpenTradeListPresenter(
     private val mainPresenter: MainPresenter,
@@ -72,8 +74,7 @@ class OpenTradeListPresenter(
 
     fun onSelect(openTradeItem: TradeItemPresentationModel) {
         if (tradeRulesConfirmed.value) {
-            tradesServiceFacade.selectOpenTrade(openTradeItem.tradeId)
-            navigateTo(Routes.OpenTrade)
+            navigateToOpenTrade(openTradeItem)
         } else {
             log.w { "User hasn't accepted trade rules yet, showing dialog" }
             _tradeGuideVisible.value = true
@@ -98,6 +99,19 @@ class OpenTradeListPresenter(
                     }
                 }
             }
+        }
+    }
+
+    private fun navigateToOpenTrade(openTradeItem: TradeItemPresentationModel) {
+        try {
+            disableInteractive()
+            tradesServiceFacade.selectOpenTrade(openTradeItem.tradeId)
+            navigateTo(Routes.OpenTrade)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to open trade ${openTradeItem.tradeId}" }
+            showSnackbar("mobile.bisqEasy.openTrades.failed".i18n(e.message ?: "unknown"))
+        } finally {
+            enableInteractive()
         }
     }
 }
