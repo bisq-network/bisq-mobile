@@ -140,8 +140,8 @@ open class SplashPresenter(
     // Node overrides that with returning false
     // TODO we should make it abstract and use a ClientSplashPresenter to make the differences more explicit
     open suspend fun isClientAndHasNoConnectivity(): Boolean {
-        val hasConnectivity = webSocketClientProvider?.get()?.isConnected() ?: false
-        if (!hasConnectivity) {
+        val provider = webSocketClientProvider ?: return false
+        if (!provider.get().isConnected()) {
             log.d { "No connectivity detected, navigating to trusted node setup" }
             navigateToTrustedNodeSetup()
             return true

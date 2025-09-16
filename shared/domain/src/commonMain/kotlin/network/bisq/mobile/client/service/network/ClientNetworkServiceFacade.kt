@@ -13,8 +13,6 @@ class ClientNetworkServiceFacade(private val webSocketClientProvider: WebSocketC
     override val numConnections: StateFlow<Int> get() = _numConnections.asStateFlow()
 
     override fun activate() {
-        super.activate()
-
         // TODO implement gateway and endpoints to subscribe to number of connections of backend
     }
 
