@@ -51,7 +51,8 @@ fun Context.findActivity(): Activity? = when (this) {
 }
 
 actual object ScreenInfo {
-    private val metrics = Resources.getSystem().displayMetrics
+    // Avoid eager access to Android framework in object initializer to keep unit tests stable.
+    private val metrics get() = Resources.getSystem().displayMetrics
 
     actual val density: Float
         get() = metrics.density

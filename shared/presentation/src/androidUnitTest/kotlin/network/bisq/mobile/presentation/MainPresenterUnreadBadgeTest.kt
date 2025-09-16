@@ -3,6 +3,8 @@ package network.bisq.mobile.presentation
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.mockkObject
+import io.mockk.unmockkObject
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,12 +50,14 @@ class MainPresenterUnreadBadgeTest {
     @AfterTest
     fun tearDownMainDispatcher() {
         Dispatchers.resetMain()
+        runCatching { unmockkObject(ScreenInfo) }
     }
 
     @Test
     fun `trades in final states are excluded from unread badge map`() = runTest {
-        // Mock top-level android-specific function called from MainPresenter.init
+        // Mock android-specific bits used during MainPresenter.init
         mockkStatic("network.bisq.mobile.presentation.PlatformPresentationAbstractions_androidKt")
+        mockkObject(ScreenInfo)
         every { ScreenInfo.widthPixels } returns 480
         // Dependencies
         val connectivity = mockk<ConnectivityService>(relaxed = true)
@@ -124,8 +128,9 @@ class MainPresenterUnreadBadgeTest {
     )
 
     private fun buildFixture(): Fixture {
-        // Mock top-level android-specific function called from MainPresenter.init
+        // Mock android-specific bits used during MainPresenter.init
         mockkStatic("network.bisq.mobile.presentation.PlatformPresentationAbstractions_androidKt")
+        mockkObject(ScreenInfo)
         every { ScreenInfo.widthPixels } returns 480
 
         val connectivity = mockk<ConnectivityService>(relaxed = true)
