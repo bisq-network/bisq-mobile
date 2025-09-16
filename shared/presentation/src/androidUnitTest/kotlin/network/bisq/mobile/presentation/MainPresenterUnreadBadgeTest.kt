@@ -3,9 +3,8 @@ package network.bisq.mobile.presentation
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -16,20 +15,20 @@ import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.model.TradeReadStateMap
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
+import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
-import kotlin.test.BeforeTest
-import kotlin.test.AfterTest
 
 /**
  * Tests for the unread badge logic in MainPresenter.
@@ -55,7 +54,7 @@ class MainPresenterUnreadBadgeTest {
     fun `trades in final states are excluded from unread badge map`() = runTest {
         // Mock top-level android-specific function called from MainPresenter.init
         mockkStatic("network.bisq.mobile.presentation.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
+        every { ScreenInfo.widthPixels } returns 480
         // Dependencies
         val connectivity = mockk<ConnectivityService>(relaxed = true)
         val notifications = mockk<OpenTradesNotificationService>(relaxed = true)
@@ -89,7 +88,6 @@ class MainPresenterUnreadBadgeTest {
 
         val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
         val presenter = MainPresenter(
-            connectivityService = connectivity,
             openTradesNotificationService = notifications,
             settingsService = settings,
             tradesServiceFacade = tradesFacade,
@@ -128,7 +126,7 @@ class MainPresenterUnreadBadgeTest {
     private fun buildFixture(): Fixture {
         // Mock top-level android-specific function called from MainPresenter.init
         mockkStatic("network.bisq.mobile.presentation.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
+        every { ScreenInfo.widthPixels } returns 480
 
         val connectivity = mockk<ConnectivityService>(relaxed = true)
         val notifications = mockk<OpenTradesNotificationService>(relaxed = true)
@@ -161,7 +159,6 @@ class MainPresenterUnreadBadgeTest {
 
         val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
         val presenter = MainPresenter(
-            connectivityService = connectivity,
             openTradesNotificationService = notifications,
             settingsService = settings,
             tradesServiceFacade = tradesFacade,

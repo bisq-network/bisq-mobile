@@ -72,7 +72,20 @@ actual fun moveAppToBackground(view: Any?) {
 
 actual fun getPlatformCurrentTimeProvider(): TimeProvider = IOSCurrentTimeProvider()
 
-@OptIn(ExperimentalForeignApi::class)
-actual fun getScreenWidthDp(): Int {
-    return CGRectGetWidth(UIScreen.mainScreen.bounds).toInt()
+actual object ScreenInfo {
+    actual val density: Float
+        get() = UIScreen.mainScreen.scale.toFloat()
+
+    actual val densityDpi: Int
+        get() {
+            // iOS doesn’t expose densityDpi directly,
+            // we can approximate:
+            val scale = UIScreen.mainScreen.scale
+            // Apple uses 163 dpi as "base" (similar to mdpi=160 on Android)
+            return (163 * scale).toInt()
+        }
+
+    @OptIn(ExperimentalForeignApi::class)
+    actual val widthPixels: Int
+        get() = CGRectGetWidth(UIScreen.mainScreen.bounds).toInt()
 }

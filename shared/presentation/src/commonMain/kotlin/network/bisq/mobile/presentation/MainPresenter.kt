@@ -100,7 +100,8 @@ open class MainPresenter(
 
     init {
         val localeCode = getDeviceLanguageCode()
-        val screenWidth = getScreenWidthDp()
+        val screenInfo = ScreenInfo
+        val screenWidth = screenInfo.widthPixels
         _isSmallScreen.value = screenWidth < 480
         log.i { "Shared Version: ${BuildConfig.SHARED_LIBS_VERSION}" }
         log.i { "iOS Client Version: ${BuildConfig.IOS_APP_VERSION}" }
@@ -109,8 +110,8 @@ open class MainPresenter(
         log.i { "Device language code: $localeCode" }
         log.i { "Screen width: $screenWidth" }
         log.i { "Small screen: ${_isSmallScreen.value}" }
+        log.i { "densityDpi / density: ${screenInfo.densityDpi} / ${screenInfo.density}" }
     }
-
 
     @CallSuper
     override fun onViewAttached() {

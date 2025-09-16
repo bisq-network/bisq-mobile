@@ -134,6 +134,7 @@ dependencies {
     debugImplementation(compose.uiTooling)
 
     implementation(libs.androidx.core.splashscreen)
+    implementation(libs.logging.kermit)
 }
 
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {

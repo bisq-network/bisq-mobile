@@ -35,13 +35,20 @@ const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
 class AndroidNodeCatHashService(private val context: Context, baseDir: Path?) :
     CatHashService<PlatformImage>(baseDir) {
     override fun composeImage(paths: Array<String>, size: Double): PlatformImage {
-        return PlatformImage(AndroidImageUtil.composeImage(
-            context,
-            CAT_HASH_PATH,
-            paths,
-            size.toInt(),
-            size.toInt()
-        ))
+        return PlatformImage(
+            AndroidImageUtil.composeImage(
+                context,
+                CAT_HASH_PATH,
+                paths,
+                size.toInt(),
+                size.toInt()
+            )
+        )
+    }
+
+    override fun getMaxCacheSize(): Int {
+        // One 60 px image has about 3-4 kb. With 500 we get about 1.5-2 MB on total cache file size
+        return 500
     }
 
     override fun writeRawImage(image: PlatformImage, file: File) {

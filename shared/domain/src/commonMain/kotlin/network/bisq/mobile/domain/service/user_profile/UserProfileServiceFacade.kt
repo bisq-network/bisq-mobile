@@ -31,7 +31,7 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * the proof of work solution.
      * The CatHash image is also created based on that hash and the proof of work solution.
      */
-    suspend fun generateKeyPair(result: (String, String, PlatformImage?) -> Unit)
+    suspend fun generateKeyPair(imageSize: Int, result: (String, String, PlatformImage?) -> Unit)
 
     /**
      * Once the user clicks the `create` button we create a user identity and publish the
