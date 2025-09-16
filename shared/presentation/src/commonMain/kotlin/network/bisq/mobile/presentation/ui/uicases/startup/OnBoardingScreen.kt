@@ -45,7 +45,7 @@ fun OnBoardingScreen() {
     BisqScrollScaffold {
         BisqGap.VHalf()
         BisqLogo()
-        BisqGap.V2()
+        BisqGap.V3()
         BisqText.h2Light(presenter.headline, textAlign = TextAlign.Center)
         BisqGap.V2()
         BisqPagerView(pagerState, presenter.filteredPages)
