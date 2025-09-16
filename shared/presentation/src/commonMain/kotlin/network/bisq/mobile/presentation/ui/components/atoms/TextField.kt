@@ -123,7 +123,7 @@ fun BisqTextField(
 
     val secondaryHoverColor = BisqTheme.colors.secondaryHover
     val secondaryDisabledColor = BisqTheme.colors.secondaryDisabled
-    val finalBackgroundColor by remember(disabled, isFocused) {
+    val finalBackgroundColor by remember(disabled, isFocused, backgroundColor, type) {
         derivedStateOf {
             when {
                 disabled -> secondaryDisabledColor

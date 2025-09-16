@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -20,6 +19,15 @@ import network.bisq.mobile.presentation.ui.components.atoms.button.CloseIconButt
 import network.bisq.mobile.presentation.ui.helpers.customPaymentIconIndex
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
+val CUSTOM_PAYMENT_ICON_IDS = listOf(
+    "custom_payment_1",
+    "custom_payment_2",
+    "custom_payment_3",
+    "custom_payment_4",
+    "custom_payment_5",
+    "custom_payment_6",
+)
+
 @Composable
 fun PaymentTypeCard(
     image: String,
@@ -29,16 +37,9 @@ fun PaymentTypeCard(
     isSelected: Boolean = false,
     isCustomPaymentMethod: Boolean = false,
 ) {
-    val customPaymentIconIds = listOf(
-        "custom_payment_1",
-        "custom_payment_2",
-        "custom_payment_3",
-        "custom_payment_4",
-        "custom_payment_5",
-        "custom_payment_6",
-    );
+
     val customIndex = if(isCustomPaymentMethod)
-        customPaymentIconIndex(title, 6)
+        customPaymentIconIndex(title, CUSTOM_PAYMENT_ICON_IDS.size)
     else
         0
     val backgroundColor = if (isSelected) {
@@ -64,13 +65,13 @@ fun PaymentTypeCard(
         Box {
             DynamicImage(
                 path = image,
-                fallbackPath = "drawable/payment/fiat/${customPaymentIconIds[customIndex]}.png",
+                fallbackPath = "drawable/payment/fiat/${CUSTOM_PAYMENT_ICON_IDS[customIndex]}.png",
                 contentDescription =  if (isCustomPaymentMethod) "mobile.components.paymentTypeCard.customPaymentMethod".i18n(title) else title,
                 modifier = Modifier.size(20.dp)
             )
-            if (isCustomPaymentMethod) {
+            if (isCustomPaymentMethod && title.isNotEmpty()) {
                 Box(modifier = Modifier.size(20.dp), contentAlignment = Alignment.Center) {
-                    val firstChar = title[0].toString()
+                    val firstChar = title.firstOrNull()?.toString().orEmpty()
                     BisqText.baseRegular(
                         text = firstChar,
                         textAlign = TextAlign.Center,

@@ -42,7 +42,7 @@ fun CreateOfferPaymentMethodScreen() {
             imagePaths = presenter.getQuoteSidePaymentMethodsImagePaths(),
             availablePaymentMethods = availableQuoteSidePaymentMethods,
             selectedPaymentMethods = selectedQuoteSidePaymentMethods,
-            onToggle = { selected -> presenter.onToggleQuoteSidePaymentMethod(selected) },
+            onToggle = presenter::onToggleQuoteSidePaymentMethod,
             showCustomPayment = true,
             onAddCustomPayment = { customPayment ->
                 presenter.addCustomPayment(customPayment)

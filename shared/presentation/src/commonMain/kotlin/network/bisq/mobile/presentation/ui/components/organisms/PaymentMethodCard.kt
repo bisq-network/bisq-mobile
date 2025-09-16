@@ -63,7 +63,7 @@ fun PaymentMethodCard(
                     image = entry.imagePath,
                     title = entry.displayName,
                     onClick = { onToggle(entry.key) },
-                    onRemove = { onRemoveCustomPayment?.invoke(entry.displayName) },
+                    onRemove = { onRemoveCustomPayment?.invoke(entry.key) },
                     isSelected = selected.contains(entry.key),
                     isCustomPaymentMethod = entry.isCustom
                 )

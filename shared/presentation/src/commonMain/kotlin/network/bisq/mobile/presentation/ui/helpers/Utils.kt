@@ -9,6 +9,8 @@ fun customPaymentIconIndex(
     customPaymentMethod: String,
     customPaymentIconLength: Int
 ): Int {
+    require(customPaymentIconLength > 0) { "customPaymentIconLength must be > 0" }
+
     // 32-byte SHA-256 over the input (multiplatform via Okio)
     val hash = customPaymentMethod.encodeUtf8().sha256().toByteArray()
 
@@ -18,7 +20,6 @@ fun customPaymentIconIndex(
                 ((hash[30].toInt() and 0xFF) shl 8)  or
                 ( hash[31].toInt() and 0xFF)
 
-    // Mimic Math.abs(int) (guard MIN_VALUE)
     val nonNegative = if (i == Int.MIN_VALUE) 0 else abs(i)
 
     return nonNegative % customPaymentIconLength
