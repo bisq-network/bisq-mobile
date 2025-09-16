@@ -51,7 +51,7 @@ class NodeSplashPresenter(
                 applicationBootstrapFacade.state,
                 numConnections
             ) { state, numConnections ->
-                if (numConnections > -1) {
+                if (numConnections >= 0) {
                     "splash.bootstrapState.stateAndNumConnections".i18n(state, numConnections)
                 } else {
                     state
@@ -72,7 +72,7 @@ class NodeSplashPresenter(
         return false
     }
 
-    // TODO refactor not not need that
+    // TODO: Refactor so we dont have Client related methods
     override suspend fun handleDemoModeForClient() {
         // Do nothing, only used in client mode
     }

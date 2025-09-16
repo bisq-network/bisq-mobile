@@ -19,14 +19,17 @@ abstract class MainApplication : Application(), Logging {
     override fun onCreate() {
         super.onCreate()
 
+        setupI18n()
+        setupSystemOutFiltering()
+        setupKoinDI(this)
+        onCreated()
+    }
+
+    private fun setupI18n() {
         // Initialize early with users device language. Later once settings are available we update if user has changed language.
         val deviceLanguageCode = getDeviceLanguageCode()
         I18nSupport.initialize(deviceLanguageCode)
         setDefaultLocale(deviceLanguageCode)
-
-        setupSystemOutFiltering()
-        setupKoinDI(this)
-        onCreated()
     }
 
     protected fun setupKoinDI(appContext: Context) {
