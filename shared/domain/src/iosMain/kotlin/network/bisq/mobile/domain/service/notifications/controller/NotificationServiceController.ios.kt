@@ -16,9 +16,7 @@ import platform.BackgroundTasks.BGTaskScheduler
 import platform.Foundation.NSDate
 import platform.Foundation.NSUUID
 import platform.Foundation.setValue
-import platform.UserNotifications.UNAuthorizationOptionAlert
-import platform.UserNotifications.UNAuthorizationOptionBadge
-import platform.UserNotifications.UNAuthorizationOptionSound
+import platform.UserNotifications.UNAuthorizationStatusAuthorized
 import platform.UserNotifications.UNMutableNotificationContent
 import platform.UserNotifications.UNNotification
 import platform.UserNotifications.UNNotificationPresentationOptionAlert
@@ -32,10 +30,13 @@ import platform.UserNotifications.UNTimeIntervalNotificationTrigger
 import platform.UserNotifications.UNUserNotificationCenter
 import platform.UserNotifications.UNUserNotificationCenterDelegateProtocol
 import platform.darwin.NSObject
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-actual class NotificationServiceController(private val appForegroundController: AppForegroundController) : ServiceController, Logging {
+actual class NotificationServiceController(private val appForegroundController: AppForegroundController) :
+    ServiceController, Logging {
 
     companion object {
         const val BACKGROUND_TASK_ID = "network.bisq.mobile.iosUC4273Y485"
@@ -77,6 +78,15 @@ actual class NotificationServiceController(private val appForegroundController: 
         logDebug("Notification center delegate applied")
     }
 
+    @OptIn(ExperimentalForeignApi::class)
+    actual suspend fun hasPermission(): Boolean = suspendCoroutine { continuation ->
+        UNUserNotificationCenter.currentNotificationCenter()
+            .getNotificationSettingsWithCompletionHandler { settings ->
+                val status = settings?.authorizationStatus
+                val isGranted = status == UNAuthorizationStatusAuthorized
+                continuation.resume(isGranted)
+            }
+    }
 
     actual override fun startService() {
         if (isRunning) {
@@ -85,10 +95,8 @@ actual class NotificationServiceController(private val appForegroundController: 
         }
         stopService() // needed in iOS to clear the id registration and avoid duplicates
         logDebug("Starting background service")
-        UNUserNotificationCenter.currentNotificationCenter().requestAuthorizationWithOptions(
-            UNAuthorizationOptionAlert or UNAuthorizationOptionSound or UNAuthorizationOptionBadge
-        ) { granted, error ->
-            if (granted) {
+        serviceScope.launch {
+            if (hasPermission()) {
                 logDebug("Notification permission granted.")
                 setupDelegate()
                 registerBackgroundTask()
@@ -96,7 +104,7 @@ actual class NotificationServiceController(private val appForegroundController: 
                 startBackgroundTaskLoop()
                 logDebug("Background service started")
             } else {
-                logDebug("Notification permission denied: ${error?.localizedDescription}")
+                logDebug("Notification permission denied")
             }
         }
     }

@@ -32,6 +32,10 @@ actual class NotificationServiceController (private val appForegroundController:
         // NOTE: to avoid referencing dep Routes.TabOpenTradeList.name
         const val MY_TRADES_TAB = "tab_my_trades"
         const val EXTRA_DESTINATION = "destination"
+
+        // we use this to avoid linter errors, as it's handled internally by
+        // ContextCompat.checkSelfPermission for different android versions
+        const val POST_NOTIFS_PERM = "android.permission.POST_NOTIFICATIONS"
     }
 
     private val context = appForegroundController.context
@@ -44,6 +48,13 @@ actual class NotificationServiceController (private val appForegroundController:
 
     var activityClassForIntents = context::class.java
 
+    actual suspend fun hasPermission(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            context,
+            POST_NOTIFS_PERM
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
     /**
      * Starts the service in the appropiate mode based on the current device running Android API
      */
@@ -51,7 +62,7 @@ actual class NotificationServiceController (private val appForegroundController:
         if (isRunning) {
             log.w { "Service already running, skipping start call" }
         } else {
-            log.i { "Starting Bisq Service.."}
+            log.i { "Starting Bisq Service.." }
             createNotificationChannel()
             val intent = Intent(context, BisqForegroundService::class.java)
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -62,7 +73,7 @@ actual class NotificationServiceController (private val appForegroundController:
                 context.startService(intent)
             }
             isRunning = true
-            log.i { "Started Bisq Service"}
+            log.i { "Started Bisq Service" }
         }
     }
 
@@ -104,13 +115,12 @@ actual class NotificationServiceController (private val appForegroundController:
             return
         }
 
-        // Check notification permission for Android 13+ (API 33+)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(context, android.Manifest.permission.POST_NOTIFICATIONS)
-                != PackageManager.PERMISSION_GRANTED) {
-                log.e { "POST_NOTIFICATIONS permission not granted, cannot send notification" }
-                return
-            }
+        if (
+            ContextCompat.checkSelfPermission(context, POST_NOTIFS_PERM)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            log.e { "POST_NOTIFICATIONS permission not granted, cannot send notification" }
+            return
         }
 
         // Generate unique notification ID to avoid overwriting previous notifications

@@ -13,8 +13,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -25,6 +29,7 @@ import bisqapps.shared.presentation.generated.resources.icon_markets
 import bisqapps.shared.presentation.generated.resources.icon_payment
 import bisqapps.shared.presentation.generated.resources.reputation
 import bisqapps.shared.presentation.generated.resources.thumbs_up
+import network.bisq.mobile.domain.data.model.NotificationPermissionState
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -33,7 +38,9 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
 import network.bisq.mobile.presentation.ui.components.molecules.AmountWithCurrency
+import network.bisq.mobile.presentation.ui.components.organisms.NotificationPermissionDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.helpers.rememberNotificationPermissionLauncher
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.DrawableResource
@@ -52,6 +59,39 @@ fun DashboardScreen() {
     val isInteractive by presenter.isInteractive.collectAsState()
     val marketPrice by presenter.marketPrice.collectAsState()
     val tradeRulesConfirmed by presenter.tradeRulesConfirmed.collectAsState()
+    val notifPermissionState by presenter.savedNotifPermissionState.collectAsState()
+    var isPermissionRequestDialogVisible by remember { mutableStateOf(false) }
+    val notifPermLauncher = rememberNotificationPermissionLauncher { granted ->
+        if (granted) {
+            presenter.saveNotificationPermissionState(NotificationPermissionState.GRANTED)
+        } else {
+            presenter.saveNotificationPermissionState(NotificationPermissionState.DONT_ASK_AGAIN)
+        }
+    }
+
+    LaunchedEffect(notifPermissionState) {
+        when (notifPermissionState) {
+            NotificationPermissionState.GRANTED -> {
+                if (presenter.hasNotificationPermission()) {
+                    isPermissionRequestDialogVisible = false
+                } else {
+                    presenter.saveNotificationPermissionState(
+                        NotificationPermissionState.NOT_GRANTED
+                    )
+                }
+            }
+
+            NotificationPermissionState.NOT_GRANTED -> {
+                isPermissionRequestDialogVisible = true
+            }
+
+            NotificationPermissionState.DONT_ASK_AGAIN -> {
+                isPermissionRequestDialogVisible = false
+            }
+
+            else -> null // ignore initial state
+        }
+    }
 
     DashboardContent(
         offersOnline = offersOnline,
@@ -61,7 +101,14 @@ fun DashboardScreen() {
         marketPrice = marketPrice,
         tradeRulesConfirmed = tradeRulesConfirmed,
         onNavigateToMarkets = presenter::onNavigateToMarkets,
-        onOpenTradeGuide = presenter::onOpenTradeGuide
+        onOpenTradeGuide = presenter::onOpenTradeGuide,
+        isPermissionRequestDialogVisible = isPermissionRequestDialogVisible,
+        onPermissionRequest = {
+            notifPermLauncher.launch()
+        },
+        onPermissionDenied = {
+            presenter.saveNotificationPermissionState(NotificationPermissionState.DONT_ASK_AGAIN)
+        }
     )
 }
 
@@ -74,7 +121,10 @@ private fun DashboardContent(
     marketPrice: String,
     tradeRulesConfirmed: Boolean,
     onNavigateToMarkets: () -> Unit,
-    onOpenTradeGuide: () -> Unit
+    onOpenTradeGuide: () -> Unit,
+    isPermissionRequestDialogVisible: Boolean,
+    onPermissionRequest: () -> Unit,
+    onPermissionDenied: () -> Unit,
 ) {
     val padding = BisqUIConstants.ScreenPadding
     BisqScrollLayout(
@@ -131,6 +181,13 @@ private fun DashboardContent(
             )
         }
         Spacer(modifier = Modifier.fillMaxHeight().weight(0.2f))
+    }
+
+    if (isPermissionRequestDialogVisible) {
+        NotificationPermissionDialog(
+            onConfirm = onPermissionRequest,
+            onDismiss = onPermissionDenied,
+        )
     }
 }
 
@@ -197,7 +254,8 @@ fun HomeInfoCard(modifier: Modifier = Modifier, price: String, text: String) {
 @Composable
 private fun DashboardContentPreview(
     language: String = "en",
-    tradeRulesConfirmed: Boolean = true
+    tradeRulesConfirmed: Boolean = true,
+    isPermissionRequestDialogVisible: Boolean = false,
 ) {
     BisqTheme.Preview(language = language) {
         DashboardContent(
@@ -208,7 +266,10 @@ private fun DashboardContentPreview(
             marketPrice = "111247.40 BTC/USD",
             tradeRulesConfirmed = tradeRulesConfirmed,
             onNavigateToMarkets = {},
-            onOpenTradeGuide = {}
+            onOpenTradeGuide = {},
+            isPermissionRequestDialogVisible = isPermissionRequestDialogVisible,
+            onPermissionRequest = {},
+            onPermissionDenied = {},
         )
     }
 }
@@ -221,6 +282,11 @@ private fun DashboardContentPreview_En() = DashboardContentPreview(tradeRulesCon
 @Composable
 private fun DashboardContentPreview_EnRulesNotConfirmed() =
     DashboardContentPreview(tradeRulesConfirmed = false)
+
+@Preview
+@Composable
+private fun DashboardContentPreview_En_PermissionDialog() =
+    DashboardContentPreview(isPermissionRequestDialogVisible = true)
 
 @Preview
 @Composable

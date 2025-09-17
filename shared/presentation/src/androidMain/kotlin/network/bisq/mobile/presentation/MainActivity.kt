@@ -1,25 +1,17 @@
 package network.bisq.mobile.presentation
 
-import android.Manifest
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.core.content.ContextCompat
 import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.Logging
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -67,8 +59,6 @@ abstract class MainActivity : ComponentActivity(), Logging {
         setContent {
             App()
         }
-
-        handleDynamicPermissions()
     }
 
     override fun onStart() {
@@ -95,37 +85,5 @@ abstract class MainActivity : ComponentActivity(), Logging {
         presenter.detachView()
         presenter.onDestroy()
         super.onDestroy()
-    }
-
-    private fun handleDynamicPermissions() {
-        requestPermissionLauncher = registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted) {
-                // Permission granted, proceed with posting notifications
-            } else {
-                // Permission denied, show a message to the user
-                Toast.makeText(this, "mobile.main.permissionDenied".i18n(), Toast.LENGTH_SHORT).show()
-            }
-        }
-
-        // Call the method to check and request permission in APIs where its mandatory
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            checkAndRequestNotificationPermission()
-        }
-    }
-
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    private fun checkAndRequestNotificationPermission() {
-        // Check if the permission is granted
-        if (ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED) {
-            // Permission already granted, proceed with posting notifications
-        } else {
-            // Request permission if not granted
-            requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
     }
 } 

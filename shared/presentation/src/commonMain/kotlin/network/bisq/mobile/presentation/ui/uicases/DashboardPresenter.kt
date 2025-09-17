@@ -1,10 +1,17 @@
 package network.bisq.mobile.presentation.ui.uicases
 
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.stateIn
+import network.bisq.mobile.domain.data.model.NotificationPermissionState
+import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
+import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -19,7 +26,9 @@ open class DashboardPresenter(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val offersServiceFacade: OffersServiceFacade,
     private val settingsServiceFacade: SettingsServiceFacade,
-    private val networkServiceFacade: NetworkServiceFacade
+    private val networkServiceFacade: NetworkServiceFacade,
+    private val settingsRepository: SettingsRepository,
+    private val notificationServiceController: NotificationServiceController,
 ) : BasePresenter(mainPresenter) {
     private val _offersOnline = MutableStateFlow(0)
     val offersOnline: StateFlow<Int> get() = _offersOnline.asStateFlow()
@@ -29,6 +38,15 @@ open class DashboardPresenter(
     val numConnections: StateFlow<Int> get() = networkServiceFacade.numConnections
     val tradeRulesConfirmed: StateFlow<Boolean> get() = settingsServiceFacade.tradeRulesConfirmed
     val marketPrice: StateFlow<String> get() = marketPriceServiceFacade.selectedFormattedMarketPrice
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val savedNotifPermissionState: StateFlow<NotificationPermissionState?> =
+        settingsRepository.data.mapLatest { it.notificationPermissionState }
+            .stateIn(
+                presenterScope,
+                SharingStarted.Lazily,
+                null
+            )
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -62,4 +80,10 @@ open class DashboardPresenter(
     fun navigateLearnMore() {
         navigateToUrl(BisqLinks.BISQ_EASY_WIKI_URL)
     }
+
+    fun saveNotificationPermissionState(state: NotificationPermissionState) {
+        launchIO { settingsRepository.setNotificationPermissionState(state) }
+    }
+
+    suspend fun hasNotificationPermission(): Boolean = notificationServiceController.hasPermission()
 }

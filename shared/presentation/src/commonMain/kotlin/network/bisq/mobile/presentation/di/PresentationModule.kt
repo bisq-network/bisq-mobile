@@ -128,7 +128,7 @@ val presentationModule = module {
         )
     } bind IUserProfileSettingsPresenter::class
 
-    single<DashboardPresenter> { DashboardPresenter(get(), get(), get(), get(), get(), get()) }
+    single<DashboardPresenter> { DashboardPresenter(get(), get(), get(), get(), get(), get(), get(), get()) }
 
     single {
         CreateProfilePresenter(

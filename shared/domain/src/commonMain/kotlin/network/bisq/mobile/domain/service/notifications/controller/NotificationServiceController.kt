@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
  */
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect class NotificationServiceController : ServiceController {
+    suspend fun hasPermission(): Boolean
     fun pushNotification(title: String, message: String)
     override fun startService()
     override fun stopService()

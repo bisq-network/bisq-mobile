@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.data.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import network.bisq.mobile.domain.data.model.NotificationPermissionState
 import network.bisq.mobile.domain.data.model.Settings
 
 interface SettingsRepository {
@@ -17,6 +18,8 @@ interface SettingsRepository {
     suspend fun setShowChatRulesWarnBox(value: Boolean)
 
     suspend fun setSelectedMarketCode(value: String)
+
+    suspend fun setNotificationPermissionState(value: NotificationPermissionState)
 
     suspend fun clear()
 }

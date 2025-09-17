@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import network.bisq.mobile.domain.data.model.NotificationPermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.utils.Logging
 
@@ -43,6 +44,12 @@ class SettingsRepositoryImpl(
     override suspend fun setSelectedMarketCode(value: String) {
         settingsStore.updateData {
             it.copy(selectedMarketCode = value)
+        }
+    }
+
+    override suspend fun setNotificationPermissionState(value: NotificationPermissionState) {
+        settingsStore.updateData {
+            it.copy(notificationPermissionState = value)
         }
     }
 

@@ -7,5 +7,13 @@ data class Settings (
     val bisqApiUrl: String = "",
     val firstLaunch: Boolean = true,
     val showChatRulesWarnBox: Boolean = true,
-    val selectedMarketCode: String = "BTC/USD"
+    val selectedMarketCode: String = "BTC/USD",
+    val notificationPermissionState: NotificationPermissionState = NotificationPermissionState.NOT_GRANTED,
 )
+
+@Serializable
+enum class NotificationPermissionState {
+    NOT_GRANTED,
+    GRANTED,
+    DONT_ASK_AGAIN,
+}
