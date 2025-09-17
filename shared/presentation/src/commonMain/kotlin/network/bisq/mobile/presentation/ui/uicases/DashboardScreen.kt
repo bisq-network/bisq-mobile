@@ -106,8 +106,10 @@ fun DashboardScreen() {
         onPermissionRequest = {
             notifPermLauncher.launch()
         },
-        onPermissionDenied = {
-            presenter.saveNotificationPermissionState(NotificationPermissionState.DONT_ASK_AGAIN)
+        onPermissionDenied = { dontAskAgain ->
+            if (dontAskAgain) {
+                presenter.saveNotificationPermissionState(NotificationPermissionState.DONT_ASK_AGAIN)
+            }
         }
     )
 }
@@ -124,7 +126,7 @@ private fun DashboardContent(
     onOpenTradeGuide: () -> Unit,
     isPermissionRequestDialogVisible: Boolean,
     onPermissionRequest: () -> Unit,
-    onPermissionDenied: () -> Unit,
+    onPermissionDenied: (dontAskAgain: Boolean) -> Unit,
 ) {
     val padding = BisqUIConstants.ScreenPadding
     BisqScrollLayout(
@@ -269,7 +271,7 @@ private fun DashboardContentPreview(
             onOpenTradeGuide = {},
             isPermissionRequestDialogVisible = isPermissionRequestDialogVisible,
             onPermissionRequest = {},
-            onPermissionDenied = {},
+            onPermissionDenied = { _ -> },
         )
     }
 }

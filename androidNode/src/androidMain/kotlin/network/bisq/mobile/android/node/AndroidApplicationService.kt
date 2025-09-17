@@ -403,8 +403,4 @@ class AndroidApplicationService(
         log.e("Exception at shutdown", throwable)
         return false
     }
-
-    override fun checkInstanceLock() {
-        // On mobile we dont need instance check
-    }
 }

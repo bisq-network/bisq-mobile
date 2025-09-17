@@ -126,6 +126,7 @@ class IOSUrlLauncher : UrlLauncher {
 
 class IOSPlatformInfo : PlatformInfo {
     override val name: String = UIDevice.currentDevice.systemName() + " " + UIDevice.currentDevice.systemVersion
+    override val type = PlatformType.IOS
 }
 
 actual fun getPlatformInfo(): PlatformInfo = IOSPlatformInfo()

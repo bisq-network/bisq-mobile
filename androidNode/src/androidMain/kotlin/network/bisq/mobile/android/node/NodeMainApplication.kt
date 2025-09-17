@@ -13,9 +13,9 @@ import bisq.common.network.clear_net_address_types.LANAddressTypeFacade
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.android.node.di.androidNodeModule
+import network.bisq.mobile.android.node.di.serviceModule
 import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
 import network.bisq.mobile.domain.di.domainModule
-import network.bisq.mobile.domain.di.serviceModule
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.MainApplication
 import network.bisq.mobile.presentation.di.presentationModule

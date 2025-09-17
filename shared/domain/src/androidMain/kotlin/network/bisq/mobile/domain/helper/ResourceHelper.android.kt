@@ -1,9 +1,11 @@
 package network.bisq.mobile.domain.helper
 
+import android.content.ContentResolver
 import android.content.Context
 import android.media.RingtoneManager
 import android.net.Uri
 import androidx.core.net.toUri
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 
 object ResourceUtils {
@@ -34,7 +36,7 @@ object ResourceUtils {
         if (name.isNullOrBlank()) {
             return 0
         }
-        val normalizedName = name.lowercase().replace('-', '_')
+        val normalizedName = name.lowercase(Locale.ENGLISH).replace('-', '_')
 
         val key = "${normalizedName}_${type}"
 
@@ -47,10 +49,40 @@ object ResourceUtils {
              * name (e.g. getIdentifier("bar", "foo", null)
              */
             context.resources.getIdentifier(
-                name,
+                normalizedName,
                 type,
                 context.packageName
             )
         }
+    }
+
+    fun getSoundUri(context: Context, sound: String?): Uri? {
+        if (sound.isNullOrBlank()) {
+            return null
+        } else if (sound.contains("://")) {
+            return sound.toUri()
+        } else if (sound.equals("default", true)) {
+            return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        } else {
+            // User is attempting to get a sound by file name, verify it exists
+            var soundResourceId = getResourceIdByName(context, sound, "raw")
+            if (soundResourceId == 0 && sound.contains(".")) {
+                soundResourceId = getResourceIdByName(context, sound.substring(0, sound.lastIndexOf('.')), "raw")
+            }
+            if (soundResourceId == 0) {
+                return null;
+            }
+            // use the actual sound name to obtain a stable URI
+            return context.resourceUri(soundResourceId)
+        }
+    }
+
+    private fun Context.resourceUri(resourceId: Int): Uri = with(resources) {
+        Uri.Builder()
+            .scheme(ContentResolver.SCHEME_ANDROID_RESOURCE)
+            .authority(getResourcePackageName(resourceId))
+            .appendPath(getResourceTypeName(resourceId))
+            .appendPath(getResourceEntryName(resourceId))
+            .build()
     }
 }

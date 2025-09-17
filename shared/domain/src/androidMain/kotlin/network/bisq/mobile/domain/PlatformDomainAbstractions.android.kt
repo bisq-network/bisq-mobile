@@ -87,6 +87,7 @@ class AndroidUrlLauncher(private val context: Context) : UrlLauncher {
 
 class AndroidPlatformInfo : PlatformInfo {
     override val name: String = "Android ${Build.VERSION.SDK_INT}"
+    override val type = PlatformType.ANDROID
 }
 
 actual fun getPlatformInfo(): PlatformInfo = AndroidPlatformInfo()

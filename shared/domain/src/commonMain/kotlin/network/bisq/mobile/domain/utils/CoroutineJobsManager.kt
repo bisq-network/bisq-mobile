@@ -1,9 +1,16 @@
 package network.bisq.mobile.domain.utils
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.getPlatformInfo
 import kotlin.coroutines.CoroutineContext
@@ -97,7 +104,7 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
 
     // TODO we might need to make the whole manager platform-specific to cater for iOS properly
     // Platform-aware scope creation
-    private val isIOS = getPlatformInfo().name.lowercase().contains("ios")
+    private val isIOS = getPlatformInfo().type == PlatformType.IOS
     private var uiScope = if (isIOS) {
         CoroutineScope(Dispatchers.Main + SupervisorJob())
     } else {

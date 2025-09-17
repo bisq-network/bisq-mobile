@@ -14,10 +14,6 @@ import org.koin.core.scope.Scope
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
-interface PlatformInfo {
-    val name: String
-}
-
 interface UrlLauncher {
     fun openUrl(url: String)
 }

@@ -66,10 +66,6 @@ class NodeApplicationLifecycleService(
         const val TIMEOUT_SEC: Long = 60
     }
 
-    init {
-        openTradesNotificationService.notificationServiceController.activityClassForIntents = NodeMainActivity::class.java
-    }
-
     private val alreadyKilled = AtomicBoolean(false)
 
     fun initialize(filesDirsPath: Path, applicationContext: Context) {

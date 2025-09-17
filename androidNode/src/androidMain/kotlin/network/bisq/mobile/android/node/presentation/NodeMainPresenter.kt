@@ -3,7 +3,6 @@ package network.bisq.mobile.android.node.presentation
 import android.app.Activity
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
-import network.bisq.mobile.android.node.NodeMainActivity
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
@@ -31,10 +30,6 @@ class NodeMainPresenter(
     tradeReadStateRepository,
     urlLauncher
 ) {
-
-    init {
-        openTradesNotificationService.notificationServiceController.activityClassForIntents = NodeMainActivity::class.java
-    }
 
     override fun onViewAttached() {
         super.onViewAttached()

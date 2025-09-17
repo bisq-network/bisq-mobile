@@ -1,24 +1,21 @@
 package network.bisq.mobile.domain.service
 
+import android.annotation.SuppressLint
 import android.app.Notification
-import android.app.NotificationManager
+import android.app.PendingIntent
 import android.app.Service
-import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.pm.ServiceInfo
-import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
-import androidx.core.content.ContextCompat
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.helper.ResourceUtils
+import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
+import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController.Companion.EXTRA_DESTINATION
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
+import org.koin.android.ext.android.inject
 
 /**
  * Implements foreground service (api >= 26) or background service accordingly
@@ -31,65 +28,60 @@ open class BisqForegroundService : Service(), Logging {
     companion object {
         const val CHANNEL_ID = "BISQ_SERVICE_CHANNEL"
         const val SERVICE_ID = 21000000
+        const val REQUEST_CODE = 21000001
         const val PUSH_NOTIFICATION_ID = 1
-        const val SERVICE_NAME = "Bisq Foreground Service"
-        const val PUSH_NOTIFICATION_ACTION_KEY = "network.bisq.bisqapps.ACTION_REQUEST_PERMISSION"
     }
 
-    private lateinit var silentNotification: Notification
+    private val notificationServiceController: NotificationServiceController by inject()
 
-    private lateinit var defaultNotification: Notification
+    private fun getServiceNotification(): Notification {
+        // Create an intent that brings the user back to the app
+        val intent = Intent(applicationContext, notificationServiceController.activityClassForIntents).apply {
+            flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra(EXTRA_DESTINATION, "tab_my_trades") // Add extras to navigate to a specific screen
+        }
 
+        // Create a PendingIntent to handle the notification click
+        // Use unique request code to avoid PendingIntent conflicts
+        val pendingIntentFlags = PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+
+        val pendingIntent = PendingIntent.getActivity(
+            applicationContext,
+            REQUEST_CODE,
+            intent,
+            pendingIntentFlags
+        )
+
+        return NotificationCompat.Builder(this, CHANNEL_ID)
+            .setContentTitle("mobile.bisqService.title".i18n())
+            .setContentText("mobile.bisqService.subTitle".i18n())
+            .setSmallIcon(ResourceUtils.getNotifResId(applicationContext))
+            .setOngoing(true)
+            .setContentIntent(pendingIntent)
+            .build()
+    }
+
+    @SuppressLint("InlinedApi")
     override fun onCreate() {
         super.onCreate()
-        initDefaultNotifications(applicationContext)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-            ServiceCompat.startForeground(this, SERVICE_ID, silentNotification, ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING)
-            log.i { "Started as foreground service compat"}
-        } else {
-            startForeground(SERVICE_ID, silentNotification)
-            log.i { "Started foreground"}
-        }
-        log.i { "Service ready" }
-
-        // Update the foreground service notification with proper text after a short delay
-        CoroutineScope(Dispatchers.Main).launch {
-            delay(1000)
-
-            val serviceNotification: Notification = NotificationCompat.Builder(this@BisqForegroundService, CHANNEL_ID)
-                .setSmallIcon(ResourceUtils.getNotifResId(applicationContext))
-                .setContentTitle("mobile.bisqService.title".i18n())
-                .setContentText("mobile.bisqService.subTitle".i18n())
-                .setPriority(NotificationCompat.PRIORITY_LOW) // Low priority for service notification
-                .setOngoing(true)  // Keeps the notification active
-                .build()
-
-            // Update the SAME notification ID to replace the silent one
-            val notificationManager = this@BisqForegroundService.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.notify(SERVICE_ID, serviceNotification) // Use SERVICE_ID, not PUSH_NOTIFICATION_ID
-
-            log.i { "Service notification updated with text" }
-        }
+        // ServiceCompat impl. checks for android versions internally
+        ServiceCompat.startForeground(
+            this,
+            SERVICE_ID,
+            getServiceNotification(),
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_REMOTE_MESSAGING
+        )
+        log.i { "Started as foreground service" }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         // Android API 35
         if (intent?.action == "DISMISS_NOTIFICATION") {
-            val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             val notificationId = intent.getIntExtra("notificationId", PUSH_NOTIFICATION_ID)
+            val notificationManager = NotificationManagerCompat.from(applicationContext)
             notificationManager.cancel(notificationId)
             log.i { "Notification $notificationId dismissed by user" }
             return START_STICKY
-        }
-        
-        // Check if notification permission is granted
-        if (ContextCompat.checkSelfPermission(
-                this,
-                android.Manifest.permission.POST_NOTIFICATIONS
-            ) != PackageManager.PERMISSION_GRANTED) {
-            // Send a broadcast to the activity to request permission
-            val broadcastIntent = Intent(PUSH_NOTIFICATION_ACTION_KEY)
-            sendBroadcast(broadcastIntent)
         }
         log.i { "Service starting sticky" }
         return START_STICKY
@@ -98,23 +90,7 @@ open class BisqForegroundService : Service(), Logging {
     override fun onDestroy() {
         log.i { "Service is being destroyed" }
         super.onDestroy()
-        // Cleanup tasks
     }
 
     override fun onBind(intent: Intent?): IBinder? = null
-
-    private fun initDefaultNotifications(context: Context) {
-        silentNotification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle("") // No title
-            .setContentText("")  // No content
-            .setSmallIcon(ResourceUtils.getNotifResId(context))
-            .setPriority(NotificationCompat.PRIORITY_MIN)  // Silent notification
-            .setOngoing(true)  // Keeps the notification active
-            .build()
-        defaultNotification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setContentTitle(SERVICE_NAME)
-            .setSmallIcon(ResourceUtils.getNotifResId(context))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT) // For android previous to O
-            .build()
-    }
 }
