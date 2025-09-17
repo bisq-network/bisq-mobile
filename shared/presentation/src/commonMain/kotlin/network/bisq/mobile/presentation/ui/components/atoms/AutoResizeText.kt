@@ -11,14 +11,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalInspectionMode
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.AnnotatedString
-
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqTypography
 
 /**
  * Tries to render the text at given fontSize, but will automatically decrease
@@ -46,7 +46,7 @@ fun AutoResizeText(
     val determinedLineHeight by remember {
         derivedStateOf {
             if (lineHeight == TextUnit.Unspecified) {
-                determinedFontSize * 1.15f
+                determinedFontSize * BisqTypography.LINE_HEIGHT_MULTIPLIER
             } else {
                 lineHeight
             }
@@ -102,7 +102,7 @@ fun AutoResizeText(
     val determinedLineHeight by remember {
         derivedStateOf {
             if (lineHeight == TextUnit.Unspecified) {
-                determinedFontSize * 1.15f
+                determinedFontSize * BisqTypography.LINE_HEIGHT_MULTIPLIER
             } else {
                 lineHeight
             }

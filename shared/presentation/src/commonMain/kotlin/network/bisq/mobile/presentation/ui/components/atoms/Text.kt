@@ -13,11 +13,12 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import network.bisq.mobile.presentation.ui.theme.BisqModifier
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqTypography
 
 object BisqText {
 
     fun getDefaultLineHeight(fontSize: TextUnit) =
-        TextUnit(fontSize.times(1.15).value, TextUnitType.Sp)
+        TextUnit(fontSize.times(BisqTypography.LINE_HEIGHT_MULTIPLIER).value, TextUnitType.Sp)
 
     private val defaultColor = BisqTheme.colors.white
     private val defaultTextAlign = TextAlign.Start
