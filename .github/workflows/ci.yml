@@ -63,10 +63,10 @@ jobs:
           echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
           echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
 
-      - name: Run androidClient Tests
+      - name: Run Tests
         env:
           CI: true
-        run: ./gradlew androidClient:clean androidClient:assembleDebug androidClient:testDebugUnitTest --info
+        run: ./gradlew clean test -x :androidNode:testDebugUnitTest -x :androidNode:testReleaseUnitTest -x :androidNode:test --info
 
 #      TODO seems GH default ci doesn't have support for this
 #      - name: Headless Android emulator and run instrumentation tests
@@ -141,4 +141,4 @@ jobs:
       - name: Build Node Project with Maven Secrets
         run: |
           ./gradlew androidNode:clean androidNode:bundleDebug --refresh-dependencies --info
-          ./gradlew test
+          ./gradlew androidNode:test
