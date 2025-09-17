@@ -16,7 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.helper.getNotifResId
+import network.bisq.mobile.domain.helper.ResourceUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
 
@@ -57,7 +57,7 @@ open class BisqForegroundService : Service(), Logging {
             delay(1000)
 
             val serviceNotification: Notification = NotificationCompat.Builder(this@BisqForegroundService, CHANNEL_ID)
-                .setSmallIcon(getNotifResId(applicationContext))
+                .setSmallIcon(ResourceUtils.getNotifResId(applicationContext))
                 .setContentTitle("mobile.bisqService.title".i18n())
                 .setContentText("mobile.bisqService.subTitle".i18n())
                 .setPriority(NotificationCompat.PRIORITY_LOW) // Low priority for service notification
@@ -107,13 +107,13 @@ open class BisqForegroundService : Service(), Logging {
         silentNotification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle("") // No title
             .setContentText("")  // No content
-            .setSmallIcon(getNotifResId(context))
+            .setSmallIcon(ResourceUtils.getNotifResId(context))
             .setPriority(NotificationCompat.PRIORITY_MIN)  // Silent notification
             .setOngoing(true)  // Keeps the notification active
             .build()
         defaultNotification = NotificationCompat.Builder(this, CHANNEL_ID)
             .setContentTitle(SERVICE_NAME)
-            .setSmallIcon(getNotifResId(context))
+            .setSmallIcon(ResourceUtils.getNotifResId(context))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT) // For android previous to O
             .build()
     }
