@@ -18,6 +18,7 @@ ksp = "2.2.10-2.0.2"
 # -------------------- Android --------------------
 #noinspection AndroidGradlePluginVersion - we need to stick to it based on https://developer.android.com/build/kotlin-support
 agp = "8.10.1"
+android-ndk = "26.1.10909125"
 android-compileSdk = "35"
 android-targetSdk = "35"
 android-minSdk = "24"

@@ -63,6 +63,8 @@ localProperties.load(File(rootDir, "local.properties").inputStream())
 android {
     namespace = "network.bisq.mobile.node"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
+    // pin ndk version for deterministic builds
+    ndkVersion = libs.versions.android.ndk.get()
 
     signingConfigs {
         create("release") {
