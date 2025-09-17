@@ -58,7 +58,4 @@ class AndroidClientMainPresenter(
     webSocketClientProvider,
     urlLauncher
 ) {
-    init {
-        openTradesNotificationService.notificationServiceController.activityClassForIntents = ClientMainActivity::class.java
-    }
 }
