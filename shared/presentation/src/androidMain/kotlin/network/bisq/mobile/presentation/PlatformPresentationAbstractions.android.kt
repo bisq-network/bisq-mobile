@@ -12,6 +12,7 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.presentation.ui.helpers.AndroidCurrentTimeProvider
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
+import kotlin.math.roundToInt
 
 actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
     return BitmapPainter(platformImage.bitmap)
@@ -50,15 +51,7 @@ fun Context.findActivity(): Activity? = when (this) {
     else -> null
 }
 
-actual object ScreenInfo {
-    private val metrics = Resources.getSystem().displayMetrics
-
-    actual val density: Float
-        get() = metrics.density
-
-    actual val densityDpi: Int
-        get() = metrics.densityDpi
-
-    actual val widthPixels: Int
-        get() = metrics.widthPixels
+actual fun getScreenWidthDp(): Int {
+    val displayMetrics = Resources.getSystem().displayMetrics
+    return (displayMetrics.widthPixels / displayMetrics.density).roundToInt()
 }

@@ -2,8 +2,7 @@ package network.bisq.mobile.presentation
 
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.mockkObject
-import io.mockk.unmockkObject
+import io.mockk.mockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -49,17 +48,13 @@ class MainPresenterUnreadBadgeTest {
     @AfterTest
     fun tearDownMainDispatcher() {
         Dispatchers.resetMain()
-        unmockkObject(ScreenInfo)
     }
 
     @Test
     fun `trades in final states are excluded from unread badge map`() = runTest {
         // Mock top-level android-specific function called from MainPresenter.init
-        every { ScreenInfo.widthPixels } returns 480
-        mockkObject(ScreenInfo)
-        every { ScreenInfo.widthPixels } returns 480
-        every { ScreenInfo.density } returns 1f
-
+        mockkStatic("network.bisq.mobile.presentation.PlatformPresentationAbstractions_androidKt")
+        every { getScreenWidthDp() } returns 480
         // Dependencies
         val connectivity = mockk<ConnectivityService>(relaxed = true)
         val notifications = mockk<OpenTradesNotificationService>(relaxed = true)
@@ -130,9 +125,8 @@ class MainPresenterUnreadBadgeTest {
 
     private fun buildFixture(): Fixture {
         // Mock top-level android-specific function called from MainPresenter.init
-        mockkObject(ScreenInfo)
-        every { ScreenInfo.widthPixels } returns 480
-        every { ScreenInfo.density } returns 1f
+        mockkStatic("network.bisq.mobile.presentation.PlatformPresentationAbstractions_androidKt")
+        every { getScreenWidthDp() } returns 480
 
         val connectivity = mockk<ConnectivityService>(relaxed = true)
         val notifications = mockk<OpenTradesNotificationService>(relaxed = true)
