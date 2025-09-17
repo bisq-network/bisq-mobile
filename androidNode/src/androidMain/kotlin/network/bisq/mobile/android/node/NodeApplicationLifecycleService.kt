@@ -97,6 +97,7 @@ class NodeApplicationLifecycleService(
                 activateServiceFacades()
             }.onFailure { e ->
                 log.e("Error at initializeTorAndServices", e)
+                runCatching { networkServiceFacade.deactivate() }
                 applicationBootstrapFacade.handleBootstrapFailure(e)
             }.also {
                 // ApplicationBootstrapFacade life cycle ends here in success and failure case.
