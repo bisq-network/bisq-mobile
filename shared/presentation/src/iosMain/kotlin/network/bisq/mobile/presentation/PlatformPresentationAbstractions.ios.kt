@@ -87,5 +87,5 @@ actual object ScreenInfo {
 
     @OptIn(ExperimentalForeignApi::class)
     actual val widthPixels: Int
-        get() = CGRectGetWidth(UIScreen.mainScreen.bounds).toInt()
+        get() = (CGRectGetWidth(UIScreen.mainScreen.bounds) * UIScreen.mainScreen.scale).toInt()
 }

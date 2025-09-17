@@ -79,7 +79,6 @@ class ClientUserProfileServiceFacade(
                 // Set empty cache to prevent repeated network calls
                 ignoredUserIdsMutex.withLock {
                     _ignoredUserIds.value = emptySet()
-                    isIgnoredUsersCacheInitialized = true
                 }
             }
         }
