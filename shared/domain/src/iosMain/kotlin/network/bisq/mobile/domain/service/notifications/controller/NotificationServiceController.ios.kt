@@ -78,6 +78,10 @@ actual class NotificationServiceController(private val appForegroundController: 
         logDebug("Notification center delegate applied")
     }
 
+    actual fun doPlatformSpecificSetup() {
+        // nothing to do here
+    }
+
     @OptIn(ExperimentalForeignApi::class)
     actual suspend fun hasPermission(): Boolean = suspendCoroutine { continuation ->
         UNUserNotificationCenter.currentNotificationCenter()

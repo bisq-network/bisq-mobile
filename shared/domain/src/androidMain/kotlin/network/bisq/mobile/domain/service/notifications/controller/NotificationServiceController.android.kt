@@ -50,6 +50,10 @@ actual class NotificationServiceController(private val appForegroundController: 
     private var isRunning = false
     private val defaultDestination = MY_TRADES_TAB
 
+    actual fun doPlatformSpecificSetup() {
+        createNotificationChannels()
+    }
+
     actual suspend fun hasPermission(): Boolean {
         return ContextCompat.checkSelfPermission(
             context,

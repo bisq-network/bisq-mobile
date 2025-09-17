@@ -64,6 +64,7 @@ fun DashboardScreen() {
     val notifPermLauncher = rememberNotificationPermissionLauncher { granted ->
         if (granted) {
             presenter.saveNotificationPermissionState(NotificationPermissionState.GRANTED)
+            presenter.doPlatformSpecificSetup()
         } else {
             presenter.saveNotificationPermissionState(NotificationPermissionState.DONT_ASK_AGAIN)
         }
