@@ -9,12 +9,16 @@ import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.OrderedTextList
 import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.list.OrderedList
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.ui.helpers.PreviewEnvironment
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 @Composable
@@ -23,14 +27,29 @@ fun TradeGuideSecurity() {
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
+
+    TradeGuideSecurityContent(
+        isInteractive = isInteractive,
+        prevClick = presenter::prevClick,
+        nextClick = presenter::securityNextClick,
+        learnMoreClick = presenter::navigateSecurityLearnMore
+    )
+}
+
+@Composable fun TradeGuideSecurityContent(
+    isInteractive: Boolean,
+    prevClick: () -> Unit,
+    nextClick: () -> Unit,
+    learnMoreClick: () -> Unit,
+) {
     val title = "bisqEasy.tradeGuide.tabs.headline".i18n() + ": " + "bisqEasy.tradeGuide.security".i18n()
 
     MultiScreenWizardScaffold(
         title = title,
         stepIndex = 2,
         stepsLength = 4,
-        prevOnClick = presenter::prevClick,
-        nextOnClick = presenter::securityNextClick,
+        prevOnClick = prevClick,
+        nextOnClick = nextClick,
         horizontalAlignment = Alignment.Start,
         isInteractive = isInteractive,
     ) {
@@ -38,20 +57,53 @@ fun TradeGuideSecurity() {
 
         BisqGap.V2()
 
-        Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.Zero)) {
-            OrderedList("1.", "mobile.tradeGuide.security.rules1".i18n())
-            OrderedList("2.", "mobile.tradeGuide.security.rules2".i18n())
-            OrderedList("3.", "mobile.tradeGuide.security.rules3".i18n())
-            OrderedList("4.", "mobile.tradeGuide.security.rules4".i18n(), includeBottomPadding = false)
-        }
+        OrderedTextList(
+            "bisqEasy.tradeGuide.security.content".i18n(),
+            regex=  "- ",
+            style = { t, m ->
+                BisqText.baseLight(
+                    text = t,
+                    modifier = m,
+                    color = BisqTheme.colors.light_grey40,
+                )
+            },
+        )
 
         BisqGap.V1()
 
         LinkButton(
             "action.learnMore".i18n(),
             link = BisqLinks.BISQ_EASY_WIKI_URL,
-            onClick = { presenter.navigateSecurityLearnMore() }
+            onClick = learnMoreClick
         )
     }
 }
+
+@Composable
+private fun TradeGuideSecurityContentPreview(
+    language: String = "en",
+) {
+    BisqTheme.Preview(language = language) {
+        TradeGuideSecurityContent(
+            isInteractive = true,
+            prevClick = {},
+            nextClick = {},
+            learnMoreClick = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun TradeGuideSecurityContentPreview_En() {
+    BisqTheme.Preview {
+        PreviewEnvironment {
+            TradeGuideSecurityContentPreview()
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun TradeGuideSecurityContentPreview_Ru() = TradeGuideSecurityContentPreview(language = "ru")
 

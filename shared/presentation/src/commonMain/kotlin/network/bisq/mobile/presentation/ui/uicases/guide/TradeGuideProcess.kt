@@ -9,11 +9,13 @@ import androidx.compose.ui.Alignment
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.OrderedTextList
 import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.list.OrderedList
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
@@ -38,15 +40,29 @@ fun TradeGuideProcess() {
 
         BisqGap.V2()
 
-        BisqText.baseLight("bisqEasy.tradeGuide.process.content".i18n())
+        OrderedTextList(
+            "bisqEasy.tradeGuide.process.content".i18n(),
+            style = { t, m ->
+                BisqText.baseLight(
+                    text = t,
+                    modifier = m,
+                    color = BisqTheme.colors.light_grey40,
+                )
+            },
+        )
 
         BisqGap.V2()
 
-        Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.Zero)) {
-            OrderedList("1.", "mobile.tradeGuide.process.rules1".i18n())
-            OrderedList("2.", "mobile.tradeGuide.process.rules2".i18n())
-            OrderedList("3.", "mobile.tradeGuide.process.rules3".i18n(), includeBottomPadding = false)
-        }
+        OrderedTextList(
+            "bisqEasy.tradeGuide.process.steps".i18n(),
+            style = { t, m ->
+                BisqText.baseLight(
+                    text = t,
+                    modifier = m,
+                    color = BisqTheme.colors.light_grey40,
+                )
+            },
+        )
 
         BisqGap.V1()
 

@@ -1,7 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.guide
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -13,12 +11,12 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.components.atoms.BisqCheckbox
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.OrderedTextList
 import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.atoms.list.OrderedList
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
 @Composable
@@ -48,18 +46,17 @@ fun TradeGuideTradeRules() {
 
         BisqGap.V2()
 
-        Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.Zero)) {
-            OrderedList("1.", "mobile.tradeGuide.rules.rules1".i18n())
-            OrderedList("2.", "mobile.tradeGuide.rules.rules2".i18n())
-            OrderedList("3.", "mobile.tradeGuide.rules.rules3".i18n())
-            OrderedList("4.", "mobile.tradeGuide.rules.rules4".i18n())
-            OrderedList("5.", "mobile.tradeGuide.rules.rules5".i18n())
-            OrderedList("6.", "mobile.tradeGuide.rules.rules6".i18n(), includeBottomPadding = false)
-        }
-
-        BisqGap.V2()
-
-        BisqText.baseLight("mobile.tradeGuide.rules.support".i18n())
+        OrderedTextList(
+            "bisqEasy.tradeGuide.rules.content".i18n(),
+            regex=  "- ",
+            style = { t, m ->
+                BisqText.baseLight(
+                    text = t,
+                    modifier = m,
+                    color = BisqTheme.colors.light_grey40,
+                )
+            },
+        )
 
         BisqGap.V1()
 
