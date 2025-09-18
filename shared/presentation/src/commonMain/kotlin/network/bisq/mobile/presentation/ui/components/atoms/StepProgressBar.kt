@@ -26,8 +26,6 @@ fun BisqStepProgressBar(
     val activeColor = BisqTheme.colors.primary
     val inactiveColor = BisqTheme.colors.mid_grey20
 
-    println( "Steps Index: $stepIndex; Steps len: $stepsLength")
-
     Row(modifier = modifier) {
         for (index in 1..stepsLength) {
             Box(
