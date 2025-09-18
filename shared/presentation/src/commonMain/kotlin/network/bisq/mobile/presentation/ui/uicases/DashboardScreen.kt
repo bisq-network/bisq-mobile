@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -29,14 +31,16 @@ import bisqapps.shared.presentation.generated.resources.icon_markets
 import bisqapps.shared.presentation.generated.resources.icon_payment
 import bisqapps.shared.presentation.generated.resources.reputation
 import bisqapps.shared.presentation.generated.resources.thumbs_up
+import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.data.model.NotificationPermissionState
+import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.layout.BisqScrollLayout
+import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.AmountWithCurrency
 import network.bisq.mobile.presentation.ui.components.organisms.NotificationPermissionDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -66,7 +70,16 @@ fun DashboardScreen() {
             presenter.saveNotificationPermissionState(NotificationPermissionState.GRANTED)
             presenter.doPlatformSpecificSetup()
         } else {
-            presenter.saveNotificationPermissionState(NotificationPermissionState.DONT_ASK_AGAIN)
+            // we can't ask more than twice, so we won't ask again
+            if (notifPermissionState == NotificationPermissionState.DENIED) {
+                presenter.saveNotificationPermissionState(NotificationPermissionState.DONT_ASK_AGAIN)
+                presenter.showSnackbar(
+                    "mobile.permissions.notifications.dismissed".i18n(),
+                    duration = SnackbarDuration.Indefinite,
+                )
+            } else {
+                presenter.saveNotificationPermissionState(NotificationPermissionState.DENIED)
+            }
         }
     }
 
@@ -82,8 +95,13 @@ fun DashboardScreen() {
                 }
             }
 
-            NotificationPermissionState.NOT_GRANTED -> {
-                isPermissionRequestDialogVisible = true
+            NotificationPermissionState.NOT_GRANTED,
+            NotificationPermissionState.DENIED -> {
+                if (notifPermissionState == NotificationPermissionState.DENIED && isPermissionRequestDialogVisible) {
+                    isPermissionRequestDialogVisible = false
+                } else {
+                    isPermissionRequestDialogVisible = true
+                }
             }
 
             NotificationPermissionState.DONT_ASK_AGAIN -> {
@@ -103,6 +121,7 @@ fun DashboardScreen() {
         tradeRulesConfirmed = tradeRulesConfirmed,
         onNavigateToMarkets = presenter::onNavigateToMarkets,
         onOpenTradeGuide = presenter::onOpenTradeGuide,
+        snackbarHostState = presenter.getSnackState(),
         isPermissionRequestDialogVisible = isPermissionRequestDialogVisible,
         onPermissionRequest = {
             notifPermLauncher.launch()
@@ -110,6 +129,13 @@ fun DashboardScreen() {
         onPermissionDenied = { dontAskAgain ->
             if (dontAskAgain) {
                 presenter.saveNotificationPermissionState(NotificationPermissionState.DONT_ASK_AGAIN)
+                presenter.showSnackbar(
+                    "mobile.permissions.notifications.dismissed".i18n(),
+                    duration = SnackbarDuration.Indefinite,
+                )
+            } else if (getPlatformInfo().type != PlatformType.ANDROID) {
+                // less important on iOS, so we allow background tap to dismiss
+                isPermissionRequestDialogVisible = false
             }
         }
     )
@@ -123,6 +149,7 @@ private fun DashboardContent(
     isInteractive: Boolean,
     marketPrice: String,
     tradeRulesConfirmed: Boolean,
+    snackbarHostState: SnackbarHostState,
     onNavigateToMarkets: () -> Unit,
     onOpenTradeGuide: () -> Unit,
     isPermissionRequestDialogVisible: Boolean,
@@ -130,8 +157,9 @@ private fun DashboardContent(
     onPermissionDenied: (dontAskAgain: Boolean) -> Unit,
 ) {
     val padding = BisqUIConstants.ScreenPadding
-    BisqScrollLayout(
-        contentPadding = PaddingValues(all = BisqUIConstants.Zero),
+    BisqScrollScaffold(
+        padding = PaddingValues(all = BisqUIConstants.Zero),
+        snackbarHostState = snackbarHostState,
         verticalArrangement = Arrangement.spacedBy(padding),
         isInteractive = isInteractive,
     ) {
@@ -270,6 +298,7 @@ private fun DashboardContentPreview(
             tradeRulesConfirmed = tradeRulesConfirmed,
             onNavigateToMarkets = {},
             onOpenTradeGuide = {},
+            snackbarHostState = SnackbarHostState(),
             isPermissionRequestDialogVisible = isPermissionRequestDialogVisible,
             onPermissionRequest = {},
             onPermissionDenied = { _ -> },

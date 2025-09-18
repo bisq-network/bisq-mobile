@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation
 
 import androidx.annotation.CallSuper
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
@@ -66,7 +67,12 @@ interface ViewPresenter {
 
     fun getSnackState(): SnackbarHostState
 
-    fun showSnackbar(message: String, isError: Boolean = true)
+    fun showSnackbar(
+        message: String,
+        isError: Boolean = true,
+        duration: SnackbarDuration = SnackbarDuration.Short,
+    )
+
     fun dismissSnackbar()
 
     /**
@@ -148,9 +154,13 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         return snackbarHostState
     }
 
-    override fun showSnackbar(message: String, isError: Boolean) {
+    override fun showSnackbar(
+        message: String,
+        isError: Boolean,
+        duration: SnackbarDuration,
+    ) {
         launchUI(Dispatchers.Main) {
-            snackbarHostState.showSnackbar(message, withDismissAction = true)
+            snackbarHostState.showSnackbar(message, withDismissAction = true, duration = duration)
         }
     }
 

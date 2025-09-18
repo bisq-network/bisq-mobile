@@ -1,12 +1,13 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import androidx.compose.material3.SnackbarHostState
 
 /**
  * Lightweight presenter used ONLY for compose @Preview. Provides the minimum surface
@@ -40,7 +41,7 @@ class PreviewTopBarPresenter(
     override fun getRootTabNavController(): NavHostController = tabNav
 
     override fun getSnackState(): SnackbarHostState = snackbar
-    override fun showSnackbar(message: String, isError: Boolean) {}
+    override fun showSnackbar(message: String, isError: Boolean, duration: SnackbarDuration) {}
     override fun dismissSnackbar() {}
     override fun isAtHome(): Boolean = true
     override fun navigateToTab(

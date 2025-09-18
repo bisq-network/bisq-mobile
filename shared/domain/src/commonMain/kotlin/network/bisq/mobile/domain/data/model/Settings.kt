@@ -15,5 +15,6 @@ data class Settings (
 enum class NotificationPermissionState {
     NOT_GRANTED,
     GRANTED,
+    DENIED,
     DONT_ASK_AGAIN,
 }
