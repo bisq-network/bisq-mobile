@@ -9,25 +9,38 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
+import network.bisq.mobile.presentation.ui.helpers.customPaymentIconIndex
 import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
+private val CUSTOM_PAYMENT_ICON_IDS = listOf(
+    "custom_payment_1",
+    "custom_payment_2",
+    "custom_payment_3",
+    "custom_payment_4",
+    "custom_payment_5",
+    "custom_payment_6",
+)
 // TODO: Get params and render apt
 @Composable
 fun PaymentMethods(
     baseSidePaymentMethods: List<String>,
     quoteSidePaymentMethods: List<String>
 ) {
-    var customMethodCounter = 1
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             quoteSidePaymentMethods.forEach { paymentMethod ->
+
                 Box(contentAlignment = Alignment.Center) {
                     val (_, missing) = i18NPaymentMethod(paymentMethod)
-                    val fallbackPath = "drawable/payment/fiat/custom_payment_${customMethodCounter}.png"
+                    val customIndex = if(missing)
+                        customPaymentIconIndex(paymentMethod, CUSTOM_PAYMENT_ICON_IDS.size)
+                    else
+                        0
+                    val fallbackPath = "drawable/payment/fiat/${CUSTOM_PAYMENT_ICON_IDS[customIndex]}.png"
                     DynamicImage(
                         path = "drawable/payment/fiat/${
                             paymentMethod
@@ -36,7 +49,6 @@ fun PaymentMethods(
                         }.png",
                         contentDescription =  if (missing) "mobile.components.paymentMethods.customPaymentMethod".i18n(paymentMethod) else paymentMethod,
                         fallbackPath = fallbackPath,
-                        onImageLoadError = { customMethodCounter++ },
                         modifier = Modifier.size(20.dp),
                     )
                     if (missing) {

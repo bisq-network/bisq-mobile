@@ -36,6 +36,7 @@ fun PaymentTypeCard(
     onRemove: ((String) -> Unit)? = null,
     isSelected: Boolean = false,
     isCustomPaymentMethod: Boolean = false,
+    showRemoveCustom: Boolean = false,
 ) {
 
     val customIndex = if(isCustomPaymentMethod)
@@ -82,7 +83,7 @@ fun PaymentTypeCard(
             }
         }
         BisqText.baseRegular(title, modifier = Modifier.weight(1.0f))
-        if (isCustomPaymentMethod) {
+        if (isCustomPaymentMethod && showRemoveCustom) {
             CloseIconButton(
                 onClick = {
                     onRemove?.invoke(title)
