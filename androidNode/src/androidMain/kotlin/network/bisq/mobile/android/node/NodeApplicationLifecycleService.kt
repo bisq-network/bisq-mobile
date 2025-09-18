@@ -67,6 +67,8 @@ class NodeApplicationLifecycleService(
     }
 
     private val alreadyKilled = AtomicBoolean(false)
+    private val isRestarting = AtomicBoolean(false)
+
 
     fun initialize(filesDirsPath: Path, applicationContext: Context) {
         log.i { "Initialize core services and Tor" }
@@ -132,15 +134,28 @@ class NodeApplicationLifecycleService(
     }
 
     fun restartApp(activity: Activity) {
-        try {
-            // Blocking wait until services and tor is shut down
-            shutdownServicesAndTor()
-        } catch (e: Exception) {
-            log.e("Error at shutdownServicesAndTor", e)
-        } finally {
-            // Use ProcessPhoenix from a Square dev which provides a more robust restart strategy by using a trampoline activity
-            // which terminates our process once launched.
-            ProcessPhoenix.triggerRebirth(activity)
+        // One-shot guard to avoid double-triggered restarts
+        if (!isRestarting.compareAndSet(false, true)) {
+            log.w { "restartApp called multiple times; ignoring duplicate" }
+            return
+        }
+
+        // Stop foreground notifications early to avoid flicker during restart
+        runCatching { openTradesNotificationService.stopNotificationService() }
+
+        val appContext = activity.applicationContext
+        launchIO {
+            try {
+                // Perform shutdown off the UI thread
+                shutdownServicesAndTor()
+            } catch (e: Exception) {
+                log.e("Error at shutdownServicesAndTor", e)
+            } finally {
+                // Trigger rebirth on the main thread
+                withContext(Dispatchers.Main) {
+                    ProcessPhoenix.triggerRebirth(appContext)
+                }
+            }
         }
     }
 
