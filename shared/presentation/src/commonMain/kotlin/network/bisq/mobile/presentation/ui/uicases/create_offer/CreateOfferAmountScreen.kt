@@ -30,6 +30,7 @@ import org.koin.compose.koinInject
 @Composable
 fun CreateOfferAmountSelectorScreen() {
     val presenter: CreateOfferAmountPresenter = koinInject()
+    val createPresenter: CreateOfferPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val isBuy by presenter.isBuy.collectAsState()
@@ -54,8 +55,8 @@ fun CreateOfferAmountSelectorScreen() {
 
     MultiScreenWizardScaffold(
         "bisqEasy.openTrades.table.quoteAmount".i18n(),
-        stepIndex = 3,
-        stepsLength = 7,
+        stepIndex = if (createPresenter.skipCurrency) 2 else 3,
+        stepsLength = if (createPresenter.skipCurrency) 6 else 7,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onNext() },
         nextDisabled = !amountValid,

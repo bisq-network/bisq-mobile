@@ -43,9 +43,12 @@ class TakeOfferPresenter(
         lateinit var baseSidePaymentMethod: String
     }
 
+    var totalSteps: Int = 1
+
     lateinit var takeOfferModel: TakeOfferModel
 
     fun selectOfferToTake(value: OfferItemPresentationModel) {
+        totalSteps = 1
         takeOfferModel = TakeOfferModel()
         takeOfferModel.offerItemPresentationVO = value
 
@@ -78,6 +81,8 @@ class TakeOfferPresenter(
                 baseAmount = CoinVOFactory.from(amountSpec.amount, baseCurrencyCode)
                 quoteAmount = priceQuote.toQuoteSideMonetary(baseAmount) as FiatVO
             }
+        } else {
+            totalSteps = totalSteps + 1
         }
         takeOfferModel.quoteAmount = quoteAmount
         takeOfferModel.baseAmount = baseAmount
@@ -85,11 +90,16 @@ class TakeOfferPresenter(
         var quoteSidePaymentMethod = ""
         if (!takeOfferModel.hasMultipleQuoteSidePaymentMethods) {
             quoteSidePaymentMethod = offerListItem.quoteSidePaymentMethods[0]
+        } else {
+            totalSteps = totalSteps + 1
         }
         takeOfferModel.quoteSidePaymentMethod = quoteSidePaymentMethod
         var baseSidePaymentMethod = ""
         if (!takeOfferModel.hasMultipleBaseSidePaymentMethods) {
             baseSidePaymentMethod = offerListItem.baseSidePaymentMethods[0]
+        } else {
+            totalSteps = totalSteps + 1
+
         }
         takeOfferModel.baseSidePaymentMethod = baseSidePaymentMethod
     }

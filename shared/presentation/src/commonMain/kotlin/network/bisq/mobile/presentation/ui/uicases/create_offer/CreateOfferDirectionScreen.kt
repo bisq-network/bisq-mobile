@@ -34,6 +34,7 @@ import org.koin.compose.koinInject
 @Composable
 fun CreateOfferDirectionScreen() {
     val presenter: CreateOfferDirectionPresenter = koinInject()
+    val createPresenter: CreateOfferPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val showSellerReputationWarning by presenter.showSellerReputationWarning.collectAsState()
@@ -41,7 +42,7 @@ fun CreateOfferDirectionScreen() {
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.progress.directionAndMarket".i18n(),
         stepIndex = 1,
-        stepsLength = 7,
+        stepsLength = if (createPresenter.skipCurrency) 6 else 7,
         horizontalAlignment = Alignment.Start,
         showNextPrevButtons = false,
         shouldBlurBg = showSellerReputationWarning,

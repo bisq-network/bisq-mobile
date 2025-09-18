@@ -14,6 +14,7 @@ import org.koin.compose.koinInject
 @Composable
 fun TakeOfferPaymentMethodScreen() {
     val presenter: TakeOfferPaymentMethodPresenter = koinInject()
+    val takeOfferPresenter: TakeOfferPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val quoteSidePaymentMethod: MutableStateFlow<Set<String>> = remember { MutableStateFlow(emptySet()) }
@@ -24,10 +25,15 @@ fun TakeOfferPaymentMethodScreen() {
         }
     }
 
+    val takeOffer = takeOfferPresenter.takeOfferModel
+    var stepIndex = 1
+    if (takeOffer.hasAmountRange)
+        stepIndex++
+
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.takeOffer.progress.quoteSidePaymentMethod".i18n(),
-        stepIndex = 2,
-        stepsLength = 4,
+        stepIndex = stepIndex,
+        stepsLength = takeOfferPresenter.totalSteps,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onQuoteSideNext() },
         snackbarHostState = presenter.getSnackState(),

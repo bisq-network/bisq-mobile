@@ -15,6 +15,7 @@ import org.koin.compose.koinInject
 @Composable
 fun CreateOfferSettlementMethodScreen() {
     val presenter: CreateOfferPaymentMethodPresenter = koinInject()
+    val createPresenter: CreateOfferPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val selectedBaseSidePaymentMethods = remember { presenter.selectedBaseSidePaymentMethods }
@@ -22,8 +23,8 @@ fun CreateOfferSettlementMethodScreen() {
 
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.createOffer.progress.baseSidePaymentMethod".i18n(),
-        stepIndex = 6,
-        stepsLength = 7,
+        stepIndex = if (createPresenter.skipCurrency) 5 else 6,
+        stepsLength = if (createPresenter.skipCurrency) 6 else 7,
         prevOnClick = { presenter.onBack() },
         nextButtonText = "action.next".i18n(),
         nextOnClick = { presenter.onBaseSideNext() },

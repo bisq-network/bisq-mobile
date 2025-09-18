@@ -14,6 +14,7 @@ import org.koin.compose.koinInject
 @Composable
 fun TakeOfferSettlementMethodScreen() {
     val presenter: TakeOfferPaymentMethodPresenter = koinInject()
+    val takeOfferPresenter: TakeOfferPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val baseSidePaymentMethod: MutableStateFlow<Set<String>> = remember { MutableStateFlow(emptySet()) }
@@ -24,10 +25,17 @@ fun TakeOfferSettlementMethodScreen() {
         }
     }
 
+    val takeOffer = takeOfferPresenter.takeOfferModel
+    var stepIndex = 1
+    if (takeOffer.hasAmountRange)
+        stepIndex++
+    if (takeOffer.hasMultipleQuoteSidePaymentMethods)
+        stepIndex++
+
     MultiScreenWizardScaffold(
         "mobile.bisqEasy.takeOffer.progress.baseSidePaymentMethod".i18n(),
-        stepIndex = 3,
-        stepsLength = 4,
+        stepIndex = stepIndex,
+        stepsLength = takeOfferPresenter.totalSteps,
         prevOnClick = { presenter.onBack() },
         nextOnClick = { presenter.onBaseSideNext() },
         snackbarHostState = presenter.getSnackState(),
@@ -43,10 +51,8 @@ fun TakeOfferSettlementMethodScreen() {
             BisqGap.V2()
 
             PaymentMethodCard(
-                title = (if (presenter.isTakerBtcBuyer)
-                    "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.seller"
-                else
-                    "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.buyer").i18n(),
+                title = (if (presenter.isTakerBtcBuyer) "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.seller"
+                else "bisqEasy.takeOffer.paymentMethods.subtitle.bitcoin.buyer").i18n(),
                 imagePaths = presenter.getBaseSidePaymentMethodsImagePaths(),
                 availablePaymentMethods = presenter.baseSidePaymentMethods.toMutableSet(),
                 selectedPaymentMethods = baseSidePaymentMethod,

@@ -29,6 +29,7 @@ import org.koin.compose.koinInject
 @Composable
 fun CreateOfferReviewOfferScreen() {
     val presenter: CreateOfferReviewPresenter = koinInject()
+    val createPresenter: CreateOfferPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
@@ -36,8 +37,8 @@ fun CreateOfferReviewOfferScreen() {
 
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.review.headline.maker".i18n(),
-        stepIndex = 7,
-        stepsLength = 7,
+        stepIndex = if (createPresenter.skipCurrency) 6 else 7,
+        stepsLength = if (createPresenter.skipCurrency) 6 else 7,
         prevOnClick = { presenter.onBack() },
         nextButtonText = "bisqEasy.tradeWizard.review.nextButton.createOffer".i18n(),
         nextOnClick = { presenter.onCreateOffer() },
