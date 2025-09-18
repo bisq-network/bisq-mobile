@@ -2,12 +2,12 @@ package network.bisq.mobile.android.node
 
 import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.os.Process
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import bisq.common.network.TransportType
 import bisq.network.NetworkServiceConfig
+import com.jakewharton.processphoenix.ProcessPhoenix
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
@@ -131,43 +131,16 @@ class NodeApplicationLifecycleService(
         }
     }
 
-
     fun restartApp(activity: Activity) {
-        launchIO {
-            try {
-                // Blocking wait until services and tor is shut down
-                shutdownServicesAndTor()
-            } catch (e: Exception) {
-                log.e("Error at shutdownServicesAndTor", e)
-            } finally {
-                try {
-                    val restartIntent = activity.packageManager
-                        .getLaunchIntentForPackage(activity.packageName)
-                        ?.apply {
-                            addFlags(
-                                Intent.FLAG_ACTIVITY_CLEAR_TOP or
-                                        Intent.FLAG_ACTIVITY_NEW_TASK or
-                                        Intent.FLAG_ACTIVITY_CLEAR_TASK
-                            )
-                        }
-
-                    if (restartIntent != null) {
-                        withContext(Dispatchers.Main) {
-                            // Start from application context so we don’t depend on dying Activity
-                            activity.applicationContext.startActivity(restartIntent)
-                            activity.finishAffinity()
-                        }
-                    } else {
-                        log.e { "Could not create restart intent" }
-                    }
-                } catch (e: Exception) {
-                    log.e("Error at shutdownServicesAndTor", e)
-                } finally {
-                    // Add a bit of delay to give activity shutdown and start more time.
-                    delay(400)
-                    killProcess()
-                }
-            }
+        try {
+            // Blocking wait until services and tor is shut down
+            shutdownServicesAndTor()
+        } catch (e: Exception) {
+            log.e("Error at shutdownServicesAndTor", e)
+        } finally {
+            // Use ProcessPhoenix from a Square dev which provides a more robust restart strategy by using a trampoline activity
+            // which terminates our process once launched.
+            ProcessPhoenix.triggerRebirth(activity)
         }
     }
 

@@ -318,6 +318,8 @@ dependencies {
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     implementation(libs.androidx.core.splashscreen)
+
+    implementation(libs.process.phoenix)
 }
 
 // ensure tests run on the same Java version as the main code

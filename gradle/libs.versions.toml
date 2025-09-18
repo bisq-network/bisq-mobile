@@ -66,6 +66,7 @@ koin = "4.1.0"
 buildconfig = "5.5.4"
 protobuf = "0.9.4"
 protob = "4.28.2"
+process-phoenix = "3.0.0"
 
 # -------------------- Bisq Core Transitive Dependencies --------------------
 chimp-jsocks-lib = { strictly = '567e1cd6' }
@@ -148,6 +149,7 @@ koin-test = { module = "io.insert-koin:koin-test", version.ref = "koin" }
 
 # -------------------- Utilities --------------------
 protoc = { module = "com.google.protobuf:protoc", version.ref = "protob" }
+process-phoenix = { module = "com.jakewharton:process-phoenix", version.ref = "process-phoenix" }
 
 # -------------------- Bisq Core Modules --------------------
 bisq-core-common = { module = "bisq:common", version.ref = "bisq-core" }
