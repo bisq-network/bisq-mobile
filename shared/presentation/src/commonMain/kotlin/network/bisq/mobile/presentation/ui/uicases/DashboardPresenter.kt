@@ -39,6 +39,8 @@ open class DashboardPresenter(
     val tradeRulesConfirmed: StateFlow<Boolean> get() = settingsServiceFacade.tradeRulesConfirmed
     val marketPrice: StateFlow<String> get() = marketPriceServiceFacade.selectedFormattedMarketPrice
 
+    open val showNumConnections: Boolean = false
+
     @OptIn(ExperimentalCoroutinesApi::class)
     val savedNotifPermissionState: StateFlow<NotificationPermissionState?> =
         settingsRepository.data.mapLatest { it.notificationPermissionState }

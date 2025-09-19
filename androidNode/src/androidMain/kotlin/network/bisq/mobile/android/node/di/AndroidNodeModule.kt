@@ -3,6 +3,7 @@ package network.bisq.mobile.android.node.di
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.presentation.NodeAboutPresenter
+import network.bisq.mobile.android.node.presentation.NodeDashboardPresenter
 import network.bisq.mobile.android.node.presentation.NodeGeneralSettingsPresenter
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
 import network.bisq.mobile.android.node.presentation.NodeOnBoardingPresenter
@@ -43,6 +44,7 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
+import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.AboutPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IAboutPresenter
@@ -138,6 +140,19 @@ val androidNodeModule = module {
     single<SplashPresenter> {
         NodeSplashPresenter(
             get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+        )
+    }
+
+    single<DashboardPresenter> {
+        NodeDashboardPresenter(
             get(),
             get(),
             get(),

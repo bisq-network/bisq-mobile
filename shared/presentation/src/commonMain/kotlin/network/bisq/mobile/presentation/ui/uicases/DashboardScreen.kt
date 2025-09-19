@@ -65,6 +65,8 @@ fun DashboardScreen() {
     val tradeRulesConfirmed by presenter.tradeRulesConfirmed.collectAsState()
     val notifPermissionState by presenter.savedNotifPermissionState.collectAsState()
     var isPermissionRequestDialogVisible by remember { mutableStateOf(false) }
+    val showNumConnections = presenter.showNumConnections
+
     val notifPermLauncher = rememberNotificationPermissionLauncher { granted ->
         if (granted) {
             presenter.saveNotificationPermissionState(NotificationPermissionState.GRANTED)
@@ -115,6 +117,7 @@ fun DashboardScreen() {
     DashboardContent(
         offersOnline = offersOnline,
         publishedProfiles = publishedProfiles,
+        showNumConnections = showNumConnections,
         numConnections = numConnections,
         isInteractive = isInteractive,
         marketPrice = marketPrice,
@@ -145,6 +148,7 @@ fun DashboardScreen() {
 private fun DashboardContent(
     offersOnline: Number,
     publishedProfiles: Number,
+    showNumConnections: Boolean,
     numConnections: Number,
     isInteractive: Boolean,
     marketPrice: String,
@@ -179,11 +183,19 @@ private fun DashboardContent(
                     price = offersOnline.toString(),
                     text = "dashboard.offersOnline".i18n()
                 )
-                HomeInfoCard(
-                    modifier = Modifier.weight(1f).fillMaxHeight(),
-                    price = numConnections.toString(),
-                    text = "mobile.dashboard.numConnections".i18n()
-                )
+                if (showNumConnections) {
+                    HomeInfoCard(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        price = numConnections.toString(),
+                        text = "mobile.dashboard.numConnections".i18n()
+                    )
+                } else {
+                    HomeInfoCard(
+                        modifier = Modifier.weight(1f).fillMaxHeight(),
+                        price = publishedProfiles.toString(),
+                        text = "dashboard.activeUsers".i18n()
+                    )
+                }
             }
         }
 
@@ -292,6 +304,7 @@ private fun DashboardContentPreview(
         DashboardContent(
             offersOnline = 1,
             publishedProfiles = 2,
+            showNumConnections = true,
             numConnections = 8,
             isInteractive = true,
             marketPrice = "111247.40 BTC/USD",
