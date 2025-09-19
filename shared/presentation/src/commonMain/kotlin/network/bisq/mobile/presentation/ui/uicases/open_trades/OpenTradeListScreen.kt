@@ -207,7 +207,7 @@ fun NoTradesSection(presenter: OpenTradeListPresenter) {
                 textAlign = TextAlign.Center
             )
             BisqButton(
-                text = "bisqEasy.tradeWizard.selectOffer.noMatchingOffers.browseOfferbook".i18n(), // Browse offerbook
+                text = "mobile.bisqEasy.tradeWizard.selectOffer.noMatchingOffers.browseOfferbook".i18n(),
                 onClick = presenter::onNavigateToOfferbook
             )
         }
