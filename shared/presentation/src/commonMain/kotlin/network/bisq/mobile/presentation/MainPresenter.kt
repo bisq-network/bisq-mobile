@@ -49,8 +49,8 @@ open class MainPresenter(
     override lateinit var tabNavController: NavHostController
 
     // Observable state
-    private val _isContentVisible = MutableStateFlow(false)
-    override val isContentVisible: StateFlow<Boolean> get() = _isContentVisible.asStateFlow()
+    private val _isMainContentVisible = MutableStateFlow(false)
+    override val isMainContentVisible: StateFlow<Boolean> get() = _isMainContentVisible.asStateFlow()
 
     private val _isSmallScreen = MutableStateFlow(false)
     override val isSmallScreen: StateFlow<Boolean> get() = _isSmallScreen.asStateFlow()
@@ -158,9 +158,8 @@ open class MainPresenter(
         openTradesNotificationService.stopNotificationService()
     }
 
-    // Toggle action
-    override fun toggleContentVisibility() {
-        _isContentVisible.value = !_isContentVisible.value
+    override fun setIsMainContentVisible(value: Boolean) {
+        _isMainContentVisible.value = value
     }
 
     override fun navigateToTrustedNode() {
