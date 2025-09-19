@@ -31,7 +31,7 @@ class OfferbookMarketPresenter(
     // flag to force market update trigger when needed
     private val _marketPriceUpdated = MutableStateFlow(false)
 
-    val hasIgnoredUsers: StateFlow<Boolean> = userProfileServiceFacade.ignoredUserIds
+    val hasIgnoredUsers: StateFlow<Boolean> = userProfileServiceFacade.ignoredProfileIds
         .map { it.isNotEmpty() }
         .stateIn(
             presenterScope,

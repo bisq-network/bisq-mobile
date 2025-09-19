@@ -52,10 +52,10 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     private val userProfileService: UserProfileService by lazy { userService.userProfileService }
     private val catHashService: AndroidNodeCatHashService by lazy { applicationService.androidCatHashService.get() }
 
-    private val _ignoredUserIds: MutableStateFlow<Set<String>> = MutableStateFlow(
+    private val _ignoredProfileIds: MutableStateFlow<Set<String>> = MutableStateFlow(
         emptySet()
     )
-    override val ignoredUserIds: StateFlow<Set<String>> get() = _ignoredUserIds.asStateFlow()
+    override val ignoredProfileIds: StateFlow<Set<String>> get() = _ignoredProfileIds.asStateFlow()
 
     // Properties
     private val _selectedUserProfile: MutableStateFlow<UserProfileVO?> = MutableStateFlow(null)
@@ -264,7 +264,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     override suspend fun getIgnoredUserProfileIds(): Set<String> {
         val ids = userProfileService.ignoredUserProfileIds
-        _ignoredUserIds.value = ids.toSet() // to create a new set to trigger updates correctly
+        _ignoredProfileIds.value = ids.toSet() // to create a new set to trigger updates correctly
         return ids
     }
 }

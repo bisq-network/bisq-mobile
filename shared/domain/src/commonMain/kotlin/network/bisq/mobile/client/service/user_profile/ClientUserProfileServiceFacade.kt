@@ -45,7 +45,7 @@ class ClientUserProfileServiceFacade(
     private val avatarMapMutex = Mutex()
 
     private val _ignoredUserIds: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
-    override val ignoredUserIds: StateFlow<Set<String>> get() = _ignoredUserIds.asStateFlow()
+    override val ignoredProfileIds: StateFlow<Set<String>> get() = _ignoredUserIds.asStateFlow()
     private val ignoredUserIdsMutex = Mutex()
 
     // Track initialization state to prevent race conditions

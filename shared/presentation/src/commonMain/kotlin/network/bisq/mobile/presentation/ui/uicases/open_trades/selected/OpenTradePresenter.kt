@@ -78,7 +78,7 @@ class OpenTradePresenter(
 
     private val _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
 
-    val isUserIgnored = selectedTrade.combine(userProfileServiceFacade.ignoredUserIds) { trade, ignoredIds ->
+    val isUserIgnored = selectedTrade.combine(userProfileServiceFacade.ignoredProfileIds) { trade, ignoredIds ->
         trade?.peersUserProfile?.id?.let { ignoredIds.contains(it) } ?: false
     }.stateIn(
         scope = presenterScope,

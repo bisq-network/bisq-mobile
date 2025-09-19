@@ -61,7 +61,7 @@ class TradeChatPresenter(
     private val _undoIgnoreUserId: MutableStateFlow<String> = MutableStateFlow("")
     val undoIgnoreUserId: StateFlow<String> get() = _undoIgnoreUserId.asStateFlow()
 
-    val ignoredUserIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredUserIds
+    val ignoredProfileIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredProfileIds
 
     val readCount =
         selectedTrade.combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
@@ -84,7 +84,7 @@ class TradeChatPresenter(
         launchUI {
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
 
-            collectUI(ignoredUserIds.combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
+            collectUI(ignoredProfileIds.combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
                 messages.filter { message ->
                     when (message.chatMessageType) {
                         ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> !ignoredIds.contains(

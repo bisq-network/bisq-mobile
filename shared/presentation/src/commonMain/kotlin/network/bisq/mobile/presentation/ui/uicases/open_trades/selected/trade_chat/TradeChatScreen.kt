@@ -32,7 +32,7 @@ fun TradeChatScreen() {
     val sortedChatMessages by presenter.sortedChatMessages.collectAsState()
     val quotedMessage by presenter.quotedMessage.collectAsState()
     val userAvatarMap by presenter.avatarMap.collectAsState()
-    val ignoredUserIds by presenter.ignoredUserIds.collectAsState()
+    val ignoredUserIds by presenter.ignoredProfileIds.collectAsState()
     val ignoreUserId by presenter.ignoreUserId.collectAsState()
     val undoIgnoreUserId by presenter.undoIgnoreUserId.collectAsState()
     val showIgnoreUserWarnBox = ignoreUserId.isNotBlank()
