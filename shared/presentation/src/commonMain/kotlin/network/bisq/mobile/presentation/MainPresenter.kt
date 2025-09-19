@@ -60,8 +60,8 @@ open class MainPresenter(
     // TODO: refactor when TradeItemPresentationModel is completely immutable
     override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> =
         tradesServiceFacade.openTradeItems
-            .map { openTradeItems ->
-                openTradeItems.map { trade ->
+            .flatMapLatest { openTradeItems ->
+                val flowsList = openTradeItems.map { trade ->
                     combine(
                         trade.bisqEasyOpenTradeChannelModel.chatMessages,
                         tradeReadStateRepository.data.map { it.map },
@@ -78,9 +78,7 @@ open class MainPresenter(
                         trade.tradeId to visibleMessages.size - readStates.getOrElse(trade.tradeId) {0}
                     }
                 }
-            }
-            .flatMapLatest { pairsList ->
-                combine(pairsList) { pairs ->
+                combine(flowsList) { pairs ->
                     pairs.filter { it.second > 0 }
                         .associate { it.first to it.second }
                 }
