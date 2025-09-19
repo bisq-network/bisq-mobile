@@ -12,6 +12,18 @@ class ClientNetworkServiceFacade(private val webSocketClientProvider: WebSocketC
     private val _numConnections = MutableStateFlow(-1)
     override val numConnections: StateFlow<Int> get() = _numConnections.asStateFlow()
 
+    private val _targetNumConnectedPeers = MutableStateFlow(0)
+    override val targetNumConnectedPeers: StateFlow<Int> get() = _targetNumConnectedPeers.asStateFlow()
+
+    private val _numPendingRequests = MutableStateFlow(0)
+    override val numPendingRequests: StateFlow<Int> get() = _numPendingRequests.asStateFlow()
+
+    private val _allDataReceived = MutableStateFlow(false)
+    override val allDataReceived: StateFlow<Boolean> get() = _allDataReceived.asStateFlow()
+
+    private val _maxPendingRequestsAtStartup = MutableStateFlow(0)
+    override val maxPendingRequestsAtStartup: StateFlow<Int> get() = _maxPendingRequestsAtStartup.asStateFlow()
+
     override fun activate() {
         // TODO implement gateway and endpoints to subscribe to number of connections of backend
     }
