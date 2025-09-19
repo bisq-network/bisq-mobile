@@ -43,7 +43,7 @@ interface AppPresenter : ViewPresenter {
     var tabNavController: NavHostController
 
     // Observables for state
-    val isContentVisible: StateFlow<Boolean>
+    val isMainContentVisible: StateFlow<Boolean>
 
     val languageCode: StateFlow<String>
 
@@ -56,7 +56,7 @@ interface AppPresenter : ViewPresenter {
     val showAllConnectionsLostDialogue: StateFlow<Boolean>
 
     // Actions
-    fun toggleContentVisibility()
+    fun setIsMainContentVisible(value: Boolean)
 
     fun navigateToTrustedNode()
 
@@ -141,6 +141,7 @@ fun App() {
                     }
                 }
             }
+
             ErrorOverlay()
 
             if (showAllConnectionsLostDialogue) {
