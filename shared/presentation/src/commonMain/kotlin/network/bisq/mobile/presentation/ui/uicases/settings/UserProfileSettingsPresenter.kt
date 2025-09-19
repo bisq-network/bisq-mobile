@@ -48,7 +48,6 @@ class UserProfileSettingsPresenter(
         get() =
             userProfileServiceFacade.selectedUserProfile
 
-
     override val uniqueAvatar: StateFlow<PlatformImage?> =
         userRepository.data.map { it.uniqueAvatar }.stateIn(
             presenterScope,
@@ -150,6 +149,12 @@ class UserProfileSettingsPresenter(
     }
 
     override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> get() = connectivityService.status
+
+    override fun onViewAttached() {
+        super.onViewAttached()
+        initEditableFields()
+    }
+
     override fun onDelete() {
         TODO("Not yet implemented")
     }
@@ -192,5 +197,20 @@ class UserProfileSettingsPresenter(
 
     private fun setShowLoading(show: Boolean = true) {
         _showLoading.value = show
+    }
+
+    private fun initEditableFields() {
+        launchUI {
+            runCatching {
+                withContext(IODispatcher) { userProfileServiceFacade.getSelectedUserProfile() }
+            }.onSuccess { profile ->
+                profile?.let {
+                    _statement.value = it.statement
+                    _tradeTerms.value = it.terms
+                }
+            }.onFailure { e ->
+                log.d("User profile not yet available: ${e.message}")
+            }
+        }
     }
 }

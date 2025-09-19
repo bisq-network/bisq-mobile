@@ -32,7 +32,10 @@ class UserProfileApiGateway(
     }
 
     suspend fun updateUserProfile(statement: String, terms: String): Result<CreateUserIdentityResponse> {
-        val request = UpdateUserIdentityRequest(statement, terms)
+        val request = UpdateUserIdentityRequest(
+            terms = terms,
+            statement = statement
+        )
         return webSocketApiClient.patch(basePath, request)
     }
 
