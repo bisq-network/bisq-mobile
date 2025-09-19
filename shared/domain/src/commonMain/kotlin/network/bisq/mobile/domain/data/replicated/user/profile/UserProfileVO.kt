@@ -6,6 +6,7 @@ import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
 import network.bisq.mobile.domain.data.replicated.security.pow.ProofOfWorkVO
+import network.bisq.mobile.domain.utils.createUuid
 
 @Serializable
 data class UserProfileVO(
@@ -50,3 +51,19 @@ val userProfileDemoObj = UserProfileVO(
     userName = "demo",
     publishDate = 10342435345324L
 )
+
+/**
+ * a fast way to create a mock user profile
+ */
+fun createMockUserProfile(name: String = createUuid()): UserProfileVO {
+    return userProfileDemoObj.copy(
+        nickName = name,
+        networkId = userProfileDemoObj.networkId.copy(
+            pubKey = userProfileDemoObj.networkId.pubKey.copy(
+                id = name,
+                keyId = name
+            )
+        ),
+        nym = name,
+    )
+}

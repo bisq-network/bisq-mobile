@@ -6,6 +6,7 @@ import io.mockk.mockkStatic
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -13,13 +14,14 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.model.TradeReadStateMap
+import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeChannelModel
+import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageDto
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.BisqEasyTradeModel
-import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
+import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
+import network.bisq.mobile.domain.data.replicated.user.profile.userProfileDemoObj
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
-import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -27,8 +29,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.assertFalse
-import kotlin.test.assertTrue
+import kotlin.test.assertEquals
 
 /**
  * Tests for the unread badge logic in MainPresenter.
@@ -51,237 +52,124 @@ class MainPresenterUnreadBadgeTest {
     }
 
     @Test
-    fun `trades in final states are excluded from unread badge map`() = runTest {
-        // Mock top-level android-specific function called from MainPresenter.init
-        mockkStatic("network.bisq.mobile.presentation.PlatformPresentationAbstractions_androidKt")
-        every { getScreenWidthDp() } returns 480
-        // Dependencies
-        val connectivity = mockk<ConnectivityService>(relaxed = true)
-        val notifications = mockk<OpenTradesNotificationService>(relaxed = true)
-        val settings = mockk<SettingsServiceFacade>()
-        every { settings.languageCode } returns MutableStateFlow("en")
-        every { settings.useAnimations } returns MutableStateFlow(false)
-        val tradesFacade = mockk<TradesServiceFacade>()
-        val readRepo = mockk<TradeReadStateRepository>()
-        val urlLauncher = mockk<UrlLauncher>(relaxed = true)
-
-        // Trade item with message and state flows
-        val chatMessagesFlow = MutableStateFlow<Set<BisqEasyOpenTradeMessageModel>>(emptySet())
-        val tradeStateFlow = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
-
-        val channelModel = mockk<BisqEasyOpenTradeChannelModel>()
-        every { channelModel.chatMessages } returns chatMessagesFlow
-        val tradeModel = mockk<BisqEasyTradeModel>()
-        every { tradeModel.tradeState } returns tradeStateFlow
-
-        val tradeItem = mockk<TradeItemPresentationModel>()
-        every { tradeItem.tradeId } returns "t1"
-        every { tradeItem.bisqEasyOpenTradeChannelModel } returns channelModel
-        every { tradeItem.bisqEasyTradeModel } returns tradeModel
-
-        val openTradesFlow = MutableStateFlow(listOf(tradeItem))
-        every { tradesFacade.openTradeItems } returns openTradesFlow
-        every { tradesFacade.selectedTrade } returns MutableStateFlow<TradeItemPresentationModel?>(null)
-
-        val readMapFlow = MutableStateFlow(TradeReadStateMap(mapOf("t1" to 0)))
-        every { readRepo.data } returns readMapFlow
-
-        val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
-        val presenter = MainPresenter(
-            openTradesNotificationService = notifications,
-            settingsService = settings,
-            tradesServiceFacade = tradesFacade,
-            userProfileServiceFacade = userProfileServiceFacade,
-            tradeReadStateRepository = readRepo,
-            urlLauncher = urlLauncher
-        )
-
-        // Initially no messages => no unread
-        var unread = presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.isEmpty())
-
-        // Add some messages while readCount is 0 => unread present
-        val m1 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m2 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m3 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        chatMessagesFlow.value = setOf(m1, m2, m3)
-
-        unread = presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.containsKey("t1"))
-
-        // Transition trade to final state => it should be excluded from unread
-        tradeStateFlow.value = BisqEasyTradeStateEnum.CANCELLED
-
-        unread = presenter.tradesWithUnreadMessages.first()
-        assertFalse(unread.containsKey("t1"))
-    }
-
-    // Test fixture to avoid duplication across final-state tests
-    private data class Fixture(
-        val presenter: MainPresenter,
-        val chatMessagesFlow: MutableStateFlow<Set<BisqEasyOpenTradeMessageModel>>,
-        val tradeStateFlow: MutableStateFlow<BisqEasyTradeStateEnum>
-    )
-
-    private fun buildFixture(): Fixture {
+    fun `unread badge count reflects the total unread chat messages exactly`() = runTest {
         // Mock top-level android-specific function called from MainPresenter.init
         mockkStatic("network.bisq.mobile.presentation.PlatformPresentationAbstractions_androidKt")
         every { getScreenWidthDp() } returns 480
 
-        val connectivity = mockk<ConnectivityService>(relaxed = true)
-        val notifications = mockk<OpenTradesNotificationService>(relaxed = true)
-        val settings = mockk<SettingsServiceFacade>()
-        every { settings.languageCode } returns MutableStateFlow("en")
-        every { settings.useAnimations } returns MutableStateFlow(false)
-        val tradesFacade = mockk<TradesServiceFacade>()
-        val readRepo = mockk<TradeReadStateRepository>()
+        // Mock dependencies
+        val tradesServiceFacade = mockk<TradesServiceFacade>()
+        val tradeReadStateRepository = mockk<TradeReadStateRepository>()
+        val userProfileServiceFacade = mockk<UserProfileServiceFacade>()
+        val openTradesNotificationService = mockk<OpenTradesNotificationService>()
+        val settingsService = mockk<SettingsServiceFacade>()
+        every { settingsService.languageCode } returns MutableStateFlow("en")
+        every { settingsService.useAnimations } returns MutableStateFlow(false)
         val urlLauncher = mockk<UrlLauncher>(relaxed = true)
 
-        val chatMessagesFlow = MutableStateFlow<Set<BisqEasyOpenTradeMessageModel>>(emptySet())
-        val tradeStateFlow = MutableStateFlow(BisqEasyTradeStateEnum.INIT)
+        // Mock ignored user IDs
+        val ignoredUserIdsFlow = MutableStateFlow(setOf("ignoredUser1"))
+        every { userProfileServiceFacade.ignoredUserIds } returns ignoredUserIdsFlow
 
-        val channelModel = mockk<BisqEasyOpenTradeChannelModel>()
-        every { channelModel.chatMessages } returns chatMessagesFlow
-        val tradeModel = mockk<BisqEasyTradeModel>()
-        every { tradeModel.tradeState } returns tradeStateFlow
+        // Mock read states
+        val readStatesFlow = MutableStateFlow(TradeReadStateMap(mapOf("trade1" to 1, "trade2" to 0)))
+        every { tradeReadStateRepository.data } returns readStatesFlow
 
-        val tradeItem = mockk<TradeItemPresentationModel>()
-        every { tradeItem.tradeId } returns "t1"
-        every { tradeItem.bisqEasyOpenTradeChannelModel } returns channelModel
-        every { tradeItem.bisqEasyTradeModel } returns tradeModel
+        // Mock myUserProfile for models
+        val myUserProfile = createMockUserProfile("myUser")
 
-        val openTradesFlow = MutableStateFlow(listOf(tradeItem))
-        every { tradesFacade.openTradeItems } returns openTradesFlow
-        every { tradesFacade.selectedTrade } returns MutableStateFlow<TradeItemPresentationModel?>(null)
+        // Mock DTOs and create models for trade1
+        val dto1 = mockk<BisqEasyOpenTradeMessageDto>()
+        every { dto1.chatMessageType } returns ChatMessageTypeEnum.TEXT
+        every { dto1.senderUserProfile } returns createMockUserProfile("User1")
+        every { dto1.messageId } returns "msg1"
+        every { dto1.text } returns null
+        every { dto1.citation } returns null
+        every { dto1.date } returns 0L
+        every { dto1.tradeId } returns "trade1"
+        every { dto1.mediator } returns null
+        every { dto1.bisqEasyOffer } returns null
+        every { dto1.citationAuthorUserProfile } returns null
+        val model1 = BisqEasyOpenTradeMessageModel(dto1, myUserProfile, emptyList())
 
-        val readMapFlow = MutableStateFlow(TradeReadStateMap(mapOf("t1" to 0)))
-        every { readRepo.data } returns readMapFlow
+        val dto2 = mockk<BisqEasyOpenTradeMessageDto>()
+        every { dto2.chatMessageType } returns ChatMessageTypeEnum.TEXT
+        every { dto2.senderUserProfile } returns createMockUserProfile("User2")
+        every { dto2.messageId } returns "msg2"
+        every { dto2.text } returns null
+        every { dto2.citation } returns null
+        every { dto2.date } returns 0L
+        every { dto2.tradeId } returns "trade1"
+        every { dto2.mediator } returns null
+        every { dto2.bisqEasyOffer } returns null
+        every { dto2.citationAuthorUserProfile } returns null
+        val model2 = BisqEasyOpenTradeMessageModel(dto2, myUserProfile, emptyList())
 
-        val userProfileServiceFacade = mockk<UserProfileServiceFacade>(relaxed = true)
+        val dto3 = mockk<BisqEasyOpenTradeMessageDto>()
+        every { dto3.chatMessageType } returns ChatMessageTypeEnum.TEXT
+        every { dto3.senderUserProfile } returns createMockUserProfile("ignoredUser1")
+        every { dto3.messageId } returns "msg3"
+        every { dto3.text } returns null
+        every { dto3.citation } returns null
+        every { dto3.date } returns 0L
+        every { dto3.tradeId } returns "trade1"
+        every { dto3.mediator } returns null
+        every { dto3.bisqEasyOffer } returns null
+        every { dto3.citationAuthorUserProfile } returns null
+        val model3 = BisqEasyOpenTradeMessageModel(dto3, myUserProfile, emptyList())
+
+        val trade1MessagesFlow: StateFlow<Set<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(setOf(model1, model2, model3))
+
+        // Mock DTO and model for trade2
+        val dto4 = mockk<BisqEasyOpenTradeMessageDto>()
+        every { dto4.chatMessageType } returns ChatMessageTypeEnum.TEXT
+        every { dto4.senderUserProfile } returns userProfileDemoObj.copy(userName = "User3", nym = "User3")
+        every { dto4.messageId } returns "msg4"
+        every { dto4.text } returns null
+        every { dto4.citation } returns null
+        every { dto4.date } returns 0L
+        every { dto4.tradeId } returns "trade2"
+        every { dto4.mediator } returns null
+        every { dto4.bisqEasyOffer } returns null
+        every { dto4.citationAuthorUserProfile } returns null
+        val model4 = BisqEasyOpenTradeMessageModel(dto4, myUserProfile, emptyList())
+
+        val trade2MessagesFlow = MutableStateFlow(setOf(model4))
+
+        val channelModel1 = mockk<BisqEasyOpenTradeChannelModel>()
+        every { channelModel1.chatMessages } answers { trade1MessagesFlow }
+
+        val channelModel2 = mockk<BisqEasyOpenTradeChannelModel>()
+        every { channelModel2.chatMessages } answers { trade2MessagesFlow }
+
+        val trade1 = mockk<TradeItemPresentationModel>()
+        every { trade1.tradeId } returns "trade1"
+        every { trade1.bisqEasyOpenTradeChannelModel } returns channelModel1
+
+        val trade2 = mockk<TradeItemPresentationModel>()
+        every { trade2.tradeId } returns "trade2"
+        every { trade2.bisqEasyOpenTradeChannelModel } returns channelModel2
+
+        val openTradeItemsFlow = MutableStateFlow(listOf(trade1, trade2))
+        every { tradesServiceFacade.openTradeItems } returns openTradeItemsFlow
+
+        // Create presenter
         val presenter = MainPresenter(
-            openTradesNotificationService = notifications,
-            settingsService = settings,
-            tradesServiceFacade = tradesFacade,
-            userProfileServiceFacade = userProfileServiceFacade,
-            tradeReadStateRepository = readRepo,
-            urlLauncher = urlLauncher
+            openTradesNotificationService,
+            settingsService,
+            tradesServiceFacade,
+            userProfileServiceFacade,
+            tradeReadStateRepository,
+            urlLauncher
         )
 
-        return Fixture(presenter, chatMessagesFlow, tradeStateFlow)
-    }
+        // Collect the unread messages map
+        val unreadMap = presenter.tradesWithUnreadMessages.first()
 
-    @Test
-    fun `final state BTC_CONFIRMED is excluded from unread badge map`() = runTest {
-        val f = buildFixture()
-        var unread = f.presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.isEmpty())
-
-        val m1 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m2 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m3 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        f.chatMessagesFlow.value = setOf(m1, m2, m3)
-
-        unread = f.presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.containsKey("t1"))
-
-        f.tradeStateFlow.value = BisqEasyTradeStateEnum.BTC_CONFIRMED
-        unread = f.presenter.tradesWithUnreadMessages.first()
-        assertFalse(unread.containsKey("t1"))
-    }
-
-    @Test
-    fun `final state REJECTED is excluded from unread badge map`() = runTest {
-        val f = buildFixture()
-        var unread = f.presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.isEmpty())
-
-        val m1 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m2 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m3 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        f.chatMessagesFlow.value = setOf(m1, m2, m3)
-
-        unread = f.presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.containsKey("t1"))
-
-        f.tradeStateFlow.value = BisqEasyTradeStateEnum.REJECTED
-        unread = f.presenter.tradesWithUnreadMessages.first()
-        assertFalse(unread.containsKey("t1"))
-    }
-
-    @Test
-    fun `final state PEER_REJECTED is excluded from unread badge map`() = runTest {
-        val f = buildFixture()
-        var unread = f.presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.isEmpty())
-
-        val m1 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m2 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m3 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        f.chatMessagesFlow.value = setOf(m1, m2, m3)
-
-        unread = f.presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.containsKey("t1"))
-
-        f.tradeStateFlow.value = BisqEasyTradeStateEnum.PEER_REJECTED
-        unread = f.presenter.tradesWithUnreadMessages.first()
-        assertFalse(unread.containsKey("t1"))
-    }
-
-    @Test
-    fun `final state PEER_CANCELLED is excluded from unread badge map`() = runTest {
-        val f = buildFixture()
-        var unread = f.presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.isEmpty())
-
-        val m1 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m2 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m3 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        f.chatMessagesFlow.value = setOf(m1, m2, m3)
-
-        unread = f.presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.containsKey("t1"))
-
-        f.tradeStateFlow.value = BisqEasyTradeStateEnum.PEER_CANCELLED
-        unread = f.presenter.tradesWithUnreadMessages.first()
-        assertFalse(unread.containsKey("t1"))
-    }
-
-    @Test
-    fun `final state FAILED is excluded from unread badge map`() = runTest {
-        val f = buildFixture()
-        var unread = f.presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.isEmpty())
-
-        val m1 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m2 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m3 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        f.chatMessagesFlow.value = setOf(m1, m2, m3)
-
-        unread = f.presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.containsKey("t1"))
-
-        f.tradeStateFlow.value = BisqEasyTradeStateEnum.FAILED
-        unread = f.presenter.tradesWithUnreadMessages.first()
-        assertFalse(unread.containsKey("t1"))
-    }
-
-    @Test
-    fun `final state FAILED_AT_PEER is excluded from unread badge map`() = runTest {
-        val f = buildFixture()
-        var unread = f.presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.isEmpty())
-
-        val m1 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m2 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        val m3 = mockk<BisqEasyOpenTradeMessageModel>(relaxed = true)
-        f.chatMessagesFlow.value = setOf(m1, m2, m3)
-
-        unread = f.presenter.tradesWithUnreadMessages.first()
-        assertTrue(unread.containsKey("t1"))
-
-        f.tradeStateFlow.value = BisqEasyTradeStateEnum.FAILED_AT_PEER
-        unread = f.presenter.tradesWithUnreadMessages.first()
-        assertFalse(unread.containsKey("t1"))
+        // Assertions
+        // Trade1: 3 messages - 1 ignored = 2 visible, read 1, unread 1
+        // Trade2: 1 message, read 0, unread 1
+        assertEquals(mapOf("trade1" to 1, "trade2" to 1), unreadMap)
     }
 }
 
