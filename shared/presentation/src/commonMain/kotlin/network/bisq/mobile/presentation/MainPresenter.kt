@@ -66,8 +66,7 @@ open class MainPresenter(
                         trade.bisqEasyOpenTradeChannelModel.chatMessages,
                         tradeReadStateRepository.data.map { it.map },
                         userProfileServiceFacade.ignoredUserIds,
-                        trade.bisqEasyTradeModel.tradeState,
-                    ) { messages, readStates, ignoredUserIds, tradeState ->
+                    ) { messages, readStates, ignoredUserIds ->
                         // TODO: refactor to filter visible messages based on ignore at trade.bisqEasyOpenTradeChannelModel.chatMessages for consistency
                         // this is a duplicated logic from OpenTradePresenter msgCount collection
                         val visibleMessages = messages.filter {
@@ -76,17 +75,14 @@ open class MainPresenter(
                                 else -> true
                             }
                         }
-                        trade.tradeId to Pair(
-                            visibleMessages.size - readStates.getOrElse(trade.tradeId) {0},
-                            tradeState.isFinalState
-                        )
+                        trade.tradeId to visibleMessages.size - readStates.getOrElse(trade.tradeId) {0}
                     }
                 }
             }
             .flatMapLatest { pairsList ->
                 combine(pairsList) { pairs ->
-                    pairs.filter { it.second.first > 0 && !it.second.second }
-                        .associate { it.first to it.second.first }
+                    pairs.filter { it.second > 0 }
+                        .associate { it.first to it.second }
                 }
             }
             .stateIn(
