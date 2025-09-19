@@ -58,7 +58,7 @@ val domainModule = module {
     single<TradeReadStateRepository> { TradeReadStateRepositoryImpl(get(named("TradeReadStateMap"))) }
 
     // Services
-    single<OpenTradesNotificationService> { OpenTradesNotificationService(get(), get()) }
+    single<OpenTradesNotificationService> { OpenTradesNotificationService(get(), get(), get()) }
 
     // Exception handler setup - singleton to ensure consistent setup
     single<CoroutineExceptionHandlerSetup> { CoroutineExceptionHandlerSetup() }

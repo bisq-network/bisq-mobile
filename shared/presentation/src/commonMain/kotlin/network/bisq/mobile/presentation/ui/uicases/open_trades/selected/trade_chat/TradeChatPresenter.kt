@@ -223,6 +223,7 @@ class TradeChatPresenter(
         launchIO {
             tradeReadStateRepository.setCount(tradeId, newValue)
         }
+        // TODO: remove the "You have a new message..." notification here when notification api is refactored
     }
 }
 

@@ -1,11 +1,13 @@
 package network.bisq.mobile.domain.service.notifications
 
+import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
+import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
-import network.bisq.mobile.domain.data.replicated.trade.TradeRoleEnum
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
 import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
 
@@ -15,16 +17,18 @@ import network.bisq.mobile.i18n.i18n
  * whilst the bisq notification service is running (e.g. background app)
  */
 class OpenTradesNotificationService(
-    val notificationServiceController: NotificationServiceController,
-    private val tradesServiceFacade: TradesServiceFacade): Logging {
+    private val notificationServiceController: NotificationServiceController,
+    private val tradesServiceFacade: TradesServiceFacade,
+    private val userProfileServiceFacade: UserProfileServiceFacade,
+) : Logging {
 
     private val observedTradeIds = mutableSetOf<String>()
     private val notifiedPaymentInfo = mutableSetOf<String>()
     private val notifiedBitcoinInfo = mutableSetOf<String>()
-    private val perTradeFlows = mutableMapOf<String, Triple<
-        kotlinx.coroutines.flow.StateFlow<*>,
-        kotlinx.coroutines.flow.StateFlow<*>,
-        kotlinx.coroutines.flow.StateFlow<*>>>()
+    private val perTradeFlows = mutableMapOf<String, List<kotlinx.coroutines.flow.StateFlow<*>>>()
+    private val perTradePeerMessageCount = mutableMapOf<String, Int>()
+
+    private fun getIgnoredProfileIds() = userProfileServiceFacade.ignoredProfileIds.value
 
     fun launchNotificationService() {
         notificationServiceController.startService()
@@ -46,12 +50,13 @@ class OpenTradesNotificationService(
         notificationServiceController.unregisterObserver(tradesServiceFacade.openTradeItems)
 
         // Unregister per-trade observers to prevent leaks
-        perTradeFlows.forEach { (_, triple) ->
-            notificationServiceController.unregisterObserver(triple.first)
-            notificationServiceController.unregisterObserver(triple.second)
-            notificationServiceController.unregisterObserver(triple.third)
+        perTradeFlows.forEach { (_, tradeFlows) ->
+            tradeFlows.forEach {
+                notificationServiceController.unregisterObserver(it)
+            }
         }
         perTradeFlows.clear()
+        perTradePeerMessageCount.clear()
 
         notificationServiceController.stopService()
 
@@ -67,7 +72,8 @@ class OpenTradesNotificationService(
      * This prevents memory leaks from trades that were removed from the system.
      */
     private fun cleanupOrphanedTrades() {
-        val currentTradeIds = tradesServiceFacade.openTradeItems.value.map { it.shortTradeId }.toSet()
+        val currentTradeIds =
+            tradesServiceFacade.openTradeItems.value.map { it.shortTradeId }.toSet()
 
         val orphanedObserved = observedTradeIds - currentTradeIds
         val orphanedPayment = notifiedPaymentInfo - currentTradeIds
@@ -80,10 +86,9 @@ class OpenTradesNotificationService(
 
             // Clean up orphaned per-trade flows
             orphanedObserved.forEach { tradeId ->
-                perTradeFlows.remove(tradeId)?.let { (a, b, c) ->
-                    notificationServiceController.unregisterObserver(a)
-                    notificationServiceController.unregisterObserver(b)
-                    notificationServiceController.unregisterObserver(c)
+                perTradeFlows.remove(tradeId)?.let { flowList ->
+                    flowList.forEach { notificationServiceController.unregisterObserver(it) }
+                    perTradePeerMessageCount.remove(tradeId)
                 }
             }
 
@@ -108,12 +113,14 @@ class OpenTradesNotificationService(
             observeFutureStateChanges(trade)
             observePaymentAccountData(trade)
             observeBitcoinPaymentData(trade)
+            observeChatMessages(trade)
 
             // Register the StateFlows for cleanup on service stop
-            perTradeFlows[trade.shortTradeId] = Triple(
+            perTradeFlows[trade.shortTradeId] = listOf(
                 trade.bisqEasyTradeModel.tradeState,
                 trade.bisqEasyTradeModel.paymentAccountData,
-                trade.bisqEasyTradeModel.bitcoinPaymentData
+                trade.bisqEasyTradeModel.bitcoinPaymentData,
+                trade.bisqEasyOpenTradeChannelModel.chatMessages,
             )
         } else {
             log.d { "Observers already registered for trade ${trade.shortTradeId}" }
@@ -162,6 +169,38 @@ class OpenTradesNotificationService(
         }
     }
 
+    private fun observeChatMessages(trade: TradeItemPresentationModel) {
+        perTradePeerMessageCount.put(
+            trade.shortTradeId,
+            getUnignoredMessageCount(trade.bisqEasyOpenTradeChannelModel.chatMessages.value),
+        )
+        notificationServiceController.registerObserver(trade.bisqEasyOpenTradeChannelModel.chatMessages) { newChatMessages ->
+            log.d { "Chat messages updated for trade ${trade.shortTradeId}" }
+
+            val currentPeerMsgCount =
+                getUnignoredMessageCount(trade.bisqEasyOpenTradeChannelModel.chatMessages.value)
+            val lastCount = perTradePeerMessageCount.getOrElse(trade.shortTradeId) { 0 }
+            if (currentPeerMsgCount > lastCount) {
+                // TODO: make pressing the notif open chat directly
+                notificationServiceController.pushNotification(
+                    "mobile.openTradeNotifications.newMessage.title".i18n(trade.shortTradeId),
+                    "mobile.openTradeNotifications.newMessage.message".i18n(trade.peersUserName)
+                )
+            }
+            perTradePeerMessageCount.put(
+                trade.shortTradeId,
+                currentPeerMsgCount,
+            )
+        }
+    }
+
+    private fun getUnignoredMessageCount(chatMessages: Set<BisqEasyOpenTradeMessageModel>): Int {
+        val ignoredIds = getIgnoredProfileIds()
+        return chatMessages.filter {
+            it.chatMessageType == ChatMessageTypeEnum.TEXT && !it.isMyMessage && it.senderUserProfileId !in ignoredIds
+        }.size
+    }
+
     private fun observeFutureStateChanges(trade: TradeItemPresentationModel) {
         notificationServiceController.registerObserver(trade.bisqEasyTradeModel.tradeState) { newState ->
             log.d { "Trade State Changed to: $newState for trade ${trade.shortTradeId}" }
@@ -172,6 +211,7 @@ class OpenTradesNotificationService(
                 notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.tradeState)
                 notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.paymentAccountData)
                 notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.bitcoinPaymentData)
+                notificationServiceController.unregisterObserver(trade.bisqEasyOpenTradeChannelModel.chatMessages)
                 observedTradeIds.remove(trade.shortTradeId)
                 notifiedPaymentInfo.remove(trade.shortTradeId)
                 notifiedBitcoinInfo.remove(trade.shortTradeId)
