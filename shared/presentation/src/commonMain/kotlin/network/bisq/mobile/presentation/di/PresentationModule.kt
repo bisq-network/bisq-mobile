@@ -10,6 +10,7 @@ import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
 import network.bisq.mobile.presentation.ui.uicases.ITabContainerPresenter
 import network.bisq.mobile.presentation.ui.uicases.TabContainerPresenter
+import network.bisq.mobile.presentation.ui.uicases.banners.BannerColumnPresenter
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountPresenter
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferDirectionPresenter
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferMarketPresenter
@@ -109,6 +110,8 @@ val presentationModule = module {
             get()
         )
     }
+
+    factory<BannerColumnPresenter> { BannerColumnPresenter(get(), get()) }
 
     factory<AgreementPresenter> { AgreementPresenter(get(), get()) } bind IAgreementPresenter::class
 
