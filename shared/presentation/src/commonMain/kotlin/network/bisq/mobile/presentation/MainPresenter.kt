@@ -75,7 +75,8 @@ open class MainPresenter(
                                 else -> true
                             }
                         }
-                        trade.tradeId to visibleMessages.size - readStates.getOrElse(trade.tradeId) {0}
+                        val unread = (visibleMessages.size - readStates.getOrElse(trade.tradeId) { 0 }).coerceAtLeast(0)
+                        trade.tradeId to unread
                     }
                 }
                 combine(flowsList) { pairs ->
