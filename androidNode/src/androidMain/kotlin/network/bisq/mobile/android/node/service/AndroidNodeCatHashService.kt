@@ -46,6 +46,11 @@ class AndroidNodeCatHashService(private val context: Context, baseDir: Path?) :
         )
     }
 
+    override fun getMaxCacheSize(): Int {
+        // One 60 px image has about 3-4 kb. With 500 we get about 1.5-2 MB on total cache file size
+        return 500
+    }
+
     override fun writeRawImage(image: PlatformImage, file: File) {
         val bitmap: Bitmap = image.bitmap.asAndroidBitmap()
         AndroidImageUtil.writeBitmapAsByteArray(bitmap, file)
