@@ -27,11 +27,11 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 fun OpenTradeListItem(
     item: TradeItemPresentationModel,
     userAvatar: PlatformImage? = null,
-    isUnread: Boolean,
+    unreadCount: Int,
     onSelect: () -> Unit,
 ) {
-    val bgColor = if (isUnread)
-        BisqTheme.colors.warning.copy(alpha = 0.15f)
+    val bgColor = if (unreadCount > 0)
+        BisqTheme.colors.dark_grey40.copy(red=0.19f)
     else
         BisqTheme.colors.dark_grey40
 
@@ -60,6 +60,7 @@ fun OpenTradeListItem(
                         reputation =  item.peersReputationScore,
                         showUserName =  true,
                         userAvatar = userAvatar,
+                        badgeCount = unreadCount,
                     )
                 }
                 BisqText.smallLightGrey("${item.formattedDate} ${item.formattedTime}")

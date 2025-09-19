@@ -56,10 +56,6 @@ fun OpenTradeListScreen() {
 
     val userAvatarMap by presenter.avatarMap.collectAsState()
 
-    fun isTradeUnread(tradeId: String): Boolean {
-        return tradeId in tradesWithUnreadMessages.keys
-    }
-
     if (tradeGuideVisible) {
         InformationConfirmationDialog(
             message = "bisqEasy.tradeGuide.notConfirmed.warn".i18n(),
@@ -112,10 +108,9 @@ fun OpenTradeListScreen() {
                     }
                 }
                 items(sortedOpenTradeItems, key = { it.tradeId }) { trade ->
-                    val isUnread = isTradeUnread(trade.tradeId)
                     OpenTradeListItem(
                         trade,
-                        isUnread = isUnread,
+                        unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
                         userAvatar = userAvatarMap[trade.peersUserProfile.nym],
                         onSelect = { presenter.onSelect(trade) }
                     )
@@ -129,10 +124,9 @@ fun OpenTradeListScreen() {
                 horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                 items(sortedOpenTradeItems, key = { it.tradeId }) { trade ->
-                    val isUnread = isTradeUnread(trade.tradeId)
                     OpenTradeListItem(
                         trade,
-                        isUnread = isUnread,
+                        unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
                         userAvatar = userAvatarMap[trade.peersUserProfile.nym],
                         onSelect = { presenter.onSelect(trade) }
                     )
