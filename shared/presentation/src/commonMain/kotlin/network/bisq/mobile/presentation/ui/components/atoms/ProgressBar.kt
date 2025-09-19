@@ -21,7 +21,6 @@ fun BisqProgressBar(
         .height(2.dp)
 ) {
     
-    val grey2Color = BisqTheme.colors.mid_grey20
 
     LinearProgressIndicator(
         progress = {progress},
@@ -33,7 +32,7 @@ fun BisqProgressBar(
             drawStopIndicator(
                 drawScope = this,
                 stopSize = 0.dp,
-                color = grey2Color,
+                color = BisqTheme.colors.mid_grey20,
                 strokeCap = ProgressIndicatorDefaults.LinearStrokeCap
             )
         }

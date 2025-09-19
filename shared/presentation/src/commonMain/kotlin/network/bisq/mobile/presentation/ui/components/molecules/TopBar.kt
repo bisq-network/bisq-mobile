@@ -2,14 +2,11 @@ package network.bisq.mobile.presentation.ui.components.molecules
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -37,8 +34,6 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.BackHandler
 import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.animations.ShineOverlay
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
 import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -129,7 +124,7 @@ fun TopBar(
         ),
         title = {
             if (isHome) {
-                BisqLogoSmall(modifier = Modifier.height(34.dp).width(100.dp))
+                BisqLogoSmall(modifier = Modifier.height(34.dp))
             } else {
                 // we will allow overflow to 2 lines here, for better accessibility
                 AutoResizeText(
@@ -163,21 +158,11 @@ fun TopBar(
 
                     BisqGap.H1()
                     val uniqueAvatar by presenter.uniqueAvatar.collectAsState()
-                    if (showAnimation && connectivityStatus != ConnectivityService.ConnectivityStatus.DISCONNECTED) {
-                        ShineOverlay {
-                            UserIcon(
-                                uniqueAvatar,
-                                modifier = userIconModifier,
-                                connectivityStatus = connectivityStatus
-                            )
-                        }
-                    } else {
-                        UserIcon(
-                            uniqueAvatar,
-                            modifier = userIconModifier,
-                            connectivityStatus = connectivityStatus
-                        )
-                    }
+                    UserIcon(
+                        uniqueAvatar,
+                        modifier = userIconModifier,
+                        connectivityStatus = connectivityStatus
+                    )
                 }
             }
         },

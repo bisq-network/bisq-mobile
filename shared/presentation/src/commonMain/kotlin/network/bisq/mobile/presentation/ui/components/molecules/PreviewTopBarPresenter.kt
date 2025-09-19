@@ -24,7 +24,7 @@ class PreviewTopBarPresenter(
     override val uniqueAvatar: StateFlow<PlatformImage?> = MutableStateFlow(null)
     override val showAnimation: StateFlow<Boolean> = MutableStateFlow(false)
     override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> =
-        MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED)
+        MutableStateFlow(ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED)
 
     private val snackbar = SnackbarHostState()
 

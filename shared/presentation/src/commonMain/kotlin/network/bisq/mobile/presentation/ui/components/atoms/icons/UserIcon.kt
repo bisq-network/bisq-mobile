@@ -2,22 +2,20 @@ package network.bisq.mobile.presentation.ui.components.atoms.icons
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.connected_and_data_received
 import bisqapps.shared.presentation.generated.resources.img_bot_image
+import bisqapps.shared.presentation.generated.resources.no_connections
+import bisqapps.shared.presentation.generated.resources.requesting_inventory
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.service.network.ConnectivityService
-import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.BOOTSTRAPPING
-import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.CONNECTED
-import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.DISCONNECTED
-import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.WARN
-import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
+import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
+import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.REQUESTING_INVENTORY
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
@@ -32,18 +30,19 @@ fun UserIcon(
             Image(painterResource(Res.drawable.img_bot_image), "User icon", modifier = modifier)
         } else {
             val painter = rememberPlatformImagePainter(platformImage)
-            Image(painter = painter, contentDescription = "User icon", modifier = Modifier.fillMaxSize())
+            Image(painter = painter, contentDescription = "User icon", modifier = Modifier.padding(2.dp))
         }
-        GlowEffect(connectivityStatus, Modifier.align(Alignment.BottomEnd))
+        ConnectivityIndicator(connectivityStatus)
     }
 }
 
 @Composable
-fun GlowEffect(connectivityStatus: ConnectivityService.ConnectivityStatus, modifier: Modifier = Modifier) {
-    val icon = when (connectivityStatus) {
-        BOOTSTRAPPING, CONNECTED -> "green-small-dot.png"
-        WARN -> "yellow-small-dot.png"
-        DISCONNECTED -> "red-small-dot.png"
+fun ConnectivityIndicator(connectivityStatus: ConnectivityService.ConnectivityStatus) {
+    if (connectivityStatus == CONNECTED_AND_DATA_RECEIVED) {
+        Image(painterResource(Res.drawable.connected_and_data_received), "Connected and data received")
+    } else if (connectivityStatus == REQUESTING_INVENTORY) {
+        Image(painterResource(Res.drawable.requesting_inventory), "Requesting inventory data")
+    } else {
+        Image(painterResource(Res.drawable.no_connections), "No connections")
     }
-    DynamicImage("drawable/chat/$icon", modifier = modifier.scale(2.0F))
 }

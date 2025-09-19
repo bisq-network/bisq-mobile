@@ -35,9 +35,11 @@ open class DashboardPresenter(
 
     private val _publishedProfiles = MutableStateFlow(0)
     val publishedProfiles: StateFlow<Int> get() = _publishedProfiles.asStateFlow()
-    val numConnections: StateFlow<Int> get() = networkServiceFacade.numConnections
     val tradeRulesConfirmed: StateFlow<Boolean> get() = settingsServiceFacade.tradeRulesConfirmed
     val marketPrice: StateFlow<String> get() = marketPriceServiceFacade.selectedFormattedMarketPrice
+
+    private val _numConnections = MutableStateFlow(0)
+    val numConnections: StateFlow<Int> get() = _numConnections.asStateFlow()
 
     open val showNumConnections: Boolean = false
 
@@ -64,6 +66,11 @@ open class DashboardPresenter(
         }
         collectUI(userProfileServiceFacade.numUserProfiles) {
             _publishedProfiles.value = it
+        }
+        collectUI(networkServiceFacade.numConnections) {
+            // numConnections in networkServiceFacade can be -1 (if no connections present at bootstrap),
+            // but in UI we want to show always >= 0.
+            _numConnections.value = it.coerceAtLeast(0)
         }
     }
 

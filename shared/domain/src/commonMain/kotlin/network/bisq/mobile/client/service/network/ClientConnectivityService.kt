@@ -85,13 +85,13 @@ class ClientConnectivityService(
             withTimeout(TIMEOUT) {
                 val previousStatus = _status.value
                 _status.value = when {
-                    !isConnected() -> ConnectivityStatus.DISCONNECTED
-                    isSlow() -> ConnectivityStatus.WARN
-                    else -> ConnectivityStatus.CONNECTED
+                    !isConnected() -> ConnectivityStatus.RECONNECTING
+                    isSlow() -> ConnectivityStatus.REQUESTING_INVENTORY
+                    else -> ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
                 }
                 if (previousStatus != _status.value) {
                     log.d { "Connectivity transition from $previousStatus to ${_status.value}" }
-                    if (previousStatus == ConnectivityStatus.DISCONNECTED) {
+                    if (previousStatus == ConnectivityStatus.RECONNECTING) {
                         runPendingBlocks()
                     }
                 }

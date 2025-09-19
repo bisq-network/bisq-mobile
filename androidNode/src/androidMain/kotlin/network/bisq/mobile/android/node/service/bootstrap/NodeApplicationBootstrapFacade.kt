@@ -25,7 +25,7 @@ class NodeApplicationBootstrapFacade(
 ) : ApplicationBootstrapFacade() {
 
     companion object {
-        private const val BOOTSTRAP_STAGE_TIMEOUT_MS = 60_000L // 60 seconds per stage
+        private const val BOOTSTRAP_STAGE_TIMEOUT_MS = 90_000L // 90 seconds per stage
     }
 
     private val applicationServiceState: Observable<State> by lazy { provider.state.get() }

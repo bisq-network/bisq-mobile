@@ -13,9 +13,10 @@ import network.bisq.mobile.domain.service.BaseService
 abstract class ConnectivityService : BaseService(), LifeCycleAware {
     enum class ConnectivityStatus {
         BOOTSTRAPPING,
-        DISCONNECTED,
-        WARN,
-        CONNECTED
+        DISCONNECTED, // never had received all inventory data, usually at startup if no connections are established
+        RECONNECTING, // after inventory data have been received and then all connections lost. Usually after longer background.
+        REQUESTING_INVENTORY, // while requesting inventory data
+        CONNECTED_AND_DATA_RECEIVED // have received all inventory data and has connections
     }
 
     protected open val _status = MutableStateFlow(ConnectivityStatus.BOOTSTRAPPING)

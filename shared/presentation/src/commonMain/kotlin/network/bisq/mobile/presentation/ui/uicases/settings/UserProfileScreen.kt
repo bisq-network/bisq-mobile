@@ -1,6 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import androidx.compose.foundation.background
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,19 +16,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
 import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButton
-import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
+import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
@@ -46,8 +44,6 @@ interface IUserProfilePresenter : ViewPresenter {
     val uniqueAvatar: StateFlow<PlatformImage?>
 
     val showLoading: StateFlow<Boolean>
-
-    val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus>
 
     fun onDelete()
     fun onSave()
@@ -96,7 +92,7 @@ fun UserProfileScreen() {
             label = "user.userProfile.nymId".i18n(),
             value = botId,
             editable = false,
-                    trailingIcon = { CopyIconButton(value = botId) }
+            trailingIcon = { CopyIconButton(value = botId) }
         )
 
         BisqGap.V1()
@@ -156,28 +152,17 @@ fun UserProfileScreen() {
 
 @Composable
 private fun UserProfileScreenHeader(presenter: IUserProfilePresenter) {
-    val connectivityStatus by presenter.connectivityStatus.collectAsState()
     val uniqueAvatar by presenter.uniqueAvatar.collectAsState()
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
-            .background(BisqTheme.colors.backgroundColor),
+            .padding(bottom = BisqUIConstants.ScreenPaddingHalf),
         contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .size(80.dp)
-                .padding(12.dp)
-                .fillMaxWidth()
-                .background(BisqTheme.colors.backgroundColor),
-            contentAlignment = Alignment.Center
-        ) {
-            UserIcon(
-                uniqueAvatar,
-                modifier = Modifier.size(72.dp),
-                connectivityStatus = connectivityStatus
-            )
+        // uniqueAvatar is never null here
+        if (uniqueAvatar != null) {
+            val painter = rememberPlatformImagePainter(uniqueAvatar!!)
+            Image(painter = painter, contentDescription = "User icon", modifier = Modifier.size(120.dp))
         }
     }
 }
@@ -187,19 +172,6 @@ private fun UserProfileScreenFooter(presenter: IUserProfilePresenter, showLoadin
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {
-        // TODO uncomment when delete profile gets implemented
-//        BisqButton(
-//            "Delete profile",
-//            onClick = { presenter.setShowDeleteProfileConfirmation(true) },
-//            disabled = isLoading,
-//            type = BisqButtonType.Danger,
-//            modifier = Modifier.weight(1.0F),
-//            padding = PaddingValues(
-//                horizontal = BisqUIConstants.ScreenPadding,
-//                vertical = BisqUIConstants.ScreenPaddingHalf
-//            )
-//        )
-//        BisqGap.H1()
         BisqButton(
             "mobile.settings.userProfile.labels.save".i18n(),
             onClick = presenter::onSave,

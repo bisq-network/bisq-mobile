@@ -62,6 +62,9 @@ open class MainPresenter(
     protected val _showAllConnectionsLostDialogue = MutableStateFlow(false)
     override val showAllConnectionsLostDialogue: StateFlow<Boolean> get() = _showAllConnectionsLostDialogue.asStateFlow()
 
+    protected val _showReconnectOverlay = MutableStateFlow(false)
+    override val showReconnectOverlay: StateFlow<Boolean> get() = _showReconnectOverlay.asStateFlow()
+
     final override val languageCode: StateFlow<String> get() = settingsService.languageCode
 
     // TODO: refactor when TradeItemPresentationModel is completely immutable

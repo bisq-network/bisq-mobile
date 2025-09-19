@@ -19,7 +19,6 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.repository.UserRepository
-import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.DateUtils
@@ -32,7 +31,6 @@ class UserProfilePresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
     private val userRepository: UserRepository,
-    private val connectivityService: ConnectivityService,
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IUserProfilePresenter {
 
@@ -146,8 +144,6 @@ class UserProfilePresenter(
     override fun setShowDeleteProfileConfirmation(value: Boolean) {
         _showDeleteOfferConfirmation.value = value
     }
-
-    override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> get() = connectivityService.status
 
     override fun onViewAttached() {
         super.onViewAttached()

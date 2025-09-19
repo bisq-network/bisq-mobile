@@ -36,6 +36,7 @@ class NodeMainPresenter(
 
         collectUI(connectivityService.status) { status ->
             _showAllConnectionsLostDialogue.value = ConnectivityStatus.DISCONNECTED == status
+            _showReconnectOverlay.value = ConnectivityStatus.RECONNECTING == status
         }
     }
 

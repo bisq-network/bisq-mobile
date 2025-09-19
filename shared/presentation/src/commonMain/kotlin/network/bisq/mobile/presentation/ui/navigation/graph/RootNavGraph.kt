@@ -5,6 +5,8 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavGraphBuilder
@@ -13,7 +15,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
+import network.bisq.mobile.presentation.ui.uicases.banners.Banner
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountSelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferCurrencySelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferDirectionScreen
@@ -73,7 +77,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
             Routes.TrustedNodeSetup to { TrustedNodeSetupScreen() },
             Routes.TabContainer to { TabContainerScreen() },
         )
-        startupScreens.forEach{ (route, screen): Pair<Routes, @Composable () -> Unit> ->
+        startupScreens.forEach { (route, screen): Pair<Routes, @Composable () -> Unit> ->
             addScreen(route.name, content = screen)
         }
 
@@ -91,7 +95,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
             Routes.Resources to { ResourcesScreen() },
             Routes.UserAgreementDisplay to { UserAgreementDisplayScreen() },
         )
-        otherScreens.forEach{ (route, screen): Pair<Routes, @Composable () -> Unit> ->
+        otherScreens.forEach { (route, screen): Pair<Routes, @Composable () -> Unit> ->
             addScreen(
                 route.name,
                 navAnimation = if (route == Routes.TradeChat)
@@ -155,7 +159,7 @@ enum class NavAnimation {
 fun NavGraphBuilder.addScreen(
     route: String,
     wizardTransition: Boolean = false,
-    navAnimation: NavAnimation = if (wizardTransition)  NavAnimation.FADE_IN else NavAnimation.SLIDE_IN_FROM_RIGHT,
+    navAnimation: NavAnimation = if (wizardTransition) NavAnimation.FADE_IN else NavAnimation.SLIDE_IN_FROM_RIGHT,
     content: @Composable () -> Unit
 ) {
     composable(
@@ -167,10 +171,12 @@ fun NavGraphBuilder.addScreen(
                     AnimatedContentTransitionScope.SlideDirection.Left,
                     animationSpec = tween(NAV_ANIM_MS)
                 )
+
                 NavAnimation.SLIDE_IN_FROM_BOTTOM -> slideIntoContainer(
                     AnimatedContentTransitionScope.SlideDirection.Up,
                     animationSpec = tween(NAV_ANIM_MS)
                 )
+
                 NavAnimation.FADE_IN -> fadeIn(animationSpec = tween(NAV_ANIM_MS))
             }
         },
@@ -188,15 +194,22 @@ fun NavGraphBuilder.addScreen(
                     AnimatedContentTransitionScope.SlideDirection.Right,
                     animationSpec = tween(NAV_ANIM_MS)
                 )
+
                 NavAnimation.SLIDE_IN_FROM_BOTTOM -> slideOutOfContainer(
                     AnimatedContentTransitionScope.SlideDirection.Down,
                     animationSpec = tween(NAV_ANIM_MS)
                 )
+
                 NavAnimation.FADE_IN -> fadeOut(animationSpec = tween(NAV_ANIM_MS))
             }
         }
 
     ) {
-        content()
+        Column(
+            verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter)
+        ) {
+            Banner()
+            content()
+        }
     }
 }

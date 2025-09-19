@@ -1,7 +1,9 @@
 package network.bisq.mobile.domain.service
 
+import androidx.annotation.CallSuper
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.LifeCycleAware
 import network.bisq.mobile.domain.data.IODispatcher
 
@@ -24,6 +26,7 @@ abstract class ServiceFacade : BaseService(), LifeCycleAware {
 
     private var isActivated = atomic(false)
 
+    @CallSuper
     override fun activate() {
         require(!isActivated.value) { "activate called on ${this::class.simpleName} while service is already activated" }
 
@@ -31,10 +34,11 @@ abstract class ServiceFacade : BaseService(), LifeCycleAware {
         isActivated.value = true
     }
 
+    @CallSuper
     override fun deactivate() {
         if (isActivated.compareAndSet(expect = true, update = false)) {
             log.i { "Deactivating service ${this::class.simpleName}" }
-            
+
             // Clean up all jobs managed by the jobsManager in a new scope because this will be killed
             CoroutineScope(IODispatcher).launch {
                 jobsManager.dispose()
