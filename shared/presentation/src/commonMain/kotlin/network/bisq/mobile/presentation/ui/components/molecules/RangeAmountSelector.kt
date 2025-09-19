@@ -50,7 +50,7 @@ fun RangeAmountSelector(
                 horizontalAlignment = Alignment.Start,
                 modifier = Modifier.weight(1.0F)
             ) {
-                BisqText.smallRegularGrey("min".i18n())
+                BisqText.smallRegularGrey("mobile.min".i18n())
                 FiatInputField(
                     text = quoteSideMinRangeAmountWithoutDecimal,
                     onValueChanged = { onMinAmountTextValueChange.invoke(it) },
@@ -71,7 +71,7 @@ fun RangeAmountSelector(
                 horizontalAlignment = Alignment.End,
                 modifier = Modifier.weight(1.0F)
             ) {
-                BisqText.smallRegularGrey("max".i18n())
+                BisqText.smallRegularGrey("mobile.max".i18n())
                 FiatInputField(
                     text = quoteSideMaxRangeAmountWithoutDecimal,
                     onValueChanged = { onMaxAmountTextValueChange.invoke(it) },

@@ -153,7 +153,7 @@ fun SellerStateMainChain3b(
         }
         amountNotMatchingDialogText?.let { errorDialogText ->
             ConfirmationDialog(
-                headline = "error.warning".i18n(),
+                headline = "mobile.error.warning".i18n(),
                 headlineColor = BisqTheme.colors.warning,
                 headlineLeftIcon = { WarningIcon() },
                 message = errorDialogText,

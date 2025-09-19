@@ -51,7 +51,7 @@ open class SplashPresenter(
 
         collectUI(shouldShowProgressToast) { shouldShow ->
             if (shouldShow) {
-                showSnackbar("bootstrap.progress.continuing".i18n(), isError = false)
+                showSnackbar("mobile.bootstrap.progress.continuing".i18n(), isError = false)
                 applicationBootstrapFacade.setShouldShowProgressToast(false)
             }
         }

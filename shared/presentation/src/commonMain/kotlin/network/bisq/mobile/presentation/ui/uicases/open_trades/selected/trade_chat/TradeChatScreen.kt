@@ -92,7 +92,7 @@ fun TradeChatScreen() {
 
         if (showIgnoreUserWarnBox) {
             ConfirmationDialog(
-                headline = "error.warning".i18n(),
+                headline = "mobile.error.warning".i18n(),
                 headlineColor = BisqTheme.colors.warning,
                 headlineLeftIcon = { WarningIcon() },
                 message = "mobile.chat.ignoreUserWarn".i18n(),

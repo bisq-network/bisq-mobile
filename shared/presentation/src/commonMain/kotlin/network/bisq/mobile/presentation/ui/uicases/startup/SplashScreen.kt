@@ -64,10 +64,10 @@ fun SplashScreen() {
         // Timeout dialog
         if (isTimeoutDialogVisible && !isBootstrapFailed) {
             WarningConfirmationDialog(
-                headline = "bootstrap.timeout.title".i18n(),
-                message = "bootstrap.timeout.message".i18n(currentBootstrapStage),
-                confirmButtonText = "bootstrap.timeout.restart".i18n(),
-                dismissButtonText = "bootstrap.timeout.continue".i18n(),
+                headline = "mobile.bootstrap.timeout.title".i18n(),
+                message = "mobile.bootstrap.timeout.message".i18n(currentBootstrapStage),
+                confirmButtonText = "mobile.bootstrap.timeout.restart".i18n(),
+                dismissButtonText = "mobile.bootstrap.timeout.continue".i18n(),
                 onConfirm = { presenter.onRestart() },
                 onDismiss = { presenter.onTimeoutDialogContinue() }
             )
@@ -76,10 +76,10 @@ fun SplashScreen() {
         // Restart dialog
         if (isBootstrapFailed) {
             WarningConfirmationDialog(
-                headline = "bootstrap.failed.title".i18n(),
-                message = "bootstrap.failed.message".i18n(currentBootstrapStage),
-                confirmButtonText = "bootstrap.failed.restart".i18n(),
-                dismissButtonText = "bootstrap.failed.shutdown".i18n(),
+                headline = "mobile.bootstrap.failed.title".i18n(),
+                message = "mobile.bootstrap.failed.message".i18n(currentBootstrapStage),
+                confirmButtonText = "mobile.bootstrap.failed.restart".i18n(),
+                dismissButtonText = "mobile.bootstrap.failed.shutdown".i18n(),
                 onConfirm = { presenter.onRestart() },
                 onDismiss = { presenter.onTerminateApp() }
             )

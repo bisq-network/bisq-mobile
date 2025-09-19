@@ -25,7 +25,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun ConfirmationDialog(
-    headline: String = "confirmation.areYouSure".i18n(),
+    headline: String = "mobile.confirmation.areYouSure".i18n(),
     headlineColor: Color = BisqTheme.colors.white,
     headlineLeftIcon: (@Composable () -> Unit)? = null,
     message: String = "",
@@ -129,7 +129,7 @@ private fun ConfirmationDialogPreview_Default() {
 private fun ConfirmationDialogPreview_Warning() {
     BisqTheme.Preview {
         ConfirmationDialog(
-            headline = "error.warning".i18n(),
+            headline = "mobile.error.warning".i18n(),
             headlineColor = BisqTheme.colors.warning,
             headlineLeftIcon = { WarningIcon() },
             message = "mobile.chat.ignoreUserWarn".i18n(),

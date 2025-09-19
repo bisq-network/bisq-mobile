@@ -91,9 +91,9 @@ class DateUtilsTest {
         // 800 days ago = 2 years, 2 months, 10 days (using 365-day year, 30-day month approximation)
         val eightHundredDaysAgo = fixedInstant.toEpochMilliseconds() - (800 * 24 * 60 * 60 * 1000L)
         val result = DateUtils.formatProfileAge(eightHundredDaysAgo)
-        assertTrue(result.contains("2 years"))
-        assertTrue(result.contains("2 months"))
-        assertTrue(result.contains("10 days"))
+        assertTrue(result.contains("2 years"), "Failed with $result")
+        assertTrue(result.contains("2 months"), "Failed with $result")
+        assertTrue(result.contains("10 days"), "Failed with $result")
     }
 
     @Test

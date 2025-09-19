@@ -12,7 +12,7 @@ fun UndoIgnoreDialog(
     onDismiss: () -> Unit,
 ) {
     ConfirmationDialog(
-        headline = "error.warning".i18n(),
+        headline = "mobile.error.warning".i18n(),
         headlineColor = BisqTheme.colors.warning,
         headlineLeftIcon = { WarningIconFilled() },
         message = "mobile.chat.undoIgnoreUserWarn".i18n(),

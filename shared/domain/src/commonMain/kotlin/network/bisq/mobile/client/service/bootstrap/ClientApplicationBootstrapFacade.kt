@@ -32,11 +32,11 @@ class ClientApplicationBootstrapFacade(
             setProgress(0.5f)
             setState("mobile.clientApplicationBootstrap.connectingToTrustedNode".i18n())
             if (trustedNodeService.isConnected) {
-                setState("bootstrap.connectedToTrustedNode".i18n())
+                setState("mobile.bootstrap.connectedToTrustedNode".i18n())
                 setProgress(1.0f)
             } else if (url.isBlank()) {
                 // fresh install scenario, let it proceed to onboarding
-                setState("bootstrap.connectedToTrustedNode".i18n())
+                setState("mobile.bootstrap.connectedToTrustedNode".i18n())
                 setProgress(1.0f)
             } else {
                 try {
@@ -44,11 +44,11 @@ class ClientApplicationBootstrapFacade(
                         trustedNodeService.connect()
                         trustedNodeService.await()
                     }
-                    setState("bootstrap.connectedToTrustedNode".i18n())
+                    setState("mobile.bootstrap.connectedToTrustedNode".i18n())
                     setProgress(1.0f)
                 } catch (e: Exception) {
                     log.e(e) { "Failed to connect to trusted node: ${e.message}" }
-                    setState("No connectivity")
+                    setState("mobile.bootstrap.noConnectivity".i18n())
                     setProgress(1.0f)
                 }
             }

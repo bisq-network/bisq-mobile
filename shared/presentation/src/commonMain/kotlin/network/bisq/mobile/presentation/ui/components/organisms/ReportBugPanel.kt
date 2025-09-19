@@ -51,7 +51,7 @@ fun ReportBugPanel(
         ) {
             ExclamationRedIcon()
             BisqGap.HQuarter()
-            BisqText.h4Light("genericError.headline".i18n())
+            BisqText.h4Light("mobile.genericError.headline".i18n())
         }
 
         BisqGap.V1()
@@ -63,7 +63,7 @@ fun ReportBugPanel(
 
         BisqGap.V1()
 
-        BisqText.baseRegular("genericError.errorMessage".i18n())
+        BisqText.baseRegular("mobile.genericError.errorMessage".i18n())
 
         BisqGap.VQuarter()
 

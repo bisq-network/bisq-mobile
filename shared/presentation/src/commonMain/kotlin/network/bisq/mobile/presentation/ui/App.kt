@@ -145,9 +145,9 @@ fun App() {
 
             if (showAllConnectionsLostDialogue) {
                 WarningConfirmationDialog(
-                    headline = "connectivity.disconnected.title".i18n(),
-                    message = "connectivity.disconnected.message".i18n(),
-                    confirmButtonText = "connectivity.disconnected.restart".i18n(),
+                    headline = "mobile.connectivity.disconnected.title".i18n(),
+                    message = "mobile.connectivity.disconnected.message".i18n(),
+                    confirmButtonText = "mobile.connectivity.disconnected.restart".i18n(),
                     onConfirm = { presenter.onRestartApp() },
                     onDismiss = { presenter.onCloseConnectionLostDialogue() }
                 )

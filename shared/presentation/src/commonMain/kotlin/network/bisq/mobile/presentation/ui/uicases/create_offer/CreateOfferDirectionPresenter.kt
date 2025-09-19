@@ -43,10 +43,10 @@ class CreateOfferDirectionPresenter(
         headline = if (market != null) {
             val fiatName = CurrencyUtils.getLocaleFiatCurrencyName(market.quoteCurrencyCode, market.quoteCurrencyName)
             marketName = fiatName
-            "bisqEasy.tradeWizard.directionAndMarket.headlineWithMarket".i18n(fiatName)
+            "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineWithMarket".i18n(fiatName)
         } else {
             marketName = null
-            "bisqEasy.tradeWizard.directionAndMarket.headlineNoMarket".i18n()
+            "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineNoMarket".i18n()
         }
 
         launchIO {

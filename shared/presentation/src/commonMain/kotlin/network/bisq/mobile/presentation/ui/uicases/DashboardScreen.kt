@@ -182,7 +182,7 @@ private fun DashboardContent(
                 HomeInfoCard(
                     modifier = Modifier.weight(1f).fillMaxHeight(),
                     price = numConnections.toString(),
-                    text = "dashboard.numConnections".i18n()
+                    text = "mobile.dashboard.numConnections".i18n()
                 )
             }
         }

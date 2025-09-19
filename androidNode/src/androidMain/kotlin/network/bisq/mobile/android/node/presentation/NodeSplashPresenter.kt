@@ -51,7 +51,7 @@ class NodeSplashPresenter(
                 numConnections
             ) { state, numConnections ->
                 if (numConnections >= 0) {
-                    "splash.bootstrapState.stateAndNumConnections".i18n(state, numConnections)
+                    "mobile.splash.bootstrapState.stateAndNumConnections".i18n(state, numConnections)
                 } else {
                     state
                 }

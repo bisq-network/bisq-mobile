@@ -59,13 +59,13 @@ class NodeApplicationBootstrapFacade(
                 when (newState) {
                     IDLE -> {}
                     STARTING -> {
-                        setState("bootstrap.tor.starting".i18n())
+                        setState("mobile.bootstrap.tor.starting".i18n())
                         setProgress(0.1f)
                         startTimeoutForStage()
                     }
 
                     STARTED -> {
-                        setState("bootstrap.tor.started".i18n())
+                        setState("mobile.bootstrap.tor.started".i18n())
                         setProgress(0.25f)
                     }
 
@@ -77,7 +77,7 @@ class NodeApplicationBootstrapFacade(
                             failure?.message,
                             failure?.cause?.message
                         ).firstOrNull() ?: "Unknown Tor error"
-                        setState("bootstrap.tor.failed".i18n() + ": $errorMessage")
+                        setState("mobile.bootstrap.tor.failed".i18n() + ": $errorMessage")
                         cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
                         setBootstrapFailed(true)
                         log.e { "Bootstrap: Tor initialization failed - $errorMessage" }

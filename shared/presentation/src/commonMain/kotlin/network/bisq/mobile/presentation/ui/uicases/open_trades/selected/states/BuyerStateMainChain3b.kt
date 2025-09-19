@@ -174,7 +174,7 @@ fun BuyerStateMainChain3b(
         }
         amountNotMatchingDialogText?.let { dialogText ->
             ConfirmationDialog(
-                headline = "error.warning".i18n(),
+                headline = "mobile.error.warning".i18n(),
                 headlineColor = BisqTheme.colors.warning,
                 headlineLeftIcon = { WarningIcon() },
                 message = dialogText,

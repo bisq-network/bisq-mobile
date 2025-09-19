@@ -18,8 +18,8 @@ fun NotificationPermissionDialog(
         message = if (platform == PlatformType.ANDROID)
             "mobile.permissions.notifications.explanation.android".i18n()
         else "mobile.permissions.notifications.explanation".i18n(),
-        confirmButtonText = "action.grantPermission".i18n(),
-        dismissButtonText = "action.dontAskAgain".i18n(),
+        confirmButtonText = "mobile.action.grantPermission".i18n(),
+        dismissButtonText = "mobile.action.dontAskAgain".i18n(),
         verticalButtonPlacement = true,
         onConfirm = onConfirm,
         onDismiss = onDismiss,

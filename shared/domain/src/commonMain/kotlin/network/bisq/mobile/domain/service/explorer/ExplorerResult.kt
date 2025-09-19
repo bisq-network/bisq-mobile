@@ -12,7 +12,7 @@ import network.bisq.mobile.i18n.i18n
 data class ExplorerResult(
     val isConfirmed: Boolean = false,
     val outputValues: List<Long> = emptyList(),
-    val exceptionName: String? = "error.exception".i18n(),
+    val exceptionName: String? = "mobile.error.exception".i18n(),
     val errorMessage: String? = null,
 ) {
     constructor(isConfirmed: Boolean = false, outputValues: List<Long> = emptyList(), error: Pair<String, String>? = null) : this(

@@ -53,12 +53,12 @@ object DateUtils {
         if (durationInSeconds == 0L) return "temporal.online".i18n()
 
         return when {
-            durationInSeconds < 60L -> "temporal.second".i18nPlural(durationInSeconds.toInt())
-            durationInSeconds < 3_600L -> "temporal.minute".i18nPlural((durationInSeconds / 60).toInt())
-            durationInSeconds < 86_400L -> "temporal.hour".i18nPlural((durationInSeconds / 3_600).toInt())
-            durationInSeconds < 2_592_000L -> "temporal.dayAgo".i18nPlural((durationInSeconds / 86_400).toInt()) // ~30 days
-            durationInSeconds < 31_536_000L -> "temporal.monthAgo".i18nPlural((durationInSeconds / 2_592_000).toInt()) // ~365 days
-            else -> "temporal.yearAgo".i18nPlural((durationInSeconds / 31_536_000).toInt())
+            durationInSeconds < 60L -> "mobile.temporal.second".i18nPlural(durationInSeconds.toInt())
+            durationInSeconds < 3_600L -> "mobile.temporal.minute".i18nPlural((durationInSeconds / 60).toInt())
+            durationInSeconds < 86_400L -> "mobile.temporal.hour".i18nPlural((durationInSeconds / 3_600).toInt())
+            durationInSeconds < 2_592_000L -> "mobile.temporal.dayAgo".i18nPlural((durationInSeconds / 86_400).toInt()) // ~30 days
+            durationInSeconds < 31_536_000L -> "mobile.temporal.monthAgo".i18nPlural((durationInSeconds / 2_592_000).toInt()) // ~365 days
+            else -> "mobile.temporal.yearAgo".i18nPlural((durationInSeconds / 31_536_000).toInt())
         }
     }
 
@@ -78,12 +78,13 @@ object DateUtils {
 
         val parts = listOfNotNull(
             if (years > 0) "temporal.year".i18nPlural(years) else null,
-            if (months > 0) "temporal.month".i18nPlural(months) else null,
+            // months not avail in default properties
+            if (months > 0) "mobile.temporal.month".i18nPlural(months) else null,
             if (days > 0) "temporal.day".i18nPlural(days) else null
         )
 
         return if (parts.isEmpty()) {
-            "temporal.lessThanADay".i18n()
+            "mobile.temporal.lessThanADay".i18n()
         } else {
             parts.joinToString(", ")
         }

@@ -118,7 +118,7 @@ fun NoOffersSection(presenter: OfferbookPresenter) {
         )
         BisqGap.V4()
         BisqButton(
-            text = "offer.createOffer".i18n(), // Create offer
+            text = "offer.create".i18n(),
             onClick = presenter::createOffer
         )
     }
