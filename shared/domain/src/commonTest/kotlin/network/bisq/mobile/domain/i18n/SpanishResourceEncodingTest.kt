@@ -66,10 +66,10 @@ class SpanishResourceEncodingTest {
 
         // Test specific key translations that should be in Spanish
         val expectedTranslations = mapOf(
-            "error.exception" to "Excepción",
-            "confirmation.areYouSure" to "¿Estás seguro?",
-            "min" to "Mín",
-            "max" to "Máx"
+            "mobile.error.exception" to "Excepción",
+            "mobile.confirmation.areYouSure" to "¿Estás seguro?",
+            "mobile.min" to "Mín",
+            "mobile.max" to "Máx"
         )
 
         expectedTranslations.forEach { (key, expectedSpanish) ->
