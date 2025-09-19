@@ -80,7 +80,7 @@ fun TabContainerScreen() {
             BottomNavigation(
                 items = navigationListItem,
                 currentRoute = currentRoute.orEmpty(),
-                unreadTradeCount = tradesWithUnreadMessages.size,
+                unreadTradeCount = tradesWithUnreadMessages.values.sum(),
                 showAnimation = showAnimation,
                 onItemClick = { currentNavigationItem ->
                     Routes.fromString(currentNavigationItem.route)?.let { presenter.navigateToTab(it) }
