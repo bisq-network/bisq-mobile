@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -75,13 +76,20 @@ open class MainPresenter(
                                 else -> true
                             }
                         }
-                        val unread = (visibleMessages.size - readStates.getOrElse(trade.tradeId) { 0 }).coerceAtLeast(0)
+                        val unread =
+                            (visibleMessages.size - readStates.getOrElse(trade.tradeId) { 0 }).coerceAtLeast(
+                                0
+                            )
                         trade.tradeId to unread
                     }
                 }
-                combine(flowsList) { pairs ->
-                    pairs.filter { it.second > 0 }
-                        .associate { it.first to it.second }
+                if (flowsList.isEmpty()) {
+                    flowOf(emptyMap())
+                } else {
+                    combine(flowsList) { pairs ->
+                        pairs.filter { it.second > 0 }
+                            .associate { it.first to it.second }
+                    }
                 }
             }
             .stateIn(
