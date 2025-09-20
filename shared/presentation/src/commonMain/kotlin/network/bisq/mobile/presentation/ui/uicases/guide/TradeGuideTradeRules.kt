@@ -36,7 +36,7 @@ fun TradeGuideTradeRules() {
         stepsLength = 4,
         prevOnClick = presenter::prevClick,
         nextOnClick = presenter::tradeRulesNextClick,
-        nextButtonText = "action.finish".i18n(),
+        nextButtonText = "mobile.action.finish".i18n(),
         nextDisabled = !localUserAgreed,
         horizontalAlignment = Alignment.Start,
         isInteractive = isInteractive,
