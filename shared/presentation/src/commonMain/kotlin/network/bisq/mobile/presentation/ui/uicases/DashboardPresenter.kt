@@ -53,6 +53,8 @@ open class DashboardPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
+        mainPresenter.setIsMainContentVisible(true)
+
         collectUI(mainPresenter.languageCode) {
             marketPriceServiceFacade.refreshSelectedFormattedMarketPrice()
         }

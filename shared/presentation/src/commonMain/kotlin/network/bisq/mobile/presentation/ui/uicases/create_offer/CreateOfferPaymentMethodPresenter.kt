@@ -12,17 +12,16 @@ class CreateOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter, private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter) {
 
-    lateinit var quoteSideHeadline: String
-    lateinit var baseSideHeadline: String
+    var quoteSideHeadline: String
+    var baseSideHeadline: String
     val availableQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow((emptySet()))
     val availableBaseSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow((emptySet()))
     val selectedQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
     val selectedBaseSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
 
-    private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
+    private val createOfferModel: CreateOfferPresenter.CreateOfferModel = createOfferPresenter.createOfferModel
 
     init {
-        createOfferModel = createOfferPresenter.createOfferModel
 
         val quoteCurrencyCode = createOfferModel.market?.quoteCurrencyCode
             ?: throw IllegalStateException("Market must be initialized before creating payment method presenter")
