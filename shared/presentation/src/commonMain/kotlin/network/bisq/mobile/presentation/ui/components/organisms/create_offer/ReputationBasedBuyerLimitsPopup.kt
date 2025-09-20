@@ -46,7 +46,7 @@ fun ReputationBasedBuyerLimitsPopup(
 
         NoteText(
             "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.linkToWikiText".i18n(),
-            linkText = BisqLinks.REPUTATION_BASE_WIKI_URL,
+            linkText = BisqLinks.REPUTATION_WIKI_URL,
             openConfirmation = true,
             onLinkClick = onRepLinkClick
         )

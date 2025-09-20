@@ -1,113 +1,138 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
-import network.bisq.mobile.domain.data.replicated.settings.AboutSettingsVO
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
+import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
-import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoCircle
+import network.bisq.mobile.presentation.ui.components.atoms.icons.AppLinkIcon
+import network.bisq.mobile.presentation.ui.components.atoms.icons.WebLinkIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
-interface IAboutPresenter : ViewPresenter {
-    val appName: String
-    fun versioning(): AboutSettingsVO
-
-    fun navigateToMobileGitHub()
-}
 
 @Composable
 fun ResourcesScreen() {
-    val presenter: IAboutPresenter = koinInject()
+    val presenter: ResourcesPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val versioning = remember { presenter.versioning() }
     val isInteractive by presenter.isInteractive.collectAsState()
+    val versionInfo by presenter.versionInfo.collectAsState()
 
     BisqScrollScaffold(
         topBar = { TopBar("mobile.more.resources".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
-        snackbarHostState = presenter.getSnackState(),
         isInteractive = isInteractive,
     ) {
-
-        BisqGap.V3()
-
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            BisqLogoCircle(Modifier.size(150.dp))
-        }
-
-        BisqGap.V2()
-
-        BisqText.h3Light(
-            text = "${presenter.appName} v${versioning.appVersion}",
-            textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth(),
+        BisqText.h3Light("support.resources.guides.headline".i18n())
+        AppLinkButton(
+            "support.resources.guides.tradeGuide".i18n(),
+            onClick = { presenter.onOpenTradeGuide() }
+        )
+        AppLinkButton(
+            "support.resources.guides.chatRules".i18n(),
+            onClick = { presenter.onOpenChatRules() }
+        )
+        AppLinkButton(
+            "support.resources.guides.walletGuide".i18n(),
+            onClick = { presenter.onOpenWalletGuide() }
         )
 
-        BisqGap.V3()
+        BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding2X))
+        BisqGap.V1()
+        BisqText.h3Light("support.resources.resources.headline".i18n())
+        ResourceWeblink(
+            "support.resources.resources.webpage".i18n(),
+            link = BisqLinks.WEBPAGE,
+            onClick = { presenter.onOpenWebUrl(BisqLinks.WEBPAGE) }
+        )
+        ResourceWeblink(
+            "support.resources.resources.dao".i18n(),
+            link = BisqLinks.DAO,
+            onClick = { presenter.onOpenWebUrl(BisqLinks.DAO) }
+        )
+        ResourceWeblink(
+            "support.resources.resources.sourceCode".i18n(),
+            link = BisqLinks.BISQ_MOBILE_GH,
+            onClick = { presenter.onOpenWebUrl(BisqLinks.BISQ_MOBILE_GH) }
+        )
+        ResourceWeblink(
+            "support.resources.resources.community".i18n(),
+            link = BisqLinks.COMMUNITY,
+            onClick = { presenter.onOpenWebUrl(BisqLinks.COMMUNITY) }
+        )
 
-        if (versioning.apiVersion != null) {
-            BisqText.baseRegular(
-                text = "Node-API v${versioning.apiVersion}",
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
+        BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding2X))
+        BisqGap.V1()
+        BisqText.h3Light("mobile.resources.version.headline".i18n())
+        BisqText.baseLight(
+            text = versionInfo,
+            color = BisqTheme.colors.mid_grey20,
+            modifier = Modifier
+                .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
+        )
 
-            BisqGap.V1()
-        }
-
-        if (versioning.torVersion != null) {
-            BisqText.baseRegular(
-                text = "Tor v${versioning.torVersion}",
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-
-            BisqGap.V1()
-        }
-
-        if (versioning.bisqCoreVersion != null) {
-            BisqText.baseRegular(
-                text = "Core v${versioning.bisqCoreVersion}",
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
-            BisqGap.V1()
-        }
-
-        BisqGap.V3()
-
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            LinkButton(
-                "support.resources.resources.sourceCode".i18n(),
-                link = BisqLinks.BISQ_MOBILE_GH,
-                onClick = { presenter.navigateToMobileGitHub() }
-            )
-        }
+        BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding2X))
+        BisqGap.V1()
+        BisqText.h3Light("support.resources.legal.headline".i18n())
+        AppLinkButton(
+            "support.resources.legal.tac".i18n(),
+            onClick = { presenter.onOpenTac() }
+        )
+        ResourceWeblink(
+            "support.resources.legal.license".i18n(),
+            link = BisqLinks.LICENSE,
+            onClick = { presenter.onOpenWebUrl(BisqLinks.LICENSE) }
+        )
     }
+}
+
+@Composable
+fun ResourceWeblink(
+    text: String,
+    link: String,
+    onClick: (() -> Unit)? = null,
+) {
+    LinkButton(
+        text,
+        link = link,
+        onClick = onClick,
+        leftIcon = { WebLinkIcon(modifier = Modifier.size(16.dp).alpha(0.5f)) },
+        color = BisqTheme.colors.mid_grey20,
+        padding = PaddingValues(
+            horizontal = BisqUIConstants.ScreenPadding2X,
+            vertical = BisqUIConstants.ScreenPaddingHalf
+        ),
+    )
+}
+
+@Composable
+fun AppLinkButton(
+    text: String,
+    onClick: (() -> Unit)? = null,
+) {
+    BisqButton(
+        text,
+        leftIcon = { AppLinkIcon(modifier = Modifier.size(16.dp).alpha(0.4f)) },
+        color = BisqTheme.colors.mid_grey20,
+        type = BisqButtonType.Underline,
+        onClick = { onClick?.invoke() },
+    )
 }

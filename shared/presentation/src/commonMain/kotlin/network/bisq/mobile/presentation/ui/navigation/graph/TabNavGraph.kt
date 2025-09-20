@@ -55,9 +55,7 @@ fun TabNavGraph() {
             }
             composable(route = Routes.TabMore.name) {
                 selectedTab.value = Routes.TabMore.name
-                MoreScreen(
-                    isTabSelected = selectedTab.value == Routes.TabMore.name
-                )
+                MoreScreen()
             }
         }
     }

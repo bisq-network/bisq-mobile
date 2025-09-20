@@ -14,16 +14,18 @@ import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_bold
 import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_light
 import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_medium
 import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_regular
+import bisqapps.shared.presentation.generated.resources.ibm_plex_sans_thin
 import org.jetbrains.compose.resources.Font
 
 @Composable
 fun bisqFontFamily(): FontFamily {
+    val thin = Font(Res.font.ibm_plex_sans_thin, FontWeight.Thin)
     val light = Font(Res.font.ibm_plex_sans_light, FontWeight.Light)
     val regular = Font(Res.font.ibm_plex_sans_regular, FontWeight.Normal)
     val medium = Font(Res.font.ibm_plex_sans_medium, FontWeight.Medium)
     val bold = Font(Res.font.ibm_plex_sans_bold, FontWeight.Bold)
     return remember {
-        FontFamily(light, regular, medium, bold)
+        FontFamily(thin, light, regular, medium, bold)
     }
 }
 
@@ -176,6 +178,13 @@ class BisqTypography(fontFamily: FontFamily) {
         fontWeight = FontWeight.Bold,
         fontSize = FontSize.H5.size,
     )
+
+    val h4Thin: TextStyle = getTextStyle(
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Thin,
+        fontSize = FontSize.H4.size,
+    )
+
     val h4Light: TextStyle = getTextStyle(
         fontFamily = fontFamily,
         fontWeight = FontWeight.Light,
@@ -198,6 +207,12 @@ class BisqTypography(fontFamily: FontFamily) {
         fontFamily = fontFamily,
         fontWeight = FontWeight.Bold,
         fontSize = FontSize.H4.size,
+    )
+
+    val h3Thin: TextStyle = getTextStyle(
+        fontFamily = fontFamily,
+        fontWeight = FontWeight.Thin,
+        fontSize = FontSize.H3.size,
     )
 
     val h3Light: TextStyle = getTextStyle(

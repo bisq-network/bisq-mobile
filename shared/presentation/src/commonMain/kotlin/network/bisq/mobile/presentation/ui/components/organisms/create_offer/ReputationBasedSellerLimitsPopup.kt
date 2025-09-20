@@ -46,7 +46,7 @@ fun ReputationBasedSellerLimitsPopup(
 
         LinkButton(
             text = "bisqEasy.tradeWizard.amount.limitInfo.overlay.learnHowToBuildReputation".i18n(),
-            link = BisqLinks.REPUTATION_BUILD_WIKI_URL,
+            link = BisqLinks.BUILD_REPUTATION_WIKI_URL,
             type = BisqButtonType.Outline,
             padding = PaddingValues(horizontal = BisqUIConstants.ScreenPadding, vertical = 8.dp),
             fullWidth = true,
@@ -57,7 +57,7 @@ fun ReputationBasedSellerLimitsPopup(
 
         NoteText(
             "bisqEasy.tradeWizard.amount.buyer.limitInfo.overlay.linkToWikiText".i18n(),
-            linkText = BisqLinks.REPUTATION_BASE_WIKI_URL,
+            linkText = BisqLinks.REPUTATION_WIKI_URL,
             openConfirmation = true,
             onLinkClick = onRepLinkClick
         )

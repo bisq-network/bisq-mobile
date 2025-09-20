@@ -337,7 +337,7 @@ class OfferbookPresenter(
         // val canBuyerTakeOffer = isReputationNotCached || sellersScore >= requiredReputationScoreForMinOrFixed
         val canBuyerTakeOffer = sellersScore >= requiredReputationScoreForMinOrFixed
         if (!canBuyerTakeOffer) {
-            val link = "hyperlinks.openInBrowser.attention".i18n(BisqLinks.REPUTATION_BUILD_WIKI_URL)
+            val link = "hyperlinks.openInBrowser.attention".i18n(BisqLinks.BUILD_REPUTATION_WIKI_URL)
             if (bisqEasyOffer.direction == DirectionEnum.SELL) {
                 // SELL offer: Maker wants to sell Bitcoin, so they are the seller
                 // Taker (me) wants to buy Bitcoin - checking if seller has enough reputation
@@ -425,7 +425,7 @@ class OfferbookPresenter(
 
     fun onLearnHowToBuildReputation() {
         _showNotEnoughReputationDialog.value = false
-        navigateToUrl(BisqLinks.REPUTATION_BUILD_WIKI_URL)
+        navigateToUrl(BisqLinks.BUILD_REPUTATION_WIKI_URL)
     }
 
     private suspend fun setupReputationDialogContent(item: OfferItemPresentationModel) {

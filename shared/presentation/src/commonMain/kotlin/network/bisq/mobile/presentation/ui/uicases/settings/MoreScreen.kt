@@ -5,25 +5,16 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticLayout
 import network.bisq.mobile.presentation.ui.components.molecules.settings.MenuItem
 import network.bisq.mobile.presentation.ui.components.molecules.settings.SettingsMenu
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
-interface ISettingsPresenter : ViewPresenter {
-    val menuItems: StateFlow<MenuItem?>
-
-    fun navigate(route: Routes)
-}
-
 @Composable
-fun MoreScreen(isTabSelected: Boolean) {
-    val presenter: ISettingsPresenter = koinInject()
+fun MoreScreen() {
+    val presenter: MorePresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
@@ -37,7 +28,7 @@ fun MoreScreen(isTabSelected: Boolean) {
         menuTree?.let { root ->
             SettingsMenu(menuItem = root) { selectedItem ->
                 if (selectedItem is MenuItem.Leaf) {
-                    presenter.navigate(selectedItem.route)
+                    presenter.onNavigateTo(selectedItem.route)
                 }
             }
         }

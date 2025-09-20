@@ -45,9 +45,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.IAboutPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.MorePresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
@@ -164,9 +162,9 @@ val androidNodeModule = module {
         )
     }
 
-    single<MorePresenter> { NodeMorePresenter(get(), get(), get()) } bind ISettingsPresenter::class
+    single<MorePresenter> { NodeMorePresenter(get(), get(), get()) }
 
-    single<ResourcesPresenter> { NodeResourcesPresenter(get()) } bind IAboutPresenter::class
+    single<ResourcesPresenter> { NodeResourcesPresenter(get()) }
 
     factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 

@@ -40,11 +40,12 @@ import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.SupportScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileScreen
-import network.bisq.mobile.presentation.ui.uicases.startup.AgreementScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScreen
+import network.bisq.mobile.presentation.ui.uicases.startup.UserAgreementDisplayScreen
+import network.bisq.mobile.presentation.ui.uicases.startup.UserAgreementScreen
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPaymentMethodScreen
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferReviewTradeScreen
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferSettlementMethodScreen
@@ -66,7 +67,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
         addScreen(Routes.TrustedNodeSettings.name, content = { TrustedNodeSetupScreen(false) })
 
         val startupScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
-            Routes.Agreement to { AgreementScreen() },
+            Routes.UserAgreement to { UserAgreementScreen() },
             Routes.Onboarding to { OnBoardingScreen() },
             Routes.CreateProfile to { CreateProfileScreen() },
             Routes.TrustedNodeSetup to { TrustedNodeSetupScreen() },
@@ -88,6 +89,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
             Routes.PaymentAccounts to { PaymentAccountsScreen() },
             Routes.IgnoredUsers to { IgnoredUsersScreen() },
             Routes.Resources to { ResourcesScreen() },
+            Routes.UserAgreementDisplay to { UserAgreementDisplayScreen() },
         )
         otherScreens.forEach{ (route, screen): Pair<Routes, @Composable () -> Unit> ->
             addScreen(

@@ -9,7 +9,7 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-open class AgreementPresenter(
+open class UserAgreementPresenter(
     mainPresenter: MainPresenter,
     private val settingsServiceFacade: SettingsServiceFacade,
 ) : BasePresenter(mainPresenter), IAgreementPresenter {
@@ -37,7 +37,7 @@ open class AgreementPresenter(
 
     private fun navigateToOnboarding() {
         navigateTo(Routes.Onboarding) {
-            it.popUpTo(Routes.Agreement.name) { inclusive = true }
+            it.popUpTo(Routes.UserAgreement.name) { inclusive = true }
         }
     }
 }

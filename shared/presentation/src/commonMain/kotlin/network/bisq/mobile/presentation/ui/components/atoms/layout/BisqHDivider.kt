@@ -11,11 +11,12 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun BisqHDivider(
-    verticalPadding: Dp = BisqUIConstants.ScreenPadding2X
+    verticalPadding: Dp = BisqUIConstants.ScreenPadding2X,
+    modifier: Modifier = Modifier.padding(vertical = verticalPadding)
 ) {
     HorizontalDivider(
         thickness = 1.dp,
-        modifier = Modifier.padding(vertical = verticalPadding),
+        modifier = modifier,
         color = BisqTheme.colors.mid_grey10
     )
 }

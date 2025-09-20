@@ -26,6 +26,8 @@ fun LinkButton(
     fullWidth: Boolean = false,
     openConfirmation: Boolean = true,
     modifier: Modifier = Modifier,
+    leftIcon: (@Composable () -> Unit)? = null,
+    rightIcon: (@Composable () -> Unit)? = null,
 ) {
 
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -44,7 +46,9 @@ fun LinkButton(
             }
 
         },
-        modifier = modifier
+        modifier = modifier,
+        leftIcon = leftIcon,
+        rightIcon = rightIcon,
     )
 
 

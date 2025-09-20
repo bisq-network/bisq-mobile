@@ -11,12 +11,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.add_custom_green
 import bisqapps.shared.presentation.generated.resources.check_circle
 import bisqapps.shared.presentation.generated.resources.exchange_h_arrow
 import bisqapps.shared.presentation.generated.resources.exchange_v_arrow
 import bisqapps.shared.presentation.generated.resources.field_add_white
-import bisqapps.shared.presentation.generated.resources.add_custom_green
 import bisqapps.shared.presentation.generated.resources.icon_add
+import bisqapps.shared.presentation.generated.resources.icon_app_link
 import bisqapps.shared.presentation.generated.resources.icon_arrow_down
 import bisqapps.shared.presentation.generated.resources.icon_arrow_down_dark
 import bisqapps.shared.presentation.generated.resources.icon_arrow_right
@@ -49,6 +50,7 @@ import bisqapps.shared.presentation.generated.resources.icon_warning_filled
 import bisqapps.shared.presentation.generated.resources.icon_warning_grey
 import bisqapps.shared.presentation.generated.resources.icon_warning_light_grey
 import bisqapps.shared.presentation.generated.resources.icon_warning_white
+import bisqapps.shared.presentation.generated.resources.icon_web_link
 import bisqapps.shared.presentation.generated.resources.leave_chat_green
 import bisqapps.shared.presentation.generated.resources.remove_offer
 import bisqapps.shared.presentation.generated.resources.up_arrow
@@ -276,4 +278,14 @@ fun WarningIconWhite(modifier: Modifier = Modifier.size(24.dp)) {
 @Composable
 fun LeaveChatIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.leave_chat_green), "Leave chat icon", modifier = modifier)
+}
+
+@Composable
+fun AppLinkIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_app_link), "App link icon", modifier = modifier)
+}
+
+@Composable
+fun WebLinkIcon(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_web_link), "Web link icon", modifier = modifier)
 }

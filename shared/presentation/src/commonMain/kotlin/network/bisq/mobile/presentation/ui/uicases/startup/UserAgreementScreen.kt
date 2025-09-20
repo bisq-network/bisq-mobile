@@ -2,10 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,7 +31,7 @@ interface IAgreementPresenter : ViewPresenter {
 }
 
 @Composable
-fun AgreementScreen() {
+fun UserAgreementScreen() {
     val presenter: IAgreementPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
@@ -66,26 +63,31 @@ fun AgreementScreen() {
         BisqText.h1Light("tac.headline".i18n())
         BisqGap.V2()
 
-        Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
-            OrderedList("1.", "mobile.terms.point1".i18n())
-            OrderedList("2.", "mobile.terms.point2".i18n())
-            OrderedList("3.", "mobile.terms.point3".i18n())
-            OrderedList("4.", "mobile.terms.point4".i18n())
-            OrderedList("5.", "mobile.terms.point5".i18n())
-            OrderedList(
-                "6.", "mobile.terms.point6".i18n(),
-                includeBottomPadding = false
-            )
+        UserAgreementContent()
+    }
+}
 
-            BisqGap.V1()
+@Composable
+fun UserAgreementContent() {
+    Column(verticalArrangement = Arrangement.spacedBy(0.dp)) {
+        OrderedList("1.", "mobile.terms.point1".i18n())
+        OrderedList("2.", "mobile.terms.point2".i18n())
+        OrderedList("3.", "mobile.terms.point3".i18n())
+        OrderedList("4.", "mobile.terms.point4".i18n())
+        OrderedList("5.", "mobile.terms.point5".i18n())
+        OrderedList(
+            "6.", "mobile.terms.point6".i18n(),
+            includeBottomPadding = false
+        )
 
-            Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
-                UnorderedList("mobile.rules1".i18n())
-                UnorderedList("mobile.rules2".i18n())
-                UnorderedList("mobile.rules3".i18n())
-                UnorderedList("mobile.rules4".i18n())
-                UnorderedList("mobile.rules5".i18n())
-            }
+        BisqGap.V1()
+
+        Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
+            UnorderedList("mobile.rules1".i18n())
+            UnorderedList("mobile.rules2".i18n())
+            UnorderedList("mobile.rules3".i18n())
+            UnorderedList("mobile.rules4".i18n())
+            UnorderedList("mobile.rules5".i18n())
         }
     }
 }

@@ -10,11 +10,11 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExte
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
-import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class CreateOfferDirectionPresenter(
@@ -81,7 +81,7 @@ class CreateOfferDirectionPresenter(
 
     fun showLearnReputation() {
         setShowSellerReputationWarning(false)
-        navigateToUrl(BisqLinks.REPUTATION_BUILD_WIKI_URL)
+        navigateToUrl(BisqLinks.BUILD_REPUTATION_WIKI_URL)
     }
 
     fun onDismissSellerReputationWarning() {

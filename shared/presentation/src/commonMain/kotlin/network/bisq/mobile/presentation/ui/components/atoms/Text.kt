@@ -657,6 +657,22 @@ object BisqText {
 
 
     @Composable
+    fun h4Thin(
+        text: String,
+        color: Color = BisqTheme.colors.white,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
+        styledText(
+            text = text,
+            style = BisqTheme.typography.h4Thin,
+            color = color,
+            textAlign = textAlign,
+            modifier = modifier,
+        )
+    }
+
+    @Composable
     fun h4Light(
         text: String,
         color: Color = BisqTheme.colors.white,
@@ -734,6 +750,21 @@ object BisqText {
         )
     }
 
+    @Composable
+    fun h3Thin(
+        text: String,
+        color: Color = BisqTheme.colors.white,
+        textAlign: TextAlign = TextAlign.Start,
+        modifier: Modifier = Modifier,
+    ) {
+        styledText(
+            text = text,
+            style = BisqTheme.typography.h3Thin,
+            color = color,
+            textAlign = textAlign,
+            modifier = modifier,
+        )
+    }
 
     @Composable
     fun h3Light(

@@ -249,11 +249,11 @@ class CreateOfferAmountPresenter(
     }
 
     fun navigateToReputation() {
-        navigateToUrl(BisqLinks.REPUTATION_BASE_WIKI_URL)
+        navigateToUrl(BisqLinks.REPUTATION_WIKI_URL)
     }
 
     fun navigateToBuildReputation() {
-        navigateToUrl(BisqLinks.REPUTATION_BUILD_WIKI_URL)
+        navigateToUrl(BisqLinks.BUILD_REPUTATION_WIKI_URL)
     }
 
     fun validateTextField(value: String): String? {

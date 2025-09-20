@@ -18,10 +18,10 @@ open class MorePresenter(
     private val settingsRepository: SettingsRepository,
     private val userProfileService: UserProfileServiceFacade,
     mainPresenter: MainPresenter
-) : BasePresenter(mainPresenter), ISettingsPresenter {
+) : BasePresenter(mainPresenter) {
 
     private val _menuItems = MutableStateFlow<MenuItem?>(null)
-    override val menuItems: StateFlow<MenuItem?> get() = _menuItems.asStateFlow()
+    val menuItems: StateFlow<MenuItem?> get() = _menuItems.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -39,7 +39,7 @@ open class MorePresenter(
             MenuItem.Leaf(label = "mobile.more.paymentAccounts".i18n(), route = Routes.PaymentAccounts),
             MenuItem.Leaf(label = "mobile.more.resources".i18n(), route = Routes.Resources)
         )
-        if (!showIgnoredUser) {
+        if (showIgnoredUser) {
             defaultList.add(
                 defaultList.size - 1, MenuItem.Leaf(label = "mobile.settings.ignoredUsers".i18n(), route = Routes.IgnoredUsers)
             )
@@ -50,7 +50,7 @@ open class MorePresenter(
     }
 
     protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
-        menuItems.add(MenuItem.Leaf("mobile.more.trustedNode".i18n(), Routes.TrustedNodeSettings))
+        menuItems.add(1, MenuItem.Leaf("mobile.more.trustedNode".i18n(), Routes.TrustedNodeSettings))
         return menuItems.toList()
     }
 
@@ -69,7 +69,7 @@ open class MorePresenter(
         }
     }
 
-    override fun navigate(route: Routes) {
+    fun onNavigateTo(route: Routes) {
         navigateTo(route)
     }
 }

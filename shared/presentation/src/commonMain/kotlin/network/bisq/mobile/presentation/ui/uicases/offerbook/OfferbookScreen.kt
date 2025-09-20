@@ -93,7 +93,7 @@ fun OfferbookScreen() {
 
     if (showNotEnoughReputationDialog) {
         WebLinkConfirmationDialog(
-            link = BisqLinks.REPUTATION_BUILD_WIKI_URL,
+            link = BisqLinks.BUILD_REPUTATION_WIKI_URL,
             headline = presenter.notEnoughReputationHeadline,
             message = presenter.notEnoughReputationMessage,
             confirmButtonText = "confirmation.yes".i18n(),

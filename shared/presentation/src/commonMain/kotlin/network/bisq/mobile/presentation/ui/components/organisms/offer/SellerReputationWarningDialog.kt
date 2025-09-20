@@ -54,7 +54,7 @@ fun SellerReputationWarningDialog(
 
         LinkButton(
             text = "bisqEasy.tradeWizard.directionAndMarket.feedback.gainReputation".i18n(),
-            link = BisqLinks.REPUTATION_BUILD_WIKI_URL,
+            link = BisqLinks.BUILD_REPUTATION_WIKI_URL,
             type = BisqButtonType.Default,
             color = BisqTheme.colors.white,
             onClick = onLearnReputation,
