@@ -16,6 +16,8 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
+import kotlinx.coroutines.flow.Flow
+
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
@@ -62,17 +64,17 @@ open class MainPresenter(
     override val tradesWithUnreadMessages: StateFlow<Map<String, Int>> =
         tradesServiceFacade.openTradeItems
             .flatMapLatest { openTradeItems ->
-                val flowsList = openTradeItems.map { trade ->
+                val flowsList: List<Flow<Pair<String, Int>>> = openTradeItems.map { trade ->
                     combine(
                         trade.bisqEasyOpenTradeChannelModel.chatMessages,
                         tradeReadStateRepository.data.map { it.map },
-                        userProfileServiceFacade.ignoredUserIds,
-                    ) { messages, readStates, ignoredUserIds ->
+                        userProfileServiceFacade.ignoredProfileIds,
+                    ) { messages, readStates, ignoredIds ->
                         // TODO: refactor to filter visible messages based on ignore at trade.bisqEasyOpenTradeChannelModel.chatMessages for consistency
                         // this is a duplicated logic from OpenTradePresenter msgCount collection
                         val visibleMessages = messages.filter {
                             when (it.chatMessageType) {
-                                ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> it.senderUserProfileId !in ignoredUserIds
+                                ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> it.senderUserProfileId !in ignoredIds
                                 else -> true
                             }
                         }
@@ -86,7 +88,7 @@ open class MainPresenter(
                 if (flowsList.isEmpty()) {
                     flowOf(emptyMap())
                 } else {
-                    combine(flowsList) { pairs ->
+                    combine(flowsList) { pairs: Array<Pair<String, Int>> ->
                         pairs.filter { it.second > 0 }
                             .associate { it.first to it.second }
                     }

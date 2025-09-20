@@ -69,7 +69,7 @@ class MainPresenterUnreadBadgeTest {
 
         // Mock ignored user IDs
         val ignoredUserIdsFlow = MutableStateFlow(setOf("ignoredUser1"))
-        every { userProfileServiceFacade.ignoredUserIds } returns ignoredUserIdsFlow
+        every { userProfileServiceFacade.ignoredProfileIds } returns ignoredUserIdsFlow
 
         // Mock read states
         val readStatesFlow = MutableStateFlow(TradeReadStateMap(mapOf("trade1" to 1, "trade2" to 0)))
