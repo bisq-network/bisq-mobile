@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation
 import androidx.annotation.CallSuper
 import androidx.navigation.NavHostController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -16,8 +17,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.take
-import kotlinx.coroutines.flow.Flow
-
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.UrlLauncher
@@ -164,7 +163,7 @@ open class MainPresenter(
     }
 
     override fun navigateToTrustedNode() {
-        tabNavController.navigate(Routes.TabSettings.name)
+        tabNavController.navigate(Routes.TabMore.name)
         navController.navigate(Routes.TrustedNodeSettings.name)
     }
 

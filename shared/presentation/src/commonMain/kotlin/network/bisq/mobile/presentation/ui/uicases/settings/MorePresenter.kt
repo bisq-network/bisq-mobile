@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
@@ -15,7 +14,7 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 /**
  * SettingsPresenter with default implementation
  */
-open class SettingsPresenter(
+open class MorePresenter(
     private val settingsRepository: SettingsRepository,
     private val userProfileService: UserProfileServiceFacade,
     mainPresenter: MainPresenter

@@ -22,7 +22,7 @@ interface ISettingsPresenter : ViewPresenter {
 }
 
 @Composable
-fun SettingsScreen(isTabSelected: Boolean) {
+fun MoreScreen(isTabSelected: Boolean) {
     val presenter: ISettingsPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 

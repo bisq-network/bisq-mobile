@@ -57,8 +57,8 @@ import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSetti
 import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfileSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IgnoredUsersPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.MorePresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.PaymentAccountPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.AgreementPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
@@ -114,7 +114,7 @@ val presentationModule = module {
 
     single { TabContainerPresenter(get(), get(), get()) } bind ITabContainerPresenter::class
 
-    single<SettingsPresenter> { SettingsPresenter(get(), get(), get()) } bind ISettingsPresenter::class
+    single<MorePresenter> { MorePresenter(get(), get(), get()) } bind ISettingsPresenter::class
 
     single<AboutPresenter> { AboutPresenter(get()) } bind IAboutPresenter::class
 

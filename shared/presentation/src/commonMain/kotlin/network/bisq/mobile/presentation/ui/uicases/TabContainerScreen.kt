@@ -29,7 +29,7 @@ val navigationListItem = listOf(
     BottomNavigationItem("mobile.bottomNavigation.home".i18n(), Routes.TabHome.name, Res.drawable.nav_home),
     BottomNavigationItem("mobile.bottomNavigation.offerbook".i18n(), Routes.TabOfferbook.name, Res.drawable.nav_offers),
     BottomNavigationItem("mobile.bottomNavigation.myTrades".i18n(), Routes.TabOpenTradeList.name, Res.drawable.nav_trades),
-    BottomNavigationItem("mobile.bottomNavigation.more".i18n(), Routes.TabSettings.name, Res.drawable.nav_more),
+    BottomNavigationItem("mobile.bottomNavigation.more".i18n(), Routes.TabMore.name, Res.drawable.nav_more),
 )
 
 interface ITabContainerPresenter : ViewPresenter {
@@ -67,7 +67,7 @@ fun TabContainerScreen() {
                     Routes.TabHome.name -> navigationListItem[0].title
                     Routes.TabOfferbook.name -> navigationListItem[1].title
                     Routes.TabOpenTradeList.name -> "mobile.bottomNavigation.myOpenTrades".i18n()
-                    Routes.TabSettings.name -> navigationListItem[3].title
+                    Routes.TabMore.name -> navigationListItem[3].title
                     else -> "mobile.bottomNavigation.app".i18n()
                 },
                 backBehavior = {
