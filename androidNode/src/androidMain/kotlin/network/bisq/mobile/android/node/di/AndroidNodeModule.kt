@@ -4,7 +4,7 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.presentation.NodeDashboardPresenter
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
-import network.bisq.mobile.android.node.presentation.NodeMorePresenter
+import network.bisq.mobile.android.node.presentation.NodeMiscItemsPresenter
 import network.bisq.mobile.android.node.presentation.NodeOnBoardingPresenter
 import network.bisq.mobile.android.node.presentation.NodeResourcesPresenter
 import network.bisq.mobile.android.node.presentation.NodeSettingsPresenter
@@ -46,7 +46,7 @@ import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.MorePresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.MiscItemsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
@@ -162,7 +162,7 @@ val androidNodeModule = module {
         )
     }
 
-    single<MorePresenter> { NodeMorePresenter(get(), get(), get()) }
+    single<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get(), get()) }
 
     single<ResourcesPresenter> { NodeResourcesPresenter(get()) }
 

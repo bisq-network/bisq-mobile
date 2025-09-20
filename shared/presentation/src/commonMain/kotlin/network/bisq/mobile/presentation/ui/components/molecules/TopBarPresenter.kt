@@ -28,7 +28,7 @@ open class TopBarPresenter(
     override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> get() = connectivityService.status
 
     override fun avatarEnabled(currentTab: String?): Boolean {
-        return isAtMainScreen() && currentTab != Routes.TabMore.name
+        return isAtMainScreen() && currentTab != Routes.TabMiscItems.name
     }
 
     override fun navigateToUserProfile() {

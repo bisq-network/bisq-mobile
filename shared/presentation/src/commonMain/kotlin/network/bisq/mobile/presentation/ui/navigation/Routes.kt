@@ -48,7 +48,7 @@ enum class Routes(val title: String) {
     IgnoredUsers(title = "ignored_users_settings"),
     Resources(title = "resources"),
 
-    TabMore(title = "tab_more"),
+    TabMiscItems(title = "tab_misc_items"),
 
     TradeGuideOverview(title = "trade_guide_overview"),
     TradeGuideSecurity(title = "trade_guide_security"),

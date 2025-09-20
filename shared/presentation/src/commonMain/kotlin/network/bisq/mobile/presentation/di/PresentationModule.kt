@@ -53,7 +53,7 @@ import network.bisq.mobile.presentation.ui.uicases.settings.IIgnoredUsersPresent
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IgnoredUsersPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.MorePresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.MiscItemsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.PaymentAccountsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ReputationPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
@@ -114,7 +114,7 @@ val presentationModule = module {
 
     single { TabContainerPresenter(get(), get(), get()) } bind ITabContainerPresenter::class
 
-    single<MorePresenter> { MorePresenter(get(), get(), get()) }
+    single<MiscItemsPresenter> { MiscItemsPresenter(get(), get(), get()) }
 
     single<ResourcesPresenter> { ResourcesPresenter(get()) }
     single<ReputationPresenter> { ReputationPresenter(get()) }

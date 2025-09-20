@@ -29,7 +29,7 @@ val navigationListItem = listOf(
     BottomNavigationItem("mobile.bottomNavigation.home".i18n(), Routes.TabHome.name, Res.drawable.nav_home),
     BottomNavigationItem("mobile.bottomNavigation.offerbook".i18n(), Routes.TabOfferbook.name, Res.drawable.nav_offers),
     BottomNavigationItem("mobile.bottomNavigation.myTrades".i18n(), Routes.TabOpenTradeList.name, Res.drawable.nav_trades),
-    BottomNavigationItem("mobile.bottomNavigation.more".i18n(), Routes.TabMore.name, Res.drawable.nav_more),
+    BottomNavigationItem("mobile.bottomNavigation.miscItems.tab".i18n(), Routes.TabMiscItems.name, Res.drawable.nav_more),
 )
 
 interface ITabContainerPresenter : ViewPresenter {
@@ -64,10 +64,10 @@ fun TabContainerScreen() {
             TopBar(
                 isHome = currentRoute == Routes.TabHome.name,
                 title = when (currentRoute) {
-                    Routes.TabHome.name -> navigationListItem[0].title
+                    Routes.TabHome.name -> ""
                     Routes.TabOfferbook.name -> navigationListItem[1].title
                     Routes.TabOpenTradeList.name -> "mobile.bottomNavigation.myOpenTrades".i18n()
-                    Routes.TabMore.name -> navigationListItem[3].title
+                    Routes.TabMiscItems.name -> "mobile.bottomNavigation.miscItems.headline".i18n()
                     else -> "mobile.bottomNavigation.app".i18n()
                 },
                 backBehavior = {

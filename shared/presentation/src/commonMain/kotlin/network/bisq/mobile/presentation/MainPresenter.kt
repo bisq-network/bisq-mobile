@@ -163,7 +163,7 @@ open class MainPresenter(
     }
 
     override fun navigateToTrustedNode() {
-        tabNavController.navigate(Routes.TabMore.name)
+        tabNavController.navigate(Routes.TabMiscItems.name)
         navController.navigate(Routes.TrustedNodeSettings.name)
     }
 
