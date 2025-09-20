@@ -6,13 +6,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
 
-class NodeGeneralSettingsPresenter(
+class NodeSettingsPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val languageServiceFacade: LanguageServiceFacade,
     mainPresenter: MainPresenter
-) : GeneralSettingsPresenter(settingsServiceFacade, languageServiceFacade, mainPresenter) {
+) : SettingsPresenter(settingsServiceFacade, languageServiceFacade, mainPresenter) {
 
     override val shouldShowPoWAdjustmentFactor: StateFlow<Boolean> get() = MutableStateFlow(true).asStateFlow()
 

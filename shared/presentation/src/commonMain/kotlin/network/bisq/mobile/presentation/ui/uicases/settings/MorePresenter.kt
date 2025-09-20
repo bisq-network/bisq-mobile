@@ -26,19 +26,22 @@ open class MorePresenter(
     override fun onViewAttached() {
         super.onViewAttached()
 
-        _menuItems.value = buildMenu(hasIgnored = false)
+        _menuItems.value = buildMenu(showIgnoredUser = false)
         loadIgnoredUsers()
     }
 
-    private fun buildMenu(hasIgnored: Boolean): MenuItem.Parent {
+    private fun buildMenu(showIgnoredUser: Boolean): MenuItem.Parent {
         val defaultList: MutableList<MenuItem> = mutableListOf(
-            MenuItem.Leaf(label = "mobile.more.settings".i18n(), route = Routes.GeneralSettings),
-            MenuItem.Leaf(label = "user.userProfile".i18n(), route = Routes.UserProfileSettings),
-            MenuItem.Leaf(label = "paymentAccounts.headline".i18n(), route = Routes.PaymentAccountSettings),
+            MenuItem.Leaf(label = "mobile.more.settings".i18n(), route = Routes.Settings),
+            MenuItem.Leaf(label = "mobile.more.support".i18n(), route = Routes.Support),
+            MenuItem.Leaf(label = "mobile.more.reputation".i18n(), route = Routes.Reputation),
+            MenuItem.Leaf(label = "mobile.more.userProfile".i18n(), route = Routes.UserProfile),
+            MenuItem.Leaf(label = "mobile.more.paymentAccounts".i18n(), route = Routes.PaymentAccounts),
+            MenuItem.Leaf(label = "mobile.more.resources".i18n(), route = Routes.Resources)
         )
-        if (hasIgnored) {
+        if (!showIgnoredUser) {
             defaultList.add(
-                2, MenuItem.Leaf(label = "mobile.settings.ignoredUsers".i18n(), route = Routes.IgnoredUsers)
+                defaultList.size - 1, MenuItem.Leaf(label = "mobile.settings.ignoredUsers".i18n(), route = Routes.IgnoredUsers)
             )
         }
         return MenuItem.Parent(
@@ -48,7 +51,6 @@ open class MorePresenter(
 
     protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
         menuItems.add(MenuItem.Leaf("mobile.more.trustedNode".i18n(), Routes.TrustedNodeSettings))
-        menuItems.add(MenuItem.Leaf(label = "mobile.more.resources".i18n(), route = Routes.About))
         return menuItems.toList()
     }
 
@@ -58,7 +60,7 @@ open class MorePresenter(
                 val ignoredUserIds = userProfileService.getIgnoredUserProfileIds()
 
                 if (ignoredUserIds.isNotEmpty()) {
-                    _menuItems.value = buildMenu(hasIgnored = true)
+                    _menuItems.value = buildMenu(showIgnoredUser = true)
                 }
 
             } catch (e: Exception) {

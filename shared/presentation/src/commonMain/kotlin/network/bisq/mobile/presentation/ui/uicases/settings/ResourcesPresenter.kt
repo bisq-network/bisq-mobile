@@ -6,7 +6,7 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
 
-open class AboutPresenter(
+open class ResourcesPresenter(
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IAboutPresenter {
 

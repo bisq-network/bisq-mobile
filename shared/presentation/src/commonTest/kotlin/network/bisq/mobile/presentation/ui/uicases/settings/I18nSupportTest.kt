@@ -16,7 +16,7 @@ class I18nSupportTest {
     @Test
     fun `getLocalizedNA should return localized N_A value`() = runTest {
         // Test that the localized N/A value is returned correctly
-        val localizedNA = UserProfileSettingsPresenter.getLocalizedNA()
+        val localizedNA = UserProfilePresenter.getLocalizedNA()
         assertEquals("N/A", localizedNA)
     }
 
@@ -24,17 +24,17 @@ class I18nSupportTest {
     fun `getLocalizedNA should return different values for different languages`() = runTest {
         // Test English
         I18nSupport.initialize("en")
-        val englishNA = UserProfileSettingsPresenter.getLocalizedNA()
+        val englishNA = UserProfilePresenter.getLocalizedNA()
         assertEquals("N/A", englishNA)
 
         // Test German
         I18nSupport.initialize("de")
-        val germanNA = UserProfileSettingsPresenter.getLocalizedNA()
+        val germanNA = UserProfilePresenter.getLocalizedNA()
         assertEquals("N/V", germanNA) // German translation for N/A
 
         // Test Russian
         I18nSupport.initialize("ru")
-        val russianNA = UserProfileSettingsPresenter.getLocalizedNA()
+        val russianNA = UserProfilePresenter.getLocalizedNA()
         assertEquals("Недоступно", russianNA) // Russian translation for N/A
     }
 }

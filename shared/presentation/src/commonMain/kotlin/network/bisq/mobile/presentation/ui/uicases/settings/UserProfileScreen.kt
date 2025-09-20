@@ -32,7 +32,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
-interface IUserProfileSettingsPresenter : ViewPresenter {
+interface IUserProfilePresenter : ViewPresenter {
 
     val reputation: StateFlow<String>
     val lastUserActivity: StateFlow<String>
@@ -59,8 +59,8 @@ interface IUserProfileSettingsPresenter : ViewPresenter {
 }
 
 @Composable
-fun UserProfileSettingsScreen() {
-    val presenter: IUserProfileSettingsPresenter = koinInject()
+fun UserProfileScreen() {
+    val presenter: IUserProfilePresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
@@ -155,7 +155,7 @@ fun UserProfileSettingsScreen() {
 }
 
 @Composable
-private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter) {
+private fun UserProfileScreenHeader(presenter: IUserProfilePresenter) {
     val connectivityStatus by presenter.connectivityStatus.collectAsState()
     val uniqueAvatar by presenter.uniqueAvatar.collectAsState()
     Box(
@@ -183,7 +183,7 @@ private fun UserProfileScreenHeader(presenter: IUserProfileSettingsPresenter) {
 }
 
 @Composable
-private fun UserProfileScreenFooter(presenter: IUserProfileSettingsPresenter, showLoading: Boolean) {
+private fun UserProfileScreenFooter(presenter: IUserProfilePresenter, showLoading: Boolean) {
     Row(
         modifier = Modifier.fillMaxWidth(),
     ) {

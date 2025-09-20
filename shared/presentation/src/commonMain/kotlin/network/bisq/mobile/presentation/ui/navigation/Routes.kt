@@ -39,11 +39,13 @@ enum class Routes(val title: String) {
 
     ChatRules(title = "chat_rules"),
 
-    GeneralSettings(title = "general_settings"),
-    UserProfileSettings(title = "user_profile_settings"),
-    PaymentAccountSettings(title = "payment_account_settings"),
+    Settings(title = "settings"),
+    Support(title = "support"),
+    Reputation(title = "reputation"),
+    UserProfile(title = "user_profile"),
+    PaymentAccounts(title = "payment_accounts"),
     IgnoredUsers(title = "ignored_users_settings"),
-    About(title = "about"),
+    Resources(title = "resources"),
 
     TabMore(title = "tab_more"),
 

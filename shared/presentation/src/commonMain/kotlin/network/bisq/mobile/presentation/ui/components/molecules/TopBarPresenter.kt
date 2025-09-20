@@ -32,6 +32,6 @@ open class TopBarPresenter(
     }
 
     override fun navigateToUserProfile() {
-        navigateTo(Routes.UserProfileSettings)
+        navigateTo(Routes.UserProfile)
     }
 }

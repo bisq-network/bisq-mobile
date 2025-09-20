@@ -28,15 +28,15 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 
-class UserProfileSettingsPresenter(
+class UserProfilePresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val reputationServiceFacade: ReputationServiceFacade,
     private val userRepository: UserRepository,
     private val connectivityService: ConnectivityService,
     mainPresenter: MainPresenter
-) : BasePresenter(mainPresenter), IUserProfileSettingsPresenter {
+) : BasePresenter(mainPresenter), IUserProfilePresenter {
 
-    companion object {
+    companion object Companion {
         /**
          * Get localized "N/A" value
          */

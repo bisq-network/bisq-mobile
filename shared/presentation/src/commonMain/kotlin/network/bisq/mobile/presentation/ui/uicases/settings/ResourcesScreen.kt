@@ -34,7 +34,7 @@ interface IAboutPresenter : ViewPresenter {
 }
 
 @Composable
-fun AboutScreen() {
+fun ResourcesScreen() {
     val presenter: IAboutPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 

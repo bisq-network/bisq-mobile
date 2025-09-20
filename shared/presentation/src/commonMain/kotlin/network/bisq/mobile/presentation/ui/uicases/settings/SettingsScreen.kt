@@ -59,7 +59,7 @@ interface IGeneralSettingsPresenter : ViewPresenter {
 }
 
 @Composable
-fun GeneralSettingsScreen() {
+fun SettingsScreen() {
     val presenter: IGeneralSettingsPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 

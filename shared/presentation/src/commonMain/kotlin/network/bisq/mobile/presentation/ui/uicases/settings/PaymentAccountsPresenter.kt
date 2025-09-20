@@ -10,7 +10,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 
-open class PaymentAccountPresenter(
+open class PaymentAccountsPresenter(
     private val accountsServiceFacade: AccountsServiceFacade,
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IPaymentAccountSettingsPresenter {

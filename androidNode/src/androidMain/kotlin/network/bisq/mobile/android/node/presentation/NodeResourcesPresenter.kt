@@ -3,12 +3,12 @@ package network.bisq.mobile.android.node.presentation
 import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.domain.data.replicated.settings.AboutSettingsVO
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.AboutPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IAboutPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
 
-class NodeAboutPresenter(
+class NodeResourcesPresenter(
     mainPresenter: MainPresenter
-) : AboutPresenter(mainPresenter), IAboutPresenter {
+) : ResourcesPresenter(mainPresenter), IAboutPresenter {
 
     override val appName: String = BuildNodeConfig.APP_NAME
 

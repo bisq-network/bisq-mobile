@@ -48,18 +48,18 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.S
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.SellerStateMainChain3bPresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.TradeStatesProvider
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.AboutPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.GeneralSettingsPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.IAboutPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IIgnoredUsersPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.ISettingsPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfileSettingsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.IUserProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IgnoredUsersPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.MorePresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.PaymentAccountPresenter
-import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileSettingsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.PaymentAccountsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.ReputationPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.SupportPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.UserProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.AgreementPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IAgreementPresenter
@@ -114,19 +114,22 @@ val presentationModule = module {
 
     single { TabContainerPresenter(get(), get(), get()) } bind ITabContainerPresenter::class
 
-    single<MorePresenter> { MorePresenter(get(), get(), get()) } bind ISettingsPresenter::class
+    single<MorePresenter> { MorePresenter(get(), get(), get()) }
 
-    single<AboutPresenter> { AboutPresenter(get()) } bind IAboutPresenter::class
+    single<ResourcesPresenter> { ResourcesPresenter(get()) }
+    single<ReputationPresenter> { ReputationPresenter(get()) }
+    single<SupportPresenter> { SupportPresenter(get()) }
 
-    single<UserProfileSettingsPresenter> {
-        UserProfileSettingsPresenter(
+
+    single<UserProfilePresenter> {
+        UserProfilePresenter(
             get(),
             get(),
             get(),
             get(),
             get()
         )
-    } bind IUserProfileSettingsPresenter::class
+    } bind IUserProfilePresenter::class
 
     single<DashboardPresenter> { DashboardPresenter(get(), get(), get(), get(), get(), get(), get(), get()) }
 
@@ -140,11 +143,11 @@ val presentationModule = module {
 
     single<TrustedNodeSetupPresenter> { TrustedNodeSetupPresenter(get(), get(), get(), get()) }
 
-    factory { GeneralSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
+    factory { SettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
     factory { IgnoredUsersPresenter(get(), get()) } bind IIgnoredUsersPresenter::class
 
-    single { PaymentAccountPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
+    single { PaymentAccountsPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
 
     // Offerbook
     single<OfferbookMarketPresenter> { OfferbookMarketPresenter(get(), get(), get(), get()) }

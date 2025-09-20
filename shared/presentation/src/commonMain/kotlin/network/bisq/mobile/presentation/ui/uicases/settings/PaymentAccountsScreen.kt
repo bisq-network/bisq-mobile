@@ -49,7 +49,7 @@ interface IPaymentAccountSettingsPresenter : ViewPresenter {
 private const val MAX_ACCOUNT_FIELD_LENGTH = 1024
 
 @Composable
-fun PaymentAccountSettingsScreen() {
+fun PaymentAccountsScreen() {
     val presenter: IPaymentAccountSettingsPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 

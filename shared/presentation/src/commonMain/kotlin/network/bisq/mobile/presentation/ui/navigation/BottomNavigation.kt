@@ -77,7 +77,7 @@ fun BottomNavigation(
                             BadgedBox(
                                 badge = {
                                     AnimatedBadge(showAnimation = showAnimation) {
-                                        BisqText.xsmallRegular(
+                                        BisqText.xsmallMedium(
                                             unreadTradeCount.toString(),
                                             textAlign = TextAlign.Center,
                                             color = BisqTheme.colors.dark_grey20
