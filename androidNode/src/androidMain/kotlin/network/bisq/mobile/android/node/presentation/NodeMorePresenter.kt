@@ -16,7 +16,7 @@ class NodeMorePresenter(
 ) : MorePresenter(settingsRepository, userProfileService, mainPresenter), ISettingsPresenter {
 
     override fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
-        menuItems.add(MenuItem.Leaf(label = "mobile.settings.about".i18n(), route = Routes.About))
+        menuItems.add(MenuItem.Leaf(label = "mobile.more.resources".i18n(), route = Routes.About))
         return menuItems.toList()
     }
 }

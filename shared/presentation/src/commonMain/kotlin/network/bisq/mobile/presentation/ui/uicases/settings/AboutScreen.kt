@@ -42,7 +42,7 @@ fun AboutScreen() {
     val isInteractive by presenter.isInteractive.collectAsState()
 
     BisqScrollScaffold(
-        topBar = { TopBar("mobile.settings.about".i18n(), showUserAvatar = false) },
+        topBar = { TopBar("mobile.more.resources".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         snackbarHostState = presenter.getSnackState(),

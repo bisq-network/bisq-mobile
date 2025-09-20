@@ -32,7 +32,7 @@ open class MorePresenter(
 
     private fun buildMenu(hasIgnored: Boolean): MenuItem.Parent {
         val defaultList: MutableList<MenuItem> = mutableListOf(
-            MenuItem.Leaf(label = "mobile.settings.general".i18n(), route = Routes.GeneralSettings),
+            MenuItem.Leaf(label = "mobile.more.settings".i18n(), route = Routes.GeneralSettings),
             MenuItem.Leaf(label = "user.userProfile".i18n(), route = Routes.UserProfileSettings),
             MenuItem.Leaf(label = "paymentAccounts.headline".i18n(), route = Routes.PaymentAccountSettings),
         )
@@ -47,8 +47,8 @@ open class MorePresenter(
     }
 
     protected open fun addCustomSettings(menuItems: MutableList<MenuItem>): List<MenuItem> {
-        menuItems.add(MenuItem.Leaf("mobile.settings.trustedNode".i18n(), Routes.TrustedNodeSettings))
-        menuItems.add(MenuItem.Leaf(label = "mobile.settings.about".i18n(), route = Routes.About))
+        menuItems.add(MenuItem.Leaf("mobile.more.trustedNode".i18n(), Routes.TrustedNodeSettings))
+        menuItems.add(MenuItem.Leaf(label = "mobile.more.resources".i18n(), route = Routes.About))
         return menuItems.toList()
     }
 

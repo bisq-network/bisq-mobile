@@ -158,7 +158,8 @@ fun GeneralSettingsScreen() {
             onValueChange = { it, isValid -> presenter.setNumDaysAfterRedactingTradeData(it, isValid) },
             helperText = "settings.trade.numDaysAfterRedactingTradeData.help".i18n(),
             validation = {
-                val parsedValue = it.toDoubleOrNullLocaleAware() ?: return@BisqTextField "mobile.settings.trade.numDaysAfterRedactingTradeData.validation.cannotBeEmpty".i18n()
+                val parsedValue = it.toDoubleOrNullLocaleAware()
+                    ?: return@BisqTextField "mobile.settings.trade.numDaysAfterRedactingTradeData.validation.cannotBeEmpty".i18n()
                 if (parsedValue < 30 || parsedValue > 365) {
                     return@BisqTextField "settings.trade.numDaysAfterRedactingTradeData.invalid".i18n(30, 365)
                 }
@@ -192,7 +193,8 @@ fun GeneralSettingsScreen() {
                 disabled = !ignorePow,
                 onValueChange = { it, isValid -> presenter.setPowFactor(it, isValid) },
                 validation = {
-                    val parsedValue = it.toIntOrNull() ?: return@BisqTextField "mobile.settings.network.difficultyAdjustmentFactor.validation.cannotBeEmpty".i18n()
+                    val parsedValue = it.toIntOrNull()
+                        ?: return@BisqTextField "mobile.settings.network.difficultyAdjustmentFactor.validation.cannotBeEmpty".i18n()
                     if (parsedValue < 0 || parsedValue > 160_000) {
                         return@BisqTextField "authorizedRole.securityManager.difficultyAdjustment.invalid".i18n(
                             160000
