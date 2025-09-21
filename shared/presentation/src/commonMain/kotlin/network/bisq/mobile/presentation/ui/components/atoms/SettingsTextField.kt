@@ -12,7 +12,7 @@ fun SettingsTextField(
     trailingIcon: (@Composable () -> Unit)? = null
 ) {
     BisqTextField(
-        label,
+        label = label,
         value = value,
         disabled = !editable,
         isTextArea = isTextArea,
