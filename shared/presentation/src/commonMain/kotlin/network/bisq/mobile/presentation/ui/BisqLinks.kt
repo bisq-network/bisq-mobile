@@ -11,6 +11,9 @@ object BisqLinks {
     const val WEBPAGE = "https://bisq.network/"
     const val LICENSE = "https://github.com/bisq-network/bisq2/blob/main/LICENSE"
     const val DAO = "https://bisq.network/dao"
-    const val COMMUNITY = "https://matrix.to/#/%23bisq:bitcoin.kyoto"
-
+    const val MATRIX = "https://matrix.to/#/%23bisq:bitcoin.kyoto"
+    const val FORUM = "https://bisq.community/"
+    const val TELEGRAM = "https://t.me/bisq_p2p"
+    const val REDDIT = "https://www.reddit.com/r/bisq/"
+    const val BISQ_AI = "https://ai.bisq.network"
 }

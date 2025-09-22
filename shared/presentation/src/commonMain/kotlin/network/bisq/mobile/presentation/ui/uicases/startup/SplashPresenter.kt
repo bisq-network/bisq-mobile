@@ -157,7 +157,7 @@ open class SplashPresenter(
         applicationBootstrapFacade.extendTimeout()
     }
 
-    fun onRestart() {
+    fun onRestartApp() {
         restartApp()
     }
 

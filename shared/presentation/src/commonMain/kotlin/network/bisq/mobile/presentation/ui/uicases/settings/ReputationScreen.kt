@@ -68,13 +68,12 @@ fun ReputationScreen() {
             text = "mobile.reputation.buildReputation.intro.part1.formula.footnote".i18n(),
             color = BisqTheme.colors.light_grey20,
         )
-
+        BisqGap.VHalf()
         Row(
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BisqText.baseLight(
-                text = "mobile.reputation.learnMore".i18n(),
+                text = "mobile.reputation.learnMore".i18n() + " ",
                 color = BisqTheme.colors.light_grey40,
             )
             LinkButton(

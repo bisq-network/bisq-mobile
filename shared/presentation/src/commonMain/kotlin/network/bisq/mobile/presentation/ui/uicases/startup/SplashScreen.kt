@@ -68,7 +68,7 @@ fun SplashScreen() {
                 message = "mobile.bootstrap.timeout.message".i18n(currentBootstrapStage),
                 confirmButtonText = "mobile.bootstrap.timeout.restart".i18n(),
                 dismissButtonText = "mobile.bootstrap.timeout.continue".i18n(),
-                onConfirm = { presenter.onRestart() },
+                onConfirm = { presenter.onRestartApp() },
                 onDismiss = { presenter.onTimeoutDialogContinue() }
             )
         }
@@ -80,7 +80,7 @@ fun SplashScreen() {
                 message = "mobile.bootstrap.failed.message".i18n(currentBootstrapStage),
                 confirmButtonText = "mobile.bootstrap.failed.restart".i18n(),
                 dismissButtonText = "mobile.bootstrap.failed.shutdown".i18n(),
-                onConfirm = { presenter.onRestart() },
+                onConfirm = { presenter.onRestartApp() },
                 onDismiss = { presenter.onTerminateApp() }
             )
         }

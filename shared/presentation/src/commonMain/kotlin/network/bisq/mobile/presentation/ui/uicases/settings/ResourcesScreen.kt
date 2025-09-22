@@ -75,8 +75,8 @@ fun ResourcesScreen() {
         )
         ResourceWeblink(
             "support.resources.resources.community".i18n(),
-            link = BisqLinks.COMMUNITY,
-            onClick = { presenter.onOpenWebUrl(BisqLinks.COMMUNITY) }
+            link = BisqLinks.MATRIX,
+            onClick = { presenter.onOpenWebUrl(BisqLinks.MATRIX) }
         )
 
         BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding2X))
