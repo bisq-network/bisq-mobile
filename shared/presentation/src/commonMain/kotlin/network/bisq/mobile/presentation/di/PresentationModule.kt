@@ -116,10 +116,11 @@ val presentationModule = module {
 
     single<MiscItemsPresenter> { MiscItemsPresenter(get(), get(), get()) }
 
-    single<ResourcesPresenter> { ResourcesPresenter(get()) }
     single<ReputationPresenter> { ReputationPresenter(get(), get()) }
-    single<SupportPresenter> { SupportPresenter(get()) }
 
+    single<SupportPresenter> { SupportPresenter(get(), get(), get()) }
+
+    single<ResourcesPresenter> { ResourcesPresenter(get(), get(), get()) }
 
     single<UserProfilePresenter> {
         UserProfilePresenter(

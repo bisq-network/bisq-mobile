@@ -56,7 +56,7 @@ fun ReputationScreen() {
     ) {
         BisqText.baseLight(
             text = "mobile.reputation.info".i18n(),
-            color = BisqTheme.colors.light_grey40,
+            color = BisqTheme.colors.light_grey50,
         )
         BisqGap.V1()
         MaxTradeAmountFormula(
@@ -74,7 +74,7 @@ fun ReputationScreen() {
         ) {
             BisqText.baseLight(
                 text = "mobile.reputation.learnMore".i18n() + " ",
-                color = BisqTheme.colors.light_grey40,
+                color = BisqTheme.colors.light_grey50,
             )
             LinkButton(
                 text = "mobile.reputation.wiki".i18n(),
@@ -96,7 +96,7 @@ fun ReputationScreen() {
 
             BisqText.baseLight(
                 "reputation.buildReputation.burnBsq.description".i18n(),
-                color = BisqTheme.colors.light_grey40,
+                color = BisqTheme.colors.light_grey50,
             )
             BisqGap.V2()
 
@@ -132,7 +132,7 @@ fun ReputationScreen() {
 
             BisqText.baseLight(
                 "reputation.buildReputation.bsqBond.description".i18n(),
-                color = BisqTheme.colors.light_grey40,
+                color = BisqTheme.colors.light_grey50,
             )
             BisqGap.V2()
 

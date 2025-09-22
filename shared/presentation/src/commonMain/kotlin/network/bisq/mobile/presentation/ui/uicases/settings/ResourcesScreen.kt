@@ -35,13 +35,14 @@ fun ResourcesScreen() {
 
     val isInteractive by presenter.isInteractive.collectAsState()
     val versionInfo by presenter.versionInfo.collectAsState()
+    val deviceInfo by presenter.deviceInfo.collectAsState()
 
     BisqScrollScaffold(
         topBar = { TopBar("mobile.more.resources".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
         isInteractive = isInteractive,
     ) {
-        BisqText.h3Light("support.resources.guides.headline".i18n(), color = BisqTheme.colors.light_grey40)
+        BisqText.h3Light("support.resources.guides.headline".i18n(), color = BisqTheme.colors.light_grey50)
         AppLinkButton(
             "support.resources.guides.tradeGuide".i18n(),
             onClick = { presenter.onOpenTradeGuide() }
@@ -57,7 +58,7 @@ fun ResourcesScreen() {
 
         BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding2X))
         BisqGap.V1()
-        BisqText.h3Light("support.resources.resources.headline".i18n(), color = BisqTheme.colors.light_grey40)
+        BisqText.h3Light("support.resources.resources.headline".i18n(), color = BisqTheme.colors.light_grey50)
         ResourceWeblink(
             "support.resources.resources.webpage".i18n(),
             link = BisqLinks.WEBPAGE,
@@ -81,7 +82,7 @@ fun ResourcesScreen() {
 
         BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding2X))
         BisqGap.V1()
-        BisqText.h3Light("mobile.resources.version.headline".i18n(), color = BisqTheme.colors.light_grey40)
+        BisqText.h3Light("mobile.resources.version.headline".i18n(), color = BisqTheme.colors.light_grey50)
         BisqText.baseLight(
             text = versionInfo,
             color = BisqTheme.colors.mid_grey20,
@@ -91,7 +92,17 @@ fun ResourcesScreen() {
 
         BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding2X))
         BisqGap.V1()
-        BisqText.h3Light("support.resources.legal.headline".i18n(), color = BisqTheme.colors.light_grey40)
+        BisqText.h3Light("mobile.resources.deviceInfo.headline".i18n(), color = BisqTheme.colors.light_grey50)
+        BisqText.baseLight(
+            text = deviceInfo,
+            color = BisqTheme.colors.mid_grey20,
+            modifier = Modifier
+                .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
+        )
+
+        BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding2X))
+        BisqGap.V1()
+        BisqText.h3Light("support.resources.legal.headline".i18n(), color = BisqTheme.colors.light_grey50)
         AppLinkButton(
             "support.resources.legal.tac".i18n(),
             onClick = { presenter.onOpenTac() }

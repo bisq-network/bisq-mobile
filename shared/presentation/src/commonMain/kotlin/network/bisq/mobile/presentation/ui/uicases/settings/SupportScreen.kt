@@ -37,6 +37,7 @@ fun SupportScreen() {
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
+    val reportUrl by presenter.reportUrl.collectAsState()
 
     BisqScrollScaffold(
         topBar = { TopBar("mobile.more.support".i18n(), showUserAvatar = false) },
@@ -50,7 +51,7 @@ fun SupportScreen() {
 
         BisqText.baseLight(
             text = "mobile.support.intro".i18n(),
-            color = BisqTheme.colors.light_grey40,
+            color = BisqTheme.colors.light_grey50,
         )
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.Zero)) {
             SupportWeblink(
@@ -79,7 +80,7 @@ fun SupportScreen() {
 
         BisqText.baseLight(
             text = "mobile.support.learnMore".i18n(),
-            color = BisqTheme.colors.light_grey40,
+            color = BisqTheme.colors.light_grey50,
         )
         LinkButton(
             text = "mobile.support.wiki".i18n(),
@@ -96,7 +97,7 @@ fun SupportScreen() {
         BisqGap.V2()
         BisqText.baseLight(
             text = "mobile.support.ai.info".i18n() + " ",
-            color = BisqTheme.colors.light_grey40,
+            color = BisqTheme.colors.light_grey50,
         )
         LinkButton(
             text = "mobile.support.ai.open".i18n(),
@@ -113,45 +114,47 @@ fun SupportScreen() {
         BisqGap.V2()
         BisqText.baseLight(
             text = "mobile.support.troubleShooting.report".i18n() + " ",
-            color = BisqTheme.colors.light_grey40,
+            color = BisqTheme.colors.light_grey50,
         )
         LinkButton(
             text = "mobile.support.troubleShooting.github".i18n(),
-            link = BisqLinks.BISQ_MOBILE_GH_ISSUES,
-            onClick = { presenter.onOpenWebUrl(BisqLinks.BISQ_MOBILE_GH_ISSUES) },
+            link = reportUrl,
+            onClick = { presenter.onOpenWebUrl(reportUrl) },
             color = BisqTheme.colors.primary,
             padding = PaddingValues(all = BisqUIConstants.Zero),
         )
 
-        BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding2X, bottom = BisqUIConstants.ScreenPadding3X))
+        // Restart / Shutdown is only supported on Android
+        if (!presenter.isIOS()) {
+            BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding2X, bottom = BisqUIConstants.ScreenPadding3X))
 
-        // connectivity
-        BisqText.h3Light("mobile.support.connectivity.headline".i18n())
-        BisqGap.V2()
-        BisqText.baseLight(
-            text = "mobile.support.connectivity.info".i18n(),
-            color = BisqTheme.colors.light_grey40,
-        )
+            // connectivity
+            BisqText.h3Light("mobile.support.connectivity.headline".i18n())
+            BisqGap.V2()
+            BisqText.baseLight(
+                text = "mobile.support.connectivity.info".i18n(),
+                color = BisqTheme.colors.light_grey50,
+            )
+            BisqGap.V1()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(
+                    BisqUIConstants.ScreenPadding,
+                    Alignment.CenterHorizontally
+                )
+            ) {
+                BisqButton(
+                    text = "mobile.support.connectivity.restart".i18n(),
+                    onClick = { presenter.onRestartApp() },
+                    type = BisqButtonType.Outline
 
-        BisqGap.V1()
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(
-                BisqUIConstants.ScreenPadding,
-                Alignment.CenterHorizontally
-            )
-        ) {
-            BisqButton(
-                text = "mobile.support.connectivity.restart".i18n(),
-                onClick = { presenter.onRestartApp() },
-                type = BisqButtonType.Outline
-
-            )
-            BisqButton(
-                text = "mobile.support.connectivity.shutdown".i18n(),
-                onClick = { presenter.onTerminateApp() },
-                type = BisqButtonType.Outline
-            )
+                )
+                BisqButton(
+                    text = "mobile.support.connectivity.shutdown".i18n(),
+                    onClick = { presenter.onTerminateApp() },
+                    type = BisqButtonType.Outline
+                )
+            }
         }
     }
 }

@@ -4,9 +4,13 @@ import network.bisq.mobile.client.AndroidClientMainPresenter
 import network.bisq.mobile.client.presentation.ClientOnBoardingPresenter
 import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.client.service.user_profile.ClientCatHashService
+import network.bisq.mobile.client.utils.ClientVersionProvider
 import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
+import network.bisq.mobile.domain.utils.DeviceInfoProvider
+import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
@@ -27,6 +31,10 @@ val androidClientModule = module {
     single { ClientConnectivityService(get()) } bind ConnectivityService::class
 
     single<IOnboardingPresenter> { ClientOnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
+
+    single<DeviceInfoProvider> { AndroidDeviceInfoProvider(androidContext()) }
+
+    single<VersionProvider> { ClientVersionProvider() }
 
     single<MainPresenter> {
         AndroidClientMainPresenter(

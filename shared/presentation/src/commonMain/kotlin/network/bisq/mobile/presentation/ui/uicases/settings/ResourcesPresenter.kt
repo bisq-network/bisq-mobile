@@ -3,29 +3,31 @@ package network.bisq.mobile.presentation.ui.uicases.settings
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.domain.utils.DeviceInfoProvider
+import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-open class ResourcesPresenter(
-    mainPresenter: MainPresenter
+class ResourcesPresenter(
+    mainPresenter: MainPresenter,
+    private var versionProvider: VersionProvider,
+    private var deviceInfoProvider: DeviceInfoProvider
 ) : BasePresenter(mainPresenter) {
 
     protected val _versionInfo: MutableStateFlow<String> = MutableStateFlow("")
     val versionInfo: StateFlow<String> get() = _versionInfo.asStateFlow()
 
+    protected val _deviceInfo: MutableStateFlow<String> = MutableStateFlow("")
+    val deviceInfo: StateFlow<String> get() = _deviceInfo.asStateFlow()
+
     override fun onViewAttached() {
         super.onViewAttached()
 
-        val demo = if (isDemo()) "-demo-" else ""
-        val appVersion = demo + if (isIOS()) BuildConfig.IOS_APP_VERSION else BuildConfig.ANDROID_APP_VERSION
+        _versionInfo.value = versionProvider.getVersionInfo(isDemo, isIOS())
 
-        _versionInfo.value =
-            "mobile.resources.versionDetails.client".i18n(BuildConfig.APP_NAME, appVersion, BuildConfig.BISQ_API_VERSION)
+        _deviceInfo.value = deviceInfoProvider.getDeviceInfo()
     }
-
 
     fun onOpenTradeGuide() {
         navigateTo(Routes.TradeGuideOverview)

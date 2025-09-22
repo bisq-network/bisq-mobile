@@ -179,7 +179,6 @@ actual fun getLocaleCurrencyName(currencyCode: String): String {
     }
 }
 
-
 actual fun Scope.getStorageDir(): String {
     return androidContext().filesDir.absolutePath
 }
