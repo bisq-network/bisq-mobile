@@ -5,14 +5,97 @@ on:
     types: [ opened, synchronize, reopened ]
     paths:
       - 'shared/domain/src/commonMain/resources/mobile/**.properties'
+      - '.tx/config'
   workflow_run:
     workflows: [ BisqApps ]
     types: [ completed ]
 
 jobs:
+  verify_config:
+    name: Verify Transifex configuration
+    if: github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    env:
+      COMMIT_SHA: ${{ github.event.pull_request.head.sha || github.event.workflow_run.head_sha }}
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ env.COMMIT_SHA }}
+          fetch-depth: 0
+
+      - name: Verify i18n resource files match Transifex configuration
+        run: |
+          set -euo pipefail
+
+          echo "Verifying that i18n resource files match the Transifex configuration..."
+
+          # Get all base properties files (excluding language-specific ones)
+          ACTUAL_SOURCE_FILES=$(find shared/domain/src/commonMain/resources/mobile/ -name "*.properties" | grep -v "_[a-z][a-z]\.properties$" | grep -v "_[a-z][a-z]_[A-Z][A-Z]\.properties$" | grep -v "_pcm\.properties$" | sort)
+          echo "Found source files:"
+          echo "$ACTUAL_SOURCE_FILES"
+
+          # Extract source files from .tx/config
+          CONFIG_SOURCE_FILES=$(awk '
+            /^source_file/ {
+              gsub(/^[[:space:]]*source_file[[:space:]]*=[[:space:]]*/, "");
+              gsub(/[[:space:]]*$/, "");
+              print
+            }
+          ' .tx/config | sort)
+          echo -e "\nConfigured source files:"
+          echo "$CONFIG_SOURCE_FILES"
+
+          # Compare the lists
+          echo -e "\nComparing lists..."
+          MISSING_FROM_CONFIG=$(comm -23 <(echo "$ACTUAL_SOURCE_FILES") <(echo "$CONFIG_SOURCE_FILES"))
+          EXTRA_IN_CONFIG=$(comm -13 <(echo "$ACTUAL_SOURCE_FILES") <(echo "$CONFIG_SOURCE_FILES"))
+
+          ERROR=false
+          if [ -n "$MISSING_FROM_CONFIG" ]; then
+            echo "❌ ERROR: The following source files exist but are not configured in .tx/config:"
+            echo "$MISSING_FROM_CONFIG"
+            ERROR=true
+          fi
+
+          if [ -n "$EXTRA_IN_CONFIG" ]; then
+            echo "❌ ERROR: The following source files are configured in .tx/config but do not exist:"
+            echo "$EXTRA_IN_CONFIG"
+            ERROR=true
+          fi
+
+          if [ "$ERROR" = true ]; then
+            echo -e "\n💡 To fix this, please update .tx/config to match the actual source files."
+            echo "   All base properties files should be configured with consistent project reference 'o:bisq:p:bisq-mobile:r:'."
+            exit 1
+          fi
+
+          echo "✅ All i18n resource files are properly configured in Transifex."
+
+      - name: Check if the commit is in the main branch
+        id: check_commit
+        run: |
+          git fetch origin main
+          if git merge-base --is-ancestor ${{ env.COMMIT_SHA }} origin/main; then
+            echo "commit_in_main=true" >> $GITHUB_OUTPUT
+          else
+            echo "commit_in_main=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: "Check if TX_TOKEN secret exists"
+        if: steps.check_commit.outputs.commit_in_main == 'true'
+        env:
+          transifex_secret: ${{ secrets.TX_TOKEN }}
+        run: |
+          if [ -z "$transifex_secret" ]; then
+            echo "The secret \"TX_TOKEN\" has not been set; please go to \"settings > secrets and variables\" to create it"
+            exit 1
+          fi
+
   calculate_and_push_sources:
     name: Calculate pushes and push source files
     if: github.event_name == 'pull_request' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    needs: verify_config
     runs-on: ubuntu-latest
     outputs:
       t_matrix: ${{ steps.calculate-pushes.outputs.t_matrix || '{"include":[]}' }}
@@ -35,22 +118,12 @@ jobs:
             echo "commit_in_main=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: "Check if TX_TOKEN secret exists"
-        if: steps.check_commit.outputs.commit_in_main == 'true'
-        env:
-          transifex_secret: ${{ secrets.TX_TOKEN }}
-        run: |
-          if [ -z "$transifex_secret" ]; then
-            echo "The secret \"TX_TOKEN\" has not been set; please go to \"settings > secrets and variables\" to create it"
-            exit 1
-          fi
-
       - name: Calculate push commands
         id: calculate-pushes
         if: steps.check_commit.outputs.commit_in_main == 'true'
         run: |
           set -euo pipefail
-          
+
           echo "Finding changed files..."
           # We compare the merge commit with its first parent to get the list of files.
           # Note: This is reliable for standard PR merges but may not handle octopus merges.
@@ -61,7 +134,7 @@ jobs:
           # --- Handle SOURCE file pushes (-s) ---
           s_args=""
           s_resources="" # This will be the comma-separated list
-          CHANGED_SOURCE_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -xF "shared/domain/src/commonMain/resources/mobile/mobile.properties" || true)
+          CHANGED_SOURCE_FILES=$(printf '%s\n' "$CHANGED_FILES" | grep -E '^shared/domain/src/commonMain/resources/mobile/[^/]+\.properties$' | grep -v "_[a-z][a-z]\.properties$" | grep -v "_[a-z][a-z]_[A-Z][A-Z]\.properties$" | grep -v "_pcm\.properties$" || true)
           if [ -n "$CHANGED_SOURCE_FILES" ]; then
             for file in $CHANGED_SOURCE_FILES; do
               resource_slug_line=$(awk -v file="$file" '
@@ -90,7 +163,7 @@ jobs:
 
           # --- Handle TRANSLATION file pushes (-t) ---
           declare -A lang_resources
-          CHANGED_TRANSLATION_FILES=$(echo "${CHANGED_FILES}" | grep -E '^shared/domain/src/commonMain/resources/mobile/mobile_([a-z]{2}(_[A-Z]{2})?|pcm)\.properties$' -- || true)
+          CHANGED_TRANSLATION_FILES=$(echo "${CHANGED_FILES}" | grep -E '^shared/domain/src/commonMain/resources/mobile/[^/]+_([a-z]{2}(_[A-Z]{2})?|pcm)\.properties$' -- || true)
           if [ -n "$CHANGED_TRANSLATION_FILES" ]; then
             for file in $CHANGED_TRANSLATION_FILES; do
               lang=$(echo "$file" | sed -E 's/.*_([a-z]{2}(_[A-Z]{2})?|pcm)\.properties$/\1/')

@@ -1,16 +1,7 @@
 [main]
 host = https://app.transifex.com
 
-[o:bisq:p:bisq-mobile:r:mobileproperties]
-file_filter            = shared/domain/src/commonMain/resources/mobile/mobile_<lang>.properties
-source_file            = shared/domain/src/commonMain/resources/mobile/mobile.properties
-type                   = UNICODEPROPERTIES
-minimum_perc           = 0
-resource_name          = mobile.properties
-replace_edited_strings = false
-keep_translations      = false
-
-[o:bisq:p:bisq-2:r:accountproperties]
+[o:bisq:p:bisq-mobile:r:account_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/account_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/account.properties
 type                   = UNICODEPROPERTIES
@@ -19,7 +10,7 @@ resource_name          = account.properties
 replace_edited_strings = false
 keep_translations      = false
 
-[o:bisq:p:bisq-2:r:applicationproperties]
+[o:bisq:p:bisq-mobile:r:application_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/application_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/application.properties
 type                   = UNICODEPROPERTIES
@@ -28,7 +19,7 @@ resource_name          = application.properties
 replace_edited_strings = false
 keep_translations      = false
 
-[o:bisq:p:bisq-2:r:authorized_roleproperties]
+[o:bisq:p:bisq-mobile:r:authorized_role_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/authorized_role_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/authorized_role.properties
 type                   = UNICODEPROPERTIES
@@ -37,7 +28,7 @@ resource_name          = authorized_role.properties
 replace_edited_strings = false
 keep_translations      = false
 
-[o:bisq:p:bisq-2:r:bisq_easyproperties]
+[o:bisq:p:bisq-mobile:r:bisq_easy_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/bisq_easy_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/bisq_easy.properties
 type                   = UNICODEPROPERTIES
@@ -46,7 +37,7 @@ resource_name          = bisq_easy.properties
 replace_edited_strings = false
 keep_translations      = false
 
-[o:bisq:p:bisq-2:r:chatproperties]
+[o:bisq:p:bisq-mobile:r:chat_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/chat_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/chat.properties
 type                   = UNICODEPROPERTIES
@@ -55,7 +46,7 @@ resource_name          = chat.properties
 replace_edited_strings = false
 keep_translations      = false
 
-[o:bisq:p:bisq-2:r:defaultproperties]
+[o:bisq:p:bisq-mobile:r:default_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/default_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/default.properties
 type                   = UNICODEPROPERTIES
@@ -64,7 +55,16 @@ resource_name          = default.properties
 replace_edited_strings = false
 keep_translations      = false
 
-[o:bisq:p:bisq-2:r:networkproperties]
+[o:bisq:p:bisq-mobile:r:mobile_properties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/mobile_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/mobile.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = mobile.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-mobile:r:network_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/network_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/network.properties
 type                   = UNICODEPROPERTIES
@@ -73,7 +73,16 @@ resource_name          = network.properties
 replace_edited_strings = false
 keep_translations      = false
 
-[o:bisq:p:bisq-2:r:reputationproperties]
+[o:bisq:p:bisq-mobile:r:payment_method_properties]
+file_filter            = shared/domain/src/commonMain/resources/mobile/payment_method_<lang>.properties
+source_file            = shared/domain/src/commonMain/resources/mobile/payment_method.properties
+type                   = UNICODEPROPERTIES
+minimum_perc           = 0
+resource_name          = payment_method.properties
+replace_edited_strings = false
+keep_translations      = false
+
+[o:bisq:p:bisq-mobile:r:reputation_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/reputation_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/reputation.properties
 type                   = UNICODEPROPERTIES
@@ -82,7 +91,7 @@ resource_name          = reputation.properties
 replace_edited_strings = false
 keep_translations      = false
 
-[o:bisq:p:bisq-2:r:settingsproperties]
+[o:bisq:p:bisq-mobile:r:settings_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/settings_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/settings.properties
 type                   = UNICODEPROPERTIES
@@ -91,7 +100,7 @@ resource_name          = settings.properties
 replace_edited_strings = false
 keep_translations      = false
 
-[o:bisq:p:bisq-2:r:supportproperties]
+[o:bisq:p:bisq-mobile:r:support_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/support_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/support.properties
 type                   = UNICODEPROPERTIES
@@ -100,7 +109,7 @@ resource_name          = support.properties
 replace_edited_strings = false
 keep_translations      = false
 
-[o:bisq:p:bisq-2:r:trade_appsproperties]
+[o:bisq:p:bisq-mobile:r:trade_apps_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/trade_apps_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/trade_apps.properties
 type                   = UNICODEPROPERTIES
@@ -109,7 +118,7 @@ resource_name          = trade_apps.properties
 replace_edited_strings = false
 keep_translations      = false
 
-[o:bisq:p:bisq-2:r:userproperties]
+[o:bisq:p:bisq-mobile:r:user_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/user_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/user.properties
 type                   = UNICODEPROPERTIES
@@ -118,7 +127,7 @@ resource_name          = user.properties
 replace_edited_strings = false
 keep_translations      = false
 
-[o:bisq:p:bisq-2:r:walletproperties]
+[o:bisq:p:bisq-mobile:r:wallet_properties]
 file_filter            = shared/domain/src/commonMain/resources/mobile/wallet_<lang>.properties
 source_file            = shared/domain/src/commonMain/resources/mobile/wallet.properties
 type                   = UNICODEPROPERTIES
