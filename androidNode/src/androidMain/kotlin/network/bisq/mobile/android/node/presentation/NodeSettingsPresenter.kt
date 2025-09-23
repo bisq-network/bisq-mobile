@@ -14,6 +14,7 @@ class NodeSettingsPresenter(
     mainPresenter: MainPresenter
 ) : SettingsPresenter(settingsServiceFacade, languageServiceFacade, mainPresenter) {
 
-    override val shouldShowPoWAdjustmentFactor: StateFlow<Boolean> get() = MutableStateFlow(true).asStateFlow()
+    private val _shouldShowPoWAdjustmentFactor = MutableStateFlow(true)
+    override val shouldShowPoWAdjustmentFactor: StateFlow<Boolean> get() = _shouldShowPoWAdjustmentFactor.asStateFlow()
 
 }

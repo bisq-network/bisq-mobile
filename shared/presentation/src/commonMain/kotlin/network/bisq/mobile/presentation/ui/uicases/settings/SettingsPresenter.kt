@@ -191,7 +191,7 @@ open class SettingsPresenter(
         collectUI(mainPresenter.languageCode.drop(1)) {
             // Only fetch settings if this is not a user-initiated language change
             if (!isUserInitiatedLanguageChange) {
-                fetchSettings()
+                launchFetchSettings()
             }
             isUserInitiatedLanguageChange = false
         }
@@ -199,15 +199,19 @@ open class SettingsPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        launchIO {
-            fetchSettings()
-        }
+        launchFetchSettings()
     }
 
     override fun onViewUnattaching() {
         jobs.forEach { it.cancel() }
         jobs.clear()
         super.onViewUnattaching()
+    }
+
+    private fun launchFetchSettings() {
+        launchIO {
+            fetchSettings()
+        }
     }
 
     private suspend fun fetchSettings() {

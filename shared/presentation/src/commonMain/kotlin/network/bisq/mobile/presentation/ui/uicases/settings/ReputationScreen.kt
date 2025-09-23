@@ -118,7 +118,7 @@ fun ReputationScreen() {
             BisqTextField(
                 "reputation.pubKeyHash".i18n(),
                 value = profileId,
-                disabled = false,
+                disabled = true,
                 rightSuffix = { CopyIconButton(value = profileId) },
                 backgroundColor = BisqTheme.colors.dark_grey30,
             )
@@ -154,7 +154,7 @@ fun ReputationScreen() {
             BisqTextField(
                 "reputation.pubKeyHash".i18n(),
                 value = profileId,
-                disabled = false,
+                disabled = true,
                 rightSuffix = { CopyIconButton(value = profileId) },
                 backgroundColor = BisqTheme.colors.dark_grey30,
             )
