@@ -132,8 +132,16 @@ class NotificationControllerImpl : NotificationController, Logging {
                     UNNotificationCategoryOptionNone,
                 )
                 // Register the category with the notification center
-                UNUserNotificationCenter.currentNotificationCenter()
-                    .setNotificationCategories(setOf(category))
+                val center = UNUserNotificationCenter.currentNotificationCenter()
+                center.getNotificationCategoriesWithCompletionHandler { existing ->
+                    // Merge existing categories with the new one
+                    val newCategory = setOf(category)
+                    if (existing != null) {
+                        center.setNotificationCategories(existing + newCategory)
+                    } else {
+                        center.setNotificationCategories(newCategory)
+                    }
+                }
                 setCategoryIdentifier(categoryId)
                 setUserInfo(userInfo)
             }
