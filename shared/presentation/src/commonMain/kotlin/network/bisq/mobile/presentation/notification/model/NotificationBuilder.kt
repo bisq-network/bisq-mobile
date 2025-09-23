@@ -17,7 +17,7 @@ class NotificationBuilder {
     var title: String? = null
     var subtitle: String? = null
     var body: String? = null
-    var actions: List<NotificationButton>? = null
+    var badgeCount: Int? = null
     var android: AndroidNotificationConfig? = null
     var ios: IosNotificationConfig? = null
 
@@ -39,6 +39,7 @@ class NotificationBuilder {
             title = title,
             subtitle = subtitle,
             body = body,
+            badgeCount = badgeCount,
             android = android,
             ios = ios,
         )
