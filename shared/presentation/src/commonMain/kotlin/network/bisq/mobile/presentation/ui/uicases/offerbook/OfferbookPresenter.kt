@@ -168,8 +168,6 @@ class OfferbookPresenter(
                 )
                 AmountFormatter.formatRangeAmount(minFiatVO, maxFiatVO, true, true)
             }
-
-            else -> ""
         }
 
         val formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(offer.priceSpec)
