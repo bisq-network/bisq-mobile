@@ -2,12 +2,10 @@ package network.bisq.mobile.client.di
 
 import network.bisq.mobile.client.AndroidClientMainPresenter
 import network.bisq.mobile.client.presentation.ClientOnBoardingPresenter
-import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.client.utils.ClientVersionProvider
 import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
-import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
@@ -27,8 +25,6 @@ val androidClientModule = module {
         val filesDir = context.filesDir.absolutePath
         AndroidClientCatHashService(context, filesDir)
     } bind ClientCatHashService::class
-
-    single { ClientConnectivityService(get()) } bind ConnectivityService::class
 
     single<IOnboardingPresenter> { ClientOnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
 

@@ -27,6 +27,8 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.notification.NotificationController
+import network.bisq.mobile.presentation.notification.NotificationIds
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class TradeChatPresenter(
@@ -36,6 +38,7 @@ class TradeChatPresenter(
     private val settingsRepository: SettingsRepository,
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val userProfileServiceFacade: UserProfileServiceFacade,
+    private val notificationController: NotificationController,
 ) : BasePresenter(mainPresenter), Logging {
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
@@ -87,6 +90,8 @@ class TradeChatPresenter(
 
         launchUI {
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
+            // cancel notifications of chat related to this trade
+            notificationController.cancel(NotificationIds.getNewChatMessageId(selectedTrade.shortTradeId))
 
             collectUI(ignoredProfileIds.combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
                 messages.filter { message ->
@@ -227,7 +232,6 @@ class TradeChatPresenter(
         launchIO {
             tradeReadStateRepository.setCount(tradeId, newValue)
         }
-        // TODO: remove the "You have a new message..." notification here when notification api is refactored
     }
 }
 

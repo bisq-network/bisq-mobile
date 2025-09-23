@@ -9,11 +9,15 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavDeepLink
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navDeepLink
 import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.Routes.Companion.getDeeplinkUriPattern
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
@@ -68,23 +72,41 @@ fun RootNavGraph(rootNavController: NavHostController) {
             SplashScreen()
         }
 
-        addScreen(Routes.TrustedNodeSettings.name, content = { TrustedNodeSetupScreen(false) })
+        addScreen(Routes.TrustedNodeSettings.name) { TrustedNodeSetupScreen(false) }
+        addScreen(Routes.UserAgreement.name) { UserAgreementScreen() }
+        addScreen(Routes.Onboarding.name) { OnBoardingScreen() }
+        addScreen(Routes.CreateProfile.name) { CreateProfileScreen() }
+        addScreen(Routes.TrustedNodeSetup.name) { TrustedNodeSetupScreen() }
 
-        val startupScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
-            Routes.UserAgreement to { UserAgreementScreen() },
-            Routes.Onboarding to { OnBoardingScreen() },
-            Routes.CreateProfile to { CreateProfileScreen() },
-            Routes.TrustedNodeSetup to { TrustedNodeSetupScreen() },
-            Routes.TabContainer to { TabContainerScreen() },
-        )
-        startupScreens.forEach { (route, screen): Pair<Routes, @Composable () -> Unit> ->
-            addScreen(route.name, content = screen)
+        addScreen(
+            Routes.TabContainer.name,
+            deepLinks = listOf(
+                 navDeepLink { uriPattern = getDeeplinkUriPattern(Routes.TabContainer) } // TODO fix with refactor
+            ),
+        ) {
+            TabContainerScreen()
+        }
+
+        addScreen(
+            Routes.OpenTrade.name,
+            deepLinks = listOf(
+                // navDeepLink { uriPattern = getDeeplinkUriPattern(Routes.OpenTrade) } // TODO implement properly with refactor (use "tradeId" in pattern)
+            ),
+        ) {
+            OpenTradeScreen()
+        }
+        addScreen(
+            Routes.TradeChat.name,
+            navAnimation = NavAnimation.SLIDE_IN_FROM_BOTTOM,
+            deepLinks = listOf(
+                // navDeepLink { uriPattern = getDeeplinkUriPattern(Routes.TradeChat) } // TODO implement properly with refactor (use "tradeId" in pattern)
+            ),
+        ) {
+            TradeChatScreen()
         }
 
         val otherScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
             Routes.OffersByMarket to { OfferbookScreen() },
-            Routes.OpenTrade to { OpenTradeScreen() },
-            Routes.TradeChat to { TradeChatScreen() },
             Routes.ChatRules to { ChatRulesScreen() },
             Routes.Settings to { SettingsScreen() },
             Routes.Support to { SupportScreen() },
@@ -96,13 +118,7 @@ fun RootNavGraph(rootNavController: NavHostController) {
             Routes.UserAgreementDisplay to { UserAgreementDisplayScreen() },
         )
         otherScreens.forEach { (route, screen): Pair<Routes, @Composable () -> Unit> ->
-            addScreen(
-                route.name,
-                navAnimation = if (route == Routes.TradeChat)
-                    NavAnimation.SLIDE_IN_FROM_BOTTOM
-                else NavAnimation.SLIDE_IN_FROM_RIGHT,
-                content = screen,
-            )
+            addScreen(route.name, content = screen)
         }
 
         val takeOfferScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
@@ -158,12 +174,16 @@ enum class NavAnimation {
 
 fun NavGraphBuilder.addScreen(
     route: String,
+    arguments: List<NamedNavArgument> = emptyList(),
+    deepLinks: List<NavDeepLink> = emptyList(),
     wizardTransition: Boolean = false,
     navAnimation: NavAnimation = if (wizardTransition) NavAnimation.FADE_IN else NavAnimation.SLIDE_IN_FROM_RIGHT,
     content: @Composable () -> Unit
 ) {
     composable(
         route = route,
+        arguments = arguments,
+        deepLinks = deepLinks,
         // 'enter' animation for the 'destination' screen
         enterTransition = {
             when (navAnimation) {

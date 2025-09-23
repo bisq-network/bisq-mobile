@@ -197,7 +197,7 @@ val presentationModule = module {
     factory { TradeFlowPresenter(get(), get(), get()) }
     factory { OpenTradePresenter(get(), get(), get(), get(), get()) }
 
-    factory { TradeChatPresenter(get(), get(), get(), get(), get(), get()) }
+    factory { TradeChatPresenter(get(), get(), get(), get(), get(), get(), get()) }
 
     single { TradeGuideOverviewPresenter(get()) } bind TradeGuideOverviewPresenter::class
     single { TradeGuideSecurityPresenter(get()) } bind TradeGuideSecurityPresenter::class

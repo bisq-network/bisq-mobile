@@ -26,13 +26,13 @@ import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
-import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainActivity
+import network.bisq.mobile.presentation.service.OpenTradesNotificationService
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
@@ -188,7 +188,7 @@ class NodeApplicationLifecycleService(
                     activity.finishAffinity()
                 }
 
-                // BisqForegroundService is stopped by onDestroy at MainPresenter
+                // ForegroundService is stopped by onDestroy at MainPresenter
 
                 delay(600)
                 log.w {

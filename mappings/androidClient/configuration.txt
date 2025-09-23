@@ -652,7 +652,7 @@
 -keep class androidx.startup.InitializationProvider { <init>(); }
 -keep class network.bisq.mobile.client.MainActivity { <init>(); }
 -keep class network.bisq.mobile.client.MainApplication { <init>(); }
--keep class network.bisq.mobile.domain.service.BisqForegroundService { <init>(); }
+-keep class network.bisq.mobile.presentation.notification.ForegroundService { <init>(); }
 -keep class org.jetbrains.compose.resources.AndroidContextProvider { <init>(); }
 -keep class android.widget.Space { <init>(android.content.Context, android.util.AttributeSet); }
 

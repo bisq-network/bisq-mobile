@@ -16,7 +16,6 @@ import network.bisq.mobile.domain.data.repository.TradeReadStateRepositoryImpl
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.data.repository.UserRepositoryImpl
 import network.bisq.mobile.domain.getStorageDir
-import network.bisq.mobile.domain.service.notifications.OpenTradesNotificationService
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
 import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
@@ -56,9 +55,6 @@ val domainModule = module {
     single<SettingsRepository> { SettingsRepositoryImpl(get(named("Settings"))) }
     single<UserRepository> { UserRepositoryImpl(get(named("User"))) }
     single<TradeReadStateRepository> { TradeReadStateRepositoryImpl(get(named("TradeReadStateMap"))) }
-
-    // Services
-    single<OpenTradesNotificationService> { OpenTradesNotificationService(get(), get(), get()) }
 
     // Exception handler setup - singleton to ensure consistent setup
     single<CoroutineExceptionHandlerSetup> { CoroutineExceptionHandlerSetup() }
