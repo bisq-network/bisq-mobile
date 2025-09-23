@@ -28,6 +28,9 @@ kotlin {
     }
 
     sourceSets {
+        commonMain.dependencies {
+            implementation(libs.koin.core)
+        }
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
@@ -307,7 +310,6 @@ dependencies {
     // protobuf
     implementation(libs.protoc)
 
-    implementation(libs.koin.core)
     implementation(libs.koin.android)
     implementation(libs.logging.kermit)
 

@@ -1,11 +1,11 @@
-package network.bisq.mobile.domain.service.notifications.controller
+package network.bisq.mobile.presentation.notification
 
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * Service controller behaviour definitions
+ * An interface for a controller of a notification service
  */
-interface ServiceController {
+interface ForegroundServiceController {
     fun startService()
     fun stopService()
     fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit)

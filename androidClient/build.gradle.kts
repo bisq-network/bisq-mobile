@@ -33,11 +33,21 @@ kotlin {
     }
 
     sourceSets {
+        commonMain.dependencies {
+            implementation(libs.koin.core)
+            implementation(project(":shared:presentation"))
+            implementation(project(":shared:domain"))
+            // FIXME hack to avoid the issue that org.slf4j is not found as we exclude it in shared
+            implementation(libs.ktor.client.cio)
+
+            implementation(libs.logging.kermit)
+        }
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
-            implementation(libs.koin.core)
             implementation(libs.koin.android)
+
+            implementation(libs.androidx.core.splashscreen)
         }
         androidUnitTest.dependencies {
             implementation(libs.kotlin.test)
@@ -127,14 +137,7 @@ android {
 }
 
 dependencies {
-    implementation(project(":shared:presentation"))
-    implementation(project(":shared:domain"))
-    // FIXME hack to avoid the issue that org.slf4j is not found as we exclude it in shared
-    implementation(libs.ktor.client.cio)
     debugImplementation(compose.uiTooling)
-
-    implementation(libs.androidx.core.splashscreen)
-    implementation(libs.logging.kermit)
 }
 
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {

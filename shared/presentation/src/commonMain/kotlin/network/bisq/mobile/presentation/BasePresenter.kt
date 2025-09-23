@@ -230,13 +230,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         return rootPresenter!!.getRootTabNavController()
     }
 
-    protected open fun pushNotification(title: String, content: String) {
-        if (isRoot()) {
-            throw IllegalStateException("You need to redefine this method in your root presenter implementation")
-        }
-        rootPresenter!!.pushNotification(title, content)
-    }
-
     override fun isAtHome(): Boolean {
         val currentTab = getRootTabNavController().currentBackStackEntry?.destination?.route
         log.d { "Current tab $currentTab" }

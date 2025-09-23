@@ -61,9 +61,21 @@ enum class Routes(val title: String) {
     WalletGuideReceiving(title = "wallet_guide_receiving");
 
     companion object {
+        const val NAV_BASE_PATH = "bisq://"
+
         fun fromString(route: String): Routes? {
             return entries.find { it.title.equals(route, ignoreCase = true) ||
                     it.name.equals(route, ignoreCase = true) }
+        }
+
+        // TODO: fix/remove with routing refactor
+        fun getDeeplinkUriPattern(route: Routes): String {
+            return NAV_BASE_PATH + route.name
+        }
+
+        // TODO: fix/remove with routing refactor
+        fun getDeeplinkUriString(route: Routes): String {
+            return getDeeplinkUriPattern(route)
         }
     }
 }

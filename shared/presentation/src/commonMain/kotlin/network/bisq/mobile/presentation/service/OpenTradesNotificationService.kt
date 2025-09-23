@@ -1,15 +1,23 @@
-package network.bisq.mobile.domain.service.notifications
+package network.bisq.mobile.presentation.service
 
+import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
-import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.notification.AndroidNotificationChannels
+import network.bisq.mobile.presentation.notification.ForegroundServiceController
+import network.bisq.mobile.presentation.notification.NotificationController
+import network.bisq.mobile.presentation.notification.NotificationIds
+import network.bisq.mobile.presentation.notification.model.AndroidNotificationCategory
+import network.bisq.mobile.presentation.notification.model.NotificationButton
+import network.bisq.mobile.presentation.notification.model.NotificationPressAction
+import network.bisq.mobile.presentation.ui.navigation.Routes
 
 /**
  * Service to manage notifications for open trades
@@ -17,7 +25,8 @@ import network.bisq.mobile.i18n.i18n
  * whilst the bisq notification service is running (e.g. background app)
  */
 class OpenTradesNotificationService(
-    private val notificationServiceController: NotificationServiceController,
+    private val notificationController: NotificationController,
+    private val foregroundServiceController: ForegroundServiceController,
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
 ) : Logging {
@@ -25,15 +34,15 @@ class OpenTradesNotificationService(
     private val observedTradeIds = mutableSetOf<String>()
     private val notifiedPaymentInfo = mutableSetOf<String>()
     private val notifiedBitcoinInfo = mutableSetOf<String>()
-    private val perTradeFlows = mutableMapOf<String, List<kotlinx.coroutines.flow.StateFlow<*>>>()
+    private val perTradeFlows = mutableMapOf<String, List<StateFlow<*>>>()
     private val perTradePeerMessageCount = mutableMapOf<String, Int>()
 
     private fun getIgnoredProfileIds() = userProfileServiceFacade.ignoredProfileIds.value
 
     fun launchNotificationService() {
-        notificationServiceController.startService()
+        foregroundServiceController.startService()
         runCatching {
-            notificationServiceController.registerObserver(tradesServiceFacade.openTradeItems) { newValue ->
+            foregroundServiceController.registerObserver(tradesServiceFacade.openTradeItems) { newValue ->
                 log.d { "open trades in total: ${newValue.size}" }
                 cleanupOrphanedTrades()
                 newValue.sortedByDescending { it.bisqEasyTradeModel.takeOfferDate }
@@ -47,18 +56,18 @@ class OpenTradesNotificationService(
     }
 
     fun stopNotificationService() {
-        notificationServiceController.unregisterObserver(tradesServiceFacade.openTradeItems)
+        foregroundServiceController.unregisterObserver(tradesServiceFacade.openTradeItems)
 
         // Unregister per-trade observers to prevent leaks
         perTradeFlows.forEach { (_, tradeFlows) ->
             tradeFlows.forEach {
-                notificationServiceController.unregisterObserver(it)
+                foregroundServiceController.unregisterObserver(it)
             }
         }
         perTradeFlows.clear()
         perTradePeerMessageCount.clear()
 
-        notificationServiceController.stopService()
+        foregroundServiceController.stopService()
 
         // Clear all tracking sets to prevent memory leaks
         observedTradeIds.clear()
@@ -87,7 +96,7 @@ class OpenTradesNotificationService(
             // Clean up orphaned per-trade flows
             orphanedObserved.forEach { tradeId ->
                 perTradeFlows.remove(tradeId)?.let { flowList ->
-                    flowList.forEach { notificationServiceController.unregisterObserver(it) }
+                    flowList.forEach { foregroundServiceController.unregisterObserver(it) }
                     perTradePeerMessageCount.remove(tradeId)
                 }
             }
@@ -128,7 +137,7 @@ class OpenTradesNotificationService(
     }
 
     private fun observeBitcoinPaymentData(trade: TradeItemPresentationModel) {
-        notificationServiceController.registerObserver(trade.bisqEasyTradeModel.bitcoinPaymentData) { bitcoinData ->
+        foregroundServiceController.registerObserver(trade.bisqEasyTradeModel.bitcoinPaymentData) { bitcoinData ->
             log.d { "Bitcoin payment data changed for trade ${trade.shortTradeId}: ${bitcoinData?.isNotEmpty()}" }
             if (!bitcoinData.isNullOrEmpty() && notifiedBitcoinInfo.add(trade.shortTradeId)) {
                 // Determine if user sent or received bitcoin info based on trade role
@@ -140,16 +149,18 @@ class OpenTradesNotificationService(
                     "mobile.openTradeNotifications.bitcoinInfoReceived.title" to "mobile.openTradeNotifications.bitcoinInfoReceived.message"
                 }
 
-                notificationServiceController.pushNotification(
+                notify(
+                    trade,
+                    NotificationIds.getBitcoinPaymentUpdatedId(trade.shortTradeId),
                     titleKey.i18n(trade.shortTradeId),
-                    messageKey.i18n(trade.peersUserName)
+                    messageKey.i18n(trade.peersUserName),
                 )
             }
         }
     }
 
     private fun observePaymentAccountData(trade: TradeItemPresentationModel) {
-        notificationServiceController.registerObserver(trade.bisqEasyTradeModel.paymentAccountData) { paymentData ->
+        foregroundServiceController.registerObserver(trade.bisqEasyTradeModel.paymentAccountData) { paymentData ->
             log.d { "Payment account data changed for trade ${trade.shortTradeId}: ${paymentData?.isNotEmpty()}" }
             if (!paymentData.isNullOrEmpty() && notifiedPaymentInfo.add(trade.shortTradeId)) {
                 // Determine if user sent or received payment info based on trade role
@@ -161,9 +172,11 @@ class OpenTradesNotificationService(
                     "mobile.openTradeNotifications.paymentInfoReceived.title" to "mobile.openTradeNotifications.paymentInfoReceived.message"
                 }
 
-                notificationServiceController.pushNotification(
+                notify(
+                    trade,
+                    NotificationIds.getPaymentUpdatedId(trade.shortTradeId),
                     titleKey.i18n(trade.shortTradeId),
-                    messageKey.i18n(trade.peersUserName)
+                    messageKey.i18n(trade.peersUserName),
                 )
             }
         }
@@ -174,17 +187,19 @@ class OpenTradesNotificationService(
             trade.shortTradeId,
             getUnignoredMessageCount(trade.bisqEasyOpenTradeChannelModel.chatMessages.value),
         )
-        notificationServiceController.registerObserver(trade.bisqEasyOpenTradeChannelModel.chatMessages) { newChatMessages ->
+        foregroundServiceController.registerObserver(trade.bisqEasyOpenTradeChannelModel.chatMessages) { newChatMessages ->
             log.d { "Chat messages updated for trade ${trade.shortTradeId}" }
 
             val currentPeerMsgCount =
                 getUnignoredMessageCount(trade.bisqEasyOpenTradeChannelModel.chatMessages.value)
             val lastCount = perTradePeerMessageCount.getOrElse(trade.shortTradeId) { 0 }
             if (currentPeerMsgCount > lastCount) {
-                // TODO: make pressing the notif open chat directly
-                notificationServiceController.pushNotification(
+                notify(
+                    trade,
+                    NotificationIds.getNewChatMessageId(trade.shortTradeId),
                     "mobile.openTradeNotifications.newMessage.title".i18n(trade.shortTradeId),
-                    "mobile.openTradeNotifications.newMessage.message".i18n(trade.peersUserName)
+                    "mobile.openTradeNotifications.newMessage.message".i18n(trade.peersUserName),
+                    true,
                 )
             }
             perTradePeerMessageCount.put(
@@ -202,16 +217,16 @@ class OpenTradesNotificationService(
     }
 
     private fun observeFutureStateChanges(trade: TradeItemPresentationModel) {
-        notificationServiceController.registerObserver(trade.bisqEasyTradeModel.tradeState) { newState ->
+        foregroundServiceController.registerObserver(trade.bisqEasyTradeModel.tradeState) { newState ->
             log.d { "Trade State Changed to: $newState for trade ${trade.shortTradeId}" }
             handleTradeStateNotification(trade, newState, isInitialState = false)
 
             // Unregister observer when trade concludes
-            if (OffersServiceFacade.isTerminalState(newState)) {
-                notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.tradeState)
-                notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.paymentAccountData)
-                notificationServiceController.unregisterObserver(trade.bisqEasyTradeModel.bitcoinPaymentData)
-                notificationServiceController.unregisterObserver(trade.bisqEasyOpenTradeChannelModel.chatMessages)
+            if (OffersServiceFacade.Companion.isTerminalState(newState)) {
+                foregroundServiceController.unregisterObserver(trade.bisqEasyTradeModel.tradeState)
+                foregroundServiceController.unregisterObserver(trade.bisqEasyTradeModel.paymentAccountData)
+                foregroundServiceController.unregisterObserver(trade.bisqEasyTradeModel.bitcoinPaymentData)
+                foregroundServiceController.unregisterObserver(trade.bisqEasyOpenTradeChannelModel.chatMessages)
                 observedTradeIds.remove(trade.shortTradeId)
                 notifiedPaymentInfo.remove(trade.shortTradeId)
                 notifiedBitcoinInfo.remove(trade.shortTradeId)
@@ -224,7 +239,11 @@ class OpenTradesNotificationService(
     /**
      * Handle trade state notifications for both initial states and state changes
      */
-    private fun handleTradeStateNotification(trade: TradeItemPresentationModel, state: BisqEasyTradeStateEnum, isInitialState: Boolean) {
+    private fun handleTradeStateNotification(
+        trade: TradeItemPresentationModel,
+        state: BisqEasyTradeStateEnum,
+        isInitialState: Boolean
+    ) {
         log.d { "handleTradeStateNotification - trade: ${trade.shortTradeId}, state: $state, isInitial: $isInitialState" }
 
         // Send notifications for important intermediate states
@@ -239,11 +258,14 @@ class OpenTradesNotificationService(
                     "mobile.openTradeNotifications.peerSentFiat.title" to "mobile.openTradeNotifications.peerSentFiat.message"
                 }
 
-                notificationServiceController.pushNotification(
+                notify(
+                    trade,
+                    NotificationIds.getTradeStateUpdatedId(trade.shortTradeId),
                     titleKey.i18n(trade.shortTradeId),
-                    messageKey.i18n(trade.peersUserName)
+                    messageKey.i18n(trade.peersUserName),
                 )
             }
+
             BisqEasyTradeStateEnum.SELLER_RECEIVED_FIAT_SENT_CONFIRMATION -> {
                 val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isSeller) {
                     // User is seller -> they received confirmation that buyer sent payment
@@ -253,11 +275,14 @@ class OpenTradesNotificationService(
                     "mobile.openTradeNotifications.youSentFiat.title" to "mobile.openTradeNotifications.youSentFiat.message"
                 }
 
-                notificationServiceController.pushNotification(
+                notify(
+                    trade,
+                    NotificationIds.getTradeStateUpdatedId(trade.shortTradeId),
                     titleKey.i18n(trade.shortTradeId),
-                    messageKey.i18n(trade.peersUserName)
+                    messageKey.i18n(trade.peersUserName),
                 )
             }
+
             BisqEasyTradeStateEnum.SELLER_CONFIRMED_FIAT_RECEIPT -> {
                 val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isBuyer) {
                     // User is buyer -> peer (seller) confirmed receiving the payment
@@ -267,11 +292,14 @@ class OpenTradesNotificationService(
                     "mobile.openTradeNotifications.youReceivedFiat.title" to "mobile.openTradeNotifications.youReceivedFiat.message"
                 }
 
-                notificationServiceController.pushNotification(
+                notify(
+                    trade,
+                    NotificationIds.getTradeStateUpdatedId(trade.shortTradeId),
                     titleKey.i18n(trade.shortTradeId),
-                    messageKey.i18n(trade.peersUserName)
+                    messageKey.i18n(trade.peersUserName),
                 )
             }
+
             BisqEasyTradeStateEnum.SELLER_SENT_BTC_SENT_CONFIRMATION -> {
                 val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isSeller) {
                     // User is seller -> they confirmed sending Bitcoin
@@ -281,11 +309,14 @@ class OpenTradesNotificationService(
                     "mobile.openTradeNotifications.peerSentBtc.title" to "mobile.openTradeNotifications.peerSentBtc.message"
                 }
 
-                notificationServiceController.pushNotification(
+                notify(
+                    trade,
+                    NotificationIds.getTradeStateUpdatedId(trade.shortTradeId),
                     titleKey.i18n(trade.shortTradeId),
-                    messageKey.i18n(trade.peersUserName)
+                    messageKey.i18n(trade.peersUserName),
                 )
             }
+
             BisqEasyTradeStateEnum.BUYER_RECEIVED_BTC_SENT_CONFIRMATION -> {
                 val (titleKey, messageKey) = if (trade.bisqEasyTradeModel.isBuyer) {
                     // User is buyer -> they received confirmation that seller sent Bitcoin
@@ -295,18 +326,22 @@ class OpenTradesNotificationService(
                     "mobile.openTradeNotifications.youSentBtc.title" to "mobile.openTradeNotifications.youSentBtc.message"
                 }
 
-                notificationServiceController.pushNotification(
+                notify(
+                    trade,
+                    NotificationIds.getTradeStateUpdatedId(trade.shortTradeId),
                     titleKey.i18n(trade.shortTradeId),
-                    messageKey.i18n(trade.peersUserName)
+                    messageKey.i18n(trade.peersUserName),
                 )
             }
 
             // Early trade states that might be missed - offer taking notifications
             BisqEasyTradeStateEnum.TAKER_SENT_TAKE_OFFER_REQUEST -> {
                 if (!isInitialState) { // Only notify on state changes, not initial discovery
-                    notificationServiceController.pushNotification(
+                    notify(
+                        trade,
+                        NotificationIds.getTradeStateUpdatedId(trade.shortTradeId),
                         "mobile.openTradeNotifications.offerTaken.title".i18n(trade.shortTradeId),
-                        "mobile.openTradeNotifications.offerTaken.message".i18n(trade.peersUserName)
+                        "mobile.openTradeNotifications.offerTaken.message".i18n(trade.peersUserName),
                     )
                 }
             }
@@ -315,9 +350,11 @@ class OpenTradesNotificationService(
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__BUYER_DID_NOT_SENT_BTC_ADDRESS__BUYER_DID_NOT_RECEIVED_ACCOUNT_DATA -> {
                 if (!isInitialState) { // Only notify on state changes, not initial discovery
-                    notificationServiceController.pushNotification(
+                    notify(
+                        trade,
+                        NotificationIds.getTradeStateUpdatedId(trade.shortTradeId),
                         "mobile.openTradeNotifications.offerTaken.title".i18n(trade.shortTradeId),
-                        "mobile.openTradeNotifications.offerTaken.message".i18n(trade.peersUserName)
+                        "mobile.openTradeNotifications.offerTaken.message".i18n(trade.peersUserName),
                     )
                 }
             }
@@ -336,18 +373,26 @@ class OpenTradesNotificationService(
                         "mobile.openTradeNotifications.paymentInfoReceived.title" to "mobile.openTradeNotifications.paymentInfoReceived.message"
                     }
 
-                    notificationServiceController.pushNotification(
+                    notify(
+                        trade,
+                        NotificationIds.getTradeStateUpdatedId(trade.shortTradeId),
                         titleKey.i18n(trade.shortTradeId),
-                        messageKey.i18n(trade.peersUserName)
+                        messageKey.i18n(trade.peersUserName),
                     )
                 }
             }
+
             else -> {
-                if (OffersServiceFacade.isTerminalState(state)) {
+                if (OffersServiceFacade.Companion.isTerminalState(state)) {
                     val translatedState = translatedI18N(state)
-                    notificationServiceController.pushNotification(
+                    notify(
+                        trade,
+                        NotificationIds.getTradeStateUpdatedId(trade.shortTradeId),
                         "mobile.openTradeNotifications.tradeCompleted.title".i18n(trade.shortTradeId),
-                        "mobile.openTradeNotifications.tradeCompleted.message".i18n(trade.peersUserName, translatedState)
+                        "mobile.openTradeNotifications.tradeCompleted.message".i18n(
+                            trade.peersUserName,
+                            translatedState
+                        ),
                     )
                 }
             }
@@ -367,5 +412,41 @@ class OpenTradesNotificationService(
         }.replaceFirstChar { it.titlecase() }
     }
 
-
+    private fun notify(trade: TradeItemPresentationModel, id: String, title: String, body: String, isChatNotif: Boolean = false) {
+        notificationController.notify {
+            this.id = id
+            this.title = title
+            this.body = body
+            android {
+                channelId = AndroidNotificationChannels.TRADE_AND_UPDATES_CHANNEL_ID
+                // TODO: fix after nav refactor
+                pressAction = if (isChatNotif) {
+                    category = AndroidNotificationCategory.CATEGORY_MESSAGE
+                    NotificationPressAction.Route(Routes.TabOpenTradeList) // TODO: use TradeChat and pass in trade.tradeId
+                } else {
+                    category = AndroidNotificationCategory.CATEGORY_PROGRESS
+                    NotificationPressAction.Route(Routes.TabOpenTradeList) // TODO: use OpenTrades and pass in trade.tradeId
+                }
+                group = trade.shortTradeId
+            }
+            ios {
+                 // TODO: fix after nav refactor
+                 actions = if (isChatNotif) {
+                    listOf(
+                        NotificationButton(
+                            "mobile.action.notifications.openChat".i18n(),
+                            NotificationPressAction.Route(Routes.TabOpenTradeList),  // TODO: use TradeChat pass in trade.tradeId
+                        )
+                    )
+                 } else {
+                     listOf(
+                         NotificationButton(
+                             "mobile.action.notifications.openTrade".i18n(),
+                             NotificationPressAction.Route(Routes.TabOpenTradeList) // TODO: use OpenTrades and pass in trade.tradeId
+                         )
+                     )
+                 }
+            }
+        }
+    }
 }

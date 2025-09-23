@@ -1,4 +1,4 @@
-package network.bisq.mobile.domain.service.notifications.controller
+package network.bisq.mobile.presentation.notification
 
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
@@ -8,35 +8,23 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.utils.Logging
 import platform.BackgroundTasks.BGProcessingTask
 import platform.BackgroundTasks.BGProcessingTaskRequest
 import platform.BackgroundTasks.BGTaskScheduler
 import platform.Foundation.NSDate
-import platform.Foundation.NSUUID
-import platform.Foundation.setValue
-import platform.UserNotifications.UNAuthorizationStatusAuthorized
-import platform.UserNotifications.UNMutableNotificationContent
 import platform.UserNotifications.UNNotification
 import platform.UserNotifications.UNNotificationPresentationOptionAlert
 import platform.UserNotifications.UNNotificationPresentationOptionBadge
 import platform.UserNotifications.UNNotificationPresentationOptionSound
 import platform.UserNotifications.UNNotificationPresentationOptions
-import platform.UserNotifications.UNNotificationRequest
 import platform.UserNotifications.UNNotificationResponse
-import platform.UserNotifications.UNNotificationSound
-import platform.UserNotifications.UNTimeIntervalNotificationTrigger
 import platform.UserNotifications.UNUserNotificationCenter
 import platform.UserNotifications.UNUserNotificationCenterDelegateProtocol
 import platform.darwin.NSObject
-import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 
-@Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
-actual class NotificationServiceController(private val appForegroundController: AppForegroundController) :
-    ServiceController, Logging {
+class ForegroundServiceControllerImpl(private val notificationController: NotificationController) : ForegroundServiceController, Logging {
 
     companion object {
         const val BACKGROUND_TASK_ID = "network.bisq.mobile.iosUC4273Y485"
@@ -78,21 +66,7 @@ actual class NotificationServiceController(private val appForegroundController: 
         logDebug("Notification center delegate applied")
     }
 
-    actual fun doPlatformSpecificSetup() {
-        // nothing to do here
-    }
-
-    @OptIn(ExperimentalForeignApi::class)
-    actual suspend fun hasPermission(): Boolean = suspendCoroutine { continuation ->
-        UNUserNotificationCenter.currentNotificationCenter()
-            .getNotificationSettingsWithCompletionHandler { settings ->
-                val status = settings?.authorizationStatus
-                val isGranted = status == UNAuthorizationStatusAuthorized
-                continuation.resume(isGranted)
-            }
-    }
-
-    actual override fun startService() {
+    override fun startService() {
         if (isRunning) {
             logDebug("Notification Service already started, skipping launch")
             return
@@ -100,7 +74,7 @@ actual class NotificationServiceController(private val appForegroundController: 
         stopService() // needed in iOS to clear the id registration and avoid duplicates
         logDebug("Starting background service")
         serviceScope.launch {
-            if (hasPermission()) {
+            if (notificationController.hasPermission()) {
                 logDebug("Notification permission granted.")
                 setupDelegate()
                 registerBackgroundTask()
@@ -113,7 +87,7 @@ actual class NotificationServiceController(private val appForegroundController: 
         }
     }
 
-    actual override fun stopService() {
+    override fun stopService() {
 //        unregisterAllObservers()
         BGTaskScheduler.sharedScheduler.cancelAllTaskRequests()
         logDebug("Background service stopped")
@@ -121,7 +95,7 @@ actual class NotificationServiceController(private val appForegroundController: 
     }
 
 
-    actual override fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit) {
+    override fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit) {
         if (observerJobs.contains(stateFlow)) {
             log.w { "State flow observer already registered, skipping registration" }
             return
@@ -132,7 +106,7 @@ actual class NotificationServiceController(private val appForegroundController: 
         observerJobs[stateFlow] = job
     }
 
-    actual override fun unregisterObserver(stateFlow: StateFlow<*>) {
+    override fun unregisterObserver(stateFlow: StateFlow<*>) {
         observerJobs[stateFlow]?.cancel()
         observerJobs.remove(stateFlow)
     }
@@ -141,36 +115,7 @@ actual class NotificationServiceController(private val appForegroundController: 
         observerJobs?.keys?.forEach { unregisterObserver(it) }
     }
 
-    actual fun pushNotification(title: String, message: String) {
-        if (isAppInForeground()) {
-            log.w { "Skipping notification since app is in the foreground" }
-            return
-        }
-
-        val content = UNMutableNotificationContent().apply {
-            setValue(title, forKey = "title")
-            setValue(message, forKey = "body")
-            setSound(UNNotificationSound.defaultSound())
-        }
-
-        val trigger = UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(5.0, repeats = false)
-
-        val requestId = NSUUID().UUIDString
-        val request = UNNotificationRequest.requestWithIdentifier(
-            requestId,
-            content,
-            trigger
-        )
-        UNUserNotificationCenter.currentNotificationCenter().addNotificationRequest(request) { error ->
-            if (error != null) {
-                logDebug("Error adding notification request: ${error.localizedDescription}")
-            } else {
-                logDebug("Notification $requestId added successfully")
-            }
-        }
-    }
-
-    actual override fun isServiceRunning(): Boolean {
+    override fun isServiceRunning(): Boolean {
         // iOS doesn't allow querying background task state directly
         return isRunning
     }
@@ -229,10 +174,5 @@ actual class NotificationServiceController(private val appForegroundController: 
             log.e(it) { "Failed to register background task - notifications won't work" }
             isBackgroundTaskRegistered = false
         }
-    }
-
-    actual fun isAppInForeground(): Boolean {
-        // for iOS we handle this externally
-        return false
     }
 }
