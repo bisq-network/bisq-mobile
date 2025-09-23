@@ -76,6 +76,7 @@ class NotificationControllerImpl(
 
         config.title?.let { builder.setContentTitle(it) }
         config.subtitle?.let { builder.setSubText(it) }
+        config.body?.let { builder.setContentText(it) }
         config.badgeCount?.let { builder.setNumber(it) }
         builder.setSound(
             // for older platforms
