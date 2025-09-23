@@ -64,6 +64,7 @@ class ForegroundServiceControllerImpl(
     override fun <T> registerObserver(stateFlow: StateFlow<T>, onStateChange: (T) -> Unit) {
         if (observerJobs.contains(stateFlow)) {
             log.w { "State flow observer already registered, skipping registration" }
+            return
         }
         val job = serviceScope.launch(Dispatchers.Default) {
             stateFlow.collect { onStateChange(it) }
