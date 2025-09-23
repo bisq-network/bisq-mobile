@@ -11,8 +11,5 @@ import org.koin.dsl.module
 
 val iosClientModule = module {
     single<UrlLauncher> { IOSUrlLauncher() }
-    single<AppForegroundController> { AppForegroundController() } bind ForegroundDetector::class
-    single<NotificationController> { NotificationControllerImpl(get()) }
-
     single<VersionProvider> { ClientVersionProvider() }
 }
