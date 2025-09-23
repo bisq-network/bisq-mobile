@@ -66,8 +66,6 @@ abstract class MainActivity : ComponentActivity(), Logging {
         super.onStart()
         presenter.onStart()
         handleDeepLinkIntent(intent)
-        // consume the intent
-        intent = null
     }
 
     override fun onResume() {
