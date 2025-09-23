@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
 import androidx.core.app.ServiceCompat
 import network.bisq.mobile.domain.helper.ResourceUtils
 import network.bisq.mobile.domain.utils.Logging
@@ -26,7 +25,7 @@ import org.koin.android.ext.android.inject
 open class ForegroundService : Service(), Logging {
     companion object {
         const val SERVICE_NOTIF_ID = 1
-        const val DISMISS_NOTIFICATION_ACTION = "DISMISS_NOTIFICATION_ACTION"
+        const val STOP_SERVICE_ACTION = "STOP_SERVICE_ACTION"
     }
 
     private val notificationController: NotificationControllerImpl by inject()
@@ -35,14 +34,13 @@ open class ForegroundService : Service(), Logging {
         val contentPendingIntent =
             notificationController.createNavDeepLinkPendingIntent(Routes.TabOpenTradeList)
 
-        val dismissIntent = Intent(applicationContext, ForegroundService::class.java).apply {
-            action = DISMISS_NOTIFICATION_ACTION
-            putExtra("notificationId", SERVICE_NOTIF_ID)
+        val stopIntent = Intent(applicationContext, ForegroundService::class.java).apply {
+            action = STOP_SERVICE_ACTION
         }
-        val dismissPendingIntent = PendingIntent.getService(
+        val stopPendingIntent = PendingIntent.getService(
             applicationContext,
             SERVICE_NOTIF_ID + 1,
-            dismissIntent,
+            stopIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
@@ -55,8 +53,8 @@ open class ForegroundService : Service(), Logging {
             .addAction(
                 NotificationCompat.Action(
                     android.R.drawable.ic_menu_close_clear_cancel,
-                    "mobile.action.notifications.dismiss".i18n(),
-                    dismissPendingIntent
+                    "mobile.action.notifications.stop".i18n(),
+                    stopPendingIntent
                 )
             )
             .build()
@@ -76,12 +74,9 @@ open class ForegroundService : Service(), Logging {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        if (intent?.action == DISMISS_NOTIFICATION_ACTION) {
-            val notificationId = intent.getIntExtra("notificationId", SERVICE_NOTIF_ID)
-            val notificationManager = NotificationManagerCompat.from(applicationContext)
-            notificationManager.cancel(notificationId)
-            log.i { "Notification $notificationId dismissed by user" }
-            stopSelf()
+        if (intent?.action == STOP_SERVICE_ACTION) {
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+            log.i { "Notification foreground service stopped by user" }
             return START_NOT_STICKY
         }
         log.i { "Service starting sticky" }
