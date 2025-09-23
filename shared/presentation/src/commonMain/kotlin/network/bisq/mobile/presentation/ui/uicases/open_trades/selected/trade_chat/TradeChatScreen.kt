@@ -6,7 +6,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
@@ -18,7 +18,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.dialog.Confirmat
 import network.bisq.mobile.presentation.ui.components.organisms.chat.ChatMessageList
 import network.bisq.mobile.presentation.ui.components.organisms.chat.UndoIgnoreDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import network.bisq.mobile.presentation.ui.helpers.toClipEntry
+
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
@@ -40,7 +40,7 @@ fun TradeChatScreen() {
     val showChatRulesWarnBox by presenter.showChatRulesWarnBox.collectAsState()
     val readCount by presenter.readCount.collectAsState()
 
-    val clipboard = LocalClipboard.current
+    val clipboardManager = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
 
     BisqStaticScaffold(
@@ -71,7 +71,7 @@ fun TradeChatScreen() {
                 onReply = presenter::onReply,
                 onCopy = { message ->
                     scope.launch {
-                        clipboard.setClipEntry(AnnotatedString(message.textString).toClipEntry())
+                        clipboardManager.setText(AnnotatedString(message.textString))
                     }
                 },
                 onIgnoreUser = presenter::showIgnoreUserPopup,

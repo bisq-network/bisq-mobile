@@ -47,7 +47,7 @@ object BisqTheme {
         language: String = "en",
         content: @Composable () -> Unit
     ) {
-        I18nSupport.setLanguage(language)
+        // Preview language parameter reserved; no-op on this branch without I18nSupport
         BisqTheme {
             content()
         }

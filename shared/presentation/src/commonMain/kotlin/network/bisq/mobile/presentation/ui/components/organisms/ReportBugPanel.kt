@@ -14,7 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
@@ -26,7 +26,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ExclamationRedIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
-import network.bisq.mobile.presentation.ui.helpers.toClipEntry
+
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
@@ -38,7 +38,7 @@ fun ReportBugPanel(
     onClose: () -> Unit,
 ) {
     val presenter: AppPresenter = koinInject()
-    val clipboard = LocalClipboard.current
+    val clipboardManager = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
@@ -100,7 +100,7 @@ fun ReportBugPanel(
                 text = "support.reports.title".i18n(),
                 onClick = {
                     scope.launch {
-                        clipboard.setClipEntry(AnnotatedString(errorMessage).toClipEntry())
+                        clipboardManager.setText(AnnotatedString(errorMessage))
                     }
                     presenter.navigateToReportError()
                     if (!isUncaughtException)

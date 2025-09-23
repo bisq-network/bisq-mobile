@@ -7,7 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
@@ -19,7 +19,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import kotlinx.coroutines.launch
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.WebLinkConfirmationDialog
-import network.bisq.mobile.presentation.ui.helpers.toClipEntry
+
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 // Pass either uri or onLinkClick. Not both
@@ -33,7 +33,7 @@ fun NoteText(
     onLinkClick: (() -> Unit)? = null,
 ) {
     val uriHandler = LocalUriHandler.current
-    val clipboard = LocalClipboard.current
+    val clipboardManager = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
     var showConfirmDialog by remember { mutableStateOf(false) }
 
@@ -129,7 +129,7 @@ fun NoteText(
             },
             onDismiss = {
                 scope.launch {
-                    clipboard.setClipEntry(AnnotatedString(uri ?: linkText).toClipEntry())
+                    clipboardManager.setText(AnnotatedString(uri ?: linkText))
                 }
                 showConfirmDialog = false
             }
