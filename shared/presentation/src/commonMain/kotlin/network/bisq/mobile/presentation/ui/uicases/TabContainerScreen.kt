@@ -25,12 +25,6 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 import network.bisq.mobile.presentation.ui.navigation.graph.TabNavGraph
 import org.koin.compose.koinInject
 
-val navigationListItem = listOf(
-    BottomNavigationItem("mobile.bottomNavigation.home".i18n(), Routes.TabHome.name, Res.drawable.nav_home),
-    BottomNavigationItem("mobile.bottomNavigation.offerbook".i18n(), Routes.TabOfferbook.name, Res.drawable.nav_offers),
-    BottomNavigationItem("mobile.bottomNavigation.myTrades".i18n(), Routes.TabOpenTradeList.name, Res.drawable.nav_trades),
-    BottomNavigationItem("mobile.bottomNavigation.miscItems.tab".i18n(), Routes.TabMiscItems.name, Res.drawable.nav_more),
-)
 
 interface ITabContainerPresenter : ViewPresenter {
     val tradesWithUnreadMessages: StateFlow<Map<String, Int>>
@@ -54,6 +48,13 @@ fun TabContainerScreen() {
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
 
+    val navigationItems = listOf(
+        BottomNavigationItem("mobile.bottomNavigation.home".i18n(), Routes.TabHome.name, Res.drawable.nav_home),
+        BottomNavigationItem("mobile.bottomNavigation.offerbook".i18n(), Routes.TabOfferbook.name, Res.drawable.nav_offers),
+        BottomNavigationItem("mobile.bottomNavigation.myTrades".i18n(), Routes.TabOpenTradeList.name, Res.drawable.nav_trades),
+        BottomNavigationItem("mobile.bottomNavigation.miscItems.tab".i18n(), Routes.TabMiscItems.name, Res.drawable.nav_more),
+    )
+
     BisqStaticScaffold(
         topBar = {
             // TODO: Since Topbar should go inside Scaffold
@@ -65,7 +66,7 @@ fun TabContainerScreen() {
                 isHome = currentRoute == Routes.TabHome.name,
                 title = when (currentRoute) {
                     Routes.TabHome.name -> ""
-                    Routes.TabOfferbook.name -> navigationListItem[1].title
+                    Routes.TabOfferbook.name -> navigationItems[1].title
                     Routes.TabOpenTradeList.name -> "mobile.bottomNavigation.myOpenTrades".i18n()
                     Routes.TabMiscItems.name -> "mobile.bottomNavigation.miscItems.headline".i18n()
                     else -> "mobile.bottomNavigation.app".i18n()
@@ -78,7 +79,7 @@ fun TabContainerScreen() {
         },
         bottomBar = {
             BottomNavigation(
-                items = navigationListItem,
+                items = navigationItems,
                 currentRoute = currentRoute.orEmpty(),
                 unreadTradeCount = tradesWithUnreadMessages.values.sum(),
                 showAnimation = showAnimation,
