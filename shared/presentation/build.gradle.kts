@@ -67,6 +67,8 @@ kotlin {
             implementation(libs.navigation.compose)
             implementation(libs.bignum)
             implementation(libs.coil.compose)
+
+            implementation(libs.atomicfu)
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
