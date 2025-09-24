@@ -10,6 +10,7 @@ import androidx.navigation.NavUri
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
+import androidx.navigation.navOptions
 import androidx.navigation.navigation
 import network.bisq.mobile.presentation.ui.navigation.ExternalUriHandler
 import network.bisq.mobile.presentation.ui.navigation.Graph
@@ -36,17 +37,25 @@ fun TabNavGraph() {
     // we set this up here because in RootNavGraph tab routes are not registered yet, so we may
     // mishandle them there
     DisposableEffect(Unit) {
+        val rootNavController = mainPresenter.getRootNavController()
+
         ExternalUriHandler.listener = { uri ->
             val navUri = NavUri(uri)
-            try {
-                mainPresenter.getRootNavController().navigate(navUri)
-            } catch (_: Throwable) {
-                // tab routes are defined on another graph, we try them as well
-                try {
-                    navController.navigate(navUri)
-                } catch (_: Throwable) {
-                    // we failed to find the route, we just ignore this
+            if (rootNavController.graph.hasDeepLink(navUri)) {
+                rootNavController.navigate(navUri)
+            } else if (navController.graph.hasDeepLink(navUri)) {
+                val navOptions = navOptions {
+                    navController.graph.startDestinationRoute?.let { route ->
+                        popUpTo(route) {
+                            saveState = true
+                        }
+                    }
+                    launchSingleTop = true
+                    restoreState = true
                 }
+                navController.navigate(navUri, navOptions)
+            } else {
+                // ignore
             }
         }
         // Removes the listener when the composable is no longer active
