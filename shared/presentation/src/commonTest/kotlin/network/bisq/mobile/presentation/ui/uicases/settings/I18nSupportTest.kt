@@ -30,7 +30,7 @@ class I18nSupportTest {
         // Test German
         I18nSupport.initialize("de")
         val germanNA = UserProfilePresenter.getLocalizedNA()
-        assertEquals("N/V", germanNA) // German translation for N/A
+        assertEquals("N/A", germanNA) // German translation for N/A
 
         // Test Russian
         I18nSupport.initialize("ru")
