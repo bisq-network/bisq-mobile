@@ -77,6 +77,7 @@ open class ForegroundService : Service(), Logging {
         if (intent?.action == STOP_SERVICE_ACTION) {
             ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
             log.i { "Notification foreground service stopped by user" }
+            stopSelf()
             return START_NOT_STICKY
         }
         log.i { "Service starting sticky" }
