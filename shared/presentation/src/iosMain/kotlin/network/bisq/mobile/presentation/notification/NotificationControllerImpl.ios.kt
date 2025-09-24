@@ -18,7 +18,6 @@ import platform.UserNotifications.UNNotificationCategory
 import platform.UserNotifications.UNNotificationCategoryOptionNone
 import platform.UserNotifications.UNNotificationRequest
 import platform.UserNotifications.UNNotificationSound
-import platform.UserNotifications.UNTimeIntervalNotificationTrigger
 import platform.UserNotifications.UNUserNotificationCenter
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
@@ -147,14 +146,11 @@ class NotificationControllerImpl : NotificationController, Logging {
             }
         }
 
-        val trigger =
-            UNTimeIntervalNotificationTrigger.triggerWithTimeInterval(0.0, repeats = false)
-
         val requestId = config.id
         val request = UNNotificationRequest.requestWithIdentifier(
             requestId,
             content,
-            trigger
+            null,
         )
         UNUserNotificationCenter.currentNotificationCenter()
             .addNotificationRequest(request) { error ->
