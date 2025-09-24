@@ -2,6 +2,7 @@ package network.bisq.mobile.client.di
 
 import network.bisq.mobile.client.AndroidClientMainPresenter
 import network.bisq.mobile.client.presentation.ClientOnBoardingPresenter
+import network.bisq.mobile.client.presentation.ClientSplashPresenter
 import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.client.utils.ClientVersionProvider
@@ -14,6 +15,7 @@ import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
+import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 import network.bisq.mobile.service.AndroidClientCatHashService
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
@@ -29,6 +31,17 @@ val androidClientModule = module {
     } bind ClientCatHashService::class
 
     single { ClientConnectivityService(get()) } bind ConnectivityService::class
+
+    single<SplashPresenter> {
+        ClientSplashPresenter(
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+        )
+    }
 
     single<IOnboardingPresenter> { ClientOnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
 
