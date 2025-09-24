@@ -32,7 +32,7 @@ import network.bisq.mobile.client.service.trades.ClientTradesServiceFacade
 import network.bisq.mobile.client.service.trades.TradesApiGateway
 import network.bisq.mobile.client.service.user_profile.ClientUserProfileServiceFacade
 import network.bisq.mobile.client.service.user_profile.UserProfileApiGateway
-import network.bisq.mobile.client.websocket.WebSocketClient
+import network.bisq.mobile.client.websocket.WebSocketClientFactory
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.websocket.messages.SubscriptionRequest
@@ -74,7 +74,6 @@ import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import org.koin.core.parameter.parametersOf
 import org.koin.core.qualifier.named
 import org.koin.dsl.module
 
@@ -147,21 +146,15 @@ val clientModule = module {
     single(named("WebsocketApiHost")) { get<EnvironmentController>().getWebSocketHost() }
     single(named("WebsocketApiPort")) { get<EnvironmentController>().getWebSocketPort() }
 
-    factory { (host: String, port: Int) ->
-        WebSocketClient(
-            get(),
-            get(),
-            host,
-            port
-        )
-    }
+    single { WebSocketClientFactory(get()) }
 
     single {
         WebSocketClientProvider(
             get(named("WebsocketApiHost")),
             get(named("WebsocketApiPort")),
             get(),
-            clientFactory = { host, port -> get { parametersOf(host, port) } },
+            get(),
+            get(),
         )
     }
 

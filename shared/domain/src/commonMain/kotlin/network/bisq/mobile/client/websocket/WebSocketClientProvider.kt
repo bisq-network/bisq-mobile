@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.websocket
 
+import io.ktor.client.HttpClient
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -13,7 +14,6 @@ import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidIpv4
-import network.bisq.mobile.domain.utils.NetworkUtils.isValidPort
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidTorV3Address
 import kotlin.concurrent.Volatile
 
@@ -24,7 +24,8 @@ class WebSocketClientProvider(
     private val defaultHost: String,
     private val defaultPort: Int,
     private val settingsRepository: SettingsRepository,
-    private val clientFactory: (String, Int) -> WebSocketClient
+    private val httpClient: HttpClient,
+    private val webSocketClientFactory: WebSocketClientFactory
 ) : Logging {
     private var observeSettingsJob: Job? = null
     private val mutex = Mutex()
@@ -89,7 +90,7 @@ class WebSocketClientProvider(
     }
 
     private fun createClient(host: String, port: Int): WebSocketClient {
-        return clientFactory(host, port)
+        return webSocketClientFactory.createNewClient(httpClient, host, port)
     }
 
     // UI usages of this call will have the currentClient available so
@@ -119,7 +120,7 @@ class WebSocketClientProvider(
                 var host = defaultHost
                 var port = defaultPort
 
-                settings?.bisqApiUrl?.takeIf { it.isNotBlank() }?.let { url ->
+                settings.bisqApiUrl.takeIf { it.isNotBlank() }?.let { url ->
                     val address = toAddress(url);
                     if (address != null) {
                         host = address.host
@@ -160,7 +161,7 @@ class WebSocketClientProvider(
             try {
                 settingsRepository.data.collect { newSettings ->
                     mutex.withLock {
-                        newSettings?.bisqApiUrl?.takeIf { it.isNotBlank() }?.let { url ->
+                        newSettings.bisqApiUrl.takeIf { it.isNotBlank() }?.let { url ->
                             try {
                                 val address = toAddress(url)
                                 if (address == null) {

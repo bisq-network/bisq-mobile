@@ -173,9 +173,9 @@ class TrustedNodeSetupPresenter(
                 }
 
                 if (success) {
-                    val previousUrl = withContext(IODispatcher) { settingsRepository.fetch()?.bisqApiUrl }
+                    val previousUrl = withContext(IODispatcher) { settingsRepository.fetch().bisqApiUrl }
                     val isCompatibleVersion = withContext(IODispatcher) {
-                        webSocketClientProvider.get().await()
+                        webSocketClientProvider.get().awaitConnection()
                         validateVersion()
                     }
 
@@ -195,7 +195,7 @@ class TrustedNodeSetupPresenter(
                         if (isWorkflow) {
                             // Compare current host/port with saved settings to decide navigation
                             val currentApiUrl = "${_host.value}:${_port.value}"
-                            if (previousUrl.isNullOrBlank() || previousUrl != currentApiUrl) {
+                            if (previousUrl.isBlank() || previousUrl != currentApiUrl) {
                                 // No saved URL or different URL -> create profile
                                 navigateToCreateProfile()
                             } else {
