@@ -16,7 +16,27 @@
  */
 package network.bisq.mobile.domain.data.replicated.common.network
 
+import io.ktor.http.parseUrl
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class AddressVO(val host: String, val port: Int)
+data class AddressVO(val host: String, val port: Int) {
+    companion object {
+        fun from(url: String): AddressVO? {
+            var url = url.trim()
+            if (url.isBlank()) return null
+            if (!url.contains("://")) {
+                // hack to make it parsable if it doesn't contain schema
+                url = "schema://$url"
+            }
+            val parsed = parseUrl(url)
+            if (parsed == null) return null
+            val rawHost = parsed.host
+            if (rawHost.isBlank()) return null
+            val host = if (rawHost.endsWith(".onion")) rawHost.lowercase() else rawHost
+            val port = parsed.port
+            if (port !in 1..65535) return null
+            return AddressVO(host, port)
+        }
+    }
+}

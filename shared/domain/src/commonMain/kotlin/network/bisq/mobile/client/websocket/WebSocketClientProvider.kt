@@ -13,8 +13,6 @@ import network.bisq.mobile.domain.data.replicated.common.network.AddressVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
-import network.bisq.mobile.domain.utils.NetworkUtils.isValidIpv4
-import network.bisq.mobile.domain.utils.NetworkUtils.isValidTorV3Address
 import kotlin.concurrent.Volatile
 
 /**
@@ -29,36 +27,6 @@ class WebSocketClientProvider(
 ) : Logging {
     private var observeSettingsJob: Job? = null
     private val mutex = Mutex()
-
-    companion object {
-        fun toAddress(uri: String): AddressVO? {
-            val trimmed = uri.trim()
-            if (trimmed.isBlank()) return null
-
-            // IPv4 or Tor v3 onion: host:port
-            val parts = trimmed.split(":", limit = 2)
-            if (parts.size != 2) return null
-
-            val rawHost = parts[0].trim()
-            val portStr = parts[1].trim()
-
-            if (rawHost.isBlank() || portStr.isBlank()) return null
-
-            val host = if (rawHost.endsWith(".onion")) {
-                rawHost.lowercase()
-            } else {
-                rawHost
-            }
-
-            val hostOk = host.isValidIpv4() || host.isValidTorV3Address()
-            if (!hostOk) return null
-
-            val port = portStr.toIntOrNull() ?: return null
-            if (port !in 1..65535) return null
-
-            return AddressVO(host, port)
-        }
-    }
 
     private val ioScope = CoroutineScope(IODispatcher)
 
@@ -121,7 +89,7 @@ class WebSocketClientProvider(
                 var port = defaultPort
 
                 settings.bisqApiUrl.takeIf { it.isNotBlank() }?.let { url ->
-                    val address = toAddress(url);
+                    val address = AddressVO.from(url);
                     if (address != null) {
                         host = address.host
                         port = address.port
@@ -163,7 +131,7 @@ class WebSocketClientProvider(
                     mutex.withLock {
                         newSettings.bisqApiUrl.takeIf { it.isNotBlank() }?.let { url ->
                             try {
-                                val address = toAddress(url)
+                                val address = AddressVO.from(url)
                                 if (address == null) {
                                     log.e { "Error parsing new URL $url" }
                                     return@let
