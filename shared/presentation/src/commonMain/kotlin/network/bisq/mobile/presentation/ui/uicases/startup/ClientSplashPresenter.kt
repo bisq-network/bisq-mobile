@@ -16,7 +16,7 @@ class ClientSplashPresenter(
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     settingsRepository: SettingsRepository,
     settingsServiceFacade: SettingsServiceFacade,
-    private val webSocketClientProvider: WebSocketClientProvider?,
+    private val webSocketClientProvider: WebSocketClientProvider,
 ) : SplashPresenter(
     mainPresenter,
     applicationBootstrapFacade,
@@ -37,7 +37,7 @@ class ClientSplashPresenter(
     }
 
     private fun hasConnectivity(): Boolean {
-        return webSocketClientProvider?.get()?.isConnected() == true
+        return webSocketClientProvider.get().isConnected()
     }
 
     override suspend fun navigateToNextScreen() {
@@ -47,7 +47,7 @@ class ClientSplashPresenter(
             navigateToTrustedNodeSetup()
             return
         }
-        if (webSocketClientProvider?.get()?.isDemo() == true) {
+        if (webSocketClientProvider.get().isDemo()) {
             ApplicationBootstrapFacade.isDemo = true
         }
         super.navigateToNextScreen()
