@@ -11,16 +11,20 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVOExte
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.faceValueToLong
+
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
+import network.bisq.mobile.domain.utils.MonetarySlider
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.helpers.AmountValidator
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import kotlin.math.roundToLong
 
+// TODO Create/Take offer amount preseenters are very similar a base class could be extracted
 class TakeOfferAmountPresenter(
     mainPresenter: MainPresenter,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -77,7 +81,7 @@ class TakeOfferAmountPresenter(
             val valueInFraction = if (takeOfferModel.quoteAmount.value == 0L)
                 0.5F
             else
-                getFractionForFiat(takeOfferModel.quoteAmount.asDouble())
+                MonetarySlider.minorToFraction(takeOfferModel.quoteAmount.value, minAmount, maxAmount)
             _sliderPosition.value = valueInFraction
             applySliderValue(sliderPosition.value)
         }.onFailure { e ->
@@ -92,8 +96,16 @@ class TakeOfferAmountPresenter(
     fun onTextValueChanged(textInput: String) {
         val _value = textInput.toDoubleOrNullLocaleAware()
         if (_value != null) {
-            val valueInFraction = getFractionForFiat(_value)
-            onSliderValueChanged(valueInFraction)
+            // Bypass slider math for exactness: compute exact minor and apply directly
+            val exactMinor = FiatVOFactory.faceValueToLong(_value)
+            val clamped = exactMinor.coerceIn(minAmount, maxAmount)
+            quoteAmount = FiatVOFactory.from(clamped, quoteCurrencyCode)
+            _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount)
+            priceQuote = takeOfferPresenter.getMostRecentPriceQuote()
+            baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
+            _formattedBaseAmount.value = AmountFormatter.formatAmount(baseAmount, false)
+            _sliderPosition.value = MonetarySlider.minorToFraction(clamped, minAmount, maxAmount)
+            _amountValid.value = true
         } else {
             _formattedQuoteAmount.value = ""
             _amountValid.value = false
@@ -135,9 +147,7 @@ class TakeOfferAmountPresenter(
         try {
             _amountValid.value = sliderPosition in 0f..1f
             _sliderPosition.value = sliderPosition
-            val range = maxAmount - minAmount
-            val value: Float = minAmount + (sliderPosition * range)
-            val roundedFiatValue: Long = (value / 10000.0f).roundToLong() * 10000
+            val roundedFiatValue: Long = MonetarySlider.fractionToAmountLong(sliderPosition, minAmount, maxAmount, 10_000L)
 
             // We do not apply the data to the model yet to avoid unnecessary model clones
             quoteAmount = FiatVOFactory.from(roundedFiatValue, quoteCurrencyCode)
