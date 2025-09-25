@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -41,15 +42,13 @@ fun TabContainerScreen() {
     RememberPresenterLifecycle(presenter)
 
     val tabNavController = rememberNavController()
-    // Bind the tab nav controller to the AppPresenter for programmatic navigation
-    androidx.compose.runtime.SideEffect {
+    // Bind controller first, then signal readiness; tie lifecycle to this controller
+    DisposableEffect(tabNavController) {
         appPresenter.tabNavController = tabNavController
-    }
-
-    // Signal when the tab graph is ready for safe navigation
-    androidx.compose.runtime.DisposableEffect(Unit) {
         appPresenter.setTabGraphReady(true)
-        onDispose { appPresenter.setTabGraphReady(false) }
+        onDispose {
+            appPresenter.setTabGraphReady(false)
+        }
     }
 
     val isInteractive by presenter.isInteractive.collectAsState()

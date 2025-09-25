@@ -15,10 +15,12 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.helper.ResourceUtils
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
+
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.service.BisqForegroundService
 import network.bisq.mobile.domain.utils.Logging
@@ -42,7 +44,6 @@ actual class NotificationServiceController(private val appForegroundController: 
         const val POST_NOTIFS_PERM = "android.permission.POST_NOTIFICATIONS"
 
         const val TRADE_AND_UPDATES_CHANNEL_ID = "BISQ_TRADE_AND_UPDATES_CHANNEL"
-        const val DEFAULT_DELAY = 350L
     }
 
     private val context get() = appForegroundController.context
@@ -50,6 +51,7 @@ actual class NotificationServiceController(private val appForegroundController: 
     private val serviceScope = CoroutineScope(SupervisorJob())
     private val observerJobs = mutableMapOf<StateFlow<*>, Job>()
     private var isRunning = false
+    private var startWatcherJob: Job? = null
     private val defaultDestination = MY_TRADES_TAB
 
     actual fun doPlatformSpecificSetup() {
@@ -72,18 +74,30 @@ actual class NotificationServiceController(private val appForegroundController: 
             return
         }
         if (isAppInForeground()) {
-            // Avoid starting while app is still in foreground; defer a bit to allow onStop to run.
-            log.i { "App is in foreground; deferring startForegroundService" }
-            serviceScope.launch(Dispatchers.Default) {
-                delay(DEFAULT_DELAY)
-                if (!isAppInForeground() && !isRunning) {
-                    startServiceInternal()
-                } else {
-                    log.d { "Still in foreground after defer; not starting service" }
+            log.i { "App is in foreground; waiting for background transition before starting service" }
+            if (startWatcherJob?.isActive == true) {
+                log.d { "Start watcher already active; skipping scheduling" }
+                return
+            }
+            startWatcherJob = serviceScope.launch(Dispatchers.Default) {
+                try {
+                    appForegroundController.isForeground
+                        .drop(1)
+                        .first { it.not() }
+                    if (!isRunning) {
+                        startServiceInternal()
+                    }
+                } catch (e: Exception) {
+                    log.e(e) { "Error while waiting for background transition" }
+                } finally {
+                    startWatcherJob = null
                 }
             }
             return
         }
+        // If we're already in background now, cancel any pending watcher and start immediately
+        startWatcherJob?.cancel()
+        startWatcherJob = null
         startServiceInternal()
     }
 
@@ -103,6 +117,9 @@ actual class NotificationServiceController(private val appForegroundController: 
     }
 
     actual override fun stopService() {
+        // Cancel any pending background transition watcher
+        startWatcherJob?.cancel()
+        startWatcherJob = null
         // TODO if we ever implement Live notifications even if app was killed
         //  we need to leave the service running if the user is ok with it
         if (isRunning) {

@@ -131,7 +131,6 @@ interface ViewPresenter {
 abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPresenter, KoinComponent, Logging {
     companion object {
         const val NAV_GRAPH_MOUNTING_DELAY = 100L
-        const val SMALL_DELAY = 50L
         const val EXIT_WARNING_TIMEOUT = 3000L
         var isDemo = false
     }
