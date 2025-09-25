@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.presentation
+package network.bisq.mobile.presentation.ui.uicases.startup
 
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
@@ -9,7 +9,6 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
-import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
 
 class ClientSplashPresenter(
     mainPresenter: MainPresenter,
