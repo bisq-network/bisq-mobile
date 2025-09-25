@@ -63,7 +63,7 @@ kotlin {
             
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
-            api(libs.navigation.compose) // to allow use of NavOptionsBuilder in ClientSplashPresenter
+            implementation(libs.navigation.compose)
             implementation(libs.bignum)
             implementation(libs.coil.compose)
         }
