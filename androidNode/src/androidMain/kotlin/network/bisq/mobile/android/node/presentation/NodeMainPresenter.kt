@@ -23,10 +23,10 @@ class NodeMainPresenter(
     tradeReadStateRepository: TradeReadStateRepository,
     private val nodeApplicationLifecycleService: NodeApplicationLifecycleService
 ) : MainPresenter(
-    openTradesNotificationService,
-    settingsServiceFacade,
     tradesServiceFacade,
     userProfileServiceFacade,
+    openTradesNotificationService,
+    settingsServiceFacade,
     tradeReadStateRepository,
     urlLauncher
 ) {

@@ -18,6 +18,9 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.filter
+
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
@@ -29,6 +32,8 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
+import network.bisq.mobile.presentation.ui.navigation.Graph
+
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
@@ -125,7 +130,8 @@ interface ViewPresenter {
  */
 abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPresenter, KoinComponent, Logging {
     companion object {
-        const val DEFAULT_DELAY = 250L
+        const val NAV_GRAPH_MOUNTING_DELAY = 100L
+        const val SMALL_DELAY = 50L
         const val EXIT_WARNING_TIMEOUT = 3000L
         var isDemo = false
     }
@@ -137,11 +143,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     // For presenters we need a fresh ui scope each as otherwise navigation brings conflicts
     protected val presenterScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-
-    // TODO we can't delegate until all the existing presenters use the new launching coroutine methods
-//    protected val ioScope: CoroutineScope
-//        get() = jobsManager.getIOScope()
-    protected val ioScope: CoroutineScope = CoroutineScope(SupervisorJob() + IODispatcher)
 
     private val dependants = if (isRoot()) mutableListOf<BasePresenter>() else null
 
@@ -179,8 +180,11 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
      * @return Nav controller for navigation from the root
      */
     private val rootNavigator: NavHostController
-        get() = (rootPresenter ?: throw IllegalStateException("This presenter has no root")).navController
-
+        get() = when {
+            rootPresenter != null -> rootPresenter.navController
+            this is MainPresenter -> this.navController
+            else -> throw IllegalStateException("This presenter ${this::class.simpleName} has no root")
+        }
 
     init {
         rootPresenter?.registerChild(child = this)
@@ -285,12 +289,35 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         shouldRestoreState: Boolean
     ) {
         log.d { "Navigating to tab ${destination.name} " }
+        val appPresenter = (if (isRoot()) this else rootPresenter) as? AppPresenter
         launchUI {
-            getRootTabNavController().navigate(destination.name) {
-                getRootTabNavController().graph.startDestinationRoute?.let { route ->
-                    popUpTo(route) {
-                        saveState = saveStateOnPopUp
+            // Ensure we're at the TabContainer first; otherwise the tab NavHost graph may not be ready yet
+            if (!isAtMainScreen()) {
+                runCatching {
+                    rootNavigator.navigate(Routes.TabContainer.name) {
+                        launchSingleTop = true
                     }
+                }.onFailure { e ->
+                    log.e(e) { "First attempt failed to navigate to TabContainer" }
+                }
+                delay(NAV_GRAPH_MOUNTING_DELAY)
+            }
+
+            // Wait deterministically until the TabContainer's NavHost has mounted
+            try {
+                appPresenter?.isTabGraphReady
+                    ?.filter { it }
+                    ?.first()
+            } catch (e: Exception) {
+                log.w { "Proceeding without tabGraphReady signal due to: ${e.message}" }
+            }
+
+            val tabNav = getRootTabNavController()
+            val startRoute = tabNav.graph.startDestinationRoute ?: Graph.MAIN_SCREEN_GRAPH_KEY
+
+            tabNav.navigate(destination.name) {
+                popUpTo(startRoute) {
+                    saveState = saveStateOnPopUp
                 }
                 launchSingleTop = shouldLaunchSingleTop
                 restoreState = shouldRestoreState

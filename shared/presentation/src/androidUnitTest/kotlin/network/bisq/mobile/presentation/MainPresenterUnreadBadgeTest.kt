@@ -155,10 +155,10 @@ class MainPresenterUnreadBadgeTest {
 
         // Create presenter
         val presenter = MainPresenter(
-            openTradesNotificationService,
-            settingsService,
             tradesServiceFacade,
             userProfileServiceFacade,
+            openTradesNotificationService,
+            settingsService,
             tradeReadStateRepository,
             urlLauncher
         )

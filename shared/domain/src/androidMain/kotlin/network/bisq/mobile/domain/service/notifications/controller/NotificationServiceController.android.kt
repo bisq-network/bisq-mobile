@@ -15,6 +15,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.helper.ResourceUtils
@@ -41,6 +42,7 @@ actual class NotificationServiceController(private val appForegroundController: 
         const val POST_NOTIFS_PERM = "android.permission.POST_NOTIFICATIONS"
 
         const val TRADE_AND_UPDATES_CHANNEL_ID = "BISQ_TRADE_AND_UPDATES_CHANNEL"
+        const val DEFAULT_DELAY = 350L
     }
 
     private val context get() = appForegroundController.context
@@ -67,20 +69,37 @@ actual class NotificationServiceController(private val appForegroundController: 
     actual override fun startService() {
         if (isRunning) {
             log.w { "Service already running, skipping start call" }
-        } else {
-            log.i { "Starting Bisq Service.." }
-            createNotificationChannels()
-            val intent = Intent(context, BisqForegroundService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                log.i { "OS supports foreground service" }
-                context.startForegroundService(intent)
-            } else {
-                // if the phone does not support foreground service
-                context.startService(intent)
-            }
-            isRunning = true
-            log.i { "Started Bisq Service" }
+            return
         }
+        if (isAppInForeground()) {
+            // Avoid starting while app is still in foreground; defer a bit to allow onStop to run.
+            log.i { "App is in foreground; deferring startForegroundService" }
+            serviceScope.launch(Dispatchers.Default) {
+                delay(DEFAULT_DELAY)
+                if (!isAppInForeground() && !isRunning) {
+                    startServiceInternal()
+                } else {
+                    log.d { "Still in foreground after defer; not starting service" }
+                }
+            }
+            return
+        }
+        startServiceInternal()
+    }
+
+    private fun startServiceInternal() {
+        log.i { "Starting Bisq Service.." }
+        createNotificationChannels()
+        val intent = Intent(context, BisqForegroundService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            log.i { "OS supports foreground service" }
+            context.startForegroundService(intent)
+        } else {
+            // if the phone does not support foreground service
+            context.startService(intent)
+        }
+        isRunning = true
+        log.i { "Started Bisq Service" }
     }
 
     actual override fun stopService() {

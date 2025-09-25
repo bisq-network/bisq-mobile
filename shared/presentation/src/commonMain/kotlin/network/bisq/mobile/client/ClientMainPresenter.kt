@@ -45,10 +45,10 @@ open class ClientMainPresenter(
     private val webSocketClientProvider: WebSocketClientProvider,
     urlLauncher: UrlLauncher
 ) : MainPresenter(
-    openTradesNotificationService,
-    settingsServiceFacade,
     tradesServiceFacade,
     userProfileServiceFacade,
+    openTradesNotificationService,
+    settingsServiceFacade,
     tradeReadStateRepository,
     urlLauncher,
 ) {

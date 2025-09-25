@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.nav_home
 import bisqapps.shared.presentation.generated.resources.nav_more
@@ -15,6 +16,7 @@ import bisqapps.shared.presentation.generated.resources.nav_trades
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
+import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.button.BisqFABAddButton
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -35,10 +37,23 @@ interface ITabContainerPresenter : ViewPresenter {
 @Composable
 fun TabContainerScreen() {
     val presenter: ITabContainerPresenter = koinInject()
+    val appPresenter: AppPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
+    val tabNavController = rememberNavController()
+    // Bind the tab nav controller to the AppPresenter for programmatic navigation
+    androidx.compose.runtime.SideEffect {
+        appPresenter.tabNavController = tabNavController
+    }
+
+    // Signal when the tab graph is ready for safe navigation
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        appPresenter.setTabGraphReady(true)
+        onDispose { appPresenter.setTabGraphReady(false) }
+    }
+
     val isInteractive by presenter.isInteractive.collectAsState()
-    val navController: NavHostController = presenter.getRootTabNavController()
+    val navController: NavHostController = tabNavController
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute by remember(navBackStackEntry) {
         derivedStateOf {
@@ -96,7 +111,7 @@ fun TabContainerScreen() {
         },
         isInteractive = isInteractive,
         snackbarHostState = presenter.getSnackState(),
-        content = { TabNavGraph() }
+        content = { TabNavGraph(navController = tabNavController) }
 
     )
 }

@@ -33,19 +33,24 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 
 /**
  * Main Presenter as an example of implementation for now.
+ * This class should be abstract, kept concrete for testing purposes
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 open class MainPresenter(
+    tradesServiceFacade: TradesServiceFacade,
+    val userProfileServiceFacade: UserProfileServiceFacade,
     private val openTradesNotificationService: OpenTradesNotificationService,
     private val settingsService: SettingsServiceFacade,
-    private val tradesServiceFacade: TradesServiceFacade,
-    val userProfileServiceFacade: UserProfileServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val urlLauncher: UrlLauncher,
 ) : BasePresenter(null), AppPresenter {
 
     override lateinit var navController: NavHostController
     override lateinit var tabNavController: NavHostController
+
+    private val _isTabGraphReady = MutableStateFlow(false)
+    override val isTabGraphReady: StateFlow<Boolean> get() = _isTabGraphReady.asStateFlow()
+    override fun setTabGraphReady(ready: Boolean) { _isTabGraphReady.value = ready }
 
     // Observable state
     private val _isContentVisible = MutableStateFlow(false)
