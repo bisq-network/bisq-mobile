@@ -51,11 +51,6 @@ class BuyerState1aPresenter(
             BitcoinLnAddressFieldType.Bitcoin
     }
 
-    override fun onViewUnattaching() {
-        _bitcoinPaymentData.value = ""
-        _bitcoinPaymentDataValid.value = false
-        super.onViewUnattaching()
-    }
 
     fun onBitcoinPaymentDataInput(value: String, isValid: Boolean) {
         _bitcoinPaymentData.value = value.trim()
