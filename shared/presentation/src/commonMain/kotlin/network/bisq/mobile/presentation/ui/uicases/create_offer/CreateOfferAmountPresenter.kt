@@ -51,9 +51,9 @@ class CreateOfferAmountPresenter(
     private val reputationServiceFacade: ReputationServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
-    var headline: String
-    var quoteCurrencyCode: String
-    var formattedMinAmount: String
+    lateinit var headline: String
+    lateinit var quoteCurrencyCode: String
+    lateinit var formattedMinAmount: String
 
     private val _amountType: MutableStateFlow<AmountType> = MutableStateFlow(AmountType.FIXED_AMOUNT)
     val amountType: StateFlow<AmountType> get() = _amountType.asStateFlow()
@@ -103,7 +103,7 @@ class CreateOfferAmountPresenter(
     private val _shouldShowWarningIcon = MutableStateFlow(false)
     val shouldShowWarningIcon: StateFlow<Boolean> get() = _shouldShowWarningIcon.asStateFlow()
 
-    private var createOfferModel: CreateOfferPresenter.CreateOfferModel
+    private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
     private var minAmount: Long = DEFAULT_MIN_USD_TRADE_AMOUNT.value
     private var maxAmount: Long = MAX_USD_TRADE_AMOUNT.value
     private lateinit var priceQuote: PriceQuoteVO

@@ -22,10 +22,15 @@ object MonetarySlider {
         maxAmount: Long,
         step: Long = 10_000L
     ): Long {
+        require(step > 0L) { "step must be > 0" }
+        require(maxAmount >= minAmount) { "maxAmount must be >= minAmount" }
+        if (maxAmount == minAmount) return minAmount
+
         val clamped = fraction.coerceIn(0f, 1f)
         val rangeD = (maxAmount - minAmount).toDouble()
         val valueD = minAmount.toDouble() + (clamped.toDouble() * rangeD)
-        return (valueD / step.toDouble()).roundToLong() * step
+        val rounded = (valueD / step.toDouble()).roundToLong() * step
+        return rounded.coerceIn(minAmount, maxAmount)
     }
 
     /**
