@@ -18,7 +18,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.helper.ResourceUtils
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 
 import network.bisq.mobile.domain.service.AppForegroundController
@@ -82,7 +81,6 @@ actual class NotificationServiceController(private val appForegroundController: 
             startWatcherJob = serviceScope.launch(Dispatchers.Default) {
                 try {
                     appForegroundController.isForeground
-                        .drop(1)
                         .first { it.not() }
                     if (!isRunning) {
                         startServiceInternal()
