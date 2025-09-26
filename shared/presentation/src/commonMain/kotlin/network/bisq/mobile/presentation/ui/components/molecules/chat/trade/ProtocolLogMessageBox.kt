@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -28,7 +29,7 @@ fun ProtocolLogMessageBox(message: BisqEasyOpenTradeMessageModel, modifier: Modi
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)
         ) {
-            BisqText.smallLight(message.decodedText)
+            BisqText.smallLight(message.decodedText, textAlign = TextAlign.Center)
             BisqText.xsmallLightGrey(message.dateString)
         }
     }
