@@ -96,9 +96,5 @@ open class DashboardPresenter(
         launchIO { settingsRepository.setNotificationPermissionState(state) }
     }
 
-    fun doPlatformSpecificSetup() {
-        notificationController.doPlatformSpecificSetup()
-    }
-
     suspend fun hasNotificationPermission(): Boolean = notificationController.hasPermission()
 }

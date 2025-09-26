@@ -4,7 +4,6 @@ import network.bisq.mobile.presentation.notification.model.NotificationBuilder
 import network.bisq.mobile.presentation.notification.model.NotificationConfig
 
 interface NotificationController {
-    fun doPlatformSpecificSetup()
 
     suspend fun hasPermission(): Boolean
 

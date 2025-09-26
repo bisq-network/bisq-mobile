@@ -70,7 +70,6 @@ fun DashboardScreen() {
     val notifPermLauncher = rememberNotificationPermissionLauncher { granted ->
         if (granted) {
             presenter.saveNotificationPermissionState(NotificationPermissionState.GRANTED)
-            presenter.doPlatformSpecificSetup()
         } else {
             // we can't ask more than twice, so we won't ask again
             if (notifPermissionState == NotificationPermissionState.DENIED) {

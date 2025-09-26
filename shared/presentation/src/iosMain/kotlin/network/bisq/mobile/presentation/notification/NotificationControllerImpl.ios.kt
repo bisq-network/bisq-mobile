@@ -25,11 +25,6 @@ import kotlin.coroutines.suspendCoroutine
 class NotificationControllerImpl : NotificationController, Logging {
     private val logScope = CoroutineScope(Dispatchers.Main)
 
-
-    override fun doPlatformSpecificSetup() {
-        // nothing to do here
-    }
-
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun hasPermission(): Boolean = suspendCoroutine { continuation ->
         UNUserNotificationCenter.currentNotificationCenter()

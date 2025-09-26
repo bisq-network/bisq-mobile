@@ -61,6 +61,7 @@ open class ForegroundService : Service(), Logging {
 
     override fun onDestroy() {
         log.i { "Service is being destroyed" }
+        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
         super.onDestroy()
     }
 
