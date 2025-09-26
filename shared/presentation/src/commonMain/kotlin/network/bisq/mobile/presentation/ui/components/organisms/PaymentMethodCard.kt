@@ -11,10 +11,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.MutableStateFlow
-import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.molecules.PaymentTypeCard
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.CustomPaymentField
+import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -41,8 +41,8 @@ fun PaymentMethodCard(
 
     val entries = availablePaymentMethods.toList()
         .mapIndexed { idx, key ->
-            val (name, missing) = i18NPaymentMethod(key)
-            Entry(key, imagePaths.getOrElse(idx) { "" }, name, missing)
+            val (displayName, hasNoEntry) = i18NPaymentMethod(key)
+            Entry(key, imagePaths.getOrElse(idx) { "" }, displayName, hasNoEntry)
         }
         .sortedBy { it.displayName }
 

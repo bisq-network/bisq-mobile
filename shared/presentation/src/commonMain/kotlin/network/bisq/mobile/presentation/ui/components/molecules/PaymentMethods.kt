@@ -1,6 +1,10 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -52,8 +56,8 @@ fun PaymentMethods(
                         modifier = Modifier.size(20.dp),
                     )
                     if (missing) {
-                        val firstChar = if (paymentMethod.isNotEmpty()) paymentMethod[0].toString() else "?"
-                        BisqText.baseRegular(
+                        val firstChar = if (paymentMethod.isNotEmpty()) paymentMethod[0].toString().uppercase() else "?"
+                        BisqText.baseBold(
                             text = firstChar,
                             textAlign = TextAlign.Center,
                             color = BisqTheme.colors.dark_grey20,

@@ -3,7 +3,13 @@ package network.bisq.mobile.presentation.ui.components.molecules
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -72,8 +78,8 @@ fun PaymentTypeCard(
             )
             if (isCustomPaymentMethod && title.isNotEmpty()) {
                 Box(modifier = Modifier.size(20.dp), contentAlignment = Alignment.Center) {
-                    val firstChar = title.firstOrNull()?.toString().orEmpty()
-                    BisqText.baseRegular(
+                    val firstChar = title.firstOrNull()?.toString()?.uppercase().orEmpty()
+                    BisqText.baseBold(
                         text = firstChar,
                         textAlign = TextAlign.Center,
                         color = BisqTheme.colors.dark_grey20,
