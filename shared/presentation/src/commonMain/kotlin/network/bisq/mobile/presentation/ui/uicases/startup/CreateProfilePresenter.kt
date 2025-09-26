@@ -53,7 +53,8 @@ open class CreateProfilePresenter(
     private val _nickName = MutableStateFlow("")
     val nickName: StateFlow<String> get() = _nickName.asStateFlow()
     fun setNickname(value: String) {
-        _nickName.value = value
+        // Trim leading/trailing whitespace to avoid accidental spaces causing validation or submission errors
+        _nickName.value = value.trim()
     }
 
     private val _nickNameValid = MutableStateFlow(false)
@@ -84,9 +85,10 @@ open class CreateProfilePresenter(
     }
 
     fun validateNickname(nickname: String): String? {
+        val trimmed = nickname.trim()
         return when {
-            nickname.isEmpty() -> "mobile.createProfile.nickname.minLength".i18n()
-            nickname.length > 100 -> "mobile.createProfile.nickname.maxLength".i18n()
+            trimmed.isEmpty() -> "mobile.createProfile.nickname.minLength".i18n()
+            trimmed.length > 100 -> "mobile.createProfile.nickname.maxLength".i18n()
             else -> null
         }.also {
             _nickNameValid.value = it == null
@@ -99,7 +101,8 @@ open class CreateProfilePresenter(
     }
 
     fun onCreateAndPublishNewUserProfile() {
-        if (nickName.value.isNotEmpty()) {
+        val toSubmit = nickName.value.trim()
+        if (toSubmit.isNotEmpty()) {
             // We would never call generateKeyPair while generateKeyPair is not
             // completed, thus we can assign to same job reference
             job = launchIO {
@@ -109,7 +112,7 @@ open class CreateProfilePresenter(
                 }
                 log.i { "Show busy animation for createAndPublishInProgress" }
                 runCatching {
-                    userProfileService.createAndPublishNewUserProfile(nickName.value)
+                    userProfileService.createAndPublishNewUserProfile(toSubmit)
                     // Navigate to TabContainer and completely clear the back stack
                     // This ensures the user can never navigate back to onboarding screens
                     navigateTo(Routes.TabContainer) {
