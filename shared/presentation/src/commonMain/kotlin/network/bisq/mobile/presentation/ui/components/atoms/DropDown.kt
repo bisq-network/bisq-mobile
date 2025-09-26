@@ -174,7 +174,7 @@ fun BisqDropDown(
                     BisqChip(
                         label = if (chipShowOnlyKey) pair.first else pair.second,
                         showRemove = selected.size != 1,
-                        type = BisqChipType.Outline,
+                        type = BisqChipType.Default,
                         onRemove = {
                             showError.value = false
                             selected = selected - pair

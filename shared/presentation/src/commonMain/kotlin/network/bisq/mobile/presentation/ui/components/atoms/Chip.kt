@@ -8,7 +8,6 @@ import androidx.compose.material3.InputChipDefaults
 import androidx.compose.material3.SelectableChipColors
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -46,7 +45,7 @@ fun BisqChip(
         )
     } else {
         SelectableChipColors(
-            containerColor = BisqTheme.colors.primaryDim,
+            containerColor = BisqTheme.colors.dark_grey40,
             labelColor = BisqTheme.colors.light_grey10,
             leadingIconColor = BisqTheme.colors.light_grey10,
             trailingIconColor = BisqTheme.colors.light_grey10,
