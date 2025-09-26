@@ -15,7 +15,6 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -30,12 +29,13 @@ fun OpenTradeListItem(
     unreadCount: Int,
     onSelect: () -> Unit,
 ) {
-    val bgColor = if (unreadCount > 0)
-        BisqTheme.colors.dark_grey40.copy(red=0.19f)
-    else
-        BisqTheme.colors.dark_grey40
+    val hasNotifications = unreadCount > 0
 
-    BisqCard(backgroundColor = bgColor) {
+    OpenTradeCard(
+        borderWidth = 6.dp,
+        borderColor = BisqTheme.colors.yellow,
+        hasNotifications = hasNotifications
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -56,9 +56,9 @@ fun OpenTradeListItem(
                 )
                 Row(modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)) {
                     UserProfileRow(
-                        user =  item.peersUserProfile,
-                        reputation =  item.peersReputationScore,
-                        showUserName =  true,
+                        user = item.peersUserProfile,
+                        reputation = item.peersReputationScore,
+                        showUserName = true,
                         userAvatar = userAvatar,
                         badgeCount = unreadCount,
                     )
