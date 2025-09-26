@@ -65,7 +65,8 @@ fun CreateProfileScreen(
         if (generateKeyPairInProgress) {
             CircularProgressIndicator(
                 modifier = Modifier.size(iconSize),
-                color = BisqTheme.colors.primary
+                color = BisqTheme.colors.primary,
+                strokeWidth = 2.dp
             )
         } else {
             profileIcon?.let { profileIcon ->
