@@ -2,6 +2,7 @@ package network.bisq.mobile.presentation.ui.navigation.graph
 
 import androidx.compose.foundation.background
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -12,6 +13,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
 import androidx.navigation.navOptions
 import androidx.navigation.navigation
+import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.navigation.ExternalUriHandler
 import network.bisq.mobile.presentation.ui.navigation.Graph
 import network.bisq.mobile.presentation.ui.navigation.Routes
@@ -21,6 +23,7 @@ import network.bisq.mobile.presentation.ui.uicases.DashboardScreen
 import network.bisq.mobile.presentation.ui.uicases.offerbook.OfferbookMarketScreen
 import network.bisq.mobile.presentation.ui.uicases.open_trades.OpenTradeListScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.MiscItemsScreen
+import org.koin.compose.koinInject
 
 @Composable
 fun TabNavGraph() {
