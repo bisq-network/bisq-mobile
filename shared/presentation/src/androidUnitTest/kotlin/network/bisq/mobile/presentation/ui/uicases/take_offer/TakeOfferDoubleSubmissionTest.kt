@@ -1,76 +1,86 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
-import io.mockk.coEvery
-import io.mockk.coVerify
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.domain.data.model.MarketPriceItem
-import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.bitcoinFrom
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
+import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
-import kotlin.test.Ignore
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
+import kotlinx.coroutines.test.advanceTimeBy
+import kotlinx.coroutines.test.runCurrent
+import org.koin.core.context.startKoin
+import org.koin.core.context.stopKoin
+import org.koin.dsl.module
+import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
+import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
+import network.bisq.mobile.i18n.I18nSupport
 
-class TakeOfferDoubleSubmissionTest {
+/**
+ * With BasePresenter#blockInteractivityOnAttached, the Review screen prevents rapid taps
+ * right after navigation by keeping isInteractive false briefly, then re-enabling it.
+ * This test verifies that behavior at the presenter layer.
+ */
+class TakeOfferReviewInteractivityTest {
 
     private val testDispatcher = UnconfinedTestDispatcher()
 
     @BeforeTest
     fun setup() {
         Dispatchers.setMain(testDispatcher)
+        startKoin {
+            modules(
+                module {
+                    single { CoroutineExceptionHandlerSetup() }
+                    factory<CoroutineJobsManager> {
+                        DefaultCoroutineJobsManager().apply {
+                            get<CoroutineExceptionHandlerSetup>().setupExceptionHandler(this)
+                        }
+                    }
+                }
+            )
+        }
+        I18nSupport.initialize("en")
     }
 
     @AfterTest
     fun tearDown() {
+        stopKoin()
         Dispatchers.resetMain()
     }
 
-    @Ignore("Covered by UI-level interactivity lock on the review screen")
+    private class TestPresenter(mainPresenter: MainPresenter) : BasePresenter(mainPresenter) {
+        override val blockInteractivityOnAttached: Boolean = true
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
-    fun takeOffer_isCalledOnlyOnce_whenInvokedTwiceQuickly() = runTest(testDispatcher) {
+    fun interactivity_isBlockedBriefly_onViewAttached_thenReEnabled() = runTest(testDispatcher) {
         // Arrange
         val mainPresenter = mockk<MainPresenter>(relaxed = true)
-        val marketPriceService = mockk<MarketPriceServiceFacade>(relaxed = true)
-        every { marketPriceService.findMarketPriceItem(any()) } returns mockk<MarketPriceItem>(relaxed = true)
+        val presenter = TestPresenter(mainPresenter)
 
-        val tradesService = mockk<TradesServiceFacade>()
-        coEvery { tradesService.takeOffer(any(), any(), any(), any(), any(), any(), any()) } coAnswers {
-            // Simulate a bit of work so the second call overlaps
-            delay(200)
-            Result.success("trade-1")
-        }
-        coEvery { tradesService.selectOpenTrade(any()) } returns Unit
+        // Sanity: starts interactive by default
+        assertTrue(presenter.isInteractive.value)
 
-        val presenter = TakeOfferPresenter(mainPresenter, marketPriceService, tradesService)
-        presenter.takeOfferModel = TakeOfferPresenter.TakeOfferModel().apply {
-            offerItemPresentationVO = mockk(relaxed = true)
-            baseAmount = CoinVOFactory.bitcoinFrom(1000)
-            quoteAmount = FiatVOFactory.from(10000, "JPY")
-            baseSidePaymentMethod = "BTC_ONCHAIN"
-            quoteSidePaymentMethod = "WISE"
-        }
+        // Act: attach view triggers BasePresenter blockInteractivityOnAttached path
+        presenter.onViewAttached()
 
-        // Act: launch 2 concurrent invocations
-        val first = async { presenter.takeOffer() }
-        val second = async { presenter.takeOffer() }
-        first.await()
-        second.await()
+        // Immediately after attach, interactivity is disabled
+        assertFalse(presenter.isInteractive.value)
 
-        // Assert: service takeOffer should be called exactly once
-        coVerify(exactly = 1) { tradesService.takeOffer(any(), any(), any(), any(), any(), any(), any()) }
+        // After the smallest perceptive delay, interactivity is re-enabled
+        advanceTimeBy(BasePresenter.SMALLEST_PERCEPTIVE_DELAY)
+        runCurrent()
+        assertTrue(presenter.isInteractive.value)
     }
 }
 

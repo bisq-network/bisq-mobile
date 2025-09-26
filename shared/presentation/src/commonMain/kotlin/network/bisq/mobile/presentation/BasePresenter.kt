@@ -198,7 +198,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     protected fun enableInteractive() {
         launchUI {
-            delay(250L)
+            delay(SMALLEST_PERCEPTIVE_DELAY)
             _isInteractive.value = true
         }
     }
@@ -605,9 +605,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     private fun blockInteractivityForBriefMoment() {
         disableInteractive()
-        launchUI {
-            delay(SMALLEST_PERCEPTIVE_DELAY)
-            enableInteractive()
-        }
+        enableInteractive()
     }
 }
