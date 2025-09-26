@@ -14,7 +14,6 @@ import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class CreateOfferDirectionPresenter(
@@ -79,9 +78,9 @@ class CreateOfferDirectionPresenter(
         navigateToOfferbookTab()
     }
 
-    fun showLearnReputation() {
+    fun onNavigateToReputation() {
+        navigateTo(Routes.Reputation)
         setShowSellerReputationWarning(false)
-        navigateToUrl(BisqLinks.BUILD_REPUTATION_WIKI_URL)
     }
 
     fun onDismissSellerReputationWarning() {

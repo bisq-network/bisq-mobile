@@ -17,12 +17,14 @@ import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.button.BisqFABAddButton
+import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.WebLinkConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
@@ -92,17 +94,31 @@ fun OfferbookScreen() {
     }
 
     if (showNotEnoughReputationDialog) {
-        WebLinkConfirmationDialog(
-            link = BisqLinks.BUILD_REPUTATION_WIKI_URL,
-            headline = presenter.notEnoughReputationHeadline,
-            message = presenter.notEnoughReputationMessage,
-            confirmButtonText = "confirmation.yes".i18n(),
-            dismissButtonText = "hyperlinks.openInBrowser.no".i18n(),
-            onConfirm = { presenter.onLearnHowToBuildReputation() },
-            onDismiss = { presenter.onDismissNotEnoughReputationDialog() }
-        )
+        if (presenter.isReputationWarningForSellerAsTaker) {
+            ConfirmationDialog(
+                headline = presenter.notEnoughReputationHeadline,
+                headlineLeftIcon = { WarningIcon() },
+                headlineColor = BisqTheme.colors.warning,
+                message = presenter.notEnoughReputationMessage,
+                confirmButtonText = "confirmation.yes".i18n(),
+                dismissButtonText = "action.cancel".i18n(),
+                onConfirm = { presenter.onNavigateToReputation() },
+                onDismiss = { presenter.onDismissNotEnoughReputationDialog() }
+            )
+        } else {
+            WebLinkConfirmationDialog(
+                link = BisqLinks.REPUTATION_WIKI_URL,
+                headline = presenter.notEnoughReputationHeadline,
+                headlineLeftIcon = { WarningIcon() },
+                headlineColor = BisqTheme.colors.warning,
+                message = presenter.notEnoughReputationMessage,
+                confirmButtonText = "confirmation.yes".i18n(),
+                dismissButtonText = "hyperlinks.openInBrowser.no".i18n(),
+                onConfirm = { presenter.onOpenReputationWiki() },
+                onDismiss = { presenter.onDismissNotEnoughReputationDialog() }
+            )
+        }
     }
-
 }
 
 @Composable

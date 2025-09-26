@@ -36,7 +36,7 @@ fun BisqDialog(
         Card(
             modifier = Modifier.wrapContentHeight(),
             colors = CardColors(
-                containerColor = BisqTheme.colors.dark_grey40,
+                containerColor = BisqTheme.colors.dark_grey30,
                 contentColor = Color.Unspecified,
                 disabledContainerColor = Color.Unspecified,
                 disabledContentColor = Color.Unspecified,

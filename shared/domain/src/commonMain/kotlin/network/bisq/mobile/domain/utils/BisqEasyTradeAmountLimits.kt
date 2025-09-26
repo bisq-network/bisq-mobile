@@ -102,7 +102,7 @@ object BisqEasyTradeAmountLimits {
             }.fold(
                 onSuccess = { it.totalScore },
                 onFailure = { exception ->
-                    logger.e("Exception at reputationServiceFacade.getReputation", exception)
+                    logger.d("Exception at reputationServiceFacade.getReputation", exception)
                     0L // Default to zero score on failure
                 }
             )

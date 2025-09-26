@@ -66,6 +66,7 @@ class OfferbookPresenter(
 
     var notEnoughReputationHeadline: String = ""
     var notEnoughReputationMessage: String = ""
+    var isReputationWarningForSellerAsTaker: Boolean = false
 
     private var selectedOffer: OfferItemPresentationModel? = null
 
@@ -97,44 +98,44 @@ class OfferbookPresenter(
             ) { offers, direction, selectedMarket, _ ->
                 Triple(offers, direction, selectedMarket)
             }
-            .mapLatest { (offers, direction, selectedMarket) ->
-                log.d { "OfferbookPresenter filtering - Selected market: ${selectedMarket.market.quoteCurrencyCode}, Direction: $direction, Input offers: ${offers.size}" }
+                .mapLatest { (offers, direction, selectedMarket) ->
+                    log.d { "OfferbookPresenter filtering - Selected market: ${selectedMarket.market.quoteCurrencyCode}, Direction: $direction, Input offers: ${offers.size}" }
 
-                val filtered = mutableListOf<OfferItemPresentationModel>()
-                var directionFilteredCount = 0
-                var ignoredUserFilteredCount = 0
+                    val filtered = mutableListOf<OfferItemPresentationModel>()
+                    var directionFilteredCount = 0
+                    var ignoredUserFilteredCount = 0
 
-                for (item in offers) {
-                    val offerCurrency = item.bisqEasyOffer.market.quoteCurrencyCode
-                    val offerDirection = item.bisqEasyOffer.direction.mirror
-                    val isIgnoredUser = isOfferFromIgnoredUserCached(item.bisqEasyOffer)
+                    for (item in offers) {
+                        val offerCurrency = item.bisqEasyOffer.market.quoteCurrencyCode
+                        val offerDirection = item.bisqEasyOffer.direction.mirror
+                        val isIgnoredUser = isOfferFromIgnoredUserCached(item.bisqEasyOffer)
 
-                    log.v { "Offer ${item.offerId} - Currency: $offerCurrency, Direction: $offerDirection, IsIgnored: $isIgnoredUser" }
+                        log.v { "Offer ${item.offerId} - Currency: $offerCurrency, Direction: $offerDirection, IsIgnored: $isIgnoredUser" }
 
-                    if (offerDirection == direction) {
-                        directionFilteredCount++
-                        if (!isIgnoredUser) {
-                            filtered += item
-                            log.v { "Offer ${item.offerId} included - Currency: $offerCurrency, Amount: ${item.formattedQuoteAmount}" }
+                        if (offerDirection == direction) {
+                            directionFilteredCount++
+                            if (!isIgnoredUser) {
+                                filtered += item
+                                log.v { "Offer ${item.offerId} included - Currency: $offerCurrency, Amount: ${item.formattedQuoteAmount}" }
+                            } else {
+                                ignoredUserFilteredCount++
+                                log.v { "Offer ${item.offerId} filtered out (ignored user)" }
+                            }
                         } else {
-                            ignoredUserFilteredCount++
-                            log.v { "Offer ${item.offerId} filtered out (ignored user)" }
+                            log.v { "Offer ${item.offerId} filtered out (wrong direction: $offerDirection != $direction)" }
                         }
-                    } else {
-                        log.v { "Offer ${item.offerId} filtered out (wrong direction: $offerDirection != $direction)" }
                     }
-                }
 
-                log.d { "OfferbookPresenter filtering results - Market: ${selectedMarket.market.quoteCurrencyCode}, Direction matches: $directionFilteredCount, Ignored users filtered: $ignoredUserFilteredCount, Final count: ${filtered.size}" }
-                filtered
-            }
-            .collectLatest { filtered ->
-                val processed = processAllOffers(filtered)
-                val sorted = processed.sortedWith(
-                    compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
-                _sortedFilteredOffers.value = sorted
-                log.d { "OfferbookPresenter final result - ${sorted.size} offers displayed for market" }
-            }
+                    log.d { "OfferbookPresenter filtering results - Market: ${selectedMarket.market.quoteCurrencyCode}, Direction matches: $directionFilteredCount, Ignored users filtered: $ignoredUserFilteredCount, Final count: ${filtered.size}" }
+                    filtered
+                }
+                .collectLatest { filtered ->
+                    val processed = processAllOffers(filtered)
+                    val sorted = processed.sortedWith(
+                        compareByDescending<OfferItemPresentationModel> { it.bisqEasyOffer.date }.thenBy { it.bisqEasyOffer.id })
+                    _sortedFilteredOffers.value = sorted
+                    log.d { "OfferbookPresenter final result - ${sorted.size} offers displayed for market" }
+                }
         }
     }
 
@@ -335,8 +336,10 @@ class OfferbookPresenter(
         // val canBuyerTakeOffer = isReputationNotCached || sellersScore >= requiredReputationScoreForMinOrFixed
         val canBuyerTakeOffer = sellersScore >= requiredReputationScoreForMinOrFixed
         if (!canBuyerTakeOffer) {
-            val link = "hyperlinks.openInBrowser.attention".i18n(BisqLinks.BUILD_REPUTATION_WIKI_URL)
-            if (bisqEasyOffer.direction == DirectionEnum.SELL) {
+            val link = "hyperlinks.openInBrowser.attention".i18n(BisqLinks.REPUTATION_WIKI_URL)
+            val takersDirection = bisqEasyOffer.direction.mirror
+            isReputationWarningForSellerAsTaker = takersDirection == DirectionEnum.SELL
+            if (takersDirection == DirectionEnum.BUY) {
                 // SELL offer: Maker wants to sell Bitcoin, so they are the seller
                 // Taker (me) wants to buy Bitcoin - checking if seller has enough reputation
                 val learnMore = "mobile.reputation.learnMore".i18n()
@@ -347,11 +350,10 @@ class OfferbookPresenter(
                     sellersScore,
                     if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,
                     if (isAmountRangeOffer) minFiatAmount else maxFiatAmount
-                ) + "\n\n" + learnMore + "\n\n\n" + link
+                ) + "\n\n" + learnMore + "\n\n" + link
             } else {
                 // BUY offer: Maker wants to buy Bitcoin, so taker becomes the seller
                 // Taker (me) wants to sell Bitcoin - checking if I have enough reputation
-                val learnMore = "mobile.reputation.buildReputation".i18n()
                 notEnoughReputationHeadline = "chat.message.takeOffer.seller.insufficientScore.headline".i18n()
                 val warningKey = if (isAmountRangeOffer) "chat.message.takeOffer.seller.insufficientScore.rangeAmount.warning"
                 else "chat.message.takeOffer.seller.insufficientScore.fixedAmount.warning"
@@ -359,7 +361,7 @@ class OfferbookPresenter(
                     sellersScore,
                     if (isAmountRangeOffer) requiredReputationScoreForMinOrFixed else requiredReputationScoreForMaxOrFixed,
                     if (isAmountRangeOffer) minFiatAmount else maxFiatAmount
-                ) + "\n\n" + learnMore + "\n\n\n" + link
+                ) + "\n\n" + "mobile.reputation.warning.navigateToReputation".i18n()
             }
         }
 
@@ -379,10 +381,10 @@ class OfferbookPresenter(
         try {
             val selectedMarket = offersServiceFacade.selectedOfferbookMarket.value.market
             createOfferPresenter.onStartCreateOffer()
-            
+
             // Check if a market is already selected (not EMPTY)
             val hasValidMarket = selectedMarket.baseCurrencyCode.isNotEmpty() && selectedMarket.quoteCurrencyCode.isNotEmpty()
-            
+
             if (hasValidMarket) {
                 // Use the already selected market
                 createOfferPresenter.commitMarket(selectedMarket)
@@ -391,7 +393,7 @@ class OfferbookPresenter(
                 // No market selected, go to market selection
                 createOfferPresenter.skipCurrency = false
             }
-            
+
             enableInteractive()
             navigateTo(Routes.CreateOfferDirection)
         } catch (e: Exception) {
@@ -421,7 +423,12 @@ class OfferbookPresenter(
         _showNotEnoughReputationDialog.value = false
     }
 
-    fun onLearnHowToBuildReputation() {
+    fun onNavigateToReputation() {
+        navigateTo(Routes.Reputation)
+        _showNotEnoughReputationDialog.value = false
+    }
+
+    fun onOpenReputationWiki() {
         _showNotEnoughReputationDialog.value = false
         navigateToUrl(BisqLinks.BUILD_REPUTATION_WIKI_URL)
     }

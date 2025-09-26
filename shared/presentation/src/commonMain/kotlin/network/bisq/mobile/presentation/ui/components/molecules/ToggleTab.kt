@@ -100,7 +100,7 @@ fun <T> ToggleTab(
                     .offset(x = animatedOffset)
                     .width(animatedWidth)
                     .height(maxHeightDp)
-                    .background(BisqTheme.colors.primary, RoundedCornerShape(4.dp))
+                    .background(BisqTheme.colors.primaryDim, RoundedCornerShape(4.dp))
                     .wrapContentSize()
             ) {
                 BisqText.baseRegular(

@@ -93,21 +93,22 @@ fun SupportScreen() {
         BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding2X, bottom = BisqUIConstants.ScreenPadding3X))
 
         // AI support
-        BisqText.h3Light("mobile.support.ai.headline".i18n())
-        BisqGap.V2()
-        BisqText.baseLight(
-            text = "mobile.support.ai.info".i18n() + " ",
-            color = BisqTheme.colors.light_grey50,
-        )
-        LinkButton(
-            text = "mobile.support.ai.open".i18n(),
-            link = BisqLinks.BISQ_AI,
-            onClick = { presenter.onOpenWebUrl(BisqLinks.BISQ_AI) },
-            color = BisqTheme.colors.primary,
-            padding = PaddingValues(all = BisqUIConstants.Zero),
-        )
+        // Not ready for release, but keep it for later
+        /* BisqText.h3Light("mobile.support.ai.headline".i18n())
+         BisqGap.V2()
+         BisqText.baseLight(
+             text = "mobile.support.ai.info".i18n() + " ",
+             color = BisqTheme.colors.light_grey50,
+         )
+         LinkButton(
+             text = "mobile.support.ai.open".i18n(),
+             link = BisqLinks.BISQ_AI,
+             onClick = { presenter.onOpenWebUrl(BisqLinks.BISQ_AI) },
+             color = BisqTheme.colors.primary,
+             padding = PaddingValues(all = BisqUIConstants.Zero),
+         )
 
-        BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding2X, bottom = BisqUIConstants.ScreenPadding3X))
+         BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding2X, bottom = BisqUIConstants.ScreenPadding3X))*/
 
         // troubleShooting
         BisqText.h3Light("mobile.support.troubleShooting.headline".i18n())

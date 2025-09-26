@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -20,7 +21,7 @@ fun BisqStepProgressBar(
     modifier: Modifier = Modifier
         .fillMaxWidth()
         .height(BisqUIConstants.ScreenPadding2),
-    gapSize: Dp = BisqUIConstants.ScreenPadding2,
+    gapSize: Dp = 3.dp,
     barHeight: Dp = BisqUIConstants.ScreenPadding2,
 ) {
     val activeColor = BisqTheme.colors.primary
