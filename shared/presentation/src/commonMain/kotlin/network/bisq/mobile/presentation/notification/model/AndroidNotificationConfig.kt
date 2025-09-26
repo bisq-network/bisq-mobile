@@ -88,5 +88,5 @@ class AndroidNotificationConfig {
     /**
      * extra actions that are shown under notification
      */
-    val actions: List<NotificationButton>? = null
+    var actions: List<NotificationButton>? = null
 }
