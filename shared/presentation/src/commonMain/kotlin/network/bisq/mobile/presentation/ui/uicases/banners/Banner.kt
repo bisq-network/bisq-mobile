@@ -61,11 +61,19 @@ fun Banner() {
 
     var shouldBeVisible by remember { mutableStateOf(false) }
     LaunchedEffect(isMainContentVisible, allDataReceived, numConnections) {
-        if (isMainContentVisible && !allDataReceived && numConnections > 0) {
-            shouldBeVisible = true
-        } else {
-            delay(4000) // enforce hide delay even if it toggles rapidly
-            shouldBeVisible = false
+        when {
+            isMainContentVisible && !allDataReceived && numConnections > 0 -> {
+                shouldBeVisible = true
+            }
+
+            allDataReceived && shouldBeVisible -> {
+                delay(4000)
+                shouldBeVisible = false
+            }
+
+            else -> {
+                shouldBeVisible = false
+            }
         }
     }
 

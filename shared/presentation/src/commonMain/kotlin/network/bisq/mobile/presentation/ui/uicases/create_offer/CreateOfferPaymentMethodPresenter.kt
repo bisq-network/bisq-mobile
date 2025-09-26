@@ -12,8 +12,8 @@ class CreateOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter, private val createOfferPresenter: CreateOfferPresenter
 ) : BasePresenter(mainPresenter) {
 
-    var quoteSideHeadline: String
-    var baseSideHeadline: String
+    val quoteSideHeadline: String
+    val baseSideHeadline: String
     val availableQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow((emptySet()))
     val availableBaseSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow((emptySet()))
     val selectedQuoteSidePaymentMethods: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())

@@ -26,7 +26,9 @@ class NodeConnectivityService(
                     hasOnceReceivedAllData = true
                 }
 
-                if (numConnections <= 0) {
+                if (numConnections < 0) {
+                    _status.value = ConnectivityStatus.BOOTSTRAPPING
+                } else if (numConnections == 0) {
                     if (hasOnceReceivedAllData) {
                         _status.value = ConnectivityStatus.RECONNECTING
                     } else {
