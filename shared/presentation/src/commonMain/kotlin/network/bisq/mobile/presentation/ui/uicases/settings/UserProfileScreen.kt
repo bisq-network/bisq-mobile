@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -75,7 +74,6 @@ fun UserProfileScreen() {
     BisqScrollScaffold(
         topBar = { TopBar("user.userProfile".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
-        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf),
         snackbarHostState = presenter.getSnackState(),
         isInteractive = isInteractive,
         shouldBlurBg = showDeleteConfirmation,

@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.components.layout
 
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
@@ -32,7 +34,11 @@ fun BisqScrollScaffold(
     content: @Composable ColumnScope.() -> Unit
 ) {
     Scaffold(
-        modifier = Modifier.blur(if (shouldBlurBg) BisqUIConstants.ScreenPaddingHalf else BisqUIConstants.Zero),
+        modifier = Modifier
+            .then(
+                if (shouldBlurBg) Modifier.blur(BisqUIConstants.ScreenPaddingHalf)
+                else Modifier
+            ),
         containerColor = BisqTheme.colors.backgroundColor,
         topBar = topBar ?: {},
         bottomBar = bottomBar ?: {},
