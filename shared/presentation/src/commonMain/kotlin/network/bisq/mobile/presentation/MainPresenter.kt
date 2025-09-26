@@ -48,10 +48,6 @@ open class MainPresenter(
     override lateinit var navController: NavHostController
     override lateinit var tabNavController: NavHostController
 
-    private val _isTabGraphReady = MutableStateFlow(false)
-    override val isTabGraphReady: StateFlow<Boolean> get() = _isTabGraphReady.asStateFlow()
-    override fun setTabGraphReady(ready: Boolean) { _isTabGraphReady.value = ready }
-
     // Observable state
     private val _isMainContentVisible = MutableStateFlow(false)
     override val isMainContentVisible: StateFlow<Boolean> get() = _isMainContentVisible.asStateFlow()
