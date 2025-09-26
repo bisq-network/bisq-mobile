@@ -48,97 +48,11 @@ class NotificationControllerImpl : NotificationController, Logging {
             config.subtitle?.let { setSubtitle(it) }
             config.body?.let { setBody(it) }
             config.badgeCount?.let { setBadge(NSNumber(it)) }
-            val soundName = config.ios?.sound
-            val isCritical = config.ios?.critical == true
-            val criticalVolume = config.ios?.criticalVolume
-            when (soundName) {
-                "default" -> {
-                    if (isCritical) {
-                        if (criticalVolume != null) {
-                            setSound(
-                                UNNotificationSound.defaultCriticalSoundWithAudioVolume(
-                                    criticalVolume
-                                )
-                            )
-                        } else {
-                            setSound(UNNotificationSound.defaultCriticalSound())
-                        }
-                    } else {
-                        setSound(UNNotificationSound.defaultSound())
-                    }
-                }
-
-                null -> {
-                    setSound(null)
-                }
-
-                else -> {
-                    if (isCritical) {
-                        if (criticalVolume != null) {
-                            setSound(
-                                UNNotificationSound.criticalSoundNamed(
-                                    soundName,
-                                    criticalVolume
-                                )
-                            )
-                        } else {
-                            setSound(UNNotificationSound.criticalSoundNamed(soundName))
-                        }
-                    } else {
-                        setSound(UNNotificationSound.soundNamed(soundName))
-                    }
-                }
-            }
-
+            configureSound(this, config)
             config.ios?.interruptionLevel?.let {
                 setInterruptionLevel(it.toPlatformEnum())
             }
-            val actions = mutableListOf<UNNotificationAction>()
-            val userInfo = mutableMapOf<Any?, Any>()
-            config.ios?.actions?.forEachIndexed { index, action ->
-                val pressAction = action.pressAction
-                when (pressAction) {
-                    is NotificationPressAction.Route,
-                    is NotificationPressAction.Default -> {
-                        val uri =
-                            Routes.getDeeplinkUriString(
-                                if (pressAction is NotificationPressAction.Route)
-                                    pressAction.route
-                                else Routes.TabOpenTradeList
-                            )
-                        val unAction = UNNotificationAction.actionWithIdentifier(
-                            "route_$index",
-                            action.title,
-                            UNNotificationActionOptionForeground
-                        )
-                        actions.add(unAction)
-                        userInfo["route_$index"] = uri
-                    }
-                }
-            }
-            if (actions.isNotEmpty()) {
-                val categoryId = config.id
-                // create category with actions
-                val category = UNNotificationCategory.categoryWithIdentifier(
-                    categoryId,
-                    actions,
-                    emptyList<String>(),
-                    UNNotificationCategoryOptionNone,
-                )
-                // Register the category with the notification center
-                val center = UNUserNotificationCenter.currentNotificationCenter()
-                center.getNotificationCategoriesWithCompletionHandler { existing ->
-                    // Merge existing categories with the new one
-                    val newCategory = setOf(category)
-                    if (existing != null) {
-                        center.setNotificationCategories(existing + newCategory)
-                    } else {
-                        center.setNotificationCategories(newCategory)
-                    }
-                }
-                setCategoryIdentifier(categoryId)
-                setUserInfo(userInfo)
-            }
+            configureActions(this, config)
         }
 
         val requestId = config.id
@@ -177,4 +91,96 @@ class NotificationControllerImpl : NotificationController, Logging {
         }
     }
 
+    private fun configureSound(content: UNMutableNotificationContent, config: NotificationConfig) {
+        val soundName = config.ios?.sound
+        val isCritical = config.ios?.critical == true
+        val criticalVolume = config.ios?.criticalVolume
+        when (soundName) {
+            "default" -> {
+                if (isCritical) {
+                    if (criticalVolume != null) {
+                        content.setSound(
+                            UNNotificationSound.defaultCriticalSoundWithAudioVolume(
+                                criticalVolume
+                            )
+                        )
+                    } else {
+                        content.setSound(UNNotificationSound.defaultCriticalSound())
+                    }
+                } else {
+                    content.setSound(UNNotificationSound.defaultSound())
+                }
+            }
+
+            null -> {
+                content.setSound(null)
+            }
+
+            else -> {
+                if (isCritical) {
+                    if (criticalVolume != null) {
+                        content.setSound(
+                            UNNotificationSound.criticalSoundNamed(
+                                soundName,
+                                criticalVolume
+                            )
+                        )
+                    } else {
+                        content.setSound(UNNotificationSound.criticalSoundNamed(soundName))
+                    }
+                } else {
+                    content.setSound(UNNotificationSound.soundNamed(soundName))
+                }
+            }
+        }
+    }
+
+    private fun configureActions(content: UNMutableNotificationContent, config: NotificationConfig) {
+        val actions = mutableListOf<UNNotificationAction>()
+        val userInfo = mutableMapOf<Any?, Any>()
+        config.ios?.actions?.forEachIndexed { index, action ->
+            val pressAction = action.pressAction
+            when (pressAction) {
+                is NotificationPressAction.Route,
+                is NotificationPressAction.Default -> {
+                    val uri =
+                        Routes.getDeeplinkUriString(
+                            if (pressAction is NotificationPressAction.Route)
+                                pressAction.route
+                            else Routes.TabOpenTradeList
+                        )
+                    val unAction = UNNotificationAction.actionWithIdentifier(
+                        "route_$index",
+                        action.title,
+                        UNNotificationActionOptionForeground
+                    )
+                    actions.add(unAction)
+                    userInfo["route_$index"] = uri
+                }
+            }
+        }
+        if (actions.isNotEmpty()) {
+            val categoryId = config.id
+            // create category with actions
+            val category = UNNotificationCategory.categoryWithIdentifier(
+                categoryId,
+                actions,
+                emptyList<String>(),
+                UNNotificationCategoryOptionNone,
+            )
+            // Register the category with the notification center
+            val center = UNUserNotificationCenter.currentNotificationCenter()
+            center.getNotificationCategoriesWithCompletionHandler { existing ->
+                // Merge existing categories with the new one
+                val newCategory = setOf(category)
+                if (existing != null) {
+                    center.setNotificationCategories(existing + newCategory)
+                } else {
+                    center.setNotificationCategories(newCategory)
+                }
+            }
+            content.setCategoryIdentifier(categoryId)
+            content.setUserInfo(userInfo)
+        }
+    }
 }
