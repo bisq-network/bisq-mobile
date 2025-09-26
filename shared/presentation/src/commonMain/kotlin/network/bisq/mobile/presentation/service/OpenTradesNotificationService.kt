@@ -418,7 +418,11 @@ class OpenTradesNotificationService(
             this.title = title
             this.body = body
             android {
-                channelId = AndroidNotificationChannels.TRADE_AND_UPDATES_CHANNEL_ID
+                channelId = if (isChatNotif) {
+                    AndroidNotificationChannels.USER_MESSAGES_CHANNEL_ID
+                } else {
+                    AndroidNotificationChannels.TRADE_UPDATES_CHANNEL_ID
+                }
                 // TODO: fix after nav refactor
                 pressAction = if (isChatNotif) {
                     category = AndroidNotificationCategory.CATEGORY_MESSAGE

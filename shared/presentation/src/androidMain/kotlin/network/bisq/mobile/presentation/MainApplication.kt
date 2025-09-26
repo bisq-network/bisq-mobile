@@ -1,13 +1,21 @@
 package network.bisq.mobile.presentation
 
 import android.app.Application
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.Context
+import android.media.AudioAttributes
+import android.os.Build
+import androidx.core.app.NotificationManagerCompat
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.domain.getDeviceLanguageCode
+import network.bisq.mobile.domain.helper.ResourceUtils
 import network.bisq.mobile.domain.setDefaultLocale
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.SystemOutFilter
 import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.notification.AndroidNotificationChannels
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -22,6 +30,7 @@ abstract class MainApplication : Application(), Logging {
         setupI18n()
         setupSystemOutFiltering()
         setupKoinDI(this)
+        createNotificationChannels()
         onCreated()
     }
 
@@ -59,5 +68,67 @@ abstract class MainApplication : Application(), Logging {
             completeBlockInRelease = true
         )
         log.i { "System.out filtering configured for ${if (isDebug()) "debug" else "release"} build" }
+    }
+
+    private fun createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val serviceChannel = NotificationChannel(
+                AndroidNotificationChannels.BISQ_SERVICE_CHANNEL_ID,
+                "mobile.android.channels.service".i18n(),
+                NotificationManager.IMPORTANCE_DEFAULT // Default importance to avoid OS killing the app
+            ).apply {
+                enableLights(false)
+                enableVibration(false)
+                setShowBadge(false)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    setAllowBubbles(false)
+                }
+                // trick to have a sound but have it silent, as it's required for IMPORTANCE_DEFAULT
+                val soundUri = ResourceUtils.getSoundUri(applicationContext, "silent.mp3")
+                if (soundUri != null) {
+                    val audioAttributes =
+                        AudioAttributes.Builder()
+                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                            .build()
+                    setSound(soundUri, audioAttributes)
+                } else {
+                    log.w { "Unable to retrieve silent.mp3 sound uri for service channel" }
+                }
+            }
+
+            val tradeUpdatesChannel = NotificationChannel(
+                AndroidNotificationChannels.TRADE_UPDATES_CHANNEL_ID,
+                "mobile.android.channels.tradeState".i18n(),
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                enableLights(false)
+                enableVibration(true)
+                setShowBadge(true)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    setAllowBubbles(false)
+                }
+            }
+
+            val userMessagesChannel = NotificationChannel(
+                AndroidNotificationChannels.USER_MESSAGES_CHANNEL_ID,
+                "mobile.android.channels.userMessages".i18n(),
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                enableLights(false)
+                enableVibration(true)
+                setShowBadge(true)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    setAllowBubbles(false)
+                }
+            }
+
+            val manager =
+                NotificationManagerCompat.from(applicationContext)
+            manager.createNotificationChannel(serviceChannel)
+            manager.createNotificationChannel(tradeUpdatesChannel)
+            manager.createNotificationChannel(userMessagesChannel)
+            log.i { "Created notification channels" }
+        }
     }
 } 

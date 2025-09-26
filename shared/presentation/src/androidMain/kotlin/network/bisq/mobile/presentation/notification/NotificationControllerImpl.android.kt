@@ -1,13 +1,9 @@
 package network.bisq.mobile.presentation.notification
 
 import android.annotation.SuppressLint
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.media.AudioAttributes
-import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
@@ -15,7 +11,6 @@ import androidx.core.net.toUri
 import network.bisq.mobile.domain.helper.ResourceUtils
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.utils.Logging
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.notification.model.NotificationPressAction
 import network.bisq.mobile.presentation.notification.model.toNotificationCompat
@@ -32,11 +27,6 @@ class NotificationControllerImpl(
     }
 
     private val context get() = appForegroundController.context
-
-
-    override fun doPlatformSpecificSetup() {
-        createNotificationChannels()
-    }
 
     override suspend fun hasPermission(): Boolean {
         return hasPermissionSync()
@@ -143,57 +133,6 @@ class NotificationControllerImpl(
 
     override fun cancel(id: String) {
         NotificationManagerCompat.from(context).cancel(id.hashCode())
-    }
-
-    private fun createNotificationChannels() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val serviceChannel = NotificationChannel(
-                AndroidNotificationChannels.BISQ_SERVICE_CHANNEL_ID,
-                "mobile.android.channels.service".i18n(),
-                NotificationManager.IMPORTANCE_DEFAULT // Default importance to avoid OS killing the app
-            ).apply {
-                description = "Bisq trade notifications and updates"
-                enableLights(false)
-                enableVibration(false)
-                setShowBadge(false)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    setAllowBubbles(false)
-                }
-                // trick to have a sound but have it silent, as it's required for IMPORTANCE_DEFAULT
-                val soundUri = ResourceUtils.getSoundUri(context, "silent.mp3")
-                if (soundUri != null) {
-                    val audioAttributes =
-                        AudioAttributes.Builder()
-                            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
-                            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                            .build()
-                    setSound(soundUri, audioAttributes)
-                } else {
-                    log.w { "Unable to retrieve silent.mp3 sound uri for service channel" }
-                }
-            }
-
-            val tradeAndUpdatesChannel = NotificationChannel(
-                AndroidNotificationChannels.TRADE_AND_UPDATES_CHANNEL_ID,
-                "mobile.android.channels.tradeAndUpdates".i18n(),
-                NotificationManager.IMPORTANCE_DEFAULT
-            ).apply {
-                description = "Bisq trade notifications and updates"
-                enableLights(false) // Reduce aggressive behavior
-                enableVibration(true)
-                setShowBadge(true)
-                // Keep bubbles disabled for now
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                    setAllowBubbles(false)
-                }
-            }
-
-            val manager =
-                NotificationManagerCompat.from(context)
-            manager.createNotificationChannel(serviceChannel)
-            manager.createNotificationChannel(tradeAndUpdatesChannel)
-            log.i { "Created notification channels" }
-        }
     }
 
     override fun isAppInForeground(): Boolean {
