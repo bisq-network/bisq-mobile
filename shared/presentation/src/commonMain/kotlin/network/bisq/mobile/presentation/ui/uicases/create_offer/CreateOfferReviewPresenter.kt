@@ -40,6 +40,8 @@ class CreateOfferReviewPresenter(
     var formattedBaseRangeMaxAmount: String = ""
     var isRangeOffer: Boolean = false
 
+    override val blockInteractivityOnAttached: Boolean = true
+
     private val _showMediatorWaitingDialog = MutableStateFlow(false)
     val showMediatorWaitingDialog: StateFlow<Boolean> get() = _showMediatorWaitingDialog.asStateFlow()
 

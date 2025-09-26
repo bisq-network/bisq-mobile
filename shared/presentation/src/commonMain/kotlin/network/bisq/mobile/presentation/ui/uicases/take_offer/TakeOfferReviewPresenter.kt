@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,6 +43,8 @@ class TakeOfferReviewPresenter(
     var marketCodes: String
     var takersDirection: DirectionEnum
     lateinit var priceDetails: String
+
+    override val blockInteractivityOnAttached: Boolean = true
 
     private var takeOfferModel: TakeOfferPresenter.TakeOfferModel
 
@@ -103,6 +106,7 @@ class TakeOfferReviewPresenter(
         price = PriceQuoteFormatter.format(takeOfferModel.priceQuote, true, false)
         applyPriceDetails()
     }
+
 
     override fun onViewUnattaching() {
         super.onViewUnattaching()

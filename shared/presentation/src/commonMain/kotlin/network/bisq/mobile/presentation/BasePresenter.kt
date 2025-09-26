@@ -132,6 +132,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     companion object {
         const val NAV_GRAPH_MOUNTING_DELAY = 100L
         const val EXIT_WARNING_TIMEOUT = 3000L
+        const val SMALLEST_PERCEPTIVE_DELAY = 250L
         var isDemo = false
     }
 
@@ -149,6 +150,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     private val _isInteractive = MutableStateFlow(true)
     override val isInteractive: StateFlow<Boolean> get() = _isInteractive.asStateFlow()
     private val snackbarHostState: SnackbarHostState = SnackbarHostState()
+
+    protected open val blockInteractivityOnAttached = false
 
     override fun getSnackState(): SnackbarHostState {
         return snackbarHostState
@@ -398,7 +401,11 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     @CallSuper
     override fun onViewAttached() {
         log.i { "Lifecycle: View ${if (view != null) view!!::class.simpleName else ""} attached to presenter ${this::class.simpleName}" }
-        enableInteractive()
+        if (blockInteractivityOnAttached) {
+            blockInteractivityForBriefMoment()
+        } else {
+            enableInteractive()
+        }
 
         // In bisq2, UserActivityDetected is triggered on mouse move and key press events
         // In bisq-mobile, userActivityDetected is triggered on every screen navigation,
@@ -594,5 +601,13 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     protected fun <T> collectIO(flow: Flow<T>, collector: suspend (T) -> Unit): Job {
         return jobsManager.collectIO(flow, collector)
+    }
+
+    private fun blockInteractivityForBriefMoment() {
+        disableInteractive()
+        launchUI {
+            delay(SMALLEST_PERCEPTIVE_DELAY)
+            enableInteractive()
+        }
     }
 }
