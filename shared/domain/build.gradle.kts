@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.kotlin.serialization)
+    alias(libs.plugins.atomicfu)
 }
 
 version = project.findProperty("shared.version") as String
