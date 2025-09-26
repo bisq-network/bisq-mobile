@@ -116,9 +116,9 @@ class NotificationControllerImpl(
             }
         }
 
-        config.android.actions?.let {
-            if (it.isNotEmpty()) {
-                it.forEach { action ->
+        config.android.actions?.let { actionsList ->
+            if (actionsList.isNotEmpty()) {
+                actionsList.forEach { action ->
                     val pressAction = action.pressAction
                     // for now only Route is supported, we will add broadcast handlers and
                     // different types of action when necessary in a cross platform way
@@ -127,7 +127,9 @@ class NotificationControllerImpl(
                     } else {
                         null
                     }
-                    builder.addAction(NotificationCompat.Action(null, action.title, pendingIntent))
+                    pendingIntent?.let {
+                        builder.addAction(NotificationCompat.Action(null, action.title, it))
+                    }
                 }
             }
         }
@@ -190,7 +192,7 @@ class NotificationControllerImpl(
                 NotificationManagerCompat.from(context)
             manager.createNotificationChannel(serviceChannel)
             manager.createNotificationChannel(tradeAndUpdatesChannel)
-            log.i { "Created notification channel with IMPORTANCE_HIGH" }
+            log.i { "Created notification channels" }
         }
     }
 
