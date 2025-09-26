@@ -74,15 +74,9 @@ fun Banner() {
         enter = fadeIn(animationSpec = tween(durationMillis = duration)) +
                 expandVertically(animationSpec = tween(durationMillis = duration)),
         exit = fadeOut(
-            animationSpec = tween(
-                durationMillis = duration,
-                delayMillis = 4000 // We delay hiding by 4 seconds once all data is received
-            )
+            animationSpec = tween(durationMillis = duration)
         ) + shrinkVertically(
-            animationSpec = tween(
-                durationMillis = duration,
-                delayMillis = 4000
-            )
+            animationSpec = tween(durationMillis = duration)
         )
     )
     {
