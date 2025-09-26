@@ -32,6 +32,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.Bis
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.organisms.settings.AppPaymentAccountCard
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
@@ -81,6 +82,7 @@ fun PaymentAccountsScreen() {
     ) {
         if (showBottomSheet) {
             BisqBottomSheet(
+                containerColor = BisqTheme.colors.dark_grey20,
                 onDismissRequest = { showBottomSheet = false }
             ) {
                 AppPaymentAccountCard(

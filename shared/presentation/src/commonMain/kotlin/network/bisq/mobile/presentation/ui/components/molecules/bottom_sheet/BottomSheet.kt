@@ -20,6 +20,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @Composable
 fun BisqBottomSheet(
     onDismissRequest:() -> Unit,
+    containerColor: Color = BisqTheme.colors.dark_grey40,
     content: @Composable () -> Unit
 ) {
     ModalBottomSheet(
@@ -28,7 +29,7 @@ fun BisqBottomSheet(
         sheetState = rememberModalBottomSheetState(
             skipPartiallyExpanded = true,
         ),
-        containerColor = BisqTheme.colors.dark_grey40,
+        containerColor = containerColor,
         dragHandle = {
             Box(
                 modifier = Modifier.padding(top = 20.dp)
