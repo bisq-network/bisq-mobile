@@ -13,7 +13,7 @@ import bisqapps.shared.presentation.generated.resources.img_bot_image
 import bisqapps.shared.presentation.generated.resources.no_connections
 import bisqapps.shared.presentation.generated.resources.requesting_inventory
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus
 import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
 import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.REQUESTING_INVENTORY
 import org.jetbrains.compose.resources.painterResource
@@ -22,7 +22,7 @@ import org.jetbrains.compose.resources.painterResource
 fun UserIcon(
     platformImage: PlatformImage?,
     modifier: Modifier = Modifier,
-    connectivityStatus: ConnectivityService.ConnectivityStatus
+    connectivityStatus: ConnectivityStatus
 ) {
     Box(modifier = modifier.padding(0.dp), contentAlignment = Alignment.BottomEnd) {
         if (platformImage == null) {
@@ -37,12 +37,20 @@ fun UserIcon(
 }
 
 @Composable
-fun ConnectivityIndicator(connectivityStatus: ConnectivityService.ConnectivityStatus) {
-    if (connectivityStatus == CONNECTED_AND_DATA_RECEIVED) {
-        Image(painterResource(Res.drawable.connected_and_data_received), "Connected and data received")
-    } else if (connectivityStatus == REQUESTING_INVENTORY) {
-        Image(painterResource(Res.drawable.requesting_inventory), "Requesting inventory data")
-    } else {
-        Image(painterResource(Res.drawable.no_connections), "No connections")
+fun ConnectivityIndicator(connectivityStatus: ConnectivityStatus) {
+    val (iconRes, description) = when (connectivityStatus) {
+        CONNECTED_AND_DATA_RECEIVED ->
+            Res.drawable.connected_and_data_received to "Connected and data received"
+
+        REQUESTING_INVENTORY ->
+            Res.drawable.requesting_inventory to "Requesting inventory data"
+
+        else ->
+            Res.drawable.no_connections to "No connections"
     }
+
+    Image(
+        painter = painterResource(iconRes),
+        contentDescription = description
+    )
 }

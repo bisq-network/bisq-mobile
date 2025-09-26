@@ -12,6 +12,7 @@ class NodeConnectivityService(
     // Activated after application service is initialized.
     private var collectJob: Job? = null
     override fun activate() {
+        collectJob?.cancel()
         collectJob = serviceScope.launch {
             combine(nodeNetworkServiceFacade.numConnections, nodeNetworkServiceFacade.allDataReceived) { numConnections, allDataReceived ->
                 numConnections to allDataReceived

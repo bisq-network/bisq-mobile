@@ -159,11 +159,11 @@ private fun UserProfileScreenHeader(presenter: IUserProfilePresenter) {
             .padding(bottom = BisqUIConstants.ScreenPaddingHalf),
         contentAlignment = Alignment.Center
     ) {
-        // uniqueAvatar is never null here
         if (uniqueAvatar != null) {
             val painter = rememberPlatformImagePainter(uniqueAvatar!!)
             Image(painter = painter, contentDescription = "User icon", modifier = Modifier.size(120.dp))
         }
+        // Not handling the null case as the uniqueAvatar is never null here
     }
 }
 
