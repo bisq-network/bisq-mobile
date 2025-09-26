@@ -33,17 +33,21 @@ class ForegroundServiceControllerImpl(
         if (isRunning) {
             log.w { "Service already running, skipping start call" }
         } else {
-            isRunning = true
             log.i { "Starting Bisq Service.." }
             val intent = Intent(context, ForegroundService::class.java)
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                log.i { "OS supports foreground service" }
-                context.startForegroundService(intent)
-            } else {
-                // if the phone does not support foreground service
-                context.startService(intent)
+            try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    log.i { "OS supports foreground service" }
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+                isRunning = true
+                log.i { "Started Bisq Service" }
+            } catch (e: Exception) {
+                isRunning = false
+                log.e(e) { "Failed to start ForegroundService" }
             }
-            log.i { "Started Bisq Service" }
         }
     }
 
