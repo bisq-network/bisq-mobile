@@ -305,15 +305,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
                 delay(NAV_GRAPH_MOUNTING_DELAY)
             }
 
-            // Wait deterministically until the TabContainer's NavHost has mounted
-            try {
-                appPresenter?.isTabGraphReady
-                    ?.filter { it }
-                    ?.first()
-            } catch (e: Exception) {
-                log.w { "Proceeding without tabGraphReady signal due to: ${e.message}" }
-            }
-
             val tabNav = getRootTabNavController()
             val startRoute = tabNav.graph.startDestinationRoute ?: Graph.MAIN_SCREEN_GRAPH_KEY
 

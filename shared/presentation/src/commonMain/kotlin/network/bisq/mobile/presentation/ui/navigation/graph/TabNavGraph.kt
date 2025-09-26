@@ -18,9 +18,16 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.OpenTradeListScre
 import network.bisq.mobile.presentation.ui.uicases.settings.MiscItemsScreen
 
 @Composable
-fun TabNavGraph(navController: NavHostController) {
+fun TabNavGraph() {
 
+    val mainPresenter: AppPresenter = koinInject()
     val selectedTab = remember { mutableStateOf(Routes.TabHome.name) }
+    val navController = mainPresenter.getRootTabNavController()
+    val viewModelStoreOwner = LocalViewModelStoreOwner.current
+    DisposableEffect(viewModelStoreOwner) {
+        navController.setViewModelStore(viewModelStoreOwner!!.viewModelStore)
+        onDispose {}
+    }
 
     NavHost(
         modifier = Modifier.background(color = BisqTheme.colors.backgroundColor),

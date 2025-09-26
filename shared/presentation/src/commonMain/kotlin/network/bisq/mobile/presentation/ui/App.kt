@@ -71,10 +71,6 @@ interface AppPresenter : ViewPresenter {
 
     val showAllConnectionsLostDialogue: StateFlow<Boolean>
 
-    // Tab graph readiness to coordinate safe navigation
-    val isTabGraphReady: StateFlow<Boolean>
-    fun setTabGraphReady(ready: Boolean)
-
     val showReconnectOverlay: StateFlow<Boolean>
 
     // Actions
@@ -133,11 +129,12 @@ fun SafeInsetsContainer(
 fun App() {
     val presenter: AppPresenter = koinInject()
     val rootNavController = rememberNavController()
+    val tabNavController = rememberNavController()
     var isNavControllerSet by remember { mutableStateOf(false) }
 
     RememberPresenterLifecycle(presenter, {
         presenter.navController = rootNavController
-        // Tab NavController is now created and bound in TabContainerScreen to ensure correct ViewModelStore ownership
+        presenter.tabNavController = tabNavController
         isNavControllerSet = true
     })
 

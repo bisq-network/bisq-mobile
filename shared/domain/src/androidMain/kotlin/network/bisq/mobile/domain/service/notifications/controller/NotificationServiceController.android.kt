@@ -18,8 +18,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.helper.ResourceUtils
-import kotlinx.coroutines.flow.first
-
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.service.BisqForegroundService
 import network.bisq.mobile.domain.utils.Logging
@@ -50,7 +48,6 @@ actual class NotificationServiceController(private val appForegroundController: 
     private val serviceScope = CoroutineScope(SupervisorJob())
     private val observerJobs = mutableMapOf<StateFlow<*>, Job>()
     private var isRunning = false
-    private var startWatcherJob: Job? = null
     private val defaultDestination = MY_TRADES_TAB
 
     actual fun doPlatformSpecificSetup() {
@@ -70,54 +67,23 @@ actual class NotificationServiceController(private val appForegroundController: 
     actual override fun startService() {
         if (isRunning) {
             log.w { "Service already running, skipping start call" }
-            return
-        }
-        if (isAppInForeground()) {
-            log.i { "App is in foreground; waiting for background transition before starting service" }
-            if (startWatcherJob?.isActive == true) {
-                log.d { "Start watcher already active; skipping scheduling" }
-                return
-            }
-            startWatcherJob = serviceScope.launch(Dispatchers.Default) {
-                try {
-                    appForegroundController.isForeground
-                        .first { it.not() }
-                    if (!isRunning) {
-                        startServiceInternal()
-                    }
-                } catch (e: Exception) {
-                    log.e(e) { "Error while waiting for background transition" }
-                } finally {
-                    startWatcherJob = null
-                }
-            }
-            return
-        }
-        // If we're already in background now, cancel any pending watcher and start immediately
-        startWatcherJob?.cancel()
-        startWatcherJob = null
-        startServiceInternal()
-    }
-
-    private fun startServiceInternal() {
-        log.i { "Starting Bisq Service.." }
-        createNotificationChannels()
-        val intent = Intent(context, BisqForegroundService::class.java)
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            log.i { "OS supports foreground service" }
-            context.startForegroundService(intent)
         } else {
-            // if the phone does not support foreground service
-            context.startService(intent)
+            log.i { "Starting Bisq Service.." }
+            createNotificationChannels()
+            val intent = Intent(context, BisqForegroundService::class.java)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                log.i { "OS supports foreground service" }
+                context.startForegroundService(intent)
+            } else {
+                // if the phone does not support foreground service
+                context.startService(intent)
+            }
+            isRunning = true
+            log.i { "Started Bisq Service" }
         }
-        isRunning = true
-        log.i { "Started Bisq Service" }
     }
 
     actual override fun stopService() {
-        // Cancel any pending background transition watcher
-        startWatcherJob?.cancel()
-        startWatcherJob = null
         // TODO if we ever implement Live notifications even if app was killed
         //  we need to leave the service running if the user is ok with it
         if (isRunning) {
