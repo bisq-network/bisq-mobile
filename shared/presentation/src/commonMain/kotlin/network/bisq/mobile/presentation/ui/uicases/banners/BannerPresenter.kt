@@ -15,6 +15,7 @@ open class BannerPresenter(
 ) : BasePresenter(mainPresenter) {
 
     val allDataReceived: StateFlow<Boolean> get() = networkServiceFacade.allDataReceived
+    val numConnections: StateFlow<Int> get() = networkServiceFacade.numConnections
     val isMainContentVisible: StateFlow<Boolean> get() = mainPresenter.isMainContentVisible
 
     val inventoryRequestInfo: StateFlow<String> =

@@ -9,16 +9,25 @@ class NodeConnectivityService(
     private val nodeNetworkServiceFacade: NodeNetworkServiceFacade
 ) : ConnectivityService() {
 
-    // Activated after application service is initialized.
+    private var hasOnceReceivedAllData: Boolean = false
     private var collectJob: Job? = null
+
+    // Activated after application service is initialized.
     override fun activate() {
         collectJob?.cancel()
         collectJob = serviceScope.launch {
             combine(nodeNetworkServiceFacade.numConnections, nodeNetworkServiceFacade.allDataReceived) { numConnections, allDataReceived ->
                 numConnections to allDataReceived
             }.collect { (numConnections, allDataReceived) ->
+                // allDataReceived in the network layer will get reset to false when we lose all connections.
+                // We want to keep the information if we have ever received all data, as we distinguish then to show the reconnect
+                // overlay instead of the connections lost dialogue which is used when bootstrap fails.
+                if (allDataReceived && !hasOnceReceivedAllData) {
+                    hasOnceReceivedAllData = true
+                }
+
                 if (numConnections <= 0) {
-                    if (allDataReceived) {
+                    if (hasOnceReceivedAllData) {
                         _status.value = ConnectivityStatus.RECONNECTING
                     } else {
                         _status.value = ConnectivityStatus.DISCONNECTED

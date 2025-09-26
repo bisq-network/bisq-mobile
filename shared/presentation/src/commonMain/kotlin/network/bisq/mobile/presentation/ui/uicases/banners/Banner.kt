@@ -19,8 +19,12 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +32,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.check_circle
+import kotlinx.coroutines.delay
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -44,6 +49,7 @@ fun Banner() {
 
     val inventoryRequestInfo by presenter.inventoryRequestInfo.collectAsState()
     val allDataReceived by presenter.allDataReceived.collectAsState()
+    val numConnections by presenter.numConnections.collectAsState()
     val isMainContentVisible by presenter.isMainContentVisible.collectAsState()
 
     val duration = 600
@@ -53,8 +59,18 @@ fun Banner() {
         label = "bannerBgAnim"
     )
 
+    var shouldBeVisible by remember { mutableStateOf(false) }
+    LaunchedEffect(isMainContentVisible, allDataReceived, numConnections) {
+        if (isMainContentVisible && !allDataReceived && numConnections > 0) {
+            shouldBeVisible = true
+        } else {
+            delay(4000) // enforce hide delay even if it toggles rapidly
+            shouldBeVisible = false
+        }
+    }
+
     AnimatedVisibility(
-        visible = isMainContentVisible && !allDataReceived,
+        visible = shouldBeVisible,
         enter = fadeIn(animationSpec = tween(durationMillis = duration)) +
                 expandVertically(animationSpec = tween(durationMillis = duration)),
         exit = fadeOut(
