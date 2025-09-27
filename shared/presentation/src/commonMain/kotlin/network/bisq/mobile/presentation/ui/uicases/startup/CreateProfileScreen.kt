@@ -13,6 +13,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
@@ -86,7 +88,9 @@ fun CreateProfileScreen(
                     Image(
                         painter = painter,
                         contentDescription = "mobile.createProfile.iconGenerated".i18n(),
-                        modifier = Modifier.size(iconSize)
+                        modifier = Modifier
+                            .size(iconSize)
+                            .semantics { contentDescription = "create_profile_avatar" }
                     )
                 }
             }
@@ -114,7 +118,8 @@ fun CreateProfileScreen(
             "action.next".i18n(),
             onClick = { presenter.onCreateAndPublishNewUserProfile() },
             disabled = nickName.isEmpty() || createAndPublishInProgress || generateKeyPairInProgress || !nickNameValid,
-            isLoading = createAndPublishInProgress
+            isLoading = createAndPublishInProgress,
+            modifier = Modifier.semantics { contentDescription = "create_profile_next_button" }
         )
     }
 }

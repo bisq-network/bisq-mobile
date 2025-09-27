@@ -10,6 +10,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -69,7 +71,8 @@ fun ConfirmationDialog(
                     BisqButton(
                         text = confirmButtonText,
                         onClick = onConfirm,
-                        fullWidth = true
+                        fullWidth = true,
+                        modifier = Modifier.semantics { contentDescription = "dialog_confirm_yes" },
                     )
                 }
                 if (confirmButtonText.isNotBlank() && dismissButtonText.isNotBlank()) {
@@ -80,7 +83,8 @@ fun ConfirmationDialog(
                         text = dismissButtonText,
                         type = BisqButtonType.Grey,
                         onClick = { onDismiss(true) },
-                        fullWidth = true
+                        fullWidth = true,
+                        modifier = Modifier.semantics { contentDescription = "dialog_confirm_no" },
                     )
                 }
             }
@@ -91,14 +95,20 @@ fun ConfirmationDialog(
             ) {
                 if (confirmButtonText.isNotBlank()) {
                     BisqButton(
-                        modifier = Modifier.weight(1.0F).fillMaxHeight(),
+                        modifier = Modifier
+                            .weight(1.0F)
+                            .fillMaxHeight()
+                            .semantics { contentDescription = "dialog_confirm_yes" },
                         text = confirmButtonText,
                         onClick = onConfirm,
                     )
                 }
                 if (dismissButtonText.isNotBlank()) {
                     BisqButton(
-                        modifier = Modifier.weight(1.0F).fillMaxHeight(),
+                        modifier = Modifier
+                            .weight(1.0F)
+                            .fillMaxHeight()
+                            .semantics { contentDescription = "dialog_confirm_no" },
                         text = dismissButtonText,
                         type = BisqButtonType.Grey,
                         onClick = { onDismiss(true) },
