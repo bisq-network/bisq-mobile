@@ -1,5 +1,3 @@
-userName:
-accessKey:
 projectName: Bisq
 buildName: bisq-build
 buildIdentifier: '#${BUILD_NUMBER}'
@@ -11,18 +9,18 @@ platforms:
   - platformName: android
     deviceName: Google Pixel 10 Pro
     platformVersion: 16.0
-  - platformName: android
-    deviceName: Google Pixel 10
-    platformVersion: 16.0
-  - platformName: android
-    deviceName: Google Pixel 9 Pro XL
-    platformVersion: 15.0
-  - platformName: android
-    deviceName: Google Pixel 9 Pro
-    platformVersion: 15.0
-  - platformName: android
-    deviceName: Google Pixel 9
-    platformVersion: 15.0
+#  - platformName: android
+#    deviceName: Google Pixel 10
+#    platformVersion: 16.0
+#  - platformName: android
+#    deviceName: Google Pixel 9 Pro XL
+#    platformVersion: 15.0
+#  - platformName: android
+#    deviceName: Google Pixel 9 Pro
+#    platformVersion: 15.0
+#  - platformName: android
+#    deviceName: Google Pixel 9
+#    platformVersion: 15.0
 
 browserstackLocal: false
 debug: true
