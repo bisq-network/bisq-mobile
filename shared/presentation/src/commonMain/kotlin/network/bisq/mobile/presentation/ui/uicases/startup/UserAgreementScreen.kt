@@ -7,6 +7,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
@@ -49,12 +51,14 @@ fun UserAgreementScreen() {
                     checked = isAccepted,
                     onCheckedChange = { presenter.onAccepted(it) },
                     label = "tac.confirm".i18n(),
+                    modifier = Modifier.semantics { contentDescription = "agreement_accept_checkbox" }
                 )
                 BisqButton(
                     "tac.accept".i18n(),
                     disabled = !isAccepted,
                     fullWidth = true,
-                    onClick = { presenter.onAcceptTerms() }
+                    onClick = { presenter.onAcceptTerms() },
+                    modifier = Modifier.semantics { contentDescription = "agreement_accept_button" }
                 )
             }
         }
