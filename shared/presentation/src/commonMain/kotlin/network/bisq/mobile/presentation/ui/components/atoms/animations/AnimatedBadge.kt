@@ -61,7 +61,7 @@ fun AnimatedBadge(
             }
     ) {
         if (content == null) {
-            BisqText.smallMedium(
+            BisqText.xsmallMedium(
                 text = text,
                 textAlign = TextAlign.Center,
                 color = contentColor,
