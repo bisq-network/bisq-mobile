@@ -39,7 +39,7 @@ public class BrowserStackJUnitTest {
         UiAutomator2Options options = new UiAutomator2Options();
         options.setNoReset(true);
         options.setFullReset(false);
-        options.setApp("bs://b345188348e0d7cf61bc7cd3d58a28c93cf625c5");
+        // options.setApp("bs://b345188348e0d7cf61bc7cd3d58a28c93cf625c5");
         options.setPlatformName("Android");
 
         userName = System.getenv("BROWSERSTACK_USERNAME") != null ? System.getenv("BROWSERSTACK_USERNAME") : (String) browserStackYamlMap.get("userName");
