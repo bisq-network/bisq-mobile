@@ -38,21 +38,12 @@ interface ITabContainerPresenter : ViewPresenter {
 @Composable
 fun TabContainerScreen() {
     val presenter: ITabContainerPresenter = koinInject()
-    val appPresenter: AppPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
     val tabNavController = rememberNavController()
-    // Bind controller first, then signal readiness; tie lifecycle to this controller
-    DisposableEffect(tabNavController) {
-        appPresenter.tabNavController = tabNavController
-        appPresenter.setTabGraphReady(true)
-        onDispose {
-            appPresenter.setTabGraphReady(false)
-        }
-    }
 
     val isInteractive by presenter.isInteractive.collectAsState()
-    val navController: NavHostController = tabNavController
+    val navController: NavHostController = presenter.getRootTabNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute by remember(navBackStackEntry) {
         derivedStateOf {
@@ -110,7 +101,6 @@ fun TabContainerScreen() {
         },
         isInteractive = isInteractive,
         snackbarHostState = presenter.getSnackState(),
-        content = { TabNavGraph(navController = tabNavController) }
-
+        content = { TabNavGraph() }
     )
 }

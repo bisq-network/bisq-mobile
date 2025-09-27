@@ -230,13 +230,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         return rootPresenter!!.getRootTabNavController()
     }
 
-    protected open fun pushNotification(title: String, content: String) {
-        if (isRoot()) {
-            throw IllegalStateException("You need to redefine this method in your root presenter implementation")
-        }
-        rootPresenter!!.pushNotification(title, content)
-    }
-
     override fun isAtHome(): Boolean {
         val currentTab = getRootTabNavController().currentBackStackEntry?.destination?.route
         log.d { "Current tab $currentTab" }
@@ -303,15 +296,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
                     log.e(e) { "First attempt failed to navigate to TabContainer" }
                 }
                 delay(NAV_GRAPH_MOUNTING_DELAY)
-            }
-
-            // Wait deterministically until the TabContainer's NavHost has mounted
-            try {
-                appPresenter?.isTabGraphReady
-                    ?.filter { it }
-                    ?.first()
-            } catch (e: Exception) {
-                log.w { "Proceeding without tabGraphReady signal due to: ${e.message}" }
             }
 
             val tabNav = getRootTabNavController()

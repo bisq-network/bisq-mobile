@@ -2,13 +2,16 @@ package network.bisq.mobile.domain.utils
 
 import io.ktor.utils.io.charsets.Charsets
 import io.ktor.utils.io.core.toByteArray
-
+import kotlin.random.Random
 
 object StringUtils {
     private val allowedEncoding = BooleanArray(256).apply {
         "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~"
             .forEach { this[it.code] = true }
     }
+
+    private val ALLOWED_CHARS = ('A'..'Z') + ('a'..'z') + ('0'..'9')
+    private val random = Random.Default
 
     fun String.truncate(maxLength: Int, ellipsis: String = "..."): String {
         return if (this.length > maxLength) {
@@ -55,5 +58,13 @@ object StringUtils {
     private fun isHexDigit(byte: Byte): Boolean {
         val c = byte.toInt().toChar()
         return c in '0'..'9' || c in 'A'..'F' || c in 'a'..'f'
+    }
+
+    fun randomAlphaNum(length: Int = 20): String {
+        return buildString {
+            repeat(length) {
+                append(ALLOWED_CHARS.random(random))
+            }
+        }
     }
 }

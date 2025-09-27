@@ -919,7 +919,7 @@
 -keep class com.jakewharton.processphoenix.PhoenixService { <init>(); }
 -keep class network.bisq.mobile.android.node.NodeMainActivity { <init>(); }
 -keep class network.bisq.mobile.android.node.NodeMainApplication { <init>(); }
--keep class network.bisq.mobile.domain.service.BisqForegroundService { <init>(); }
+-keep class network.bisq.mobile.presentation.notification.ForegroundService { <init>(); }
 -keep class org.jetbrains.compose.resources.AndroidContextProvider { <init>(); }
 -keep class android.widget.Space { <init>(android.content.Context, android.util.AttributeSet); }
 

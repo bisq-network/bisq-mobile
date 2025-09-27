@@ -11,12 +11,12 @@ import network.bisq.mobile.domain.data.model.NotificationPermissionState
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
-import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.notification.NotificationController
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
@@ -28,7 +28,7 @@ open class DashboardPresenter(
     private val settingsServiceFacade: SettingsServiceFacade,
     private val networkServiceFacade: NetworkServiceFacade,
     private val settingsRepository: SettingsRepository,
-    private val notificationServiceController: NotificationServiceController,
+    private val notificationController: NotificationController,
 ) : BasePresenter(mainPresenter) {
     private val _offersOnline = MutableStateFlow(0)
     val offersOnline: StateFlow<Int> get() = _offersOnline.asStateFlow()
@@ -96,9 +96,5 @@ open class DashboardPresenter(
         launchIO { settingsRepository.setNotificationPermissionState(state) }
     }
 
-    fun doPlatformSpecificSetup() {
-        notificationServiceController.doPlatformSpecificSetup()
-    }
-
-    suspend fun hasNotificationPermission(): Boolean = notificationServiceController.hasPermission()
+    suspend fun hasNotificationPermission(): Boolean = notificationController.hasPermission()
 }

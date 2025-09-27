@@ -9,6 +9,7 @@ plugins {
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.ksp)
+    alias(libs.plugins.atomicfu)
 }
 
 dependencies {
@@ -66,6 +67,8 @@ kotlin {
             implementation(libs.navigation.compose)
             implementation(libs.bignum)
             implementation(libs.coil.compose)
+
+            implementation(libs.atomicfu)
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)

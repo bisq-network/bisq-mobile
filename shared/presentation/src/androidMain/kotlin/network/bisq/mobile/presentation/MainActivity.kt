@@ -6,15 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResultLauncher
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import network.bisq.mobile.domain.service.notifications.controller.NotificationServiceController
 import network.bisq.mobile.domain.utils.CoroutineExceptionHandlerSetup
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.ui.App
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.ExternalUriHandler
 import network.bisq.mobile.presentation.ui.theme.adjustGamma
 import org.koin.android.ext.android.inject
 
@@ -29,18 +27,21 @@ abstract class MainActivity : ComponentActivity(), Logging {
     private val presenter: MainPresenter by inject()
     private val exceptionHandlerSetup: CoroutineExceptionHandlerSetup by inject()
 
-    // TODO probably better to handle from presenter once the user reach home?
-    private lateinit var requestPermissionLauncher: ActivityResultLauncher<String>
-
     init {
         GenericErrorHandler.init()
     }
 
+    private fun handleDeepLinkIntent(intent: Intent?) {
+        intent?.let {
+            if (it.action == Intent.ACTION_VIEW) {
+                it.dataString?.let { uriString -> ExternalUriHandler.onNewUri(uriString) }
+            }
+        }
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        intent.getStringExtra(NotificationServiceController.EXTRA_DESTINATION)?.let { destination ->
-            Routes.fromString(destination)?.let { presenter.navigateToTab(it) }
-        }
+        handleDeepLinkIntent(intent)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -64,6 +65,7 @@ abstract class MainActivity : ComponentActivity(), Logging {
     override fun onStart() {
         super.onStart()
         presenter.onStart()
+        handleDeepLinkIntent(intent)
     }
 
     override fun onResume() {
