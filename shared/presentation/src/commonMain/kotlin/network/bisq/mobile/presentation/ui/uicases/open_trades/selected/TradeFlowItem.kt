@@ -3,20 +3,25 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.trade_check_white
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import bisqapps.shared.presentation.generated.resources.trade_step_active_1
+import bisqapps.shared.presentation.generated.resources.trade_step_active_2
+import bisqapps.shared.presentation.generated.resources.trade_step_active_3
+import bisqapps.shared.presentation.generated.resources.trade_step_inactive_1
+import bisqapps.shared.presentation.generated.resources.trade_step_inactive_2
+import bisqapps.shared.presentation.generated.resources.trade_step_inactive_3
+import bisqapps.shared.presentation.generated.resources.trade_step_inactive_4
+import bisqapps.shared.presentation.generated.resources.trade_step_visited
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.painterResource
 
@@ -31,9 +36,8 @@ fun TradeFlowItem(
 ) {
     val textColor = if (isActive) BisqTheme.colors.white else BisqTheme.colors.mid_grey20
     val lineColor = BisqTheme.colors.dark_grey50
-    val greyCircleColor = BisqTheme.colors.dark_grey50
     val spacerBetweenNodes: Dp = if (isLastIndex) 5.dp else 20.dp
-    val text = (1 + index).toString()
+    val stepNumber = 1 + index
 
     Box(
         modifier = Modifier.wrapContentSize().drawBehind {
@@ -43,64 +47,75 @@ fun TradeFlowItem(
                 end = Offset(x = 12.dp.toPx(), y = this.size.height),
                 strokeWidth = 1.dp.toPx()
             )
-        }
+        },
     ) {
-        val primary = BisqTheme.colors.primary
         Box(
-            modifier = Modifier.wrapContentSize().drawBehind {
-                if (isVisited) {
-                    drawCircle(
-                        color = primary,
-                        radius = 12.dp.toPx(),
-                        center = Offset(12.dp.toPx(), 12.dp.toPx()),
-                    )
-                } else if (isActive) {
-                    drawCircle(
-                        color = primary,
-                        radius = 12.dp.toPx(),
-                        center = Offset(12.dp.toPx(), 12.dp.toPx()),
-                    )
-                    drawCircle(
-                        color = greyCircleColor,
-                        radius = 11.dp.toPx(),
-                        center = Offset(12.dp.toPx(), 12.dp.toPx()),
-                    )
-                    drawCircle(
-                        color = primary,
-                        radius = 10.dp.toPx(),
-                        center = Offset(12.dp.toPx(), 12.dp.toPx()),
-                    )
-                } else {
-                    drawCircle(
-                        color = greyCircleColor,
-                        radius = 12.dp.toPx(),
-                        center = Offset(12.dp.toPx(), 12.dp.toPx()),
-                    )
-                }
+            modifier = Modifier.wrapContentSize(),
+            contentAlignment = Alignment.Center
+        ) {
 
-            }) {
-
+            val modifier = Modifier.size(24.dp)
             if (isVisited) {
                 Image(
-                    painterResource(Res.drawable.trade_check_white), "",
-                    modifier = Modifier.height(18.dp).width(18.dp).padding(start = 6.dp, top = 6.dp)
+                    painterResource(Res.drawable.trade_step_visited), "trade step visited",
+                    modifier = modifier
                 )
 
             } else if (isActive) {
-                BisqText.baseRegular(
-                    textAlign = TextAlign.Center,
-                    text = text,
-                    color = textColor,
-                    modifier = Modifier.padding(start = 7.dp, top = 1.dp)
-                )
+                when (stepNumber) {
+                    1 -> {
+                        Image(
+                            painterResource(Res.drawable.trade_step_active_1), "trade step 1",
+                            modifier = modifier
+                        )
+                    }
+
+                    2 -> {
+                        Image(
+                            painterResource(Res.drawable.trade_step_active_2), "trade step 2",
+                            modifier = modifier
+                        )
+                    }
+
+                    3 -> {
+                        Image(
+                            painterResource(Res.drawable.trade_step_active_3), "trade step 3",
+                            modifier = modifier
+                        )
+                    }
+                }
+                // Step 4 active is never shown as we move to the completed screen
 
             } else {
-                BisqText.baseRegular(
-                    textAlign = TextAlign.Center,
-                    text = text,
-                    color = textColor,
-                    modifier = Modifier.padding(start = 7.dp, top = 1.dp)
-                )
+                when (stepNumber) {
+                    1 -> {
+                        Image(
+                            painterResource(Res.drawable.trade_step_inactive_1), "trade step inactive 1",
+                            modifier = modifier
+                        )
+                    }
+
+                    2 -> {
+                        Image(
+                            painterResource(Res.drawable.trade_step_inactive_2), "trade step inactive 2",
+                            modifier = modifier
+                        )
+                    }
+
+                    3 -> {
+                        Image(
+                            painterResource(Res.drawable.trade_step_inactive_3), "trade step inactive 3",
+                            modifier = modifier
+                        )
+                    }
+
+                    4 -> {
+                        Image(
+                            painterResource(Res.drawable.trade_step_inactive_4), "trade step inactive 4",
+                            modifier = modifier
+                        )
+                    }
+                }
             }
 
         }
