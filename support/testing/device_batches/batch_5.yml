@@ -1,5 +1,3 @@
-userName:
-accessKey:
 projectName: Bisq
 buildName: bisq-build
 buildIdentifier: '#${BUILD_NUMBER}'
@@ -11,15 +9,15 @@ platforms:
   - platformName: android
     deviceName: Google Pixel 6 Pro
     platformVersion: 15.0
-  - platformName: android
-    deviceName: Oneplus 13R
-    platformVersion: 15.0
-  - platformName: android
-    deviceName: Oneplus 12R
-    platformVersion: 14.0
-  - platformName: android
-    deviceName: Oneplus 11R
-    platformVersion: 13.0
+#  - platformName: android
+#    deviceName: Oneplus 13R
+#    platformVersion: 15.0
+#  - platformName: android
+#    deviceName: Oneplus 12R
+#    platformVersion: 14.0
+#  - platformName: android
+#    deviceName: Oneplus 11R
+#    platformVersion: 13.0
 
 browserstackLocal: false
 debug: true

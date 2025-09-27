@@ -20,7 +20,7 @@ More can be added later, as required.
 ## 2. How to Run the Project
 
 ### Prerequisites
-- Java 9 or higher
+- Java 11 or higher
 - Maven 3.6+
 - Valid BrowserStack account with username and access key
 
@@ -28,7 +28,10 @@ More can be added later, as required.
 
 #### Single Device Testing
 ```bash
+# From support/testing/
 mvn test -P bisq-test
+# From repo root
++mvn -f support/testing/pom.xml -B -q test -P bisq-test
 ```
 Note: BrowserStack limits concurrent tests to 5 devices. For testing more devices, use batch testing below.
 
@@ -38,24 +41,26 @@ Note: BrowserStack limits concurrent tests to 5 devices. For testing more device
 ```
 
 The batch testing script will:
-- Split all devices into batches of 5 devices each
-- Create separate configuration files for each batch
+- 5 YAML configurations are provided in /device_batches (update them manually as needed)
 - Run tests sequentially for each batch
+
+List of supported devices:
+<https://www.browserstack.com/list-of-browsers-and-platforms/app_automate?fw-lang=java>
 
 ## 3. How to Upload APK to BrowserStack
 
 ### Using BrowserStack REST API
 ```bash
-curl -u "USERNAME:ACCESS_KEY" \
+curl -u "${BROWSERSTACK_USERNAME}:${BROWSERSTACK_ACCESS_KEY}" \
     -X POST "https://api-cloud.browserstack.com/app-automate/upload" \
-    -F "file=@BisqAndroid-0.0.56.apk" \
+    -F "file=@${APK_PATH:-BisqAndroid-0.0.56.apk}" \
     -F "bypass_secure_screen_restriction=false"
 ```
 
-## Configuration Settings
+## 4. Configuration Settings
 
 ### Update App Configuration
-After uploading, update the `app` field in `browserstack.yml`:
+After uploading, update the `app` field in `browserstack.yml` and in /device_batches:
 ```yaml
 app: bs://your_app_id_here
 ```
@@ -66,10 +71,10 @@ The app package is configured in the `BrowserStackJUnitTest.java` file:
 String appPackage = "network.bisq.mobile.node.debug";
 ```
 
-## 4. How to Set Username/Access Key
+## 5. How to Set Username/Access Key
 
 ### Environment Variables (Recommended)
-Get Username and Access key from https://www.browserstack.com/accounts/profile/details
+Get Username and Access key from <https://www.browserstack.com/accounts/profile/details>
 ```bash
 export BROWSERSTACK_USERNAME="your_username"
 export BROWSERSTACK_ACCESS_KEY="your_access_key"

@@ -7,8 +7,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.openqa.selenium.ScreenOrientation;
-import org.openqa.selenium.interactions.PointerInput;
-import org.openqa.selenium.interactions.Sequence;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -25,25 +23,53 @@ public class BrowserStackJUnitTest {
     public static AndroidDriver driver;
     public static String userName;
     public static String accessKey;
-    public UiAutomator2Options options;
+    public static UiAutomator2Options options;
     public static Map<String, Object> browserStackYamlMap;
     public static final String USER_DIR = "user.dir";
 
+    // Static block to initialize YAML configuration
+    static {
+        try {
+            File file = new File(System.getProperty(USER_DIR) + "/browserstack.yml");
+            browserStackYamlMap = convertYamlFileToMap(file, new HashMap<>());
+        } catch (Exception e) {
+            browserStackYamlMap = new HashMap<>();
+            System.err.println("Warning: Failed to load browserstack.yml - " + e.getMessage());
+        }
+    }
+
     public BrowserStackJUnitTest() {
-        File file = new File(getUserDir() + "/browserstack.yml");
-        this.browserStackYamlMap = convertYamlFileToMap(file, new HashMap<>());
+        // Constructor no longer needs to initialize browserStackYamlMap
     }
 
     @BeforeAll
     static void setupOnce() throws Exception {
-        UiAutomator2Options options = new UiAutomator2Options();
+        options = new UiAutomator2Options();
         options.setNoReset(true);
         options.setFullReset(false);
         // options.setApp("bs://b345188348e0d7cf61bc7cd3d58a28c93cf625c5");
         options.setPlatformName("Android");
 
-        userName = System.getenv("BROWSERSTACK_USERNAME") != null ? System.getenv("BROWSERSTACK_USERNAME") : (String) browserStackYamlMap.get("userName");
-        accessKey = System.getenv("BROWSERSTACK_ACCESS_KEY") != null ? System.getenv("BROWSERSTACK_ACCESS_KEY") : (String) browserStackYamlMap.get("accessKey");
+        // Get credentials from environment variables first, then fallback to YAML
+        userName = System.getenv("BROWSERSTACK_USERNAME");
+        if (userName == null) {
+            userName = (String) browserStackYamlMap.get("userName");
+        }
+        
+        accessKey = System.getenv("BROWSERSTACK_ACCESS_KEY");
+        if (accessKey == null) {
+            accessKey = (String) browserStackYamlMap.get("accessKey");
+        }
+        
+        // Validate that we have credentials from either source
+        if (userName == null || userName.trim().isEmpty()) {
+            throw new IllegalStateException("BrowserStack username not found. Please set BROWSERSTACK_USERNAME environment variable or add userName to browserstack.yml");
+        }
+        
+        if (accessKey == null || accessKey.trim().isEmpty()) {
+            throw new IllegalStateException("BrowserStack access key not found. Please set BROWSERSTACK_ACCESS_KEY environment variable or add accessKey to browserstack.yml");
+        }
+        
         driver = new AndroidDriver(new URL(
                 String.format("https://%s:%s@hub.browserstack.com/wd/hub", userName, accessKey)
         ), options);
@@ -73,14 +99,20 @@ public class BrowserStackJUnitTest {
         return System.getProperty(USER_DIR);
     }
 
-    private Map<String, Object> convertYamlFileToMap(File yamlFile, Map<String, Object> map) {
-        try {
-            InputStream inputStream = Files.newInputStream(yamlFile.toPath());
+    private static Map<String, Object> convertYamlFileToMap(File yamlFile, Map<String, Object> map) {
+        if (!yamlFile.exists()) {
+            return map;
+        }
+        try (InputStream inputStream = Files.newInputStream(yamlFile.toPath())) {
             Yaml yaml = new Yaml();
             Map<String, Object> config = yaml.load(inputStream);
-            map.putAll(config);
+            if (config != null) {
+                map.putAll(config);
+            }
+        } catch (java.io.IOException e) {
+            throw new RuntimeException(String.format("Failed to read browserstack.yml - %s.", e.getMessage()), e);
         } catch (Exception e) {
-            throw new RuntimeException(String.format("Malformed browserstack.yml file - %s.", e));
+            throw new RuntimeException(String.format("Malformed browserstack.yml file - %s.", e.getMessage()), e);
         }
         return map;
     }
