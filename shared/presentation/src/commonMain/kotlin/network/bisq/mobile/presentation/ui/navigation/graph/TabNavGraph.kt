@@ -32,7 +32,7 @@ fun TabNavGraph() {
     val selectedTab = remember { mutableStateOf(Routes.TabHome.name) }
     val navController = mainPresenter.getRootTabNavController()
     val viewModelStoreOwner = LocalViewModelStoreOwner.current
-    DisposableEffect(viewModelStoreOwner) {
+    DisposableEffect(viewModelStoreOwner, navController) {
         viewModelStoreOwner?.let { owner ->
             navController.setViewModelStore(owner.viewModelStore)
         }
@@ -41,9 +41,8 @@ fun TabNavGraph() {
 
     // we set this up here because in RootNavGraph tab routes are not registered yet, so we may
     // mishandle them there
-    DisposableEffect(Unit) {
-        val rootNavController = mainPresenter.getRootNavController()
-
+    val rootNavController = mainPresenter.getRootNavController()
+    DisposableEffect(navController, rootNavController) {
         ExternalUriHandler.listener = { uri ->
             val navUri = NavUri(uri)
             if (rootNavController.graph.hasDeepLink(navUri)) {
