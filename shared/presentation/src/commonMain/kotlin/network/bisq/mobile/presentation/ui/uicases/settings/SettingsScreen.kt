@@ -167,18 +167,6 @@ fun SettingsScreen() {
             }
         )
 
-        BisqHDivider()
-
-        BisqText.h4Light("settings.display.headline".i18n())
-
-        BisqGap.V1()
-
-        BisqSwitch(
-            label = "settings.display.useAnimations".i18n(),
-            checked = useAnimations,
-            onSwitch = { presenter.setUseAnimations(it) }
-        )
-
         if (shouldShowPoWAdjustmentFactor) {
             BisqHDivider()
 
