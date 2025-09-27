@@ -18,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
@@ -93,12 +92,10 @@ fun TradeChatRow(
                 modifier = Modifier.graphicsLayer(clip = false),
                 badge = {
                     if (newMsgCount > 0) {
-                        AnimatedBadge(showAnimation = true, xOffset = (-4).dp) {
-                            BisqText.xsmallRegular(
-                                newMsgCount.toString(),
-                                textAlign = TextAlign.Center, color = BisqTheme.colors.dark_grey20
-                            )
-                        }
+                        AnimatedBadge(
+                            text = newMsgCount.toString(),
+                            xOffset = (-4).dp
+                        )
                     }
                 }) {
                 IconButton(

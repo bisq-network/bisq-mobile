@@ -19,7 +19,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
-import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.animations.AnimatedBadge
 import network.bisq.mobile.presentation.ui.composeModels.BottomNavigationItem
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -76,13 +75,9 @@ fun BottomNavigation(
                         if (index == MY_TRADES_TAB_INDEX && unreadTradeCount > 0) {
                             BadgedBox(
                                 badge = {
-                                    AnimatedBadge(showAnimation = showAnimation) {
-                                        BisqText.xsmallMedium(
-                                            unreadTradeCount.toString(),
-                                            textAlign = TextAlign.Center,
-                                            color = BisqTheme.colors.dark_grey20
-                                        )
-                                    }
+                                    AnimatedBadge(
+                                        text = unreadTradeCount.toString(),
+                                    )
                                 }
                             ) {
                                 icon()

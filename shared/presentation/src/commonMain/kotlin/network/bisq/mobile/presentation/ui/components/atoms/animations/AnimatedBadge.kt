@@ -1,22 +1,32 @@
 package network.bisq.mobile.presentation.ui.components.atoms.animations
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.offset
-import androidx.compose.material3.*
+import androidx.compose.material3.Badge
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 
 @Composable
 fun AnimatedBadge(
-    showAnimation: Boolean,
+    text: String,
+    contentColor: Color = BisqTheme.colors.white,
+    badgeColor: Color = BisqTheme.colors.yellow,
+    showAnimation: Boolean = false,
     xOffset: Dp = 8.dp,
     yOffset: Dp = (-8).dp,
-    content: @Composable RowScope.() -> Unit
+    content: (@Composable RowScope.() -> Unit)? = null
 ) {
 
     val scale: Float
@@ -41,8 +51,8 @@ fun AnimatedBadge(
     }
 
     Badge(
-        containerColor = BisqTheme.colors.warningHover,
-        contentColor = BisqTheme.colors.dark_grey20,
+        containerColor = badgeColor,
+        contentColor = contentColor,
         modifier = Modifier
             .offset(x = xOffset, y = yOffset)
             .graphicsLayer {
@@ -50,6 +60,14 @@ fun AnimatedBadge(
                 scaleY = scale
             }
     ) {
-        content()
+        if (content == null) {
+            BisqText.xsmallMedium(
+                text = text,
+                textAlign = TextAlign.Center,
+                color = contentColor,
+            )
+        } else {
+            content()
+        }
     }
 }
