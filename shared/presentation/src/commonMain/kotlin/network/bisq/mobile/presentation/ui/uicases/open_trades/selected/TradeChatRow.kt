@@ -94,7 +94,7 @@ fun TradeChatRow(
                 badge = {
                     if (newMsgCount > 0) {
                         AnimatedBadge(showAnimation = true, xOffset = (-4).dp) {
-                            BisqText.xsmallLight(
+                            BisqText.xsmallRegular(
                                 newMsgCount.toString(),
                                 textAlign = TextAlign.Center, color = BisqTheme.colors.dark_grey20
                             )

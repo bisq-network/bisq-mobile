@@ -25,6 +25,8 @@ import network.bisq.mobile.presentation.ui.composeModels.BottomNavigationItem
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.resources.painterResource
 
+const val MY_TRADES_TAB_INDEX = 2
+
 @Composable
 fun BottomNavigation(
     items: List<BottomNavigationItem>,
@@ -33,8 +35,6 @@ fun BottomNavigation(
     showAnimation: Boolean,
     onItemClick: (BottomNavigationItem) -> Unit
 ) {
-
-    val MY_TRADES_TAB_INDEX = 2
 
     //  MaterialTheme v3 use a background for selected item and by that has a larger spacing between icon an text.
     // As we do not use a bag for selection the large space looks weird. As it does not allow customization we
