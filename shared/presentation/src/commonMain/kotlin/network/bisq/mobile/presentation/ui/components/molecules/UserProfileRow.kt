@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bot_image
@@ -22,7 +21,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.StarRating
 import network.bisq.mobile.presentation.ui.components.atoms.animations.AnimatedBadge
 import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
-import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.painterResource
 
@@ -52,12 +50,11 @@ fun UserProfileRow(
             modifier = Modifier.graphicsLayer(clip = false),
             badge = {
                 if (badgeCount > 0) {
-                    AnimatedBadge(showAnimation = true, xOffset = 2.dp, yOffset = 24.dp) {
-                        BisqText.xsmallMedium(
-                            badgeCount.toString(),
-                            textAlign = TextAlign.Center, color = BisqTheme.colors.dark_grey20
-                        )
-                    }
+                    AnimatedBadge(
+                        text = badgeCount.toString(),
+                        xOffset = 2.dp,
+                        yOffset = 24.dp
+                    )
                 }
             }) {
             Image(
