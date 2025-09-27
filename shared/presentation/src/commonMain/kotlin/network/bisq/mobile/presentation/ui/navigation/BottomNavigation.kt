@@ -77,7 +77,6 @@ fun BottomNavigation(
                                 badge = {
                                     AnimatedBadge(
                                         text = unreadTradeCount.toString(),
-                                        showAnimation = showAnimation
                                     )
                                 }
                             ) {
