@@ -105,8 +105,10 @@ fun BitcoinLnAddressField(
         validation = validationError,
         rightSuffixModifier = Modifier,
         rightSuffix = {
-            BisqIconButton(onClick = permLauncher::launch) {
-                ScanIcon(Modifier.size(BisqUIConstants.ScreenPadding2X))
+            if (!disabled) {
+                BisqIconButton(onClick = permLauncher::launch) {
+                    ScanIcon(Modifier.size(BisqUIConstants.ScreenPadding2X))
+                }
             }
         }
     )
