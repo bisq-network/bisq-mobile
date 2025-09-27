@@ -2,6 +2,14 @@ package network.bisq.mobile.presentation.ui.helpers
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import platform.AVFoundation.AVAuthorizationStatusAuthorized
+import platform.AVFoundation.AVAuthorizationStatusDenied
+import platform.AVFoundation.AVAuthorizationStatusNotDetermined
+import platform.AVFoundation.AVAuthorizationStatusRestricted
+import platform.AVFoundation.AVCaptureDevice
+import platform.AVFoundation.AVMediaTypeVideo
+import platform.AVFoundation.authorizationStatusForMediaType
+import platform.AVFoundation.requestAccessForMediaType
 import platform.UserNotifications.UNAuthorizationOptionAlert
 import platform.UserNotifications.UNAuthorizationOptionBadge
 import platform.UserNotifications.UNAuthorizationOptionSound
@@ -33,8 +41,31 @@ class IosNotificationPermissionRequestLauncher(private val onResult: (Boolean) -
     }
 }
 
+class IosCameraPermissionRequestLauncher(private val onResult: (Boolean) -> Unit) : PermissionRequestLauncher {
+    override fun launch() {
+        val status = AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo)
+        when (status) {
+            AVAuthorizationStatusAuthorized -> onResult(true)
+            AVAuthorizationStatusDenied -> onResult(false)
+            AVAuthorizationStatusRestricted -> onResult(false)
+            AVAuthorizationStatusNotDetermined -> {
+                AVCaptureDevice.requestAccessForMediaType(AVMediaTypeVideo) { granted ->
+                    onResult(granted)
+                }
+            }
+            else -> onResult(false)
+        }
+    }
+}
+
 @Composable
 actual fun rememberNotificationPermissionLauncher(onResult: (Boolean) -> Unit): PermissionRequestLauncher {
     val launcher = remember(onResult) { IosNotificationPermissionRequestLauncher(onResult) }
+    return launcher
+}
+
+@Composable
+actual fun rememberCameraPermissionLauncher(onResult: (Boolean) -> Unit): PermissionRequestLauncher {
+    val launcher = remember(onResult) { IosCameraPermissionRequestLauncher(onResult) }
     return launcher
 }

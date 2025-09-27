@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.helpers
 
+import android.Manifest
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -25,6 +26,18 @@ actual fun rememberNotificationPermissionLauncher(onResult: (Boolean) -> Unit): 
     )
     val androidLauncher = remember(launcher) {
         AndroidPermissionLauncher("android.permission.POST_NOTIFICATIONS", launcher)
+    }
+    return androidLauncher
+}
+
+@Composable
+actual fun rememberCameraPermissionLauncher(onResult: (Boolean) -> Unit): PermissionRequestLauncher {
+    val launcher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission(),
+        onResult,
+    )
+    val androidLauncher = remember(launcher) {
+        AndroidPermissionLauncher(Manifest.permission.CAMERA, launcher)
     }
     return androidLauncher
 }

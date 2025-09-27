@@ -19,6 +19,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.ScanIcon
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BarcodeScannerDialog
 import network.bisq.mobile.presentation.ui.helpers.BitcoinAddressValidation
 import network.bisq.mobile.presentation.ui.helpers.LightningInvoiceValidation
+import network.bisq.mobile.presentation.ui.helpers.rememberCameraPermissionLauncher
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 enum class BitcoinLnAddressFieldType {
@@ -35,11 +36,18 @@ fun BitcoinLnAddressField(
     type: BitcoinLnAddressFieldType = BitcoinLnAddressFieldType.Bitcoin,
     modifier: Modifier = Modifier
 ) {
-    val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
     var showScanner by remember { mutableStateOf(false) }
+
     var shouldBlurAfterFocus by remember { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
+    val focusRequester = remember { FocusRequester() }
+    val focusManager = LocalFocusManager.current
+
+    val permLauncher = rememberCameraPermissionLauncher {
+        if (it) {
+            showScanner = true
+        }
+    }
 
     // If you have not set up a wallet yet, you can find help at the wallet guide
     val helperText = "bisqEasy.tradeState.info.buyer.phase1a.bitcoinPayment.walletHelp".i18n()
@@ -97,7 +105,7 @@ fun BitcoinLnAddressField(
         validation = validationError,
         rightSuffixModifier = Modifier,
         rightSuffix = {
-            BisqIconButton(onClick = { showScanner = true }) {
+            BisqIconButton(onClick = permLauncher::launch) {
                 ScanIcon(Modifier.size(BisqUIConstants.ScreenPadding2X))
             }
         }

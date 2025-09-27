@@ -9,3 +9,6 @@ interface PermissionRequestLauncher {
 
 @Composable
 expect fun rememberNotificationPermissionLauncher(onResult: (Boolean) -> Unit): PermissionRequestLauncher
+
+@Composable
+expect fun rememberCameraPermissionLauncher(onResult: (Boolean) -> Unit): PermissionRequestLauncher
