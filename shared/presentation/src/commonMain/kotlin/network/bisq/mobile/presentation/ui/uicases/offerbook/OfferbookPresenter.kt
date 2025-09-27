@@ -342,7 +342,7 @@ class OfferbookPresenter(
             if (takersDirection == DirectionEnum.BUY) {
                 // SELL offer: Maker wants to sell Bitcoin, so they are the seller
                 // Taker (me) wants to buy Bitcoin - checking if seller has enough reputation
-                val learnMore = "mobile.reputation.learnMore".i18n()
+                val learnMore = "mobile.reputation.learnMoreAtWiki".i18n()
                 notEnoughReputationHeadline = "chat.message.takeOffer.buyer.invalidOffer.headline".i18n()
                 val warningKey = if (isAmountRangeOffer) "chat.message.takeOffer.buyer.invalidOffer.rangeAmount.text"
                 else "chat.message.takeOffer.buyer.invalidOffer.fixedAmount.text"

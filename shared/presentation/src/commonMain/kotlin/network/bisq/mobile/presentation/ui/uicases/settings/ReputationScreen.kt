@@ -160,6 +160,8 @@ fun ReputationScreen() {
                 rightSuffix = { CopyIconButton(value = profileId) },
                 backgroundColor = BisqTheme.colors.dark_grey30,
             )
+            // Give a bit extra space at bottom
+            BisqGap.V2()
         }
     }
 }
