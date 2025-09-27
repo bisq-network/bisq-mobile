@@ -64,8 +64,6 @@ log/
 logs/
 
 # Test results
-batch_results/
-device_batches/
 *.txt
 *.log
 

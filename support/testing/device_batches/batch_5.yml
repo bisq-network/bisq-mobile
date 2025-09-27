@@ -9,20 +9,17 @@ app: bs://c8086baf71cceac9c03097303dda5b48e03789ed
 
 platforms:
   - platformName: android
-    deviceName: Samsung Galaxy S24
-    platformVersion: 14.0
-  - platformName: android
-    deviceName: Samsung Galaxy Tab S10 Plus
+    deviceName: Google Pixel 6 Pro
     platformVersion: 15.0
   - platformName: android
-    deviceName: Samsung Galaxy Tab A9 Plus
+    deviceName: Oneplus 13R
+    platformVersion: 15.0
+  - platformName: android
+    deviceName: Oneplus 12R
     platformVersion: 14.0
   - platformName: android
-    deviceName: Samsung Galaxy Tab S9
+    deviceName: Oneplus 11R
     platformVersion: 13.0
-  - platformName: android
-    deviceName: Google Pixel 10 Pro XL
-    platformVersion: 16.0
 
 browserstackLocal: false
 debug: true

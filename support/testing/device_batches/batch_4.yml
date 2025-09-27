@@ -9,20 +9,20 @@ app: bs://c8086baf71cceac9c03097303dda5b48e03789ed
 
 platforms:
   - platformName: android
-    deviceName: Samsung Galaxy S24
+    deviceName: Google Pixel 8 Pro
     platformVersion: 14.0
   - platformName: android
-    deviceName: Samsung Galaxy Tab S10 Plus
-    platformVersion: 15.0
-  - platformName: android
-    deviceName: Samsung Galaxy Tab A9 Plus
+    deviceName: Google Pixel 8
     platformVersion: 14.0
   - platformName: android
-    deviceName: Samsung Galaxy Tab S9
+    deviceName: Google Pixel 7 Pro
     platformVersion: 13.0
   - platformName: android
-    deviceName: Google Pixel 10 Pro XL
-    platformVersion: 16.0
+    deviceName: Google Pixel 7
+    platformVersion: 13.0
+  - platformName: android
+    deviceName: Google Pixel 6 Pro
+    platformVersion: 13.0
 
 browserstackLocal: false
 debug: true
