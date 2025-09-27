@@ -6,6 +6,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.StateFlow
@@ -56,7 +59,8 @@ fun OnBoardingScreen() {
                 buttonText
             else
                 "action.next".i18n(),
-            onClick = { presenter.onNextButtonClick(coroutineScope, pagerState) }
+            onClick = { presenter.onNextButtonClick(coroutineScope, pagerState) },
+            modifier = Modifier.semantics { contentDescription = "onboarding_next_button" }
         )
     }
 }
