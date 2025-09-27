@@ -41,9 +41,11 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
+const val HIDE_BANNER_DELAY = 4000L
 
 @Composable
 fun Banner() {
+
     val presenter: BannerPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
@@ -73,7 +75,7 @@ fun Banner() {
     // Hide with delay once all data has been received
     LaunchedEffect(allDataReceived, shouldBeVisible) {
         if (allDataReceived && shouldBeVisible) {
-            delay(4000)
+            delay(HIDE_BANNER_DELAY)
             shouldBeVisible = false
         }
     }
