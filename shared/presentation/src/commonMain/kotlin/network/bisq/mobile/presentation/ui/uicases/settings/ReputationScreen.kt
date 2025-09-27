@@ -68,18 +68,17 @@ fun ReputationScreen() {
             text = "mobile.reputation.buildReputation.intro.part1.formula.footnote".i18n(),
             color = BisqTheme.colors.light_grey20,
         )
-        BisqGap.V1()
+        BisqGap.VHalf()
+
         Row(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             BisqText.baseLight(
-                text = "mobile.reputation.learnMore".i18n() + " ",
+                text = "mobile.reputation.learnMore.part1".i18n() + " ",
                 color = BisqTheme.colors.light_grey50,
-                modifier = Modifier.width(260.dp)
             )
-            BisqGap.H1()
             LinkButton(
-                text = "mobile.reputation.wiki".i18n(),
+                text = "mobile.reputation.learnMore.part2".i18n(),
                 link = BisqLinks.REPUTATION_WIKI_URL,
                 onClick = { presenter.onOpenWebUrl(BisqLinks.REPUTATION_WIKI_URL) },
                 color = BisqTheme.colors.primary,
@@ -124,6 +123,7 @@ fun ReputationScreen() {
                 rightSuffix = { CopyIconButton(value = profileId) },
                 backgroundColor = BisqTheme.colors.dark_grey30,
             )
+            BisqGap.V1()
         }
 
         BisqGap.V2()
@@ -161,7 +161,7 @@ fun ReputationScreen() {
                 backgroundColor = BisqTheme.colors.dark_grey30,
             )
             // Give a bit extra space at bottom
-            BisqGap.V2()
+            BisqGap.V1()
         }
     }
 }
