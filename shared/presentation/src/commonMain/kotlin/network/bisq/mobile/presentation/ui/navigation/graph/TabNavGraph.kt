@@ -33,7 +33,9 @@ fun TabNavGraph() {
     val navController = mainPresenter.getRootTabNavController()
     val viewModelStoreOwner = LocalViewModelStoreOwner.current
     DisposableEffect(viewModelStoreOwner) {
-        navController.setViewModelStore(viewModelStoreOwner!!.viewModelStore)
+        viewModelStoreOwner?.let { owner ->
+            navController.setViewModelStore(owner.viewModelStore)
+        }
         onDispose {}
     }
 

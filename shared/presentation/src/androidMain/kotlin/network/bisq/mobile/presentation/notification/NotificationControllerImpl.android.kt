@@ -76,7 +76,6 @@ class NotificationControllerImpl(
             )
         )
         builder.setOngoing(config.android.ongoing)
-        // Defaults priority to DEFAULT to avoid OS killing the app
         builder.setPriority(config.android.priority.toNotificationCompat())
         builder.setCategory(config.android.category.toNotificationCompat())
         builder.setOnlyAlertOnce(config.android.onlyAlertOnce)
