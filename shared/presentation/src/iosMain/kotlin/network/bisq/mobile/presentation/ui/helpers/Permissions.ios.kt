@@ -17,31 +17,51 @@ import platform.UserNotifications.UNAuthorizationStatusAuthorized
 import platform.UserNotifications.UNAuthorizationStatusDenied
 import platform.UserNotifications.UNAuthorizationStatusNotDetermined
 import platform.UserNotifications.UNUserNotificationCenter
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
 
-class IosNotificationPermissionRequestLauncher(private val onResult: (Boolean) -> Unit) : PermissionRequestLauncher {
+class IosNotificationPermissionRequestLauncher(private val onResult: (Boolean) -> Unit) :
+    PermissionRequestLauncher {
     override fun launch() {
         val center = UNUserNotificationCenter.currentNotificationCenter()
         center.getNotificationSettingsWithCompletionHandler { settings ->
             when (settings?.authorizationStatus) {
-                UNAuthorizationStatusAuthorized -> onResult(true)
-                UNAuthorizationStatusDenied -> onResult(false)
+                UNAuthorizationStatusAuthorized -> {
+                    dispatch_async(dispatch_get_main_queue()) {
+                        onResult(true)
+                    }
+                }
+
+                UNAuthorizationStatusDenied -> {
+                    dispatch_async(dispatch_get_main_queue()) {
+                        onResult(false)
+                    }
+                }
+
                 UNAuthorizationStatusNotDetermined -> {
                     center.requestAuthorizationWithOptions(
                         UNAuthorizationOptionAlert or
                                 UNAuthorizationOptionSound or
                                 UNAuthorizationOptionBadge
                     ) { granted, error ->
-                        onResult(granted)
+                        dispatch_async(dispatch_get_main_queue()) {
+                            onResult(granted)
+                        }
                     }
                 }
 
-                else -> onResult(false)
+                else -> {
+                    dispatch_async(dispatch_get_main_queue()) {
+                        onResult(false)
+                    }
+                }
             }
         }
     }
 }
 
-class IosCameraPermissionRequestLauncher(private val onResult: (Boolean) -> Unit) : PermissionRequestLauncher {
+class IosCameraPermissionRequestLauncher(private val onResult: (Boolean) -> Unit) :
+    PermissionRequestLauncher {
     override fun launch() {
         val status = AVCaptureDevice.authorizationStatusForMediaType(AVMediaTypeVideo)
         when (status) {
@@ -50,9 +70,12 @@ class IosCameraPermissionRequestLauncher(private val onResult: (Boolean) -> Unit
             AVAuthorizationStatusRestricted -> onResult(false)
             AVAuthorizationStatusNotDetermined -> {
                 AVCaptureDevice.requestAccessForMediaType(AVMediaTypeVideo) { granted ->
-                    onResult(granted)
+                    dispatch_async(dispatch_get_main_queue()) {
+                        onResult(granted)
+                    }
                 }
             }
+
             else -> onResult(false)
         }
     }
