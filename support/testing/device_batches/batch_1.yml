@@ -1,0 +1,27 @@
+projectName: Bisq
+buildName: bisq-build
+buildIdentifier: '#${BUILD_NUMBER}'
+framework: junit5
+
+app: bs://c8086baf71cceac9c03097303dda5b48e03789ed
+
+platforms:
+  - platformName: android
+    deviceName: Samsung Galaxy S23 Ultra
+    platformVersion: 13.0
+#  - platformName: android
+#    deviceName: Samsung Galaxy S23
+#    platformVersion: 13.0
+#  - platformName: android
+#    deviceName: Samsung Galaxy S25 Ultra
+#    platformVersion: 15.0
+#  - platformName: android
+#    deviceName: Samsung Galaxy S25
+#    platformVersion: 15.0
+#  - platformName: android
+#    deviceName: Samsung Galaxy S24 Ultra
+#    platformVersion: 14.0
+
+browserstackLocal: false
+debug: true
+networkLogs: true
