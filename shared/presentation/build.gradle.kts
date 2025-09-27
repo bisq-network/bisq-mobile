@@ -47,6 +47,7 @@ kotlin {
         commonMain.dependencies {
             //put your multiplatform dependencies here
             implementation(project(":shared:domain"))
+            implementation(project(":shared:kscan"))
 
             implementation(compose.runtime)
             implementation(compose.foundation)
