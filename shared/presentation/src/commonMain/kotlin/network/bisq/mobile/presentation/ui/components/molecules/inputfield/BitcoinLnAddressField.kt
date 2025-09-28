@@ -12,6 +12,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
@@ -20,7 +21,6 @@ import network.bisq.mobile.presentation.ui.components.molecules.dialog.BarcodeSc
 import network.bisq.mobile.presentation.ui.helpers.BitcoinAddressValidation
 import network.bisq.mobile.presentation.ui.helpers.LightningInvoiceValidation
 import network.bisq.mobile.presentation.ui.helpers.rememberCameraPermissionLauncher
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 enum class BitcoinLnAddressFieldType {
     Bitcoin,
@@ -107,7 +107,7 @@ fun BitcoinLnAddressField(
         rightSuffix = {
             if (!disabled) {
                 BisqIconButton(onClick = permLauncher::launch) {
-                    ScanIcon(Modifier.size(BisqUIConstants.ScreenPadding2X))
+                    ScanIcon(Modifier.size(22.dp))
                 }
             }
         }
