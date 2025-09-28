@@ -82,8 +82,8 @@ class TradeDetailsHeaderPresenter(
     private val _mediationError = MutableStateFlow("")
     val mediationError: StateFlow<String> get() = _mediationError.asStateFlow()
 
-    private val _peerAvatar: MutableStateFlow<PlatformImage?> = MutableStateFlow(null)
-    val peerAvatar: StateFlow<PlatformImage?> get() = _peerAvatar.asStateFlow()
+    private val _peersProfileIcon: MutableStateFlow<PlatformImage?> = MutableStateFlow(null)
+    val peersProfileIcon: StateFlow<PlatformImage?> get() = _peersProfileIcon.asStateFlow()
 
     private val _isShowDetails: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isShowDetails: StateFlow<Boolean> get() = this._isShowDetails.asStateFlow()
@@ -134,7 +134,7 @@ class TradeDetailsHeaderPresenter(
         }
 
         launchIO {
-            _peerAvatar.value = userProfileServiceFacade.getUserAvatar(openTradeItemModel.peersUserProfile)
+            _peersProfileIcon.value = userProfileServiceFacade.getUserProfileIcon(openTradeItemModel.peersUserProfile)
         }
 
     }

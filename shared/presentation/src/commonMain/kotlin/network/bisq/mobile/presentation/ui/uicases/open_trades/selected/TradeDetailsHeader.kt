@@ -41,8 +41,6 @@ import network.bisq.mobile.presentation.ui.components.molecules.UserProfileRow
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxCurrency
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
-import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxStyle
-import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxValueType
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRow
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoRowContainer
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -65,7 +63,7 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
     val leftCode by presenter.leftCode.collectAsState()
     val rightAmount by presenter.rightAmount.collectAsState()
     val rightCode by presenter.rightCode.collectAsState()
-    val peerAvatar by presenter.peerAvatar.collectAsState()
+    val peersProfileIcon by presenter.peersProfileIcon.collectAsState()
 
     val enterTransition = remember {
         expandVertically(
@@ -127,7 +125,7 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
                             user = item.peersUserProfile,
                             reputation = item.peersReputationScore,
                             showUserName = true,
-                            userAvatar = peerAvatar,
+                            userProfileIcon = peersProfileIcon,
                         )
                     }
                 }

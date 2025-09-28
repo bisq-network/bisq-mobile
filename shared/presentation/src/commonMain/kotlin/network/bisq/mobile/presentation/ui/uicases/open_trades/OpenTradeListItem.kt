@@ -25,7 +25,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @Composable
 fun OpenTradeListItem(
     item: TradeItemPresentationModel,
-    userAvatar: PlatformImage? = null,
+    userProfileIcon: PlatformImage? = null,
     unreadCount: Int,
     onSelect: () -> Unit,
 ) {
@@ -59,7 +59,7 @@ fun OpenTradeListItem(
                         user = item.peersUserProfile,
                         reputation = item.peersReputationScore,
                         showUserName = true,
-                        userAvatar = userAvatar,
+                        userProfileIcon = userProfileIcon,
                         badgeCount = unreadCount,
                     )
                 }

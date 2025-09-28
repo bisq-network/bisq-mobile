@@ -31,7 +31,7 @@ fun TradeChatScreen() {
     val selectedTrade by presenter.selectedTrade.collectAsState()
     val sortedChatMessages by presenter.sortedChatMessages.collectAsState()
     val quotedMessage by presenter.quotedMessage.collectAsState()
-    val userAvatarMap by presenter.avatarMap.collectAsState()
+    val userProfileIconByProfileId by presenter.userProfileIconByProfileId.collectAsState()
     val ignoredUserIds by presenter.ignoredProfileIds.collectAsState()
     val ignoreUserId by presenter.ignoreUserId.collectAsState()
     val undoIgnoreUserId by presenter.undoIgnoreUserId.collectAsState()
@@ -64,7 +64,7 @@ fun TradeChatScreen() {
                 messages = sortedChatMessages,
                 ignoredUserIds = ignoredUserIds,
                 showChatRulesWarnBox = showChatRulesWarnBox,
-                avatarMap = userAvatarMap,
+                userProfileIconByProfileId = userProfileIconByProfileId,
                 readCount = readCount,
                 onAddReaction = presenter::onAddReaction,
                 onRemoveReaction = presenter::onRemoveReaction,

@@ -130,7 +130,6 @@ val presentationModule = module {
         UserProfilePresenter(
             get(),
             get(),
-            get(),
             get()
         )
     } bind IUserProfilePresenter::class

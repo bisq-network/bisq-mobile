@@ -31,7 +31,6 @@ class ClientUserProfileServiceFacade(
     private val clientCatHashService: ClientCatHashService<PlatformImage>,
     private val json: Json
 ) : ServiceFacade(), UserProfileServiceFacade {
-
     private var keyMaterialResponse: KeyMaterialResponse? = null
 
     // Properties
@@ -41,8 +40,8 @@ class ClientUserProfileServiceFacade(
     private val _numUserProfiles = MutableStateFlow(0)
     override val numUserProfiles: StateFlow<Int> get() = _numUserProfiles.asStateFlow()
 
-    private val avatarMap: MutableMap<String, PlatformImage?> = mutableMapOf<String, PlatformImage?>()
-    private val avatarMapMutex = Mutex()
+    private val userProfileIconByProfileId: MutableMap<String, PlatformImage?> = mutableMapOf()
+    private val userProfileIconByProfileIdMutex = Mutex()
 
     private val _ignoredUserIds: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
     override val ignoredProfileIds: StateFlow<Set<String>> get() = _ignoredUserIds.asStateFlow()
@@ -214,20 +213,24 @@ class ClientUserProfileServiceFacade(
         delay(delayDuration)
     }
 
-    override suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage? =
-        avatarMapMutex.withLock {
-            if (avatarMap[userProfile.nym] == null) {
-                val avatar = try {
+    override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage? {
+        return getUserProfileIcon(userProfile, ClientCatHashService.DEFAULT_SIZE)
+    }
+
+    override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage? =
+        userProfileIconByProfileIdMutex.withLock {
+            if (userProfileIconByProfileId[userProfile.id] == null) {
+                val userProfileIcon = try {
                     val pubKeyHash = userProfile.networkId.pubKey.hash.decodeBase64()!!.toByteArray()
                     val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()!!.toByteArray()
-                    clientCatHashService.getImage(pubKeyHash, powSolution, userProfile.avatarVersion, 120)
+                    clientCatHashService.getImage(pubKeyHash, powSolution, userProfile.avatarVersion, size.toInt())
                 } catch (e: Exception) {
                     log.e(e) { "Avatar generation failed for ${userProfile.nym}" }
                     null
                 }
-                avatarMap[userProfile.nym] = avatar
+                userProfileIconByProfileId[userProfile.id] = userProfileIcon
             }
-            return avatarMap[userProfile.nym]
+            return userProfileIconByProfileId[userProfile.id]
         }
 
     override suspend fun getUserPublishDate(): Long {

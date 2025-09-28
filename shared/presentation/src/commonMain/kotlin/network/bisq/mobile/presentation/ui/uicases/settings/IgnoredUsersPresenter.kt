@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -17,8 +18,8 @@ class IgnoredUsersPresenter(
     private val _ignoredUsers = MutableStateFlow<List<UserProfileVO>>(emptyList())
     override val ignoredUsers: StateFlow<List<UserProfileVO>> get() = _ignoredUsers.asStateFlow()
 
-    private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
-    override val avatarMap: StateFlow<Map<String, PlatformImage?>> get() = _avatarMap.asStateFlow()
+    private val _userProfileIconByProfileId: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
+    override val userProfileIconByProfileId: StateFlow<Map<String, PlatformImage?>> get() = _userProfileIconByProfileId.asStateFlow()
 
     private val _ignoreUserId: MutableStateFlow<String> = MutableStateFlow("")
     override val ignoreUserId: StateFlow<String> get() = _ignoreUserId.asStateFlow()
@@ -29,7 +30,7 @@ class IgnoredUsersPresenter(
     }
 
     override fun onViewUnattaching() {
-        _avatarMap.update { emptyMap() }
+        _userProfileIconByProfileId.update { emptyMap() }
         super.onViewUnattaching()
     }
 
@@ -40,14 +41,14 @@ class IgnoredUsersPresenter(
 
                 val userProfiles = userProfileService.findUserProfiles(ignoredUserIds)
 
-                val newAvatars = mutableMapOf<String, PlatformImage?>()
+                val map = mutableMapOf<String, PlatformImage?>()
                 userProfiles.forEach { profile ->
-                    if (_avatarMap.value[profile.nym] == null) {
-                        newAvatars[profile.nym] = userProfileService.getUserAvatar(profile)
+                    if (_userProfileIconByProfileId.value[profile.id] == null) {
+                        map[profile.id] = userProfileService.getUserProfileIcon(profile)
                     }
                 }
-                _avatarMap.update { currentMap ->
-                    currentMap + newAvatars
+                _userProfileIconByProfileId.update { currentMap ->
+                    currentMap + map
                 }
 
                 _ignoredUsers.value = userProfiles

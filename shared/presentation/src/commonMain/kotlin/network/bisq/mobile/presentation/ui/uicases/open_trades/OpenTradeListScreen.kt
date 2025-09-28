@@ -28,6 +28,7 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.fiat_btc
 import bisqapps.shared.presentation.generated.resources.reputation
 import bisqapps.shared.presentation.generated.resources.thumbs_up
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -53,8 +54,7 @@ fun OpenTradeListScreen() {
     val tradeRulesConfirmed by presenter.tradeRulesConfirmed.collectAsState()
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
     val sortedOpenTradeItems by presenter.sortedOpenTradeItems.collectAsState()
-
-    val userAvatarMap by presenter.avatarMap.collectAsState()
+    val userProfileIconByProfileId by presenter.userProfileIconByProfileId.collectAsState()
 
     if (tradeGuideVisible) {
         InformationConfirmationDialog(
@@ -111,7 +111,7 @@ fun OpenTradeListScreen() {
                     OpenTradeListItem(
                         trade,
                         unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
-                        userAvatar = userAvatarMap[trade.peersUserProfile.nym],
+                        userProfileIcon = userProfileIconByProfileId[trade.peersUserProfile.id],
                         onSelect = { presenter.onSelect(trade) }
                     )
                 }
@@ -127,7 +127,7 @@ fun OpenTradeListScreen() {
                     OpenTradeListItem(
                         trade,
                         unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
-                        userAvatar = userAvatarMap[trade.peersUserProfile.nym],
+                        userProfileIcon = userProfileIconByProfileId[trade.peersUserProfile.id],
                         onSelect = { presenter.onSelect(trade) }
                     )
                 }

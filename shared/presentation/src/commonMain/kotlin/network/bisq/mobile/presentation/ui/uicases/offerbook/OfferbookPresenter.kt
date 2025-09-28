@@ -72,10 +72,8 @@ class OfferbookPresenter(
 
     lateinit var selectedUserProfile: UserProfileVO
 
-    private val _avatarMap: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(
-        emptyMap()
-    )
-    val avatarMap: StateFlow<Map<String, PlatformImage?>> get() = _avatarMap.asStateFlow()
+    private val _userProfileIconByProfileId: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
+    val userProfileIconByProfileId: StateFlow<Map<String, PlatformImage?>> get() = _userProfileIconByProfileId.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun onViewAttached() {
@@ -140,7 +138,7 @@ class OfferbookPresenter(
     }
 
     override fun onViewUnattaching() {
-        _avatarMap.update { emptyMap() }
+        _userProfileIconByProfileId.update { emptyMap() }
         super.onViewUnattaching()
     }
 
@@ -243,10 +241,10 @@ class OfferbookPresenter(
     }
 
     private suspend fun ensureAvatarLoaded(userProfile: UserProfileVO) = withContext(IODispatcher) {
-        val nym = userProfile.nym
-        if (_avatarMap.value[nym] == null) {
-            val image = userProfileServiceFacade.getUserAvatar(userProfile)
-            _avatarMap.update { it + (nym to image) }
+        val id = userProfile.id
+        if (_userProfileIconByProfileId.value[id] == null) {
+            val image = userProfileServiceFacade.getUserProfileIcon(userProfile)
+            _userProfileIconByProfileId.update { it + (id to image) }
         }
     }
 

@@ -78,11 +78,13 @@ interface UserProfileServiceFacade : LifeCycleAware {
     suspend fun findUserProfiles(ids: List<String>): List<UserProfileVO>
 
     /**
-     * @return Get avatar of the user
+     * @return User profile icon
      * This function may perform CPU-intensive work such as Base64 decoding and image generation.
      * It is recommended to call this from a background (non-main) dispatcher.
      */
-    suspend fun getUserAvatar(userProfile: UserProfileVO): PlatformImage?
+    suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage?
+
+    suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage?
 
     suspend fun getUserPublishDate(): Long
 

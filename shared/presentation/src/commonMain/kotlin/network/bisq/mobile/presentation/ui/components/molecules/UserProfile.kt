@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bot_image
 import kotlinx.coroutines.flow.StateFlow
@@ -21,13 +22,12 @@ import network.bisq.mobile.presentation.ui.components.atoms.StarRating
 import network.bisq.mobile.presentation.ui.components.atoms.icons.LanguageIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun UserProfile(
     user: UserProfileVO,
-    userAvatar: PlatformImage? = null,
+    userProfileIcon: PlatformImage? = null,
     reputation: StateFlow<ReputationScoreVO>,
     supportedLanguageCodes: List<String>,
     showUserName: Boolean = true,
@@ -35,10 +35,11 @@ fun UserProfile(
 ) {
     val reputationScore by reputation.collectAsState()
 
-    val painter: Painter = if (userAvatar == null) {
+    val painter: Painter = if (userProfileIcon == null) {
+        //TODO dont show random icon
         painterResource(Res.drawable.img_bot_image)
     } else {
-        rememberPlatformImagePainter(userAvatar)
+        rememberPlatformImagePainter(userProfileIcon)
     }
 
     Column(
@@ -47,7 +48,7 @@ fun UserProfile(
     ) {
         Image(
             painter, "",
-            modifier = Modifier.size(BisqUIConstants.ScreenPadding3X)
+            modifier = Modifier.size(40.dp)
         )
         BisqGap.V1()
         Column {

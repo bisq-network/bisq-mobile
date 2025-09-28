@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bot_image
 import network.bisq.mobile.domain.PlatformImage
@@ -22,17 +21,17 @@ import org.jetbrains.compose.resources.painterResource
 @Composable
 fun ProfileIconAndText(
     message: BisqEasyOpenTradeMessageModel,
-    userAvatar: PlatformImage? = null,
+    userProfileIcon: PlatformImage? = null,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(
             vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding
         ), horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
     ) {
-        val painter: Painter = if (userAvatar == null) {
+        val painter: Painter = if (userProfileIcon == null) {
             painterResource(Res.drawable.img_bot_image)
         } else {
-            rememberPlatformImagePainter(userAvatar)
+            rememberPlatformImagePainter(userProfileIcon)
         }
 
         val icon = @Composable {

@@ -2,8 +2,8 @@ package network.bisq.mobile.client.cathash
 
 import com.ionspin.kotlin.bignum.integer.BigInteger
 import com.ionspin.kotlin.bignum.integer.Sign
-import kotlinx.datetime.Clock
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.datetime.Clock
 import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -23,16 +23,16 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 abstract class BaseClientCatHashService(private val baseDirPath: String) :
     BaseService(), ClientCatHashService<PlatformImage?>, Logging {
     companion object {
-        const val SIZE_OF_CACHED_ICONS = 60
         const val MAX_CACHE_SIZE = 5000
         const val CATHASH_ICONS_PATH = "db/cache/cat_hash_icons"
     }
 
     private val fileSystem: FileSystem = FileSystem.SYSTEM
-    // In-memory cache: key by (avatarVersion, catHashInput) to avoid stale reads across version bumps.
+
+    // In-memory cache with userProfileId as key.
     // Guarded by a non-suspending Mutex tryLock to avoid blocking in non-suspend getImage().
     private val cacheLock = Mutex()
-    private val cache = mutableMapOf<Pair<Int, BigInteger>, PlatformImage>()
+    private val cache = mutableMapOf<String, PlatformImage>()
 
     protected abstract fun composeImage(paths: Array<String>, size: Int): PlatformImage?
     protected abstract fun writeRawImage(image: PlatformImage, iconFilePath: String)
@@ -64,13 +64,13 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
             val iconsDir = baseDirPath.toPath().resolve(subPath.toPath())
             val iconFilePath = iconsDir.resolve("$userProfileId.raw")
 
-            val useCache = size <= SIZE_OF_CACHED_ICONS
+            val profileId = pubKeyHash.toHex()
+            val useCache = size <= getSizeOfCachedIcons()
             if (useCache) {
-                val cacheKey = avatarVersion to catHashInput
                 // Fast path: attempt non-blocking cache read; if lock is contested, skip cache read
                 if (cacheLock.tryLock()) {
                     try {
-                        cache[cacheKey]?.let { return it }
+                        cache[profileId]?.let { return it }
                     } finally {
                         cacheLock.unlock()
                     }
@@ -87,7 +87,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
                             if (cacheLock.tryLock()) {
                                 try {
                                     if (cache.size < MAX_CACHE_SIZE) {
-                                        cache[cacheKey] = image
+                                        cache[profileId] = image
                                     }
                                 } finally {
                                     cacheLock.unlock()
@@ -107,22 +107,17 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
             val buckets = BucketEncoder.encode(catHashInput, bucketSizes)
             val paths: Array<String?> = BucketEncoder.toPaths(buckets, bucketConfig.pathTemplates)
             val pathsList: Array<String> = paths.filterNotNull().toTypedArray()
-
-            // Generate image at requested size (at least 2x cache size for quality)
-            val targetSize = if (size < SIZE_OF_CACHED_ICONS * 2) SIZE_OF_CACHED_ICONS * 2 else size
-            val image = composeImage(pathsList, targetSize)
-
+            val image = composeImage(pathsList, size)
             val passed = Clock.System.now().toEpochMilliseconds() - ts
             if (passed > 100) { // Only log if it takes more than 100ms
                 log.i("Creating user profile icon for $userProfileId took $passed ms.")
             }
 
             if (image != null && useCache) {
-                val cacheKey = avatarVersion to catHashInput
                 if (cacheLock.tryLock()) {
                     try {
                         if (cache.size < MAX_CACHE_SIZE) {
-                            cache[cacheKey] = image
+                            cache[profileId] = image
                         }
                     } finally {
                         cacheLock.unlock()
@@ -135,6 +130,10 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
             log.e { e.toString() }
             throw e
         }
+    }
+
+    open fun getSizeOfCachedIcons(): Int {
+        return ClientCatHashService.DEFAULT_SIZE
     }
 
     private fun writeAsync(image: PlatformImage, iconFilePath: Path) {
@@ -175,8 +174,6 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
             }
         }
     }
-
-    fun currentAvatarsVersion(): Int = BucketConfig.CURRENT_VERSION
 
     private fun getBucketConfig(avatarVersion: Int): BucketConfig {
         return when (avatarVersion) {

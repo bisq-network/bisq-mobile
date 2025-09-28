@@ -39,7 +39,7 @@ import org.koin.compose.koinInject
 
 interface IIgnoredUsersPresenter : ViewPresenter {
     val ignoredUsers: StateFlow<List<UserProfileVO>>
-    val avatarMap: StateFlow<Map<String, PlatformImage?>>
+    val userProfileIconByProfileId: StateFlow<Map<String, PlatformImage?>>
     val ignoreUserId: StateFlow<String>
     fun unblockUser(userId: String)
     fun unblockUserConfirm(userId: String)
@@ -53,7 +53,7 @@ fun IgnoredUsersScreen() {
 
     val isInteractive by presenter.isInteractive.collectAsState()
     val ignoredUsers by presenter.ignoredUsers.collectAsState()
-    val userAvatarMap by presenter.avatarMap.collectAsState()
+    val userProfileIconByProfileId by presenter.userProfileIconByProfileId.collectAsState()
     val ignoreUserId by presenter.ignoreUserId.collectAsState()
     val showIgnoreUserWarnBox = ignoreUserId.isNotEmpty()
 
@@ -71,11 +71,11 @@ fun IgnoredUsersScreen() {
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
-                ignoredUsers.forEach { user ->
+                ignoredUsers.forEach { userProfile ->
                     IgnoredUserItem(
-                        user = user,
-                        userAvatar = userAvatarMap[user.nym],
-                        onUnblock = { presenter.unblockUser(user.id) }
+                        userProfile = userProfile,
+                        userProfileIcon = userProfileIconByProfileId[userProfile.id],
+                        onUnblock = { presenter.unblockUser(userProfile.id) }
                     )
                 }
             }
@@ -101,13 +101,14 @@ fun IgnoredUsersScreen() {
 
 @Composable
 private fun IgnoredUserItem(
-    user: UserProfileVO, userAvatar: PlatformImage? = null, onUnblock: () -> Unit
+    userProfile: UserProfileVO, userProfileIcon: PlatformImage? = null, onUnblock: () -> Unit
 ) {
 
-    val painter: Painter = if (userAvatar == null) {
+    val painter: Painter = if (userProfileIcon == null) {
+        //todo Dont show a random icon!
         painterResource(Res.drawable.img_bot_image)
     } else {
-        rememberPlatformImagePainter(userAvatar)
+        rememberPlatformImagePainter(userProfileIcon)
     }
 
     Row(
@@ -122,7 +123,7 @@ private fun IgnoredUserItem(
         BisqGap.HHalf()
 
         BisqText.baseRegular(
-            text = user.userName, modifier = Modifier.weight(1f)
+            text = userProfile.userName, modifier = Modifier.weight(1f)
         )
 
         BisqGap.H1()

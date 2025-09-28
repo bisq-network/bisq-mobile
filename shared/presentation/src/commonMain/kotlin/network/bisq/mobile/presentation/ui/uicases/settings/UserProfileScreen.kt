@@ -40,7 +40,7 @@ interface IUserProfilePresenter : ViewPresenter {
     val statement: StateFlow<String>
     val tradeTerms: StateFlow<String>
 
-    val uniqueAvatar: StateFlow<PlatformImage?>
+    val userProfileIcon: StateFlow<PlatformImage?>
 
     val showLoading: StateFlow<Boolean>
 
@@ -150,15 +150,15 @@ fun UserProfileScreen() {
 
 @Composable
 private fun UserProfileScreenHeader(presenter: IUserProfilePresenter) {
-    val uniqueAvatar by presenter.uniqueAvatar.collectAsState()
+    val userProfileIcon by presenter.userProfileIcon.collectAsState()
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = BisqUIConstants.ScreenPaddingHalf),
         contentAlignment = Alignment.Center
     ) {
-        if (uniqueAvatar != null) {
-            val painter = rememberPlatformImagePainter(uniqueAvatar!!)
+        if (userProfileIcon != null) {
+            val painter = rememberPlatformImagePainter(userProfileIcon!!)
             Image(painter = painter, contentDescription = "User icon", modifier = Modifier.size(120.dp))
         }
         // Not handling the null case as the uniqueAvatar is never null here

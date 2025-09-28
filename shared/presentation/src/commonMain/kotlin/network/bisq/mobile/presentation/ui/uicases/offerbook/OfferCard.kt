@@ -42,7 +42,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun OfferCard(
     item: OfferItemPresentationModel,
-    userAvatar: PlatformImage? = null,
+    userProfileIcon: PlatformImage? = null,
     onSelectOffer: () -> Unit,
 ) {
     val userName by item.userName.collectAsState()
@@ -97,7 +97,7 @@ fun OfferCard(
     ) {
         UserProfile(
             user = item.makersUserProfile,
-            userAvatar = userAvatar,
+            userProfileIcon = userProfileIcon,
             reputation = item.makersReputationScore,
             supportedLanguageCodes = item.bisqEasyOffer.supportedLanguageCodes,
             showUserName = false,

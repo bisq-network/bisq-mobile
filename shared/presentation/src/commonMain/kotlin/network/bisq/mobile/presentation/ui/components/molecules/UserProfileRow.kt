@@ -29,16 +29,16 @@ fun UserProfileRow(
     user: UserProfileVO,
     reputation: ReputationScoreVO,
     showUserName: Boolean = true,
-    userAvatar: PlatformImage? = null,
+    userProfileIcon: PlatformImage? = null,
     badgeCount: Int = 0,
     modifier: Modifier = Modifier,
 ) {
     val fiveSystemScore = reputation.fiveSystemScore
 
-    val painter: Painter = if (userAvatar == null) {
+    val painter: Painter = if (userProfileIcon == null) {
         painterResource(Res.drawable.img_bot_image)
     } else {
-        rememberPlatformImagePainter(userAvatar)
+        rememberPlatformImagePainter(userProfileIcon)
     }
 
     Row(

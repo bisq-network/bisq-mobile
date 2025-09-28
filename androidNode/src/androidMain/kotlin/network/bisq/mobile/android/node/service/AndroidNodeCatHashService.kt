@@ -34,6 +34,11 @@ const val CAT_HASH_PATH = PATH_TO_DRAWABLE + "cathash/"
 
 class AndroidNodeCatHashService(private val context: Context, baseDir: Path?) :
     CatHashService<PlatformImage>(baseDir) {
+    companion object {
+        // We use 40.dp at offers, to get a 3x resolution we use 120
+        const val DEFAULT_SIZE = 120.0
+    }
+
     override fun composeImage(paths: Array<String>, size: Double): PlatformImage {
         return PlatformImage(
             AndroidImageUtil.composeImage(
@@ -44,6 +49,10 @@ class AndroidNodeCatHashService(private val context: Context, baseDir: Path?) :
                 size.toInt()
             )
         )
+    }
+
+    override fun getSizeOfCachedIcons(): Double {
+        return DEFAULT_SIZE
     }
 
     override fun getMaxCacheSize(): Int {
