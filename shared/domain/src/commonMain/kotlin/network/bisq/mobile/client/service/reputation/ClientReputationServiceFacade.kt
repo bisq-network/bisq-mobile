@@ -2,8 +2,6 @@ package network.bisq.mobile.client.service.reputation
 
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.shared.BuildConfig
@@ -17,9 +15,13 @@ class ClientReputationServiceFacade(
     private val json: Json,
 ) : ServiceFacade(), ReputationServiceFacade {
 
+    // MutableStateFlow is only used as there is no kmp compatible concurrent map. The ConcurrentMap from ktor is not recommended to be
+    // used as its only an internal implementation.
+    // reputationByUserProfileId is used only as local cache to avoid frequent API calls.
+    private val reputationByUserProfileId = MutableStateFlow<Map<String, ReputationScoreVO>>(emptyMap())
+
     // Properties
-    private val _reputationByUserProfileId = MutableStateFlow<Map<String, ReputationScoreVO>>(emptyMap())
-    override val reputationByUserProfileId: StateFlow<Map<String, ReputationScoreVO>> get() = _reputationByUserProfileId.asStateFlow()
+    override val scoreByUserProfileId: Map<String, Long> get() = reputationByUserProfileId.value.mapValues { (_, v) -> v.totalScore }
 
     // Misc
     private var reputationSequenceNumber = atomic(-1)
@@ -80,7 +82,7 @@ class ClientReputationServiceFacade(
             runCatching {
                 WebSocketEventPayload.from<Map<String, ReputationScoreVO>>(json, webSocketEvent).payload
             }.onSuccess { payload ->
-                _reputationByUserProfileId.value = payload
+                reputationByUserProfileId.value = payload
             }.onFailure { t ->
                 log.e(t) { "Failed to deserialize reputation payload; event ignored." }
             }
