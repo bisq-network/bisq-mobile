@@ -38,6 +38,7 @@ import bisqapps.shared.presentation.generated.resources.icon_paste
 import bisqapps.shared.presentation.generated.resources.icon_qr
 import bisqapps.shared.presentation.generated.resources.icon_question_mark
 import bisqapps.shared.presentation.generated.resources.icon_reply
+import bisqapps.shared.presentation.generated.resources.icon_scan_qr
 import bisqapps.shared.presentation.generated.resources.icon_search_dimmed
 import bisqapps.shared.presentation.generated.resources.icon_send
 import bisqapps.shared.presentation.generated.resources.icon_sort
@@ -207,6 +208,11 @@ fun ReplyIcon(modifier: Modifier = Modifier.size(24.dp)) {
 @Composable
 fun ScanIcon(modifier: Modifier = Modifier) {
     Image(painterResource(Res.drawable.icon_qr), "Scan icon", modifier = modifier)
+}
+
+@Composable
+fun ScanQrIcon(modifier: Modifier = Modifier) {
+    Image(painterResource(Res.drawable.icon_scan_qr), "Scan icon", modifier = modifier)
 }
 
 @Composable
