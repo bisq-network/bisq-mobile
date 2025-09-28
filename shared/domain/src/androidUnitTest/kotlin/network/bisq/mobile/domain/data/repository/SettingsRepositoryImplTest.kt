@@ -253,3 +253,4 @@ class SettingsRepositoryImplTest {
         assertEquals("BTC/EUR", afterMarketUpdate.selectedMarketCode)
     }
 }
+

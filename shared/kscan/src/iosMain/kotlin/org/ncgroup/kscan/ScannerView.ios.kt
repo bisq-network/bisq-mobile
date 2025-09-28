@@ -1,7 +1,7 @@
 package org.ncgroup.kscan
 
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.matchParentSize
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -96,7 +96,7 @@ actual fun ScannerView(
     Box(modifier = modifier) {
         UIKitViewController(
             factory = { cameraViewController!! },
-            modifier = Modifier.matchParentSize(),
+            modifier = Modifier.fillMaxSize(),
         )
 
         if (showUi) {

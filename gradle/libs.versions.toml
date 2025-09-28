@@ -38,7 +38,7 @@ androidx-datastore = "1.1.7"
 androidx-camera = "1.5.0"
 
 # -------------------- UI / Compose --------------------
-compose-material-icons = "1.7.3"
+compose-material-icons = "1.8.2"
 coil-compose = "3.3.0"
 
 # -------------------- Multiplatform Libraries --------------------
@@ -55,7 +55,7 @@ androidx-test-compose = "1.9.0"
 androidx-test-espresso = "3.7.0"
 robolectric = "4.10.3"
 junit = "4.13.2"
-mockk = "1.14.5"
+mockk = "1.13.12"
 
 # -------------------- Networking --------------------
 ktor = "3.2.3"
@@ -134,6 +134,9 @@ androidx-test-compose-manifest = { module = "androidx.compose.ui:ui-test-manifes
 robolectric = { module = "org.robolectric:robolectric", version.ref = "robolectric" }
 junit = { module = "junit:junit", version.ref = "junit" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+mockk-common = { module = "io.mockk:mockk-common", version.ref = "mockk" }
+mockk-darwin = { module = "io.mockk:mockk-darwin", version.ref = "mockk" }
+
 
 # -------------------- Multiplatform Libraries --------------------
 logging-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }

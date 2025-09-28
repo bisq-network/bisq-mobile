@@ -168,3 +168,4 @@ class UserRepositoryImplTest {
         assertEquals(expectedUser, result)
     }
 }
+

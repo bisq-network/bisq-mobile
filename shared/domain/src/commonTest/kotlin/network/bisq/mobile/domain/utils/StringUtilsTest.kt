@@ -26,7 +26,7 @@ class StringUtilsTest {
     }
 
     @Test
-    fun `handles surrogate pairs (emoji) correctly`() {
+    fun `handles surrogate pairs - emoji - correctly`() {
         assertEquals("%F0%9F%98%80", "😀".urlEncode()) // U+1F600 GRINNING FACE
         assertEquals("abc%F0%9F%98%80xyz", "abc😀xyz".urlEncode())
     }

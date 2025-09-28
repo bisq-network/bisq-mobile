@@ -155,6 +155,11 @@ kotlin {
         iosMain.dependencies {
             implementation(libs.koin.core)
         }
+
+        iosTest.dependencies {
+            implementation(libs.kotlin.test)
+            implementation(libs.kotlinx.coroutines.test)
+        }
     }
 }
 

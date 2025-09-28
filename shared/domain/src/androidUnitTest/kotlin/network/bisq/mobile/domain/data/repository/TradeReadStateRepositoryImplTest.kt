@@ -276,14 +276,15 @@ class TradeReadStateRepositoryImplTest {
         
         // 3. Remove trade2
         currentMap = updateSlots[2](currentMap)
-        assertEquals(null, currentMap.map["trade2"])
-        assertEquals(15, currentMap.map["trade1"])
+        assertEquals(null, currentMap.map["trade2"]) 
+        assertEquals(15, currentMap.map["trade1"]) 
         
         // 4. Add trade3 with count 20
         currentMap = updateSlots[3](currentMap)
-        assertEquals(20, currentMap.map["trade3"])
-        assertEquals(15, currentMap.map["trade1"])
-        assertEquals(null, currentMap.map["trade2"])
+        assertEquals(20, currentMap.map["trade3"]) 
+        assertEquals(15, currentMap.map["trade1"]) 
+        assertEquals(null, currentMap.map["trade2"]) 
         assertEquals(2, currentMap.map.size)
     }
 }
+
