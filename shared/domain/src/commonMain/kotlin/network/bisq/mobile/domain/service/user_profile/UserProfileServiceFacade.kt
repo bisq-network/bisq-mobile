@@ -82,9 +82,9 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * This function may perform CPU-intensive work such as Base64 decoding and image generation.
      * It is recommended to call this from a background (non-main) dispatcher.
      */
-    suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage?
+    suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage
 
-    suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage?
+    suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage
 
     suspend fun getUserPublishDate(): Long
 

@@ -1,0 +1,49 @@
+package network.bisq.mobile.presentation.ui.components.molecules
+
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
+
+@Composable
+fun UserProfileIcon(
+    userProfileId: String,
+    userProfileIconProvider: suspend (String) -> PlatformImage
+) {
+    val userProfileIcon by produceState<PlatformImage?>(initialValue = null, key1 = userProfileId) {
+        // Run on IO thread to avoid blocking main
+        value = withContext(Dispatchers.IO) {
+            userProfileIconProvider.invoke(userProfileId)
+        }
+    }
+
+    if (userProfileIcon != null) {
+        Image(
+            rememberPlatformImagePainter(userProfileIcon!!), "",
+            modifier = Modifier.size(40.dp)
+        )
+    } else {
+        // Just a placeholder so that we occupy the same space in case the icon is not ready.
+        Box(
+            modifier = Modifier.size(40.dp),
+        )
+
+        // Icon creation is that fast that it does not make sense to show a CircularProgressIndicator
+        /*
+        CircularProgressIndicator(
+            color = BisqTheme.colors.primary,
+            modifier = Modifier.size(20.dp),
+            strokeWidth = 1.dp,
+        )
+        */
+    }
+}

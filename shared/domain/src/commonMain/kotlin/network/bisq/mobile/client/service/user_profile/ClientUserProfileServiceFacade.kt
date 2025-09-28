@@ -213,24 +213,19 @@ class ClientUserProfileServiceFacade(
         delay(delayDuration)
     }
 
-    override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage? {
+    override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage {
         return getUserProfileIcon(userProfile, ClientCatHashService.DEFAULT_SIZE)
     }
 
-    override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage? =
+    override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage =
         userProfileIconByProfileIdMutex.withLock {
             if (userProfileIconByProfileId[userProfile.id] == null) {
-                val userProfileIcon = try {
-                    val pubKeyHash = userProfile.networkId.pubKey.hash.decodeBase64()!!.toByteArray()
-                    val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()!!.toByteArray()
-                    clientCatHashService.getImage(pubKeyHash, powSolution, userProfile.avatarVersion, size.toInt())
-                } catch (e: Exception) {
-                    log.e(e) { "Avatar generation failed for ${userProfile.nym}" }
-                    null
-                }
+                val pubKeyHash = userProfile.networkId.pubKey.hash.decodeBase64()!!.toByteArray()
+                val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()!!.toByteArray()
+                val userProfileIcon = clientCatHashService.getImage(pubKeyHash, powSolution, userProfile.avatarVersion, size.toInt())
                 userProfileIconByProfileId[userProfile.id] = userProfileIcon
             }
-            return userProfileIconByProfileId[userProfile.id]
+            return userProfileIconByProfileId[userProfile.id]!!
         }
 
     override suspend fun getUserPublishDate(): Long {

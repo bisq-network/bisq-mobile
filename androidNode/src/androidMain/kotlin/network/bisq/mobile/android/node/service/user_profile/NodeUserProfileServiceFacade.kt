@@ -183,18 +183,21 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         return ids.mapNotNull { id -> findUserProfile(id) }
     }
 
-    override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage? {
+    override suspend fun getUserProfileIcon(userProfile: UserProfileVO): PlatformImage {
         return getUserProfileIcon(userProfile, AndroidNodeCatHashService.DEFAULT_SIZE)
     }
 
-    override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage? {
+    override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage {
         // In case we create the image we want to run it in IO context.
-        // We cache the images in the catHashService if its <=60 px
+        // We cache the images in the catHashService if its <=120 px
         return withContext(Dispatchers.IO) {
+            val ts = System.currentTimeMillis()
             catHashService.getImage(
                 Mappings.UserProfileMapping.toBisq2Model(userProfile),
                 size.toDouble()
-            )
+            ).also {
+                log.d { "Get userProfileIcon for ${userProfile.userName} took ${System.currentTimeMillis() - ts} ms. User profile ID=${userProfile.id}" }
+            }
         }
     }
 

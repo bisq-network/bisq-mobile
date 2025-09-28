@@ -12,7 +12,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -38,7 +37,6 @@ fun OfferbookScreen() {
     val selectedDirection by presenter.selectedDirection.collectAsState()
     val showDeleteConfirmation by presenter.showDeleteConfirmation.collectAsState()
     val showNotEnoughReputationDialog by presenter.showNotEnoughReputationDialog.collectAsState()
-    val userProfileIconByProfileId by presenter.userProfileIconByProfileId.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
     val selectedMarket by presenter.selectedMarket.collectAsState()
 
@@ -80,7 +78,7 @@ fun OfferbookScreen() {
                     onSelectOffer = {
                         presenter.onOfferSelected(item)
                     },
-                    userProfileIcon = userProfileIconByProfileId[item.makersUserProfile.id]
+                    userProfileIconProvider = presenter.getUserProfileIconProvider(item.makersUserProfile)
                 )
             }
         }

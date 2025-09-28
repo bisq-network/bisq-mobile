@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
@@ -72,9 +71,6 @@ class OfferbookPresenter(
 
     lateinit var selectedUserProfile: UserProfileVO
 
-    private val _userProfileIconByProfileId: MutableStateFlow<Map<String, PlatformImage?>> = MutableStateFlow(emptyMap())
-    val userProfileIconByProfileId: StateFlow<Map<String, PlatformImage?>> get() = _userProfileIconByProfileId.asStateFlow()
-
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun onViewAttached() {
         super.onViewAttached()
@@ -137,11 +133,6 @@ class OfferbookPresenter(
         }
     }
 
-    override fun onViewUnattaching() {
-        _userProfileIconByProfileId.update { emptyMap() }
-        super.onViewUnattaching()
-    }
-
     private suspend fun processAllOffers(
         offers: List<OfferItemPresentationModel>
     ): List<OfferItemPresentationModel> = withContext(IODispatcher) {
@@ -190,8 +181,6 @@ class OfferbookPresenter(
             item.isInvalidDueToReputation = isInvalid
         }
 
-        ensureAvatarLoaded(item.makersUserProfile)
-
         return item
     }
 
@@ -238,14 +227,6 @@ class OfferbookPresenter(
     fun onDismissDeleteOffer() {
         _showDeleteConfirmation.value = false
         deselectOffer()
-    }
-
-    private suspend fun ensureAvatarLoaded(userProfile: UserProfileVO) = withContext(IODispatcher) {
-        val id = userProfile.id
-        if (_userProfileIconByProfileId.value[id] == null) {
-            val image = userProfileServiceFacade.getUserProfileIcon(userProfile)
-            _userProfileIconByProfileId.update { it + (id to image) }
-        }
     }
 
     private fun takeOffer() {
@@ -468,5 +449,9 @@ class OfferbookPresenter(
             log.w("isUserIgnoredCached failed for $makerUserProfileId", e)
             false
         }
+    }
+
+    fun getUserProfileIconProvider(userProfile: UserProfileVO): suspend (String) -> PlatformImage {
+        return { id -> userProfileServiceFacade.getUserProfileIcon(userProfile) }
     }
 }
