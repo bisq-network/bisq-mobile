@@ -135,6 +135,8 @@ fun ChatMessageList(
                 easing = FastOutSlowInEasing
             )
 
+            val userProfileIconProvider = remember(userProfileIconProvider) { userProfileIconProvider() }
+
             LazyColumn(
                 reverseLayout = true,
                 state = scrollState,
@@ -193,7 +195,7 @@ fun ChatMessageList(
                         else -> {
                             TextMessageBox(
                                 message = message,
-                                userProfileIconProvider = userProfileIconProvider.invoke(),
+                                userProfileIconProvider = userProfileIconProvider,
                                 onScrollToMessage = { id ->
                                     val index = messages.indexOfFirst { it.id == id }
                                     if (index >= 0) {

@@ -1,14 +1,12 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChangedBy
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapLatest
@@ -26,7 +24,6 @@ import network.bisq.mobile.domain.utils.TimeUtils
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfilePresenter
 
 class UserProfilePresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
@@ -41,19 +38,8 @@ class UserProfilePresenter(
         fun getLocalizedNA(): String = "data.na".i18n()
     }
 
-    private val selectedUserProfile: Flow<UserProfileVO?>
-        get() = userProfileServiceFacade.selectedUserProfile
-
-    override val userProfileIcon: StateFlow<PlatformImage?> =
-        userProfileServiceFacade.selectedUserProfile
-            .filterNotNull()
-            .map { userProfileServiceFacade.getUserProfileIcon(it, CreateProfilePresenter.IMAGE_SIZE_IN_PX) }
-            .stateIn(
-                presenterScope,
-                SharingStarted.Lazily,
-                null
-            )
-
+    override val selectedUserProfile: StateFlow<UserProfileVO?> get() = userProfileServiceFacade.selectedUserProfile
+    override val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override val reputation: StateFlow<String> = selectedUserProfile

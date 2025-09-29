@@ -10,6 +10,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
@@ -70,7 +71,9 @@ fun CreateProfileScreen(
             )
         } else {
             profileIcon?.let { profileIcon ->
-                val painter = getPlatformImagePainter(profileIcon)
+                val painter = remember(profileIcon) {
+                    getPlatformImagePainter(profileIcon)
+                }
                 Button(
                     contentPadding = PaddingValues(BisqUIConstants.Zero),
                     enabled = !generateKeyPairInProgress,

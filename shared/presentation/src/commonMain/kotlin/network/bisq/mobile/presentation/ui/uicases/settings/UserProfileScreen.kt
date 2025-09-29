@@ -13,20 +13,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.dummy_user_profile_icon
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
 import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButton
-import network.bisq.mobile.presentation.ui.components.atoms.icons.getPlatformImagePainter
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.UserProfileIcon
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 interface IUserProfilePresenter : ViewPresenter {
@@ -39,9 +43,8 @@ interface IUserProfilePresenter : ViewPresenter {
     val botId: StateFlow<String>
     val statement: StateFlow<String>
     val tradeTerms: StateFlow<String>
-
-    val userProfileIcon: StateFlow<PlatformImage?>
-
+    val selectedUserProfile: StateFlow<UserProfileVO?>
+    val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
     val showLoading: StateFlow<Boolean>
 
     fun onDelete()
@@ -150,18 +153,26 @@ fun UserProfileScreen() {
 
 @Composable
 private fun UserProfileScreenHeader(presenter: IUserProfilePresenter) {
-    val userProfileIcon by presenter.userProfileIcon.collectAsState()
+    val selectedUserProfile by presenter.selectedUserProfile.collectAsState()
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(bottom = BisqUIConstants.ScreenPaddingHalf),
         contentAlignment = Alignment.Center
     ) {
-        if (userProfileIcon != null) {
-            val painter = getPlatformImagePainter(userProfileIcon!!)
-            Image(painter = painter, contentDescription = "User icon", modifier = Modifier.size(120.dp))
+        if (selectedUserProfile != null) {
+            UserProfileIcon(
+                selectedUserProfile!!,
+                presenter.userProfileIconProvider,
+                120.dp
+            )
+        } else {
+            // Icons are expected to be present, so this branch will never be reached
+            Image(
+                painterResource(Res.drawable.dummy_user_profile_icon), "",
+                modifier = Modifier.size(BisqUIConstants.ScreenPadding3X)
+            )
         }
-        // Not handling the null case as the uniqueAvatar is never null here
     }
 }
 

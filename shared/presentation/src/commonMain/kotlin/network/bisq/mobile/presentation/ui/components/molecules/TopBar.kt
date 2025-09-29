@@ -49,8 +49,8 @@ import org.koin.compose.koinInject
 
 interface ITopBarPresenter : ViewPresenter {
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
-    val showAnimation: StateFlow<Boolean>
     val userProfile: StateFlow<UserProfileVO?>
+    val showAnimation: StateFlow<Boolean>
     val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus>
 
     fun avatarEnabled(currentTab: String?): Boolean
@@ -173,7 +173,7 @@ fun TopBar(
                     } else {
                         Image(
                             painterResource(Res.drawable.dummy_user_profile_icon), "",
-                            modifier = Modifier.size(BisqUIConstants.ScreenPadding3X)
+                            modifier = userIconModifier
                         )
                     }
                 }
