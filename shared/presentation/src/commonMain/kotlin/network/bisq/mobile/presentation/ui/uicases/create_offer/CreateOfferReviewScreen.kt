@@ -16,7 +16,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.InformationConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxCurrency
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
@@ -33,7 +32,6 @@ fun CreateOfferReviewOfferScreen() {
     RememberPresenterLifecycle(presenter)
 
     val isInteractive by presenter.isInteractive.collectAsState()
-    val showMediatorWaitingDialog by presenter.showMediatorWaitingDialog.collectAsState()
 
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.review.headline.maker".i18n(),
@@ -171,14 +169,5 @@ fun CreateOfferReviewOfferScreen() {
                 subvalue = presenter.feeDetails,
             )
         }
-    }
-
-    // Mediator waiting dialog
-    if (showMediatorWaitingDialog) {
-        InformationConfirmationDialog(
-            message = "mobile.bisqEasy.createOffer.mediatorWaiting.message".i18n(),
-            onConfirm = { presenter.onDismissMediatorWaitingDialog() },
-            onDismiss = { presenter.onDismissMediatorWaitingDialog() }
-        )
     }
 }

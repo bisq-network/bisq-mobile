@@ -92,27 +92,6 @@ class ClientOffersServiceFacade(
         }
     }
 
-    override suspend fun createOfferWithMediatorWait(
-        direction: DirectionEnum,
-        market: MarketVO,
-        bitcoinPaymentMethods: Set<String>,
-        fiatPaymentMethods: Set<String>,
-        amountSpec: AmountSpecVO,
-        priceSpec: PriceSpecVO,
-        supportedLanguageCodes: Set<String>
-    ): Result<String> {
-        // For client mode, we delegate to the server which should handle mediator waiting
-        return createOffer(
-            direction,
-            market,
-            bitcoinPaymentMethods,
-            fiatPaymentMethods,
-            amountSpec,
-            priceSpec,
-            supportedLanguageCodes
-        )
-    }
-
     private fun observeAvailableMarkets() {
         launchIO {
             val result = apiGateway.getMarkets()

@@ -186,32 +186,6 @@ class NodeOffersServiceFacade(
         }
     }
 
-    override suspend fun createOfferWithMediatorWait(
-        direction: DirectionEnum,
-        market: MarketVO,
-        bitcoinPaymentMethods: Set<String>,
-        fiatPaymentMethods: Set<String>,
-        amountSpec: AmountSpecVO,
-        priceSpec: PriceSpecVO,
-        supportedLanguageCodes: Set<String>
-    ): Result<String> {
-        return try {
-            val offerId = createOfferWithMediatorWait(
-                Mappings.DirectionMapping.toBisq2Model(direction),
-                Mappings.MarketMapping.toBisq2Model(market),
-                bitcoinPaymentMethods.map { BitcoinPaymentMethodUtil.getPaymentMethod(it) },
-                fiatPaymentMethods.map { FiatPaymentMethodUtil.getPaymentMethod(it) },
-                Mappings.AmountSpecMapping.toBisq2Model(amountSpec),
-                Mappings.PriceSpecMapping.toBisq2Model(priceSpec),
-                ArrayList<String>(supportedLanguageCodes)
-            )
-            Result.success(offerId)
-        } catch (e: Exception) {
-            log.e(e) { "Failed to create offer with mediator wait: ${e.message}" }
-            Result.failure(e)
-        }
-    }
-
     // Private
     private fun createOffer(
         direction: Direction,
@@ -264,26 +238,6 @@ class NodeOffersServiceFacade(
         // blocking call
         bisqEasyOfferbookChannelService.publishChatMessage(myOfferMessage, userIdentity).join()
         return bisqEasyOffer.id
-    }
-
-    private fun createOfferWithMediatorWait(
-        direction: Direction,
-        market: Market,
-        bitcoinPaymentMethods: List<BitcoinPaymentMethod>,
-        fiatPaymentMethods: List<FiatPaymentMethod>,
-        amountSpec: AmountSpec,
-        priceSpec: PriceSpec,
-        supportedLanguageCodes: List<String>
-    ): String {
-        return createOffer(
-            direction,
-            market,
-            bitcoinPaymentMethods,
-            fiatPaymentMethods,
-            amountSpec,
-            priceSpec,
-            supportedLanguageCodes
-        )
     }
 
     private fun observeSelectedChannel() {

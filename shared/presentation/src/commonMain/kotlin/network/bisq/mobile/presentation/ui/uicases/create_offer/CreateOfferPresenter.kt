@@ -14,9 +14,9 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
+import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
@@ -224,21 +224,6 @@ class CreateOfferPresenter(
             val params = prepareOfferParameters()
             withContext(IODispatcher) {
                 offersServiceFacade.createOffer(
-                    params.direction, params.market, params.bitcoinPaymentMethods,
-                    params.fiatPaymentMethods, params.amountSpec, params.priceSpec,
-                    params.supportedLanguageCodes
-                )
-            }
-        } catch (e: IllegalStateException) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun createOfferWithMediatorWait(): Result<String> {
-        return try {
-            val params = prepareOfferParameters()
-            withContext(IODispatcher) {
-                offersServiceFacade.createOfferWithMediatorWait(
                     params.direction, params.market, params.bitcoinPaymentMethods,
                     params.fiatPaymentMethods, params.amountSpec, params.priceSpec,
                     params.supportedLanguageCodes
