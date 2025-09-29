@@ -125,6 +125,7 @@ class NodeOffersServiceFacade(
         marketPricePin?.unbind()
         marketPricePin = null
         numOffersObservers.forEach { it.dispose() }
+        numOffersObservers.clear()
         log.d { "NodeOffersServiceFacade deactivated" }
 
         super.deactivate()
@@ -150,9 +151,11 @@ class NodeOffersServiceFacade(
 
     override suspend fun deleteOffer(offerId: String): Result<Boolean> {
         try {
-            val optionalOfferbookMessage = findBisqEasyOfferbookMessage(offerId)
-            check(optionalOfferbookMessage.isPresent) { "BisqEasyOfferbookMessage with offer ID $offerId not found" }
-            val offerbookMessage = optionalOfferbookMessage.get()
+            val optionalOfferbookMessage: Optional<BisqEasyOfferbookMessage> = bisqEasyOfferbookChannelService.findMessageByOfferId(offerId)
+            if (optionalOfferbookMessage.isEmpty) {
+                return Result.success(false)
+            }
+            val offerbookMessage: BisqEasyOfferbookMessage = optionalOfferbookMessage.get()
             val authorUserProfileId: String = offerbookMessage.authorUserProfileId
             val optionalUserIdentity = userIdentityService.findUserIdentity(authorUserProfileId)
             check(optionalUserIdentity.isPresent) { "UserIdentity for authorUserProfileId $authorUserProfileId not found" }
