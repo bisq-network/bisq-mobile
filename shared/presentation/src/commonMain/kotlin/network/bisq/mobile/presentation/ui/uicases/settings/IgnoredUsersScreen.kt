@@ -107,7 +107,7 @@ private fun IgnoredUserItem(
         ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        UserProfileIcon(userProfile, userProfileIconProvider, 30.dp)
+        UserProfileIcon(userProfile, userProfileIconProvider, 40.dp)
         BisqGap.HHalf()
 
         BisqText.baseRegular(

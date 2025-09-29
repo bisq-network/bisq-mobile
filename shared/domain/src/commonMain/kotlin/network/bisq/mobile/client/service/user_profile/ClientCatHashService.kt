@@ -1,5 +1,7 @@
 package network.bisq.mobile.client.service.user_profile
 
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
+
 interface ClientCatHashService<T> {
     companion object {
         // We use 40.dp at offers, to get a 3x resolution we use 120px
@@ -12,4 +14,6 @@ interface ClientCatHashService<T> {
         avatarVersion: Int,
         size: Int
     ): T
+
+    fun getImage(userProfile: UserProfileVO, size: Int): T
 }

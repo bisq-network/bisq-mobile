@@ -19,7 +19,6 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExte
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.hexToByteArray
-import okio.ByteString.Companion.decodeBase64
 import kotlin.concurrent.Volatile
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.max
@@ -39,9 +38,6 @@ class ClientUserProfileServiceFacade(
 
     private val _numUserProfiles = MutableStateFlow(0)
     override val numUserProfiles: StateFlow<Int> get() = _numUserProfiles.asStateFlow()
-
-    private val userProfileIconByProfileId: MutableMap<String, PlatformImage?> = mutableMapOf()
-    private val userProfileIconByProfileIdMutex = Mutex()
 
     private val _ignoredUserIds: MutableStateFlow<Set<String>> = MutableStateFlow(emptySet())
     override val ignoredProfileIds: StateFlow<Set<String>> get() = _ignoredUserIds.asStateFlow()
@@ -114,7 +110,10 @@ class ClientUserProfileServiceFacade(
         val pubKeyHash: ByteArray = preparedData.id.hexToByteArray()
         val solutionEncoded = preparedData.proofOfWork.solutionEncoded
         val image: PlatformImage? = clientCatHashService.getImage(
-            pubKeyHash, solutionEncoded.decodeBase64Bytes(), 0, imageSize
+            pubKeyHash,
+            solutionEncoded.decodeBase64Bytes(),
+            0,
+            imageSize
         )
 
         result(preparedData.id, preparedData.nym, image)
@@ -218,23 +217,7 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage =
-        userProfileIconByProfileIdMutex.withLock {
-            val id = userProfile.id
-            var userProfileIcon: PlatformImage? = userProfileIconByProfileId[id]
-            if (userProfileIcon == null) {
-                // toByteArray() will never be null, but for sake of null safety we set 0 as default
-                val pubKeyHash = userProfile.networkId.pubKey.hash.decodeBase64()?.toByteArray() ?: ByteArray(0)
-                val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()?.toByteArray() ?: ByteArray(0)
-                userProfileIcon = clientCatHashService.getImage(
-                    pubKeyHash,
-                    powSolution,
-                    userProfile.avatarVersion,
-                    size.toInt()
-                )
-                userProfileIconByProfileId[id] = userProfileIcon
-            }
-            return userProfileIcon
-        }
+        clientCatHashService.getImage(userProfile, size.toInt())
 
     override suspend fun getUserPublishDate(): Long {
         return selectedUserProfile.value?.publishDate ?: 0L

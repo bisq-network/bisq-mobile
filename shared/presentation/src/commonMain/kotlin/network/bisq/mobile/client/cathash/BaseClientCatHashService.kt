@@ -23,7 +23,7 @@ import kotlin.io.encoding.ExperimentalEncodingApi
 abstract class BaseClientCatHashService(private val baseDirPath: String) :
     BaseService(), ClientCatHashService<PlatformImage?>, Logging {
     companion object {
-        const val MAX_CACHE_SIZE = 5000
+        const val MAX_CACHE_SIZE = 500
         const val CATHASH_ICONS_PATH = "db/cache/cat_hash_icons"
     }
 
@@ -39,7 +39,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
     protected abstract fun readRawImage(iconFilePath: String): PlatformImage?
 
     @OptIn(ExperimentalEncodingApi::class)
-    fun getImage(userProfile: UserProfileVO, size: Int): PlatformImage? {
+    override fun getImage(userProfile: UserProfileVO, size: Int): PlatformImage? {
         val pubKeyHash: ByteArray = userProfile.pubKeyHashAsByteArray
         val powSolution: ByteArray = userProfile.proofOfWork.solutionEncoded.base64ToByteArray()
         return getImage(
@@ -65,12 +65,13 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
             val iconFilePath = iconsDir.resolve("$userProfileId.raw")
 
             val profileId = pubKeyHash.toHex()
+            val cacheKey = "$profileId-v$avatarVersion"
             val useCache = size <= getSizeOfCachedIcons()
             if (useCache) {
                 // Fast path: attempt non-blocking cache read; if lock is contested, skip cache read
                 if (cacheLock.tryLock()) {
                     try {
-                        cache[profileId]?.let { return it }
+                        cache[cacheKey]?.let { return it }
                     } finally {
                         cacheLock.unlock()
                     }
@@ -87,7 +88,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
                             if (cacheLock.tryLock()) {
                                 try {
                                     if (cache.size < MAX_CACHE_SIZE) {
-                                        cache[profileId] = image
+                                        cache[cacheKey] = image
                                     }
                                 } finally {
                                     cacheLock.unlock()
@@ -117,7 +118,7 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
                 if (cacheLock.tryLock()) {
                     try {
                         if (cache.size < MAX_CACHE_SIZE) {
-                            cache[profileId] = image
+                            cache[cacheKey] = image
                         }
                     } finally {
                         cacheLock.unlock()
