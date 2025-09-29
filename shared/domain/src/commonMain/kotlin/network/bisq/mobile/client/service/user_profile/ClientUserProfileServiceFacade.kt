@@ -10,10 +10,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.ServiceFacade
@@ -216,8 +218,21 @@ class ClientUserProfileServiceFacade(
         return getUserProfileIcon(userProfile, ClientCatHashService.DEFAULT_SIZE)
     }
 
-    override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage =
-        clientCatHashService.getImage(userProfile, size.toInt())
+    override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage {
+        // In case we create the image we want to run it in IO context.
+        // We cache the images in the catHashService if its <=120 px
+        return withContext(IODispatcher) {
+            val ts = Clock.System.now().toEpochMilliseconds()
+            clientCatHashService.getImage(userProfile, size.toInt())
+                .also {
+                    log.d {
+                        "Get userProfileIcon for ${userProfile.userName} took ${
+                            Clock.System.now().toEpochMilliseconds() - ts
+                        } ms. User profile ID=${userProfile.id}"
+                    }
+                }
+        }
+    }
 
     override suspend fun getUserPublishDate(): Long {
         return selectedUserProfile.value?.publishDate ?: 0L

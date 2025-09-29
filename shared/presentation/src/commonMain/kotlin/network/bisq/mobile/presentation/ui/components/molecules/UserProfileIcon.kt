@@ -9,9 +9,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.presentation.ui.components.atoms.icons.getPlatformImagePainter
 
@@ -22,10 +20,8 @@ fun UserProfileIcon(
     size: Dp = 50.dp
 ) {
     val userProfileIcon by produceState<PlatformImage?>(initialValue = null, key1 = userProfile) {
-        // Run on IO thread to avoid blocking main
-        value = withContext(IODispatcher) {
-            userProfileIconProvider.invoke(userProfile)
-        }
+        // The UserProfileServiceFacade will run with IODispatcher context, thus no need to wrap it here as well
+        value = userProfileIconProvider.invoke(userProfile)
     }
 
     if (userProfileIcon != null) {
