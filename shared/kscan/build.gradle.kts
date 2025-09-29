@@ -12,7 +12,6 @@ kotlin {
         publishLibraryVariants("release")
     }
 
-    jvm()
 
     listOf(
         iosX64(),
@@ -25,8 +24,6 @@ kotlin {
         }
     }
 
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs()
     sourceSets {
         androidMain.dependencies {
             implementation(libs.android.mlkit.barcode.scanning)
@@ -52,6 +49,8 @@ android {
 
     defaultConfig {
         minSdk = libs.versions.android.minSdk.get().toInt()
+        // Ensure consumer rules are packaged with the AAR for release builds
+        consumerProguardFiles("consumer-rules.pro")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
