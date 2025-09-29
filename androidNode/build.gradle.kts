@@ -111,9 +111,8 @@ android {
         buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")
 
         // Memory management configuration
-        // Default: standard heap. Release builds use large heap to handle heavy network sync
-        // while debug builds use standard heap to catch memory leaks early in development
-        manifestPlaceholders["largeHeap"] = "false"
+        // Default: extended heap. Turn false to test for mem leaks reducing heap size.
+        manifestPlaceholders["largeHeap"] = "true"
 
         // for apk release build after tor inclusion
         ndk {
@@ -195,8 +194,8 @@ android {
             // Reduce GC logging noise in debug builds
             buildConfigField("String", "GC_LOG_LEVEL", "\"WARN\"")
 
-            // Keep standard heap in debug for leak detection
-            manifestPlaceholders["largeHeap"] = "false"
+            // Turn false to use standard heap in debug for leak detection
+            manifestPlaceholders["largeHeap"] = "true"
 
             // Disable minification in debug to avoid lock verification issues
             isMinifyEnabled = false

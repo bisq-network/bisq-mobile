@@ -96,7 +96,7 @@ actual fun ScannerView(
     Box(modifier = modifier) {
         UIKitViewController(
             factory = { cameraViewController!! },
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.matchParentSize(),
         )
 
         if (showUi) {
