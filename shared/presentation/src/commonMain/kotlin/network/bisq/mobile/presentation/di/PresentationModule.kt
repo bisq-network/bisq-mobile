@@ -120,7 +120,7 @@ val presentationModule = module {
 
     single<MiscItemsPresenter> { MiscItemsPresenter(get(), get(), get()) }
 
-    single<ReputationPresenter> { ReputationPresenter(get(), get()) }
+    factory<ReputationPresenter> { ReputationPresenter(get(), get()) }
 
     single<SupportPresenter> { SupportPresenter(get(), get(), get()) }
 

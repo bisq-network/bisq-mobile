@@ -33,9 +33,11 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.helpers.PreviewEnvironment
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 
@@ -68,7 +70,8 @@ fun ReputationScreen() {
             text = "mobile.reputation.buildReputation.intro.part1.formula.footnote".i18n(),
             color = BisqTheme.colors.light_grey20,
         )
-        BisqGap.VHalf()
+
+        BisqGap.V1()
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
@@ -76,13 +79,15 @@ fun ReputationScreen() {
             BisqText.baseLight(
                 text = "mobile.reputation.learnMore.part1".i18n() + " ",
                 color = BisqTheme.colors.light_grey50,
+                modifier = Modifier.weight(0.85f)
             )
+            BisqGap.HHalf()
             LinkButton(
                 text = "mobile.reputation.learnMore.part2".i18n(),
                 link = BisqLinks.REPUTATION_WIKI_URL,
                 onClick = { presenter.onOpenWebUrl(BisqLinks.REPUTATION_WIKI_URL) },
                 color = BisqTheme.colors.primary,
-                padding = PaddingValues(all = BisqUIConstants.Zero),
+                padding = PaddingValues(all = BisqUIConstants.Zero)
             )
         }
 
