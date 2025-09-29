@@ -521,8 +521,6 @@ class NodeOffersServiceFacade(
         offersToProcess.chunked(5).forEach { chunk ->
             for (message in chunk) {
                 try {
-                    val offerId = message.bisqEasyOffer.get().id
-
                     if (!isValidOfferMessage(message)) {
                         continue
                     }
