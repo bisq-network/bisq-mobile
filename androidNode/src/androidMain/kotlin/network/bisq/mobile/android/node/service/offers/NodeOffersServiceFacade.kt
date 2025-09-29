@@ -388,13 +388,13 @@ class NodeOffersServiceFacade(
         chatMessagesPin =
             chatMessages.addObserver(object : CollectionObserver<BisqEasyOfferbookMessage> {
                 override fun add(message: BisqEasyOfferbookMessage) {
-                    if (!message.bisqEasyOffer.isPresent) {
+                    if (!message.hasBisqEasyOffer()) {
                         return
                     }
 
                     // Add to thread-safe queue (non-blocking)
                     pendingOffers.offer(message)
-                    startOffersBatchJob()
+                    maybeStartOffersBatchJob()
                 }
 
                 override fun remove(message: Any) {
@@ -422,7 +422,7 @@ class NodeOffersServiceFacade(
         log.d { "Chat messages observer added for ${channel.market.marketCodes}, pin: $chatMessagesPin" }
     }
 
-    private fun startOffersBatchJob() {
+    private fun maybeStartOffersBatchJob() {
         // Use mutex to prevent race conditions when starting batch jobs
         launchIO {
             batchMutex.withLock {
@@ -501,23 +501,6 @@ class NodeOffersServiceFacade(
         }
     }
 
-    private fun isValidOfferMessage(message: BisqEasyOfferbookMessage): Boolean {
-//    TODO restore for usage of core version v2.1.8
-//        return bisqEasyOfferbookMessageService.isValid(message)
-        // Basic validation - message must have an offer
-        if (!message.hasBisqEasyOffer()) {
-            return false
-        }
-
-        // Don't show our own offers
-//        val myUserIdentityIds = userIdentityService.userIdentities.map { it.userProfile.id }.toSet()
-//        if (myUserIdentityIds.contains(makerUserProfile.get().id)) {
-//            return false
-//        }
-
-        return true
-    }
-
     private suspend fun findBisqEasyOfferbookMessage(offerId: String): Optional<BisqEasyOfferbookMessage> {
         return Optional.ofNullable(getOfferMessage(offerId))
     }
@@ -581,7 +564,6 @@ class NodeOffersServiceFacade(
                 try {
                     val offerId = message.bisqEasyOffer.get().id
 
-                    // Quick validation before expensive operations
                     if (offerMessagesContainsKey(offerId) || !isValidOfferMessage(message)) {
                         continue
                     }
@@ -627,6 +609,22 @@ class NodeOffersServiceFacade(
                 log.w { "MEMORY: Large offer list - UI: $currentSize, Map: $mapSize" }
             }
         }
+    }
+
+    private fun isValidOfferMessage(message: BisqEasyOfferbookMessage): Boolean {
+        // TODO Add more validation
+        // In Bisq main we have that code in the bisqEasyOfferbookMessageService.isValid(message)
+        // method
+        /*
+         public boolean isValid(BisqEasyOfferbookMessage message) {
+        return isNotBanned(message) &&
+                isNotIgnored(message) &&
+                (isTextMessage(message) ||
+                        isBuyOffer(message) ||
+                        hasSellerSufficientReputation(message));
+    }
+         */
+        return true
     }
 
     private fun startMemoryMonitoring() {
