@@ -219,13 +219,21 @@ class ClientUserProfileServiceFacade(
 
     override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage =
         userProfileIconByProfileIdMutex.withLock {
-            if (userProfileIconByProfileId[userProfile.id] == null) {
-                val pubKeyHash = userProfile.networkId.pubKey.hash.decodeBase64()!!.toByteArray()
-                val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()!!.toByteArray()
-                val userProfileIcon = clientCatHashService.getImage(pubKeyHash, powSolution, userProfile.avatarVersion, size.toInt())
-                userProfileIconByProfileId[userProfile.id] = userProfileIcon
+            val id = userProfile.id
+            var userProfileIcon: PlatformImage? = userProfileIconByProfileId[id]
+            if (userProfileIcon == null) {
+                // toByteArray() will never be null, but for sake of null safety we set 0 as default
+                val pubKeyHash = userProfile.networkId.pubKey.hash.decodeBase64()?.toByteArray() ?: ByteArray(0)
+                val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()?.toByteArray() ?: ByteArray(0)
+                userProfileIcon = clientCatHashService.getImage(
+                    pubKeyHash,
+                    powSolution,
+                    userProfile.avatarVersion,
+                    size.toInt()
+                )
+                userProfileIconByProfileId[id] = userProfileIcon
             }
-            return userProfileIconByProfileId[userProfile.id]!!
+            return userProfileIcon
         }
 
     override suspend fun getUserPublishDate(): Long {

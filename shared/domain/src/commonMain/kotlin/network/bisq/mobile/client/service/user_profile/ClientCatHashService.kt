@@ -11,5 +11,5 @@ interface ClientCatHashService<T> {
         powSolution: ByteArray,
         avatarVersion: Int,
         size: Int
-    ): T?
+    ): T
 }
