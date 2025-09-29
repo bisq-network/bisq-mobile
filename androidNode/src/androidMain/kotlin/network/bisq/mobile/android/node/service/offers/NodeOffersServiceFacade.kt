@@ -99,11 +99,7 @@ class NodeOffersServiceFacade(
 
         observeSelectedChannel()
         observeMarketPrice()
-        if (numOffersObservers.isNotEmpty()) {
-            numOffersObservers.forEach { it.resume() }
-        } else {
-            observeMarketListItems(_offerbookMarketItems)
-        }
+        observeMarketListItems(_offerbookMarketItems)
         startMemoryMonitoring()
         log.d { "NodeOffersServiceFacade activated, numOffersObservers: ${numOffersObservers.size}" }
     }
