@@ -27,6 +27,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.icons.ScanQrIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BarcodeScannerDialog
 import network.bisq.mobile.presentation.ui.helpers.BitcoinAddressValidation
+import network.bisq.mobile.presentation.ui.helpers.BitcoinLightningNormalization
 import network.bisq.mobile.presentation.ui.helpers.LightningInvoiceValidation
 import network.bisq.mobile.presentation.ui.helpers.PreviewEnvironment
 import network.bisq.mobile.presentation.ui.helpers.rememberCameraPermissionLauncher
@@ -85,11 +86,13 @@ fun BitcoinLnAddressField(
             onCanceled = { showScanner = false },
             onFailed = { showScanner = false },
         ) {
+            // Normalize only for bech32/BOLT11; keep base58 and query params intact
+            val data = BitcoinLightningNormalization.normalizeScan(it.data)
             showScanner = false
-            if (validationError(it.data) == null) {
-                onValueChange?.invoke(it.data, true)
+            if (validationError(data) == null) {
+                onValueChange?.invoke(data, true)
             } else {
-                onValueChange?.invoke(it.data, false)
+                onValueChange?.invoke(data, false)
             }
             // trigger input validator
             shouldBlurAfterFocus = true
