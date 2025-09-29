@@ -20,7 +20,7 @@ import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScor
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.StarRating
 import network.bisq.mobile.presentation.ui.components.atoms.animations.AnimatedBadge
-import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
+import network.bisq.mobile.presentation.ui.components.atoms.icons.getPlatformImagePainter
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.painterResource
 
@@ -38,7 +38,7 @@ fun UserProfileRow(
     val painter: Painter = if (userProfileIcon == null) {
         painterResource(Res.drawable.img_bot_image)
     } else {
-        rememberPlatformImagePainter(userProfileIcon)
+        getPlatformImagePainter(userProfileIcon)
     }
 
     Row(

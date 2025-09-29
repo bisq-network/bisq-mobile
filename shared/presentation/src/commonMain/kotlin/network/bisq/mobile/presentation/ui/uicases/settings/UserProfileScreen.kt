@@ -20,7 +20,7 @@ import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.SettingsTextField
 import network.bisq.mobile.presentation.ui.components.atoms.button.CopyIconButton
-import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
+import network.bisq.mobile.presentation.ui.components.atoms.icons.getPlatformImagePainter
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -158,7 +158,7 @@ private fun UserProfileScreenHeader(presenter: IUserProfilePresenter) {
         contentAlignment = Alignment.Center
     ) {
         if (userProfileIcon != null) {
-            val painter = rememberPlatformImagePainter(userProfileIcon!!)
+            val painter = getPlatformImagePainter(userProfileIcon!!)
             Image(painter = painter, contentDescription = "User icon", modifier = Modifier.size(120.dp))
         }
         // Not handling the null case as the uniqueAvatar is never null here

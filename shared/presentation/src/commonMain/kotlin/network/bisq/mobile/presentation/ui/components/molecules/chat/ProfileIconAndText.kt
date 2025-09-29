@@ -14,7 +14,7 @@ import bisqapps.shared.presentation.generated.resources.img_bot_image
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
+import network.bisq.mobile.presentation.ui.components.atoms.icons.getPlatformImagePainter
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.painterResource
 
@@ -31,7 +31,7 @@ fun ProfileIconAndText(
         val painter: Painter = if (userProfileIcon == null) {
             painterResource(Res.drawable.img_bot_image)
         } else {
-            rememberPlatformImagePainter(userProfileIcon)
+            getPlatformImagePainter(userProfileIcon)
         }
 
         val icon = @Composable {

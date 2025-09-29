@@ -9,7 +9,7 @@ import org.jetbrains.skia.Image
 import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation
 
-actual fun rememberPlatformImagePainter(platformImage: PlatformImage): Painter {
+actual fun getPlatformImagePainter(platformImage: PlatformImage): Painter {
     val uiImage = platformImage.image
     val skiaImage = uiImage.toSkiaImage()
     return BitmapPainter(skiaImage.toComposeImageBitmap())

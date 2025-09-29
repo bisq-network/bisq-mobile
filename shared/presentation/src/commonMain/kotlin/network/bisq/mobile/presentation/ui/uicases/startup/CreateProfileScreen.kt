@@ -19,7 +19,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
-import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
+import network.bisq.mobile.presentation.ui.components.atoms.icons.getPlatformImagePainter
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -70,7 +70,7 @@ fun CreateProfileScreen(
             )
         } else {
             profileIcon?.let { profileIcon ->
-                val painter = rememberPlatformImagePainter(profileIcon)
+                val painter = getPlatformImagePainter(profileIcon)
                 Button(
                     contentPadding = PaddingValues(BisqUIConstants.Zero),
                     enabled = !generateKeyPairInProgress,

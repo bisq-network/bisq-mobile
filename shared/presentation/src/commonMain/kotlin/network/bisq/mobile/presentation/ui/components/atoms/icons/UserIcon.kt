@@ -29,7 +29,7 @@ fun UserIcon(
             // show default
             Image(painterResource(Res.drawable.img_bot_image), "User icon", modifier = modifier)
         } else {
-            val painter = rememberPlatformImagePainter(platformImage)
+            val painter = getPlatformImagePainter(platformImage)
             Image(painter = painter, contentDescription = "User icon", modifier = Modifier.padding(2.dp))
         }
         ConnectivityIndicator(connectivityStatus)

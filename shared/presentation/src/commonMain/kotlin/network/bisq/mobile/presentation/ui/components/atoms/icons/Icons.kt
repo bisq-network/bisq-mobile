@@ -58,7 +58,7 @@ import bisqapps.shared.presentation.generated.resources.up_arrow
 import network.bisq.mobile.domain.PlatformImage
 import org.jetbrains.compose.resources.painterResource
 
-expect fun rememberPlatformImagePainter(platformImage: PlatformImage): Painter
+expect fun getPlatformImagePainter(platformImage: PlatformImage): Painter
 
 @Composable
 fun CloseIcon(modifier: Modifier = Modifier.size(24.dp), color: Color = Color.White) {

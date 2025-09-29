@@ -11,7 +11,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.IODispatcher
-import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
+import network.bisq.mobile.presentation.ui.components.atoms.icons.getPlatformImagePainter
 
 @Composable
 fun UserProfileIcon(
@@ -27,7 +27,7 @@ fun UserProfileIcon(
 
     if (userProfileIcon != null) {
         Image(
-            rememberPlatformImagePainter(userProfileIcon!!), "",
+            getPlatformImagePainter(userProfileIcon!!), "",
             modifier = Modifier.size(40.dp)
         )
     } else {

@@ -26,7 +26,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIcon
-import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
+import network.bisq.mobile.presentation.ui.components.atoms.icons.getPlatformImagePainter
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
@@ -108,7 +108,7 @@ private fun IgnoredUserItem(
         //todo Dont show a random icon!
         painterResource(Res.drawable.img_bot_image)
     } else {
-        rememberPlatformImagePainter(userProfileIcon)
+        getPlatformImagePainter(userProfileIcon)
     }
 
     Row(
