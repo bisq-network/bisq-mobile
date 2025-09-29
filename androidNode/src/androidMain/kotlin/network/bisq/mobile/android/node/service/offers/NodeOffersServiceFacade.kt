@@ -66,7 +66,6 @@ class NodeOffersServiceFacade(
         // Higher threshold to avoid masking memory leaks - only suggest GC in critical situations
         private const val MEMORY_GC_THRESHOLD = 0.85
         private const val OFFER_BATCH_DELAY = 100L // milliseconds
-        private const val MAP_CLEAR_THRESHOLD = 50
         private const val MIN_GC_INTERVAL = 10000L
         private val MEDIATOR_WAIT_TIMEOUT = 1.minutes
         private val MEDIATOR_POLL_INTERVAL = 2.seconds
@@ -152,9 +151,7 @@ class NodeOffersServiceFacade(
     override suspend fun deleteOffer(offerId: String): Result<Boolean> {
         try {
             val optionalOfferbookMessage: Optional<BisqEasyOfferbookMessage> = bisqEasyOfferbookChannelService.findMessageByOfferId(offerId)
-            if (optionalOfferbookMessage.isEmpty) {
-                return Result.success(false)
-            }
+            check(optionalOfferbookMessage.isPresent) { "Could not find offer for offer ID $offerId" }
             val offerbookMessage: BisqEasyOfferbookMessage = optionalOfferbookMessage.get()
             val authorUserProfileId: String = offerbookMessage.authorUserProfileId
             val optionalUserIdentity = userIdentityService.findUserIdentity(authorUserProfileId)
