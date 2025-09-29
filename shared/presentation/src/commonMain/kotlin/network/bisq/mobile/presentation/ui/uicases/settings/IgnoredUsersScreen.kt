@@ -1,21 +1,17 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.painter.Painter
-import bisqapps.shared.presentation.generated.resources.Res
-import bisqapps.shared.presentation.generated.resources.img_bot_image
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -26,20 +22,19 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIcon
-import network.bisq.mobile.presentation.ui.components.atoms.icons.getPlatformImagePainter
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.UserProfileIcon
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 interface IIgnoredUsersPresenter : ViewPresenter {
+    val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
     val ignoredUsers: StateFlow<List<UserProfileVO>>
-    val userProfileIconByProfileId: StateFlow<Map<String, PlatformImage?>>
     val ignoreUserId: StateFlow<String>
     fun unblockUser(userId: String)
     fun unblockUserConfirm(userId: String)
@@ -53,7 +48,6 @@ fun IgnoredUsersScreen() {
 
     val isInteractive by presenter.isInteractive.collectAsState()
     val ignoredUsers by presenter.ignoredUsers.collectAsState()
-    val userProfileIconByProfileId by presenter.userProfileIconByProfileId.collectAsState()
     val ignoreUserId by presenter.ignoreUserId.collectAsState()
     val showIgnoreUserWarnBox = ignoreUserId.isNotEmpty()
 
@@ -74,7 +68,7 @@ fun IgnoredUsersScreen() {
                 ignoredUsers.forEach { userProfile ->
                     IgnoredUserItem(
                         userProfile = userProfile,
-                        userProfileIcon = userProfileIconByProfileId[userProfile.id],
+                        userProfileIconProvider = presenter.userProfileIconProvider,
                         onUnblock = { presenter.unblockUser(userProfile.id) }
                     )
                 }
@@ -101,15 +95,10 @@ fun IgnoredUsersScreen() {
 
 @Composable
 private fun IgnoredUserItem(
-    userProfile: UserProfileVO, userProfileIcon: PlatformImage? = null, onUnblock: () -> Unit
+    userProfile: UserProfileVO,
+    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
+    onUnblock: () -> Unit
 ) {
-
-    val painter: Painter = if (userProfileIcon == null) {
-        //todo Dont show a random icon!
-        painterResource(Res.drawable.img_bot_image)
-    } else {
-        getPlatformImagePainter(userProfileIcon)
-    }
 
     Row(
         modifier = Modifier.fillMaxWidth().padding(
@@ -118,8 +107,7 @@ private fun IgnoredUserItem(
         ),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Image(painter, contentDescription = null, modifier = Modifier.size(BisqUIConstants.ScreenPadding3X))
-
+        UserProfileIcon(userProfile, userProfileIconProvider, 30.dp)
         BisqGap.HHalf()
 
         BisqText.baseRegular(

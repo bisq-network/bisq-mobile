@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
@@ -25,7 +26,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 @Composable
 fun OpenTradeListItem(
     item: TradeItemPresentationModel,
-    userProfileIcon: PlatformImage? = null,
+    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     unreadCount: Int,
     onSelect: () -> Unit,
 ) {
@@ -56,10 +57,10 @@ fun OpenTradeListItem(
                 )
                 Row(modifier = Modifier.padding(top = 6.dp, bottom = 16.dp)) {
                     UserProfileRow(
-                        user = item.peersUserProfile,
+                        userProfile = item.peersUserProfile,
+                        userProfileIconProvider = userProfileIconProvider,
                         reputation = item.peersReputationScore,
                         showUserName = true,
-                        userProfileIcon = userProfileIcon,
                         badgeCount = unreadCount,
                     )
                 }

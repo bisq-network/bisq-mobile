@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
@@ -30,7 +29,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
-fun CurrencyCard(
+fun MarketCard(
     item: MarketListItem,
     isSelected: Boolean = false,
     hasIgnoredUsers: Boolean = false,

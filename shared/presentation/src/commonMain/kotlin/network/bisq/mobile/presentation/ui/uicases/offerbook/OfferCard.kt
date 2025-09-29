@@ -26,6 +26,7 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.mirror
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.utils.StringUtils.truncate
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
@@ -43,7 +44,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 fun OfferCard(
     item: OfferItemPresentationModel,
     onSelectOffer: () -> Unit,
-    userProfileIconProvider: suspend (String) -> PlatformImage
+    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
 ) {
     val userName by item.userName.collectAsState()
     val sellColor = BisqTheme.colors.danger.copy(alpha = 0.8f)

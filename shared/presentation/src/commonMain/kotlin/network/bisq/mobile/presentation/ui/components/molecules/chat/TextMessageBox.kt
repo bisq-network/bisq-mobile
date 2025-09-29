@@ -23,6 +23,7 @@ import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -30,7 +31,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 @Composable
 fun TextMessageBox(
     message: BisqEasyOpenTradeMessageModel,
-    userProfileIcon: PlatformImage? = null,
+    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onScrollToMessage: (String) -> Unit = {},
     onAddReaction: (ReactionEnum) -> Unit,
     onRemoveReaction: (BisqEasyOpenTradeMessageReactionVO) -> Unit,
@@ -75,7 +76,7 @@ fun TextMessageBox(
                         }
                     }) {
                 }
-                ProfileIconAndText(message, userProfileIcon)
+                ProfileIconAndText(message, userProfileIconProvider)
             }
         }
         val messageBox = @Composable {
@@ -93,7 +94,7 @@ fun TextMessageBox(
                     if (message.citation != null) {
                         quoteAndProfileIconAndText()
                     } else {
-                        ProfileIconAndText(message, userProfileIcon)
+                        ProfileIconAndText(message, userProfileIconProvider)
                     }
                 }
             }

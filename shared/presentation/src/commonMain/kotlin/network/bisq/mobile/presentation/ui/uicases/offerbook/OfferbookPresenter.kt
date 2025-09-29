@@ -63,6 +63,8 @@ class OfferbookPresenter(
 
     val selectedMarket get() = marketPriceServiceFacade.selectedMarketPriceItem
 
+    val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
+
     var notEnoughReputationHeadline: String = ""
     var notEnoughReputationMessage: String = ""
     var isReputationWarningForSellerAsTaker: Boolean = false
@@ -449,9 +451,5 @@ class OfferbookPresenter(
             log.w("isUserIgnoredCached failed for $makerUserProfileId", e)
             false
         }
-    }
-
-    fun getUserProfileIconProvider(userProfile: UserProfileVO): suspend (String) -> PlatformImage {
-        return { id -> userProfileServiceFacade.getUserProfileIcon(userProfile) }
     }
 }

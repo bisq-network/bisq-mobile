@@ -12,6 +12,7 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -82,11 +83,10 @@ class TradeDetailsHeaderPresenter(
     private val _mediationError = MutableStateFlow("")
     val mediationError: StateFlow<String> get() = _mediationError.asStateFlow()
 
-    private val _peersProfileIcon: MutableStateFlow<PlatformImage?> = MutableStateFlow(null)
-    val peersProfileIcon: StateFlow<PlatformImage?> get() = _peersProfileIcon.asStateFlow()
-
     private val _isShowDetails: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isShowDetails: StateFlow<Boolean> get() = this._isShowDetails.asStateFlow()
+
+    val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -132,11 +132,6 @@ class TradeDetailsHeaderPresenter(
         collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation) {
             this@TradeDetailsHeaderPresenter._isInMediation.value = it
         }
-
-        launchIO {
-            _peersProfileIcon.value = userProfileServiceFacade.getUserProfileIcon(openTradeItemModel.peersUserProfile)
-        }
-
     }
 
     override fun onViewUnattaching() {

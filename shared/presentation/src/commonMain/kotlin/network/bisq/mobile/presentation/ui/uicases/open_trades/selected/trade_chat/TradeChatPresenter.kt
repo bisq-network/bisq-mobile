@@ -17,6 +17,7 @@ import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.Bis
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
@@ -63,6 +64,8 @@ class TradeChatPresenter(
     val undoIgnoreUserId: StateFlow<String> get() = _undoIgnoreUserId.asStateFlow()
 
     val ignoredProfileIds: StateFlow<Set<String>> get() = userProfileServiceFacade.ignoredProfileIds
+
+    val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 
     val readCount =
         selectedTrade.combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->

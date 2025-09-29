@@ -78,7 +78,7 @@ fun OfferbookScreen() {
                     onSelectOffer = {
                         presenter.onOfferSelected(item)
                     },
-                    userProfileIconProvider = presenter.getUserProfileIconProvider(item.makersUserProfile)
+                    userProfileIconProvider = presenter.userProfileIconProvider
                 )
             }
         }

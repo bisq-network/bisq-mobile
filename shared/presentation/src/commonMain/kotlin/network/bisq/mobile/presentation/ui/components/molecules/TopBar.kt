@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -23,29 +24,33 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import bisqapps.shared.presentation.generated.resources.Res
+import bisqapps.shared.presentation.generated.resources.dummy_user_profile_icon
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.BackHandler
 import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
-import network.bisq.mobile.presentation.ui.components.atoms.icons.UserIcon
+import network.bisq.mobile.presentation.ui.components.atoms.icons.MyUserProfileIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import org.jetbrains.compose.resources.painterResource
 import org.koin.compose.koinInject
 
 interface ITopBarPresenter : ViewPresenter {
-    val uniqueAvatar: StateFlow<PlatformImage?>
+    val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
     val showAnimation: StateFlow<Boolean>
+    val userProfile: StateFlow<UserProfileVO?>
     val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus>
 
     fun avatarEnabled(currentTab: String?): Boolean
@@ -89,6 +94,7 @@ fun TopBar(
             navController.previousBackStackEntry != null &&
             !presenter.isAtHome())
 
+    val userProfile by presenter.userProfile.collectAsState()
     val connectivityStatus by presenter.connectivityStatus.collectAsState()
 
     val defaultBackButton: @Composable () -> Unit = {
@@ -149,7 +155,7 @@ fun TopBar(
                 if (showUserAvatar) {
                     val userIconModifier = Modifier
                         .size(BisqUIConstants.topBarAvatarSize)
-                        .alpha(if (presenter.avatarEnabled(currentTab)) 1.0f else 0.5f)
+                        //.alpha(if (presenter.avatarEnabled(currentTab)) 1.0f else 0.5f)
                         .clickable {
                             if (presenter.avatarEnabled(currentTab)) {
                                 presenter.navigateToUserProfile()
@@ -157,12 +163,19 @@ fun TopBar(
                         }
 
                     BisqGap.H1()
-                    val uniqueAvatar by presenter.uniqueAvatar.collectAsState()
-                    UserIcon(
-                        uniqueAvatar,
-                        modifier = userIconModifier,
-                        connectivityStatus = connectivityStatus
-                    )
+                    if (userProfile != null) {
+                        MyUserProfileIcon(
+                            userProfile!!,
+                            presenter.userProfileIconProvider,
+                            modifier = userIconModifier,
+                            connectivityStatus = connectivityStatus
+                        )
+                    } else {
+                        Image(
+                            painterResource(Res.drawable.dummy_user_profile_icon), "",
+                            modifier = Modifier.size(BisqUIConstants.ScreenPadding3X)
+                        )
+                    }
                 }
             }
         },

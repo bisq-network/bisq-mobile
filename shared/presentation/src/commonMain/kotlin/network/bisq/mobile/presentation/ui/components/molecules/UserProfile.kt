@@ -10,7 +10,6 @@ import androidx.compose.ui.Modifier
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.StarRating
@@ -20,7 +19,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 @Composable
 fun UserProfile(
     userProfile: UserProfileVO,
-    userProfileIconProvider: suspend (String) -> PlatformImage,
+    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     reputation: StateFlow<ReputationScoreVO>,
     supportedLanguageCodes: List<String>,
     showUserName: Boolean = true,
@@ -32,7 +31,7 @@ fun UserProfile(
         modifier = modifier
     ) {
 
-        UserProfileIcon(userProfile.id, userProfileIconProvider)
+        UserProfileIcon(userProfile, userProfileIconProvider)
 
         BisqGap.V1()
         Column {

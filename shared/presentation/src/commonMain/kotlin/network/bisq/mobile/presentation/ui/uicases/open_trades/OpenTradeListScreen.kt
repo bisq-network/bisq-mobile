@@ -28,7 +28,6 @@ import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.fiat_btc
 import bisqapps.shared.presentation.generated.resources.reputation
 import bisqapps.shared.presentation.generated.resources.thumbs_up
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
@@ -54,7 +53,6 @@ fun OpenTradeListScreen() {
     val tradeRulesConfirmed by presenter.tradeRulesConfirmed.collectAsState()
     val tradesWithUnreadMessages by presenter.tradesWithUnreadMessages.collectAsState()
     val sortedOpenTradeItems by presenter.sortedOpenTradeItems.collectAsState()
-    val userProfileIconByProfileId by presenter.userProfileIconByProfileId.collectAsState()
 
     if (tradeGuideVisible) {
         InformationConfirmationDialog(
@@ -88,7 +86,7 @@ fun OpenTradeListScreen() {
                         modifier = Modifier.clip(shape = RoundedCornerShape(12.dp))
                             .background(color = BisqTheme.colors.dark_grey30)
                             .padding(12.dp),
-                        ) {
+                    ) {
                         WelcomeToFirstTradePane(presenter)
                     }
                 }
@@ -111,23 +109,22 @@ fun OpenTradeListScreen() {
                     OpenTradeListItem(
                         trade,
                         unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
-                        userProfileIcon = userProfileIconByProfileId[trade.peersUserProfile.id],
+                        userProfileIconProvider = presenter.userProfileIconProvider,
                         onSelect = { presenter.onSelect(trade) }
                     )
                 }
             }
-        //}
         } else {
             LazyColumn(
                 // modifier = Modifier.padding(top = 48.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
+            ) {
                 items(sortedOpenTradeItems, key = { it.tradeId }) { trade ->
                     OpenTradeListItem(
                         trade,
                         unreadCount = tradesWithUnreadMessages.getOrElse(trade.tradeId) { 0 },
-                        userProfileIcon = userProfileIconByProfileId[trade.peersUserProfile.id],
+                        userProfileIconProvider = presenter.userProfileIconProvider,
                         onSelect = { presenter.onSelect(trade) }
                     )
                 }

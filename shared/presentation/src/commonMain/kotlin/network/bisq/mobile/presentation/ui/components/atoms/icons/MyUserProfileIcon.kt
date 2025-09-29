@@ -9,29 +9,26 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.connected_and_data_received
-import bisqapps.shared.presentation.generated.resources.img_bot_image
 import bisqapps.shared.presentation.generated.resources.no_connections
 import bisqapps.shared.presentation.generated.resources.requesting_inventory
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus
 import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
 import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.REQUESTING_INVENTORY
+import network.bisq.mobile.presentation.ui.components.molecules.UserProfileIcon
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
-fun UserIcon(
-    platformImage: PlatformImage?,
+fun MyUserProfileIcon(
+    userProfile: UserProfileVO,
+    userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     modifier: Modifier = Modifier,
     connectivityStatus: ConnectivityStatus
 ) {
     Box(modifier = modifier.padding(0.dp), contentAlignment = Alignment.BottomEnd) {
-        if (platformImage == null) {
-            // show default
-            Image(painterResource(Res.drawable.img_bot_image), "User icon", modifier = modifier)
-        } else {
-            val painter = getPlatformImagePainter(platformImage)
-            Image(painter = painter, contentDescription = "User icon", modifier = Modifier.padding(2.dp))
-        }
+        UserProfileIcon(userProfile, userProfileIconProvider, BisqUIConstants.topBarAvatarSize)
         ConnectivityIndicator(connectivityStatus)
     }
 }

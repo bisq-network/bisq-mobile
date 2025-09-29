@@ -63,7 +63,6 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
     val leftCode by presenter.leftCode.collectAsState()
     val rightAmount by presenter.rightAmount.collectAsState()
     val rightCode by presenter.rightCode.collectAsState()
-    val peersProfileIcon by presenter.peersProfileIcon.collectAsState()
 
     val enterTransition = remember {
         expandVertically(
@@ -122,10 +121,10 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
                         BisqGap.H1()
 
                         UserProfileRow(
-                            user = item.peersUserProfile,
+                            userProfile = item.peersUserProfile,
                             reputation = item.peersReputationScore,
                             showUserName = true,
-                            userProfileIcon = peersProfileIcon,
+                            userProfileIconProvider = presenter.userProfileIconProvider,
                         )
                     }
                 }

@@ -7,9 +7,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.IODispatcher
-import network.bisq.mobile.domain.data.model.User
-import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
@@ -17,9 +14,8 @@ import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-open class CreateProfilePresenter(
+class CreateProfilePresenter(
     mainPresenter: MainPresenter,
-    private val userRepository: UserRepository,
     private val userProfileService: UserProfileServiceFacade
 ) : BasePresenter(mainPresenter) {
 
@@ -161,15 +157,6 @@ open class CreateProfilePresenter(
                         showSnackbar("mobile.profile.generatingKeyPairFailed".i18n())
                     }
                 }
-
-                withContext(IODispatcher) {
-                    userRepository.update(
-                        User().copy(
-                            uniqueAvatar = profileIcon.value,
-                        )
-                    )
-                }
-
                 _generateKeyPairInProgress.value = false
                 log.i { "Hide busy animation for generateKeyPair" }
             }

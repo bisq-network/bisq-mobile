@@ -9,15 +9,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
-import network.bisq.mobile.presentation.ui.components.CurrencyCard
+import network.bisq.mobile.presentation.ui.components.MarketCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.icons.GreenSortIcon
@@ -120,7 +120,7 @@ private fun OfferbookMarketScreenContent(
             }
             LazyColumn(state = listState) {
                 items(marketItems, key = { it.market.marketCodes }) { item ->
-                    CurrencyCard(
+                    MarketCard(
                         item = item,
                         hasIgnoredUsers = hasIgnoredUsers,
                         onClick = { onMarketSelect(item) }

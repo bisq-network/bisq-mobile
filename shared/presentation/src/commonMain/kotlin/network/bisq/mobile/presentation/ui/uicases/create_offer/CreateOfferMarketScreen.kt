@@ -13,7 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.CurrencyCard
+import network.bisq.mobile.presentation.ui.components.MarketCard
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
@@ -66,7 +66,7 @@ fun CreateOfferCurrencySelectorScreen() {
                 verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
             ) {
                 items(filteredMarketList, key = { it.market.marketCodes }) { item ->
-                    CurrencyCard(
+                    MarketCard(
                         item,
                         isSelected = selectedMarketItem?.market == item.market,
                         onClick = { presenter.onSelectMarket(item) }
