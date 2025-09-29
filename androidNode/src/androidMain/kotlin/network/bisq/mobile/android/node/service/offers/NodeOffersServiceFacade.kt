@@ -556,7 +556,7 @@ class NodeOffersServiceFacade(
                 try {
                     val offerId = message.bisqEasyOffer.get().id
 
-                    if (offerMessagesContainsKey(offerId) || !isValidOfferMessage(message)) {
+                    if (!isValidOfferMessage(message)) {
                         continue
                     }
 
@@ -591,14 +591,17 @@ class NodeOffersServiceFacade(
 
         // Single UI update for all new offers
         if (newOffers.isNotEmpty()) {
-            _offerbookListItems.update { it + newOffers }
+            // distinct avoids that we add duplicates but requires proper equals/hashCode in OfferItemPresentationModel
+            _offerbookListItems.update { currentList ->
+                (currentList + newOffers).distinct()
+            }
+
             val currentSize = _offerbookListItems.value.size
             log.i { "Batch processed $processedCount offers, total: $currentSize" }
 
             // Log memory pressure if list is getting large
             if (currentSize > 100 && currentSize % 50 == 0) {
-                val mapSize = offerMapMutex.withLock { offerIds.size }
-                log.w { "MEMORY: Large offer list - UI: $currentSize, Map: $mapSize" }
+                log.w { "MEMORY: Large offer list - UI: $currentSize" }
             }
         }
     }
@@ -627,11 +630,10 @@ class NodeOffersServiceFacade(
                     val runtime = Runtime.getRuntime()
                     val usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024
                     val maxMemory = runtime.maxMemory() / 1024 / 1024
-                    val offerMapSize = offerMapMutex.withLock { offerIds.size }
                     val offersListSize = _offerbookListItems.value.size
                     val observersCount = numOffersObservers.size
 
-                    log.w { "MEMORY: Used ${usedMemory}MB/${maxMemory}MB, OfferMap: $offerMapSize, OffersList: $offersListSize, Observers: $observersCount" }
+                    log.w { "MEMORY: Used ${usedMemory}MB/${maxMemory}MB, OffersList: $offersListSize, Observers: $observersCount" }
 
                     // Only suggest GC in critical situations (90%+) to avoid masking memory leaks
                     if (usedMemory > maxMemory * MEMORY_GC_THRESHOLD) {
