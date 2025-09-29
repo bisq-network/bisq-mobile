@@ -33,8 +33,8 @@ fun ByteArray.toHex(): String {
 }
 
 
-fun String.base64ToByteArray(): ByteArray {
-    return decodeBase64()?.toByteArray()!!
+fun String.base64ToByteArray(): ByteArray? {
+    return decodeBase64()?.toByteArray()
 }
 
 fun String.hexToByteArray(): ByteArray {

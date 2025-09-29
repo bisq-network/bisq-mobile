@@ -4,10 +4,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ProofOfWorkVO(
-    val payloadEncoded: String,
+    val payloadEncoded: String, // Base64 encoded
     val counter: Long,
-    val challengeEncoded: String?,
+    val challengeEncoded: String?, // Base64 encoded
     val difficulty: Double,
-    val solutionEncoded: String,
+    val solutionEncoded: String, // Base64 encoded
     val duration: Long
 )

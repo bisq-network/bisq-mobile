@@ -8,12 +8,11 @@ import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
-import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.pubKeyHashAsByteArray
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.utils.Logging
-import network.bisq.mobile.domain.utils.base64ToByteArray
 import network.bisq.mobile.domain.utils.concat
 import network.bisq.mobile.domain.utils.toHex
+import okio.ByteString.Companion.decodeBase64
 import okio.FileSystem
 import okio.Path
 import okio.Path.Companion.toPath
@@ -40,8 +39,11 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
 
     @OptIn(ExperimentalEncodingApi::class)
     override fun getImage(userProfile: UserProfileVO, size: Int): PlatformImage? {
-        val pubKeyHash: ByteArray = userProfile.pubKeyHashAsByteArray
-        val powSolution: ByteArray = userProfile.proofOfWork.solutionEncoded.base64ToByteArray()
+        // We get the data Base 64 encoded form the Webservice/Rest API backend
+        // As the data are verified at the network layer, the decodeBase64() cannot return null,
+        // but to cover the case we fall back to 0.
+        val pubKeyHash = userProfile.networkId.pubKey.hash.decodeBase64()?.toByteArray() ?: ByteArray(0)
+        val powSolution = userProfile.proofOfWork.solutionEncoded.decodeBase64()?.toByteArray() ?: ByteArray(0)
         return getImage(
             pubKeyHash,
             powSolution,

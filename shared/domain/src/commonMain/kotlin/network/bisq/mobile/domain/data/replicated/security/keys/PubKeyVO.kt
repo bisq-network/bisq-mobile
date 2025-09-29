@@ -19,4 +19,9 @@ package network.bisq.mobile.domain.data.replicated.security.keys
 import kotlinx.serialization.Serializable
 
 @Serializable
-data class PubKeyVO(val publicKey: PublicKeyVO, val keyId: String, val hash: String, val id: String)
+data class PubKeyVO(
+    val publicKey: PublicKeyVO,
+    val keyId: String,
+    val hash: String,  // Base64 encoded
+    val id: String
+)
