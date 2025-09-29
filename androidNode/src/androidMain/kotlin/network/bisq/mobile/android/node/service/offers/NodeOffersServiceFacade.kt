@@ -25,14 +25,12 @@ import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
@@ -45,12 +43,10 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import java.util.Date
 import java.util.Optional
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -67,8 +63,6 @@ class NodeOffersServiceFacade(
         private const val MEMORY_GC_THRESHOLD = 0.85
         private const val OFFER_BATCH_DELAY = 100L // milliseconds
         private const val MIN_GC_INTERVAL = 10000L
-        private val MEDIATOR_WAIT_TIMEOUT = 1.minutes
-        private val MEDIATOR_POLL_INTERVAL = 2.seconds
         private val MEMORY_LOG_INTERVAL = 30.seconds
     }
 
@@ -276,7 +270,7 @@ class NodeOffersServiceFacade(
         return bisqEasyOffer.id
     }
 
-    private suspend fun createOfferWithMediatorWait(
+    private fun createOfferWithMediatorWait(
         direction: Direction,
         market: Market,
         bitcoinPaymentMethods: List<BitcoinPaymentMethod>,
@@ -285,51 +279,15 @@ class NodeOffersServiceFacade(
         priceSpec: PriceSpec,
         supportedLanguageCodes: List<String>
     ): String {
-        val mediationRequestService = applicationService.supportService.get().mediationRequestService
-        val userIdentity: UserIdentity = userIdentityService.selectedUserIdentity
-
-        log.d { "Checking mediator availability..." }
-
-        try {
-            return withTimeout(MEDIATOR_WAIT_TIMEOUT) {
-                // Check immediately, then poll with delay
-                var firstCheck = true
-                while (true) {
-                    if (!firstCheck) {
-                        delay(MEDIATOR_POLL_INTERVAL)
-                    }
-
-                    val currentMediator = mediationRequestService.selectMediator(
-                        userIdentity.userProfile.id,
-                        userIdentity.userProfile.id,
-                        "temp-offer-id"
-                    )
-
-                    if (currentMediator.isPresent) {
-                        log.d { "Mediator available, creating offer" }
-                        return@withTimeout createOffer(
-                            direction,
-                            market,
-                            bitcoinPaymentMethods,
-                            fiatPaymentMethods,
-                            amountSpec,
-                            priceSpec,
-                            supportedLanguageCodes
-                        )
-                    }
-
-                    if (firstCheck) {
-                        log.d { "No mediator available, waiting up to ${MEDIATOR_WAIT_TIMEOUT.inWholeSeconds} seconds..." }
-                    }
-
-                    firstCheck = false
-                }
-                @Suppress("UNREACHABLE_CODE")
-                error("Unreachable")
-            }
-        } catch (e: TimeoutCancellationException) {
-            throw MediatorNotAvailableException("Timeout waiting for mediator after ${MEDIATOR_WAIT_TIMEOUT.inWholeSeconds} seconds")
-        }
+        return createOffer(
+            direction,
+            market,
+            bitcoinPaymentMethods,
+            fiatPaymentMethods,
+            amountSpec,
+            priceSpec,
+            supportedLanguageCodes
+        )
     }
 
     private fun observeSelectedChannel() {
