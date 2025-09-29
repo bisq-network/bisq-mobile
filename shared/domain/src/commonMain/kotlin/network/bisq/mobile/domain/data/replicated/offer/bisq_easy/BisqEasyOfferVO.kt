@@ -41,4 +41,43 @@ data class BisqEasyOfferVO(
     val quoteSidePaymentMethodSpecs: List<FiatPaymentMethodSpecVO>,
     val offerOptions: List<OfferOptionVO>,
     val supportedLanguageCodes: List<String>
-)
+
+) {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || this::class != other::class) return false
+
+        other as BisqEasyOfferVO
+
+        if (date != other.date) return false
+        if (id != other.id) return false
+        if (makerNetworkId != other.makerNetworkId) return false
+        if (direction != other.direction) return false
+        if (market != other.market) return false
+        if (amountSpec != other.amountSpec) return false
+        if (priceSpec != other.priceSpec) return false
+        if (protocolTypes != other.protocolTypes) return false
+        if (baseSidePaymentMethodSpecs != other.baseSidePaymentMethodSpecs) return false
+        if (quoteSidePaymentMethodSpecs != other.quoteSidePaymentMethodSpecs) return false
+        if (offerOptions != other.offerOptions) return false
+        if (supportedLanguageCodes != other.supportedLanguageCodes) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = date.hashCode()
+        result = 31 * result + id.hashCode()
+        result = 31 * result + makerNetworkId.hashCode()
+        result = 31 * result + direction.hashCode()
+        result = 31 * result + market.hashCode()
+        result = 31 * result + amountSpec.hashCode()
+        result = 31 * result + priceSpec.hashCode()
+        result = 31 * result + protocolTypes.hashCode()
+        result = 31 * result + baseSidePaymentMethodSpecs.hashCode()
+        result = 31 * result + quoteSidePaymentMethodSpecs.hashCode()
+        result = 31 * result + offerOptions.hashCode()
+        result = 31 * result + supportedLanguageCodes.hashCode()
+        return result
+    }
+}
