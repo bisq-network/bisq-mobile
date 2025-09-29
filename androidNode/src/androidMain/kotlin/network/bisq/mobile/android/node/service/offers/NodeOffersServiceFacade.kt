@@ -501,10 +501,6 @@ class NodeOffersServiceFacade(
         }
     }
 
-    private suspend fun findBisqEasyOfferbookMessage(offerId: String): Optional<BisqEasyOfferbookMessage> {
-        return Optional.ofNullable(getOfferMessage(offerId))
-    }
-
     private suspend fun putOfferMessage(offerId: String, message: BisqEasyOfferbookMessage) {
         offerMapMutex.withLock {
             bisqEasyOfferbookMessageByOfferId[offerId] = message
@@ -528,12 +524,6 @@ class NodeOffersServiceFacade(
                 log.w { "MEMORY: Cleared large offer map ($currentSize items), suggesting GC" }
                 suggestGCtoOS()
             }
-        }
-    }
-
-    private suspend fun getOfferMessage(offerId: String): BisqEasyOfferbookMessage? {
-        return offerMapMutex.withLock {
-            bisqEasyOfferbookMessageByOfferId[offerId]
         }
     }
 
