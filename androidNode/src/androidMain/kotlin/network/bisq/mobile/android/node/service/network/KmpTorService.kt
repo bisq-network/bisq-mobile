@@ -9,7 +9,6 @@ import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +16,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.utils.Logging
 import java.io.File
@@ -287,7 +287,7 @@ class KmpTorService : BaseService(), Logging {
             }
 
             val configFile = File(getTorDir(), "external_tor.config")
-            withContext(Dispatchers.IO) {
+            withContext(IODispatcher) {
                 runInterruptible {
                     FileOutputStream(configFile).use { fos ->
                         fos.write(configContent.toByteArray())
@@ -308,7 +308,7 @@ class KmpTorService : BaseService(), Logging {
 
     private suspend fun validateExternalTorConfig(configFile: File, expectedSocksPort: Int, expectedControlPort: Int) {
         try {
-            withContext(Dispatchers.IO) {
+            withContext(IODispatcher) {
                 runInterruptible {
                     if (!configFile.exists()) {
                         throw KmpTorException("external_tor.config file does not exist after writing")

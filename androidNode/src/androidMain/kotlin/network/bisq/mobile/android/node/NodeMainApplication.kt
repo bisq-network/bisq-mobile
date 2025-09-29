@@ -10,11 +10,11 @@ import bisq.common.facades.android.AndroidGuavaFacade
 import bisq.common.facades.android.AndroidJdkFacade
 import bisq.common.network.clear_net_address_types.AndroidEmulatorAddressTypeFacade
 import bisq.common.network.clear_net_address_types.LANAddressTypeFacade
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.android.node.di.androidNodeModule
 import network.bisq.mobile.android.node.di.serviceModule
 import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.presentation.MainApplication
@@ -45,7 +45,7 @@ class NodeMainApplication : MainApplication(), ComponentCallbacks2 {
         // 2. setupBisqCoreStatics() configures essential system components (BouncyCastle, Facades)
         // 3. The app cannot function without these being initialized
         // 4. It's a one-time operation during app startup
-        runBlocking(Dispatchers.IO) {
+        runBlocking(IODispatcher) {
             setupBisqCoreStatics()
         }
 

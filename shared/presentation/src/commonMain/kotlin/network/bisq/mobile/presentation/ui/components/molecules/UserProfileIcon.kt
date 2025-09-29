@@ -8,10 +8,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.produceState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.presentation.ui.components.atoms.icons.rememberPlatformImagePainter
 
 @Composable
@@ -21,7 +20,7 @@ fun UserProfileIcon(
 ) {
     val userProfileIcon by produceState<PlatformImage?>(initialValue = null, key1 = userProfileId) {
         // Run on IO thread to avoid blocking main
-        value = withContext(Dispatchers.IO) {
+        value = withContext(IODispatcher) {
             userProfileIconProvider.invoke(userProfileId)
         }
     }
