@@ -32,6 +32,8 @@ class UserProfilePresenter(
 ) : BasePresenter(mainPresenter), IUserProfilePresenter {
 
     companion object Companion {
+        // We use 120.dp here, so we want the max size with 300 px for good resolution
+        const val iconSize = 300
         /**
          * Get localized "N/A" value
          */
@@ -39,7 +41,11 @@ class UserProfilePresenter(
     }
 
     override val selectedUserProfile: StateFlow<UserProfileVO?> get() = userProfileServiceFacade.selectedUserProfile
-    override val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
+    override val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage
+        get() = { userProfile ->
+            userProfileServiceFacade.getUserProfileIcon(userProfile, iconSize)
+        }
+
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override val reputation: StateFlow<String> = selectedUserProfile

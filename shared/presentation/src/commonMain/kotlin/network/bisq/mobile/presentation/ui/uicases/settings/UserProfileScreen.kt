@@ -160,17 +160,18 @@ private fun UserProfileScreenHeader(presenter: IUserProfilePresenter) {
             .padding(bottom = BisqUIConstants.ScreenPaddingHalf),
         contentAlignment = Alignment.Center
     ) {
+        val size = 120.dp
         if (selectedUserProfile != null) {
             UserProfileIcon(
                 selectedUserProfile!!,
                 presenter.userProfileIconProvider,
-                120.dp
+                size
             )
         } else {
             // Icons are expected to be present, so this branch will never be reached
             Image(
                 painterResource(Res.drawable.dummy_user_profile_icon), "",
-                modifier = Modifier.size(BisqUIConstants.ScreenPadding3X)
+                modifier = Modifier.size(size)
             )
         }
     }
