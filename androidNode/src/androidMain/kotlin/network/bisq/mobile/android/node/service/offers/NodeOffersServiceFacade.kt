@@ -24,6 +24,7 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -87,14 +88,12 @@ class NodeOffersServiceFacade(
     // Misc
     private var selectedChannel: BisqEasyOfferbookChannel? = null
 
-    private val offerIds: MutableSet<String> = mutableSetOf()
-    private val offerMapMutex = Mutex()
     private var numOffersObservers: MutableList<NumOffersObserver> = mutableListOf()
     private var chatMessagesPin: Pin? = null
     private var selectedChannelPin: Pin? = null
     private var marketPricePin: Pin? = null
-    private var memoryMonitoringJob: kotlinx.coroutines.Job? = null
-    private var offerBatchJob: kotlinx.coroutines.Job? = null
+    private var memoryMonitoringJob: Job? = null
+    private var offerBatchJob: Job? = null
     private val pendingOffers = ConcurrentLinkedQueue<BisqEasyOfferbookMessage>()
     private val batchMutex = Mutex()
 
@@ -354,9 +353,7 @@ class NodeOffersServiceFacade(
                 _selectedOfferbookMarket.value = OfferbookMarket(marketVO)
                 updateMarketPrice()
 
-                // Clear the map synchronously before adding observers
                 launchIO {
-                    clearOfferMessages()
                     addChatMessagesObservers(channel)
                 }
 
@@ -414,7 +411,6 @@ class NodeOffersServiceFacade(
                         }
                         item?.let { model ->
                             _offerbookListItems.update { it - model }
-                            launchIO { removeOfferMessage(offerId) }
                             log.i { "Removed offer: $offerId, remaining offers: ${_offerbookListItems.value.size}" }
                         }
                     }
@@ -423,7 +419,6 @@ class NodeOffersServiceFacade(
                 override fun clear() {
                     log.d { "Clearing all offer messages" }
                     _offerbookListItems.value = emptyList()
-                    launchIO { clearOfferMessages() }
                 }
             })
 
@@ -509,34 +504,6 @@ class NodeOffersServiceFacade(
         }
     }
 
-    private suspend fun removeOfferMessage(offerId: String) {
-        offerMapMutex.withLock {
-            offerIds.remove(offerId)
-        }
-    }
-
-    private suspend fun clearOfferMessages() {
-        offerMapMutex.withLock {
-            val currentSize = offerIds.size
-            log.d { "Clearing offer messages map, current size: $currentSize" }
-            offerIds.clear()
-
-            // Suggest GC after clearing large collections
-            if (currentSize > MAP_CLEAR_THRESHOLD) {
-                log.w { "MEMORY: Cleared large offer map ($currentSize items), suggesting GC" }
-                suggestGCtoOS()
-            }
-        }
-    }
-
-    private suspend fun offerMessagesContainsKey(offerId: String): Boolean {
-        return offerMapMutex.withLock {
-            val contains = offerIds.contains(offerId)
-            log.d { "Checking if offer $offerId exists in map: $contains, map size: ${offerIds.size}" }
-            contains
-        }
-    }
-
     private suspend fun processPendingOffers() {
         // Drain the thread-safe queue (non-blocking)
         val offersToProcess = mutableListOf<BisqEasyOfferbookMessage>()
@@ -565,7 +532,6 @@ class NodeOffersServiceFacade(
                     val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
 
                     newOffers.add(offerItemPresentationModel)
-                    offerIds.add(offerId)
                     processedCount++
 
                 } catch (e: Exception) {
