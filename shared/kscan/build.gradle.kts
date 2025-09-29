@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library)
@@ -19,7 +17,7 @@ kotlin {
         iosSimulatorArm64(),
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "lib"
+            baseName = "KScan"
             isStatic = true
         }
     }
@@ -36,6 +34,13 @@ kotlin {
             implementation(compose.ui)
             implementation(compose.materialIconsExtended)
         }
+        val androidInstrumentedTest by getting {
+            dependencies {
+                implementation(libs.androidx.test.core)
+                implementation(libs.androidx.test.junit)
+                implementation(libs.androidx.test.espresso.core)
+            }
+        }
     }
 }
 
@@ -51,6 +56,7 @@ android {
         minSdk = libs.versions.android.minSdk.get().toInt()
         // Ensure consumer rules are packaged with the AAR for release builds
         consumerProguardFiles("consumer-rules.pro")
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17

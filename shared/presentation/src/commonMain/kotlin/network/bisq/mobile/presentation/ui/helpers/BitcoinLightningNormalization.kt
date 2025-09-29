@@ -44,5 +44,25 @@ object BitcoinLightningNormalization {
             else -> raw
         }
     }
+
+    /**
+     * Cleans a scanned/typed payload for validation:
+     * - Applies normalizeScan first (case handling for bech32/BOLT11)
+     * - Strips leading scheme (bitcoin:, lightning:) case-insensitively
+     * - Drops any leading slashes after the scheme (handles bitcoin:// and lightning://)
+     * - Removes query and fragment starting at '?' or '#'
+     */
+    fun cleanForValidation(input: String): String {
+        val normalized = normalizeScan(input)
+        val s = normalized.trim()
+        val afterScheme = when {
+            s.startsWith("bitcoin:", ignoreCase = true) -> s.substringAfter(":")
+            s.startsWith("lightning:", ignoreCase = true) -> s.substringAfter(":")
+            else -> s
+        }
+        val withoutSlashes = afterScheme.trim().trimStart('/')
+        return withoutSlashes.substringBefore('?').substringBefore('#')
+    }
+
 }
 

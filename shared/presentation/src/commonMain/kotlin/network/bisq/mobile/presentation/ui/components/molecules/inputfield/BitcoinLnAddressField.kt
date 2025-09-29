@@ -86,13 +86,13 @@ fun BitcoinLnAddressField(
             onCanceled = { showScanner = false },
             onFailed = { showScanner = false },
         ) {
-            // Normalize only for bech32/BOLT11; keep base58 and query params intact
-            val data = BitcoinLightningNormalization.normalizeScan(it.data)
+            // Normalize + clean: remove scheme (case-insensitive), drop leading slashes, strip query/fragment
+            val cleaned = BitcoinLightningNormalization.cleanForValidation(it.data)
             showScanner = false
-            if (validationError(data) == null) {
-                onValueChange?.invoke(data, true)
+            if (validationError(cleaned) == null) {
+                onValueChange?.invoke(cleaned, true)
             } else {
-                onValueChange?.invoke(data, false)
+                onValueChange?.invoke(cleaned, false)
             }
             // trigger input validator
             shouldBlurAfterFocus = true

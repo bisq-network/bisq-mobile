@@ -266,5 +266,27 @@ class CameraViewController(
     private val APP_TO_AV_FORMAT_MAP: Map<BarcodeFormat, AVMetadataObjectType> =
         AV_TO_APP_FORMAT_MAP.entries.associateBy({ it.value }) { it.key }
 
+    fun dispose() {
+        // Best-effort cleanup to avoid retaining camera resources
+        runCatching {
+            if (::captureSession.isInitialized) {
+                if (captureSession.isRunning()) captureSession.stopRunning()
+                // Remove inputs/outputs to break potential retain cycles
+                (captureSession.outputs as? List<AVCaptureOutput>)?.forEach { output ->
+                    runCatching { captureSession.removeOutput(output) }
+                }
+                (captureSession.inputs as? List<AVCaptureDeviceInput>)?.forEach { input ->
+                    runCatching { captureSession.removeInput(input) }
+                }
+            }
+        }
+        runCatching {
+            if (::previewLayer.isInitialized) {
+                previewLayer.removeFromSuperlayer()
+            }
+        }
+        barcodesDetected.clear()
+    }
+
     val ALL_SUPPORTED_AV_TYPES: List<AVMetadataObjectType> = AV_TO_APP_FORMAT_MAP.keys.toList()
 }

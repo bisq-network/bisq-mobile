@@ -36,7 +36,7 @@ actual fun ScannerView(
     var zoomRatio by remember { mutableStateOf(1f) }
     var maxZoomRatio by remember { mutableStateOf(1f) }
 
-    var cameraViewController by remember { mutableStateOf<CameraViewController?>(null) }
+
     val captureDevice: AVCaptureDevice? =
         remember {
             AVCaptureDevice.defaultDeviceWithDeviceType(
@@ -52,74 +52,83 @@ actual fun ScannerView(
     }
 
     scannerController?.onTorchChange = { enabled ->
+        val prev = torchEnabled
         runCatching {
             if (captureDevice.hasTorch) {
                 captureDevice.lockForConfiguration(null)
-                captureDevice.torchMode =
-                    if (enabled) AVCaptureTorchModeOn else AVCaptureTorchModeOff
+                captureDevice.torchMode = if (enabled) AVCaptureTorchModeOn else AVCaptureTorchModeOff
                 captureDevice.unlockForConfiguration()
                 torchEnabled = enabled
                 scannerController.torchEnabled = enabled
             }
+        }.onFailure { e ->
+            // Revert state and report
+            torchEnabled = prev
+            scannerController.torchEnabled = prev
+            result(BarcodeResult.OnFailed(Exception(e.message ?: "Torch toggle failed")))
         }
     }
 
+    val controller = remember {
+        CameraViewController(
+            device = captureDevice,
+            codeTypes = codeTypes,
+            filter = filter,
+            onBarcodeSuccess = { scannedBarcodes ->
+                result(BarcodeResult.OnSuccess(scannedBarcodes.first()))
+            },
+            onBarcodeFailed = { error ->
+                result(BarcodeResult.OnFailed(error))
+            },
+            onBarcodeCanceled = {
+                result(BarcodeResult.OnCanceled)
+            },
+            onMaxZoomRatioAvailable = { maxRatio ->
+                maxZoomRatio = maxRatio
+            }
+        )
+    }
+
     scannerController?.onZoomChange = { ratio ->
-        cameraViewController?.setZoom(ratio)
+        controller.setZoom(ratio)
         zoomRatio = ratio
         scannerController.zoomRatio = ratio
     }
 
     scannerController?.maxZoomRatio = maxZoomRatio
 
-    cameraViewController =
-        remember {
-            CameraViewController(
-                device = captureDevice,
-                codeTypes = codeTypes,
-                filter = filter,
-                onBarcodeSuccess = { scannedBarcodes ->
-                    result(BarcodeResult.OnSuccess(scannedBarcodes.first()))
-                },
-                onBarcodeFailed = { error ->
-                    result(BarcodeResult.OnFailed(error))
-                },
-                onBarcodeCanceled = {
-                    result(BarcodeResult.OnCanceled)
-                },
-                onMaxZoomRatioAvailable = { maxRatio ->
-                    maxZoomRatio = maxRatio
-                }
-            )
-        }
-
     Box(modifier = modifier) {
         UIKitViewController(
-            factory = { cameraViewController!! },
+            factory = { controller },
             modifier = Modifier.matchParentSize(),
         )
 
         if (showUi) {
             ScannerUI(
                 onCancel = {
+                    controller.dispose()
                     result(BarcodeResult.OnCanceled)
-                    cameraViewController = null
                 },
                 torchEnabled = torchEnabled,
                 onTorchEnabled = { enabled ->
+                    val prev = torchEnabled
                     runCatching {
                         if (captureDevice.hasTorch) {
                             captureDevice.lockForConfiguration(null)
-                            captureDevice.torchMode =
-                                if (enabled) AVCaptureTorchModeOn else AVCaptureTorchModeOff
+                            captureDevice.torchMode = if (enabled) AVCaptureTorchModeOn else AVCaptureTorchModeOff
                             captureDevice.unlockForConfiguration()
                             torchEnabled = enabled
                         }
+                    }.onFailure { e ->
+                        // Revert state and report
+                        torchEnabled = prev
+                        scannerController?.torchEnabled = prev
+                        result(BarcodeResult.OnFailed(Exception(e.message ?: "Torch toggle failed")))
                     }
                 },
                 zoomRatio = zoomRatio,
                 zoomRatioOnChange = { ratio ->
-                    cameraViewController?.setZoom(ratio)
+                    controller.setZoom(ratio)
                     zoomRatio = ratio
                 },
                 maxZoomRatio = maxZoomRatio,
@@ -130,7 +139,7 @@ actual fun ScannerView(
 
     DisposableEffect(Unit) {
         onDispose {
-            cameraViewController = null
+            controller.dispose()
         }
     }
 }
