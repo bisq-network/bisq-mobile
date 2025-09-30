@@ -111,6 +111,7 @@ actual class PlatformImage(val bitmap: ImageBitmap) {
     actual companion object {
         actual fun deserialize(data: ByteArray): PlatformImage {
             val bitmap = BitmapFactory.decodeByteArray(data, 0, data.size)
+                ?: throw IllegalArgumentException("Failed to decode image data")
             return PlatformImage(bitmap.asImageBitmap())
         }
     }
@@ -121,6 +122,12 @@ actual class PlatformImage(val bitmap: ImageBitmap) {
         androidBitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
         return stream.toByteArray()
     }
+}
+
+actual fun createEmptyImage(): PlatformImage {
+    val bitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+    bitmap.eraseColor(android.graphics.Color.TRANSPARENT)
+    return PlatformImage(bitmap.asImageBitmap())
 }
 
 actual val decimalFormatter: DecimalFormatter = object : DecimalFormatter {

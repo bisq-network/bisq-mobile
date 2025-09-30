@@ -278,10 +278,20 @@ actual class PlatformImage(val image: UIImage) {
     companion actual object {
         actual fun deserialize(data: ByteArray): PlatformImage {
             val nsData = data.toNSData()
-            val image = UIImage(data = nsData)!!
+            val image = UIImage(data = nsData)
+                ?: throw IllegalArgumentException("Failed to decode image data")
             return PlatformImage(image)
         }
     }
+}
+
+actual fun createEmptyImage(): PlatformImage {
+    // Create a 1x1 transparent image
+    val size = CGSizeMake(1.0, 1.0)
+    UIGraphicsBeginImageContextWithOptions(size, false, 0.0)
+    val image = UIGraphicsGetImageFromCurrentImageContext()!!
+    UIGraphicsEndImageContext()
+    return PlatformImage(image)
 }
 
 // Helper extensions for NSData conversion:

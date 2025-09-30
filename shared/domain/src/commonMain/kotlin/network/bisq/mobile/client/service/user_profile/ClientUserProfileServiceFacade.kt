@@ -15,6 +15,7 @@ import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.PlatformImage
+import network.bisq.mobile.domain.createEmptyImage
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
@@ -238,10 +239,17 @@ class ClientUserProfileServiceFacade(
 
     @OptIn(ExperimentalEncodingApi::class)
     private fun fallbackProfileImage(): PlatformImage {
-        // 1x1 transparent PNG
-        val base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y0iYy0AAAAASUVORK5CYII="
-        val bytes = kotlin.io.encoding.Base64.decode(base64)
-        return PlatformImage.deserialize(bytes)
+        return try {
+            // Try to decode a 1x1 transparent PNG
+            val base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y0iYy0AAAAASUVORK5CYII="
+            val bytes = kotlin.io.encoding.Base64.decode(base64)
+            PlatformImage.deserialize(bytes)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to decode fallback PNG; using platform empty image" }
+            // If PNG decode fails, platform-specific deserialize will throw
+            // and we'll create an empty image in the platform implementation
+            createEmptyImage()
+        }
     }
 
     override suspend fun getUserPublishDate(): Long {
