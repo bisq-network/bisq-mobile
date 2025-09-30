@@ -36,7 +36,7 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.molecules.JumpToBottomFloatingButton
-import network.bisq.mobile.presentation.ui.components.molecules.chat.TextMessageBox
+import network.bisq.mobile.presentation.ui.components.molecules.chat.ChatTextMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.private_messages.ChatRulesWarningMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.ProtocolLogMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.TradePeerLeftMessageBox
@@ -193,7 +193,7 @@ fun ChatMessageList(
                         }
 
                         else -> {
-                            TextMessageBox(
+                            ChatTextMessageBox(
                                 message = message,
                                 userProfileIconProvider = userProfileIconProvider,
                                 onScrollToMessage = { id ->

@@ -29,7 +29,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TextMessageBox(
+fun ChatTextMessageBox(
     message: BisqEasyOpenTradeMessageModel,
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     onScrollToMessage: (String) -> Unit = {},
