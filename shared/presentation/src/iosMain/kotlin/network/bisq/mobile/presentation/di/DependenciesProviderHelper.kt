@@ -1,12 +1,11 @@
-package network.bisq.mobile.client.di
+package network.bisq.mobile.presentation.di
 
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ObjCClass
 import kotlinx.cinterop.getOriginalKotlinClass
+import network.bisq.mobile.client.di.clientModule
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.di.iosClientModule
-import network.bisq.mobile.presentation.di.iosPresentationModule
-import network.bisq.mobile.presentation.di.presentationModule
 import org.koin.core.Koin
 import org.koin.core.context.startKoin
 import org.koin.core.parameter.parametersOf

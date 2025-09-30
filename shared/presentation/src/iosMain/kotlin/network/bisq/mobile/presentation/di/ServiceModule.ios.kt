@@ -1,4 +1,4 @@
-package network.bisq.mobile.client.di
+package network.bisq.mobile.presentation.di
 
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.service.ForegroundDetector
@@ -10,7 +10,7 @@ import network.bisq.mobile.presentation.service.OpenTradesNotificationService
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-actual val serviceModule = module {
+val serviceModule = module {
     single<AppForegroundController> { AppForegroundController() } bind ForegroundDetector::class
     single<NotificationController> {
         NotificationControllerImpl()

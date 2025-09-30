@@ -12,7 +12,7 @@ import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
 
-actual val serviceModule = module {
+val serviceModule = module {
     single<AppForegroundController> { AppForegroundController(androidContext()) } bind ForegroundDetector::class
     single<NotificationControllerImpl> {
         NotificationControllerImpl(get(), ClientMainActivity::class.java)
