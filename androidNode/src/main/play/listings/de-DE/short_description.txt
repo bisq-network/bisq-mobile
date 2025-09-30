@@ -1,0 +1,1 @@
+Dezentrales Kommunikationstool für sichere Verbindungen über ein P2P-Protokoll
