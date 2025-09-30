@@ -1,5 +1,6 @@
 package network.bisq.mobile.android.node.service.user_profile
 
+import androidx.compose.ui.graphics.asImageBitmap
 import bisq.common.encoding.Hex
 import bisq.common.observable.Pin
 import bisq.security.DigestUtil
@@ -208,10 +209,18 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     private fun fallbackProfileImage(): PlatformImage {
-        // 1x1 transparent PNG
-        val base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y0iYy0AAAAASUVORK5CYII="
-        val bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
-        return PlatformImage.deserialize(bytes)
+        return try {
+            // Try to decode a 1x1 transparent PNG
+            val base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y0iYy0AAAAASUVORK5CYII="
+            val bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
+            PlatformImage.deserialize(bytes)
+        } catch (e: Exception) {
+            log.e(e) { "Failed to decode fallback PNG; creating empty bitmap" }
+            // Create a simple 1x1 transparent bitmap programmatically as last resort
+            val bitmap = android.graphics.Bitmap.createBitmap(1, 1, android.graphics.Bitmap.Config.ARGB_8888)
+            bitmap.eraseColor(android.graphics.Color.TRANSPARENT)
+            PlatformImage(bitmap.asImageBitmap())
+        }
     }
 
     override suspend fun getUserPublishDate(): Long {

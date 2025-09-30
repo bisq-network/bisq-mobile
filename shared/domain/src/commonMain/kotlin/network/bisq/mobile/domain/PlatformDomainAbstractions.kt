@@ -39,6 +39,8 @@ expect class PlatformImage {
     fun serialize(): ByteArray
 }
 
+expect fun createEmptyImage(): PlatformImage
+
 object PlatformImageSerializer : KSerializer<PlatformImage> {
     override val descriptor: SerialDescriptor = PrimitiveSerialDescriptor("PlatformImage", PrimitiveKind.STRING)
 
