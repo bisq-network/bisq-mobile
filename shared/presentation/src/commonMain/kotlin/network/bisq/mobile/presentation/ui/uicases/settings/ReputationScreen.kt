@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.ClickableText
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,8 +20,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.components.atoms.BisqCard
@@ -33,11 +40,9 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
-import network.bisq.mobile.presentation.ui.helpers.PreviewEnvironment
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 
@@ -73,23 +78,49 @@ fun ReputationScreen() {
 
         BisqGap.V1()
 
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            BisqText.baseLight(
-                text = "mobile.reputation.learnMore.part1".i18n() + " ",
-                color = BisqTheme.colors.light_grey50,
-                modifier = Modifier.weight(0.85f)
+        val part1 = "mobile.reputation.learnMore.part1".i18n()
+        val part2 = "mobile.reputation.learnMore.part2".i18n()
+        val fullText = "$part1 $part2"
+        val annotatedString = buildAnnotatedString {
+            withStyle(
+                style = SpanStyle(
+                    color = BisqTheme.colors.light_grey50,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Light
+                )
+            ) {
+                append(part1)
+                append(" ")
+            }
+            pushStringAnnotation(
+                tag = "URL",
+                annotation = BisqLinks.REPUTATION_WIKI_URL
             )
-            BisqGap.HHalf()
-            LinkButton(
-                text = "mobile.reputation.learnMore.part2".i18n(),
-                link = BisqLinks.REPUTATION_WIKI_URL,
-                onClick = { presenter.onOpenWebUrl(BisqLinks.REPUTATION_WIKI_URL) },
-                color = BisqTheme.colors.primary,
-                padding = PaddingValues(all = BisqUIConstants.Zero)
-            )
+            withStyle(
+                style = SpanStyle(
+                    color = BisqTheme.colors.primary,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Light,
+                    textDecoration = TextDecoration.Underline
+                )
+            ) {
+                append(part2)
+            }
+            pop()
         }
+
+        ClickableText(
+            text = annotatedString,
+            onClick = { offset ->
+                annotatedString.getStringAnnotations(
+                    tag = "URL",
+                    start = offset,
+                    end = offset
+                ).firstOrNull()?.let { annotation ->
+                    presenter.onOpenWebUrl(annotation.item)
+                }
+            }
+        )
 
         BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding3X))
 
