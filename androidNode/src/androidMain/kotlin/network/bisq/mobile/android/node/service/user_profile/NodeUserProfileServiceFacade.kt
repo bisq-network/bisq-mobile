@@ -189,17 +189,29 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage {
-        // In case we create the image we want to run it in IO context.
-        // We cache the images in the catHashService if its <=120 px
-        return withContext(IODispatcher) {
-            val ts = System.currentTimeMillis()
-            catHashService.getImage(
-                Mappings.UserProfileMapping.toBisq2Model(userProfile),
-                size.toDouble()
-            ).also {
-                log.d { "Get userProfileIcon for ${userProfile.userName} took ${System.currentTimeMillis() - ts} ms. User profile ID=${userProfile.id}" }
+        return try {
+            // In case we create the image we want to run it in IO context.
+            // We cache the images in the catHashService if its <=120 px
+            withContext(IODispatcher) {
+                val ts = System.currentTimeMillis()
+                catHashService.getImage(
+                    Mappings.UserProfileMapping.toBisq2Model(userProfile),
+                    size.toDouble()
+                ).also {
+                    log.d { "Get userProfileIcon for ${userProfile.userName} took ${System.currentTimeMillis() - ts} ms. User profile ID=${userProfile.id}" }
+                }
             }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to get user profile icon; returning fallback" }
+            fallbackProfileImage()
         }
+    }
+
+    private fun fallbackProfileImage(): PlatformImage {
+        // 1x1 transparent PNG
+        val base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y0iYy0AAAAASUVORK5CYII="
+        val bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
+        return PlatformImage.deserialize(bytes)
     }
 
     override suspend fun getUserPublishDate(): Long {

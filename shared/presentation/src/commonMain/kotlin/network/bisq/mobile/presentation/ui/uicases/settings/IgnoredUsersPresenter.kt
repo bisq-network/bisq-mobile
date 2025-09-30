@@ -10,7 +10,6 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 
 class IgnoredUsersPresenter(
-    private val userProfileService: UserProfileServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IIgnoredUsersPresenter {
@@ -31,8 +30,8 @@ class IgnoredUsersPresenter(
     private fun loadIgnoredUsers() {
         launchIO {
             try {
-                val ignoredUserIds = userProfileService.getIgnoredUserProfileIds().toList()
-                val userProfiles = userProfileService.findUserProfiles(ignoredUserIds)
+                val ignoredUserIds = userProfileServiceFacade.getIgnoredUserProfileIds().toList()
+                val userProfiles = userProfileServiceFacade.findUserProfiles(ignoredUserIds)
                 _ignoredUsers.value = userProfiles
             } catch (e: Exception) {
                 log.e(e) { "Failed to load ignored users" }
@@ -48,7 +47,7 @@ class IgnoredUsersPresenter(
     override fun unblockUserConfirm(userId: String) {
         launchIO {
             try {
-                userProfileService.undoIgnoreUserProfile(userId)
+                userProfileServiceFacade.undoIgnoreUserProfile(userId)
                 _ignoreUserId.value = ""
                 loadIgnoredUsers()
             } catch (e: Exception) {

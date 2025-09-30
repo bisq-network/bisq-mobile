@@ -155,7 +155,6 @@ fun TopBar(
                 if (showUserAvatar) {
                     val userIconModifier = Modifier
                         .size(BisqUIConstants.topBarAvatarSize)
-                        //.alpha(if (presenter.avatarEnabled(currentTab)) 1.0f else 0.5f)
                         .clickable {
                             if (presenter.avatarEnabled(currentTab)) {
                                 presenter.navigateToUserProfile()
@@ -168,7 +167,8 @@ fun TopBar(
                             userProfile!!,
                             presenter.userProfileIconProvider,
                             modifier = userIconModifier,
-                            connectivityStatus = connectivityStatus
+                            connectivityStatus = connectivityStatus,
+                            showAnimation
                         )
                     } else {
                         Image(

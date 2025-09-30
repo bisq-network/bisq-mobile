@@ -9,6 +9,9 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.ColorPainter
+
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -26,29 +29,13 @@ fun UserProfileIcon(
         value = userProfileIconProvider.invoke(userProfile)
     }
 
-    if (userProfileIcon != null) {
-        val painter = remember(userProfile) {
-            getPlatformImagePainter(userProfileIcon!!)
-        }
-
-        Image(
-            painter = painter,
-            contentDescription = "mobile.createProfile.iconGenerated".i18n(),
-            modifier = Modifier.size(size)
-        )
-    } else {
-        // Just a placeholder so that we occupy the same space in case the icon is not ready.
-        Box(
-            modifier = Modifier.size(size),
-        )
-
-        // Icon creation is that fast that it does not make sense to show a CircularProgressIndicator
-        /*
-        CircularProgressIndicator(
-            color = BisqTheme.colors.primary,
-            modifier = Modifier.size(20.dp),
-            strokeWidth = 1.dp,
-        )
-        */
+    val painter = remember(userProfileIcon) {
+        userProfileIcon?.let { getPlatformImagePainter(it) } ?: ColorPainter(Color.Transparent)
     }
+
+    Image(
+        painter = painter,
+        contentDescription = "mobile.createProfile.iconGenerated".i18n(),
+        modifier = Modifier.size(size)
+    )
 }

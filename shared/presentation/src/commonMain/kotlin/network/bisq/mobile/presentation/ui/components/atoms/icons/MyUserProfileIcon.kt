@@ -16,6 +16,7 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus
 import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.CONNECTED_AND_DATA_RECEIVED
 import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus.REQUESTING_INVENTORY
+import network.bisq.mobile.presentation.ui.components.atoms.animations.ShineOverlay
 import network.bisq.mobile.presentation.ui.components.molecules.UserProfileIcon
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.painterResource
@@ -25,10 +26,18 @@ fun MyUserProfileIcon(
     userProfile: UserProfileVO,
     userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage,
     modifier: Modifier = Modifier,
-    connectivityStatus: ConnectivityStatus
+    connectivityStatus: ConnectivityStatus,
+    showAnimations: Boolean
 ) {
+    val useAnimation = showAnimations && connectivityStatus == CONNECTED_AND_DATA_RECEIVED
     Box(modifier = modifier.padding(0.dp), contentAlignment = Alignment.BottomEnd) {
-        UserProfileIcon(userProfile, userProfileIconProvider, BisqUIConstants.topBarAvatarSize)
+        if (useAnimation)
+            ShineOverlay {
+                UserProfileIcon(userProfile, userProfileIconProvider, BisqUIConstants.topBarAvatarSize)
+            }
+        else {
+            UserProfileIcon(userProfile, userProfileIconProvider, BisqUIConstants.topBarAvatarSize)
+        }
         ConnectivityIndicator(connectivityStatus)
     }
 }

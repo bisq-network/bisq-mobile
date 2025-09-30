@@ -147,7 +147,7 @@ val presentationModule = module {
 
     factory { SettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
-    factory { IgnoredUsersPresenter(get(), get(), get()) } bind IIgnoredUsersPresenter::class
+    factory { IgnoredUsersPresenter(get(), get()) } bind IIgnoredUsersPresenter::class
 
     single { PaymentAccountsPresenter(get(), get()) } bind IPaymentAccountSettingsPresenter::class
 

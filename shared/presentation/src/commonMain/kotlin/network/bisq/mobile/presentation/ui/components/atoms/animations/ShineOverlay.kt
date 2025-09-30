@@ -15,8 +15,8 @@ import kotlin.random.Random
 
 const val INITIAL_SHINE = -1.0f
 const val TARGET_SHINE = 3f
-const val ANIMATION_INTERVAL = 5000
-const val ANIMATION_MAX_INTERVAL = 10001
+const val ANIMATION_INTERVAL = 8000
+const val ANIMATION_MAX_INTERVAL = 12001
 const val GRADIENT_OFFSET_FACTOR = 300f
 
 fun nextDuration(): Int = Random.nextInt(ANIMATION_INTERVAL, ANIMATION_MAX_INTERVAL)

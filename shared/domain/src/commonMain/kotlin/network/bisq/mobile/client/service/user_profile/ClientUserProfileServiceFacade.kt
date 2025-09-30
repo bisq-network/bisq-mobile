@@ -219,19 +219,29 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun getUserProfileIcon(userProfile: UserProfileVO, size: Number): PlatformImage {
-        // In case we create the image we want to run it in IO context.
-        // We cache the images in the catHashService if its <=120 px
-        return withContext(IODispatcher) {
-            val ts = Clock.System.now().toEpochMilliseconds()
-            clientCatHashService.getImage(userProfile, size.toInt())
-                .also {
+        return try {
+            // In case we create the image we want to run it in IO context.
+            // We cache the images in the catHashService if its <=120 px
+            withContext(IODispatcher) {
+                val ts = Clock.System.now().toEpochMilliseconds()
+                clientCatHashService.getImage(userProfile, size.toInt()).also {
                     log.d {
-                        "Get userProfileIcon for ${userProfile.userName} took ${
-                            Clock.System.now().toEpochMilliseconds() - ts
-                        } ms. User profile ID=${userProfile.id}"
+                        "Get userProfileIcon for ${userProfile.userName} took ${Clock.System.now().toEpochMilliseconds() - ts} ms. User profile ID=${userProfile.id}"
                     }
                 }
+            }
+        } catch (e: Exception) {
+            log.e(e) { "Failed to get user profile icon; returning fallback" }
+            fallbackProfileImage()
         }
+    }
+
+    @OptIn(ExperimentalEncodingApi::class)
+    private fun fallbackProfileImage(): PlatformImage {
+        // 1x1 transparent PNG
+        val base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y0iYy0AAAAASUVORK5CYII="
+        val bytes = kotlin.io.encoding.Base64.decode(base64)
+        return PlatformImage.deserialize(bytes)
     }
 
     override suspend fun getUserPublishDate(): Long {
