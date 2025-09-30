@@ -24,14 +24,13 @@ import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
@@ -44,12 +43,10 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import java.util.Date
 import java.util.Optional
 import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 
@@ -61,13 +58,11 @@ class NodeOffersServiceFacade(
     companion object {
         private const val SMALL_DELAY = 25L
         private const val SMALL_DELAY_THRESHOLD = 5
+
         // Higher threshold to avoid masking memory leaks - only suggest GC in critical situations
         private const val MEMORY_GC_THRESHOLD = 0.85
         private const val OFFER_BATCH_DELAY = 100L // milliseconds
-        private const val MAP_CLEAR_THRESHOLD = 50
         private const val MIN_GC_INTERVAL = 10000L
-        private val MEDIATOR_WAIT_TIMEOUT = 1.minutes
-        private val MEDIATOR_POLL_INTERVAL = 2.seconds
         private val MEMORY_LOG_INTERVAL = 30.seconds
     }
 
@@ -86,14 +81,12 @@ class NodeOffersServiceFacade(
     // Misc
     private var selectedChannel: BisqEasyOfferbookChannel? = null
 
-    private val bisqEasyOfferbookMessageByOfferId: MutableMap<String, BisqEasyOfferbookMessage> = mutableMapOf()
-    private val offerMapMutex = Mutex()
     private var numOffersObservers: MutableList<NumOffersObserver> = mutableListOf()
     private var chatMessagesPin: Pin? = null
     private var selectedChannelPin: Pin? = null
     private var marketPricePin: Pin? = null
-    private var memoryMonitoringJob: kotlinx.coroutines.Job? = null
-    private var offerBatchJob: kotlinx.coroutines.Job? = null
+    private var memoryMonitoringJob: Job? = null
+    private var offerBatchJob: Job? = null
     private val pendingOffers = ConcurrentLinkedQueue<BisqEasyOfferbookMessage>()
     private val batchMutex = Mutex()
 
@@ -106,11 +99,7 @@ class NodeOffersServiceFacade(
 
         observeSelectedChannel()
         observeMarketPrice()
-        if (numOffersObservers.isNotEmpty())  {
-            numOffersObservers.forEach { it.resume() }
-        } else {
-            observeMarketListItems(_offerbookMarketItems)
-        }
+        observeMarketListItems(_offerbookMarketItems)
         startMemoryMonitoring()
         log.d { "NodeOffersServiceFacade activated, numOffersObservers: ${numOffersObservers.size}" }
     }
@@ -125,6 +114,7 @@ class NodeOffersServiceFacade(
         marketPricePin?.unbind()
         marketPricePin = null
         numOffersObservers.forEach { it.dispose() }
+        numOffersObservers.clear()
         log.d { "NodeOffersServiceFacade deactivated" }
 
         super.deactivate()
@@ -150,9 +140,9 @@ class NodeOffersServiceFacade(
 
     override suspend fun deleteOffer(offerId: String): Result<Boolean> {
         try {
-            val optionalOfferbookMessage = findBisqEasyOfferbookMessage(offerId)
-            check(optionalOfferbookMessage.isPresent) { "BisqEasyOfferbookMessage with offer ID $offerId not found" }
-            val offerbookMessage = optionalOfferbookMessage.get()
+            val optionalOfferbookMessage: Optional<BisqEasyOfferbookMessage> = bisqEasyOfferbookChannelService.findMessageByOfferId(offerId)
+            check(optionalOfferbookMessage.isPresent) { "Could not find offer for offer ID $offerId" }
+            val offerbookMessage: BisqEasyOfferbookMessage = optionalOfferbookMessage.get()
             val authorUserProfileId: String = offerbookMessage.authorUserProfileId
             val optionalUserIdentity = userIdentityService.findUserIdentity(authorUserProfileId)
             check(optionalUserIdentity.isPresent) { "UserIdentity for authorUserProfileId $authorUserProfileId not found" }
@@ -196,32 +186,6 @@ class NodeOffersServiceFacade(
         }
     }
 
-    override suspend fun createOfferWithMediatorWait(
-        direction: DirectionEnum,
-        market: MarketVO,
-        bitcoinPaymentMethods: Set<String>,
-        fiatPaymentMethods: Set<String>,
-        amountSpec: AmountSpecVO,
-        priceSpec: PriceSpecVO,
-        supportedLanguageCodes: Set<String>
-    ): Result<String> {
-        return try {
-            val offerId = createOfferWithMediatorWait(
-                Mappings.DirectionMapping.toBisq2Model(direction),
-                Mappings.MarketMapping.toBisq2Model(market),
-                bitcoinPaymentMethods.map { BitcoinPaymentMethodUtil.getPaymentMethod(it) },
-                fiatPaymentMethods.map { FiatPaymentMethodUtil.getPaymentMethod(it) },
-                Mappings.AmountSpecMapping.toBisq2Model(amountSpec),
-                Mappings.PriceSpecMapping.toBisq2Model(priceSpec),
-                ArrayList<String>(supportedLanguageCodes)
-            )
-            Result.success(offerId)
-        } catch (e: Exception) {
-            log.e(e) { "Failed to create offer with mediator wait: ${e.message}" }
-            Result.failure(e)
-        }
-    }
-
     // Private
     private fun createOffer(
         direction: Direction,
@@ -259,7 +223,6 @@ class NodeOffersServiceFacade(
         )
 
 
-
         val channel: BisqEasyOfferbookChannel = bisqEasyOfferbookChannelService.findChannel(market).get()
 
         val myOfferMessage = BisqEasyOfferbookMessage(
@@ -275,54 +238,6 @@ class NodeOffersServiceFacade(
         // blocking call
         bisqEasyOfferbookChannelService.publishChatMessage(myOfferMessage, userIdentity).join()
         return bisqEasyOffer.id
-    }
-
-    private suspend fun createOfferWithMediatorWait(
-        direction: Direction,
-        market: Market,
-        bitcoinPaymentMethods: List<BitcoinPaymentMethod>,
-        fiatPaymentMethods: List<FiatPaymentMethod>,
-        amountSpec: AmountSpec,
-        priceSpec: PriceSpec,
-        supportedLanguageCodes: List<String>
-    ): String {
-        val mediationRequestService = applicationService.supportService.get().mediationRequestService
-        val userIdentity: UserIdentity = userIdentityService.selectedUserIdentity
-
-        log.d { "Checking mediator availability..." }
-
-        try {
-            return withTimeout(MEDIATOR_WAIT_TIMEOUT) {
-                // Check immediately, then poll with delay
-                var firstCheck = true
-                while (true) {
-                    if (!firstCheck) {
-                        delay(MEDIATOR_POLL_INTERVAL)
-                    }
-
-                    val currentMediator = mediationRequestService.selectMediator(
-                        userIdentity.userProfile.id,
-                        userIdentity.userProfile.id,
-                        "temp-offer-id"
-                    )
-
-                    if (currentMediator.isPresent) {
-                        log.d { "Mediator available, creating offer" }
-                        return@withTimeout createOffer(direction, market, bitcoinPaymentMethods, fiatPaymentMethods, amountSpec, priceSpec, supportedLanguageCodes)
-                    }
-
-                    if (firstCheck) {
-                        log.d { "No mediator available, waiting up to ${MEDIATOR_WAIT_TIMEOUT.inWholeSeconds} seconds..." }
-                    }
-
-                    firstCheck = false
-                }
-                @Suppress("UNREACHABLE_CODE")
-                error("Unreachable")
-            }
-        } catch (e: TimeoutCancellationException) {
-            throw MediatorNotAvailableException("Timeout waiting for mediator after ${MEDIATOR_WAIT_TIMEOUT.inWholeSeconds} seconds")
-        }
     }
 
     private fun observeSelectedChannel() {
@@ -343,9 +258,7 @@ class NodeOffersServiceFacade(
                 _selectedOfferbookMarket.value = OfferbookMarket(marketVO)
                 updateMarketPrice()
 
-                // Clear the map synchronously before adding observers
                 launchIO {
-                    clearOfferMessages()
                     addChatMessagesObservers(channel)
                 }
 
@@ -385,13 +298,13 @@ class NodeOffersServiceFacade(
         chatMessagesPin =
             chatMessages.addObserver(object : CollectionObserver<BisqEasyOfferbookMessage> {
                 override fun add(message: BisqEasyOfferbookMessage) {
-                    if (!message.bisqEasyOffer.isPresent) {
+                    if (!message.hasBisqEasyOffer()) {
                         return
                     }
 
                     // Add to thread-safe queue (non-blocking)
                     pendingOffers.offer(message)
-                    startOffersBatchJob()
+                    maybeStartOffersBatchJob()
                 }
 
                 override fun remove(message: Any) {
@@ -403,7 +316,6 @@ class NodeOffersServiceFacade(
                         }
                         item?.let { model ->
                             _offerbookListItems.update { it - model }
-                            launchIO { removeOfferMessage(offerId) }
                             log.i { "Removed offer: $offerId, remaining offers: ${_offerbookListItems.value.size}" }
                         }
                     }
@@ -412,14 +324,13 @@ class NodeOffersServiceFacade(
                 override fun clear() {
                     log.d { "Clearing all offer messages" }
                     _offerbookListItems.value = emptyList()
-                    launchIO { clearOfferMessages() }
                 }
             })
 
         log.d { "Chat messages observer added for ${channel.market.marketCodes}, pin: $chatMessagesPin" }
     }
 
-    private fun startOffersBatchJob() {
+    private fun maybeStartOffersBatchJob() {
         // Use mutex to prevent race conditions when starting batch jobs
         launchIO {
             batchMutex.withLock {
@@ -498,67 +409,6 @@ class NodeOffersServiceFacade(
         }
     }
 
-    private fun isValidOfferMessage(message: BisqEasyOfferbookMessage): Boolean {
-//    TODO restore for usage of core version v2.1.8
-//        return bisqEasyOfferbookMessageService.isValid(message)
-        // Basic validation - message must have an offer
-        if (!message.hasBisqEasyOffer()) {
-            return false
-        }
-
-        // Don't show our own offers
-//        val myUserIdentityIds = userIdentityService.userIdentities.map { it.userProfile.id }.toSet()
-//        if (myUserIdentityIds.contains(makerUserProfile.get().id)) {
-//            return false
-//        }
-
-        return true
-    }
-
-    private suspend fun findBisqEasyOfferbookMessage(offerId: String): Optional<BisqEasyOfferbookMessage> {
-        return Optional.ofNullable(getOfferMessage(offerId))
-    }
-
-    private suspend fun putOfferMessage(offerId: String, message: BisqEasyOfferbookMessage) {
-        offerMapMutex.withLock {
-            bisqEasyOfferbookMessageByOfferId[offerId] = message
-        }
-    }
-
-    private suspend fun removeOfferMessage(offerId: String) {
-        offerMapMutex.withLock {
-            bisqEasyOfferbookMessageByOfferId.remove(offerId)
-        }
-    }
-
-    private suspend fun clearOfferMessages() {
-        offerMapMutex.withLock {
-            val currentSize = bisqEasyOfferbookMessageByOfferId.size
-            log.d { "Clearing offer messages map, current size: $currentSize" }
-            bisqEasyOfferbookMessageByOfferId.clear()
-
-            // Suggest GC after clearing large collections
-            if (currentSize > MAP_CLEAR_THRESHOLD) {
-                log.w { "MEMORY: Cleared large offer map ($currentSize items), suggesting GC" }
-                suggestGCtoOS()
-            }
-        }
-    }
-
-    private suspend fun getOfferMessage(offerId: String): BisqEasyOfferbookMessage? {
-        return offerMapMutex.withLock {
-            bisqEasyOfferbookMessageByOfferId[offerId]
-        }
-    }
-
-    private suspend fun offerMessagesContainsKey(offerId: String): Boolean {
-        return offerMapMutex.withLock {
-            val contains = bisqEasyOfferbookMessageByOfferId.containsKey(offerId)
-            log.d { "Checking if offer $offerId exists in map: $contains, map size: ${bisqEasyOfferbookMessageByOfferId.size}" }
-            contains
-        }
-    }
-
     private suspend fun processPendingOffers() {
         // Drain the thread-safe queue (non-blocking)
         val offersToProcess = mutableListOf<BisqEasyOfferbookMessage>()
@@ -576,10 +426,7 @@ class NodeOffersServiceFacade(
         offersToProcess.chunked(5).forEach { chunk ->
             for (message in chunk) {
                 try {
-                    val offerId = message.bisqEasyOffer.get().id
-
-                    // Quick validation before expensive operations
-                    if (offerMessagesContainsKey(offerId) || !isValidOfferMessage(message)) {
+                    if (!isValidOfferMessage(message)) {
                         continue
                     }
 
@@ -588,7 +435,6 @@ class NodeOffersServiceFacade(
                     val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
 
                     newOffers.add(offerItemPresentationModel)
-                    putOfferMessage(offerId, message)
                     processedCount++
 
                 } catch (e: Exception) {
@@ -614,16 +460,35 @@ class NodeOffersServiceFacade(
 
         // Single UI update for all new offers
         if (newOffers.isNotEmpty()) {
-            _offerbookListItems.update { it + newOffers }
+            // distinct avoids that we add duplicates but requires proper equals/hashCode in OfferItemPresentationModel
+            _offerbookListItems.update { currentList ->
+                (currentList + newOffers).distinct()
+            }
+
             val currentSize = _offerbookListItems.value.size
             log.i { "Batch processed $processedCount offers, total: $currentSize" }
 
             // Log memory pressure if list is getting large
             if (currentSize > 100 && currentSize % 50 == 0) {
-                val mapSize = offerMapMutex.withLock { bisqEasyOfferbookMessageByOfferId.size }
-                log.w { "MEMORY: Large offer list - UI: $currentSize, Map: $mapSize" }
+                log.w { "MEMORY: Large offer list - UI: $currentSize" }
             }
         }
+    }
+
+    private fun isValidOfferMessage(message: BisqEasyOfferbookMessage): Boolean {
+        // TODO Add more validation
+        // In Bisq main we have that code in the bisqEasyOfferbookMessageService.isValid(message)
+        // method
+        /*
+         public boolean isValid(BisqEasyOfferbookMessage message) {
+        return isNotBanned(message) &&
+                isNotIgnored(message) &&
+                (isTextMessage(message) ||
+                        isBuyOffer(message) ||
+                        hasSellerSufficientReputation(message));
+    }
+         */
+        return true
     }
 
     private fun startMemoryMonitoring() {
@@ -634,11 +499,10 @@ class NodeOffersServiceFacade(
                     val runtime = Runtime.getRuntime()
                     val usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024
                     val maxMemory = runtime.maxMemory() / 1024 / 1024
-                    val offerMapSize = offerMapMutex.withLock { bisqEasyOfferbookMessageByOfferId.size }
                     val offersListSize = _offerbookListItems.value.size
                     val observersCount = numOffersObservers.size
 
-                    log.w { "MEMORY: Used ${usedMemory}MB/${maxMemory}MB, OfferMap: $offerMapSize, OffersList: $offersListSize, Observers: $observersCount" }
+                    log.w { "MEMORY: Used ${usedMemory}MB/${maxMemory}MB, OffersList: $offersListSize, Observers: $observersCount" }
 
                     // Only suggest GC in critical situations (90%+) to avoid masking memory leaks
                     if (usedMemory > maxMemory * MEMORY_GC_THRESHOLD) {
@@ -684,30 +548,14 @@ class NodeOffersServiceFacade(
         when {
             level >= 80 || level == 15 -> { // COMPLETE or RUNNING_CRITICAL
                 log.w { "MEMORY: Critical system memory pressure (level $level), clearing caches" }
-                launchIO {
-                    // Clear non-essential caches during critical memory pressure
-                    val clearedOffers = offerMapMutex.withLock {
-                        val size = bisqEasyOfferbookMessageByOfferId.size
-                        if (size > MAP_CLEAR_THRESHOLD) {
-                            // Keep only recent offers during memory pressure
-                            val recentOffers = bisqEasyOfferbookMessageByOfferId.entries
-                                .sortedByDescending { it.value.date }
-                                .take(25)
-                                .associate { it.key to it.value }
-                            bisqEasyOfferbookMessageByOfferId.clear()
-                            bisqEasyOfferbookMessageByOfferId.putAll(recentOffers)
-                            size - recentOffers.size
-                        } else 0
-                    }
-                    if (clearedOffers > 0) {
-                        log.w { "MEMORY: Cleared $clearedOffers old offers due to memory pressure" }
-                    }
-                }
+                //todo the past code did not had any effect on the used data
             }
+
             level >= 10 -> { // RUNNING_LOW or higher
                 log.i { "MEMORY: System memory running low (level $level), reducing batch sizes" }
                 // Could reduce batch processing sizes here if needed
             }
+
             else -> {
                 log.d { "MEMORY: Minor memory trim request (level $level)" }
             }
