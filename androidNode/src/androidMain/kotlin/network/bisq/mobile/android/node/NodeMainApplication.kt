@@ -14,6 +14,7 @@ import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.android.node.di.androidNodeModule
 import network.bisq.mobile.android.node.di.serviceModule
 import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
+import network.bisq.mobile.android.node.utils.MemoryProfiler
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -47,6 +48,18 @@ class NodeMainApplication : MainApplication(), ComponentCallbacks2 {
         // 4. It's a one-time operation during app startup
         runBlocking(IODispatcher) {
             setupBisqCoreStatics()
+        }
+
+        // Writes in debug mode a file to the data dir (memory_log.csv), which can be opened in a spreadsheet app and applied to a chart
+        // to see the memory footprint over time.
+        // As Android profiler is a pain to use, that might be an easier and low-overhead way to get insight about memory consumption and
+        // help in optimisations.
+        if (isDebug()) {
+            val file = filesDir.toPath().resolve("memory_log.csv").toFile()
+            if (file.exists()) {
+                file.delete()
+            }
+            MemoryProfiler.start(file, 1000)
         }
 
         // We start here the initialisation (non blocking) of the core services and tor.
