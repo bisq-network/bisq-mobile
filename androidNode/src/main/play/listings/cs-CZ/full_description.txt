@@ -1,0 +1,17 @@
+Bisq pro Android je decentralizovaný peer-to-peer (P2P) komunikační nástroj navržený k usnadnění bezpečných spojení mezi uživateli, který jim umožňuje vyměňovat si informace přímo bez spoléhání na centralizované servery. Tato aplikace slouží jako most pro jednotlivce, kteří chtějí komunikovat přes síť Bisq, a zajišťuje soukromí a autonomii v jejich komunikaci.
+
+<b>Klíčové funkce:</b>
+
+• <b>Decentralizovaná komunikace:</b> Pracujte v plně decentralizované síti, která eliminuje potřebu centrálních autorit a snižuje jednotlivé body selhání.
+
+• <b>Zaměřeno na soukromí:</b> Vaše data zůstávají na vašem zařízení; Bisq pro Android neukládá ani nesleduje žádné informace o uživatelích, čímž zajišťuje úplné soukromí.
+
+• <b>Bezpečná spojení mezi uzly:</b> Využívejte robustní šifrovací protokoly k vytvoření bezpečných kanálů mezi uzly, které chrání vaše interakce.
+
+• <b>Usnadňuje výměnu informací:</b> Ačkoli aplikace nezpracovává finanční transakce ani neukládá aktiva, umožňuje uživatelům efektivně se koordinovat a komunikovat pro aktivity, jako je organizování obchodů nebo sdílení dat.
+
+• <b>Uživatelsky přívětivé rozhraní:</b> Navrženo s ohledem na jednoduchost, což umožňuje jak začátečníkům, tak zkušeným uživatelům snadno se v aplikaci orientovat a používat ji.
+
+Bisq pro Android je nezbytný nástroj pro ty, kteří hledají decentralizovanou platformu pro bezpečnou správu své peer-to-peer komunikace. Upřednostněním soukromí uživatelů a eliminací potřeby centrálních zprostředkovatelů umožňuje jednotlivcům udržet kontrolu nad svými interakcemi v digitálním prostoru.
+
+<b>Poznámka:</b> Tato aplikace neobsahuje funkce peněženky pro kryptoměny nebo fiat měny a neusnadňuje přímé obchodování nebo finanční transakce. Slouží výhradně jako komunikační facilitátor v rámci sítě Bisq.

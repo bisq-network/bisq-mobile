@@ -1,0 +1,17 @@
+Bisq für Android ist ein dezentrales Peer-to-Peer (P2P) Kommunikationstool, das sichere Verbindungen zwischen Benutzern ermöglicht und es ihnen erlaubt, Informationen direkt auszutauschen, ohne auf zentralisierte Server angewiesen zu sein. Diese Anwendung dient als Brücke für Personen, die über das Bisq-Netzwerk interagieren möchten, und gewährleistet Privatsphäre und Autonomie in ihrer Kommunikation.
+
+<b>Hauptfunktionen:</b>
+
+• <b>Dezentrale Kommunikation:</b> Arbeiten Sie in einem vollständig dezentralisierten Netzwerk, das zentrale Autoritäten überflüssig macht und einzelne Ausfallpunkte reduziert.
+
+• <b>Datenschutzorientiert:</b> Ihre Daten bleiben auf Ihrem Gerät; Bisq für Android speichert oder verfolgt keine Benutzerinformationen und gewährleistet so vollständige Privatsphäre.
+
+• <b>Sichere Peer-Verbindungen:</b> Nutzen Sie robuste Verschlüsselungsprotokolle, um sichere Kanäle zwischen Peers einzurichten und Ihre Interaktionen zu schützen.
+
+• <b>Ermöglicht Informationsaustausch:</b> Obwohl die App keine finanziellen Transaktionen abwickelt oder Vermögenswerte speichert, ermöglicht sie Benutzern, sich effektiv für Aktivitäten wie die Organisation von Trades oder den Austausch von Daten zu koordinieren und zu kommunizieren.
+
+• <b>Benutzerfreundliche Oberfläche:</b> Mit Blick auf Einfachheit entwickelt, sodass sowohl Anfänger als auch erfahrene Benutzer die App problemlos navigieren und nutzen können.
+
+Bisq für Android ist ein unverzichtbares Tool für diejenigen, die eine dezentralisierte Plattform zur sicheren Verwaltung ihrer Peer-to-Peer-Kommunikation suchen. Durch die Priorisierung der Privatsphäre der Benutzer und die Eliminierung der Notwendigkeit zentraler Vermittler ermöglicht es Einzelpersonen, die Kontrolle über ihre Interaktionen im digitalen Raum zu behalten.
+
+<b>Hinweis:</b> Diese Anwendung enthält keine Wallet-Funktionen für Kryptowährungen oder Fiat-Währungen und ermöglicht keine direkten Handels- oder Finanztransaktionen. Sie dient ausschließlich als Kommunikationserleichterung innerhalb des Bisq-Netzwerks.
