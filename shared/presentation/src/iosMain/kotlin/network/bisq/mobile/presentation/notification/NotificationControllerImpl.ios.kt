@@ -4,6 +4,7 @@ import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.notification.model.IosNotificationCategory
@@ -34,7 +35,9 @@ import platform.darwin.NSObject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
-class NotificationControllerImpl : NotificationController, Logging {
+class NotificationControllerImpl(
+    private val appForegroundController: AppForegroundController,
+) : NotificationController, Logging {
     private val logScope = CoroutineScope(Dispatchers.Main)
     // strong reference to delegate to keep it in memory and working
     private var notificationDelegate: NSObject? = null
@@ -111,8 +114,9 @@ class NotificationControllerImpl : NotificationController, Logging {
 
 
     override fun isAppInForeground(): Boolean {
-        // for iOS we handle this externally
-        return false
+        // for iOS we handle this inside delegate
+        // but wouldn't hurt to return early when possible
+        return appForegroundController.isForeground.value
     }
 
     private fun logDebug(message: String) {
