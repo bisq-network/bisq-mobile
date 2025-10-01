@@ -195,15 +195,25 @@ class CreateOfferAmountPresenter(
         val v = textInput.toDoubleOrNullLocaleAware()
         if (v != null) {
             val exactMinor = FiatVOFactory.faceValueToLong(v)
-            val clamped = exactMinor.coerceIn(minAmount, maxAmount)
-            _fixedAmountSliderPosition.value = MonetarySlider.minorToFraction(clamped, minAmount, maxAmount)
-            quoteSideFixedAmount = FiatVOFactory.from(clamped, quoteCurrencyCode)
+
+            // Check if value is within valid range
+            val isInRange = exactMinor in minAmount..maxAmount
+            _amountValid.value = isInRange
+
+            // Store the UNCLAMPED value so user sees what they typed
+            // This fixes issue #785: typing "5" then "0" now produces "50" instead of "60"
+            quoteSideFixedAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
             _formattedQuoteSideFixedAmount.value = AmountFormatter.formatAmount(quoteSideFixedAmount).replace(separator, "")
+
             priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
             baseSideFixedAmount = priceQuote.toBaseSideMonetary(quoteSideFixedAmount) as CoinVO
             _formattedBaseSideFixedAmount.value = AmountFormatter.formatAmount(baseSideFixedAmount, false)
+
+            // Update slider with clamped value for visual feedback
+            val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmount)
+            _fixedAmountSliderPosition.value = MonetarySlider.minorToFraction(clampedForSlider, minAmount, maxAmount)
+
             updateAmountLimitInfo()
-            _amountValid.value = true
         } else {
             _formattedQuoteSideFixedAmount.value = ""
             _amountValid.value = false
@@ -215,15 +225,24 @@ class CreateOfferAmountPresenter(
         val v = textInput.toDoubleOrNullLocaleAware()
         if (v != null) {
             val exactMinor = FiatVOFactory.faceValueToLong(v)
-            val clamped = exactMinor.coerceIn(minAmount, maxAmount)
-            _minRangeSliderValue.value = MonetarySlider.minorToFraction(clamped, minAmount, maxAmount)
-            quoteSideMinRangeAmount = FiatVOFactory.from(clamped, quoteCurrencyCode)
+
+            // Check if value is within valid range
+            val isInRange = exactMinor in minAmount..maxAmount
+            _amountValid.value = isInRange
+
+            // Store the UNCLAMPED value so user sees what they typed
+            quoteSideMinRangeAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
             _formattedQuoteSideMinRangeAmount.value = AmountFormatter.formatAmount(quoteSideMinRangeAmount).replace(separator, "")
+
             priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
             baseSideMinRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMinRangeAmount) as CoinVO
             _formattedBaseSideMinRangeAmount.value = AmountFormatter.formatAmount(baseSideMinRangeAmount, false)
+
+            // Update slider with clamped value for visual feedback
+            val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmount)
+            _minRangeSliderValue.value = MonetarySlider.minorToFraction(clampedForSlider, minAmount, maxAmount)
+
             updateAmountLimitInfo()
-            _amountValid.value = true
         } else {
             _formattedQuoteSideMinRangeAmount.value = ""
             _amountValid.value = false
@@ -235,15 +254,24 @@ class CreateOfferAmountPresenter(
         val v = textInput.toDoubleOrNullLocaleAware()
         if (v != null) {
             val exactMinor = FiatVOFactory.faceValueToLong(v)
-            val clamped = exactMinor.coerceIn(minAmount, maxAmount)
-            _maxRangeSliderValue.value = MonetarySlider.minorToFraction(clamped, minAmount, maxAmount)
-            quoteSideMaxRangeAmount = FiatVOFactory.from(clamped, quoteCurrencyCode)
+
+            // Check if value is within valid range
+            val isInRange = exactMinor in minAmount..maxAmount
+            _amountValid.value = isInRange
+
+            // Store the UNCLAMPED value so user sees what they typed
+            quoteSideMaxRangeAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
             _formattedQuoteSideMaxRangeAmount.value = AmountFormatter.formatAmount(quoteSideMaxRangeAmount).replace(separator, "")
+
             priceQuote = createOfferPresenter.getMostRecentPriceQuote(createOfferModel.market!!)
             baseSideMaxRangeAmount = priceQuote.toBaseSideMonetary(quoteSideMaxRangeAmount) as CoinVO
             _formattedBaseSideMaxRangeAmount.value = AmountFormatter.formatAmount(baseSideMaxRangeAmount, false)
+
+            // Update slider with clamped value for visual feedback
+            val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmount)
+            _maxRangeSliderValue.value = MonetarySlider.minorToFraction(clampedForSlider, minAmount, maxAmount)
+
             updateAmountLimitInfo()
-            _amountValid.value = true
         } else {
             _formattedQuoteSideMaxRangeAmount.value = ""
             _amountValid.value = false
