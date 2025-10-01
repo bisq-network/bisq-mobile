@@ -32,7 +32,7 @@ open class ForegroundService : Service(), Logging {
         val contentPendingIntent =
             notificationController.createNavDeepLinkPendingIntent(Routes.TabOpenTradeList)
 
-        return NotificationCompat.Builder(this, AndroidNotificationChannels.BISQ_SERVICE_CHANNEL_ID)
+        return NotificationCompat.Builder(this, NotificationChannels.BISQ_SERVICE)
             .setContentTitle("mobile.bisqService.title".i18n())
             .setContentText("mobile.bisqService.subTitle".i18n())
             .setSmallIcon(ResourceUtils.getNotifResId(applicationContext))

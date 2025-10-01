@@ -21,4 +21,9 @@ class IosNotificationConfig {
     var criticalVolume: Float? = null
 
     var actions: List<NotificationButton>? = null
+
+    /**
+     * actions must be provided to set correct userInfo for category
+     */
+    var categoryId: String? = null
 }

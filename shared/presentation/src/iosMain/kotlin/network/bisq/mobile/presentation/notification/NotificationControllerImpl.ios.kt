@@ -5,25 +5,39 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.i18n
+import network.bisq.mobile.presentation.notification.model.IosNotificationCategory
+import network.bisq.mobile.presentation.notification.model.NotificationButton
 import network.bisq.mobile.presentation.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.notification.model.NotificationPressAction
 import network.bisq.mobile.presentation.notification.model.toPlatformEnum
+import network.bisq.mobile.presentation.ui.navigation.ExternalUriHandler
 import network.bisq.mobile.presentation.ui.navigation.Routes
 import platform.Foundation.NSNumber
 import platform.UserNotifications.UNAuthorizationStatusAuthorized
 import platform.UserNotifications.UNMutableNotificationContent
+import platform.UserNotifications.UNNotification
 import platform.UserNotifications.UNNotificationAction
 import platform.UserNotifications.UNNotificationActionOptionForeground
 import platform.UserNotifications.UNNotificationCategory
 import platform.UserNotifications.UNNotificationCategoryOptionNone
+import platform.UserNotifications.UNNotificationPresentationOptionAlert
+import platform.UserNotifications.UNNotificationPresentationOptionBadge
+import platform.UserNotifications.UNNotificationPresentationOptionSound
+import platform.UserNotifications.UNNotificationPresentationOptions
 import platform.UserNotifications.UNNotificationRequest
+import platform.UserNotifications.UNNotificationResponse
 import platform.UserNotifications.UNNotificationSound
 import platform.UserNotifications.UNUserNotificationCenter
+import platform.UserNotifications.UNUserNotificationCenterDelegateProtocol
+import platform.darwin.NSObject
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 class NotificationControllerImpl : NotificationController, Logging {
     private val logScope = CoroutineScope(Dispatchers.Main)
+    // strong reference to delegate to keep it in memory and working
+    private var notificationDelegate: NSObject? = null
 
     @OptIn(ExperimentalForeignApi::class)
     override suspend fun hasPermission(): Boolean = suspendCoroutine { continuation ->
@@ -52,7 +66,23 @@ class NotificationControllerImpl : NotificationController, Logging {
             config.ios?.interruptionLevel?.let {
                 setInterruptionLevel(it.toPlatformEnum())
             }
-            configureActions(this, config)
+            config.ios?.categoryId?.let {
+                val actions = config.ios.actions
+                if (actions.isNullOrEmpty()) {
+                    throw IllegalArgumentException("When setting categoryId, notification actions must be provided to behave correctly")
+                }
+                setCategoryIdentifier(it)
+                configureActions(this, actions)
+            }
+            config.ios?.actions?.let {
+                if (config.ios.categoryId == null) {
+                    IllegalArgumentException("When setting actions, notification categoryId must be provided to behave correctly")
+                }
+            }
+
+            if (config.skipInForeground) {
+                 setUserInfo(this.userInfo + ("skipForeground" to 1))
+            }
         }
 
         val requestId = config.id
@@ -135,10 +165,12 @@ class NotificationControllerImpl : NotificationController, Logging {
         }
     }
 
-    private fun configureActions(content: UNMutableNotificationContent, config: NotificationConfig) {
-        val actions = mutableListOf<UNNotificationAction>()
+    private fun configureActions(
+        content: UNMutableNotificationContent,
+        actions: List<NotificationButton>
+    ) {
         val userInfo = mutableMapOf<Any?, Any>()
-        config.ios?.actions?.forEachIndexed { index, action ->
+        for (action in actions) {
             val pressAction = action.pressAction
             when (pressAction) {
                 is NotificationPressAction.Route,
@@ -149,38 +181,126 @@ class NotificationControllerImpl : NotificationController, Logging {
                                 pressAction.route
                             else Routes.TabOpenTradeList
                         )
-                    val unAction = UNNotificationAction.actionWithIdentifier(
-                        "route_$index",
-                        action.title,
-                        UNNotificationActionOptionForeground
-                    )
-                    actions.add(unAction)
-                    userInfo["route_$index"] = uri
+                    userInfo[action.pressAction.id] = uri
                 }
             }
         }
-        if (actions.isNotEmpty()) {
-            val categoryId = config.id
-            // create category with actions
-            val category = UNNotificationCategory.categoryWithIdentifier(
-                categoryId,
-                actions,
-                emptyList<String>(),
-                UNNotificationCategoryOptionNone,
-            )
-            // Register the category with the notification center
-            val center = UNUserNotificationCenter.currentNotificationCenter()
-            center.getNotificationCategoriesWithCompletionHandler { existing ->
-                // Merge existing categories with the new one
-                val newCategory = setOf(category)
-                if (existing != null) {
-                    center.setNotificationCategories(existing + newCategory)
-                } else {
-                    center.setNotificationCategories(newCategory)
+        content.setUserInfo(userInfo)
+    }
+
+    private fun setNotificationCategories(categories: Set<IosNotificationCategory>) {
+        val resultCategories = mutableSetOf<UNNotificationCategory>()
+        for (cat in categories) {
+            val actions = mutableListOf<UNNotificationAction>()
+            cat.actions.forEachIndexed { index, action ->
+                val pressAction = action.pressAction
+                when (pressAction) {
+                    is NotificationPressAction.Route,
+                    is NotificationPressAction.Default -> {
+                        val unAction = UNNotificationAction.actionWithIdentifier(
+                            action.pressAction.id,
+                            action.title,
+                            UNNotificationActionOptionForeground
+                        )
+                        actions.add(unAction)
+                    }
                 }
             }
-            content.setCategoryIdentifier(categoryId)
-            content.setUserInfo(userInfo)
+            if (actions.isNotEmpty()) {
+                // create category with actions
+                val category = UNNotificationCategory.categoryWithIdentifier(
+                    cat.id,
+                    actions,
+                    emptyList<String>(),
+                    UNNotificationCategoryOptionNone,
+                )
+                resultCategories.add(category)
+            }
+        }
+
+        if (resultCategories.isNotEmpty()) {
+            UNUserNotificationCenter.currentNotificationCenter()
+                .setNotificationCategories(resultCategories)
         }
     }
+
+    private fun setupDelegate() {
+        val delegate = object : NSObject(), UNUserNotificationCenterDelegateProtocol {
+            // Handle user actions on the notification
+            override fun userNotificationCenter(
+                center: UNUserNotificationCenter,
+                didReceiveNotificationResponse: UNNotificationResponse,
+                withCompletionHandler: () -> Unit
+            ) {
+                // Handle the response when the user taps the notification
+                val userInfo = didReceiveNotificationResponse.notification.request.content.userInfo
+                val actionId = didReceiveNotificationResponse.actionIdentifier
+                when (actionId) {
+                    "default",
+                    "route" -> {
+                        val userInfoMap = userInfo as? Map<*, *>
+                        val uri = userInfoMap?.get(actionId) as? String
+                        if (uri != null) {
+                            ExternalUriHandler.onNewUri(uri)
+                        }
+                    }
+                }
+                withCompletionHandler()
+            }
+
+            // Asks the delegate how to handle a notification that arrived while
+            // the app was running in the foreground.
+            override fun userNotificationCenter(
+                center: UNUserNotificationCenter,
+                willPresentNotification: UNNotification,
+                withCompletionHandler: (UNNotificationPresentationOptions) -> Unit
+            ) {
+                val userInfo = willPresentNotification.request.content.userInfo
+
+                if (!userInfo.contains("skipForeground")) {
+                    // Display alert, sound, or badge when the app is in the foreground
+                    withCompletionHandler(
+                        UNNotificationPresentationOptionAlert or UNNotificationPresentationOptionSound or UNNotificationPresentationOptionBadge
+                    )
+                }
+            }
+        }
+        notificationDelegate = delegate
+        UNUserNotificationCenter.currentNotificationCenter().delegate = delegate
+        logDebug("Notification center delegate applied")
+    }
+
+    private fun setupNotificationCategories() {
+        setNotificationCategories(
+            setOf(
+                IosNotificationCategory(
+                    id = NotificationChannels.TRADE_UPDATES,
+                    actions = listOf(
+                        NotificationButton(
+                            title = "mobile.action.notifications.openTrade".i18n(),
+                            // the actual route here doesn't matter, but it will matter
+                            // when actions are passed to notify()
+                            pressAction = NotificationPressAction.Route(Routes.TabHome)
+                        )
+                    )
+                ),
+                IosNotificationCategory(
+                    id = NotificationChannels.USER_MESSAGES,
+                    actions = listOf(
+                        NotificationButton(
+                            title = "mobile.action.notifications.openChat".i18n(),
+                            pressAction = NotificationPressAction.Route(Routes.TabHome)
+                        )
+                    )
+                )
+            )
+        )
+    }
+
+    @Suppress("unused")  // Called from iosClient.swift
+    fun setup() {
+        setupDelegate()
+        setupNotificationCategories()
+    }
 }
+

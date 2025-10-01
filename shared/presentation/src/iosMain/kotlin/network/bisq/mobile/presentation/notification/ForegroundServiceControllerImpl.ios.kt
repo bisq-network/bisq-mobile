@@ -38,34 +38,6 @@ class ForegroundServiceControllerImpl(private val notificationController: Notifi
     private var isBackgroundTaskRegistered = false
     private val logScope = CoroutineScope(Dispatchers.Main)
 
-    private fun setupDelegate() {
-        val delegate = object : NSObject(), UNUserNotificationCenterDelegateProtocol {
-            override fun userNotificationCenter(
-                center: UNUserNotificationCenter,
-                willPresentNotification: UNNotification,
-                withCompletionHandler: (UNNotificationPresentationOptions) -> Unit
-            ) {
-                // Display alert, sound, or badge when the app is in the foreground
-                withCompletionHandler(
-                    UNNotificationPresentationOptionAlert or UNNotificationPresentationOptionSound or UNNotificationPresentationOptionBadge
-                )
-            }
-
-            // Handle user actions on the notification
-            override fun userNotificationCenter(
-                center: UNUserNotificationCenter,
-                didReceiveNotificationResponse: UNNotificationResponse,
-                withCompletionHandler: () -> Unit
-            ) {
-                // Handle the response when the user taps the notification
-                withCompletionHandler()
-            }
-        }
-
-        UNUserNotificationCenter.currentNotificationCenter().delegate = delegate
-        logDebug("Notification center delegate applied")
-    }
-
     override fun startService() {
         if (isRunning) {
             logDebug("Notification Service already started, skipping launch")
@@ -76,7 +48,6 @@ class ForegroundServiceControllerImpl(private val notificationController: Notifi
         serviceScope.launch {
             if (notificationController.hasPermission()) {
                 logDebug("Notification permission granted.")
-                setupDelegate()
                 registerBackgroundTask()
                 // Once permission is granted, you can start scheduling background tasks
                 startBackgroundTaskLoop()

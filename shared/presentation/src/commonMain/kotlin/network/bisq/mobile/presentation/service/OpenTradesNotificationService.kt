@@ -10,7 +10,7 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.notification.AndroidNotificationChannels
+import network.bisq.mobile.presentation.notification.NotificationChannels
 import network.bisq.mobile.presentation.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.notification.NotificationController
 import network.bisq.mobile.presentation.notification.NotificationIds
@@ -419,9 +419,9 @@ class OpenTradesNotificationService(
             this.body = body
             android {
                 channelId = if (isChatNotif) {
-                    AndroidNotificationChannels.USER_MESSAGES_CHANNEL_ID
+                    NotificationChannels.USER_MESSAGES
                 } else {
-                    AndroidNotificationChannels.TRADE_UPDATES_CHANNEL_ID
+                    NotificationChannels.TRADE_UPDATES
                 }
                 // TODO: fix after nav refactor
                 pressAction = if (isChatNotif) {
@@ -434,7 +434,8 @@ class OpenTradesNotificationService(
                 group = trade.shortTradeId
             }
             ios {
-                 // TODO: fix after nav refactor
+                categoryId = if (isChatNotif) NotificationChannels.USER_MESSAGES else NotificationChannels.TRADE_UPDATES
+                // TODO: fix after nav refactor
                  actions = if (isChatNotif) {
                     listOf(
                         NotificationButton(

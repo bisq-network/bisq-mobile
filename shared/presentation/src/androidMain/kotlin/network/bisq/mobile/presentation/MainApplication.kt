@@ -15,7 +15,7 @@ import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.SystemOutFilter
 import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.notification.AndroidNotificationChannels
+import network.bisq.mobile.presentation.notification.NotificationChannels
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -73,7 +73,7 @@ abstract class MainApplication : Application(), Logging {
     private fun createNotificationChannels() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val serviceChannel = NotificationChannel(
-                AndroidNotificationChannels.BISQ_SERVICE_CHANNEL_ID,
+                NotificationChannels.BISQ_SERVICE,
                 "mobile.android.channels.service".i18n(),
                 NotificationManager.IMPORTANCE_DEFAULT // Default importance to avoid OS killing the app
             ).apply {
@@ -98,7 +98,7 @@ abstract class MainApplication : Application(), Logging {
             }
 
             val tradeUpdatesChannel = NotificationChannel(
-                AndroidNotificationChannels.TRADE_UPDATES_CHANNEL_ID,
+                NotificationChannels.TRADE_UPDATES,
                 "mobile.android.channels.tradeState".i18n(),
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
@@ -111,7 +111,7 @@ abstract class MainApplication : Application(), Logging {
             }
 
             val userMessagesChannel = NotificationChannel(
-                AndroidNotificationChannels.USER_MESSAGES_CHANNEL_ID,
+                NotificationChannels.USER_MESSAGES,
                 "mobile.android.channels.userMessages".i18n(),
                 NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
