@@ -11,17 +11,10 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val serviceModule = module {
-    single<AppForegroundController> { AppForegroundController() } bind ForegroundDetector::class
-    single<NotificationController> {
-        NotificationControllerImpl()
-    }
-    single<ForegroundServiceControllerImpl> {
-        ForegroundServiceControllerImpl(get())
-    }
-    single<ForegroundServiceController> {
-        get<ForegroundServiceControllerImpl>()
-    }
-    single<OpenTradesNotificationService> {
+    single { AppForegroundController() } bind ForegroundDetector::class
+    single { NotificationControllerImpl() } bind NotificationController::class
+    single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
+    single {
         OpenTradesNotificationService(get(), get(), get(), get())
     }
 }

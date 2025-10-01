@@ -13,17 +13,10 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val serviceModule = module {
-    single<AppForegroundController> { AppForegroundController(androidContext()) } bind ForegroundDetector::class
-    single<NotificationControllerImpl> {
-        NotificationControllerImpl(get(), NodeMainActivity::class.java)
-    }
-    single<NotificationController> {
-        get<NotificationControllerImpl>()
-    }
-    single<ForegroundServiceController> {
-        ForegroundServiceControllerImpl(get())
-    }
-    single<OpenTradesNotificationService> {
+    single { AppForegroundController(androidContext()) } bind ForegroundDetector::class
+    single { NotificationControllerImpl(get(), NodeMainActivity::class.java) } bind NotificationController::class
+    single { ForegroundServiceControllerImpl(get()) } bind ForegroundServiceController::class
+    single {
         OpenTradesNotificationService(get(), get(), get(), get())
     }
 }
