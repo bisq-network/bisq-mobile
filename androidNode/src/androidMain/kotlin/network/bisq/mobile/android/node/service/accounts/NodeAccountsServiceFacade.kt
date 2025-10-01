@@ -29,7 +29,6 @@ class NodeAccountsServiceFacade(applicationService: AndroidApplicationService.Pr
     }
 
     override suspend fun getAccounts(): List<UserDefinedFiatAccountVO> {
-        log.e { "NodeAccountServiceFacade :: getAccounts()" }
         return accountService
             .accountByNameMap
             .values

@@ -22,9 +22,10 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExte
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
+import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.notification.NotificationController
@@ -39,7 +40,8 @@ class TradeChatPresenter(
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val notificationController: NotificationController,
-) : BasePresenter(mainPresenter), Logging {
+    private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade
+) : BasePresenter(mainPresenter) {
 
     val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = tradesServiceFacade.selectedTrade
 
@@ -140,6 +142,14 @@ class TradeChatPresenter(
             tradeChatMessagesServiceFacade.sendChatMessage(finalText, citation)
             _quotedMessage.value = null
         }
+    }
+
+    fun onResendMessage(messageId: String) {
+        messageDeliveryServiceFacade.onResendMessage(messageId)
+    }
+
+    suspend fun getUserName(peerProfileId: String): String {
+        return userProfileServiceFacade.findUserProfile(peerProfileId)?.userName ?: "data.na".i18n()
     }
 
     fun onAddReaction(message: BisqEasyOpenTradeMessageModel, reaction: ReactionEnum) {

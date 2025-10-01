@@ -22,6 +22,7 @@ import network.bisq.mobile.domain.data.replicated.presentation.open_trades.Trade
 import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.domain.data.replicated.user.profile.userProfileDemoObj
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
+import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -77,7 +78,7 @@ class MainPresenterUnreadBadgeTest {
 
         // Mock myUserProfile for models
         val myUserProfile = createMockUserProfile("myUser")
-
+        val messageDeliveryServiceFacade: MessageDeliveryServiceFacade = mockk<MessageDeliveryServiceFacade>(relaxed = true)
         // Mock DTOs and create models for trade1
         val dto1 = mockk<BisqEasyOpenTradeMessageDto>()
         every { dto1.chatMessageType } returns ChatMessageTypeEnum.TEXT
@@ -90,7 +91,7 @@ class MainPresenterUnreadBadgeTest {
         every { dto1.mediator } returns null
         every { dto1.bisqEasyOffer } returns null
         every { dto1.citationAuthorUserProfile } returns null
-        val model1 = BisqEasyOpenTradeMessageModel(dto1, myUserProfile, emptyList())
+        val model1 = BisqEasyOpenTradeMessageModel(dto1, myUserProfile, emptyList(), messageDeliveryServiceFacade)
 
         val dto2 = mockk<BisqEasyOpenTradeMessageDto>()
         every { dto2.chatMessageType } returns ChatMessageTypeEnum.TEXT
@@ -103,7 +104,7 @@ class MainPresenterUnreadBadgeTest {
         every { dto2.mediator } returns null
         every { dto2.bisqEasyOffer } returns null
         every { dto2.citationAuthorUserProfile } returns null
-        val model2 = BisqEasyOpenTradeMessageModel(dto2, myUserProfile, emptyList())
+        val model2 = BisqEasyOpenTradeMessageModel(dto2, myUserProfile, emptyList(), messageDeliveryServiceFacade)
 
         val dto3 = mockk<BisqEasyOpenTradeMessageDto>()
         every { dto3.chatMessageType } returns ChatMessageTypeEnum.TEXT
@@ -116,7 +117,7 @@ class MainPresenterUnreadBadgeTest {
         every { dto3.mediator } returns null
         every { dto3.bisqEasyOffer } returns null
         every { dto3.citationAuthorUserProfile } returns null
-        val model3 = BisqEasyOpenTradeMessageModel(dto3, myUserProfile, emptyList())
+        val model3 = BisqEasyOpenTradeMessageModel(dto3, myUserProfile, emptyList(), messageDeliveryServiceFacade)
 
         val trade1MessagesFlow: StateFlow<Set<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(setOf(model1, model2, model3))
 
@@ -132,7 +133,7 @@ class MainPresenterUnreadBadgeTest {
         every { dto4.mediator } returns null
         every { dto4.bisqEasyOffer } returns null
         every { dto4.citationAuthorUserProfile } returns null
-        val model4 = BisqEasyOpenTradeMessageModel(dto4, myUserProfile, emptyList())
+        val model4 = BisqEasyOpenTradeMessageModel(dto4, myUserProfile, emptyList(), messageDeliveryServiceFacade)
 
         val trade2MessagesFlow = MutableStateFlow(setOf(model4))
 

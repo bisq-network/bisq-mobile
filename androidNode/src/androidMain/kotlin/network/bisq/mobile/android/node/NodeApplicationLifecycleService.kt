@@ -25,6 +25,7 @@ import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
+import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -59,6 +60,7 @@ class NodeApplicationLifecycleService(
     private val androidMemoryReportService: AndroidMemoryReportService,
     private val kmpTorService: KmpTorService,
     private val networkServiceFacade: NetworkServiceFacade,
+    private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
     private val connectivityService: NodeConnectivityService,
 ) : BaseService() {
 
@@ -259,6 +261,7 @@ class NodeApplicationLifecycleService(
         mediationServiceFacade.activate()
         reputationServiceFacade.activate()
         userProfileServiceFacade.activate()
+        messageDeliveryServiceFacade.activate()
     }
 
     private fun deactivateServiceFacades() {
@@ -277,6 +280,7 @@ class NodeApplicationLifecycleService(
         mediationServiceFacade.deactivate()
         reputationServiceFacade.deactivate()
         userProfileServiceFacade.deactivate()
+        messageDeliveryServiceFacade.deactivate()
     }
 
     private fun isTorSupported(networkServiceConfig: NetworkServiceConfig): Boolean {

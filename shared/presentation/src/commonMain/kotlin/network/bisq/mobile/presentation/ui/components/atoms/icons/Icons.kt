@@ -8,11 +8,18 @@ import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.add_custom_green
 import bisqapps.shared.presentation.generated.resources.check_circle
+import bisqapps.shared.presentation.generated.resources.delivery_status_connecting
+import bisqapps.shared.presentation.generated.resources.delivery_status_mailbox
+import bisqapps.shared.presentation.generated.resources.delivery_status_received
+import bisqapps.shared.presentation.generated.resources.delivery_status_sent
+import bisqapps.shared.presentation.generated.resources.delivery_status_try_again
+import bisqapps.shared.presentation.generated.resources.delivery_status_undelivered
 import bisqapps.shared.presentation.generated.resources.exchange_h_arrow
 import bisqapps.shared.presentation.generated.resources.exchange_v_arrow
 import bisqapps.shared.presentation.generated.resources.field_add_white
@@ -294,4 +301,83 @@ fun AppLinkIcon(modifier: Modifier = Modifier.size(24.dp)) {
 @Composable
 fun WebLinkIcon(modifier: Modifier = Modifier.size(24.dp)) {
     Image(painterResource(Res.drawable.icon_web_link), "Web link icon", modifier = modifier)
+}
+
+
+@Composable
+fun DeliveryStatusConnecting(
+    modifier: Modifier = Modifier.size(14.dp),
+    colorFilter: ColorFilter? = null
+) {
+    Image(
+        painterResource(Res.drawable.delivery_status_connecting),
+        "Connecting",
+        modifier = modifier,
+        colorFilter = colorFilter
+    )
+}
+
+@Composable
+fun DeliveryStatusSent(
+    modifier: Modifier = Modifier.size(12.dp),
+    colorFilter: ColorFilter? = null
+) {
+    Image(
+        painterResource(Res.drawable.delivery_status_sent),
+        "Sent",
+        modifier = modifier,
+        colorFilter = colorFilter
+    )
+}
+
+@Composable
+fun DeliveryStatusMailbox(
+    modifier: Modifier = Modifier.size(12.dp),
+    colorFilter: ColorFilter? = null
+) {
+    Image(
+        painterResource(Res.drawable.delivery_status_mailbox),
+        "Mailbox",
+        modifier = modifier,
+        colorFilter = colorFilter
+    )
+}
+
+@Composable
+fun DeliveryStatusReceived(
+    modifier: Modifier = Modifier.size(12.dp),
+    colorFilter: ColorFilter? = null
+) {
+    Image(
+        painterResource(Res.drawable.delivery_status_received),
+        "Received",
+        modifier = modifier,
+        colorFilter = colorFilter
+    )
+}
+
+@Composable
+fun DeliveryStatusUndelivered(
+    modifier: Modifier = Modifier.size(12.dp),
+    colorFilter: ColorFilter? = null
+) {
+    Image(
+        painterResource(Res.drawable.delivery_status_undelivered),
+        "Undelivered",
+        modifier = modifier,
+        colorFilter = colorFilter
+    )
+}
+
+@Composable
+fun DeliveryStatusTrySendingAgain(
+    modifier: Modifier = Modifier.size(12.dp),
+    colorFilter: ColorFilter? = null
+) {
+    Image(
+        painterResource(Res.drawable.delivery_status_try_again),
+        "Try again",
+        modifier = modifier,
+        colorFilter = colorFilter
+    )
 }

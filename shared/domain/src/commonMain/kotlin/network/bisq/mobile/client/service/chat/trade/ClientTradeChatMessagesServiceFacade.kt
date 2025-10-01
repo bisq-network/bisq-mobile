@@ -19,12 +19,14 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
+import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 
 class ClientTradeChatMessagesServiceFacade(
     private val tradesServiceFacade: TradesServiceFacade,
     private val userProfileServiceFacade: UserProfileServiceFacade,
+    private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
     private val apiGateway: TradeChatMessagesApiGateway,
     private val json: Json
 ) : ServiceFacade(), TradeChatMessagesServiceFacade {
@@ -35,8 +37,8 @@ class ClientTradeChatMessagesServiceFacade(
 
     private val _allBisqEasyOpenTradeMessages: MutableStateFlow<Set<BisqEasyOpenTradeMessageDto>> =
         MutableStateFlow(emptySet())
-    private val allBisqEasyOpenTradeMessages: StateFlow<Set<BisqEasyOpenTradeMessageDto>> get() =
-        _allBisqEasyOpenTradeMessages.asStateFlow()
+    private val allBisqEasyOpenTradeMessages: StateFlow<Set<BisqEasyOpenTradeMessageDto>>
+        get() = _allBisqEasyOpenTradeMessages.asStateFlow()
 
     private val _allChatReactions: MutableStateFlow<Set<BisqEasyOpenTradeMessageReactionVO>> =
         MutableStateFlow(emptySet())
@@ -148,7 +150,7 @@ class ClientTradeChatMessagesServiceFacade(
             .map { message ->
                 val chatReactions =
                     allChatReactions.value.filter { it.chatMessageId == message.messageId && !it.isRemoved }
-                BisqEasyOpenTradeMessageModel(message, myUserProfile, chatReactions)
+                BisqEasyOpenTradeMessageModel(message, myUserProfile, chatReactions, messageDeliveryServiceFacade)
             }
             .toSet()
         bisqEasyOpenTradeChannelModel.setAllChatMessages(messages)
