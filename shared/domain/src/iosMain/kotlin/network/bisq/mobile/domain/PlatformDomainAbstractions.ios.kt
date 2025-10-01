@@ -45,8 +45,12 @@ import platform.Foundation.dataWithContentsOfFile
 import platform.Foundation.languageCode
 import platform.Foundation.localeWithLocaleIdentifier
 import platform.Foundation.stringByAddingPercentEncodingWithAllowedCharacters
+import platform.CoreGraphics.CGSizeMake
 import platform.UIKit.UIApplication
 import platform.UIKit.UIDevice
+import platform.UIKit.UIGraphicsBeginImageContextWithOptions
+import platform.UIKit.UIGraphicsEndImageContext
+import platform.UIKit.UIGraphicsGetImageFromCurrentImageContext
 import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation
 import platform.darwin.dispatch_async
@@ -285,6 +289,7 @@ actual class PlatformImage(val image: UIImage) {
     }
 }
 
+@OptIn(ExperimentalForeignApi::class)
 actual fun createEmptyImage(): PlatformImage {
     // Create a 1x1 transparent image
     val size = CGSizeMake(1.0, 1.0)
