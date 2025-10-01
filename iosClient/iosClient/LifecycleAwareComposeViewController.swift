@@ -28,13 +28,13 @@ class LifecycleAwareComposeViewController: UIViewController {
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         presenter.onResume()
-        notificationServiceWrapper.notificationServiceController.stopService()
+        notificationServiceWrapper.foregroundServiceController.stopService()
         NotificationCenter.default.addObserver(forName: UIApplication.willResignActiveNotification, object: nil, queue: .main) { [self] _ in
-            notificationServiceWrapper.notificationServiceController.startService()
+            notificationServiceWrapper.foregroundServiceController.startService()
             presenter.onPause()
         }
         NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [self] _ in
-            notificationServiceWrapper.notificationServiceController.stopService()
+            notificationServiceWrapper.foregroundServiceController.stopService()
             presenter.onResume()
         }
     }

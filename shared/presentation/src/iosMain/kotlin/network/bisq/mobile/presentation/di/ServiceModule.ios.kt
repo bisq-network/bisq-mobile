@@ -15,8 +15,11 @@ val serviceModule = module {
     single<NotificationController> {
         NotificationControllerImpl()
     }
-    single<ForegroundServiceController> {
+    single<ForegroundServiceControllerImpl> {
         ForegroundServiceControllerImpl(get())
+    }
+    single<ForegroundServiceController> {
+        get<ForegroundServiceControllerImpl>()
     }
     single<OpenTradesNotificationService> {
         OpenTradesNotificationService(get(), get(), get(), get())

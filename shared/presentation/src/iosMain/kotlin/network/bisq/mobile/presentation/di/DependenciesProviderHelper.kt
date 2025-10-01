@@ -17,32 +17,64 @@ import org.koin.core.qualifier.Qualifier
 class DependenciesProviderHelper {
 
     fun initKoin() {
-        val instance = startKoin {
-            modules(
-                listOf(
-                    domainModule,
-                    serviceModule,
-                    presentationModule,
-                    clientModule,
-                    iosClientModule,
-                    iosPresentationModule
-                )
-            )
+        // Guard against multiple initializations
+        if (_koin != null) {
+            println("KMP: Koin already initialized, skipping")
+            return
         }
 
-        koin = instance.koin
+        try {
+            println("KMP: Initializing Koin...")
+            val instance = startKoin {
+                modules(
+                    listOf(
+                        domainModule,
+                        serviceModule,
+                        presentationModule,
+                        clientModule,
+                        iosClientModule,
+                        iosPresentationModule,
+                    )
+                )
+            }
+
+            _koin = instance.koin
+            println("KMP: Koin initialized successfully")
+        } catch (e: Exception) {
+            println("KMP: Error initializing Koin: ${e.message}")
+            e.printStackTrace()
+            throw e
+        }
     }
 
     companion object {
-        lateinit var koin: Koin
+        private var _koin: Koin? = null
+        val koin: Koin
+            get() = _koin ?: error("Koin not initialized. Call initKoin() first.")
     }
 
 }
 
 @OptIn(BetaInteropApi::class)
 fun Koin.get(objCClass: ObjCClass): Any {
-    val kClazz = getOriginalKotlinClass(objCClass)!!
-    return get(kClazz, null, null)
+    println("KMP: get() called with objCClass: $objCClass")
+    return try {
+        println("KMP: Getting original Kotlin class...")
+        val kClazz = getOriginalKotlinClass(objCClass)
+        println("KMP: Original Kotlin class: $kClazz")
+        if (kClazz == null) {
+            throw IllegalStateException("Could not get original Kotlin class for $objCClass")
+        }
+        println("KMP: Resolving class: ${kClazz.simpleName}")
+        val result: Any = get(kClazz, null, null)
+        println("KMP: Successfully resolved: ${kClazz.simpleName}")
+        result
+    } catch (e: Exception) {
+        println("KMP: ERROR resolving dependency: ${e.message}")
+        println("KMP: Exception type: ${e::class.simpleName}")
+        e.printStackTrace()
+        throw e
+    }
 }
 
 @OptIn(BetaInteropApi::class)
