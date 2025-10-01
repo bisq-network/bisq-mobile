@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +12,6 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.formatters.AmountFormatter
-import network.bisq.mobile.domain.formatters.MarketPriceFormatter
 import network.bisq.mobile.domain.formatters.PercentageFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
@@ -24,7 +22,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 class TakeOfferReviewPresenter(
     mainPresenter: MainPresenter,
@@ -151,7 +149,7 @@ class TakeOfferReviewPresenter(
         setShowTakeOfferSuccessDialog(false)
         navigateToOfferbookTab()
         // ensure we go to the my trade tab
-        navigateToTab(Routes.TabOpenTradeList)
+        navigateToTab(NavRoute.TabOpenTradeList)
     }
 
     private fun applyPriceDetails() {

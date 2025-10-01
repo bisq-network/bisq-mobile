@@ -6,13 +6,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.faceValueToLong
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
-import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVOExtensions.asDouble
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.RangeAmountSpecVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.faceValueToLong
-
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
@@ -21,8 +19,7 @@ import network.bisq.mobile.domain.utils.MonetarySlider
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.helpers.AmountValidator
-import network.bisq.mobile.presentation.ui.navigation.Routes
-import kotlin.math.roundToLong
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 // TODO Create/Take offer amount preseenters are very similar a base class could be extracted
 class TakeOfferAmountPresenter(
@@ -144,11 +141,11 @@ class TakeOfferAmountPresenter(
         commitToModel()
 
         if (takeOfferPresenter.showPaymentMethodsScreen()) {
-            navigateTo(Routes.TakeOfferQuoteSidePaymentMethod)
+            navigateTo(NavRoute.TakeOfferPaymentMethod)
         } else if (takeOfferPresenter.showSettlementMethodsScreen()) {
-            navigateTo(Routes.TakeOfferBaseSidePaymentMethod)
+            navigateTo(NavRoute.TakeOfferSettlementMethod)
         } else {
-            navigateTo(Routes.TakeOfferReviewTrade)
+            navigateTo(NavRoute.TakeOfferReviewTrade)
         }
     }
 

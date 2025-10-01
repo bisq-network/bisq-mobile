@@ -35,7 +35,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
 
@@ -240,13 +240,13 @@ class OfferbookPresenter(
                         if (canTakeOffer(item)) {
                             takeOfferPresenter.selectOfferToTake(item)
                             if (takeOfferPresenter.showAmountScreen()) {
-                                navigateTo(Routes.TakeOfferTradeAmount)
+                                navigateTo(NavRoute.TakeOfferTradeAmount)
                             } else if (takeOfferPresenter.showPaymentMethodsScreen()) {
-                                navigateTo(Routes.TakeOfferQuoteSidePaymentMethod)
+                                navigateTo(NavRoute.TakeOfferPaymentMethod)
                             } else if (takeOfferPresenter.showSettlementMethodsScreen()) {
-                                navigateTo(Routes.TakeOfferBaseSidePaymentMethod)
+                                navigateTo(NavRoute.TakeOfferSettlementMethod)
                             } else {
-                                navigateTo(Routes.TakeOfferReviewTrade)
+                                navigateTo(NavRoute.TakeOfferReviewTrade)
                             }
                         } else {
                             showReputationRequirementInfo(item)
@@ -376,7 +376,7 @@ class OfferbookPresenter(
             }
 
             enableInteractive()
-            navigateTo(Routes.CreateOfferDirection)
+            navigateTo(NavRoute.CreateOfferDirection)
         } catch (e: Exception) {
             enableInteractive()
             log.e(e) { "Failed to create offer" }
@@ -405,7 +405,7 @@ class OfferbookPresenter(
     }
 
     fun onNavigateToReputation() {
-        navigateTo(Routes.Reputation)
+        navigateTo(NavRoute.Reputation)
         _showNotEnoughReputationDialog.value = false
     }
 

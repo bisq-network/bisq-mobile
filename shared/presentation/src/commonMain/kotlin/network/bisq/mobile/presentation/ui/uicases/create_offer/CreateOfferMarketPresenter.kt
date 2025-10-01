@@ -13,7 +13,7 @@ import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.uicases.market.MarketFilterUtil
 
 class CreateOfferMarketPresenter(
@@ -120,7 +120,7 @@ class CreateOfferMarketPresenter(
 
     private fun navigateNext() {
         commitToModel()
-        navigateTo(Routes.CreateOfferAmount)
+        navigateTo(NavRoute.CreateOfferAmount)
     }
 
     private fun commitToModel() {

@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.ui.components.molecules
 
+import androidx.navigation.NavDestination
+import androidx.navigation.NavDestination.Companion.hasRoute
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -8,7 +10,8 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.ui.navigation.TabNavRoute
 
 open class TopBarPresenter(
     private val userProfileServiceFacade: UserProfileServiceFacade,
@@ -24,11 +27,12 @@ open class TopBarPresenter(
 
     override val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus> get() = connectivityService.status
 
-    override fun avatarEnabled(currentTab: String?): Boolean {
-        return isAtMainScreen() && currentTab != Routes.TabMiscItems.name
+    override fun avatarEnabled(currentTab: TabNavRoute?): Boolean {
+        val hasTabMiscItemsRoute = currentTab == NavRoute.TabMiscItems
+        return isAtMainScreen() && !hasTabMiscItemsRoute
     }
 
     override fun navigateToUserProfile() {
-        navigateTo(Routes.UserProfile)
+        navigateTo(NavRoute.UserProfile)
     }
 }

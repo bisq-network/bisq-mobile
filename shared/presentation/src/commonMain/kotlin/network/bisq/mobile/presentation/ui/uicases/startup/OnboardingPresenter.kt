@@ -17,9 +17,9 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.composeModels.PagerViewItem
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
-abstract class OnBoardingPresenter(
+abstract class OnboardingPresenter(
     mainPresenter: MainPresenter,
     private val settingsRepository: SettingsRepository,
     private val userProfileService: UserProfileServiceFacade,
@@ -86,7 +86,7 @@ abstract class OnBoardingPresenter(
     }
 
     protected fun navigateToCreateProfile() {
-        navigateTo(Routes.CreateProfile)
+        navigateTo(NavRoute.CreateProfile)
     }
 
     abstract fun doCustomNavigationLogic(isBisqUrlSet: Boolean, hasProfile: Boolean)

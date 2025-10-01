@@ -7,6 +7,8 @@ import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.ITopBarPresenter
 import network.bisq.mobile.presentation.ui.components.molecules.TopBarPresenter
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
+import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManager
+import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManagerImpl
 import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
 import network.bisq.mobile.presentation.ui.uicases.ITabContainerPresenter
 import network.bisq.mobile.presentation.ui.uicases.TabContainerPresenter
@@ -118,7 +120,7 @@ val presentationModule = module {
 
     single { TabContainerPresenter(get(), get(), get()) } bind ITabContainerPresenter::class
 
-    single<MiscItemsPresenter> { MiscItemsPresenter(get(), get(), get()) }
+    single<MiscItemsPresenter> { MiscItemsPresenter(get(), get()) }
 
     factory<ReputationPresenter> { ReputationPresenter(get(), get()) }
 
@@ -210,4 +212,5 @@ val presentationModule = module {
 
     factory<TimeProvider> { getPlatformCurrentTimeProvider() }
 
+    single<NavigationManager> { NavigationManagerImpl(get()) }
 }

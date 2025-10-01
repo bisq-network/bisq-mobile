@@ -18,7 +18,6 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod
-import network.bisq.mobile.presentation.ui.navigation.Routes
 
 class CreateOfferReviewPresenter(
     mainPresenter: MainPresenter,
@@ -55,15 +54,25 @@ class CreateOfferReviewPresenter(
         direction = createOfferModel.direction
 
         quoteSidePaymentMethodDisplayString =
-            createOfferModel.selectedQuoteSidePaymentMethods.joinToString(", ") { i18NPaymentMethod(it).first }
+            createOfferModel.selectedQuoteSidePaymentMethods.joinToString(", ") {
+                i18NPaymentMethod(
+                    it
+                ).first
+            }
         baseSidePaymentMethodDisplayString =
-            createOfferModel.selectedBaseSidePaymentMethods.joinToString(", ") { i18NPaymentMethod(it).first }
+            createOfferModel.selectedBaseSidePaymentMethods.joinToString(", ") {
+                i18NPaymentMethod(
+                    it
+                ).first
+            }
 
         val formattedQuoteAmount: String
         val formattedBaseAmount: String
         if (createOfferModel.amountType == CreateOfferPresenter.AmountType.FIXED_AMOUNT) {
-            formattedQuoteAmount = AmountFormatter.formatAmount(createOfferModel.quoteSideFixedAmount!!, true, true)
-            formattedBaseAmount = AmountFormatter.formatAmount(createOfferModel.baseSideFixedAmount!!, false, false)
+            formattedQuoteAmount =
+                AmountFormatter.formatAmount(createOfferModel.quoteSideFixedAmount!!, true, true)
+            formattedBaseAmount =
+                AmountFormatter.formatAmount(createOfferModel.baseSideFixedAmount!!, false, false)
         } else {
             formattedQuoteAmount = AmountFormatter.formatRangeAmount(
                 createOfferModel.quoteSideMinRangeAmount!!,
@@ -75,8 +84,16 @@ class CreateOfferReviewPresenter(
                 createOfferModel.baseSideMaxRangeAmount!!,
                 false
             )
-            formattedBaseRangeMinAmount = AmountFormatter.formatAmount(createOfferModel.baseSideMinRangeAmount!!, false, false)
-            formattedBaseRangeMaxAmount = AmountFormatter.formatAmount(createOfferModel.baseSideMaxRangeAmount!!, false, false)
+            formattedBaseRangeMinAmount = AmountFormatter.formatAmount(
+                createOfferModel.baseSideMinRangeAmount!!,
+                false,
+                false
+            )
+            formattedBaseRangeMaxAmount = AmountFormatter.formatAmount(
+                createOfferModel.baseSideMaxRangeAmount!!,
+                false,
+                false
+            )
         }
         headLine = "${direction.name.uppercase()} Bitcoin"
 
@@ -102,21 +119,32 @@ class CreateOfferReviewPresenter(
         if (percentagePriceValue == 0.0) {
             priceDetails = "bisqEasy.tradeWizard.review.priceDetails".i18n()
         } else {
-            val priceWithCode = PriceQuoteFormatter.format(createOfferModel.originalPriceQuote, true, true)
-            val percentagePrice = PercentageFormatter.format(kotlin.math.abs(percentagePriceValue), true)
+            val priceWithCode =
+                PriceQuoteFormatter.format(createOfferModel.originalPriceQuote, true, true)
+            val percentagePrice =
+                PercentageFormatter.format(kotlin.math.abs(percentagePriceValue), true)
             val aboveOrBelow = if (percentagePriceValue > 0)
                 "mobile.general.above".i18n()
             else
                 "mobile.general.below".i18n()
-            priceDetails = if (createOfferModel.priceType == CreateOfferPresenter.PriceType.PERCENTAGE) {
-                "bisqEasy.tradeWizard.review.priceDetails.float".i18n(percentagePrice, aboveOrBelow, priceWithCode)
-            } else {
-                if (percentagePriceValue == 0.0) {
-                    "bisqEasy.tradeWizard.review.priceDetails.fix.atMarket".i18n(priceWithCode)
+            priceDetails =
+                if (createOfferModel.priceType == CreateOfferPresenter.PriceType.PERCENTAGE) {
+                    "bisqEasy.tradeWizard.review.priceDetails.float".i18n(
+                        percentagePrice,
+                        aboveOrBelow,
+                        priceWithCode
+                    )
                 } else {
-                    "bisqEasy.tradeWizard.review.priceDetails.fix".i18n(percentagePrice, aboveOrBelow, priceWithCode)
+                    if (percentagePriceValue == 0.0) {
+                        "bisqEasy.tradeWizard.review.priceDetails.fix.atMarket".i18n(priceWithCode)
+                    } else {
+                        "bisqEasy.tradeWizard.review.priceDetails.fix".i18n(
+                            percentagePrice,
+                            aboveOrBelow,
+                            priceWithCode
+                        )
+                    }
                 }
-            }
         }
     }
 
@@ -157,14 +185,14 @@ class CreateOfferReviewPresenter(
         }
     }
 
-    private suspend fun showMediatorWaitingDialogAndRetry() {
+    private fun showMediatorWaitingDialogAndRetry() {
         _showMediatorWaitingDialog.value = true
         mediatorWaitJob = launchIO {
             val retryResult = createOfferPresenter.createOfferWithMediatorWait()
             if (isActive) {
                 _showMediatorWaitingDialog.value = false
                 if (retryResult.isSuccess) {
-                    launchUI { navigateToOfferbookTab() }
+                    navigateToOfferbookTab()
                 } else {
                     launchUI { showSnackbar("mobile.bisqEasy.createOffer.mediatorTimeout".i18n()) }
                 }

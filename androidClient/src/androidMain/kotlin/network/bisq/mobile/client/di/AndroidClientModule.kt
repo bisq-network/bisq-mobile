@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.di
 
 import network.bisq.mobile.client.AndroidClientMainPresenter
-import network.bisq.mobile.client.presentation.ClientOnBoardingPresenter
+import network.bisq.mobile.client.presentation.ClientOnboardingPresenter
 import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.client.utils.ClientVersionProvider
 import network.bisq.mobile.domain.AndroidUrlLauncher
@@ -26,7 +26,13 @@ val androidClientModule = module {
         AndroidClientCatHashService(context, filesDir)
     } bind ClientCatHashService::class
 
-    single<IOnboardingPresenter> { ClientOnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
+    single<IOnboardingPresenter> {
+        ClientOnboardingPresenter(
+            get(),
+            get(),
+            get()
+        )
+    }
 
     single<DeviceInfoProvider> { AndroidDeviceInfoProvider(androidContext()) }
 

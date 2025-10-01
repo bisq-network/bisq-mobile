@@ -19,7 +19,7 @@ import network.bisq.mobile.domain.utils.NetworkUtils.isValidTorV3Address
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import org.koin.core.component.inject
 
 /**
@@ -214,7 +214,11 @@ class TrustedNodeSetupPresenter(
                     }
                 } else {
                     val endpoint = "${_host.value}:${_port.value}"
-                    showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.couldNotConnect".i18n(endpoint))
+                    showSnackbar(
+                        "mobile.trustedNodeSetup.connectionJob.messages.couldNotConnect".i18n(
+                            endpoint
+                        )
+                    )
                     _isConnected.value = false
                     _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
                 }
@@ -227,7 +231,11 @@ class TrustedNodeSetupPresenter(
                 val errorMessage = e.message
                 log.e(e) { "Error testing connection: $errorMessage" }
                 if (errorMessage != null) {
-                    showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(errorMessage))
+                    showSnackbar(
+                        "mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(
+                            errorMessage
+                        )
+                    )
                 } else {
                     showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.unknownError".i18n())
                 }
@@ -258,16 +266,16 @@ class TrustedNodeSetupPresenter(
 
     fun navigateToCreateProfile() {
         launchUI {
-            navigateTo(Routes.CreateProfile) {
-                it.popUpTo(Routes.TrustedNodeSetup.name) { inclusive = true }
+            navigateTo(NavRoute.CreateProfile) {
+                it.popUpTo(NavRoute.TrustedNodeSetup) { inclusive = true }
             }
         }
     }
 
     private fun navigateToHome() {
         launchUI {
-            navigateTo(Routes.TabContainer) {
-                it.popUpTo(Routes.TrustedNodeSetup.name) { inclusive = true }
+            navigateTo(NavRoute.TabContainer) {
+                it.popUpTo(NavRoute.TrustedNodeSetup) { inclusive = true }
             }
         }
     }

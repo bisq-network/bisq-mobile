@@ -1,12 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
 import kotlinx.coroutines.flow.MutableStateFlow
+import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
-import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
-
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 class TakeOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter,
@@ -82,9 +81,9 @@ class TakeOfferPaymentMethodPresenter(
             commitToPaymentMethod()
 
             if (takeOfferPresenter.showSettlementMethodsScreen()) {
-                navigateTo(Routes.TakeOfferBaseSidePaymentMethod)
+                navigateTo(NavRoute.TakeOfferSettlementMethod)
             } else {
-                navigateTo(Routes.TakeOfferReviewTrade)
+                navigateTo(NavRoute.TakeOfferReviewTrade)
             }
         } else {
             showSnackbar("bisqEasy.tradeWizard.review.paymentMethodDescriptions.fiat.taker".i18n())
@@ -99,7 +98,7 @@ class TakeOfferPaymentMethodPresenter(
     fun onBaseSideNext() {
         if (isBaseSideValid()) {
             commitToSettlementMethod()
-            navigateTo(Routes.TakeOfferReviewTrade)
+            navigateTo(NavRoute.TakeOfferReviewTrade)
         } else {
             showSnackbar("bisqEasy.tradeWizard.review.paymentMethodDescriptions.btc.taker".i18n())
         }

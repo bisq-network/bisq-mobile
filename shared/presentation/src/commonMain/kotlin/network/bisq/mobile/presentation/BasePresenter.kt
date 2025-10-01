@@ -3,7 +3,6 @@ package network.bisq.mobile.presentation
 import androidx.annotation.CallSuper
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,9 +17,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.filter
-
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
@@ -32,9 +28,9 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
-import network.bisq.mobile.presentation.ui.navigation.Graph
-
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.ui.navigation.TabNavRoute
+import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManager
 import org.koin.core.component.KoinComponent
 import org.koin.core.component.inject
 import kotlin.coroutines.CoroutineContext
@@ -60,16 +56,6 @@ interface ViewPresenter {
 
     fun isIOS(): Boolean
 
-    /**
-     * @return root navigation controller
-     */
-    fun getRootNavController(): NavHostController
-
-    /**
-     * @return main app tab nav controller
-     */
-    fun getRootTabNavController(): NavHostController
-
     fun getSnackState(): SnackbarHostState
 
     fun showSnackbar(
@@ -83,20 +69,14 @@ interface ViewPresenter {
     /**
      * @return true if user is in home tab, false otherwise
      */
-    fun isAtHome(): Boolean
+    fun isAtHomeTab(): Boolean
 
     fun navigateToTab(
-        destination: Routes,
+        destination: TabNavRoute,
         saveStateOnPopUp: Boolean = true,
         shouldLaunchSingleTop: Boolean = true,
         shouldRestoreState: Boolean = true
     )
-
-    /**
-     * Navigate back in the stack
-     * **CAUTION** this irreversibly removes backstack history
-     */
-    fun goBack(): Boolean
 
     /**
      * Handle event of back navigation whilst on main tabs screen (e.g. swipes gesture)
@@ -128,7 +108,8 @@ interface ViewPresenter {
  * Base class allows to have a tree hierarchy of presenters. If the rootPresenter is null, this presenter acts as root
  * if root present is passed, this present attach itself to the root to get updates (consequently its dependants will be always empty
  */
-abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPresenter, KoinComponent, Logging {
+abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
+    ViewPresenter, KoinComponent, Logging {
     companion object {
         const val NAV_GRAPH_MOUNTING_DELAY = 100L
         const val EXIT_WARNING_TIMEOUT = 3000L
@@ -138,7 +119,9 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     protected var view: Any? = null
 
-    // we use KoinComponent to avoid having to pass the manager as parameter on efery single presenter
+    protected val navigationManager: NavigationManager by inject()
+
+    // we use KoinComponent to avoid having to pass the manager as parameter on every single presenter
     protected val jobsManager: CoroutineJobsManager by inject()
 
     // For presenters we need a fresh ui scope each as otherwise navigation brings conflicts
@@ -177,17 +160,6 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         return rootPresenter?.isSmallScreen?.value ?: false
     }
 
-    /**
-     * @throws IllegalStateException if this presenter has no root
-     * @return Nav controller for navigation from the root
-     */
-    private val rootNavigator: NavHostController
-        get() = when {
-            rootPresenter != null -> rootPresenter.navController
-            this is MainPresenter -> this.navController
-            else -> throw IllegalStateException("This presenter ${this::class.simpleName} has no root")
-        }
-
     init {
         rootPresenter?.registerChild(child = this)
     }
@@ -210,105 +182,65 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
         return isIOS
     }
 
-    /**
-     * Default implementation assumes is a child presenter
-     */
-    override fun getRootNavController(): NavHostController {
-        if (isRoot()) {
-            throw IllegalStateException("You need to redefine this method in your root presenter implementation")
-        }
-        return rootPresenter!!.getRootNavController()
-    }
-
-    /**
-     * Default implementation assumes is a child presenter
-     */
-    override fun getRootTabNavController(): NavHostController {
-        if (isRoot()) {
-            throw IllegalStateException("You need to redefine this method in your root presenter implementation")
-        }
-        return rootPresenter!!.getRootTabNavController()
-    }
-
-    override fun isAtHome(): Boolean {
-        val currentTab = getRootTabNavController().currentBackStackEntry?.destination?.route
-        log.d { "Current tab $currentTab" }
-        return isAtMainScreen() && (currentTab == null || currentTab == Routes.TabHome.name)
+    override fun isAtHomeTab(): Boolean {
+        return navigationManager.isAtHomeTab()
     }
 
     protected fun isAtMainScreen(): Boolean {
-        val currentScreen = getRootNavController().currentBackStackEntry?.destination?.route
-        log.d { "Current screen $currentScreen" }
-        return (currentScreen == null || currentScreen == Routes.TabContainer.name)
+        return navigationManager.isAtMainScreen()
     }
 
     /**
      * Navigate to given destination
      */
-    protected fun navigateTo(destination: Routes, customSetup: (NavOptionsBuilder) -> Unit = {}) {
+    protected fun navigateTo(destination: NavRoute, customSetup: (NavOptionsBuilder) -> Unit = {}) {
         disableInteractive()
-        launchUI(Dispatchers.Main) {
-            try {
-                rootNavigator.navigate(destination.name) {
-                    customSetup(this)
-                }
-            } catch (e: Exception) {
-                log.e(e) { "Failed to navigate to ${destination.name}" }
-            } finally {
-                enableInteractive()
-            }
+        navigationManager.navigate(
+            destination,
+            customSetup
+        ) {
+            enableInteractive()
         }
     }
 
-    protected fun navigateBack(): Boolean {
+    protected fun navigateBack() {
         log.d { "Navigating back" }
-        return goBack()
+        disableInteractive()
+        navigationManager.navigateBack {
+            enableInteractive()
+        }
     }
 
     /**
      * Back navigation popping back stack
      */
-    protected fun navigateBackTo(destination: Routes, shouldInclusive: Boolean = false, shouldSaveState: Boolean = false) {
-        launchUI(Dispatchers.Main) {
-            rootNavigator.popBackStack(destination.name, inclusive = shouldInclusive, saveState = shouldSaveState)
-        }
+    protected fun navigateBackTo(
+        destination: NavRoute,
+        shouldInclusive: Boolean = false,
+        shouldSaveState: Boolean = false
+    ) {
+        navigationManager.navigateBackTo(
+            destination,
+            shouldInclusive,
+            shouldSaveState
+        )
     }
 
     /**
      * Navigates to the given tab route inside the main presentation, with default parameters.
      */
     override fun navigateToTab(
-        destination: Routes,
+        destination: TabNavRoute,
         saveStateOnPopUp: Boolean,
         shouldLaunchSingleTop: Boolean,
         shouldRestoreState: Boolean
     ) {
-        log.d { "Navigating to tab ${destination.name} " }
-        val appPresenter = (if (isRoot()) this else rootPresenter) as? AppPresenter
-        launchUI {
-            // Ensure we're at the TabContainer first; otherwise the tab NavHost graph may not be ready yet
-            if (!isAtMainScreen()) {
-                runCatching {
-                    rootNavigator.navigate(Routes.TabContainer.name) {
-                        launchSingleTop = true
-                    }
-                }.onFailure { e ->
-                    log.e(e) { "First attempt failed to navigate to TabContainer" }
-                }
-                delay(NAV_GRAPH_MOUNTING_DELAY)
-            }
-
-            val tabNav = getRootTabNavController()
-            val startRoute = tabNav.graph.startDestinationRoute ?: Graph.MAIN_SCREEN_GRAPH_KEY
-
-            tabNav.navigate(destination.name) {
-                popUpTo(startRoute) {
-                    saveState = saveStateOnPopUp
-                }
-                launchSingleTop = shouldLaunchSingleTop
-                restoreState = shouldRestoreState
-            }
-        }
+        navigationManager.navigateToTab(
+            destination,
+            saveStateOnPopUp,
+            shouldLaunchSingleTop,
+            shouldRestoreState
+        )
     }
 
     /**
@@ -316,8 +248,8 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
      * Called from Create offer, Take offer flow to close the work flow.
      */
     protected fun navigateToOfferbookTab() {
-        navigateBackTo(Routes.TabContainer)
-        navigateToTab(Routes.TabOfferbook)
+        navigateBackTo(NavRoute.TabContainer)
+        navigateToTab(NavRoute.TabOfferbookMarket)
     }
 
     // Add a flag to track if we've shown the exit warning
@@ -325,7 +257,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
 
     override fun onMainBackNavigation() {
         when {
-            isAtHome() -> {
+            isAtHomeTab() -> {
                 if (exitWarningShown) {
                     moveAppToBackground()
                     exitWarningShown = false // Reset after action
@@ -342,44 +274,23 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
                 }
             }
 
-            isAtMainScreen() -> {
+            navigationManager.isAtMainScreen() -> {
                 // Reset the exit warning when navigating to home
                 exitWarningShown = false
-                navigateToTab(Routes.TabHome, saveStateOnPopUp = true, shouldLaunchSingleTop = true, shouldRestoreState = false)
+                navigateToTab(
+                    destination = NavRoute.TabHome,
+                    saveStateOnPopUp = true,
+                    shouldLaunchSingleTop = true,
+                    shouldRestoreState = false
+                )
             }
 
             else -> {
                 // Reset the exit warning for normal back navigation
                 exitWarningShown = false
-                goBack()
+                navigateBack()
             }
         }
-    }
-
-    override fun goBack(): Boolean {
-        disableInteractive()
-        var wentBack = false
-        launchUI(Dispatchers.Main) {
-            try {
-                log.i { "goBack default implementation" }
-                if (isIOS()) {
-                    // TODO this is still not working on iOS, it could be because of the different way it handles the Dispatchers.Main coroutine
-                    // making this a suspend fun and using withContext() could fix it
-                    if (rootNavigator.currentBackStack.value.size > 1) {
-                        wentBack = rootNavigator.popBackStack()
-                    } else {
-                        moveAppToBackground()
-                    }
-                } else {
-                    wentBack = rootNavigator.popBackStack()
-                }
-            } catch (e: Exception) {
-                log.e(e) { "Failed to navigate back" }
-            } finally {
-                enableInteractive()
-            }
-        }
-        return wentBack
     }
 
     @CallSuper
@@ -571,7 +482,10 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) : ViewPr
     override fun isDemo(): Boolean = rootPresenter?.isDemo() ?: false
 
     // Presenter-level helper methods for launching coroutines with the jobsManager
-    protected fun launchUI(context: CoroutineContext = EmptyCoroutineContext, block: suspend CoroutineScope.() -> Unit): Job {
+    protected fun launchUI(
+        context: CoroutineContext = EmptyCoroutineContext,
+        block: suspend CoroutineScope.() -> Unit
+    ): Job {
         return jobsManager.launchUI(context, block)
     }
 

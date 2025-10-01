@@ -16,7 +16,7 @@ import network.bisq.mobile.presentation.notification.NotificationController
 import network.bisq.mobile.presentation.notification.NotificationIds
 import network.bisq.mobile.presentation.notification.model.AndroidNotificationCategory
 import network.bisq.mobile.presentation.notification.model.NotificationPressAction
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 /**
  * Service to manage notifications for open trades
@@ -411,7 +411,13 @@ class OpenTradesNotificationService(
         }.replaceFirstChar { it.titlecase() }
     }
 
-    private fun notify(trade: TradeItemPresentationModel, id: String, title: String, body: String, isChatNotif: Boolean = false) {
+    private fun notify(
+        trade: TradeItemPresentationModel,
+        id: String,
+        title: String,
+        body: String,
+        isChatNotif: Boolean = false
+    ) {
         notificationController.notify {
             this.id = id
             this.title = title
@@ -422,22 +428,20 @@ class OpenTradesNotificationService(
                 } else {
                     NotificationChannels.TRADE_UPDATES
                 }
-                // TODO: fix after nav refactor
                 pressAction = if (isChatNotif) {
                     category = AndroidNotificationCategory.CATEGORY_MESSAGE
-                    NotificationPressAction.Route(Routes.TabOpenTradeList) // TODO: use TradeChat and pass in trade.tradeId
+                    NotificationPressAction.Route(NavRoute.TradeChat(trade.tradeId))
                 } else {
                     category = AndroidNotificationCategory.CATEGORY_PROGRESS
-                    NotificationPressAction.Route(Routes.TabOpenTradeList) // TODO: use OpenTrades and pass in trade.tradeId
+                    NotificationPressAction.Route(NavRoute.OpenTrade(trade.tradeId))
                 }
                 group = trade.shortTradeId
             }
             ios {
-                // TODO: fix after nav refactor
                 pressAction = if (isChatNotif) {
-                    NotificationPressAction.Route(Routes.TabOpenTradeList) // TODO: use TradeChat and pass in trade.tradeId
+                    NotificationPressAction.Route(NavRoute.TradeChat(trade.tradeId))
                 } else {
-                    NotificationPressAction.Route(Routes.TabOpenTradeList) // TODO: use OpenTrades and pass in trade.tradeId
+                    NotificationPressAction.Route(NavRoute.OpenTrade(trade.tradeId))
                 }
             }
         }

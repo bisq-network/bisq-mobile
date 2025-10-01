@@ -19,8 +19,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.AmountSlider
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.NoteText
-import network.bisq.mobile.presentation.ui.components.atoms.button.BisqIconButton
-import network.bisq.mobile.presentation.ui.components.atoms.icons.CloseIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.ToggleTab
@@ -31,7 +29,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 @Composable
-fun CreateOfferTradePriceSelectorScreen() {
+fun CreateOfferPriceScreen() {
     val presenter: CreateOfferPricePresenter = koinInject()
     val createPresenter: CreateOfferPresenter = koinInject()
     RememberPresenterLifecycle(presenter)

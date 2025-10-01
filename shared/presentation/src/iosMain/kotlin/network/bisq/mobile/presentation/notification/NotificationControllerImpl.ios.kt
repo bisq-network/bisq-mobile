@@ -12,7 +12,7 @@ import network.bisq.mobile.presentation.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.notification.model.NotificationPressAction
 import network.bisq.mobile.presentation.notification.model.toPlatformEnum
 import network.bisq.mobile.presentation.ui.navigation.ExternalUriHandler
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import platform.Foundation.NSNumber
 import platform.UserNotifications.UNAuthorizationStatusAuthorized
 import platform.UserNotifications.UNMutableNotificationContent
@@ -192,13 +192,13 @@ class NotificationControllerImpl(
         when (pressAction) {
             is NotificationPressAction.Route -> {
                 content.setUserInfo(
-                    content.userInfo + (id to Routes.getDeeplinkUriString(pressAction.route))
+                    content.userInfo + (id to pressAction.route.toUriString())
                 )
             }
 
             is NotificationPressAction.Default -> {
                 content.setUserInfo(
-                    content.userInfo + (id to Routes.getDeeplinkUriString(Routes.TabOpenTradeList))
+                    content.userInfo + (id to NavRoute.TabOpenTradeList.toUriString())
                 )
             }
         }

@@ -7,7 +7,7 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 open class UserAgreementPresenter(
     mainPresenter: MainPresenter,
@@ -36,8 +36,8 @@ open class UserAgreementPresenter(
     }
 
     private fun navigateToOnboarding() {
-        navigateTo(Routes.Onboarding) {
-            it.popUpTo(Routes.UserAgreement.name) { inclusive = true }
+        navigateTo(NavRoute.Onboarding) {
+            it.popUpTo(NavRoute.UserAgreement) { inclusive = true }
         }
     }
 }

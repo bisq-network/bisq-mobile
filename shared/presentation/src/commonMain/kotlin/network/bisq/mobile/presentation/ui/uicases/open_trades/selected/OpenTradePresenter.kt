@@ -32,19 +32,20 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.helpers.EMPTY_STRING
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class OpenTradePresenter(
     mainPresenter: MainPresenter,
+    tradeReadStateRepository: TradeReadStateRepository,
     private val tradesServiceFacade: TradesServiceFacade,
-    val tradeFlowPresenter: TradeFlowPresenter,
-    private val tradeReadStateRepository: TradeReadStateRepository,
     private val userProfileServiceFacade: UserProfileServiceFacade,
+    val tradeFlowPresenter: TradeFlowPresenter,
 ) : BasePresenter(mainPresenter) {
 
-    private val _selectedTrade: MutableStateFlow<TradeItemPresentationModel?> = MutableStateFlow(null)
-    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade.asStateFlow() // tradesServiceFacade.selectedTrade //
+    private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
+    val selectedTrade: StateFlow<TradeItemPresentationModel?> get() = _selectedTrade.asStateFlow()
 
     private val _tradeAbortedBoxVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val tradeAbortedBoxVisible: StateFlow<Boolean> get() = _tradeAbortedBoxVisible.asStateFlow()
@@ -56,13 +57,14 @@ class OpenTradePresenter(
     val isInMediation: StateFlow<Boolean> get() = _isInMediation.asStateFlow()
 
 
-    private val readCount: Flow<Int> = _selectedTrade.combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
-        if (trade?.tradeId != null) {
-            readStates.getOrElse(trade.tradeId) { 0 }
-        } else {
-            0
+    private val readCount: Flow<Int> =
+        _selectedTrade.combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
+            if (trade?.tradeId != null) {
+                readStates.getOrElse(trade.tradeId) { 0 }
+            } else {
+                0
+            }
         }
-    }
 
     private val msgCount: MutableStateFlow<Int> = MutableStateFlow(0)
     val newMsgCount = readCount.combine(msgCount) { readCount, msgCount ->
@@ -73,18 +75,20 @@ class OpenTradePresenter(
         initialValue = 0,
     )
 
-    private val _lastChatMsg: MutableStateFlow<BisqEasyOpenTradeMessageModel?> = MutableStateFlow(null)
+    private val _lastChatMsg: MutableStateFlow<BisqEasyOpenTradeMessageModel?> =
+        MutableStateFlow(null)
     val lastChatMsg: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _lastChatMsg.asStateFlow()
 
     private val _tradePaneScrollState: MutableStateFlow<ScrollState?> = MutableStateFlow(null)
 
-    val isUserIgnored = selectedTrade.combine(userProfileServiceFacade.ignoredProfileIds) { trade, ignoredIds ->
-        trade?.peersUserProfile?.id?.let { ignoredIds.contains(it) } ?: false
-    }.stateIn(
-        scope = presenterScope,
-        started = SharingStarted.Eagerly,
-        initialValue = false,
-    )
+    val isUserIgnored =
+        selectedTrade.combine(userProfileServiceFacade.ignoredProfileIds) { trade, ignoredIds ->
+            trade?.peersUserProfile?.id?.let { ignoredIds.contains(it) } ?: false
+        }.stateIn(
+            scope = presenterScope,
+            started = SharingStarted.Eagerly,
+            initialValue = false,
+        )
 
     private val _showUndoIgnoreDialog = MutableStateFlow(false)
     val showUndoIgnoreDialog: StateFlow<Boolean> get() = _showUndoIgnoreDialog.asStateFlow()
@@ -95,29 +99,28 @@ class OpenTradePresenter(
     private var tradeStateJob: Job? = null
     private var mediationJob: Job? = null
 
-    init {
+    fun initialize(tradeId: String, scrollState: ScrollState, uiScope: CoroutineScope) {
+        tradesServiceFacade.selectOpenTrade(tradeId)
         _selectedTrade.value = tradesServiceFacade.selectedTrade.value
-    }
+        _tradePaneScrollState.value = scrollState
+        _coroutineScope = uiScope
 
-    override fun onViewAttached() {
-        super.onViewAttached()
-        val selectedTrade = tradesServiceFacade.selectedTrade.value
-        if (selectedTrade == null) {
-            log.w { "OpenTradePresenter.onViewAttached called but selectedTrade is null - skipping initialization" }
+        val currentTrade = _selectedTrade.value
+        if (currentTrade == null) {
+            log.w { "OpenTradePresenter.initialize called but selectedTrade is null - skipping flow collection" }
             return
         }
-        val openTradeItemModel = selectedTrade
 
-        collectUI(openTradeItemModel.bisqEasyTradeModel.tradeState) { tradeState ->
+        collectUI(currentTrade.bisqEasyTradeModel.tradeState) { tradeState ->
             tradeStateChanged(tradeState)
         }
 
         collectUI(
-            isUserIgnored.combine(openTradeItemModel.bisqEasyOpenTradeChannelModel.chatMessages) { isIgnored, messages ->
+            isUserIgnored.combine(currentTrade.bisqEasyOpenTradeChannelModel.chatMessages) { isIgnored, messages ->
                 if (isIgnored) {
                     messages.filter {
                         when (it.chatMessageType) {
-                            ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> it.senderUserProfileId != openTradeItemModel.peersUserProfile.id
+                            ChatMessageTypeEnum.TEXT, ChatMessageTypeEnum.TAKE_BISQ_EASY_OFFER -> it.senderUserProfileId != currentTrade.peersUserProfile.id
                             else -> true
                         }
                     }
@@ -130,7 +133,7 @@ class OpenTradePresenter(
             _lastChatMsg.update { _ -> it.maxByOrNull { msg -> msg.date } }
         }
 
-        collectUI(openTradeItemModel.bisqEasyOpenTradeChannelModel.isInMediation) {
+        collectUI(currentTrade.bisqEasyOpenTradeChannelModel.isInMediation) {
             _isInMediation.value = it
         }
     }
@@ -151,7 +154,7 @@ class OpenTradePresenter(
     }
 
     fun onOpenChat() {
-        navigateTo(Routes.TradeChat)
+        navigateTo(NavRoute.TradeChat(selectedTrade.value?.tradeId ?: EMPTY_STRING))
     }
 
     private fun tradeStateChanged(state: BisqEasyTradeStateEnum?) {
@@ -227,14 +230,6 @@ class OpenTradePresenter(
 
             else -> {}
         }
-    }
-
-    fun setTradePaneScrollState(scrollState: ScrollState) {
-        _tradePaneScrollState.value = scrollState
-    }
-
-    fun setUIScope(scope: CoroutineScope) {
-        _coroutineScope = scope
     }
 
     fun onOpenUndoIgnoreDialog() {

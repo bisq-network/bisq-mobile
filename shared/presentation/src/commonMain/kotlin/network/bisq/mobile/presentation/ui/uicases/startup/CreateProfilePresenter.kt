@@ -12,7 +12,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 class CreateProfilePresenter(
     mainPresenter: MainPresenter,
@@ -111,8 +111,8 @@ class CreateProfilePresenter(
                     userProfileService.createAndPublishNewUserProfile(toSubmit)
                     // Navigate to TabContainer and completely clear the back stack
                     // This ensures the user can never navigate back to onboarding screens
-                    navigateTo(Routes.TabContainer) {
-                        it.popUpTo(Routes.Splash.name) { inclusive = true }
+                    navigateTo(NavRoute.TabContainer) {
+                        it.popUpTo(NavRoute.Splash) { inclusive = true }
                     }
 
                     log.i { "Hide busy animation for createAndPublishInProgress" }

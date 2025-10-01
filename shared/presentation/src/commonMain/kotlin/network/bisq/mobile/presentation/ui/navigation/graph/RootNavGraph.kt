@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.navigation.graph
 
+import androidx.compose.animation.AnimatedContentScope
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -9,26 +10,27 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NamedNavArgument
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDeepLink
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
-import network.bisq.mobile.presentation.ui.navigation.Routes
-import network.bisq.mobile.presentation.ui.navigation.Routes.Companion.getDeeplinkUriPattern
+import androidx.navigation.toRoute
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
+import network.bisq.mobile.presentation.ui.navigation.NavUtils.getDeepLinkBasePath
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import network.bisq.mobile.presentation.ui.uicases.TabContainerScreen
 import network.bisq.mobile.presentation.ui.uicases.banners.Banner
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountSelectorScreen
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferCurrencySelectorScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferAmountScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferDirectionScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferMarketScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPaymentMethodScreen
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPriceScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferReviewOfferScreen
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferSettlementMethodScreen
-import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferTradePriceSelectorScreen
 import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideOverview
 import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideProcess
 import network.bisq.mobile.presentation.ui.uicases.guide.TradeGuideSecurity
@@ -49,7 +51,7 @@ import network.bisq.mobile.presentation.ui.uicases.settings.SettingsScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.SupportScreen
 import network.bisq.mobile.presentation.ui.uicases.settings.UserProfileScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.CreateProfileScreen
-import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingScreen
+import network.bisq.mobile.presentation.ui.uicases.startup.OnboardingScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupScreen
 import network.bisq.mobile.presentation.ui.uicases.startup.UserAgreementDisplayScreen
@@ -59,110 +61,92 @@ import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferReviewTra
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferSettlementMethodScreen
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferTradeAmountScreen
 
-private const val NAV_ANIM_MS = 300
+const val NAV_ANIM_MS = 300
 
 @Composable
 fun RootNavGraph(rootNavController: NavHostController) {
     NavHost(
         modifier = Modifier.background(color = BisqTheme.colors.backgroundColor),
         navController = rootNavController,
-        startDestination = Routes.Splash.name,
+        startDestination = NavRoute.Splash,
     ) {
-        composable(route = Routes.Splash.name) {
-            SplashScreen()
-        }
+        composable<NavRoute.Splash> { SplashScreen() }
 
-        addScreen(Routes.TrustedNodeSettings.name) { TrustedNodeSetupScreen(false) }
-        addScreen(Routes.UserAgreement.name) { UserAgreementScreen() }
-        addScreen(Routes.Onboarding.name) { OnBoardingScreen() }
-        addScreen(Routes.CreateProfile.name) { CreateProfileScreen() }
-        addScreen(Routes.TrustedNodeSetup.name) { TrustedNodeSetupScreen() }
+        addScreen<NavRoute.TrustedNodeSetupSettings> { TrustedNodeSetupScreen(false) }
+        addScreen<NavRoute.UserAgreement> { UserAgreementScreen() }
+        addScreen<NavRoute.Onboarding> { OnboardingScreen() }
+        addScreen<NavRoute.CreateProfile> { CreateProfileScreen() }
+        addScreen<NavRoute.TrustedNodeSetup> { TrustedNodeSetupScreen() }
 
-        addScreen(
-            Routes.TabContainer.name,
+        addScreen<NavRoute.TabContainer>(
             deepLinks = listOf(
-                 navDeepLink { uriPattern = getDeeplinkUriPattern(Routes.TabContainer) } // TODO fix with refactor
+                navDeepLink<NavRoute.TabContainer>(
+                    basePath = getDeepLinkBasePath<NavRoute.TabContainer>()
+                ),
+            )
+        ) { TabContainerScreen() }
+
+        addScreen<NavRoute.OpenTrade>(
+            deepLinks = listOf(
+                navDeepLink<NavRoute.OpenTrade>(
+                    basePath = getDeepLinkBasePath<NavRoute.OpenTrade>()
+                )
             ),
-        ) {
-            TabContainerScreen()
+        ) { backStackEntry ->
+            val openTrade: NavRoute.OpenTrade = backStackEntry.toRoute()
+            OpenTradeScreen(openTrade.tradeId)
         }
 
-        addScreen(
-            Routes.OpenTrade.name,
-            deepLinks = listOf(
-                // navDeepLink { uriPattern = getDeeplinkUriPattern(Routes.OpenTrade) } // TODO implement properly with refactor (use "tradeId" in pattern)
-            ),
-        ) {
-            OpenTradeScreen()
-        }
-        addScreen(
-            Routes.TradeChat.name,
+        addScreen<NavRoute.TradeChat>(
             navAnimation = NavAnimation.SLIDE_IN_FROM_BOTTOM,
             deepLinks = listOf(
-                // navDeepLink { uriPattern = getDeeplinkUriPattern(Routes.TradeChat) } // TODO implement properly with refactor (use "tradeId" in pattern)
+                navDeepLink<NavRoute.TradeChat>(
+                    basePath = getDeepLinkBasePath<NavRoute.TradeChat>()
+                )
             ),
-        ) {
-            TradeChatScreen()
+        ) { backStackEntry ->
+            val tradeChat: NavRoute.TradeChat = backStackEntry.toRoute()
+            TradeChatScreen(tradeChat.tradeId)
         }
 
-        val otherScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
-            Routes.OffersByMarket to { OfferbookScreen() },
-            Routes.ChatRules to { ChatRulesScreen() },
-            Routes.Settings to { SettingsScreen() },
-            Routes.Support to { SupportScreen() },
-            Routes.Reputation to { ReputationScreen() },
-            Routes.UserProfile to { UserProfileScreen() },
-            Routes.PaymentAccounts to { PaymentAccountsScreen() },
-            Routes.IgnoredUsers to { IgnoredUsersScreen() },
-            Routes.Resources to { ResourcesScreen() },
-            Routes.UserAgreementDisplay to { UserAgreementDisplayScreen() },
-        )
-        otherScreens.forEach { (route, screen): Pair<Routes, @Composable () -> Unit> ->
-            addScreen(route.name, content = screen)
-        }
+        // --- Other Screens ---
+        addScreen<NavRoute.Offerbook> { OfferbookScreen() }
+        addScreen<NavRoute.ChatRules> { ChatRulesScreen() }
+        addScreen<NavRoute.Settings> { SettingsScreen() }
+        addScreen<NavRoute.Support> { SupportScreen() }
+        addScreen<NavRoute.Reputation> { ReputationScreen() }
+        addScreen<NavRoute.UserProfile> { UserProfileScreen() }
+        addScreen<NavRoute.PaymentAccounts> { PaymentAccountsScreen() }
+        addScreen<NavRoute.IgnoredUsers> { IgnoredUsersScreen() }
+        addScreen<NavRoute.Resources> { ResourcesScreen() }
+        addScreen<NavRoute.UserAgreementDisplay> { UserAgreementDisplayScreen() }
 
-        val takeOfferScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
-            Routes.TakeOfferTradeAmount to { TakeOfferTradeAmountScreen() },
-            Routes.TakeOfferQuoteSidePaymentMethod to { TakeOfferPaymentMethodScreen() },
-            Routes.TakeOfferBaseSidePaymentMethod to { TakeOfferSettlementMethodScreen() },
-            Routes.TakeOfferReviewTrade to { TakeOfferReviewTradeScreen() },
-        )
-        takeOfferScreens.forEachIndexed { i: Int, (route, screen): Pair<Routes, @Composable () -> Unit> ->
-            addScreen(route.name, content = screen, wizardTransition = i != 0)
-        }
+        // --- Take Offer Screens ---
+        addScreen<NavRoute.TakeOfferTradeAmount>(wizardTransition = false) { TakeOfferTradeAmountScreen() }
+        addScreen<NavRoute.TakeOfferPaymentMethod>(wizardTransition = true) { TakeOfferPaymentMethodScreen() }
+        addScreen<NavRoute.TakeOfferSettlementMethod>(wizardTransition = true) { TakeOfferSettlementMethodScreen() }
+        addScreen<NavRoute.TakeOfferReviewTrade>(wizardTransition = true) { TakeOfferReviewTradeScreen() }
 
-        val createOfferScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
-            Routes.CreateOfferDirection to { CreateOfferDirectionScreen() },
-            Routes.CreateOfferMarket to { CreateOfferCurrencySelectorScreen() },
-            Routes.CreateOfferAmount to { CreateOfferAmountSelectorScreen() },
-            Routes.CreateOfferPrice to { CreateOfferTradePriceSelectorScreen() },
-            Routes.CreateOfferQuoteSidePaymentMethod to { CreateOfferPaymentMethodScreen() },
-            Routes.CreateOfferBaseSidePaymentMethod to { CreateOfferSettlementMethodScreen() },
-            Routes.CreateOfferReviewOffer to { CreateOfferReviewOfferScreen() },
-        )
-        createOfferScreens.forEachIndexed { i: Int, (route, screen): Pair<Routes, @Composable () -> Unit> ->
-            addScreen(route.name, content = screen, wizardTransition = i != 0)
-        }
+        // --- Create Offer Screens ---
+        addScreen<NavRoute.CreateOfferDirection>(wizardTransition = false) { CreateOfferDirectionScreen() }
+        addScreen<NavRoute.CreateOfferMarket>(wizardTransition = true) { CreateOfferMarketScreen() }
+        addScreen<NavRoute.CreateOfferAmount>(wizardTransition = true) { CreateOfferAmountScreen() }
+        addScreen<NavRoute.CreateOfferPrice>(wizardTransition = true) { CreateOfferPriceScreen() }
+        addScreen<NavRoute.CreateOfferPaymentMethod>(wizardTransition = true) { CreateOfferPaymentMethodScreen() }
+        addScreen<NavRoute.CreateOfferSettlementMethod>(wizardTransition = true) { CreateOfferSettlementMethodScreen() }
+        addScreen<NavRoute.CreateOfferReviewOffer>(wizardTransition = true) { CreateOfferReviewOfferScreen() }
 
-        val tradeGuideScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
-            Routes.TradeGuideOverview to { TradeGuideOverview() },
-            Routes.TradeGuideSecurity to { TradeGuideSecurity() },
-            Routes.TradeGuideProcess to { TradeGuideProcess() },
-            Routes.TradeGuideTradeRules to { TradeGuideTradeRules() },
-        )
-        tradeGuideScreens.forEachIndexed { i: Int, (route, screen): Pair<Routes, @Composable () -> Unit> ->
-            addScreen(route.name, content = screen, wizardTransition = i != 0)
-        }
+        // --- Trade Guide Screens ---
+        addScreen<NavRoute.TradeGuideOverview>(wizardTransition = false) { TradeGuideOverview() }
+        addScreen<NavRoute.TradeGuideSecurity>(wizardTransition = true) { TradeGuideSecurity() }
+        addScreen<NavRoute.TradeGuideProcess>(wizardTransition = true) { TradeGuideProcess() }
+        addScreen<NavRoute.TradeGuideTradeRules>(wizardTransition = true) { TradeGuideTradeRules() }
 
-        val walletGuideScreens: List<Pair<Routes, @Composable () -> Unit>> = listOf(
-            Routes.WalletGuideIntro to { WalletGuideIntro() },
-            Routes.WalletGuideDownload to { WalletGuideDownload() },
-            Routes.WalletGuideNewWallet to { WalletGuideNewWallet() },
-            Routes.WalletGuideReceiving to { WalletGuideReceiving() },
-        )
-        walletGuideScreens.forEachIndexed { i: Int, (route, screen): Pair<Routes, @Composable () -> Unit> ->
-            addScreen(route.name, content = screen, wizardTransition = i != 0)
-        }
+        // --- Wallet Guide Screens ---
+        addScreen<NavRoute.WalletGuideIntro>(wizardTransition = false) { WalletGuideIntro() }
+        addScreen<NavRoute.WalletGuideDownload>(wizardTransition = true) { WalletGuideDownload() }
+        addScreen<NavRoute.WalletGuideNewWallet>(wizardTransition = true) { WalletGuideNewWallet() }
+        addScreen<NavRoute.WalletGuideReceiving>(wizardTransition = true) { WalletGuideReceiving() }
     }
 }
 
@@ -172,17 +156,13 @@ enum class NavAnimation {
     SLIDE_IN_FROM_BOTTOM,
 }
 
-fun NavGraphBuilder.addScreen(
-    route: String,
-    arguments: List<NamedNavArgument> = emptyList(),
+inline fun <reified T : NavRoute> NavGraphBuilder.addScreen(
     deepLinks: List<NavDeepLink> = emptyList(),
     wizardTransition: Boolean = false,
     navAnimation: NavAnimation = if (wizardTransition) NavAnimation.FADE_IN else NavAnimation.SLIDE_IN_FROM_RIGHT,
-    content: @Composable () -> Unit
+    noinline content: @Composable AnimatedContentScope.(NavBackStackEntry) -> Unit
 ) {
-    composable(
-        route = route,
-        arguments = arguments,
+    composable<T>(
         deepLinks = deepLinks,
         // 'enter' animation for the 'destination' screen
         enterTransition = {
@@ -223,13 +203,12 @@ fun NavGraphBuilder.addScreen(
                 NavAnimation.FADE_IN -> fadeOut(animationSpec = tween(NAV_ANIM_MS))
             }
         }
-
-    ) {
+    ) { backStackEntry ->
         Column(
             verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter)
         ) {
             Banner()
-            content()
+            content(backStackEntry)
         }
     }
 }

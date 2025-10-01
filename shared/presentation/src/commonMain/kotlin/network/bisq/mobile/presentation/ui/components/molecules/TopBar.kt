@@ -17,33 +17,27 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.currentBackStackEntryAsState
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.dummy_user_profile_icon
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.service.network.ConnectivityService
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.BackHandler
 import network.bisq.mobile.presentation.ui.components.atoms.AutoResizeText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoSmall
 import network.bisq.mobile.presentation.ui.components.atoms.icons.MyUserProfileIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
-import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.navigation.TabNavRoute
+import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.resources.painterResource
@@ -55,7 +49,7 @@ interface ITopBarPresenter : ViewPresenter {
     val showAnimation: StateFlow<Boolean>
     val connectivityStatus: StateFlow<ConnectivityService.ConnectivityStatus>
 
-    fun avatarEnabled(currentTab: String?): Boolean
+    fun avatarEnabled(currentTab: TabNavRoute?): Boolean
     fun navigateToUserProfile()
 }
 
@@ -67,49 +61,23 @@ interface ITopBarPresenter : ViewPresenter {
 fun TopBar(
     title: String = "",
     isHome: Boolean = false,
-    customBackButton: @Composable (() -> Unit)? = null,
-    backConfirmation: Boolean = false,
     backBehavior: (() -> Unit)? = null,
     showUserAvatar: Boolean = true,
     extraActions: @Composable (RowScope.() -> Unit)? = null,
 ) {
+    val navigationManager: NavigationManager = koinInject()
     val presenter: ITopBarPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val navController: NavHostController = presenter.getRootNavController()
-    val tabNavController: NavHostController = presenter.getRootTabNavController()
+    val currentTabDestination by navigationManager.currentTab.collectAsState()
 
     val showAnimation by presenter.showAnimation.collectAsState()
-    var showBackConfirmationDialog by remember { mutableStateOf(false) }
-
-    val currentBackStackEntry by tabNavController.currentBackStackEntryAsState()
-    val currentTab: String? =
-        if (androidx.compose.ui.platform.LocalInspectionMode.current) {
-            currentBackStackEntry?.destination?.route
-        } else {
-            remember(currentBackStackEntry) {
-                derivedStateOf { currentBackStackEntry?.destination?.route }
-            }.value
-        }
-
-    val showBackButton = (customBackButton == null &&
-            navController.previousBackStackEntry != null &&
-            !presenter.isAtHome())
-
     val userProfile by presenter.userProfile.collectAsState()
     val connectivityStatus by presenter.connectivityStatus.collectAsState()
 
     val defaultBackButton: @Composable () -> Unit = {
         IconButton(onClick = {
-            if (navController.previousBackStackEntry != null) {
-                if (backConfirmation) {
-                    if (!showBackConfirmationDialog) {
-                        showBackConfirmationDialog = true
-                    }
-                } else {
-                    presenter.onMainBackNavigation()
-                }
-            }
+            presenter.onMainBackNavigation()
         }) {
             Icon(
                 Icons.AutoMirrored.Filled.ArrowBack,
@@ -121,10 +89,8 @@ fun TopBar(
 
     TopAppBar(
         navigationIcon = {
-            if (showBackButton) {
+            if (navigationManager.showBackButton()) {
                 defaultBackButton()
-            } else {
-                customBackButton?.invoke()
             }
         },
         colors = TopAppBarDefaults.topAppBarColors(
@@ -158,7 +124,7 @@ fun TopBar(
                     val userIconModifier = Modifier
                         .size(BisqUIConstants.topBarAvatarSize)
                         .clickable {
-                            if (presenter.avatarEnabled(currentTab)) {
+                            if (presenter.avatarEnabled(currentTabDestination)) {
                                 presenter.navigateToUserProfile()
                             }
                         }
@@ -185,26 +151,6 @@ fun TopBar(
     )
 
     if (backBehavior != null) {
-        BackHandler(onBackPressed = {
-            backBehavior.invoke()
-        })
-    } else if (backConfirmation) {
-        BackHandler(onBackPressed = {
-            showBackConfirmationDialog = true
-        })
-    }
-
-    if (showBackConfirmationDialog) {
-        ConfirmationDialog(
-            headline = "mobile.components.topBar.confirmationDialog.headline".i18n(),
-            message = "mobile.components.topBar.confirmationDialog.message".i18n(),
-            onConfirm = {
-                showBackConfirmationDialog = false
-                presenter.goBack()
-            },
-            onDismiss = {
-                showBackConfirmationDialog = false
-            }
-        )
+        BackHandler(onBackPressed = { backBehavior.invoke() })
     }
 }

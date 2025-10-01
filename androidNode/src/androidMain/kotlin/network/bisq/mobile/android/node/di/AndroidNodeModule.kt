@@ -5,7 +5,7 @@ import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.presentation.NodeDashboardPresenter
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
 import network.bisq.mobile.android.node.presentation.NodeMiscItemsPresenter
-import network.bisq.mobile.android.node.presentation.NodeOnBoardingPresenter
+import network.bisq.mobile.android.node.presentation.NodeOnboardingPresenter
 import network.bisq.mobile.android.node.presentation.NodeSettingsPresenter
 import network.bisq.mobile.android.node.presentation.NodeSplashPresenter
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
@@ -161,7 +161,7 @@ val androidNodeModule = module {
         )
     }
 
-    single<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get(), get()) }
+    single<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
 
     single<DeviceInfoProvider> { AndroidDeviceInfoProvider(androidContext()) }
 
@@ -169,5 +169,11 @@ val androidNodeModule = module {
 
     factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
-    single<IOnboardingPresenter> { NodeOnBoardingPresenter(get(), get(), get()) } bind IOnboardingPresenter::class
+    single<IOnboardingPresenter> {
+        NodeOnboardingPresenter(
+            get(),
+            get(),
+            get()
+        )
+    } bind IOnboardingPresenter::class
 }

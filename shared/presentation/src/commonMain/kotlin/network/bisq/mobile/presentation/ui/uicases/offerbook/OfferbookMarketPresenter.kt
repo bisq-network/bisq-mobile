@@ -16,7 +16,7 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFilter
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketSortBy
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.uicases.market.MarketFilterUtil
 
 class OfferbookMarketPresenter(
@@ -125,7 +125,7 @@ class OfferbookMarketPresenter(
 
     fun onSelectMarket(marketListItem: MarketListItem) {
         offersServiceFacade.selectOfferbookMarket(marketListItem)
-        navigateTo(Routes.OffersByMarket)
+        navigateTo(NavRoute.Offerbook)
     }
 
     override fun onViewAttached() {

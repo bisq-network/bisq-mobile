@@ -18,7 +18,7 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.notification.NotificationController
 import network.bisq.mobile.presentation.ui.BisqLinks
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 open class DashboardPresenter(
     private val mainPresenter: MainPresenter,
@@ -81,11 +81,11 @@ open class DashboardPresenter(
     }
 
     fun onOpenTradeGuide() {
-        navigateTo(Routes.TradeGuideOverview)
+        navigateTo(NavRoute.TradeGuideOverview)
     }
 
     private fun navigateToTradingTab() {
-        navigateToTab(Routes.TabOfferbook)
+        navigateToTab(NavRoute.TabOfferbookMarket)
     }
 
     fun navigateLearnMore() {

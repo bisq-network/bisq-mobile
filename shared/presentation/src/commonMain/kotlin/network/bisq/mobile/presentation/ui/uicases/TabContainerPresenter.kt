@@ -4,7 +4,7 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 
 /**
@@ -32,7 +32,7 @@ class TabContainerPresenter(
         try {
             createOfferPresenter.onStartCreateOffer()
             createOfferPresenter.skipCurrency = false
-            navigateTo(Routes.CreateOfferDirection)
+            navigateTo(NavRoute.CreateOfferDirection)
         } catch (e: Exception) {
             log.e(e) { "Failed to create offer: ${e.message}" }
         } finally {

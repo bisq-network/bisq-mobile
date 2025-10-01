@@ -11,7 +11,7 @@ import androidx.core.app.ServiceCompat
 import network.bisq.mobile.domain.helper.ResourceUtils
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import org.koin.android.ext.android.inject
 
 /**
@@ -30,7 +30,7 @@ open class ForegroundService : Service(), Logging {
 
     private fun getServiceNotification(): Notification {
         val contentPendingIntent =
-            notificationController.createNavDeepLinkPendingIntent(Routes.TabOpenTradeList)
+            notificationController.createNavDeepLinkPendingIntent(NavRoute.TabOpenTradeList)
 
         return NotificationCompat.Builder(this, NotificationChannels.BISQ_SERVICE)
             .setContentTitle("mobile.bisqService.title".i18n())

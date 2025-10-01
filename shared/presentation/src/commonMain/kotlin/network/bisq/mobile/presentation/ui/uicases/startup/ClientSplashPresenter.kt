@@ -8,7 +8,7 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 class ClientSplashPresenter(
     mainPresenter: MainPresenter,
@@ -25,7 +25,6 @@ class ClientSplashPresenter(
     settingsServiceFacade,
 ) {
     override val state: StateFlow<String> get() = applicationBootstrapFacade.state
-
 
     override fun doCustomNavigationLogic(settings: Settings, hasProfile: Boolean): Boolean {
         when {
@@ -54,8 +53,8 @@ class ClientSplashPresenter(
     }
 
     private fun navigateToTrustedNodeSetup() {
-        navigateTo(Routes.TrustedNodeSetup) {
-            it.popUpTo(Routes.Splash.name) { inclusive = true }
+        navigateTo(NavRoute.TrustedNodeSetup) {
+            it.popUpTo(NavRoute.Splash) { inclusive = true }
         }
     }
 }
