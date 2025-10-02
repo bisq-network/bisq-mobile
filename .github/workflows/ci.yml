@@ -126,12 +126,16 @@ jobs:
 
       - name: Build iOS Client (Mac only)
         if: startsWith(matrix.os, 'macos')
+        env:
+          GRADLE_OPTS: "-Dorg.gradle.configuration-cache=false -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
         run: |
           xcodebuild -workspace iosClient/iosClient.xcworkspace \
             -scheme "iosClient Release" \
             -configuration Release \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
+            -parallelizeTargets NO \
+            -jobs 1 \
             clean build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
