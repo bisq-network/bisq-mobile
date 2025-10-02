@@ -433,7 +433,6 @@ class OpenTradesNotificationService(
                 group = trade.shortTradeId
             }
             ios {
-                categoryId = if (isChatNotif) NotificationChannels.USER_MESSAGES else NotificationChannels.TRADE_UPDATES
                 // TODO: fix after nav refactor
                 pressAction = if (isChatNotif) {
                     NotificationPressAction.Route(Routes.TabOpenTradeList) // TODO: use TradeChat and pass in trade.tradeId
