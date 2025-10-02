@@ -89,13 +89,25 @@ jobs:
 #          disable-animations: true
 #          script: ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
 
+      - name: Generate KMP dummy frameworks (Mac only)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          ./gradlew :shared:domain:generateDummyFramework :shared:presentation:generateDummyFramework --no-daemon
       - name: Install CocoaPods dependencies (Mac only)
         if: startsWith(matrix.os, 'macos')
         working-directory: iosClient
         run: pod install
 
+      - name: Prebuild KMP CocoaPods frameworks (Mac only)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          ./gradlew :shared:domain:podDebugIosSimulatorFatFramework :shared:presentation:podDebugIosSimulatorFatFramework --no-daemon
+
+
       - name: Build iOS Client (Mac only)
         if: startsWith(matrix.os, 'macos')
+        env:
+          OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED: "YES"
         run: |
           xcodebuild -workspace iosClient/iosClient.xcworkspace \
             -scheme "iosClient Release" \
