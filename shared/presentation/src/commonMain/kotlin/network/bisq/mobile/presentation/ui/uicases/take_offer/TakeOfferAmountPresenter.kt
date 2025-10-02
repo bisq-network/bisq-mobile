@@ -96,16 +96,25 @@ class TakeOfferAmountPresenter(
     fun onTextValueChanged(textInput: String) {
         val _value = textInput.toDoubleOrNullLocaleAware()
         if (_value != null) {
-            // Bypass slider math for exactness: compute exact minor and apply directly
+            // Compute exact minor units from user input
             val exactMinor = FiatVOFactory.faceValueToLong(_value)
-            val clamped = exactMinor.coerceIn(minAmount, maxAmount)
-            quoteAmount = FiatVOFactory.from(clamped, quoteCurrencyCode)
+
+            // Check if value is within valid range
+            val isInRange = exactMinor in minAmount..maxAmount
+            _amountValid.value = isInRange
+
+            // Store the UNCLAMPED value so user sees what they typed
+            // This fixes issue #785: typing "5" then "0" now produces "50" instead of "60"
+            quoteAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
             _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount)
+
             priceQuote = takeOfferPresenter.getMostRecentPriceQuote()
             baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
             _formattedBaseAmount.value = AmountFormatter.formatAmount(baseAmount, false)
-            _sliderPosition.value = MonetarySlider.minorToFraction(clamped, minAmount, maxAmount)
-            _amountValid.value = true
+
+            // Update slider with clamped value for visual feedback
+            val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmount)
+            _sliderPosition.value = MonetarySlider.minorToFraction(clampedForSlider, minAmount, maxAmount)
         } else {
             _formattedQuoteAmount.value = ""
             _amountValid.value = false
