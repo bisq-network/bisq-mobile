@@ -8,20 +8,13 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.domain.utils.Logging
 import platform.BackgroundTasks.BGProcessingTask
 import platform.BackgroundTasks.BGProcessingTaskRequest
 import platform.BackgroundTasks.BGTaskScheduler
 import platform.Foundation.NSDate
-import platform.UserNotifications.UNNotification
-import platform.UserNotifications.UNNotificationPresentationOptionAlert
-import platform.UserNotifications.UNNotificationPresentationOptionBadge
-import platform.UserNotifications.UNNotificationPresentationOptionSound
-import platform.UserNotifications.UNNotificationPresentationOptions
-import platform.UserNotifications.UNNotificationResponse
-import platform.UserNotifications.UNUserNotificationCenter
-import platform.UserNotifications.UNUserNotificationCenterDelegateProtocol
-import platform.darwin.NSObject
 
 
 class ForegroundServiceControllerImpl(private val notificationController: NotificationController) : ForegroundServiceController, Logging {
@@ -35,25 +28,30 @@ class ForegroundServiceControllerImpl(private val notificationController: Notifi
     private val observerJobs = mutableMapOf<StateFlow<*>, Job>()
 
     private var isRunning = false
+    private val isRunningMutex = Mutex()
     private var isBackgroundTaskRegistered = false
     private val logScope = CoroutineScope(Dispatchers.Main)
 
     override fun startService() {
-        if (isRunning) {
-            logDebug("Notification Service already started, skipping launch")
-            return
-        }
-        stopService() // needed in iOS to clear the id registration and avoid duplicates
-        logDebug("Starting background service")
         serviceScope.launch {
-            if (notificationController.hasPermission()) {
-                logDebug("Notification permission granted.")
-                registerBackgroundTask()
-                // Once permission is granted, you can start scheduling background tasks
-                startBackgroundTaskLoop()
-                logDebug("Background service started")
-            } else {
-                logDebug("Notification permission denied")
+            isRunningMutex.withLock {
+                if (isRunning) {
+                    logDebug("Notification Service already started, skipping launch")
+                    return@launch
+                }
+                isRunning = true
+
+                stopService() // needed in iOS to clear the id registration and avoid duplicates
+                logDebug("Starting background service")
+                if (notificationController.hasPermission()) {
+                    logDebug("Notification permission granted.")
+                    registerBackgroundTask()
+                    // Once permission is granted, you can start scheduling background tasks
+                    startBackgroundTaskLoop()
+                    logDebug("Background service started")
+                } else {
+                    logDebug("Notification permission denied")
+                }
             }
         }
     }
@@ -62,7 +60,11 @@ class ForegroundServiceControllerImpl(private val notificationController: Notifi
 //        unregisterAllObservers()
         BGTaskScheduler.sharedScheduler.cancelAllTaskRequests()
         logDebug("Background service stopped")
-        isRunning = false
+        serviceScope.launch {
+            isRunningMutex.withLock {
+                isRunning = false
+            }
+        }
     }
 
 
@@ -98,7 +100,6 @@ class ForegroundServiceControllerImpl(private val notificationController: Notifi
     }
 
     private fun startBackgroundTaskLoop() {
-        isRunning = true
         CoroutineScope(Dispatchers.Default).launch {
             while (isRunning) {
                 scheduleBackgroundTask()
