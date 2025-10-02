@@ -29,15 +29,27 @@ jobs:
           distribution: 'zulu'
           cache: gradle
 
-      - name: Cache Gradle dependencies
+      - name: Cache Gradle dependencies (Mac only)
+        if: startsWith(matrix.os, 'macos')
         uses: actions/cache@v4
         with:
           path: |
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: macos-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/settings.gradle*', '**/build.gradle*', 'gradle/libs.versions.toml') }}
           restore-keys: |
-            ${{ runner.os }}-gradle-
+            macos-gradle-
+
+      - name: Cache Kotlin/Native (konan) (Mac only)
+        if: startsWith(matrix.os, 'macos')
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.konan
+          key: macos-konan-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties', '**/settings.gradle*', '**/build.gradle*', 'gradle/libs.versions.toml') }}
+          restore-keys: |
+            macos-konan-
+
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -98,15 +110,18 @@ jobs:
         working-directory: iosClient
         run: pod install
 
-      - name: Prebuild KMP frameworks (Intel runner)
-        if: startsWith(matrix.os, 'macos') && runner.arch == 'X64'
-        run: |
-          ./gradlew :shared:domain:linkPodReleaseFrameworkIosX64 :shared:presentation:linkPodReleaseFrameworkIosX64 --no-daemon
 
-      - name: Prebuild KMP frameworks (Apple Silicon runner)
+      - name: Warm KMP compile outputs (Apple Silicon)
         if: startsWith(matrix.os, 'macos') && runner.arch == 'ARM64'
         run: |
-          ./gradlew :shared:domain:linkPodReleaseFrameworkIosSimulatorArm64 :shared:presentation:linkPodReleaseFrameworkIosSimulatorArm64 --no-daemon
+          ./gradlew :shared:domain:compileKotlinIosSimulatorArm64 :shared:presentation:compileKotlinIosSimulatorArm64 --no-daemon
+
+      - name: Warm KMP compile outputs (Intel)
+        if: startsWith(matrix.os, 'macos') && runner.arch == 'X64'
+        run: |
+          ./gradlew :shared:domain:compileKotlinIosX64 :shared:presentation:compileKotlinIosX64 --no-daemon
+
+
 
 
       - name: Build iOS Client (Mac only)
@@ -121,9 +136,13 @@ jobs:
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
-      - name: Run iOS Tests (x64 simulator for Intel runners)
-        if: startsWith(runner.os, 'macOS')
+      - name: Run iOS Tests (Intel runner)
+        if: startsWith(runner.os, 'macOS') && runner.arch == 'X64'
         run: ./gradlew shared:presentation:iosX64Test
+
+      - name: Run iOS Tests (Apple Silicon runner)
+        if: startsWith(runner.os, 'macOS') && runner.arch == 'ARM64'
+        run: ./gradlew shared:presentation:iosSimulatorArm64Test
 
   # --- Node-specific Maven build (needs secrets) ---
   node-maven:
