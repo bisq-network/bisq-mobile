@@ -98,29 +98,32 @@ jobs:
         working-directory: iosClient
         run: pod install
 
-      - name: Prebuild KMP CocoaPods frameworks (Mac only)
-        if: startsWith(matrix.os, 'macos')
+      - name: Prebuild KMP frameworks (Intel runner)
+        if: startsWith(matrix.os, 'macos') && runner.arch == 'X64'
         run: |
-          ./gradlew :shared:domain:podDebugIosSimulatorFatFramework :shared:presentation:podDebugIosSimulatorFatFramework --no-daemon
+          ./gradlew :shared:domain:linkPodReleaseFrameworkIosX64 :shared:presentation:linkPodReleaseFrameworkIosX64 --no-daemon
+
+      - name: Prebuild KMP frameworks (Apple Silicon runner)
+        if: startsWith(matrix.os, 'macos') && runner.arch == 'ARM64'
+        run: |
+          ./gradlew :shared:domain:linkPodReleaseFrameworkIosSimulatorArm64 :shared:presentation:linkPodReleaseFrameworkIosSimulatorArm64 --no-daemon
 
 
       - name: Build iOS Client (Mac only)
         if: startsWith(matrix.os, 'macos')
-        env:
-          OVERRIDE_KOTLIN_BUILD_IDE_SUPPORTED: "YES"
         run: |
           xcodebuild -workspace iosClient/iosClient.xcworkspace \
             -scheme "iosClient Release" \
-            -configuration Debug \
+            -configuration Release \
             -sdk iphonesimulator \
             -destination 'generic/platform=iOS Simulator' \
             clean build \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGNING_ALLOWED=NO
-      - name: Run iOS Tests
+      - name: Run iOS Tests (x64 simulator for Intel runners)
         if: startsWith(runner.os, 'macOS')
-        run: ./gradlew shared:presentation:iosSimulatorArm64Test
+        run: ./gradlew shared:presentation:iosX64Test
 
   # --- Node-specific Maven build (needs secrets) ---
   node-maven:
