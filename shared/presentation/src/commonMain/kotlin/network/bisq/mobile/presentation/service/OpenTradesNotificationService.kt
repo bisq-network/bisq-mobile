@@ -10,12 +10,11 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.notification.NotificationChannels
 import network.bisq.mobile.presentation.notification.ForegroundServiceController
+import network.bisq.mobile.presentation.notification.NotificationChannels
 import network.bisq.mobile.presentation.notification.NotificationController
 import network.bisq.mobile.presentation.notification.NotificationIds
 import network.bisq.mobile.presentation.notification.model.AndroidNotificationCategory
-import network.bisq.mobile.presentation.notification.model.NotificationButton
 import network.bisq.mobile.presentation.notification.model.NotificationPressAction
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
@@ -436,21 +435,11 @@ class OpenTradesNotificationService(
             ios {
                 categoryId = if (isChatNotif) NotificationChannels.USER_MESSAGES else NotificationChannels.TRADE_UPDATES
                 // TODO: fix after nav refactor
-                 actions = if (isChatNotif) {
-                    listOf(
-                        NotificationButton(
-                            "mobile.action.notifications.openChat".i18n(),
-                            NotificationPressAction.Route(Routes.TabOpenTradeList),  // TODO: use TradeChat pass in trade.tradeId
-                        )
-                    )
-                 } else {
-                     listOf(
-                         NotificationButton(
-                             "mobile.action.notifications.openTrade".i18n(),
-                             NotificationPressAction.Route(Routes.TabOpenTradeList) // TODO: use OpenTrades and pass in trade.tradeId
-                         )
-                     )
-                 }
+                pressAction = if (isChatNotif) {
+                    NotificationPressAction.Route(Routes.TabOpenTradeList) // TODO: use TradeChat and pass in trade.tradeId
+                } else {
+                    NotificationPressAction.Route(Routes.TabOpenTradeList) // TODO: use OpenTrades and pass in trade.tradeId
+                }
             }
         }
     }

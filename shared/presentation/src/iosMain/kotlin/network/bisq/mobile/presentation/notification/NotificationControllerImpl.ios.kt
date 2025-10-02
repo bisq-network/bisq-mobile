@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.utils.Logging
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.notification.model.IosNotificationCategory
 import network.bisq.mobile.presentation.notification.model.NotificationButton
 import network.bisq.mobile.presentation.notification.model.NotificationConfig
@@ -22,6 +21,7 @@ import platform.UserNotifications.UNNotificationAction
 import platform.UserNotifications.UNNotificationActionOptionForeground
 import platform.UserNotifications.UNNotificationCategory
 import platform.UserNotifications.UNNotificationCategoryOptionNone
+import platform.UserNotifications.UNNotificationDefaultActionIdentifier
 import platform.UserNotifications.UNNotificationPresentationOptionAlert
 import platform.UserNotifications.UNNotificationPresentationOptionBadge
 import platform.UserNotifications.UNNotificationPresentationOptionSound
@@ -39,6 +39,7 @@ class NotificationControllerImpl(
     private val appForegroundController: AppForegroundController,
 ) : NotificationController, Logging {
     private val logScope = CoroutineScope(Dispatchers.Main)
+
     // strong reference to delegate to keep it in memory and working
     private var notificationDelegate: NSObject? = null
 
@@ -79,12 +80,15 @@ class NotificationControllerImpl(
             }
             config.ios?.actions?.let {
                 if (config.ios.categoryId == null) {
-                    IllegalArgumentException("When setting actions, notification categoryId must be provided to behave correctly")
+                    throw IllegalArgumentException("When setting actions, notification categoryId must be provided to behave correctly")
                 }
+            }
+            config.ios?.pressAction?.let {
+                addActionUserInfo(this, it, "default")
             }
 
             if (config.skipInForeground) {
-                 setUserInfo(this.userInfo + ("skipForeground" to 1))
+                setUserInfo(this.userInfo + ("skipForeground" to 1))
             }
         }
 
@@ -173,23 +177,31 @@ class NotificationControllerImpl(
         content: UNMutableNotificationContent,
         actions: List<NotificationButton>
     ) {
-        val userInfo = mutableMapOf<Any?, Any>()
         for (action in actions) {
             val pressAction = action.pressAction
-            when (pressAction) {
-                is NotificationPressAction.Route,
-                is NotificationPressAction.Default -> {
-                    val uri =
-                        Routes.getDeeplinkUriString(
-                            if (pressAction is NotificationPressAction.Route)
-                                pressAction.route
-                            else Routes.TabOpenTradeList
-                        )
-                    userInfo[action.pressAction.id] = uri
-                }
+            addActionUserInfo(content, pressAction)
+        }
+    }
+
+    private fun addActionUserInfo(
+        content: UNMutableNotificationContent,
+        pressAction: NotificationPressAction,
+        id: String? = null,
+    ) {
+        val id = id ?: pressAction.id
+        when (pressAction) {
+            is NotificationPressAction.Route -> {
+                content.setUserInfo(
+                    content.userInfo + (id to Routes.getDeeplinkUriString(pressAction.route))
+                )
+            }
+
+            is NotificationPressAction.Default -> {
+                content.setUserInfo(
+                    content.userInfo + (id to Routes.getDeeplinkUriString(Routes.TabOpenTradeList))
+                )
             }
         }
-        content.setUserInfo(userInfo)
     }
 
     private fun setNotificationCategories(categories: Set<IosNotificationCategory>) {
@@ -238,7 +250,10 @@ class NotificationControllerImpl(
             ) {
                 // Handle the response when the user taps the notification
                 val userInfo = didReceiveNotificationResponse.notification.request.content.userInfo
-                val actionId = didReceiveNotificationResponse.actionIdentifier
+                val actionId =
+                    didReceiveNotificationResponse.actionIdentifier.let {
+                        if (it == UNNotificationDefaultActionIdentifier) "default" else it
+                    }
                 when (actionId) {
                     "default",
                     "route" -> {
@@ -276,27 +291,19 @@ class NotificationControllerImpl(
 
     private fun setupNotificationCategories() {
         setNotificationCategories(
+            // theres no need for this right now but I'm leaving it here as an example
             setOf(
-                IosNotificationCategory(
-                    id = NotificationChannels.TRADE_UPDATES,
-                    actions = listOf(
-                        NotificationButton(
-                            title = "mobile.action.notifications.openTrade".i18n(),
-                            // the actual route here doesn't matter, but it will matter
-                            // when actions are passed to notify()
-                            pressAction = NotificationPressAction.Route(Routes.TabHome)
-                        )
-                    )
-                ),
-                IosNotificationCategory(
-                    id = NotificationChannels.USER_MESSAGES,
-                    actions = listOf(
-                        NotificationButton(
-                            title = "mobile.action.notifications.openChat".i18n(),
-                            pressAction = NotificationPressAction.Route(Routes.TabHome)
-                        )
-                    )
-                )
+//                IosNotificationCategory(
+//                    id = NotificationChannels.TRADE_UPDATES,
+//                    actions = listOf(
+//                        NotificationButton(
+//                            title = "mobile.action.notifications.openTrade".i18n(),
+//                            // the actual route here doesn't matter, but it will matter
+//                            // when actions are passed to notify()
+//                            pressAction = NotificationPressAction.Route(Routes.TabHome)
+//                        )
+//                    )
+//                ),
             )
         )
     }
