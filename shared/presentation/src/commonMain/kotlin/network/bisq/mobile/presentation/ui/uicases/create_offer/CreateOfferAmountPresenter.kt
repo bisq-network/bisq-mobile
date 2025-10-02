@@ -196,8 +196,9 @@ class CreateOfferAmountPresenter(
         if (v != null) {
             val exactMinor = FiatVOFactory.faceValueToLong(v)
 
-            // Check if value is within valid range
-            val isInRange = exactMinor in minAmount..maxAmount
+            // Use the same validation logic as validateTextField to ensure consistency
+            val maxAmountForValidation = getMaxAmountForValidation()
+            val isInRange = exactMinor in minAmount..maxAmountForValidation
             _amountValid.value = isInRange
 
             // Store the UNCLAMPED value so user sees what they typed
@@ -210,7 +211,7 @@ class CreateOfferAmountPresenter(
             _formattedBaseSideFixedAmount.value = AmountFormatter.formatAmount(baseSideFixedAmount, false)
 
             // Update slider with clamped value for visual feedback
-            val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmount)
+            val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmountForValidation)
             _fixedAmountSliderPosition.value = MonetarySlider.minorToFraction(clampedForSlider, minAmount, maxAmount)
 
             updateAmountLimitInfo()
@@ -226,8 +227,9 @@ class CreateOfferAmountPresenter(
         if (v != null) {
             val exactMinor = FiatVOFactory.faceValueToLong(v)
 
-            // Check if value is within valid range
-            val isInRange = exactMinor in minAmount..maxAmount
+            // Use the same validation logic as validateTextField to ensure consistency
+            val maxAmountForValidation = getMaxAmountForValidation()
+            val isInRange = exactMinor in minAmount..maxAmountForValidation
             _amountValid.value = isInRange
 
             // Store the UNCLAMPED value so user sees what they typed
@@ -239,7 +241,7 @@ class CreateOfferAmountPresenter(
             _formattedBaseSideMinRangeAmount.value = AmountFormatter.formatAmount(baseSideMinRangeAmount, false)
 
             // Update slider with clamped value for visual feedback
-            val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmount)
+            val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmountForValidation)
             _minRangeSliderValue.value = MonetarySlider.minorToFraction(clampedForSlider, minAmount, maxAmount)
 
             updateAmountLimitInfo()
@@ -255,8 +257,9 @@ class CreateOfferAmountPresenter(
         if (v != null) {
             val exactMinor = FiatVOFactory.faceValueToLong(v)
 
-            // Check if value is within valid range
-            val isInRange = exactMinor in minAmount..maxAmount
+            // Use the same validation logic as validateTextField to ensure consistency
+            val maxAmountForValidation = getMaxAmountForValidation()
+            val isInRange = exactMinor in minAmount..maxAmountForValidation
             _amountValid.value = isInRange
 
             // Store the UNCLAMPED value so user sees what they typed
@@ -268,7 +271,7 @@ class CreateOfferAmountPresenter(
             _formattedBaseSideMaxRangeAmount.value = AmountFormatter.formatAmount(baseSideMaxRangeAmount, false)
 
             // Update slider with clamped value for visual feedback
-            val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmount)
+            val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmountForValidation)
             _maxRangeSliderValue.value = MonetarySlider.minorToFraction(clampedForSlider, minAmount, maxAmount)
 
             updateAmountLimitInfo()
@@ -326,17 +329,21 @@ class CreateOfferAmountPresenter(
     }
 
     fun validateTextField(value: String): String? {
+        val maxAmountForValidation = getMaxAmountForValidation()
+        val validateError = AmountValidator.validate(value, minAmount, maxAmountForValidation)
+        _amountValid.value = validateError == null
+        return validateError
+    }
+
+    private fun getMaxAmountForValidation(): Long {
         val maxRepBasedValue = if (reputationBasedMaxSliderValue.value == null)
             0L
         else
             sliderValueToAmount(reputationBasedMaxSliderValue.value!!)
-        val maxAmountForValiation = if (maxRepBasedValue == 0L)
+        return if (maxRepBasedValue == 0L)
             maxAmount
         else
             minOf(maxAmount, maxRepBasedValue)
-        val validateError = AmountValidator.validate(value, minAmount, maxAmountForValiation)
-        _amountValid.value = validateError == null
-        return validateError
     }
 
     // private
