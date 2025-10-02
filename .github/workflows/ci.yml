@@ -15,7 +15,7 @@ jobs:
     name: Build & Test (No Secrets)
     strategy:
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -53,7 +53,7 @@ jobs:
       - name: Set up Xcode (Mac only)
         if: startsWith(matrix.os, 'macos')
         run: |
-          sudo xcode-select -s /Applications/Xcode_14.3.app
+          sudo xcode-select -s /Applications/Xcode.app || true
           xcodebuild -version
 
       - name: Create fake local.properties
@@ -65,10 +65,15 @@ jobs:
           echo "KEY_PASSWORD=yourKeyPassword" >> local.properties
           echo "CLI_KEY_PASSWORD=yourCliKeyPassword" >> local.properties
 
-      - name: Run Tests
+      - name: Run Android Tests (Ubuntu only)
+        if: startsWith(matrix.os, 'ubuntu')
         env:
           CI: true
         run: ./gradlew clean test -x :androidNode:testDebugUnitTest -x :androidNode:testReleaseUnitTest -x :androidNode:test --info
+
+      - name: Android compile-only (Mac only)
+        if: startsWith(matrix.os, 'macos')
+        run: ./gradlew :androidClient:assembleDebug -x test -x lint
 
 #      TODO seems GH default ci doesn't have support for this
 #      - name: Headless Android emulator and run instrumentation tests
@@ -84,6 +89,23 @@ jobs:
 #          disable-animations: true
 #          script: ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
 
+      - name: Install CocoaPods dependencies (Mac only)
+        if: startsWith(matrix.os, 'macos')
+        working-directory: iosClient
+        run: pod install
+
+      - name: Build iOS Client (Mac only)
+        if: startsWith(matrix.os, 'macos')
+        run: |
+          xcodebuild -workspace iosClient/iosClient.xcworkspace \
+            -scheme "iosClient Release" \
+            -configuration Debug \
+            -sdk iphonesimulator \
+            -destination 'generic/platform=iOS Simulator' \
+            clean build \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
       - name: Run iOS Tests
         if: startsWith(runner.os, 'macOS')
         run: ./gradlew shared:presentation:iosSimulatorArm64Test
