@@ -112,7 +112,11 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     value = host,
                     placeholder = hostPrompt,
                     keyboardType = if (selectedNetworkType == NetworkType.LAN) {
-                        KeyboardType.Decimal
+                        if (presenter.isIOS()) {
+                            KeyboardType.Ascii
+                        } else {
+                            KeyboardType.Decimal
+                        }
                     } else {
                         KeyboardType.Text
                     },
