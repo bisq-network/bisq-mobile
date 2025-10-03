@@ -15,7 +15,7 @@ jobs:
     name: Build & Test (No Secrets)
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest]
+        os: [ubuntu-latest, macos-14]
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -112,16 +112,16 @@ jobs:
 #        working-directory: iosClient
 #        run: pod install
 
-
-      - name: Warm KMP compile outputs (Apple Silicon)
-        if: startsWith(matrix.os, 'macos') && runner.arch == 'ARM64'
-        run: |
-          ./gradlew :shared:domain:compileKotlinIosSimulatorArm64 :shared:presentation:compileKotlinIosSimulatorArm64 --no-daemon
-
-      - name: Warm KMP compile outputs (Intel)
-        if: startsWith(matrix.os, 'macos') && runner.arch == 'X64'
-        run: |
-          ./gradlew :shared:domain:compileKotlinIosX64 :shared:presentation:compileKotlinIosX64 --no-daemon
+#     Not needed anymore since we are not using xcodebuild
+#      - name: Warm KMP compile outputs (Apple Silicon)
+#        if: startsWith(matrix.os, 'macos') && runner.arch == 'ARM64'
+#        run: |
+#          ./gradlew :shared:domain:compileKotlinIosSimulatorArm64 :shared:presentation:compileKotlinIosSimulatorArm64 --no-daemon
+#
+#      - name: Warm KMP compile outputs (Intel)
+#        if: startsWith(matrix.os, 'macos') && runner.arch == 'X64'
+#        run: |
+#          ./gradlew :shared:domain:compileKotlinIosX64 :shared:presentation:compileKotlinIosX64 --no-daemon
 
 #     Takes way too much time in GH CI Actions
 #      - name: Build iOS Client (Mac only)
