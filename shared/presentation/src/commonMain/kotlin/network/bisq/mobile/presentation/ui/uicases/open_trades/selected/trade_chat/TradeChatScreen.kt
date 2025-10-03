@@ -23,9 +23,11 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
 @Composable
-fun TradeChatScreen() {
+fun TradeChatScreen(tradeId: String) {
     val presenter: TradeChatPresenter = koinInject()
-    RememberPresenterLifecycle(presenter)
+    RememberPresenterLifecycle(presenter, onExecute = {
+        presenter.initialize(tradeId)
+    })
 
     val isInteractive by presenter.isInteractive.collectAsState()
     val selectedTrade by presenter.selectedTrade.collectAsState()

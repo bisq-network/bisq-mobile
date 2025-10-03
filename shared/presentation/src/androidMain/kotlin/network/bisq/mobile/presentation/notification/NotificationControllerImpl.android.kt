@@ -14,7 +14,8 @@ import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.presentation.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.notification.model.NotificationPressAction
 import network.bisq.mobile.presentation.notification.model.toNotificationCompat
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.DeepLinkableRoute
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 class NotificationControllerImpl(
     private val appForegroundController: AppForegroundController,
@@ -96,7 +97,7 @@ class NotificationControllerImpl(
                 )
 
                 is NotificationPressAction.Default ->  builder.setContentIntent(
-                    createNavDeepLinkPendingIntent(Routes.TabOpenTradeList)
+                    createNavDeepLinkPendingIntent(NavRoute.TabOpenTradeList)
                 )
 
                 null -> {
@@ -138,9 +139,8 @@ class NotificationControllerImpl(
         return appForegroundController.isForeground.value
     }
 
-    // TODO: fix after nav refactor to accept a Route class
-    fun createNavDeepLinkPendingIntent(route: Routes): PendingIntent {
-        val link = Routes.getDeeplinkUriString(route)
+    fun createNavDeepLinkPendingIntent(route: DeepLinkableRoute): PendingIntent {
+        val link = route.toUriString()
         val intent = Intent(
             Intent.ACTION_VIEW,
             link.toUri(),

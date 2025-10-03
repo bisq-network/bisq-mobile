@@ -1,7 +1,6 @@
 package network.bisq.mobile.presentation
 
 import androidx.annotation.CallSuper
-import androidx.navigation.NavHostController
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -29,7 +28,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 /**
  * Main Presenter as an example of implementation for now.
@@ -44,9 +43,6 @@ open class MainPresenter(
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val urlLauncher: UrlLauncher,
 ) : BasePresenter(null), AppPresenter {
-
-    override lateinit var navController: NavHostController
-    override lateinit var tabNavController: NavHostController
 
     // Observable state
     private val _isMainContentVisible = MutableStateFlow(false)
@@ -166,15 +162,7 @@ open class MainPresenter(
     }
 
     override fun navigateToTrustedNode() {
-        navController.navigate(Routes.TrustedNodeSettings.name)
-    }
-
-    override fun getRootNavController(): NavHostController {
-        return navController
-    }
-
-    override fun getRootTabNavController(): NavHostController {
-        return tabNavController
+        navigateTo(NavRoute.TrustedNodeSetupSettings)
     }
 
     final override fun navigateToUrl(url: String) {

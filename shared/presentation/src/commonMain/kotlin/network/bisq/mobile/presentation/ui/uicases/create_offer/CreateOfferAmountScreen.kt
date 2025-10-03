@@ -15,10 +15,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.NoteText
 import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIconLightGrey
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
-import network.bisq.mobile.presentation.ui.components.molecules.rememberConfirmCloseState
 import network.bisq.mobile.presentation.ui.components.molecules.BisqAmountSelector
-import network.bisq.mobile.presentation.ui.components.molecules.ConfirmCloseAction
-import network.bisq.mobile.presentation.ui.components.molecules.ConfirmCloseOverlay
 import network.bisq.mobile.presentation.ui.components.molecules.RangeAmountSelector
 import network.bisq.mobile.presentation.ui.components.molecules.ToggleTab
 import network.bisq.mobile.presentation.ui.components.organisms.create_offer.ReputationBasedBuyerLimitsPopup
@@ -28,7 +25,7 @@ import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPrese
 import org.koin.compose.koinInject
 
 @Composable
-fun CreateOfferAmountSelectorScreen() {
+fun CreateOfferAmountScreen() {
     val presenter: CreateOfferAmountPresenter = koinInject()
     val createPresenter: CreateOfferPresenter = koinInject()
     RememberPresenterLifecycle(presenter)

@@ -29,7 +29,7 @@ const val MY_TRADES_TAB_INDEX = 2
 @Composable
 fun BottomNavigation(
     items: List<BottomNavigationItem>,
-    currentRoute: String,
+    currentRoute: TabNavRoute?,
     unreadTradeCount: Int,
     showAnimation: Boolean,
     onItemClick: (BottomNavigationItem) -> Unit

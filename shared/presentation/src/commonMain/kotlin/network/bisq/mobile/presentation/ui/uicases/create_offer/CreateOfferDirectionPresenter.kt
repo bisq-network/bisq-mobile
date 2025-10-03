@@ -14,7 +14,7 @@ import network.bisq.mobile.domain.utils.CurrencyUtils
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 class CreateOfferDirectionPresenter(
     mainPresenter: MainPresenter,
@@ -26,7 +26,6 @@ class CreateOfferDirectionPresenter(
     lateinit var direction: DirectionEnum
     lateinit var headline: String
     var marketName: String? = null
-    val hasMarket: Boolean get() = marketName != null
     private val _reputation = MutableStateFlow<ReputationScoreVO?>(null)
 
     private val _showSellerReputationWarning = MutableStateFlow(false)
@@ -40,7 +39,10 @@ class CreateOfferDirectionPresenter(
         direction = createOfferPresenter.createOfferModel.direction
         val market = createOfferPresenter.createOfferModel.market
         headline = if (market != null) {
-            val fiatName = CurrencyUtils.getLocaleFiatCurrencyName(market.quoteCurrencyCode, market.quoteCurrencyName)
+            val fiatName = CurrencyUtils.getLocaleFiatCurrencyName(
+                market.quoteCurrencyCode,
+                market.quoteCurrencyName
+            )
             marketName = fiatName
             "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineWithMarket".i18n(fiatName)
         } else {
@@ -79,7 +81,7 @@ class CreateOfferDirectionPresenter(
     }
 
     fun onNavigateToReputation() {
-        navigateTo(Routes.Reputation)
+        navigateTo(NavRoute.Reputation)
         setShowSellerReputationWarning(false)
     }
 
@@ -89,10 +91,11 @@ class CreateOfferDirectionPresenter(
 
     private fun navigateNext() {
         commitToModel()
-        if (createOfferPresenter.skipCurrency)
-            navigateTo(Routes.CreateOfferAmount)
-        else
-            navigateTo(Routes.CreateOfferMarket)
+        if (createOfferPresenter.skipCurrency) {
+            navigateTo(NavRoute.CreateOfferAmount)
+        } else {
+            navigateTo(NavRoute.CreateOfferMarket)
+        }
     }
 
     private fun commitToModel() {

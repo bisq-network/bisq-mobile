@@ -2,23 +2,19 @@ package network.bisq.mobile.presentation.ui.components.molecules
 
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
-import androidx.navigation.NavHostController
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.service.network.ConnectivityService
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.TabNavRoute
 
 /**
  * Lightweight presenter used ONLY for compose @Preview. Provides the minimum surface
  * so TopBar and scaffolds can render without real DI/navigation.
  */
-class PreviewTopBarPresenter(
-    private val rootNav: NavHostController,
-    private val tabNav: NavHostController,
-) : ITopBarPresenter {
+class PreviewTopBarPresenter : ITopBarPresenter {
 
     private val _isInteractive = MutableStateFlow(true)
     override val isInteractive: StateFlow<Boolean> get() = _isInteractive
@@ -34,7 +30,7 @@ class PreviewTopBarPresenter(
 
     private val snackbar = SnackbarHostState()
 
-    override fun avatarEnabled(currentTab: String?): Boolean = false
+    override fun avatarEnabled(currentTab: TabNavRoute?): Boolean = false
     override fun navigateToUserProfile() {}
 
     override fun isDemo(): Boolean = false
@@ -43,22 +39,17 @@ class PreviewTopBarPresenter(
     override fun navigateToReportError() {}
     override fun isIOS(): Boolean = false
 
-    override fun getRootNavController(): NavHostController = rootNav
-    override fun getRootTabNavController(): NavHostController = tabNav
-
     override fun getSnackState(): SnackbarHostState = snackbar
     override fun showSnackbar(message: String, isError: Boolean, duration: SnackbarDuration) {}
     override fun dismissSnackbar() {}
-    override fun isAtHome(): Boolean = true
+    override fun isAtHomeTab(): Boolean = true
     override fun navigateToTab(
-        destination: Routes,
+        destination: TabNavRoute,
         saveStateOnPopUp: Boolean,
         shouldLaunchSingleTop: Boolean,
         shouldRestoreState: Boolean
-    ) {
-    }
+    ) {}
 
-    override fun goBack(): Boolean = false
     override fun onMainBackNavigation() {}
     override fun onViewAttached() {}
     override fun onViewUnattaching() {}

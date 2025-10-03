@@ -6,13 +6,14 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
-import network.bisq.mobile.presentation.ui.uicases.startup.OnBoardingPresenter
+import network.bisq.mobile.presentation.ui.uicases.startup.OnboardingPresenter
 
-class NodeOnBoardingPresenter(
+class NodeOnboardingPresenter(
     mainPresenter: MainPresenter,
     settingsRepository: SettingsRepository,
     userProfileService: UserProfileServiceFacade,
-) : OnBoardingPresenter(mainPresenter, settingsRepository, userProfileService), IOnboardingPresenter {
+) : OnboardingPresenter(mainPresenter, settingsRepository, userProfileService),
+    IOnboardingPresenter {
 
     override val indexesToShow = listOf(0, 1)
 

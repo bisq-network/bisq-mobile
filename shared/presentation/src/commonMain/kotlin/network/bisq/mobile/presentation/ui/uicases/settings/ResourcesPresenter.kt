@@ -7,7 +7,7 @@ import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 class ResourcesPresenter(
     mainPresenter: MainPresenter,
@@ -30,19 +30,19 @@ class ResourcesPresenter(
     }
 
     fun onOpenTradeGuide() {
-        navigateTo(Routes.TradeGuideOverview)
+        navigateTo(NavRoute.TradeGuideOverview)
     }
 
     fun onOpenChatRules() {
-        navigateTo(Routes.ChatRules)
+        navigateTo(NavRoute.ChatRules)
     }
 
     fun onOpenWalletGuide() {
-        navigateTo(Routes.WalletGuideIntro)
+        navigateTo(NavRoute.WalletGuideIntro)
     }
 
     fun onOpenTac() {
-        navigateTo(Routes.UserAgreementDisplay)
+        navigateTo(NavRoute.UserAgreementDisplay)
     }
 
     fun onOpenWebUrl(url: String) {

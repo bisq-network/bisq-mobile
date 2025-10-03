@@ -11,7 +11,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 abstract class SplashPresenter(
     mainPresenter: MainPresenter,
@@ -81,27 +81,27 @@ abstract class SplashPresenter(
     }
 
     private fun navigateToOnboarding() {
-        navigateTo(Routes.Onboarding) {
-            it.popUpTo(Routes.Splash.name) { inclusive = true }
+        navigateTo(NavRoute.Onboarding) {
+            it.popUpTo(NavRoute.Splash) { inclusive = true }
         }
     }
 
     protected fun navigateToCreateProfile() {
-        navigateTo(Routes.CreateProfile) {
-            it.popUpTo(Routes.Splash.name) { inclusive = true }
+        navigateTo(NavRoute.CreateProfile) {
+            it.popUpTo(NavRoute.Splash) { inclusive = true }
         }
     }
 
     protected fun navigateToHome() {
-        navigateTo(Routes.TabContainer) {
-            it.popUpTo(Routes.Splash.name) { inclusive = true }
+        navigateTo(NavRoute.TabContainer) {
+            it.popUpTo(NavRoute.Splash) { inclusive = true }
         }
     }
 
     private fun navigateToAgreement() {
         log.d { "Navigating to agreement" }
-        navigateTo(Routes.UserAgreement) {
-            it.popUpTo(Routes.Splash.name) { inclusive = true }
+        navigateTo(NavRoute.UserAgreement) {
+            it.popUpTo(NavRoute.Splash) { inclusive = true }
         }
     }
 

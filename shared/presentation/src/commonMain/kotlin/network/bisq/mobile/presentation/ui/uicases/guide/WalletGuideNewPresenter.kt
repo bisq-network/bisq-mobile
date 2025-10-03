@@ -2,7 +2,7 @@ package network.bisq.mobile.presentation.ui.uicases.guide
 
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 class WalletGuideNewPresenter(
     mainPresenter: MainPresenter,
@@ -13,7 +13,7 @@ class WalletGuideNewPresenter(
     }
 
     fun newWalletNextClick() {
-        navigateTo(Routes.WalletGuideReceiving)
+        navigateTo(NavRoute.WalletGuideReceiving)
     }
 
 }

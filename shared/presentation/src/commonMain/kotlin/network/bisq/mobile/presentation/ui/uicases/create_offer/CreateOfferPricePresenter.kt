@@ -18,7 +18,7 @@ import network.bisq.mobile.domain.utils.PriceUtil
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.PriceType
 
 class CreateOfferPricePresenter(
@@ -312,7 +312,7 @@ class CreateOfferPricePresenter(
     fun onNext() {
         if (isValid(percentagePriceValue)) {
             commitToModel()
-            navigateTo(Routes.CreateOfferQuoteSidePaymentMethod)
+            navigateTo(NavRoute.CreateOfferPaymentMethod)
         }
     }
 

@@ -20,19 +20,17 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.setDefaultLocale
@@ -47,16 +45,14 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.context.LocalAnimationsEnabled
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.navigation.ExternalUriHandler
 import network.bisq.mobile.presentation.ui.navigation.graph.RootNavGraph
+import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManager
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 interface AppPresenter : ViewPresenter {
-    var navController: NavHostController
-
-    var tabNavController: NavHostController
 
     // Observables for state
     val isMainContentVisible: StateFlow<Boolean>
@@ -125,18 +121,18 @@ fun SafeInsetsContainer(
  * Main composable view of the application that platforms use to draw.
  */
 @Composable
-@Preview
 fun App() {
     val presenter: AppPresenter = koinInject()
+    val navigationManager: NavigationManager = koinInject()
     val rootNavController = rememberNavController()
-    val tabNavController = rememberNavController()
-    var isNavControllerSet by remember { mutableStateOf(false) }
 
-    RememberPresenterLifecycle(presenter, {
-        presenter.navController = rootNavController
-        presenter.tabNavController = tabNavController
-        isNavControllerSet = true
-    })
+    DisposableEffect(rootNavController) {
+        navigationManager.setRootNavController(rootNavController)
+        onDispose {
+            navigationManager.setRootNavController(null)
+        }
+    }
+    RememberPresenterLifecycle(presenter)
 
     val languageCode by presenter.languageCode.collectAsState()
     val showAnimation by presenter.showAnimation.collectAsState()
@@ -153,12 +149,18 @@ fun App() {
 
     BisqTheme {
         SafeInsetsContainer {
-            if (isNavControllerSet) {
                 SwipeBackIOSNavigationHandler(rootNavController) {
                     CompositionLocalProvider(LocalAnimationsEnabled provides showAnimation) {
+                        DisposableEffect(Unit) {
+                            ExternalUriHandler.listener = { uri ->
+                                navigationManager.navigateFromUri(uri)
+                            }
+                            onDispose {
+                                ExternalUriHandler.listener = null
+                            }
+                        }
                         RootNavGraph(rootNavController)
                     }
-                }
             }
 
             ErrorOverlay()

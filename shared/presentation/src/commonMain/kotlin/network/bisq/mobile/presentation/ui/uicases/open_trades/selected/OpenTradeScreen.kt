@@ -46,7 +46,7 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.S
 import org.koin.compose.koinInject
 
 @Composable
-fun OpenTradeScreen() {
+fun OpenTradeScreen(tradeId: String) {
     val presenter: OpenTradePresenter = koinInject()
     val headerPresenter: TradeDetailsHeaderPresenter = koinInject()
     val buyerState1aPresenter: BuyerState1aPresenter = koinInject()
@@ -57,8 +57,7 @@ fun OpenTradeScreen() {
     val scrollState = rememberScrollState()
     val scope = rememberCoroutineScope()
     RememberPresenterLifecycle(presenter, {
-        presenter.setTradePaneScrollState(scrollState)
-        presenter.setUIScope(scope)
+        presenter.initialize(tradeId, scrollState, scope)
     })
 
     val focusManager = LocalFocusManager.current
@@ -98,7 +97,13 @@ fun OpenTradeScreen() {
     }
 
     BisqStaticScaffold(
-        topBar = { TopBar("mobile.bisqEasy.openTrades.title".i18n(selectedTrade?.shortTradeId ?: "")) },
+        topBar = {
+            TopBar(
+                "mobile.bisqEasy.openTrades.title".i18n(
+                    selectedTrade?.shortTradeId ?: ""
+                )
+            )
+        },
         shouldBlurBg = shouldBlurBg,
     ) {
         Box(

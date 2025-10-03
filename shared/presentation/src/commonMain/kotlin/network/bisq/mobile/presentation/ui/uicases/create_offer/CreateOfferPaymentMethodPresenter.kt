@@ -6,7 +6,7 @@ import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 class CreateOfferPaymentMethodPresenter(
     mainPresenter: MainPresenter, private val createOfferPresenter: CreateOfferPresenter
@@ -53,7 +53,10 @@ class CreateOfferPaymentMethodPresenter(
     }
 
     fun getBaseSidePaymentMethodsImagePaths(): List<String> {
-        return getPaymentMethodsImagePaths(availableBaseSidePaymentMethods.value.toList(), "bitcoin")
+        return getPaymentMethodsImagePaths(
+            availableBaseSidePaymentMethods.value.toList(),
+            "bitcoin"
+        )
     }
 
     fun onToggleQuoteSidePaymentMethod(value: String) {
@@ -114,7 +117,7 @@ class CreateOfferPaymentMethodPresenter(
     fun onQuoteSideNext() {
         if (isQuoteSideValid()) {
             commitPaymentToModel()
-            navigateTo(Routes.CreateOfferBaseSidePaymentMethod)
+            navigateTo(NavRoute.CreateOfferSettlementMethod)
         } else {
             showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noFiatPaymentMethodSelected".i18n())
         }
@@ -123,7 +126,7 @@ class CreateOfferPaymentMethodPresenter(
     fun onBaseSideNext() {
         if (isBaseSideValid()) {
             commitSettlementToModel()
-            navigateTo(Routes.CreateOfferReviewOffer)
+            navigateTo(NavRoute.CreateOfferReviewOffer)
         } else {
             showSnackbar("bisqEasy.tradeWizard.paymentMethods.warn.noBtcSettlementMethodSelected".i18n())
         }
@@ -148,8 +151,9 @@ class CreateOfferPaymentMethodPresenter(
     private fun isQuoteSideValid() = selectedQuoteSidePaymentMethods.value.isNotEmpty()
     private fun isBaseSideValid() = selectedBaseSidePaymentMethods.value.isNotEmpty()
 
-    private fun getPaymentMethodsImagePaths(list: List<String>, directory: String) = list.map { paymentMethod ->
-        val fileName = paymentMethod.lowercase().replace("-", "_")
-        "drawable/payment/$directory/$fileName.png"
-    }
+    private fun getPaymentMethodsImagePaths(list: List<String>, directory: String) =
+        list.map { paymentMethod ->
+            val fileName = paymentMethod.lowercase().replace("-", "_")
+            "drawable/payment/$directory/$fileName.png"
+        }
 }

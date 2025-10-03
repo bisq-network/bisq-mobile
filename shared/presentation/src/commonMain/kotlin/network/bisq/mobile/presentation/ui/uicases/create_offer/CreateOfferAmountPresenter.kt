@@ -8,11 +8,10 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
+import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.faceValueToLong
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.from
 import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVOExtensions.asDouble
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory.faceValueToLong
-
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
@@ -30,17 +29,15 @@ import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.MAX_USD_TRADE_
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.findRequiredReputationScoreByFiatAmount
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.getReputationBasedQuoteSideAmount
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits.withTolerance
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.domain.utils.MonetarySlider
-
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.i18n.i18nPlural
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.helpers.AmountValidator
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.AmountType
-import kotlin.math.roundToLong
 
 // TODO Create/Take offer amount preseenters are very similar a base class could be extracted
 class CreateOfferAmountPresenter(
@@ -317,7 +314,7 @@ class CreateOfferAmountPresenter(
             return
         }
         commitToModel()
-        navigateTo(Routes.CreateOfferPrice)
+        navigateTo(NavRoute.CreateOfferPrice)
     }
 
     fun navigateToReputation() {

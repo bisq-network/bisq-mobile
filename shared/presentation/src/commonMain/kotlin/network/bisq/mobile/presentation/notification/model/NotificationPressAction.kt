@@ -1,6 +1,6 @@
 package network.bisq.mobile.presentation.notification.model
 
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.DeepLinkableRoute
 
 /**
  * Represents an action that will be taken when a NotificationButton is pressed
@@ -10,9 +10,8 @@ import network.bisq.mobile.presentation.ui.navigation.Routes
 sealed class NotificationPressAction {
     abstract val id: String
 
-    // TODO: fix after nav refactor to accept a Route class
     data class Route(
-        val route: Routes,
+        val route: DeepLinkableRoute,
         override val id: String = "route",
     ) : NotificationPressAction()
 

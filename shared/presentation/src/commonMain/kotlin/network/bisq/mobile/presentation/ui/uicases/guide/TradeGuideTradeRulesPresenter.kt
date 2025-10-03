@@ -6,7 +6,7 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
-import network.bisq.mobile.presentation.ui.navigation.Routes
+import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 class TradeGuideTradeRulesPresenter(
     mainPresenter: MainPresenter,
@@ -25,7 +25,7 @@ class TradeGuideTradeRulesPresenter(
             if (!isConfirmed) {
                 settingsServiceFacade.confirmTradeRules(true)
             }
-            navigateBackTo(Routes.TradeGuideSecurity, true, false)
+            navigateBackTo(NavRoute.TradeGuideSecurity, true, false)
             navigateBack()
         }
     }

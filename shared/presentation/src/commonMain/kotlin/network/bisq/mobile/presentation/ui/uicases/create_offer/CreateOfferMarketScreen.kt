@@ -23,7 +23,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 @Composable
-fun CreateOfferCurrencySelectorScreen() {
+fun CreateOfferMarketScreen() {
     val presenter: CreateOfferMarketPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
