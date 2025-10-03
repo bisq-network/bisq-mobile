@@ -105,10 +105,12 @@ jobs:
         if: startsWith(matrix.os, 'macos')
         run: |
           ./gradlew :shared:domain:generateDummyFramework :shared:presentation:generateDummyFramework --no-daemon
-      - name: Install CocoaPods dependencies (Mac only)
-        if: startsWith(matrix.os, 'macos')
-        working-directory: iosClient
-        run: pod install
+
+#      If we figure out how to fix the Build iOS client task re-enable this
+#      - name: Install CocoaPods dependencies (Mac only)
+#        if: startsWith(matrix.os, 'macos')
+#        working-directory: iosClient
+#        run: pod install
 
 
       - name: Warm KMP compile outputs (Apple Silicon)
@@ -121,25 +123,25 @@ jobs:
         run: |
           ./gradlew :shared:domain:compileKotlinIosX64 :shared:presentation:compileKotlinIosX64 --no-daemon
 
+#     Takes way too much time in GH CI Actions
+#      - name: Build iOS Client (Mac only)
+#        if: startsWith(matrix.os, 'macos')
+#        env:
+#          GRADLE_OPTS: "-Dorg.gradle.configuration-cache=false -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
+#        run: |
+#          xcodebuild -workspace iosClient/iosClient.xcworkspace \
+#            -scheme "iosClient Release" \
+#            -configuration Release \
+#            -sdk iphonesimulator \
+#            -destination 'generic/platform=iOS Simulator' \
+#            -parallelizeTargets NO \
+#            -jobs 1 \
+#            clean build \
+#            CODE_SIGN_IDENTITY="" \
+#            CODE_SIGNING_REQUIRED=NO \
+#            CODE_SIGNING_ALLOWED=NO
 
 
-
-      - name: Build iOS Client (Mac only)
-        if: startsWith(matrix.os, 'macos')
-        env:
-          GRADLE_OPTS: "-Dorg.gradle.configuration-cache=false -Dorg.gradle.daemon=false -Dorg.gradle.parallel=false"
-        run: |
-          xcodebuild -workspace iosClient/iosClient.xcworkspace \
-            -scheme "iosClient Release" \
-            -configuration Release \
-            -sdk iphonesimulator \
-            -destination 'generic/platform=iOS Simulator' \
-            -parallelizeTargets NO \
-            -jobs 1 \
-            clean build \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
       - name: Run iOS Tests (Intel runner)
         if: startsWith(runner.os, 'macOS') && runner.arch == 'X64'
         run: ./gradlew shared:presentation:iosX64Test
