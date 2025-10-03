@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlowPresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlowPresenter.TradePhaseState.BUYER_STATE1A
+import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlowPresenter.TradePhaseState.BUYER_STATE1B
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlowPresenter.TradePhaseState.BUYER_STATE2A
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlowPresenter.TradePhaseState.BUYER_STATE2B
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.TradeFlowPresenter.TradePhaseState.BUYER_STATE3A
@@ -53,6 +54,7 @@ class TradeStatesProvider(
             SELLER_STATE_LIGHTNING3B -> sellerStateLightning3bPresenter
             SELLER_STATE4 -> sellerState4Presenter
             BUYER_STATE1A -> buyerState1aPresenter
+            BUYER_STATE1B -> buyerState1aPresenter // not used
             BUYER_STATE2A -> buyerState2aPresenter
             BUYER_STATE2B -> buyerState2bPresenter
             BUYER_STATE3A -> buyerState3aPresenter
@@ -62,6 +64,4 @@ class TradeStatesProvider(
             else -> throw IllegalArgumentException("No presenter for the given phase $phase")
         })
     }
-
-
 }
