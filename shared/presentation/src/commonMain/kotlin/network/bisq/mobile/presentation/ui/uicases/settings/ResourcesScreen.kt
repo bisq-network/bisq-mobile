@@ -37,6 +37,7 @@ fun ResourcesScreen() {
     val isInteractive by presenter.isInteractive.collectAsState()
     val versionInfo by presenter.versionInfo.collectAsState()
     val deviceInfo by presenter.deviceInfo.collectAsState()
+    val showBackupAndRestore by presenter.showBackupAndRestore.collectAsState()
 
     val dividerModifier = Modifier.padding(top = BisqUIConstants.ScreenPaddingHalf, bottom = BisqUIConstants.ScreenPadding)
 
@@ -59,38 +60,39 @@ fun ResourcesScreen() {
             onClick = { presenter.onOpenWalletGuide() }
         )
 
-        BisqHDivider(modifier = dividerModifier)
-        BisqGap.V1()
-        BisqText.h3Light("mobile.resources.backup.headline".i18n(), color = BisqTheme.colors.light_grey50)
-        BisqText.smallLight(
-            text = "mobile.resources.backup.export.info".i18n(),
-            color = BisqTheme.colors.mid_grey20,
-            modifier = Modifier
-                .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
-        )
-        BisqButton(
-            text = "mobile.resources.backup.export".i18n(),
-            onClick = presenter::onExportDataDir,
-            type = BisqButtonType.Outline,
-            modifier = Modifier.fillMaxWidth()
-                .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
-        )
+        if (showBackupAndRestore) {
+            BisqHDivider(modifier = dividerModifier)
+            BisqGap.V1()
+            BisqText.h3Light("mobile.resources.backup.headline".i18n(), color = BisqTheme.colors.light_grey50)
+            BisqText.smallLight(
+                text = "mobile.resources.backup.export.info".i18n(),
+                color = BisqTheme.colors.mid_grey20,
+                modifier = Modifier
+                    .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
+            )
+            BisqButton(
+                text = "mobile.resources.backup.export".i18n(),
+                onClick = presenter::onExportDataDir,
+                type = BisqButtonType.Outline,
+                modifier = Modifier.fillMaxWidth()
+                    .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
+            )
 
-        BisqGap.V1()
-        BisqText.smallLight(
-            text = "mobile.resources.backup.import.info".i18n(),
-            color = BisqTheme.colors.mid_grey20,
-            modifier = Modifier
-                .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
-        )
-        BisqButton(
-            text = "mobile.resources.backup.import".i18n(),
-            onClick = presenter::onImport,
-            type = BisqButtonType.Outline,
-            modifier = Modifier.fillMaxWidth()
-                .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
-        )
-
+            BisqGap.V1()
+            BisqText.smallLight(
+                text = "mobile.resources.backup.import.info".i18n(),
+                color = BisqTheme.colors.mid_grey20,
+                modifier = Modifier
+                    .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
+            )
+            BisqButton(
+                text = "mobile.resources.backup.import".i18n(),
+                onClick = presenter::onImport,
+                type = BisqButtonType.Outline,
+                modifier = Modifier.fillMaxWidth()
+                    .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
+            )
+        }
 
         BisqHDivider(modifier = dividerModifier)
         BisqGap.V1()

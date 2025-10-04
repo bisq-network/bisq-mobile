@@ -9,17 +9,20 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
-class ResourcesPresenter(
+open class ResourcesPresenter(
     mainPresenter: MainPresenter,
     private var versionProvider: VersionProvider,
     private var deviceInfoProvider: DeviceInfoProvider
 ) : BasePresenter(mainPresenter) {
 
-    protected val _versionInfo: MutableStateFlow<String> = MutableStateFlow("")
+    private val _versionInfo: MutableStateFlow<String> = MutableStateFlow("")
     val versionInfo: StateFlow<String> get() = _versionInfo.asStateFlow()
 
-    protected val _deviceInfo: MutableStateFlow<String> = MutableStateFlow("")
+    private val _deviceInfo: MutableStateFlow<String> = MutableStateFlow("")
     val deviceInfo: StateFlow<String> get() = _deviceInfo.asStateFlow()
+
+    protected val _showBackupAndRestore: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val showBackupAndRestore: StateFlow<Boolean> get() = _showBackupAndRestore.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()

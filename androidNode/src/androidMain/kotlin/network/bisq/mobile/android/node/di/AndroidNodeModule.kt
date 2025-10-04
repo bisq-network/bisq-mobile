@@ -6,6 +6,7 @@ import network.bisq.mobile.android.node.presentation.NodeDashboardPresenter
 import network.bisq.mobile.android.node.presentation.NodeMainPresenter
 import network.bisq.mobile.android.node.presentation.NodeMiscItemsPresenter
 import network.bisq.mobile.android.node.presentation.NodeOnboardingPresenter
+import network.bisq.mobile.android.node.presentation.NodeResourcesPresenter
 import network.bisq.mobile.android.node.presentation.NodeSettingsPresenter
 import network.bisq.mobile.android.node.presentation.NodeSplashPresenter
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
@@ -52,6 +53,7 @@ import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.MiscItemsPresenter
+import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
@@ -168,6 +170,8 @@ val androidNodeModule = module {
     }
 
     single<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
+
+    single<ResourcesPresenter> { NodeResourcesPresenter(get(), get(), get()) }
 
     single<DeviceInfoProvider> { AndroidDeviceInfoProvider(androidContext()) }
 
