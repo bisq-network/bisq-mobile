@@ -67,7 +67,7 @@ open class ResourcesPresenter(
         // Node will provide implementation as only used in node mode
     }
 
-    open fun onRestoreDataDir() {
+    open fun onRestoreDataDir(fileName: String, password: String?, data: ByteArray) {
         // Node will provide implementation as only used in node mode
     }
 }

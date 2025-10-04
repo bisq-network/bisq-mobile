@@ -170,7 +170,7 @@ val androidNodeModule = module {
 
     single<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
 
-    single<ResourcesPresenter> { NodeResourcesPresenter(get(), get(), get()) }
+    single<ResourcesPresenter> { NodeResourcesPresenter(get(), get(), get(), get()) }
 
     single<DeviceInfoProvider> { AndroidDeviceInfoProvider(androidContext()) }
 
