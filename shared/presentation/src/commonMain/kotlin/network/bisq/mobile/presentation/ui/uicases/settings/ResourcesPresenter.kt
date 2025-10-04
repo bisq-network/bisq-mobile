@@ -48,4 +48,10 @@ class ResourcesPresenter(
     fun onOpenWebUrl(url: String) {
         navigateToUrl(url)
     }
+
+    fun onExportDataDir() {
+    }
+
+    fun onImport() {
+    }
 }
