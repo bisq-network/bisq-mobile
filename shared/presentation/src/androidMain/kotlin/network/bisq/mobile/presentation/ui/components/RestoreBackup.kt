@@ -39,7 +39,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 const val backupPrefix = "bisq2_mobile-backup-"
-
+private const val MAX_BACKUP_SIZE_BYTES = 200L * 1024 * 1024
 @Composable
 actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Unit) {
     val context = LocalContext.current
@@ -69,7 +69,7 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Unit) 
                 scope.launch(Dispatchers.IO) {
                     try {
                         val size = context.contentResolver.openFileDescriptor(selectedUri, "r").use { it?.statSize } ?: 0
-                        if (size > 10 * 1024 * 1024) {
+                        if (size > MAX_BACKUP_SIZE_BYTES) {
                             withContext(Dispatchers.Main) {
                                 errorMessage = "mobile.resources.restore.error.fileSizeTooLarge".i18n()
                             }
