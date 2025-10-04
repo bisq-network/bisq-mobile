@@ -61,19 +61,28 @@ class NodeMainApplication : MainApplication() {
             log.i { "Restore from backup" }
             val dbDir = File(filesDir, "Bisq2_mobile/db")
 
+            val backupPrivate = File(backupDir, "private")
+            val targetPrivate = File(dbDir, "private")
+            val backupSettings = File(backupDir, "settings")
+            val targetSettings = File(dbDir, "settings")
             moveDirReplace(
-                File(backupDir, "private"),
-                File(dbDir, "private")
+                backupPrivate,
+                targetPrivate
             )
             moveDirReplace(
-                File(backupDir, "settings"),
-                File(dbDir, "settings")
+                backupSettings,
+                targetSettings
             )
-
-            if (backupDir.deleteRecursively()) {
-                log.i { "We restored successfully from a backup" }
+            val restoreSucceeded = !backupPrivate.exists() && targetPrivate.exists() &&
+                    !backupSettings.exists() && targetSettings.exists()
+            if (restoreSucceeded) {
+                if (backupDir.deleteRecursively()) {
+                    log.i { "We restored successfully from a backup" }
+                } else {
+                    log.w { "Could not delete backup dir at restore from backup" }
+                }
             } else {
-                log.w { "Could not delete backup dir at restore from backup" }
+                log.w { "Restore incomplete; keeping backup dir at ${backupDir.absolutePath}" }
             }
         }
     }

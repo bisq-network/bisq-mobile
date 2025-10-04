@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,7 +68,10 @@ open class ResourcesPresenter(
         // Node will provide implementation as only used in node mode
     }
 
-    open fun onRestoreDataDir(fileName: String, password: String?, data: ByteArray) {
+    open fun onRestoreDataDir(fileName: String, password: String?, data: ByteArray): CompletableDeferred<String?> {
         // Node will provide implementation as only used in node mode
+        val result: CompletableDeferred<String?> = CompletableDeferred()
+        result.complete(null)
+        return result
     }
 }

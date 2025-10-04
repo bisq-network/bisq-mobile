@@ -23,6 +23,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import co.touchlab.kermit.Logger
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -39,9 +40,10 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 const val backupPrefix = "bisq2_mobile-backup-"
+private const val MAX_BACKUP_SIZE_BYTES = 200L * 1024 * 1024
 
 @Composable
-actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Unit) {
+actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> CompletableDeferred<String?>) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val log: Logger = remember { getLogger("ImportBackupFile") }
@@ -69,7 +71,7 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Unit) 
                 scope.launch(Dispatchers.IO) {
                     try {
                         val size = context.contentResolver.openFileDescriptor(selectedUri, "r").use { it?.statSize } ?: 0
-                        if (size > 10 * 1024 * 1024) {
+                        if (size > MAX_BACKUP_SIZE_BYTES) {
                             withContext(Dispatchers.Main) {
                                 errorMessage = "mobile.resources.restore.error.fileSizeTooLarge".i18n()
                             }
@@ -104,7 +106,16 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Unit) 
                                 selectedFileData = bytes
                                 showPasswordOverlay = true
                             } else {
-                                onRestoreBackup(fileName, null, bytes)
+                                val deferredErrorMessage: CompletableDeferred<String?> = onRestoreBackup(fileName, null, bytes)
+                                deferredErrorMessage.invokeOnCompletion { throwable ->
+                                    scope.launch(Dispatchers.Main) {
+                                        if (throwable != null) {
+                                            errorMessage = throwable.message ?: throwable.toString().take(20)
+                                        } else {
+                                            showPasswordOverlay = false
+                                        }
+                                    }
+                                }
                             }
                         }
                     } catch (e: Exception) {
@@ -138,9 +149,17 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Unit) 
                 val fileName = selectedFileName
                 val data = selectedFileData
                 if (fileName != null && data != null) {
-                    onRestoreUpdated(fileName, password, data)
+                    val deferredErrorMessage: CompletableDeferred<String?> = onRestoreUpdated(fileName, password, data)
+                    deferredErrorMessage.invokeOnCompletion { throwable ->
+                        scope.launch(Dispatchers.Main) {
+                            if (throwable != null) {
+                                errorMessage = throwable.message ?: throwable.toString().take(20)
+                            } else {
+                                showPasswordOverlay = false
+                            }
+                        }
+                    }
                 }
-                showPasswordOverlay = false
                 selectedFileName = null
                 selectedFileData = null
             },
