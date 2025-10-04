@@ -3,13 +3,13 @@ package network.bisq.mobile.presentation.ui.components.molecules.chat
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
-import org.junit.Rule
-import org.junit.Test
-import org.junit.Ignore
-import network.bisq.mobile.i18n.I18nSupport
-import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryInfoVO
 import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryStatusEnum
+import network.bisq.mobile.i18n.I18nSupport
+import network.bisq.mobile.i18n.i18n
+import org.junit.Ignore
+import org.junit.Rule
+import org.junit.Test
 
 class MessageDeliveryInfoAndroidUiTest {
 
@@ -24,7 +24,6 @@ class MessageDeliveryInfoAndroidUiTest {
             network.bisq.mobile.presentation.ui.theme.BisqTheme {
                 MessageDeliveryInfo(
                     map = emptyMap(),
-                    multiplePeers = false,
                     userNameProvider = { _ -> "Alice" }
                 )
             }
@@ -49,7 +48,6 @@ class MessageDeliveryInfoAndroidUiTest {
             network.bisq.mobile.presentation.ui.theme.BisqTheme {
                 MessageDeliveryInfo(
                     map = map,
-                    multiplePeers = false,
                     userNameProvider = { _ -> "Alice" }
                 )
             }
