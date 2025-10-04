@@ -9,17 +9,23 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.navigation.Routes
 
-class ResourcesPresenter(
+open class ResourcesPresenter(
     mainPresenter: MainPresenter,
     private var versionProvider: VersionProvider,
     private var deviceInfoProvider: DeviceInfoProvider
 ) : BasePresenter(mainPresenter) {
 
-    protected val _versionInfo: MutableStateFlow<String> = MutableStateFlow("")
+    private val _versionInfo: MutableStateFlow<String> = MutableStateFlow("")
     val versionInfo: StateFlow<String> get() = _versionInfo.asStateFlow()
 
-    protected val _deviceInfo: MutableStateFlow<String> = MutableStateFlow("")
+    private val _deviceInfo: MutableStateFlow<String> = MutableStateFlow("")
     val deviceInfo: StateFlow<String> get() = _deviceInfo.asStateFlow()
+
+    protected val _showBackupAndRestore: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val showBackupAndRestore: StateFlow<Boolean> get() = _showBackupAndRestore.asStateFlow()
+
+    protected val _showBackupOverlay: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val showBackupOverlay: StateFlow<Boolean> get() = _showBackupOverlay.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -47,5 +53,21 @@ class ResourcesPresenter(
 
     fun onOpenWebUrl(url: String) {
         navigateToUrl(url)
+    }
+
+    open fun onBackupDataDir() {
+        _showBackupOverlay.value = true
+    }
+
+    open fun onDismissBackupOverlay() {
+        _showBackupOverlay.value = false
+    }
+
+    open fun onBackupDataDir(password: String?) {
+        // Node will provide implementation as only used in node mode
+    }
+
+    open fun onRestoreDataDir(fileName: String, password: String?, data: ByteArray) {
+        // Node will provide implementation as only used in node mode
     }
 }
