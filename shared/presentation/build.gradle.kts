@@ -16,7 +16,9 @@ dependencies {
     androidTestImplementation(libs.androidx.test.compose.junit4)
     androidTestImplementation(libs.androidx.test.compose.manifest)
     debugImplementation(compose.uiTooling)
+    debugImplementation(libs.androidx.test.compose.manifest)
 }
+
 
 version = project.findProperty("shared.version") as String
 
@@ -62,7 +64,7 @@ kotlin {
             implementation(libs.logging.kermit)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.kotlinx.datetime)
-            
+
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.navigation.compose)
@@ -83,6 +85,7 @@ kotlin {
             implementation(libs.robolectric)
             implementation(libs.androidx.test.core)
             implementation(libs.androidx.test.espresso.core)
+            implementation(libs.androidx.test.compose.junit4)
             implementation(libs.androidx.test.junit)
         }
         val commonTest by getting {
