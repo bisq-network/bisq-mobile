@@ -24,6 +24,9 @@ open class ResourcesPresenter(
     protected val _showBackupAndRestore: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val showBackupAndRestore: StateFlow<Boolean> get() = _showBackupAndRestore.asStateFlow()
 
+    protected val _showBackupOverlay: MutableStateFlow<Boolean> = MutableStateFlow(false)
+    val showBackupOverlay: StateFlow<Boolean> get() = _showBackupOverlay.asStateFlow()
+
     override fun onViewAttached() {
         super.onViewAttached()
 
@@ -52,9 +55,19 @@ open class ResourcesPresenter(
         navigateToUrl(url)
     }
 
-    fun onExportDataDir() {
+    open fun onBackupDataDir() {
+        _showBackupOverlay.value = true
     }
 
-    fun onImport() {
+    open fun onDismissBackupOverlay() {
+        _showBackupOverlay.value = false
+    }
+
+    open fun onBackupDataDir(password: String?) {
+        // Node will provide implementation as only used in node mode
+    }
+
+    open fun onRestoreDataDir() {
+        // Node will provide implementation as only used in node mode
     }
 }
