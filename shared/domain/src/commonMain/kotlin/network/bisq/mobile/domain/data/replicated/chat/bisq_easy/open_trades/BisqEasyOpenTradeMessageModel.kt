@@ -6,17 +6,21 @@ import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
+import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryInfoVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
+import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.i18n.I18nSupport
 
 class BisqEasyOpenTradeMessageModel(
-    bisqEasyOpenTradeMessage: BisqEasyOpenTradeMessageDto,
+    private val bisqEasyOpenTradeMessage: BisqEasyOpenTradeMessageDto,
     myUserProfile: UserProfileVO,
-    chatReactions: List<BisqEasyOpenTradeMessageReactionVO>
+    chatReactions: List<BisqEasyOpenTradeMessageReactionVO>,
+    private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
 ) {
+
     val senderUserProfile: UserProfileVO = bisqEasyOpenTradeMessage.senderUserProfile
     private val myUserProfileId = myUserProfile.id
 
@@ -46,12 +50,19 @@ class BisqEasyOpenTradeMessageModel(
     val senderUserName = senderUserProfile.userName
     val citationString: String = citation?.text ?: ""
     val isMyMessage: Boolean = senderUserProfileId == myUserProfileId
-
     fun isMyChatReaction(reaction: BisqEasyOpenTradeMessageReactionVO): Boolean {
         return myUserProfileId == reaction.senderUserProfile.id
     }
 
     fun setReactions(chatMessageReactions: List<BisqEasyOpenTradeMessageReactionVO>) {
         _chatReactions.value = chatMessageReactions
+    }
+
+    fun removeMessageDeliveryStatusObserver() {
+        messageDeliveryServiceFacade.removeMessageDeliveryStatusObserver(bisqEasyOpenTradeMessage.messageId)
+    }
+
+    fun addMessageDeliveryStatusObserver(): StateFlow<Map<String, MessageDeliveryInfoVO>> {
+        return messageDeliveryServiceFacade.addMessageDeliveryStatusObserver(bisqEasyOpenTradeMessage.messageId)
     }
 }

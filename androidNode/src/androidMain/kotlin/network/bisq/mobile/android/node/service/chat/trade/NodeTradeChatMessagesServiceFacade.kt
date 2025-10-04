@@ -21,6 +21,7 @@ import network.bisq.mobile.domain.data.replicated.presentation.open_trades.Trade
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
+import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import java.util.Optional
 import kotlin.jvm.optionals.getOrNull
@@ -28,7 +29,8 @@ import kotlin.jvm.optionals.getOrNull
 // When we add other chat types we will refactor that class to provide a base class for the common areas.
 class NodeTradeChatMessagesServiceFacade(
     applicationService: AndroidApplicationService.Provider,
-    private val tradesServiceFacade: TradesServiceFacade
+    private val tradesServiceFacade: TradesServiceFacade,
+    private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade
 ) : ServiceFacade(), TradeChatMessagesServiceFacade {
 
     // Dependencies
@@ -144,7 +146,8 @@ class NodeTradeChatMessagesServiceFacade(
                 val model: BisqEasyOpenTradeMessageModel = Mappings.BisqEasyOpenTradeMessageModelMapping.fromBisq2Model(
                     message,
                     citationAuthorUserProfile,
-                    myUserProfile
+                    myUserProfile,
+                    messageDeliveryServiceFacade
                 )
                 openTradeItem.bisqEasyOpenTradeChannelModel.addChatMessages(model)
             }

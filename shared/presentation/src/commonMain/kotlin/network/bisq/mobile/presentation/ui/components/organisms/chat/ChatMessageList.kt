@@ -14,12 +14,14 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,7 +38,7 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.molecules.JumpToBottomFloatingButton
-import network.bisq.mobile.presentation.ui.components.molecules.chat.TextMessageBox
+import network.bisq.mobile.presentation.ui.components.molecules.chat.ChatTextMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.private_messages.ChatRulesWarningMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.ProtocolLogMessageBox
 import network.bisq.mobile.presentation.ui.components.molecules.chat.trade.TradePeerLeftMessageBox
@@ -61,6 +63,8 @@ fun ChatMessageList(
     onDontShowAgainChatRulesWarningBox: () -> Unit = {},
     onUpdateReadCount: (Int) -> Unit = {},
     modifier: Modifier = Modifier,
+    onResendMessage: (String) -> Unit,
+    userNameProvider: suspend (String) -> String,
 ) {
     val scope = rememberCoroutineScope()
     var jumpToBottomVisible by remember { mutableStateOf(false) }
@@ -84,6 +88,15 @@ fun ChatMessageList(
             (messages.size - initialReadCount).coerceIn(0, messages.size)
         } else {
             0
+        }
+    }
+
+    val latestMessages by rememberUpdatedState(messages)
+    DisposableEffect(Unit) {
+        onDispose {
+            latestMessages.forEach {
+                it.removeMessageDeliveryStatusObserver()
+            }
         }
     }
 
@@ -177,7 +190,10 @@ fun ChatMessageList(
                                     fadeInSpec = fadeAnimSpec,
                                     fadeOutSpec = fadeAnimSpec,
                                     placementSpec = placementAnimSpec
-                                )
+                                ),
+                                onResendMessage = onResendMessage,
+                                userNameProvider = userNameProvider,
+                                messageDeliveryInfoByPeersProfileId = message.addMessageDeliveryStatusObserver()
                             )
                         }
 
@@ -193,7 +209,7 @@ fun ChatMessageList(
                         }
 
                         else -> {
-                            TextMessageBox(
+                            ChatTextMessageBox(
                                 message = message,
                                 userProfileIconProvider = userProfileIconProvider,
                                 onScrollToMessage = { id ->
@@ -223,6 +239,9 @@ fun ChatMessageList(
                                     fadeOutSpec = fadeAnimSpec,
                                     placementSpec = placementAnimSpec
                                 ),
+                                onResendMessage = onResendMessage,
+                                userNameProvider = userNameProvider,
+                                messageDeliveryInfoByPeersProfileId = message.addMessageDeliveryStatusObserver()
                             )
                         }
                     }

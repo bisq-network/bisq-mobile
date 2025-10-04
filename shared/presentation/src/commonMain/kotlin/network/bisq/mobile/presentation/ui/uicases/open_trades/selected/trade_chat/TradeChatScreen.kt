@@ -80,6 +80,8 @@ fun TradeChatScreen() {
                 onDontShowAgainChatRulesWarningBox = presenter::onDontShowAgainChatRulesWarningBox,
                 onUpdateReadCount = presenter::onUpdateReadCount,
                 modifier = Modifier.weight(1f),
+                onResendMessage = { messageId -> presenter.onResendMessage(messageId) },
+                userNameProvider = { messageId -> presenter.getUserName(messageId) },
             )
         }
         ChatInputField(

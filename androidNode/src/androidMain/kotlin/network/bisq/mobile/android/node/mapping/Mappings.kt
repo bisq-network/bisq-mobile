@@ -42,6 +42,7 @@ import bisq.contract.Role
 import bisq.contract.bisq_easy.BisqEasyContract
 import bisq.identity.Identity
 import bisq.network.identity.NetworkId
+import bisq.network.p2p.services.confidential.ack.MessageDeliveryStatus
 import bisq.offer.Direction
 import bisq.offer.amount.spec.AmountSpec
 import bisq.offer.amount.spec.BaseSideFixedAmountSpec
@@ -76,7 +77,6 @@ import bisq.trade.bisq_easy.protocol.BisqEasyTradeState
 import bisq.user.identity.UserIdentity
 import bisq.user.profile.UserProfile
 import bisq.user.reputation.ReputationScore
-import network.bisq.mobile.android.node.BuildNodeConfig
 import network.bisq.mobile.domain.data.replicated.account.protocol_type.TradeProtocolTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.ChatChannelDomainEnum
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
@@ -106,6 +106,7 @@ import network.bisq.mobile.domain.data.replicated.contract.ContractSignatureData
 import network.bisq.mobile.domain.data.replicated.contract.PartyVO
 import network.bisq.mobile.domain.data.replicated.contract.RoleEnum
 import network.bisq.mobile.domain.data.replicated.identity.IdentityVO
+import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryStatusEnum
 import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
@@ -143,6 +144,7 @@ import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.userProfileDemoObj
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
+import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.PublicKey
@@ -310,7 +312,8 @@ class Mappings {
         fun fromBisq2Model(
             message: BisqEasyOpenTradeMessage,
             citationAuthorUserProfile: UserProfile?,
-            myUserProfile: UserProfile
+            myUserProfile: UserProfile,
+            messageDeliveryServiceFacade: MessageDeliveryServiceFacade
         ): BisqEasyOpenTradeMessageModel {
             userProfileDemoObj
             val citationAuthorUserProfileVO = citationAuthorUserProfile?.let { UserProfileMapping.fromBisq2Model(it) }
@@ -325,7 +328,8 @@ class Mappings {
             return BisqEasyOpenTradeMessageModel(
                 bisqEasyOpenTradeMessage,
                 myUserProfileVO,
-                chatMessageReactions
+                chatMessageReactions,
+                messageDeliveryServiceFacade
             )
         }
     }
@@ -761,6 +765,35 @@ class Mappings {
             )
         }
     }
+
+    // network.p2p.services.confidential.ack
+
+    object MessageDeliveryStatusMapping {
+        fun toBisq2Model(value: MessageDeliveryStatusEnum): MessageDeliveryStatus {
+            return when (value) {
+                MessageDeliveryStatusEnum.CONNECTING -> MessageDeliveryStatus.CONNECTING
+                MessageDeliveryStatusEnum.SENT -> MessageDeliveryStatus.SENT
+                MessageDeliveryStatusEnum.ACK_RECEIVED -> MessageDeliveryStatus.ACK_RECEIVED
+                MessageDeliveryStatusEnum.TRY_ADD_TO_MAILBOX -> MessageDeliveryStatus.TRY_ADD_TO_MAILBOX
+                MessageDeliveryStatusEnum.ADDED_TO_MAILBOX -> MessageDeliveryStatus.ADDED_TO_MAILBOX
+                MessageDeliveryStatusEnum.MAILBOX_MSG_RECEIVED -> MessageDeliveryStatus.MAILBOX_MSG_RECEIVED
+                MessageDeliveryStatusEnum.FAILED -> MessageDeliveryStatus.FAILED
+            }
+        }
+
+        fun fromBisq2Model(value: MessageDeliveryStatus): MessageDeliveryStatusEnum {
+            return when (value) {
+                MessageDeliveryStatus.CONNECTING -> MessageDeliveryStatusEnum.CONNECTING
+                MessageDeliveryStatus.SENT -> MessageDeliveryStatusEnum.SENT
+                MessageDeliveryStatus.ACK_RECEIVED -> MessageDeliveryStatusEnum.ACK_RECEIVED
+                MessageDeliveryStatus.TRY_ADD_TO_MAILBOX -> MessageDeliveryStatusEnum.TRY_ADD_TO_MAILBOX
+                MessageDeliveryStatus.ADDED_TO_MAILBOX -> MessageDeliveryStatusEnum.ADDED_TO_MAILBOX
+                MessageDeliveryStatus.MAILBOX_MSG_RECEIVED -> MessageDeliveryStatusEnum.MAILBOX_MSG_RECEIVED
+                MessageDeliveryStatus.FAILED -> MessageDeliveryStatusEnum.FAILED
+            }
+        }
+    }
+
 
 
     // offer

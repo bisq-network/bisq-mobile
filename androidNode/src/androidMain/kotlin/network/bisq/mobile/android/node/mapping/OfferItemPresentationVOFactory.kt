@@ -51,7 +51,10 @@ object OfferItemPresentationVOFactory {
         val isMyOffer = bisqEasyOfferbookMessage.isMyMessage(userIdentityService)
 
         val authorUserProfileId = bisqEasyOfferbookMessage.authorUserProfileId
-        val authorUserProfile = Mappings.UserProfileMapping.fromBisq2Model(userProfileService.findUserProfile(authorUserProfileId).get())
+        val optionalAuthorUserProfile = userProfileService.findUserProfile(authorUserProfileId)
+        check(optionalAuthorUserProfile.isPresent) { "AuthorUserProfile with userProfileId $authorUserProfileId is not present." }
+        val userProfile = optionalAuthorUserProfile.get()
+        val authorUserProfile = Mappings.UserProfileMapping.fromBisq2Model(userProfile)
 
         // For now, we get also the formatted values as we have not the complex formatters in mobile impl. yet.
         // We might need to replicate the formatters anyway later and then those fields could be removed

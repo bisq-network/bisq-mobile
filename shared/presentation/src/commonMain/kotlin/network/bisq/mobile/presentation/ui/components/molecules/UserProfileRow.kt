@@ -39,8 +39,8 @@ fun UserProfileRow(
                 if (badgeCount > 0) {
                     AnimatedBadge(
                         text = badgeCount.toString(),
-                        xOffset = 2.dp,
-                        yOffset = 24.dp
+                        xOffset = 3.dp,
+                        yOffset = 35.dp
                     )
                 }
             }) {

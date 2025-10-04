@@ -21,6 +21,7 @@ import network.bisq.mobile.client.service.market.ClientMarketPriceServiceFacade
 import network.bisq.mobile.client.service.market.MarketPriceApiGateway
 import network.bisq.mobile.client.service.mediation.ClientMediationServiceFacade
 import network.bisq.mobile.client.service.mediation.MediationApiGateway
+import network.bisq.mobile.client.service.message_delivery.ClientMessageDeliveryServiceFacade
 import network.bisq.mobile.client.service.network.ClientNetworkServiceFacade
 import network.bisq.mobile.client.service.offers.ClientOffersServiceFacade
 import network.bisq.mobile.client.service.offers.OfferbookApiGateway
@@ -68,6 +69,7 @@ import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
+import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -195,7 +197,7 @@ val clientModule = module {
     single<TradesServiceFacade> { ClientTradesServiceFacade(get(), get(), get()) }
 
     single { TradeChatMessagesApiGateway(get(), get()) }
-    single<TradeChatMessagesServiceFacade> { ClientTradeChatMessagesServiceFacade(get(), get(), get(), get()) }
+    single<TradeChatMessagesServiceFacade> { ClientTradeChatMessagesServiceFacade(get(), get(), get(), get(), get()) }
 
     single { ExplorerApiGateway(get()) }
     single<ExplorerServiceFacade> { ClientExplorerServiceFacade(get()) }
@@ -213,4 +215,6 @@ val clientModule = module {
 
     single { ReputationApiGateway(get(), get()) }
     single<ReputationServiceFacade> { ClientReputationServiceFacade(get(), get()) }
+
+    single<MessageDeliveryServiceFacade> { ClientMessageDeliveryServiceFacade() }
 }

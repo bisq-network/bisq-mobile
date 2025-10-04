@@ -17,6 +17,7 @@ import network.bisq.mobile.android.node.service.common.NodeLanguageServiceFacade
 import network.bisq.mobile.android.node.service.explorer.NodeExplorerServiceFacade
 import network.bisq.mobile.android.node.service.market_price.NodeMarketPriceServiceFacade
 import network.bisq.mobile.android.node.service.mediation.NodeMediationServiceFacade
+import network.bisq.mobile.android.node.service.message_delivery.NodeMessageDeliveryServiceFacade
 import network.bisq.mobile.android.node.service.network.KmpTorService
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.android.node.service.network.NodeNetworkServiceFacade
@@ -35,6 +36,7 @@ import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
+import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -69,6 +71,8 @@ val androidNodeModule = module {
 
     single { AndroidApplicationService.Provider() }
 
+    single<MessageDeliveryServiceFacade> { NodeMessageDeliveryServiceFacade(get()) }
+
     single { NodeNetworkServiceFacade(get()) } bind NetworkServiceFacade::class
 
     single<KmpTorService> { KmpTorService() }
@@ -85,7 +89,7 @@ val androidNodeModule = module {
 
     single<TradesServiceFacade> { NodeTradesServiceFacade(get()) }
 
-    single<TradeChatMessagesServiceFacade> { NodeTradeChatMessagesServiceFacade(get(), get()) }
+    single<TradeChatMessagesServiceFacade> { NodeTradeChatMessagesServiceFacade(get(), get(), get()) }
 
     single<MediationServiceFacade> { NodeMediationServiceFacade(get()) }
 
@@ -103,6 +107,7 @@ val androidNodeModule = module {
 
     single<NodeApplicationLifecycleService> {
         NodeApplicationLifecycleService(
+            get(),
             get(),
             get(),
             get(),
