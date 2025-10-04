@@ -144,7 +144,6 @@ import network.bisq.mobile.domain.data.replicated.user.identity.UserIdentityVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.userProfileDemoObj
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
-import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import java.security.KeyPair
 import java.security.PrivateKey
 import java.security.PublicKey
@@ -313,7 +312,6 @@ class Mappings {
             message: BisqEasyOpenTradeMessage,
             citationAuthorUserProfile: UserProfile?,
             myUserProfile: UserProfile,
-            messageDeliveryServiceFacade: MessageDeliveryServiceFacade
         ): BisqEasyOpenTradeMessageModel {
             userProfileDemoObj
             val citationAuthorUserProfileVO = citationAuthorUserProfile?.let { UserProfileMapping.fromBisq2Model(it) }
@@ -329,7 +327,6 @@ class Mappings {
                 bisqEasyOpenTradeMessage,
                 myUserProfileVO,
                 chatMessageReactions,
-                messageDeliveryServiceFacade
             )
         }
     }

@@ -91,7 +91,7 @@ class MainPresenterUnreadBadgeTest {
         every { dto1.mediator } returns null
         every { dto1.bisqEasyOffer } returns null
         every { dto1.citationAuthorUserProfile } returns null
-        val model1 = BisqEasyOpenTradeMessageModel(dto1, myUserProfile, emptyList(), messageDeliveryServiceFacade)
+        val model1 = BisqEasyOpenTradeMessageModel(dto1, myUserProfile, emptyList())
 
         val dto2 = mockk<BisqEasyOpenTradeMessageDto>()
         every { dto2.chatMessageType } returns ChatMessageTypeEnum.TEXT
@@ -104,7 +104,7 @@ class MainPresenterUnreadBadgeTest {
         every { dto2.mediator } returns null
         every { dto2.bisqEasyOffer } returns null
         every { dto2.citationAuthorUserProfile } returns null
-        val model2 = BisqEasyOpenTradeMessageModel(dto2, myUserProfile, emptyList(), messageDeliveryServiceFacade)
+        val model2 = BisqEasyOpenTradeMessageModel(dto2, myUserProfile, emptyList())
 
         val dto3 = mockk<BisqEasyOpenTradeMessageDto>()
         every { dto3.chatMessageType } returns ChatMessageTypeEnum.TEXT
@@ -117,7 +117,7 @@ class MainPresenterUnreadBadgeTest {
         every { dto3.mediator } returns null
         every { dto3.bisqEasyOffer } returns null
         every { dto3.citationAuthorUserProfile } returns null
-        val model3 = BisqEasyOpenTradeMessageModel(dto3, myUserProfile, emptyList(), messageDeliveryServiceFacade)
+        val model3 = BisqEasyOpenTradeMessageModel(dto3, myUserProfile, emptyList())
 
         val trade1MessagesFlow: StateFlow<Set<BisqEasyOpenTradeMessageModel>> = MutableStateFlow(setOf(model1, model2, model3))
 
@@ -133,7 +133,7 @@ class MainPresenterUnreadBadgeTest {
         every { dto4.mediator } returns null
         every { dto4.bisqEasyOffer } returns null
         every { dto4.citationAuthorUserProfile } returns null
-        val model4 = BisqEasyOpenTradeMessageModel(dto4, myUserProfile, emptyList(), messageDeliveryServiceFacade)
+        val model4 = BisqEasyOpenTradeMessageModel(dto4, myUserProfile, emptyList())
 
         val trade2MessagesFlow = MutableStateFlow(setOf(model4))
 

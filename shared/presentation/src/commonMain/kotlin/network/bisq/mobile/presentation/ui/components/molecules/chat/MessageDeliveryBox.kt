@@ -1,20 +1,15 @@
 package network.bisq.mobile.presentation.ui.components.molecules.chat
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ColorFilter
@@ -38,34 +33,39 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
 @Composable
 fun MessageDeliveryBox(
-    modifier: Modifier = Modifier,
     onResendMessage: (String) -> Unit,
     userNameProvider: suspend (String) -> String,
     messageDeliveryInfoByPeersProfileId: StateFlow<Map<String, MessageDeliveryInfoVO>>,
+    showInfo: Boolean,
+    onDismissMenu: () -> Unit,
 ) {
     val map by messageDeliveryInfoByPeersProfileId.collectAsState()
-
-    var showInfo by remember { mutableStateOf(false) }
-    val onShowInfo: (Boolean) -> Unit = { showInfo = it }
 
     if (map.isEmpty()) {
         return
     }
 
-    val multiplePeers = map.size > 1
-
     Column(
-        modifier = modifier.wrapContentSize(),
-        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter),
-        horizontalAlignment = Alignment.End
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.End,
     ) {
+        DropdownMenu(
+            expanded = showInfo,
+            onDismissRequest = onDismissMenu,
+            containerColor = BisqTheme.colors.dark_grey50,
+            offset = DpOffset(
+                x = 0.dp,
+                y = BisqUIConstants.ScreenPaddingQuarter
+            ),
+        ) {
+            MessageDeliveryInfo(map, userNameProvider)
+        }
         map.values.forEach { messageDeliveryInfo ->
             val messageDeliveryStatus = messageDeliveryInfo.messageDeliveryStatus
 
             Row(
                 modifier = Modifier
-                    .semantics(mergeDescendants = true) {}
-                    .clickable(onClick = { onShowInfo.invoke(true) }),
+                    .semantics(mergeDescendants = true) {},
                 verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalfQuarter),
             ) {
@@ -103,27 +103,15 @@ fun MessageDeliveryBox(
             }
         }
     }
-    // FIXME when visible the icons move a bit to the left. Have tried many attempts to solve that but without success.
-    DropdownMenu(
-        expanded = showInfo,
-        onDismissRequest = { showInfo = false },
-        containerColor = BisqTheme.colors.dark_grey50,
-        offset = DpOffset(
-            x = 0.dp,
-            y = BisqUIConstants.ScreenPaddingQuarter
-        ),
-        modifier = Modifier.wrapContentSize()
-    ) {
-        MessageDeliveryInfo(map, multiplePeers, userNameProvider)
-    }
 }
 
 @Composable
 fun MessageDeliveryInfo(
     map: Map<String, MessageDeliveryInfoVO>,
-    multiplePeers: Boolean,
     userNameProvider: suspend (String) -> String,
 ) {
+    val multiplePeers = map.size > 1
+
     val usernames by produceState(initialValue = emptyMap(), map) {
         value = map.keys.associateWith { id ->
             if (multiplePeers) {

@@ -4,10 +4,6 @@ import bisq.chat.ChatMessageType
 import bisq.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessage
 import bisq.common.observable.Pin
 import bisq.network.p2p.services.confidential.ack.MessageDeliveryStatus
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryInfoVO
@@ -43,16 +39,11 @@ class NodeMessageDeliveryServiceFacade(private val applicationService: AndroidAp
         networkService.resendMessageService.ifPresent { service -> service.manuallyResendMessage(messageId) }
     }
 
-    override fun addMessageDeliveryStatusObserver(tradeMessageId: String): StateFlow<Map<String, MessageDeliveryInfoVO>> {
-        val _messageDeliveryInfoByPeersProfileId =
-            MutableStateFlow<Map<String, MessageDeliveryInfoVO>>(emptyMap())
-        val messageDeliveryInfoByPeersProfileId: StateFlow<Map<String, MessageDeliveryInfoVO>> =
-            _messageDeliveryInfoByPeersProfileId.asStateFlow()
-
+    override fun addMessageDeliveryStatusObserver(tradeMessageId: String, onNewStatus: (entry: Pair<String, MessageDeliveryInfoVO>) -> Unit) {
         val message: BisqEasyOpenTradeMessage? = findBisqEasyOpenTradeMessages(tradeMessageId)
         if (message == null) {
             log.w { "TradeMessage for id $tradeMessageId not found" }
-            return messageDeliveryInfoByPeersProfileId
+            return
         }
         val tradeMessage: BisqEasyOpenTradeMessage = message
 
@@ -93,11 +84,7 @@ class NodeMessageDeliveryServiceFacade(private val applicationService: AndroidAp
                         ackRequestingMessageId,
                         canManuallyResendMessage
                     )
-                    _messageDeliveryInfoByPeersProfileId.update { currentMap ->
-                        currentMap.toMutableMap().apply {
-                            put(peersProfileId, messageDeliveryInfo)
-                        }
-                    }
+                    onNewStatus(peersProfileId to messageDeliveryInfo)
                 }
 
                 statusPins.remove(tradeMessageId)?.unbind()
@@ -106,7 +93,6 @@ class NodeMessageDeliveryServiceFacade(private val applicationService: AndroidAp
         }
         deliveryStatusMapPins.remove(tradeMessageId)?.unbind()
         deliveryStatusMapPins.put(tradeMessageId, deliveryStatusMapPin)
-        return messageDeliveryInfoByPeersProfileId
     }
 
 
