@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -7,15 +8,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.BisqLinks
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
+import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.button.LinkButton
 import network.bisq.mobile.presentation.ui.components.atoms.icons.AppLinkIcon
 import network.bisq.mobile.presentation.ui.components.atoms.icons.WebLinkIcon
@@ -23,6 +30,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -38,6 +46,7 @@ fun ResourcesScreen() {
     val versionInfo by presenter.versionInfo.collectAsState()
     val deviceInfo by presenter.deviceInfo.collectAsState()
     val showBackupAndRestore by presenter.showBackupAndRestore.collectAsState()
+    val showBackupOverlay by presenter.showBackupOverlay.collectAsState()
 
     val dividerModifier = Modifier.padding(top = BisqUIConstants.ScreenPaddingHalf, bottom = BisqUIConstants.ScreenPadding)
 
@@ -72,7 +81,7 @@ fun ResourcesScreen() {
             )
             BisqButton(
                 text = "mobile.resources.backup.export".i18n(),
-                onClick = presenter::onExportDataDir,
+                onClick = { presenter.onBackupDataDir() },
                 type = BisqButtonType.Outline,
                 modifier = Modifier.fillMaxWidth()
                     .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
@@ -87,7 +96,7 @@ fun ResourcesScreen() {
             )
             BisqButton(
                 text = "mobile.resources.backup.import".i18n(),
-                onClick = presenter::onImport,
+                onClick = presenter::onRestoreDataDir,
                 type = BisqButtonType.Outline,
                 modifier = Modifier.fillMaxWidth()
                     .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
@@ -150,6 +159,94 @@ fun ResourcesScreen() {
             link = BisqLinks.LICENSE,
             onClick = { presenter.onOpenWebUrl(BisqLinks.LICENSE) }
         )
+
+        if (showBackupOverlay) {
+            BackupPasswordOverlay(
+                onBackupDataDir = { password -> presenter.onBackupDataDir(password) },
+                onDismissBackupOverlay = presenter::onDismissBackupOverlay,
+            )
+        }
+    }
+}
+
+@Composable
+fun BackupPasswordOverlay(
+    onBackupDataDir: (String?) -> Unit,
+    onDismissBackupOverlay: () -> Unit,
+) {
+    var password: String by remember { mutableStateOf("") }
+    var confirmedPassword: String by remember { mutableStateOf("") }
+    var encryptAndBackup: String by remember { mutableStateOf("mobile.resources.backup.export.password.backup".i18n()) }
+    var arePasswordsValidOrEmpty: Boolean by remember { mutableStateOf(true) }
+    if (password.isBlank()) {
+        encryptAndBackup = "mobile.resources.backup.export.password.backup".i18n()
+    } else {
+        encryptAndBackup = "mobile.resources.backup.export.password.encryptAndBackup".i18n()
+    }
+
+    val validatePassword: (String) -> String? = {
+        var result: String?
+        if (password.isBlank() && confirmedPassword.isBlank()) {
+            result = null
+        } else if (it.length < 8) {
+            result = "validation.password.tooShort".i18n()
+        } else if (!confirmedPassword.isBlank() && confirmedPassword != password) {
+            result = "validation.password.notMatching".i18n()
+        } else {
+            result = null
+        }
+        arePasswordsValidOrEmpty = result == null
+        result
+    }
+
+    BisqDialog(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        marginTop = BisqUIConstants.ScreenPadding,
+        onDismissRequest = { onDismissBackupOverlay() }
+    ) {
+        BisqText.h4Regular("mobile.resources.backup.export.password.headline".i18n(), color = BisqTheme.colors.primary)
+        BisqGap.V2()
+        BisqText.baseLight("mobile.resources.backup.export.password.info".i18n())
+        BisqGap.V2()
+        BisqTextField(
+            value = password,
+            label = "mobile.resources.backup.export.password".i18n(),
+            onValueChange = { newValue, isValid ->
+                password = newValue
+            },
+            disabled = false,
+            isPasswordField = true,
+            validation = { return@BisqTextField validatePassword(it) }
+        )
+        BisqGap.V1()
+        BisqTextField(
+            value = confirmedPassword,
+            label = "mobile.resources.backup.export.password.confirm".i18n(),
+            onValueChange = { newValue, isValid ->
+                confirmedPassword = newValue
+            },
+            disabled = false,
+            isPasswordField = true,
+            validation = { return@BisqTextField validatePassword(it) }
+        )
+        BisqGap.V2()
+        Column {
+            BisqButton(
+                text = encryptAndBackup,
+                onClick = { onBackupDataDir(password) },
+                disabled = !arePasswordsValidOrEmpty,
+                fullWidth = true,
+                modifier = Modifier.semantics { contentDescription = encryptAndBackup },
+            )
+            BisqGap.VHalf()
+            BisqButton(
+                text = "action.cancel".i18n(),
+                type = BisqButtonType.Grey,
+                onClick = { onDismissBackupOverlay() },
+                fullWidth = true,
+                modifier = Modifier.semantics { contentDescription = "action.cancel".i18n() },
+            )
+        }
     }
 }
 
