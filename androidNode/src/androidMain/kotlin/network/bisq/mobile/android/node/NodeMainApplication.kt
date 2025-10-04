@@ -13,7 +13,9 @@ import bisq.common.network.clear_net_address_types.LANAddressTypeFacade
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.android.node.di.androidNodeModule
 import network.bisq.mobile.android.node.di.serviceModule
+import network.bisq.mobile.android.node.presentation.backupFileName
 import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
+import network.bisq.mobile.android.node.utils.moveDirReplace
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
@@ -23,6 +25,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.core.module.Module
+import java.io.File
 import java.security.Security
 
 /**
@@ -49,6 +52,8 @@ class NodeMainApplication : MainApplication(), ComponentCallbacks2 {
             setupBisqCoreStatics()
         }
 
+        maybeRestoreDataDirectory()
+
         // We start here the initialisation (non blocking) of the core services and tor.
         // The lifecycle of those is tied to the lifecycle of the Application/Process not to the lifecycle of the MainActivity.
         // As Android does not provide any callback when the process gets terminated we cannot gracefully shutdown the services and tor.
@@ -60,6 +65,29 @@ class NodeMainApplication : MainApplication(), ComponentCallbacks2 {
         // No need to registerComponentCallbacks(this) - that would cause infinite recursion
         // Note: Tor initialization is now handled in NodeApplicationBootstrapFacade
         log.i { "Bisq Node Application Created" }
+    }
+
+    private fun maybeRestoreDataDirectory() {
+        val backupDir = File(filesDir, backupFileName)
+        if (backupDir.exists()) {
+            log.i { "Restore from backup" }
+            val dbDir = File(filesDir, "Bisq2_mobile/db")
+
+            moveDirReplace(
+                File(backupDir, "private"),
+                File(dbDir, "private")
+            )
+            moveDirReplace(
+                File(backupDir, "settings"),
+                File(dbDir, "settings")
+            )
+
+            if (backupDir.deleteRecursively()) {
+                log.i { "We restored successfully from a backup" }
+            } else {
+                log.w { "Could not delete backup dir at restore from backup" }
+            }
+        }
     }
 
     override fun onTrimMemory(level: Int) {
