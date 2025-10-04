@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
@@ -37,6 +38,8 @@ fun ResourcesScreen() {
     val versionInfo by presenter.versionInfo.collectAsState()
     val deviceInfo by presenter.deviceInfo.collectAsState()
 
+    val dividerModifier = Modifier.padding(top = BisqUIConstants.ScreenPaddingHalf, bottom = BisqUIConstants.ScreenPadding)
+
     BisqScrollScaffold(
         topBar = { TopBar("mobile.more.resources".i18n(), showUserAvatar = false) },
         horizontalAlignment = Alignment.Start,
@@ -56,7 +59,40 @@ fun ResourcesScreen() {
             onClick = { presenter.onOpenWalletGuide() }
         )
 
-        BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding2X))
+        BisqHDivider(modifier = dividerModifier)
+        BisqGap.V1()
+        BisqText.h3Light("mobile.resources.backup.headline".i18n(), color = BisqTheme.colors.light_grey50)
+        BisqText.smallLight(
+            text = "mobile.resources.backup.export.info".i18n(),
+            color = BisqTheme.colors.mid_grey20,
+            modifier = Modifier
+                .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
+        )
+        BisqButton(
+            text = "mobile.resources.backup.export".i18n(),
+            onClick = presenter::onExportDataDir,
+            type = BisqButtonType.Outline,
+            modifier = Modifier.fillMaxWidth()
+                .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
+        )
+
+        BisqGap.V1()
+        BisqText.smallLight(
+            text = "mobile.resources.backup.import.info".i18n(),
+            color = BisqTheme.colors.mid_grey20,
+            modifier = Modifier
+                .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
+        )
+        BisqButton(
+            text = "mobile.resources.backup.import".i18n(),
+            onClick = presenter::onImport,
+            type = BisqButtonType.Outline,
+            modifier = Modifier.fillMaxWidth()
+                .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
+        )
+
+
+        BisqHDivider(modifier = dividerModifier)
         BisqGap.V1()
         BisqText.h3Light("support.resources.resources.headline".i18n(), color = BisqTheme.colors.light_grey50)
         ResourceWeblink(
@@ -80,7 +116,7 @@ fun ResourcesScreen() {
             onClick = { presenter.onOpenWebUrl(BisqLinks.MATRIX) }
         )
 
-        BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding2X))
+        BisqHDivider(modifier = dividerModifier)
         BisqGap.V1()
         BisqText.h3Light("mobile.resources.version.headline".i18n(), color = BisqTheme.colors.light_grey50)
         BisqText.baseLight(
@@ -90,7 +126,7 @@ fun ResourcesScreen() {
                 .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
         )
 
-        BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding2X))
+        BisqHDivider(modifier = dividerModifier)
         BisqGap.V1()
         BisqText.h3Light("mobile.resources.deviceInfo.headline".i18n(), color = BisqTheme.colors.light_grey50)
         BisqText.baseLight(
@@ -100,7 +136,7 @@ fun ResourcesScreen() {
                 .padding(vertical = BisqUIConstants.ScreenPaddingHalf, horizontal = BisqUIConstants.ScreenPadding2X)
         )
 
-        BisqHDivider(modifier = Modifier.padding(top = BisqUIConstants.ScreenPadding, bottom = BisqUIConstants.ScreenPadding2X))
+        BisqHDivider(modifier = dividerModifier)
         BisqGap.V1()
         BisqText.h3Light("support.resources.legal.headline".i18n(), color = BisqTheme.colors.light_grey50)
         AppLinkButton(
