@@ -147,7 +147,6 @@ class NodeTradeChatMessagesServiceFacade(
                     message,
                     citationAuthorUserProfile,
                     myUserProfile,
-                    messageDeliveryServiceFacade
                 )
                 openTradeItem.bisqEasyOpenTradeChannelModel.addChatMessages(model)
             }
