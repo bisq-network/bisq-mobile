@@ -1,6 +1,8 @@
 package network.bisq.mobile.android.node.presentation
 
 import android.content.Context
+import io.matthewnelson.kmp.file.IOException
+import kotlinx.coroutines.CompletableDeferred
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.utils.copyDirectory
 import network.bisq.mobile.android.node.utils.decrypt
@@ -12,9 +14,11 @@ import network.bisq.mobile.android.node.utils.unzipToDirectory
 import network.bisq.mobile.android.node.utils.zipDirectory
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
 import org.koin.core.component.inject
+import org.kotlincrypto.error.GeneralSecurityException
 import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.InputStream
@@ -63,14 +67,21 @@ class NodeResourcesPresenter(
                 val useEncryption = !password.isNullOrEmpty()
                 val outName = getCurrentBackupFileName(useEncryption)
                 val outFile = File(cacheDir, outName)
-
-                if (useEncryption) {
-                    encrypt(zipFile, outFile, password)
-                    zipFile.delete()
-                } else {
-                    zipFile.renameTo(outFile)
+                try {
+                    if (useEncryption) {
+                        encrypt(zipFile, outFile, password)
+                        zipFile.delete()
+                    } else if (!zipFile.renameTo(outFile)) {
+                        zipFile.copyTo(outFile, overwrite = true)
+                    }
+                } catch (e: Exception) {
+                    outFile.delete()
+                    throw e
+                } finally {
+                    if (zipFile.exists()) {
+                        zipFile.delete()
+                    }
                 }
-
                 val uri = getShareableUriForFile(outFile, context)
 
                 shareBackup(context, uri.toString())
@@ -80,8 +91,9 @@ class NodeResourcesPresenter(
         }
     }
 
-    override fun onRestoreDataDir(fileName: String, password: String?, data: ByteArray) {
+    override fun onRestoreDataDir(fileName: String, password: String?, data: ByteArray): CompletableDeferred<String?> {
         val context: Context by inject()
+        val result: CompletableDeferred<String?> = CompletableDeferred()
         launchIO {
             try {
                 val filesDir = context.filesDir
@@ -89,26 +101,60 @@ class NodeResourcesPresenter(
                 val backupDir = File(filesDir, backupFileName)
                 if (backupDir.exists()) backupDir.deleteRecursively()
                 val rawInputStream: InputStream = ByteArrayInputStream(data)
-
+                var decryptedTempFile: File? = null
                 val inputStream: InputStream = if (!password.isNullOrEmpty()) {
-                    decrypt(rawInputStream, password)
+                    try {
+                        decrypt(rawInputStream, password).also { decryptedTempFile = it }.inputStream()
+                    } catch (e: Exception) {
+                        val errorMessage = "mobile.resources.restore.error.decryptionFailed".i18n()
+                        throw GeneralSecurityException(errorMessage, e)
+                    }
                 } else {
                     rawInputStream
                 }
-
-                unzipToDirectory(inputStream, backupDir)
-                inputStream.close()
+                try {
+                    unzipToDirectory(inputStream, backupDir)
+                } catch (e: Exception) {
+                    // Clean up incomplete backup to prevent corrupted restore on next launch
+                    if (backupDir.exists()) {
+                        backupDir.deleteRecursively()
+                    }
+                    val errorMessage = "mobile.resources.restore.error.unzipFailed".i18n()
+                    throw IOException(errorMessage, e)
+                } finally {
+                    try {
+                        inputStream.close()
+                    } catch (ignore: Exception) {
+                    }
+                    decryptedTempFile?.let { temp ->
+                        if (!temp.delete()) {
+                            temp.deleteOnExit()
+                        }
+                    }
+                }
 
                 if (backupDir.exists()) {
+                    val requiredDirs = listOf(File(backupDir, "private"), File(backupDir, "settings"))
+                    if (!requiredDirs.all { it.exists() && it.isDirectory }) {
+                        val errorMessage = "mobile.resources.restore.error.invalidBackupStructure".i18n()
+                        throw IOException(errorMessage)
+                    }
+
                     nodeApplicationLifecycleService.restartForRestoreDataDirectory(context)
+                    result.complete(null)
                 } else {
-                    log.e { "onRestoreDataDir: $backupDir does not exits" }
+                    val errorMessage = "mobile.resources.restore.error.missingBackupDir".i18n()
+                    throw IOException(errorMessage)
                 }
             } catch (e: Exception) {
-                log.e(e) { "Failed to backup data directory" }
+                log.e(e) { errorMessage(e) }
+                result.completeExceptionally(e)
             }
         }
+        return result
     }
+
+    private fun errorMessage(e: Exception): String = e.message ?: e.javaClass.simpleName
 
     private fun getCurrentBackupFileName(useEncryption: Boolean): String {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss")
