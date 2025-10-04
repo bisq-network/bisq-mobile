@@ -19,12 +19,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.ReactionEnum
-import network.bisq.mobile.domain.data.replicated.network.confidential.ack.MessageDeliveryInfoVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -46,7 +44,6 @@ fun ChatTextMessageBox(
     modifier: Modifier = Modifier,
     onResendMessage: (String) -> Unit,
     userNameProvider: suspend (String) -> String,
-    messageDeliveryInfoByPeersProfileId: StateFlow<Map<String, MessageDeliveryInfoVO>>,
 ) {
     val isMyMessage = message.isMyMessage
     val chatAlign = if (isMyMessage) Alignment.End else Alignment.Start
@@ -64,13 +61,13 @@ fun ChatTextMessageBox(
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = chatAlign,
-        verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingQuarter)
+        verticalArrangement = Arrangement.Center,
     ) {
         UsernameMessageDeliveryAndDate(
             message,
             onResendMessage = onResendMessage,
             userNameProvider = userNameProvider,
-            messageDeliveryInfoByPeersProfileId = messageDeliveryInfoByPeersProfileId
+            messageDeliveryInfoByPeersProfileId = message.messageDeliveryStatus,
         )
         val quoteAndProfileIconAndText = @Composable {
             Column(

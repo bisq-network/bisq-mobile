@@ -1,10 +1,14 @@
 package network.bisq.mobile.presentation.ui.components.molecules.chat
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
@@ -22,26 +26,33 @@ fun UsernameMessageDeliveryAndDate(
     userNameProvider: suspend (String) -> String,
     messageDeliveryInfoByPeersProfileId: StateFlow<Map<String, MessageDeliveryInfoVO>>,
 ) {
+    var showInfo by remember { mutableStateOf(false) }
+
     Row(
-        modifier = Modifier.semantics(mergeDescendants = true) {},
-        verticalAlignment = Alignment.Bottom,
+        modifier = Modifier
+            .semantics(mergeDescendants = true) {}
+            .clickable(message.isMyMessage) { showInfo = true },
+        verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalfQuarter),
     ) {
         val username = @Composable {
-            BisqText.baseRegular(text = message.senderUserName)
+            BisqText.baseRegular(message.senderUserName, modifier = Modifier.offset(y = (-1).dp))
         }
 
         val date = @Composable {
-            BisqText.xsmallLightGrey(message.dateString, modifier = Modifier.offset(y = (-1).dp))
+            BisqText.xsmallLightGrey(message.dateString)
         }
 
         if (message.isMyMessage) {
             date()
             MessageDeliveryBox(
-                modifier = Modifier.padding(bottom = 4.dp),
                 onResendMessage = onResendMessage,
                 userNameProvider = userNameProvider,
                 messageDeliveryInfoByPeersProfileId = messageDeliveryInfoByPeersProfileId,
+                showInfo,
+                onDismissMenu = {
+                    showInfo = false
+                }
             )
             username()
         } else {

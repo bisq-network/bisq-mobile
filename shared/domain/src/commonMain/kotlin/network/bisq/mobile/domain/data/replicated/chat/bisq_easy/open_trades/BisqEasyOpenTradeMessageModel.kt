@@ -3,6 +3,7 @@ package network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.chat.reactions.BisqEasyOpenTradeMessageReactionVO
@@ -18,7 +19,6 @@ class BisqEasyOpenTradeMessageModel(
     private val bisqEasyOpenTradeMessage: BisqEasyOpenTradeMessageDto,
     myUserProfile: UserProfileVO,
     chatReactions: List<BisqEasyOpenTradeMessageReactionVO>,
-    private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
 ) {
 
     val senderUserProfile: UserProfileVO = bisqEasyOpenTradeMessage.senderUserProfile
@@ -50,6 +50,10 @@ class BisqEasyOpenTradeMessageModel(
     val senderUserName = senderUserProfile.userName
     val citationString: String = citation?.text ?: ""
     val isMyMessage: Boolean = senderUserProfileId == myUserProfileId
+
+    private val _messageDeliveryStatus = MutableStateFlow<Map<String, MessageDeliveryInfoVO>>(emptyMap())
+    val messageDeliveryStatus = _messageDeliveryStatus.asStateFlow()
+
     fun isMyChatReaction(reaction: BisqEasyOpenTradeMessageReactionVO): Boolean {
         return myUserProfileId == reaction.senderUserProfile.id
     }
@@ -58,11 +62,13 @@ class BisqEasyOpenTradeMessageModel(
         _chatReactions.value = chatMessageReactions
     }
 
-    fun removeMessageDeliveryStatusObserver() {
+    fun removeMessageDeliveryStatusObserver(messageDeliveryServiceFacade: MessageDeliveryServiceFacade) {
         messageDeliveryServiceFacade.removeMessageDeliveryStatusObserver(bisqEasyOpenTradeMessage.messageId)
     }
 
-    fun addMessageDeliveryStatusObserver(): StateFlow<Map<String, MessageDeliveryInfoVO>> {
-        return messageDeliveryServiceFacade.addMessageDeliveryStatusObserver(bisqEasyOpenTradeMessage.messageId)
+    fun addMessageDeliveryStatusObserver(messageDeliveryServiceFacade: MessageDeliveryServiceFacade) {
+        messageDeliveryServiceFacade.addMessageDeliveryStatusObserver(bisqEasyOpenTradeMessage.messageId) {
+            entry -> _messageDeliveryStatus.update { it + entry }
+        }
     }
 }

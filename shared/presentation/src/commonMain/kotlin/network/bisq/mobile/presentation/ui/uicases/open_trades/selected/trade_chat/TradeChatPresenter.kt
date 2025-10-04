@@ -85,6 +85,8 @@ class TradeChatPresenter(
             initialValue = -1,
         )
 
+    private val observedChatMessages = MutableStateFlow<Set<BisqEasyOpenTradeMessageModel>>(emptySet())
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -94,6 +96,16 @@ class TradeChatPresenter(
             val bisqEasyOpenTradeChannelModel = selectedTrade.bisqEasyOpenTradeChannelModel
             // cancel notifications of chat related to this trade
             notificationController.cancel(NotificationIds.getNewChatMessageId(selectedTrade.shortTradeId))
+
+            collectUI(bisqEasyOpenTradeChannelModel.chatMessages) { messages ->
+                observedChatMessages.update {
+                    val newMessages = messages - it
+                    newMessages.forEach { m ->
+                        m.addMessageDeliveryStatusObserver(messageDeliveryServiceFacade)
+                    }
+                    messages
+                }
+            }
 
             collectUI(ignoredProfileIds.combine(bisqEasyOpenTradeChannelModel.chatMessages) { ignoredIds, messages ->
                 messages.filter { message ->
@@ -125,6 +137,10 @@ class TradeChatPresenter(
 
     override fun onViewUnattaching() {
         _userProfileIconByProfileId.update { emptyMap() }
+        observedChatMessages.update {
+            it.forEach { m -> m.removeMessageDeliveryStatusObserver(messageDeliveryServiceFacade) }
+            emptySet()
+        }
         super.onViewUnattaching()
     }
 
