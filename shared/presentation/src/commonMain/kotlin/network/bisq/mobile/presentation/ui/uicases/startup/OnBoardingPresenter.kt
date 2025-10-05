@@ -4,7 +4,7 @@ import androidx.compose.foundation.pager.PagerState
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.img_bisq_Easy
 import bisqapps.shared.presentation.generated.resources.img_connect
-import bisqapps.shared.presentation.generated.resources.img_fiat_btc
+import bisqapps.shared.presentation.generated.resources.img_p2p_tor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -37,7 +37,7 @@ abstract class OnBoardingPresenter(
         // Shown at full mode
         PagerViewItem(
             title = "mobile.onboarding.fullMode.teaserHeadline".i18n(),
-            image = Res.drawable.img_fiat_btc,
+            image = Res.drawable.img_p2p_tor,
             desc = "mobile.onboarding.fullMode.line".i18n()
         ),
         // Shown at client mode
