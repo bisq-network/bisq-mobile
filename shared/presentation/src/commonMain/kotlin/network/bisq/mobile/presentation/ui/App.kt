@@ -211,7 +211,7 @@ fun ReconnectingOverlay(onClick: (() -> Unit)? = null) {
 
                 BisqGap.VQuarter()
                 CircularProgressIndicator(
-                    color = BisqTheme.colors.warning,
+                    color = BisqTheme.colors.primary,
                     modifier = Modifier.size(70.dp),
                     strokeWidth = 1.dp
                 )
