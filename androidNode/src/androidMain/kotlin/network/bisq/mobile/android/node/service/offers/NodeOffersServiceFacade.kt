@@ -68,6 +68,11 @@ class NodeOffersServiceFacade(
     override fun activate() {
         super.activate()
 
+        // We set channel to null to avoid that our _offerbookMarketItems gets filled initially
+        // to avoid memory and cpu pressure at startup.
+        // We only want to fill it when we select a market.
+        bisqEasyOfferbookChannelSelectionService.selectChannel(null)
+
         observeSelectedChannel()
         observeMarketPrice()
         observeMarketListItems(_offerbookMarketItems)
