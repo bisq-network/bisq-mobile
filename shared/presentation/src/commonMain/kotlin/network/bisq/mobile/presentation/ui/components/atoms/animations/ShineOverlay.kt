@@ -19,6 +19,8 @@ const val ANIMATION_INTERVAL = 8000
 const val ANIMATION_MAX_INTERVAL = 12001
 const val GRADIENT_OFFSET_FACTOR = 300f
 
+const val SHINE_SWEEP_DURATION_MS = 4000
+
 fun nextDuration(): Int = Random.nextInt(ANIMATION_INTERVAL, ANIMATION_MAX_INTERVAL)
 
 @Composable
@@ -27,50 +29,52 @@ fun ShineOverlay(
     content: @Composable BoxScope.() -> Unit
 ) {
 
-    val randomDuration = remember { mutableStateOf(nextDuration()) }
-
-    val infiniteTransition = rememberInfiniteTransition()
-    val gradientOffset by infiniteTransition.animateFloat(
-        initialValue = INITIAL_SHINE,
-        targetValue = TARGET_SHINE,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = randomDuration.value, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        )
-    )
-
-    LaunchedEffect(gradientOffset) {
-        if (gradientOffset == TARGET_SHINE) {
-            randomDuration.value = nextDuration()
-        }
-    }
-
-    // Gradient brush that moves across the composable
-    val gradientBrush = Brush.linearGradient(
-        colors = listOf(
-            Color.Transparent,
-            Color.White.copy(alpha = 0.3f), // Shine effect
-            Color.Transparent
-        ),
-        start = Offset(gradientOffset * GRADIENT_OFFSET_FACTOR, gradientOffset * GRADIENT_OFFSET_FACTOR),
-        end = Offset((gradientOffset + 1) * GRADIENT_OFFSET_FACTOR, (gradientOffset + 1) * GRADIENT_OFFSET_FACTOR)
-    )
-
     // Layer composable with shine overlay
     Box(
         modifier = modifier,
-            //.clip(CircleShape),
         contentAlignment = Alignment.Center
     ) {
-        // UserIcon composable
         content()
-
-        // Canvas for the moving shine gradient
-        Canvas(
+        ShineCanvasOverlay(
             modifier = Modifier
                 .matchParentSize()
-                .clip(CircleShape)) {
-            drawRect(brush = gradientBrush)
+                .clip(CircleShape)
+        )
+    }
+}
+
+@Composable
+private fun ShineCanvasOverlay(modifier: Modifier = Modifier) {
+    val anim = remember { Animatable(INITIAL_SHINE) }
+    var isAnimating by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(nextDuration().toLong())
+            anim.snapTo(INITIAL_SHINE)
+            isAnimating = true
+            anim.animateTo(
+                targetValue = TARGET_SHINE,
+                animationSpec = tween(durationMillis = SHINE_SWEEP_DURATION_MS, easing = LinearEasing)
+            )
+            isAnimating = false
+            anim.snapTo(INITIAL_SHINE)
         }
+    }
+    Canvas(modifier = modifier) {
+        if (!isAnimating) return@Canvas
+        val t = anim.value
+        val start = Offset(t * GRADIENT_OFFSET_FACTOR, t * GRADIENT_OFFSET_FACTOR)
+        val end = Offset((t + 1) * GRADIENT_OFFSET_FACTOR, (t + 1) * GRADIENT_OFFSET_FACTOR)
+        val brush = Brush.linearGradient(
+            colorStops = arrayOf(
+                0.0f to Color.Transparent,
+                0.35f to Color.White.copy(alpha = 0.3f),
+                0.65f to Color.White.copy(alpha = 0.3f),
+                1.0f to Color.Transparent
+            ),
+            start = start,
+            end = end
+        )
+        drawRect(brush = brush)
     }
 }
