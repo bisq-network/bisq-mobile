@@ -38,19 +38,23 @@ class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentation
     // convenience fields
     val offerId = bisqEasyOffer.id
 
+    // TODO _formattedPrice is never updated from market price
     // In case of market price or float is used, the price and the base amount need to be updated at market price updates.
     private val _formattedPrice = MutableStateFlow(offerItemPresentationDto.formattedPrice)
     val formattedPrice: StateFlow<String> get() = _formattedPrice.asStateFlow()
 
+    // TODO _formattedBaseAmount is never updated when market/float price is used and has change
     private val _formattedBaseAmount = MutableStateFlow(offerItemPresentationDto.formattedBaseAmount)
     val formattedBaseAmount: StateFlow<String> get() = _formattedBaseAmount.asStateFlow()
 
     // The user name is the nickname and the nym in case there are multiple nicknames in the network.
     // We get that set by the backend in the makersUserProfile but we need to update it after initial retrieval by websocket events.
     // At Bisq Easy the UserNameLookup class handles that.
+    // TODO not updated when there is a duplicated nickname, though rather rare moments that it gets updated
     private val _userName = MutableStateFlow(offerItemPresentationDto.userProfile.userName)
     val userName: StateFlow<String> get() = _userName.asStateFlow()
 
+    // TODO not updated, though rather rare moments that it gets updated
     private val _makersReputationScore = MutableStateFlow(offerItemPresentationDto.reputationScore)
     val makersReputationScore: StateFlow<ReputationScoreVO> get() = _makersReputationScore.asStateFlow()
 

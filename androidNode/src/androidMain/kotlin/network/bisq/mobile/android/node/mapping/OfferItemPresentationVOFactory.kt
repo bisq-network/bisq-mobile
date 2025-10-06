@@ -90,11 +90,11 @@ object OfferItemPresentationVOFactory {
         val formattedPriceSpec = PriceSpecFormatter.getFormattedPriceSpec(priceSpec, false)
         val quoteSidePaymentMethods: List<String> = PaymentMethodSpecUtil.getPaymentMethods(bisqEasyOffer.quoteSidePaymentMethodSpecs)
             .stream()
-            .map { obj: FiatPaymentMethod -> obj.name }
+            .map { method: FiatPaymentMethod -> method.name }
             .collect(Collectors.toList())
         val baseSidePaymentMethods = PaymentMethodSpecUtil.getPaymentMethods(bisqEasyOffer.baseSidePaymentMethodSpecs)
             .stream()
-            .map { obj: BitcoinPaymentMethod -> obj.name }
+            .map { method: BitcoinPaymentMethod -> method.name }
             .collect(Collectors.toList())
 
         val reputationScore = reputationService.getReputationScore(authorUserProfileId)

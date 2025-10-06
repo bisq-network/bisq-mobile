@@ -23,14 +23,8 @@ import bisq.user.identity.UserIdentity
 import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
@@ -40,32 +34,17 @@ import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
-import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import java.util.Date
 import java.util.Optional
-import java.util.concurrent.ConcurrentLinkedQueue
-import kotlin.time.Duration.Companion.seconds
 
 
 class NodeOffersServiceFacade(
     private val applicationService: AndroidApplicationService.Provider,
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
 ) : OffersServiceFacade() {
-
-    companion object {
-        private const val SMALL_DELAY = 25L
-        private const val SMALL_DELAY_THRESHOLD = 5
-
-        // Higher threshold to avoid masking memory leaks - only suggest GC in critical situations
-        private const val MEMORY_GC_THRESHOLD = 0.85
-        private const val OFFER_BATCH_DELAY = 100L // milliseconds
-        private const val MIN_GC_INTERVAL = 10000L
-        private val MEMORY_LOG_INTERVAL = 30.seconds
-    }
-
     // Dependencies
     private val userIdentityService: UserIdentityService by lazy { applicationService.userService.get().userIdentityService }
     private val marketPriceService: MarketPriceService by lazy { applicationService.bondedRolesService.get().marketPriceService }
@@ -80,33 +59,21 @@ class NodeOffersServiceFacade(
 
     // Misc
     private var selectedChannel: BisqEasyOfferbookChannel? = null
-
     private var numOffersObservers: MutableList<NumOffersObserver> = mutableListOf()
     private var chatMessagesPin: Pin? = null
     private var selectedChannelPin: Pin? = null
     private var marketPricePin: Pin? = null
-    private var memoryMonitoringJob: Job? = null
-    private var offerBatchJob: Job? = null
-    private val pendingOffers = ConcurrentLinkedQueue<BisqEasyOfferbookMessage>()
-    private val batchMutex = Mutex()
-
-    private var lastGcTime = 0L
 
     // Life cycle
     override fun activate() {
-        log.d { "Activating NodeOffersServiceFacade" }
         super.activate()
 
         observeSelectedChannel()
         observeMarketPrice()
         observeMarketListItems(_offerbookMarketItems)
-        startMemoryMonitoring()
-        log.d { "NodeOffersServiceFacade activated, numOffersObservers: ${numOffersObservers.size}" }
     }
 
     override fun deactivate() {
-        log.d { "Deactivating NodeOffersServiceFacade" }
-        pendingOffers.clear()
         chatMessagesPin?.unbind()
         chatMessagesPin = null
         selectedChannelPin?.unbind()
@@ -115,14 +82,12 @@ class NodeOffersServiceFacade(
         marketPricePin = null
         numOffersObservers.forEach { it.dispose() }
         numOffersObservers.clear()
-        log.d { "NodeOffersServiceFacade deactivated" }
 
         super.deactivate()
     }
 
     // API
     override fun selectOfferbookMarket(marketListItem: MarketListItem) {
-        log.d { "Selecting offerbook market: ${marketListItem.market.quoteCurrencyCode}, current offers count: ${_offerbookListItems.value.size}" }
         val market = Mappings.MarketMapping.toBisq2Model(marketListItem.market)
         val channelOptional = bisqEasyOfferbookChannelService.findChannel(market)
 
@@ -132,8 +97,6 @@ class NodeOffersServiceFacade(
         }
 
         val channel = channelOptional.get()
-        log.d { "Found channel for market ${market.marketCodes}, chat messages count: ${channel.chatMessages.size}" }
-
         bisqEasyOfferbookChannelSelectionService.selectChannel(channel)
         marketPriceServiceFacade.selectMarket(marketListItem)
     }
@@ -222,9 +185,7 @@ class NodeOffersServiceFacade(
 //            BuildNodeConfig.TRADE_PROTOCOL_VERSION,
         )
 
-
         val channel: BisqEasyOfferbookChannel = bisqEasyOfferbookChannelService.findChannel(market).get()
-
         val myOfferMessage = BisqEasyOfferbookMessage(
             channel.id,
             userProfile.id,
@@ -240,110 +201,110 @@ class NodeOffersServiceFacade(
         return bisqEasyOffer.id
     }
 
-    private fun observeSelectedChannel() {
-        log.d { "Setting up selected channel observer" }
-        selectedChannelPin?.unbind()
-        log.d { "Previous selectedChannelPin unbound: $selectedChannelPin" }
+    /////////////////////////////////////////////////////////////////////////////
+    // Market Channel
+    /////////////////////////////////////////////////////////////////////////////
 
+    private fun observeSelectedChannel() {
+        selectedChannelPin?.unbind()
         selectedChannelPin = bisqEasyOfferbookChannelSelectionService.selectedChannel.addObserver { channel ->
             if (channel == null) {
-                log.d { "Selected channel is null" }
                 selectedChannel = channel
-                log.d { "After null channel selection, offers count: ${_offerbookListItems.value.size}" }
+                chatMessagesPin?.unbind()
             } else if (channel is BisqEasyOfferbookChannel) {
-                log.d { "Selected channel changed to: ${channel.id}, market: ${channel.market.marketCodes}, chat messages: ${channel.chatMessages.size}" }
                 selectedChannel = channel
                 marketPriceService.setSelectedMarket(channel.market)
                 val marketVO = Mappings.MarketMapping.fromBisq2Model(channel.market)
                 _selectedOfferbookMarket.value = OfferbookMarket(marketVO)
                 updateMarketPrice()
 
-                launchIO {
-                    addChatMessagesObservers(channel)
-                }
-
-                log.d { "After channel selection, offers count: ${_offerbookListItems.value.size}" }
+                observeChatMessages(channel)
             } else {
                 log.w { "Selected channel is not a BisqEasyOfferbookChannel: ${channel::class.simpleName}" }
             }
         }
-        log.d { "Selected channel observer set up, pin: $selectedChannelPin" }
     }
 
-    private fun createOfferListItem(bisqEasyOfferbookMessage: BisqEasyOfferbookMessage): OfferItemPresentationDto {
-        return OfferItemPresentationVOFactory.create(
+
+    /////////////////////////////////////////////////////////////////////////////
+    // OfferbookListItems
+    /////////////////////////////////////////////////////////////////////////////
+
+    private fun observeChatMessages(channel: BisqEasyOfferbookChannel) {
+        _offerbookListItems.update { emptyList() }
+
+        val chatMessages: ObservableSet<BisqEasyOfferbookMessage> = channel.chatMessages
+        chatMessagesPin?.unbind()
+        chatMessagesPin =
+            chatMessages.addObserver(object : CollectionObserver<BisqEasyOfferbookMessage> {
+                // We get all already existing offers applied at channel selection
+                override fun addAll(values: Collection<BisqEasyOfferbookMessage>) {
+                    val listItems: List<OfferItemPresentationModel> = values
+                        .filter { it.hasBisqEasyOffer() }
+                        .filter { isValidOfferbookMessage(it) }
+                        .map { createOfferItemPresentationModel(it) }
+                    _offerbookListItems.update { current -> (current + listItems).distinctBy { it.bisqEasyOffer.id } }
+                }
+
+                // Newly added messages
+                override fun add(message: BisqEasyOfferbookMessage) {
+                    if (!message.hasBisqEasyOffer() || !isValidOfferbookMessage(message)) {
+                        return
+                    }
+                    val listItem = createOfferItemPresentationModel(message)
+                    _offerbookListItems.update { current -> (current + listItem).distinctBy { it.bisqEasyOffer.id } }
+                }
+
+                override fun remove(message: Any) {
+                    if (message is BisqEasyOfferbookMessage && message.bisqEasyOffer.isPresent) {
+                        val offerId = message.bisqEasyOffer.get().id
+                        _offerbookListItems.update { current ->
+                            val item = current.firstOrNull { it.bisqEasyOffer.id == offerId }
+                            if (item != null) {
+                                log.i { "Removed offer: $offerId, remaining offers: ${current.size - 1}" }
+                                current - item
+                            } else current
+                        }
+                    }
+                }
+
+                override fun clear() {
+                    _offerbookListItems.update { emptyList() }
+                }
+            })
+    }
+
+    private fun createOfferItemPresentationModel(bisqEasyOfferbookMessage: BisqEasyOfferbookMessage): OfferItemPresentationModel {
+        val offerItemPresentationDto = OfferItemPresentationVOFactory.create(
             userProfileService,
             userIdentityService,
             marketPriceService,
             reputationService,
             bisqEasyOfferbookMessage
         )
+        return OfferItemPresentationModel(offerItemPresentationDto)
     }
 
-    private fun addChatMessagesObservers(channel: BisqEasyOfferbookChannel) {
-        log.d { "Adding chat message observers for channel: ${channel.id}, market: ${channel.market.marketCodes}" }
-        chatMessagesPin?.unbind()
-        log.d { "Previous chatMessagesPin unbound" }
-
-        // Only clear the list, not the map (map is cleared before this method is called)
-        _offerbookListItems.value = emptyList()
-
-        val chatMessages: ObservableSet<BisqEasyOfferbookMessage> = channel.chatMessages
-        log.d { "Initial chat messages count for ${channel.market.marketCodes}: ${chatMessages.size}" }
-
-        if (chatMessages.isEmpty()) {
-            log.w { "Channel ${channel.market.marketCodes} has no chat messages/offers" }
-        }
-
-        chatMessagesPin =
-            chatMessages.addObserver(object : CollectionObserver<BisqEasyOfferbookMessage> {
-                override fun add(message: BisqEasyOfferbookMessage) {
-                    if (!message.hasBisqEasyOffer()) {
-                        return
-                    }
-
-                    // Add to thread-safe queue (non-blocking)
-                    pendingOffers.offer(message)
-                    maybeStartOffersBatchJob()
-                }
-
-                override fun remove(message: Any) {
-                    if (message is BisqEasyOfferbookMessage && message.bisqEasyOffer.isPresent) {
-                        val offerId = message.bisqEasyOffer.get().id
-                        log.d { "Removing offer message: $offerId" }
-                        val item = _offerbookListItems.value.firstOrNull {
-                            it.bisqEasyOffer.id == message.bisqEasyOffer.map { offer -> offer.id }.orElse(null)
-                        }
-                        item?.let { model ->
-                            _offerbookListItems.update { it - model }
-                            log.i { "Removed offer: $offerId, remaining offers: ${_offerbookListItems.value.size}" }
-                        }
-                    }
-                }
-
-                override fun clear() {
-                    log.d { "Clearing all offer messages" }
-                    _offerbookListItems.value = emptyList()
-                }
-            })
-
-        log.d { "Chat messages observer added for ${channel.market.marketCodes}, pin: $chatMessagesPin" }
+    private fun isValidOfferbookMessage(message: BisqEasyOfferbookMessage): Boolean {
+        // TODO Add more validation
+        // In Bisq main we have that code in the bisqEasyOfferbookMessageService.isValid(message)
+        // method
+        /*
+         public boolean isValid(BisqEasyOfferbookMessage message) {
+        return isNotBanned(message) &&
+                isNotIgnored(message) &&
+                (isTextMessage(message) ||
+                        isBuyOffer(message) ||
+                        hasSellerSufficientReputation(message));
+    }
+         */
+        return true
     }
 
-    private fun maybeStartOffersBatchJob() {
-        // Use mutex to prevent race conditions when starting batch jobs
-        launchIO {
-            batchMutex.withLock {
-                // Only start a new job if none is running
-                if (offerBatchJob?.isActive != true) {
-                    offerBatchJob = serviceScope.launch(Dispatchers.Default) {
-                        delay(OFFER_BATCH_DELAY)
-                        processPendingOffers()
-                    }
-                }
-            }
-        }
-    }
+
+    /////////////////////////////////////////////////////////////////////////////
+    // Markets
+    /////////////////////////////////////////////////////////////////////////////
 
     private fun observeMarketListItems(itemsFlow: MutableStateFlow<List<MarketListItem>>) {
         log.d { "Observing market list items" }
@@ -406,159 +367,6 @@ class NodeOffersServiceFacade(
         if (marketPriceServiceFacade.selectedMarketPriceItem.value != null) {
             val formattedPrice = marketPriceServiceFacade.selectedMarketPriceItem.value!!.formattedPrice
             _selectedOfferbookMarket.value.setFormattedPrice(formattedPrice)
-        }
-    }
-
-    private suspend fun processPendingOffers() {
-        // Drain the thread-safe queue (non-blocking)
-        val offersToProcess = mutableListOf<BisqEasyOfferbookMessage>()
-        while (true) {
-            val offer = pendingOffers.poll() ?: break
-            offersToProcess.add(offer)
-        }
-
-        if (offersToProcess.isEmpty()) return
-
-        val newOffers = mutableListOf<OfferItemPresentationModel>()
-        var processedCount = 0
-
-        // Process in smaller chunks to reduce memory pressure
-        offersToProcess.chunked(5).forEach { chunk ->
-            for (message in chunk) {
-                try {
-                    if (!isValidOfferMessage(message)) {
-                        continue
-                    }
-
-                    // Create objects only after validation
-                    val offerItemPresentationDto: OfferItemPresentationDto = createOfferListItem(message)
-                    val offerItemPresentationModel = OfferItemPresentationModel(offerItemPresentationDto)
-
-                    newOffers.add(offerItemPresentationModel)
-                    processedCount++
-
-                } catch (e: Exception) {
-                    log.e(e) { "Error processing batched offer" }
-                }
-            }
-
-            if (offersToProcess.size > SMALL_DELAY_THRESHOLD) {
-                try {
-                    val runtime = Runtime.getRuntime()
-                    val memoryUsage = (runtime.totalMemory() - runtime.freeMemory()).toDouble() / runtime.maxMemory()
-                    if (memoryUsage > MEMORY_GC_THRESHOLD) {
-                        log.w { "High memory pressure detected during batch processing" }
-                        delay(SMALL_DELAY * 2)  // Use a smaller multiplier to avoid excessive delays
-                    } else {
-                        delay(SMALL_DELAY)
-                    }
-                } catch (e: Exception) {
-                    log.e(e) { "Error checking memory usage, failed to delay offer processing" }
-                }
-            }
-        }
-
-        // Single UI update for all new offers
-        if (newOffers.isNotEmpty()) {
-            // distinct avoids that we add duplicates but requires proper equals/hashCode in OfferItemPresentationModel
-            _offerbookListItems.update { currentList ->
-                (currentList + newOffers).distinct()
-            }
-
-            val currentSize = _offerbookListItems.value.size
-            log.i { "Batch processed $processedCount offers, total: $currentSize" }
-
-            // Log memory pressure if list is getting large
-            if (currentSize > 100 && currentSize % 50 == 0) {
-                log.w { "MEMORY: Large offer list - UI: $currentSize" }
-            }
-        }
-    }
-
-    private fun isValidOfferMessage(message: BisqEasyOfferbookMessage): Boolean {
-        // TODO Add more validation
-        // In Bisq main we have that code in the bisqEasyOfferbookMessageService.isValid(message)
-        // method
-        /*
-         public boolean isValid(BisqEasyOfferbookMessage message) {
-        return isNotBanned(message) &&
-                isNotIgnored(message) &&
-                (isTextMessage(message) ||
-                        isBuyOffer(message) ||
-                        hasSellerSufficientReputation(message));
-    }
-         */
-        return true
-    }
-
-    private fun startMemoryMonitoring() {
-        memoryMonitoringJob = launchIO {
-            while (true) {
-                delay(MEMORY_LOG_INTERVAL)
-                try {
-                    val runtime = Runtime.getRuntime()
-                    val usedMemory = (runtime.totalMemory() - runtime.freeMemory()) / 1024 / 1024
-                    val maxMemory = runtime.maxMemory() / 1024 / 1024
-                    val offersListSize = _offerbookListItems.value.size
-                    val observersCount = numOffersObservers.size
-
-                    log.w { "MEMORY: Used ${usedMemory}MB/${maxMemory}MB, OffersList: $offersListSize, Observers: $observersCount" }
-
-                    // Only suggest GC in critical situations (90%+) to avoid masking memory leaks
-                    if (usedMemory > maxMemory * MEMORY_GC_THRESHOLD) {
-                        log.w { "MEMORY: Critical memory usage detected (${usedMemory}MB/${maxMemory}MB), suggesting GC" }
-                        suggestGCtoOS()
-                    }
-                } catch (e: Exception) {
-                    log.e(e) { "Error in memory monitoring" }
-                }
-            }
-        }
-    }
-
-    /**
-     * suggests Garbage Collection to OS making sure we don't call it too often
-     * TODO when the need to reuse memory management code arises, move to common helper object
-     */
-    private fun suggestGCtoOS() {
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastGcTime > MIN_GC_INTERVAL) {
-            // Note: System.gc() is a suggestion only, used here for P2P sync GC pressure relief
-            // This is documented as necessary for heavy network sync workloads - see memory optimization PR
-            // for node release builds we use manifest largeHeap flag which in general should be sufficient
-            System.gc()
-            lastGcTime = currentTime
-        }
-    }
-
-    /**
-     * Handle system memory pressure callbacks
-     * Uses raw integer values instead of deprecated ComponentCallbacks2 constants
-     *
-     * Memory trim levels (from Android documentation):
-     * - TRIM_MEMORY_COMPLETE (80): App in background, system extremely low on memory
-     * - TRIM_MEMORY_MODERATE (60): App in background, system moderately low on memory
-     * - TRIM_MEMORY_BACKGROUND (40): App just moved to background
-     * - TRIM_MEMORY_UI_HIDDEN (20): App's UI no longer visible
-     * - TRIM_MEMORY_RUNNING_CRITICAL (15): App running, system extremely low on memory
-     * - TRIM_MEMORY_RUNNING_LOW (10): App running, system low on memory
-     * - TRIM_MEMORY_RUNNING_MODERATE (5): App running, system moderately low on memory
-     */
-    fun onTrimMemory(level: Int) {
-        when {
-            level >= 80 || level == 15 -> { // COMPLETE or RUNNING_CRITICAL
-                log.w { "MEMORY: Critical system memory pressure (level $level), clearing caches" }
-                //todo the past code did not had any effect on the used data
-            }
-
-            level >= 10 -> { // RUNNING_LOW or higher
-                log.i { "MEMORY: System memory running low (level $level), reducing batch sizes" }
-                // Could reduce batch processing sizes here if needed
-            }
-
-            else -> {
-                log.d { "MEMORY: Minor memory trim request (level $level)" }
-            }
         }
     }
 }
