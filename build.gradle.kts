@@ -13,7 +13,7 @@ plugins {
     // of tor to reduce application binary size by keeping only the host/architecture
     // necessary for that distribution.
     // See: https://github.com/05nelsonm/kmp-tor-resource/blob/master/library/resource-filterjar-gradle-plugin/README.md
-    alias(libs.plugins.kmp.tor.resource.filterjar) apply(false)
+    alias(libs.plugins.kmp.tor.resource.filterjar).apply(false)
 
     // For iOS device some setup is needed to incorporate the LibTor.framework
     // that is expected to be present at runtime.

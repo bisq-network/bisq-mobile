@@ -12,6 +12,7 @@ import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -334,9 +335,9 @@ class KmpTorService : BaseService(), Logging {
     }
 
     private suspend fun verifyControlPortAccessible(controlPort: Int) {
+        val selectorManager = SelectorManager(Dispatchers.IO)
         try {
             delay(500)
-            val selectorManager = SelectorManager(Dispatchers.Default)
             repeat(3) { attempt ->
                 try {
                     val socket = aSocket(selectorManager).tcp().connect("127.0.0.1", controlPort)
@@ -350,6 +351,8 @@ class KmpTorService : BaseService(), Logging {
             log.w { "Control port $controlPort not yet accessible, but continuing anyway" }
         } catch (e: Exception) {
             log.w(e) { "Control port $controlPort not yet accessible, but continuing anyway" }
+        } finally {
+            selectorManager.close()
         }
     }
 
