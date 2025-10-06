@@ -15,7 +15,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
-import network.bisq.mobile.android.node.service.network.KmpTorService
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -26,6 +25,7 @@ import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
+import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -34,6 +34,7 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainActivity
 import network.bisq.mobile.presentation.service.OpenTradesNotificationService
+import okio.Path.Companion.toPath
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
@@ -225,7 +226,7 @@ class NodeApplicationLifecycleService(
                 log.i { "Starting Tor" }
                 val baseDir: Path = applicationService.config.baseDir
                 // We block until Tor is ready, or timeout after 60 sec
-                withTimeout(TIMEOUT_SEC * 1000) { kmpTorService.startTor(baseDir).await() }
+                withTimeout(TIMEOUT_SEC * 1000) { kmpTorService.startTor(baseDir.toString().toPath(true)).await() }
                 log.i { "Tor successfully started" }
                 result.complete(true)
             } catch (e: TimeoutCancellationException) {

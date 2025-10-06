@@ -142,6 +142,7 @@ mockk-darwin = { module = "io.mockk:mockk-darwin", version.ref = "mockk" }
 logging-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 kmp-tor-runtime = { module = "io.matthewnelson.kmp-tor:runtime", version.ref = "kmp-tor" }
 kmp-tor-resource-exec = { module = "io.matthewnelson.kmp-tor:resource-exec-tor-gpl", version.ref = "kmp-tor-resource" }
+kmp-tor-resource-noexec = { module = "io.matthewnelson.kmp-tor:resource-noexec-tor-gpl", version.ref = "kmp-tor-resource" }
 bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum-lib" }
 
 # -------------------- Networking --------------------
@@ -250,3 +251,5 @@ protobuf = { id = "com.google.protobuf", version.ref = "protobuf" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 atomicfu = { id = "org.jetbrains.kotlinx.atomicfu", version.ref = "atomicfu" }
+kmp-tor-resource-filterjar = { id = "io.matthewnelson.kmp.tor.resource-filterjar", version.ref = "kmp-tor-resource" }
+kmp-tor-resource-frameworks = { id = "io.matthewnelson.kmp.tor.resource-frameworks", version.ref = "kmp-tor-resource" }

@@ -312,9 +312,6 @@ dependencies {
     implementation(libs.koin.android)
     implementation(libs.logging.kermit)
 
-    // kmp-tor for embedded Tor support
-    implementation(libs.kmp.tor.runtime)
-    implementation(libs.kmp.tor.resource.exec)
 
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 

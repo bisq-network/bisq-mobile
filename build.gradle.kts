@@ -7,6 +7,18 @@ plugins {
     alias(libs.plugins.compose.compiler).apply(false)
     alias(libs.plugins.buildconfig).apply(false)
     alias(libs.plugins.protobuf).apply(false)
+
+
+    // For Java & KotlinMultiplatform/Jvm this is for stripping out unused compilations
+    // of tor to reduce application binary size by keeping only the host/architecture
+    // necessary for that distribution.
+    // See: https://github.com/05nelsonm/kmp-tor-resource/blob/master/library/resource-filterjar-gradle-plugin/README.md
+    alias(libs.plugins.kmp.tor.resource.filterjar) apply(false)
+
+    // For iOS device some setup is needed to incorporate the LibTor.framework
+    // that is expected to be present at runtime.
+    // See: https://github.com/05nelsonm/kmp-tor-resource/blob/master/library/resource-frameworks-gradle-plugin/README.md
+    alias(libs.plugins.kmp.tor.resource.frameworks).apply(false)
 }
 
 // Configure all subprojects to run generateResourceBundles before compilation

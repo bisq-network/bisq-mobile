@@ -8,15 +8,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.android.node.service.network.KmpTorService
-import network.bisq.mobile.android.node.service.network.KmpTorService.State.IDLE
-import network.bisq.mobile.android.node.service.network.KmpTorService.State.STARTED
-import network.bisq.mobile.android.node.service.network.KmpTorService.State.STARTING
-import network.bisq.mobile.android.node.service.network.KmpTorService.State.STARTING_FAILED
-import network.bisq.mobile.android.node.service.network.KmpTorService.State.STOPPED
-import network.bisq.mobile.android.node.service.network.KmpTorService.State.STOPPING
-import network.bisq.mobile.android.node.service.network.KmpTorService.State.STOPPING_FAILED
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.domain.service.network.KmpTorService.State.IDLE
+import network.bisq.mobile.domain.service.network.KmpTorService.State.STARTED
+import network.bisq.mobile.domain.service.network.KmpTorService.State.STARTING
+import network.bisq.mobile.domain.service.network.KmpTorService.State.STARTING_FAILED
+import network.bisq.mobile.domain.service.network.KmpTorService.State.STOPPED
+import network.bisq.mobile.domain.service.network.KmpTorService.State.STOPPING
+import network.bisq.mobile.domain.service.network.KmpTorService.State.STOPPING_FAILED
 import network.bisq.mobile.i18n.i18n
 
 class NodeApplicationBootstrapFacade(

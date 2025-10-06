@@ -18,7 +18,6 @@ import network.bisq.mobile.android.node.service.explorer.NodeExplorerServiceFaca
 import network.bisq.mobile.android.node.service.market_price.NodeMarketPriceServiceFacade
 import network.bisq.mobile.android.node.service.mediation.NodeMediationServiceFacade
 import network.bisq.mobile.android.node.service.message_delivery.NodeMessageDeliveryServiceFacade
-import network.bisq.mobile.android.node.service.network.KmpTorService
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.android.node.service.network.NodeNetworkServiceFacade
 import network.bisq.mobile.android.node.service.offers.NodeOffersServiceFacade
@@ -38,6 +37,7 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade

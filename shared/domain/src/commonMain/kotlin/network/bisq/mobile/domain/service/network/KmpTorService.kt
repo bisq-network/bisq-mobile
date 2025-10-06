@@ -1,6 +1,8 @@
-package network.bisq.mobile.android.node.service.network
+package network.bisq.mobile.domain.service.network
 
-import io.matthewnelson.kmp.tor.resource.exec.tor.ResourceLoaderTorExec
+import io.ktor.network.selector.SelectorManager
+import io.ktor.network.sockets.aSocket
+import io.matthewnelson.kmp.file.File
 import io.matthewnelson.kmp.tor.runtime.Action
 import io.matthewnelson.kmp.tor.runtime.Action.Companion.stopDaemonSync
 import io.matthewnelson.kmp.tor.runtime.TorRuntime
@@ -9,23 +11,20 @@ import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.utils.Logging
-import java.io.File
-import java.io.FileOutputStream
-import java.net.InetSocketAddress
-import java.net.Socket
-import java.nio.file.Path
-import kotlin.io.path.Path
-import kotlin.io.path.absolutePathString
+import okio.FileSystem
+import okio.Path
+import okio.SYSTEM
 
 
 /**
@@ -131,9 +130,9 @@ class KmpTorService : BaseService(), Logging {
         val cacheDirectory = getTorCacheDir()
         val controlPortFile = getControlPortFile()
         val environment = TorRuntime.Environment.Builder(
-            workDirectory = torDir,
-            cacheDirectory = cacheDirectory,
-            loader = ResourceLoaderTorExec::getOrCreate
+            workDirectory = File(torDir.toString()),
+            cacheDirectory = File(cacheDirectory.toString()),
+            loader = ::torResourceLoader,
         )
 
         torRuntime = TorRuntime.Builder(environment) {
@@ -151,10 +150,10 @@ class KmpTorService : BaseService(), Logging {
             config { _ ->
                 TorOption.SocksPort.configure { auto() }
                 TorOption.ControlPort.configure { auto() }
-                TorOption.ControlPortWriteToFile.configure(controlPortFile)
+                TorOption.ControlPortWriteToFile.configure(File(controlPortFile.toString()))
                 TorOption.CookieAuthentication.configure(true)
-                TorOption.DataDirectory.configure(torDir)
-                TorOption.CacheDirectory.configure(cacheDirectory)
+                TorOption.DataDirectory.configure(File(torDir.toString()))
+                TorOption.CacheDirectory.configure(File(cacheDirectory.toString()))
                 TorOption.DisableNetwork.configure(true) // Bisq Easy tor lib managed the DisableNetwork state, initially it is disabled.
                 TorOption.NoExec.configure(true)
                 TorOption.TruncateLogFile.configure(true)
@@ -207,7 +206,7 @@ class KmpTorService : BaseService(), Logging {
         val deferred = CompletableDeferred<Int>()
         controlPortFileObserverJob = launchIO {
             val controlPortFile = getControlPortFile()
-            log.i("Path to controlPortFile: ${controlPortFile.absolutePath}")
+            log.i("Path to controlPortFile: $controlPortFile")
             try {
                 // We can't use FileObserver because it misses events between event processing.
                 // Tor writes the port to a swap file first, and renames it afterward.
@@ -218,19 +217,20 @@ class KmpTorService : BaseService(), Logging {
                 var iterations = 0
                 val delay: Long = 100
                 val maxIterations = 30 * 1000 / delay // 30 seconds with 100ms delays
-                val startTime = System.currentTimeMillis()
+                val startTime = Clock.System.now().toEpochMilliseconds()
                 val timeoutMs = 60_000 // 60 second timeout
                 while (!deferred.isCompleted && iterations < maxIterations) {
                     iterations++
-                    if (System.currentTimeMillis() - startTime > timeoutMs) {
+                    if (Clock.System.now().toEpochMilliseconds() - startTime > timeoutMs) {
                         deferred.completeExceptionally(
                             KmpTorException("Timeout waiting for control port file")
                         )
                         break
                     }
                     log.i("readControlPort iterations=$iterations")
-                    if (controlPortFile.exists()) {
-                        val currentModified = controlPortFile.lastModified()
+                    val currentMetadata = FileSystem.SYSTEM.metadataOrNull(controlPortFile)
+                    if (currentMetadata != null) {
+                        val currentModified = currentMetadata.lastModifiedAtMillis ?: 0L
                         if (currentModified != lastModified) {
                             lastModified = currentModified
                             log.i("We detected modification change of controlPortFile: $controlPortFile")
@@ -247,7 +247,7 @@ class KmpTorService : BaseService(), Logging {
                     )
                 }
             } catch (e: Exception) {
-                handleError("Observing file ${controlPortFile.absolutePath} failed: ${e.message}")
+                handleError("Observing file controlPortFile failed: ${e.message}")
                 deferred.completeExceptionally(e)
             } finally {
                 if (controlPortFileObserverJob === this@launchIO) {
@@ -258,17 +258,21 @@ class KmpTorService : BaseService(), Logging {
         return deferred
     }
 
-    private fun readControlPortFile(file: File, deferred: CompletableDeferred<Int>) {
+    private fun readControlPortFile(file: Path, deferred: CompletableDeferred<Int>) {
         try {
             // Expected string in file: `PORT=127.0.0.1:{port}`
-            val line = file.readLines().firstOrNull { it.startsWith("PORT=127.0.0.1:") }
+            val lines = FileSystem.SYSTEM.read(file) {
+                readUtf8().lines()
+            }
+            val line = lines.firstOrNull { it.startsWith("PORT=127.0.0.1:") }
                 ?: error("No PORT line found")
             val port = line.removePrefix("PORT=127.0.0.1:").toInt()
             deferred.takeIf { !it.isCompleted }?.complete(port)
             log.i("Control port read from control.txt file: $port")
 
-            // We rename the file so that the file observer is not taking an old file from the last run
-            getControlPortFile().renameTo(getControlPortBackupFile())
+            // Rename the file so the observer doesn't pick up an old file
+            val backup = getControlPortBackupFile()
+            FileSystem.SYSTEM.atomicMove(getControlPortFile(), backup)
         } catch (error: Exception) {
             handleError("Failed to read control port from control.txt file: $error")
             deferred.completeExceptionally(error)
@@ -277,56 +281,51 @@ class KmpTorService : BaseService(), Logging {
 
     private suspend fun writeExternalTorConfig(socksPort: Int, controlPort: Int) {
         try {
-            val cookieFile = File(getTorDir(), "control_auth_cookie")
+            val torDir = getTorDir()
+            val cookieFile = torDir / "control_auth_cookie"
             val configContent = buildString {
                 appendLine("UseExternalTor 1")
                 appendLine("CookieAuthentication 1")
-                appendLine("CookieAuthFile ${cookieFile.absolutePath}")
+                appendLine("CookieAuthFile ${cookieFile.toString()}")
                 appendLine("SocksPort 127.0.0.1:$socksPort")
                 appendLine("ControlPort 127.0.0.1:$controlPort")
             }
 
-            val configFile = File(getTorDir(), "external_tor.config")
+            val configFile = torDir / "external_tor.config"
             withContext(IODispatcher) {
-                runInterruptible {
-                    FileOutputStream(configFile).use { fos ->
-                        fos.write(configContent.toByteArray())
-                        fos.fd.sync()
-                    }
+                FileSystem.SYSTEM.write(configFile) {
+                    writeUtf8(configContent)
+                    flush()
                 }
             }
 
             // Validate that the config file was written correctly and is readable
             validateExternalTorConfig(configFile, socksPort, controlPort)
 
-            log.i { "Wrote external_tor.config to ${configFile.absolutePath}\n\n$configContent\n\n" }
+            log.i { "Wrote external_tor.config to ${configFile}\n\n$configContent\n\n" }
         } catch (error: Exception) {
             handleError("Failed to write external_tor.config: $error")
             throw error
         }
     }
 
-    private suspend fun validateExternalTorConfig(configFile: File, expectedSocksPort: Int, expectedControlPort: Int) {
+    private suspend fun validateExternalTorConfig(configFile: Path, expectedSocksPort: Int, expectedControlPort: Int) {
         try {
             withContext(IODispatcher) {
-                runInterruptible {
-                    if (!configFile.exists()) {
-                        throw KmpTorException("external_tor.config file does not exist after writing")
-                    }
-
-                    val content = configFile.readText()
-                    if (!content.contains("UseExternalTor 1")) {
-                        throw KmpTorException("external_tor.config missing UseExternalTor directive")
-                    }
-                    if (!content.contains("SocksPort 127.0.0.1:$expectedSocksPort")) {
-                        throw KmpTorException("external_tor.config missing or incorrect SocksPort")
-                    }
-                    if (!content.contains("ControlPort 127.0.0.1:$expectedControlPort")) {
-                        throw KmpTorException("external_tor.config missing or incorrect ControlPort")
-                    }
-
-                    log.i { "external_tor.config validation successful" }
+                if (!FileSystem.SYSTEM.exists(configFile)) {
+                    throw KmpTorException("external_tor.config file does not exist after writing")
                 }
+                val content = FileSystem.SYSTEM.read(configFile) { readUtf8() }
+                if (!content.contains("UseExternalTor 1")) {
+                    throw KmpTorException("external_tor.config missing UseExternalTor directive")
+                }
+                if (!content.contains("SocksPort 127.0.0.1:$expectedSocksPort")) {
+                    throw KmpTorException("external_tor.config missing or incorrect SocksPort")
+                }
+                if (!content.contains("ControlPort 127.0.0.1:$expectedControlPort")) {
+                    throw KmpTorException("external_tor.config missing or incorrect ControlPort")
+                }
+                log.i { "external_tor.config validation successful" }
             }
         } catch (error: Exception) {
             log.e(error) { "external_tor.config validation failed" }
@@ -336,16 +335,14 @@ class KmpTorService : BaseService(), Logging {
 
     private suspend fun verifyControlPortAccessible(controlPort: Int) {
         try {
-            // Give Tor a moment to fully initialize the control port
             delay(500)
-
+            val selectorManager = SelectorManager(Dispatchers.Default)
             repeat(3) { attempt ->
                 try {
-                    Socket().use { socket ->
-                        socket.connect(InetSocketAddress("127.0.0.1", controlPort), 1000)
-                        log.i { "Verified control port $controlPort is accessible" }
-                        return
-                    }
+                    val socket = aSocket(selectorManager).tcp().connect("127.0.0.1", controlPort)
+                    socket.close()
+                    log.i { "Verified control port $controlPort is accessible" }
+                    return
                 } catch (e: Exception) {
                     if (attempt < 2) delay(250)
                 }
@@ -356,27 +353,26 @@ class KmpTorService : BaseService(), Logging {
         }
     }
 
-    private fun getTorDir(): File {
-        val torDirPath = Path(baseDir.absolutePathString(), "tor")
-        val torDir = torDirPath.toFile()
-        if (!torDir.exists()) {
-            torDir.mkdirs()
+    private fun getTorDir(): Path {
+        val torDir = baseDir / "tor"
+        if (!FileSystem.SYSTEM.exists(torDir)) {
+            FileSystem.SYSTEM.createDirectories(torDir)
         }
         return torDir
     }
 
-    private fun getTorCacheDir(): File {
-        val torDirPath = Path(baseDir.absolutePathString(), "tor")
-        val torCacheDir = Path(torDirPath.absolutePathString(), "cache").toFile()
-        if (!torCacheDir.exists()) {
-            torCacheDir.mkdirs()
+    private fun getTorCacheDir(): Path {
+        val torDir = getTorDir()
+        val cacheDir = torDir / "cache"
+        if (!FileSystem.SYSTEM.exists(cacheDir)) {
+            FileSystem.SYSTEM.createDirectories(cacheDir)
         }
-        return torCacheDir
+        return cacheDir
     }
 
-    private fun getControlPortFile() = File(getTorDir(), "control-port.txt")
+    private fun getControlPortFile(): Path = getTorDir() / "control-port.txt"
 
-    private fun getControlPortBackupFile() = File(getTorDir(), "control-port-backup.txt")
+    private fun getControlPortBackupFile(): Path = getTorDir() / "control-port-backup.txt"
 
     private fun handleError(messageString: String) {
         log.e(messageString)

@@ -100,13 +100,14 @@ kotlin {
     sourceSets {
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
+            implementation(libs.kmp.tor.resource.exec)
         }
         commonMain.dependencies {
             //put your multiplatform dependencies here
             implementation(libs.koin.core)
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.logging.kermit)
-            implementation(libs.okio)
+            api(libs.okio) // to allow platform specific path conversion for kmp tor
             implementation(libs.kotlinx.datetime)
             implementation(libs.bignum)
 
@@ -117,6 +118,8 @@ kotlin {
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.ktor.client.websockets)
+
+            implementation(libs.kmp.tor.runtime)
 
             implementation(libs.atomicfu)
             implementation(libs.kotlin.reflect)
@@ -155,6 +158,7 @@ kotlin {
 
         iosMain.dependencies {
             implementation(libs.koin.core)
+            implementation(libs.kmp.tor.resource.noexec)
         }
 
         iosTest.dependencies {
