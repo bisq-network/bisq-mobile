@@ -1,3 +1,4 @@
+
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.io.InputStreamReader
 import java.util.Properties
@@ -121,6 +122,9 @@ kotlin {
             implementation(libs.atomicfu)
             implementation(libs.kotlin.reflect)
 
+            implementation(libs.kmp.tor.runtime)
+            implementation(libs.kmp.tor.resource.exec)
+
             implementation(libs.androidx.datastore.okio)
 
             configurations.all {
@@ -138,6 +142,8 @@ kotlin {
 
             implementation(libs.koin.core)
             implementation(libs.koin.android)
+
+            implementation(libs.kmp.tor.runtime)
         }
         androidUnitTest.dependencies {
             implementation(libs.mockk)
@@ -155,6 +161,9 @@ kotlin {
 
         iosMain.dependencies {
             implementation(libs.koin.core)
+
+            implementation(libs.kmp.tor.runtime)
+            implementation(libs.kmp.tor.resource.noexec)
         }
 
         iosTest.dependencies {

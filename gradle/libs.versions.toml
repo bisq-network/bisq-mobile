@@ -142,6 +142,8 @@ mockk-darwin = { module = "io.mockk:mockk-darwin", version.ref = "mockk" }
 logging-kermit = { module = "co.touchlab:kermit", version.ref = "kermit" }
 kmp-tor-runtime = { module = "io.matthewnelson.kmp-tor:runtime", version.ref = "kmp-tor" }
 kmp-tor-resource-exec = { module = "io.matthewnelson.kmp-tor:resource-exec-tor-gpl", version.ref = "kmp-tor-resource" }
+kmp-tor-resource-noexec = { module = "io.matthewnelson.kmp-tor:resource-noexec-tor-gpl", version.ref = "kmp-tor-resource" }
+
 bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum-lib" }
 
 # -------------------- Networking --------------------
