@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.di
 
 import network.bisq.mobile.client.AndroidClientMainPresenter
+import network.bisq.mobile.client.ClientApplicationLifecycleService
 import network.bisq.mobile.client.presentation.ClientOnboardingPresenter
 import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.client.utils.ClientVersionProvider
@@ -38,10 +39,8 @@ val androidClientModule = module {
 
     single<VersionProvider> { ClientVersionProvider() }
 
-    single<MainPresenter> {
-        AndroidClientMainPresenter(
-            get(),
-            get(),
+    single<ClientApplicationLifecycleService> {
+        ClientApplicationLifecycleService(
             get(),
             get(),
             get(),
@@ -57,6 +56,19 @@ val androidClientModule = module {
             get(),
             get(),
             get()
+        )
+    }
+
+    single<MainPresenter> {
+        AndroidClientMainPresenter(
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
         )
     } bind AppPresenter::class
 }
