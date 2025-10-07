@@ -29,6 +29,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.icon_chat
+import bisqapps.shared.presentation.generated.resources.icon_learn
 import bisqapps.shared.presentation.generated.resources.icon_markets
 import bisqapps.shared.presentation.generated.resources.icon_payment
 import bisqapps.shared.presentation.generated.resources.reputation
@@ -220,7 +221,7 @@ private fun DashboardContent(
                 bulletPoints = listOf(
                     Pair("mobile.dashboard.tradeGuide.bulletPoint1".i18n(), Res.drawable.thumbs_up),
                     Pair("bisqEasy.onboarding.top.content2".i18n(), Res.drawable.icon_payment),
-                    Pair("bisqEasy.onboarding.top.content3".i18n(), Res.drawable.icon_chat)
+                    Pair("bisqEasy.onboarding.top.content3".i18n(), Res.drawable.icon_learn)
                 ),
                 buttonText = "support.resources.guides.tradeGuide".i18n(),
                 buttonHandler = onOpenTradeGuide
