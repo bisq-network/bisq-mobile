@@ -1,5 +1,9 @@
 package network.bisq.mobile.client
 
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -10,6 +14,7 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.network.KmpTorClientService
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -18,6 +23,7 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 
 class ClientApplicationLifecycleService(
+    private val kmpTorClientService: KmpTorClientService,
     private val accountsServiceFacade: AccountsServiceFacade,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
@@ -35,6 +41,15 @@ class ClientApplicationLifecycleService(
     private val connectivityService: ConnectivityService,
 ) : BaseService() {
 
+    companion object Companion {
+        const val TIMEOUT_SEC: Long = 60
+    }
+
+    private var baseDirPath: String? = null
+    fun setBaseDirPath(value: String) {
+        baseDirPath = value
+    }
+
     fun initialize() {
         log.i { "Initialize core services and Tor" }
 
@@ -42,6 +57,12 @@ class ClientApplicationLifecycleService(
             runCatching {
                 networkServiceFacade.activate()
                 applicationBootstrapFacade.activate()
+
+                if (isTorSupported()) {
+                    // Block until tor is ready or a timeout exception is thrown
+                    initializeTor().await()
+                }
+
                 activateServiceFacades()
             }.onFailure { e ->
                 log.e("Error at initializeTorAndServices", e)
@@ -57,9 +78,59 @@ class ClientApplicationLifecycleService(
 
     fun shutdown() {
         log.i { "Destroying NodeMainPresenter" }
-        deactivateServiceFacades()
+        shutdownServicesAndTor()
     }
 
+    private fun shutdownServicesAndTor() {
+        try {
+            log.i { "Stopping service facades" }
+            deactivateServiceFacades()
+        } catch (e: Exception) {
+            log.e("Error at deactivateServiceFacades", e)
+        }
+
+        try {
+            log.i { "Stopping Tor" }
+            kmpTorClientService.stopTorSync()
+            log.i { "Tor stopped" }
+        } catch (e: Exception) {
+            log.e("Error at stopTor", e)
+        }
+    }
+
+    private fun initializeTor(): CompletableDeferred<Boolean> {
+        val result = CompletableDeferred<Boolean>()
+        kmpTorClientService.setBaseDirPath(baseDirPath)
+        launchIO {
+            try {
+                log.i { "Starting Tor" }
+                // We block until Tor is ready, or timeout after 60 sec
+                withTimeout(TIMEOUT_SEC * 1000) { kmpTorClientService.startTor().await() }
+                log.i { "Tor successfully started" }
+                result.complete(true)
+            } catch (e: TimeoutCancellationException) {
+                log.e(e) { "Tor initialization not completed after $TIMEOUT_SEC seconds" }
+                result.completeExceptionally(e)
+            } catch (e: CancellationException) {
+                result.cancel(e)
+                throw e
+            } catch (e: Exception) {
+                val failure = kmpTorClientService.startupFailure.value
+                val errorMessage = listOfNotNull(
+                    failure?.message,
+                    failure?.cause?.message
+                ).firstOrNull() ?: "Unknown Tor error"
+                result.completeExceptionally(e)
+                log.e(e) { "Tor initialization failed - $errorMessage" }
+            }
+        }
+        return result
+    }
+
+    //todo
+    private fun isTorSupported(): Boolean {
+        return true
+    }
 
     private fun activateServiceFacades() {
         settingsServiceFacade.activate()

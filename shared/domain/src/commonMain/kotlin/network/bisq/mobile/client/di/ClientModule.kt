@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.di
 
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.ProxyBuilder
 import io.ktor.client.engine.cio.CIO
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.websocket.WebSockets
@@ -72,6 +73,7 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.network.KmpTorClientService
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -140,8 +142,15 @@ val clientModule = module {
             install(ContentNegotiation) {
                 json(json)
             }
+            engine {
+                // FIXME We should use a provider which gets set the port once tor is ready (using a free system port)
+                // But this might cause quite some impact how all the webservices are handling it. If accessed too early it will fail.
+                proxy = ProxyBuilder.socks(host = "127.0.0.1", port = KmpTorClientService.SOCKS_PORT)
+            }
         }
     }
+
+    single<KmpTorClientService> { KmpTorClientService() }
 
     single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get(), get()) }
 

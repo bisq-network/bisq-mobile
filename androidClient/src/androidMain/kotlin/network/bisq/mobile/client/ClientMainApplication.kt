@@ -1,5 +1,6 @@
 package network.bisq.mobile.client
 
+import android.content.Context
 import network.bisq.mobile.client.di.androidClientModule
 import network.bisq.mobile.client.di.clientModule
 import network.bisq.mobile.client.di.serviceModule
@@ -20,7 +21,13 @@ class ClientMainApplication : MainApplication() {
     override fun onCreated() {
         // We start here the initialisation (non blocking) of tor and the service facades.
         // The lifecycle of those is tied to the lifecycle of the Application/Process not to the lifecycle of the MainActivity.
+
         val applicationLifecycleService: ClientApplicationLifecycleService = get()
+
+        val context = this as Context
+        val baseDirPath = context.filesDir.resolve("Bisq2_mobile").absolutePath
+        applicationLifecycleService.setBaseDirPath(baseDirPath)
+
         applicationLifecycleService.initialize()
         log.i { "Bisq Client Application Created" }
     }
