@@ -2,12 +2,14 @@ package network.bisq.mobile.android.node.service.offers
 
 
 import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookChannel
+import bisq.chat.bisq_easy.offerbook.BisqEasyOfferbookMessage
+
 import bisq.common.observable.Pin
 import network.bisq.mobile.domain.utils.Logging
 
 class NumOffersObserver(
-    // TODO restore usage of bisqEasyOfferbookMessageService for v2.1.8
     private val channel: BisqEasyOfferbookChannel,
+    private val messageFilter: (BisqEasyOfferbookMessage) -> Boolean,
     val setNumOffers: (Int) -> Unit
 ) : Logging {
     private var channelPin: Pin? = null
@@ -31,10 +33,14 @@ class NumOffersObserver(
         channelPin?.unbind()
         channelPin = null
     }
+    fun refresh() {
+        updateNumOffers()
+    }
+
 
     private fun updateNumOffers() {
         try {
-            val count = channel.chatMessages.count { it.hasBisqEasyOffer() }
+            val count = channel.chatMessages.count { it.hasBisqEasyOffer() && messageFilter(it) }
 
             // Only update if count changed to reduce unnecessary updates
             if (count != cachedCount) {

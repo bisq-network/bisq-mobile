@@ -83,7 +83,7 @@ val androidNodeModule = module {
 
     single<UserProfileServiceFacade> { NodeUserProfileServiceFacade(get()) }
 
-    single<OffersServiceFacade> { NodeOffersServiceFacade(get(), get()) }
+    single<OffersServiceFacade> { NodeOffersServiceFacade(get(), get(), get()) }
 
     single<ExplorerServiceFacade> { NodeExplorerServiceFacade(get()) }
 
