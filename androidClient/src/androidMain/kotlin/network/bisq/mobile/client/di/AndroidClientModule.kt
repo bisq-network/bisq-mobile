@@ -55,6 +55,20 @@ val androidClientModule = module {
             get(),
             get(),
             get(),
+            get(),
+            get()
+        )
+    }
+
+    single<MainPresenter> {
+        AndroidClientMainPresenter(
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
+            get(),
             get()
         )
     }
