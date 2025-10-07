@@ -333,7 +333,7 @@ tasks.withType<Test> {
 }
 
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {
-    return "BisqEasy-${defaultConfig.versionName}_${defaultConfig.versionCode}"
+    return "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 }
 
 // Configure ProGuard mapping file management using shared script

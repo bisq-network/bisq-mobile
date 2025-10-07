@@ -142,7 +142,7 @@ dependencies {
 
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {
 //    val date = SimpleDateFormat("yyyyMMdd").format(Date())
-    return "BisqConnect-${defaultConfig.versionName}_${defaultConfig.versionCode}"
+    return "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 }
 
 // Configure ProGuard mapping file management using shared script
