@@ -144,6 +144,8 @@ kotlin {
             implementation(libs.koin.android)
 
             implementation(libs.kmp.tor.runtime)
+            implementation(libs.kmp.tor.resource.exec)
+            implementation(libs.ktor.client.okhttp)
         }
         androidUnitTest.dependencies {
             implementation(libs.mockk)
@@ -164,6 +166,7 @@ kotlin {
 
             implementation(libs.kmp.tor.runtime)
             implementation(libs.kmp.tor.resource.noexec)
+            implementation(libs.ktor.client.darwin)
         }
 
         iosTest.dependencies {
