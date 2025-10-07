@@ -59,7 +59,7 @@ class NodeMainApplication : MainApplication(), ComponentCallbacks2 {
         // Note: NodeMainApplication already implements ComponentCallbacks2, so onTrimMemory is automatically called
         // No need to registerComponentCallbacks(this) - that would cause infinite recursion
         // Note: Tor initialization is now handled in NodeApplicationBootstrapFacade
-        log.i { "Bisq Node Application Created" }
+        log.i { "Bisq Easy Node Application Created" }
     }
 
     override fun onTrimMemory(level: Int) {

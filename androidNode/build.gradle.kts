@@ -15,6 +15,7 @@ plugins {
 version = project.findProperty("node.android.version") as String
 val versionCodeValue = (project.findProperty("node.android.version.code") as String).toInt()
 val sharedVersion = project.findProperty("shared.version") as String
+val appName = project.findProperty("node.name") as String
 
 kotlin {
     // using JDK21 for full bisq2 compatibility
@@ -209,9 +210,8 @@ android {
         val variant = this
         outputs.all {
             val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            val appName = project.name
             val version = variant.versionName
-            val fileName = "$appName-$version.apk"
+            val fileName = "${appName.replace(" ", "_")}-$version.apk"
             output.outputFileName = fileName
         }
     }
@@ -333,7 +333,7 @@ tasks.withType<Test> {
 }
 
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {
-    return "Bisq-${defaultConfig.versionName}_${defaultConfig.versionCode}"
+    return "BisqEasy-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 }
 
 // Configure ProGuard mapping file management using shared script

@@ -12,6 +12,7 @@ plugins {
 version = project.findProperty("client.android.version") as String
 val versionCodeValue = (project.findProperty("client.android.version.code") as String).toInt()
 val sharedVersion = project.findProperty("shared.version") as String
+val appName = project.findProperty("client.name") as String
 
 kotlin {
     androidTarget {
@@ -119,9 +120,8 @@ android {
         val variant = this
         outputs.all {
             val output = this as com.android.build.gradle.internal.api.BaseVariantOutputImpl
-            val appName = "Bisq Connect"
             val version = variant.versionName
-            val fileName = "$appName-$version.apk"
+            val fileName = "${appName.replace(" ", "_")}-$version.apk"
             output.outputFileName = fileName
         }
     }
