@@ -72,4 +72,22 @@ class OfferItemPresentationModel(offerItemPresentationDto: OfferItemPresentation
     override fun hashCode(): Int {
         return bisqEasyOffer.hashCode()
     }
+
+    // Updates from services
+    fun updateFormattedPrice(value: String) {
+        if (value.isNotEmpty() && value != _formattedPrice.value) {
+            _formattedPrice.value = value
+        }
+    }
+
+    fun updateFormattedBaseAmount(value: String) {
+        if (value.isNotEmpty() && value != _formattedBaseAmount.value) {
+            _formattedBaseAmount.value = value
+        }
+    }
+
+    fun updateFormattedValues(price: String, baseAmount: String) {
+        updateFormattedPrice(price)
+        updateFormattedBaseAmount(baseAmount)
+    }
 }
