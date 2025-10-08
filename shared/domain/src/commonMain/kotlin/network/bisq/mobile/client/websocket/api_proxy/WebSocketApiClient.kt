@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.websocket.api_proxy
 
-import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.accept
 import io.ktor.client.request.patch
@@ -18,13 +17,14 @@ import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
+import network.bisq.mobile.domain.service.network.HttpClientProvider
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 class WebSocketApiClient(
-    val httpClient: HttpClient,
+    val httpClientProvider: HttpClientProvider,
     val webSocketClientProvider: WebSocketClientProvider,
     val json: Json,
     private val defaultHost: String,
@@ -66,7 +66,7 @@ class WebSocketApiClient(
         if (useHttpClient) {
             try {
                 val apiUrl = currentApiUrl()
-                val response: HttpResponse = httpClient.patch(apiUrl + path) {
+                val response: HttpResponse = httpClientProvider.get().patch(apiUrl + path) {
                     contentType(ContentType.Application.Json)
                     accept(ContentType.Application.Json)
                     setBody(requestBody)
@@ -85,7 +85,7 @@ class WebSocketApiClient(
         if (useHttpClient) {
             try {
                 val apiUrl = currentApiUrl()
-                val response: HttpResponse = httpClient.post(apiUrl + path) {
+                val response: HttpResponse = httpClientProvider.get().post(apiUrl + path) {
                     contentType(ContentType.Application.Json)
                     accept(ContentType.Application.Json)
                     setBody(requestBody)

@@ -64,11 +64,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     // Add state for dialog
     val showConfirmDialog = remember { mutableStateOf(false) }
 
-    val networkType: List<NetworkType> = if (BuildConfig.IS_DEBUG) {
-        listOf(NetworkType.LAN, NetworkType.TOR)
-    } else {
-        listOf(NetworkType.LAN)
-    }
+    val networkType: List<NetworkType> = listOf(NetworkType.LAN, NetworkType.TOR)
 
     val isNewApiUrl by produceState(initialValue = false, host, port, selectedNetworkType) {
         value = presenter.isNewApiUrl()

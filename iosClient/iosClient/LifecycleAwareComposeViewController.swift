@@ -7,11 +7,16 @@ import domain
 class LifecycleAwareComposeViewController: UIViewController {
     private let presenter: MainPresenter
     private let notificationServiceWrapper: NotificationServiceWrapper
+    private let clientApplicationLifecycleService: ClientApplicationLifecycleService
 
     init(presenter: MainPresenter, notificationServiceWrapper: NotificationServiceWrapper) {
         self.presenter = presenter
         self.notificationServiceWrapper = notificationServiceWrapper
         GenericErrorHandler.companion.doInit()
+
+        self.clientApplicationLifecycleService = get(ClientApplicationLifecycleService.self)
+        self.clientApplicationLifecycleService.initialize()
+
         super.init(nibName: nil, bundle: nil)
     }
 

@@ -1,4 +1,4 @@
-package network.bisq.mobile.android.node.service.network
+package network.bisq.mobile.domain.service.network
 
 class KmpTorException : Exception {
     constructor(cause: Throwable) : super(cause)

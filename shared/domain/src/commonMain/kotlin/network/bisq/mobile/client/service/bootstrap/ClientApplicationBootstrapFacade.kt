@@ -1,14 +1,15 @@
 package network.bisq.mobile.client.service.bootstrap
 
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.TrustedNodeService
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.network.KmpTorClientService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
 
 class ClientApplicationBootstrapFacade(
+    private val kmpTorClientService: KmpTorClientService,
     private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
     private val trustedNodeService: TrustedNodeService
@@ -22,13 +23,21 @@ class ClientApplicationBootstrapFacade(
         setState("mobile.clientApplicationBootstrap.bootstrapping".i18n())
         setProgress(0f)
 
-        bootstrapJob = serviceScope.launch {
-            val url = settingsRepository.fetch().bisqApiUrl
-            log.d { "Settings url $url" }
+        // TODO Needs dependency to kmp-tor-client to track progress.
+        // Must not go to 1 before tor is ready.
 
-            if (trustedNodeService.isDemo()) {
+        /* bootstrapJob = serviceScope.launch {
+             val url = settingsRepository.fetch().bisqApiUrl
+             log.d { "Settings url $url" }
+
+            *//* if (trustedNodeService.isDemo()) {
                 isDemo = true
-            }
+            }*//*
+
+
+
+            isDemo = false
+
             setProgress(0.5f)
             setState("mobile.clientApplicationBootstrap.connectingToTrustedNode".i18n())
             if (trustedNodeService.isConnected) {
@@ -52,7 +61,7 @@ class ClientApplicationBootstrapFacade(
                     setProgress(1.0f)
                 }
             }
-        }
+        }*/
 
         log.d { "Running bootstrap finished." }
     }

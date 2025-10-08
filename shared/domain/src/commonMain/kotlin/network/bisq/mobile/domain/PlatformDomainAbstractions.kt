@@ -2,6 +2,9 @@
 
 package network.bisq.mobile.domain
 
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.ProxyConfig
 import kotlinx.datetime.LocalDateTime
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
@@ -81,3 +84,8 @@ expect fun getLocaleCurrencyName(currencyCode: String): String
  * careful to only call this inside a Koin context on android
  */
 expect fun Scope.getStorageDir(): String
+
+/**
+ * Implementations of this function are expected to handle DNS leak by preventing system dns resolution in case proxy is a tor proxy.
+ */
+expect fun createHttpClient(proxyConfig: ProxyConfig? = null, config: HttpClientConfig<*>.() -> Unit = {}): HttpClient

@@ -1,10 +1,5 @@
 package network.bisq.mobile.client.di
 
-import io.ktor.client.HttpClient
-import io.ktor.client.engine.cio.CIO
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.modules.SerializersModule
 import kotlinx.serialization.modules.polymorphic
@@ -72,6 +67,8 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.network.HttpClientProvider
+import network.bisq.mobile.domain.service.network.KmpTorClientService
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -134,16 +131,11 @@ val clientModule = module {
 
     single { json }
 
-    single {
-        HttpClient(CIO) {
-            install(WebSockets)
-            install(ContentNegotiation) {
-                json(json)
-            }
-        }
-    }
+    single<HttpClientProvider> { HttpClientProvider(get()) }
 
-    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get(), get()) }
+    single<KmpTorClientService> { KmpTorClientService() }
+
+    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get(), get(), get()) }
 
     single { EnvironmentController() }
     single(named("ApiHost")) { get<EnvironmentController>().getApiHost() }
