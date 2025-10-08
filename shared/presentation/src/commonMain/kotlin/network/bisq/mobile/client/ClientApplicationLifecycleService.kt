@@ -4,6 +4,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.withTimeout
+import network.bisq.mobile.domain.data.model.TorConfig
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -58,7 +59,7 @@ class ClientApplicationLifecycleService(
                 networkServiceFacade.activate()
                 applicationBootstrapFacade.activate()
 
-                if (isTorSupported()) {
+                if (TorConfig.useTor) {
                     // Block until tor is ready or a timeout exception is thrown
                     initializeTor().await()
                 }
@@ -125,11 +126,6 @@ class ClientApplicationLifecycleService(
             }
         }
         return result
-    }
-
-    //todo
-    private fun isTorSupported(): Boolean {
-        return true
     }
 
     private fun activateServiceFacades() {

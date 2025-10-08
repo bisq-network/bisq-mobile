@@ -8,13 +8,12 @@ import io.ktor.client.plugins.websocket.WebSockets
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.domain.createHttpClient
+import network.bisq.mobile.domain.data.model.TorConfig
 import network.bisq.mobile.domain.utils.Logging
 
 class HttpClientProvider(private val json: Json) : Logging {
     fun get(): HttpClient {
-        //todo
-        val useTor = false
-        if (useTor) {
+        if (TorConfig.useTor) {
             val proxyConfig = ProxyBuilder.socks("10.0.2.2", 8090)
             return createHttpClient(proxyConfig) {
                 install(WebSockets)
