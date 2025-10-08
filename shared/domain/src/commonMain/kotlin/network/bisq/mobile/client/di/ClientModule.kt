@@ -135,7 +135,7 @@ val clientModule = module {
 
     single<KmpTorClientService> { KmpTorClientService() }
 
-    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get(), get()) }
+    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get(), get(), get()) }
 
     single { EnvironmentController() }
     single(named("ApiHost")) { get<EnvironmentController>().getApiHost() }

@@ -14,7 +14,7 @@ import network.bisq.mobile.domain.utils.Logging
 class HttpClientProvider(private val json: Json) : Logging {
     fun get(): HttpClient {
         if (TorConfig.useTor) {
-            val proxyConfig = ProxyBuilder.socks("10.0.2.2", 8090)
+            val proxyConfig = ProxyBuilder.socks("127.0.0.1", KmpTorClientService.SOCKS_PORT)
             return createHttpClient(proxyConfig) {
                 install(WebSockets)
                 install(ContentNegotiation) {

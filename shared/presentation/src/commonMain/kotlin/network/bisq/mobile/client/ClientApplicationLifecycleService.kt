@@ -2,7 +2,9 @@ package network.bisq.mobile.client
 
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.domain.data.model.TorConfig
 import network.bisq.mobile.domain.service.BaseService
@@ -59,11 +61,22 @@ class ClientApplicationLifecycleService(
                 networkServiceFacade.activate()
                 applicationBootstrapFacade.activate()
 
+                // TODO just temp, we should pass the tor dependency to applicationBootstrapFacade
+                withContext(Dispatchers.Main) {
+                    applicationBootstrapFacade.setProgress(0.1f)
+                    applicationBootstrapFacade.setState("Starting Tor") // todo use i18n from node
+                }
                 if (TorConfig.useTor) {
                     // Block until tor is ready or a timeout exception is thrown
                     initializeTor().await()
                 }
 
+                // TODO just temp, we should pass the tor dependency to applicationBootstrapFacade
+                withContext(Dispatchers.Main) {
+                    applicationBootstrapFacade.setProgress(1f)
+                    applicationBootstrapFacade.setState("Tor started") // todo use i18n from node
+                }
+                
                 activateServiceFacades()
             }.onFailure { e ->
                 log.e("Error at initializeTorAndServices", e)

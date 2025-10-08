@@ -40,8 +40,9 @@ open class ClientMainPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        validateVersion()
-        listenForConnectivity()
+        // TODO this need to be done elsewhere otherwise we fail before tor is ready
+        // validateVersion()
+        // listenForConnectivity()
     }
 
 

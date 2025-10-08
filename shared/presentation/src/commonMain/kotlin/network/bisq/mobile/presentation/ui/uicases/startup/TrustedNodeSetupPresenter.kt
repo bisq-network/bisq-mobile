@@ -10,6 +10,7 @@ import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.domain.data.IODispatcher
+import network.bisq.mobile.domain.data.model.TorConfig
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -37,7 +38,7 @@ class TrustedNodeSetupPresenter(
         const val LOCALHOST = "localhost"
         const val ANDROID_LOCALHOST = "10.0.2.2"
         const val IPV4_EXAMPLE = "192.168.1.10"
-        const val TOR_EXAMPLE = "oszft36kya27en3fvvr5p4rrqonnnjwsubjnc63s6syvhyyn3gggulyd.onion"
+        const val TOR_EXAMPLE = TorConfig.host
     }
 
     enum class NetworkType(private val i18nKey: String) {
@@ -86,19 +87,16 @@ class TrustedNodeSetupPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        // Reset connection state when view is attached to ensure proper initial state
-        _isConnected.value = false
-        initialize()
-    }
-
-    private fun initialize() {
         log.i { "View attached to Trusted node presenter" }
 
-        updateHostPrompt()
+        // Reset connection state when view is attached to ensure proper initial state
+        _isConnected.value = false
+        _selectedNetworkType.value = if (TorConfig.useTor) NetworkType.TOR else NetworkType.LAN
         if (BuildConfig.IS_DEBUG) {
-            _host.value = localHost()
-            validateApiUrl()
+            _host.value = if (TorConfig.useTor) TOR_EXAMPLE else localHost()
         }
+        updateHostPrompt()
+        validateApiUrl()
 
         launchUI {
             try {
@@ -135,6 +133,7 @@ class TrustedNodeSetupPresenter(
 
     fun onNetworkType(value: NetworkType) {
         _selectedNetworkType.value = value
+        TorConfig.useTor = value == NetworkType.TOR
         updateHostPrompt()
         validateApiUrl()
     }
@@ -301,14 +300,18 @@ class TrustedNodeSetupPresenter(
     }
 
     private fun updateHostPrompt() {
-        if (selectedNetworkType.value == NetworkType.LAN) {
-            if (BuildConfig.IS_DEBUG) {
+        if (BuildConfig.IS_DEBUG) {
+            if (selectedNetworkType.value == NetworkType.LAN) {
                 _hostPrompt.value = localHost()
             } else {
-                _hostPrompt.value = IPV4_EXAMPLE
+                _hostPrompt.value = TOR_EXAMPLE
             }
         } else {
-            _hostPrompt.value = "mobile.trustedNodeSetup.host.prompt".i18n()
+            if (selectedNetworkType.value == NetworkType.LAN) {
+                _hostPrompt.value = IPV4_EXAMPLE
+            } else {
+                _hostPrompt.value = "mobile.trustedNodeSetup.host.prompt".i18n()
+            }
         }
     }
 
