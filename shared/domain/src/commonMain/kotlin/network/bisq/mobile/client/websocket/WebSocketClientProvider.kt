@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.websocket
 
-import io.ktor.client.HttpClient
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -12,6 +11,7 @@ import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.network.AddressVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.network.HttpClientProvider
 import network.bisq.mobile.domain.utils.Logging
 import kotlin.concurrent.Volatile
 
@@ -22,7 +22,7 @@ class WebSocketClientProvider(
     private val defaultHost: String,
     private val defaultPort: Int,
     private val settingsRepository: SettingsRepository,
-    private val httpClient: HttpClient,
+    private val httpClientProvider: HttpClientProvider,
     private val webSocketClientFactory: WebSocketClientFactory
 ) : Logging {
     private var observeSettingsJob: Job? = null
@@ -58,7 +58,7 @@ class WebSocketClientProvider(
     }
 
     private fun createClient(host: String, port: Int): WebSocketClient {
-        return webSocketClientFactory.createNewClient(httpClient, host, port)
+        return webSocketClientFactory.createNewClient(httpClientProvider, host, port)
     }
 
     // UI usages of this call will have the currentClient available so

@@ -37,6 +37,7 @@ class TrustedNodeSetupPresenter(
         const val LOCALHOST = "localhost"
         const val ANDROID_LOCALHOST = "10.0.2.2"
         const val IPV4_EXAMPLE = "192.168.1.10"
+        const val TOR_EXAMPLE = "oszft36kya27en3fvvr5p4rrqonnnjwsubjnc63s6syvhyyn3gggulyd.onion"
     }
 
     enum class NetworkType(private val i18nKey: String) {
