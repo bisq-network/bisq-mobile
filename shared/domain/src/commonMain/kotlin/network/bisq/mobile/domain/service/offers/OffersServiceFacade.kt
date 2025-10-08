@@ -60,6 +60,10 @@ abstract class OffersServiceFacade : ServiceFacade(), LifeCycleAware {
     // sorted alphabetically (false before true), thus we use thenByDescending
 
     companion object {
+        // Debounce configuration for market price ticks
+        // Chosen to balance responsiveness and avoiding UI churn
+        protected const val MARKET_TICK_DEBOUNCE_MS = 150L
+
         val mainCurrencies: List<String> = listOf("USD", "EUR", "GBP", "CAD", "AUD", "RUB", "CNY", "INR", "NGN")
 
         fun isTerminalState(tradeState: BisqEasyTradeStateEnum): Boolean {

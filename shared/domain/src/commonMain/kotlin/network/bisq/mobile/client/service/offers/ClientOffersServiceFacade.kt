@@ -30,6 +30,7 @@ import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOEx
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVOExtensions.getPriceQuoteVO
+import network.bisq.mobile.domain.service.offers.OfferFormattingUtil
 
 class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
@@ -270,7 +271,8 @@ class ClientOffersServiceFacade(
         marketPriceUpdateJob?.cancel()
         marketPriceUpdateJob = serviceScope.launch(Dispatchers.Default) {
             try {
-                delay(150)
+                // Debounce to avoid UI churn during high-frequency price ticks
+                delay(MARKET_TICK_DEBOUNCE_MS)
                 refreshOffersFormattedValues()
             } catch (e: Exception) {
                 log.e(e) { "Error scheduling offers price refresh (client)" }
@@ -283,43 +285,7 @@ class ClientOffersServiceFacade(
         val currentOffers = _offerbookListItems.value
         if (currentOffers.isEmpty()) return
 
-        currentOffers.forEach { model ->
-            val offerVO = model.bisqEasyOffer
-            val priceSpecVO = offerVO.priceSpec
-
-            // Only offers depending on market price need updates
-            if (priceSpecVO is network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO) return@forEach
-
-            try {
-                val priceQuoteVO = priceSpecVO.getPriceQuoteVO(marketItem)
-                val newFormattedPrice = PriceQuoteFormatter.format(priceQuoteVO, useLowPrecision = true, withCode = true)
-                model.updateFormattedPrice(newFormattedPrice)
-            } catch (e: Exception) {
-                log.e(e) { "Error updating formatted price (client) for offer ${offerVO.id}" }
-            }
-
-            try {
-                val priceQuoteVO = priceSpecVO.getPriceQuoteVO(marketItem)
-                val newFormattedBaseAmount = when (val amountSpec = offerVO.amountSpec) {
-                    is QuoteSideFixedAmountSpecVO -> {
-                        val quoteMonetary = FiatVOFactory.run { from(amountSpec.amount, offerVO.market.quoteCurrencyCode) }
-                        val baseMonetary = priceQuoteVO.toBaseSideMonetary(quoteMonetary)
-                        AmountFormatter.formatAmount(baseMonetary, useLowPrecision = false, withCode = true)
-                    }
-                    is QuoteSideRangeAmountSpecVO -> {
-                        val minQuote = FiatVOFactory.run { from(amountSpec.minAmount, offerVO.market.quoteCurrencyCode) }
-                        val maxQuote = FiatVOFactory.run { from(amountSpec.maxAmount, offerVO.market.quoteCurrencyCode) }
-                        val minBase = priceQuoteVO.toBaseSideMonetary(minQuote)
-                        val maxBase = priceQuoteVO.toBaseSideMonetary(maxQuote)
-                        AmountFormatter.formatRangeAmount(minBase, maxBase, useLowPrecision = false, withCode = true)
-                    }
-                    else -> model.formattedBaseAmount.value
-                }
-                model.updateFormattedBaseAmount(newFormattedBaseAmount)
-            } catch (e: Exception) {
-                log.e(e) { "Error updating formatted base amount (client) for offer ${offerVO.id}" }
-            }
-        }
+        OfferFormattingUtil.updateOffersFormattedValues(currentOffers, marketItem)
     }
 
     private fun fillMarketListItems(markets: List<MarketVO>) {

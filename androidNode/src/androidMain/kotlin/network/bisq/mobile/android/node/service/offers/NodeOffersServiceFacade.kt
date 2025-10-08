@@ -50,9 +50,9 @@ import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.data.model.MarketPriceItem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import network.bisq.mobile.domain.service.offers.OfferFormattingUtil
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import java.util.Date
@@ -82,7 +82,6 @@ class NodeOffersServiceFacade(
     private var chatMessagesPin: Pin? = null
     private var selectedChannelPin: Pin? = null
     private var marketPricePin: Pin? = null
-
 
     // Life cycle
     override fun activate() {
@@ -151,7 +150,8 @@ class NodeOffersServiceFacade(
 
     override suspend fun deleteOffer(offerId: String): Result<Boolean> {
         try {
-            val optionalOfferbookMessage: Optional<BisqEasyOfferbookMessage> = bisqEasyOfferbookChannelService.findMessageByOfferId(offerId)
+            val optionalOfferbookMessage: Optional<BisqEasyOfferbookMessage> =
+                bisqEasyOfferbookChannelService.findMessageByOfferId(offerId)
             check(optionalOfferbookMessage.isPresent) { "Could not find offer for offer ID $offerId" }
             val offerbookMessage: BisqEasyOfferbookMessage = optionalOfferbookMessage.get()
             val authorUserProfileId: String = offerbookMessage.authorUserProfileId
@@ -160,7 +160,10 @@ class NodeOffersServiceFacade(
             val userIdentity = optionalUserIdentity.get()
             check(userIdentity == userIdentityService.selectedUserIdentity) { "Selected selectedUserIdentity does not match the offers authorUserIdentity" }
             val broadcastResult: BroadcastResult =
-                bisqEasyOfferbookChannelService.deleteChatMessage(offerbookMessage, userIdentity.networkIdWithKeyPair).join()
+                bisqEasyOfferbookChannelService.deleteChatMessage(
+                    offerbookMessage,
+                    userIdentity.networkIdWithKeyPair
+                ).join()
             val broadcastResultNotEmpty = broadcastResult.isNotEmpty()
             if (!broadcastResultNotEmpty) {
                 log.w { "Delete offer message was not broadcast to network. Maybe there are no peers connected." }
@@ -233,7 +236,8 @@ class NodeOffersServiceFacade(
 //            BuildNodeConfig.TRADE_PROTOCOL_VERSION,
         )
 
-        val channel: BisqEasyOfferbookChannel = bisqEasyOfferbookChannelService.findChannel(market).get()
+        val channel: BisqEasyOfferbookChannel =
+            bisqEasyOfferbookChannelService.findChannel(market).get()
         val myOfferMessage = BisqEasyOfferbookMessage(
             channel.id,
             userProfile.id,
@@ -255,22 +259,23 @@ class NodeOffersServiceFacade(
 
     private fun observeSelectedChannel() {
         selectedChannelPin?.unbind()
-        selectedChannelPin = bisqEasyOfferbookChannelSelectionService.selectedChannel.addObserver { channel ->
-            if (channel == null) {
-                selectedChannel = channel
-                chatMessagesPin?.unbind()
-            } else if (channel is BisqEasyOfferbookChannel) {
-                selectedChannel = channel
-                marketPriceService.setSelectedMarket(channel.market)
-                val marketVO = Mappings.MarketMapping.fromBisq2Model(channel.market)
-                _selectedOfferbookMarket.value = OfferbookMarket(marketVO)
-                updateMarketPrice()
+        selectedChannelPin =
+            bisqEasyOfferbookChannelSelectionService.selectedChannel.addObserver { channel ->
+                if (channel == null) {
+                    selectedChannel = channel
+                    chatMessagesPin?.unbind()
+                } else if (channel is BisqEasyOfferbookChannel) {
+                    selectedChannel = channel
+                    marketPriceService.setSelectedMarket(channel.market)
+                    val marketVO = Mappings.MarketMapping.fromBisq2Model(channel.market)
+                    _selectedOfferbookMarket.value = OfferbookMarket(marketVO)
+                    updateMarketPrice()
 
-                observeChatMessages(channel)
-            } else {
-                log.w { "Selected channel is not a BisqEasyOfferbookChannel: ${channel::class.simpleName}" }
+                    observeChatMessages(channel)
+                } else {
+                    log.w { "Selected channel is not a BisqEasyOfferbookChannel: ${channel::class.simpleName}" }
+                }
             }
-        }
     }
 
 
@@ -336,8 +341,10 @@ class NodeOffersServiceFacade(
     private fun isValidOfferbookMessage(message: BisqEasyOfferbookMessage): Boolean {
         // Mirrors Bisq main: see bisqEasyOfferbookMessageService.isValid(message)
         return isNotBanned(message) &&
-            isNotIgnored(message) &&
-            (isTextMessage(message) || isBuyOffer(message) || hasSellerSufficientReputation(message))
+                isNotIgnored(message) &&
+                (isTextMessage(message) || isBuyOffer(message) || hasSellerSufficientReputation(
+                    message
+                ))
     }
 
     private fun isNotBanned(message: BisqEasyOfferbookMessage): Boolean {
@@ -375,16 +382,18 @@ class NodeOffersServiceFacade(
 
         // Compute required seller reputation based on offer amount in fiat using our domain util.
         val offerVO = Mappings.BisqEasyOfferMapping.fromBisq2Model(offer)
-        val requiredScore = BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
-            marketPriceServiceFacade,
-            offerVO
-        )
+        val requiredScore =
+            BisqEasyTradeAmountLimits.findRequiredReputationScoreForMinOrFixedAmount(
+                marketPriceServiceFacade,
+                offerVO
+            )
 
         // If we cannot determine required score (missing market prices), we err on the safe side
         // and do not filter by reputation to avoid hiding legitimate offers due to transient price lookups.
         if (requiredScore == null) return true
 
-        val authorScore = reputationService.getReputationScore(message.authorUserProfileId).totalScore
+        val authorScore =
+            reputationService.getReputationScore(message.authorUserProfileId).totalScore
         return authorScore >= requiredScore
     }
 
@@ -460,7 +469,8 @@ class NodeOffersServiceFacade(
 
     private fun updateMarketPrice() {
         if (marketPriceServiceFacade.selectedMarketPriceItem.value != null) {
-            val formattedPrice = marketPriceServiceFacade.selectedMarketPriceItem.value!!.formattedPrice
+            val formattedPrice =
+                marketPriceServiceFacade.selectedMarketPriceItem.value!!.formattedPrice
             _selectedOfferbookMarket.value.setFormattedPrice(formattedPrice)
         }
     }
@@ -469,7 +479,8 @@ class NodeOffersServiceFacade(
         marketPriceUpdateJob?.cancel()
         marketPriceUpdateJob = serviceScope.launch(Dispatchers.Default) {
             try {
-                delay(150)
+                // Debounce to avoid UI churn during high-frequency price ticks
+                delay(MARKET_TICK_DEBOUNCE_MS)
                 refreshOffersFormattedValues()
             } catch (e: Exception) {
                 log.e(e) { "Error scheduling offers price refresh" }
@@ -481,100 +492,7 @@ class NodeOffersServiceFacade(
         val marketItem = marketPriceServiceFacade.selectedMarketPriceItem.value ?: return
         val currentOffers = _offerbookListItems.value
         if (currentOffers.isEmpty()) return
-        refreshOffersFormattedValuesForTest(currentOffers, marketItem)
-    }
-
-    // Visible for JVM tests to avoid loading AndroidApplicationService.Provider
-    internal fun refreshOffersFormattedValuesForTest(
-        offers: List<OfferItemPresentationModel>,
-        marketItem: MarketPriceItem
-    ) {
-        offers.forEach { model ->
-            val offerVO = model.bisqEasyOffer
-            val priceSpecVO = offerVO.priceSpec
-
-            // Only offers depending on market price need updates
-            if (priceSpecVO is FixPriceSpecVO) return@forEach
-
-            try {
-                // 1) Price string (shared KMP formatter for consistency across Node/Client)
-                val priceQuoteVO = priceSpecVO.getPriceQuoteVO(marketItem)
-                val newFormattedPrice = PriceQuoteFormatter.format(priceQuoteVO, useLowPrecision = true, withCode = true)
-                model.updateFormattedPrice(newFormattedPrice)
-            } catch (e: Exception) {
-                log.e(e) { "Error updating formatted price for offer ${offerVO.id}" }
-            }
-
-            try {
-                // 2) Base amount string (compute from amountSpec + price quote)
-                val priceQuoteVO = priceSpecVO.getPriceQuoteVO(marketItem)
-                val newFormattedBaseAmount = when (val amountSpec = offerVO.amountSpec) {
-                    is QuoteSideFixedAmountSpecVO -> {
-                        val quoteMonetary = FiatVOFactory.run { from(amountSpec.amount, offerVO.market.quoteCurrencyCode) }
-                        val baseMonetary = priceQuoteVO.toBaseSideMonetary(quoteMonetary)
-                        AmountFormatter.formatAmount(baseMonetary, useLowPrecision = false, withCode = true)
-                    }
-                    is QuoteSideRangeAmountSpecVO -> {
-                        val minQuote = FiatVOFactory.run { from(amountSpec.minAmount, offerVO.market.quoteCurrencyCode) }
-                        val maxQuote = FiatVOFactory.run { from(amountSpec.maxAmount, offerVO.market.quoteCurrencyCode) }
-                        val minBase = priceQuoteVO.toBaseSideMonetary(minQuote)
-                        val maxBase = priceQuoteVO.toBaseSideMonetary(maxQuote)
-                        AmountFormatter.formatRangeAmount(minBase, maxBase, useLowPrecision = false, withCode = true)
-                    }
-                    else -> {
-                        // Base-side specs do not depend on market price for base amount; keep previous value
-                        model.formattedBaseAmount.value
-                    }
-                }
-                model.updateFormattedBaseAmount(newFormattedBaseAmount)
-            } catch (e: Exception) {
-                // Per requirement: keep previous formatted values if unavailable or on error
-                log.e(e) { "Error updating formatted base amount for offer ${offerVO.id}" }
-            }
-        }
-    }
-
-}
-
-
-
-// Top-level helper visible to JVM tests to avoid AndroidApplicationService.Provider
-internal fun refreshOffersFormattedValuesForTest(
-    offers: List<OfferItemPresentationModel>,
-    marketItem: MarketPriceItem
-) {
-    offers.forEach { model ->
-        val offerVO = model.bisqEasyOffer
-        val priceSpecVO = offerVO.priceSpec
-        if (priceSpecVO is FixPriceSpecVO) return@forEach
-        try {
-            val priceQuoteVO = priceSpecVO.getPriceQuoteVO(marketItem)
-            val newFormattedPrice = PriceQuoteFormatter.format(priceQuoteVO, useLowPrecision = true, withCode = true)
-            model.updateFormattedPrice(newFormattedPrice)
-        } catch (_: Exception) {
-            // ignore errors in test helper
-        }
-        try {
-            val priceQuoteVO = priceSpecVO.getPriceQuoteVO(marketItem)
-            val newFormattedBaseAmount = when (val amountSpec = offerVO.amountSpec) {
-                is QuoteSideFixedAmountSpecVO -> {
-                    val quoteMonetary = FiatVOFactory.run { from(amountSpec.amount, offerVO.market.quoteCurrencyCode) }
-                    val baseMonetary = priceQuoteVO.toBaseSideMonetary(quoteMonetary)
-                    AmountFormatter.formatAmount(baseMonetary, useLowPrecision = false, withCode = true)
-                }
-                is QuoteSideRangeAmountSpecVO -> {
-                    val minQuote = FiatVOFactory.run { from(amountSpec.minAmount, offerVO.market.quoteCurrencyCode) }
-                    val maxQuote = FiatVOFactory.run { from(amountSpec.maxAmount, offerVO.market.quoteCurrencyCode) }
-                    val minBase = priceQuoteVO.toBaseSideMonetary(minQuote)
-                    val maxBase = priceQuoteVO.toBaseSideMonetary(maxQuote)
-                    AmountFormatter.formatRangeAmount(minBase, maxBase, useLowPrecision = false, withCode = true)
-                }
-                else -> model.formattedBaseAmount.value
-            }
-            model.updateFormattedBaseAmount(newFormattedBaseAmount)
-        } catch (_: Exception) {
-            // ignore errors in test helper
-        }
+        OfferFormattingUtil.updateOffersFormattedValues(currentOffers, marketItem)
     }
 
 }
