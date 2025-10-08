@@ -125,6 +125,8 @@ class NodeOffersServiceFacade(
         selectedChannelPin = null
         marketPricePin?.unbind()
         marketPricePin = null
+        marketPriceUpdateJob?.cancel()
+        marketPriceUpdateJob = null
         ignoredIdsJob?.cancel()
         ignoredIdsJob = null
         numOffersObservers.forEach { it.dispose() }
