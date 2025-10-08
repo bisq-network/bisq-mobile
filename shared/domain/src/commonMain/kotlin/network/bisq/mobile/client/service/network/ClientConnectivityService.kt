@@ -172,6 +172,6 @@ class ClientConnectivityService(
     }
 
     private fun isConnected(): Boolean {
-        return webSocketClientProvider.get().isConnected()
+        return webSocketClientProvider.isConnected()
     }
 }

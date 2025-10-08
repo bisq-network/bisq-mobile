@@ -1,4 +1,4 @@
-# Websocket overview
+# WebSocket overview
 
 We use websockets for getting data pushed from the back-end.
 

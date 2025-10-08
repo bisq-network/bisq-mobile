@@ -1,11 +1,7 @@
 package network.bisq.mobile.domain.service
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
+import network.bisq.mobile.client.websocket.ConnectionState
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.utils.Logging
 
 /**
@@ -13,48 +9,25 @@ import network.bisq.mobile.domain.utils.Logging
  * against the trusted node for the client.
  */
 class TrustedNodeService(private val webSocketClientProvider: WebSocketClientProvider) : Logging {
-    private val ioScope = CoroutineScope(IODispatcher)
-
-    var isConnected: Boolean = false
-    private var observingConnectivity = false
-
-    private var connectivityObserverJob: Job? = null
 
     /**
      * Connects to the trusted node, throws an exception if connection fails
      */
-    suspend fun connect() {
-        if (!observingConnectivity) {
-            observeConnectivity()
-        }
-        runCatching {
-            // first test connect and proceed to establish it if test passes
-            webSocketClientProvider.get().let {
-                if (!it.isDemo() && !it.isConnected()) {
-                    it.connect(true)
-                    delay(250L)
-                    it.connect()
-                }
-            }
-        }.onSuccess {
-            log.d { "Connected to trusted node" }
-        }.onFailure {
-            log.e(it) { "ERROR: FAILED to connect to trusted node - ${it.message}" }
-            throw it
-        }
-    }
-
-    suspend fun await() = webSocketClientProvider.get().awaitConnection()
-
-    private fun observeConnectivity() {
-        connectivityObserverJob = ioScope.launch {
-            webSocketClientProvider.get().webSocketClientStatus.collect {
-                log.d { "connectivity status changed to $it" }
-                isConnected = webSocketClientProvider.get().isConnected()
+    suspend fun connect(): Throwable? {
+        webSocketClientProvider.get().let {
+            val status = it.webSocketClientStatus.value
+            val error = (status as? ConnectionState.Disconnected)?.error
+            if (error == null && status is ConnectionState.Connected) {
+                log.d { "Connected to trusted node" }
+            } else {
+                log.e(error) { "ERROR: FAILED to connect to trusted node - status: $status - ${error?.message}" }
+                return error
             }
         }
-        observingConnectivity = true
+        return null
     }
 
-    fun isDemo() = webSocketClientProvider.get().isDemo()
+    fun isConnected(): Boolean {
+        return webSocketClientProvider.isConnected()
+    }
 }

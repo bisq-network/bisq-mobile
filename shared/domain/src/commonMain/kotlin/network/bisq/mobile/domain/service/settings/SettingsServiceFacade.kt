@@ -42,7 +42,5 @@ interface SettingsServiceFacade : LifeCycleAware {
     val numDaysAfterRedactingTradeData: StateFlow<Int>
     suspend fun setNumDaysAfterRedactingTradeData(days: Int)
 
-    suspend fun isApiCompatible() = true
-
     suspend fun getTrustedNodeVersion() = ""
 }

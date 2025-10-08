@@ -1,18 +1,17 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
 import kotlinx.coroutines.TimeoutCancellationException
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.client.websocket.ConnectionState
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
-import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidIpv4
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidPort
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidTorV3Address
@@ -29,11 +28,9 @@ class TrustedNodeSetupPresenter(
     mainPresenter: MainPresenter,
     private val userRepository: UserRepository,
     private val settingsRepository: SettingsRepository,
-    private val settingsServiceFacade: SettingsServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
     companion object {
-        const val SAFEGUARD_TEST_TIMEOUT = 10000L
         const val LOCALHOST = "localhost"
         const val ANDROID_LOCALHOST = "10.0.2.2"
         const val IPV4_EXAMPLE = "192.168.1.10"
@@ -49,13 +46,14 @@ class TrustedNodeSetupPresenter(
     // Must not be injected in constructor as node has not defined the WebSocketClientProvider dependency
     // Better would be that this presenter and screen is only instantiated in client
     // See https://github.com/bisq-network/bisq-mobile/issues/684
-    private val webSocketClientProvider: WebSocketClientProvider by inject()
+    private val wsClientProvider: WebSocketClientProvider by inject()
+
+    private val _wsClientConnectionState =
+        MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
+    val wsClientConnectionState = _wsClientConnectionState.asStateFlow()
 
     private val _isApiUrlValid = MutableStateFlow(true)
     val isApiUrlValid: StateFlow<Boolean> get() = _isApiUrlValid.asStateFlow()
-
-    private val _isBisqApiVersionValid = MutableStateFlow(true)
-    val isBisqApiVersionValid: StateFlow<Boolean> get() = _isBisqApiVersionValid.asStateFlow()
 
     private val _host = MutableStateFlow("")
     val host: StateFlow<String> get() = _host.asStateFlow()
@@ -68,14 +66,8 @@ class TrustedNodeSetupPresenter(
     )
     val hostPrompt: StateFlow<String> get() = _hostPrompt.asStateFlow()
 
-    private val _trustedNodeVersion = MutableStateFlow("")
-    val trustedNodeVersion: StateFlow<String> get() = _trustedNodeVersion.asStateFlow()
-
     private val _status = MutableStateFlow("")
     val status: StateFlow<String> get() = _status.asStateFlow()
-
-    private val _isConnected = MutableStateFlow(false)
-    val isConnected: StateFlow<Boolean> get() = _isConnected.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> get() = _isLoading.asStateFlow()
@@ -85,8 +77,6 @@ class TrustedNodeSetupPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        // Reset connection state when view is attached to ensure proper initial state
-        _isConnected.value = false
         initialize()
     }
 
@@ -104,7 +94,7 @@ class TrustedNodeSetupPresenter(
                 val data = withContext(IODispatcher) {
                     settingsRepository.fetch()
                 }
-                data?.let {
+                data.let {
                     if (it.bisqApiUrl.isBlank()) {
                         if (_host.value.isNotBlank()) onHostChanged(_host.value)
                     } else {
@@ -114,7 +104,6 @@ class TrustedNodeSetupPresenter(
                         onHostChanged(savedHost)
                         if (savedPort.isNotBlank()) onPortChanged(savedPort)
                     }
-                    validateVersion()
                 }
             } catch (e: Exception) {
                 log.e("Failed to load from repository", e)
@@ -140,7 +129,7 @@ class TrustedNodeSetupPresenter(
 
     suspend fun isNewApiUrl(): Boolean {
         var isNewApiUrl = false
-        settingsRepository.fetch()?.let {
+        settingsRepository.fetch().let {
             val newApiUrl = _host.value + ":" + _port.value
             if (it.bisqApiUrl.isNotBlank() && it.bisqApiUrl != newApiUrl) {
                 isNewApiUrl = true
@@ -162,26 +151,44 @@ class TrustedNodeSetupPresenter(
         _status.value = "mobile.trustedNodeSetup.status.connecting".i18n()
         log.d { "Test: ${_host.value} isWorkflow $isWorkflow" }
 
-        val connectionJob = launchUI {
+        launchUI {
             try {
                 // Add a timeout to prevent indefinite waiting
-                val success = withTimeout(15000) { // 15 second timeout
-                    withContext(IODispatcher) {
-                        val portValue = port.value.toIntOrNull() ?: return@withContext false
-                        webSocketClientProvider.testClient(host.value, portValue)
+                val error = port.value.toIntOrNull().let { portValue ->
+                    if (portValue == null) {
+                        IllegalArgumentException("Invalid port value was provided")
+                    } else {
+                        wsClientProvider.testClient(
+                            host.value,
+                            portValue,
+                            15000
+                        ) // 15 second timeout
                     }
                 }
-
-                if (success) {
-                    val previousUrl = withContext(IODispatcher) { settingsRepository.fetch().bisqApiUrl }
-                    val isCompatibleVersion = withContext(IODispatcher) {
-                        webSocketClientProvider.get().awaitConnection()
-                        validateVersion()
+                if (error == null) {
+                    _wsClientConnectionState.value = ConnectionState.Connected
+                } else {
+                    _wsClientConnectionState.value = ConnectionState.Disconnected(error)
+                }
+                when (error) {
+                    is TimeoutCancellationException -> {
+                        log.e(error) { "Connection test timed out after 15 seconds" }
+                        showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionTimedOut".i18n())
+                        _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
                     }
 
-                    if (isCompatibleVersion) {
-                        withContext(IODispatcher) { updateSettings() }
-                        _isConnected.value = true
+                    is IncompatibleHttpApiVersionException -> {
+                        log.d { "Invalid version cannot connect" }
+                        showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.incompatible".i18n())
+                        _status.value = "mobile.trustedNodeSetup.status.invalidVersion".i18n()
+                    }
+
+                    null -> {
+                        val previousUrl =
+                            withContext(IODispatcher) { settingsRepository.fetch().bisqApiUrl }
+                        withContext(IODispatcher) { updateSettings() } // trigger ws client update
+                        val error = wsClientProvider.get().connect()
+                        if (error != null) return@launchUI
                         _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
 
                         val newApiUrl = _host.value + ":" + _port.value
@@ -205,56 +212,27 @@ class TrustedNodeSetupPresenter(
                         } else {
                             navigateBack()
                         }
-                    } else {
-                        webSocketClientProvider.get().disconnect(isTest = true)
-                        log.d { "Invalid version cannot connect" }
-                        showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.incompatible".i18n())
-                        _isConnected.value = false
-                        _status.value = "mobile.trustedNodeSetup.status.invalidVersion".i18n()
                     }
-                } else {
-                    val endpoint = "${_host.value}:${_port.value}"
-                    showSnackbar(
-                        "mobile.trustedNodeSetup.connectionJob.messages.couldNotConnect".i18n(
-                            endpoint
-                        )
-                    )
-                    _isConnected.value = false
-                    _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
-                }
-            } catch (e: TimeoutCancellationException) {
-                log.e(e) { "Connection test timed out after 15 seconds" }
-                showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionTimedOut".i18n())
-                _isConnected.value = false
-                _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
-            } catch (e: Exception) {
-                val errorMessage = e.message
-                log.e(e) { "Error testing connection: $errorMessage" }
-                if (errorMessage != null) {
-                    showSnackbar(
-                        "mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(
-                            errorMessage
-                        )
-                    )
-                } else {
-                    showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.unknownError".i18n())
-                }
 
-                _isConnected.value = false
-                _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
+                    else -> {
+                        // other errors
+                        val errorMessage = error.message
+                        log.e(error) { "Error testing connection: $errorMessage" }
+                        if (errorMessage != null) {
+                            showSnackbar(
+                                "mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(
+                                    errorMessage
+                                )
+                            )
+                        } else {
+                            showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.unknownError".i18n())
+                        }
+
+                        _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
+                    }
+                }
             } finally {
                 _isLoading.value = false
-            }
-        }
-
-        launchUI {
-            delay(SAFEGUARD_TEST_TIMEOUT) // 10 seconds as a fallback
-            if (_isLoading.value) {
-                log.w { "Force stopping connection test after 10 seconds" }
-                connectionJob.cancel()
-                _isLoading.value = false
-                _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
-                showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionTookTooLong".i18n())
             }
         }
     }
@@ -291,14 +269,6 @@ class TrustedNodeSetupPresenter(
         }
     }
 
-    private suspend fun validateVersion(): Boolean {
-        val version = withContext(IODispatcher) { settingsServiceFacade.getTrustedNodeVersion() }
-        val compatible = withContext(IODispatcher) { settingsServiceFacade.isApiCompatible() }
-        _trustedNodeVersion.value = version
-        _isBisqApiVersionValid.value = compatible
-        return compatible
-    }
-
     private fun updateHostPrompt() {
         if (selectedNetworkType.value == NetworkType.LAN) {
             if (BuildConfig.IS_DEBUG) {
@@ -315,6 +285,9 @@ class TrustedNodeSetupPresenter(
         if (value.isEmpty()) {
             return "mobile.trustedNodeSetup.host.invalid.empty".i18n()
         }
+
+        if (value == "demo.bisq") return null
+
         if (selectedNetworkType.value == NetworkType.LAN) {
             // We only support IPv4 as we only support LAN addresses
             // Accept "localhost" on any platform; on Android, normalize it to 10.0.2.2 (emulator host).

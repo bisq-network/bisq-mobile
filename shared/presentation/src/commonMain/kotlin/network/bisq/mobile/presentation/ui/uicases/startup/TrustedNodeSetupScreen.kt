@@ -27,6 +27,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.client.websocket.ConnectionState
+import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
@@ -52,10 +54,8 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
     val host by presenter.host.collectAsState()
     val port by presenter.port.collectAsState()
-    val isConnected by presenter.isConnected.collectAsState()
-    val isVersionValid by presenter.isBisqApiVersionValid.collectAsState()
+    val connectionState by presenter.wsClientConnectionState.collectAsState()
     val isLoading by presenter.isLoading.collectAsState()
-    val trustedNodeVersion by presenter.trustedNodeVersion.collectAsState()
     val selectedNetworkType by presenter.selectedNetworkType.collectAsState()
     val hostPrompt by presenter.hostPrompt.collectAsState()
     val status by presenter.status.collectAsState()
@@ -136,18 +136,20 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     color =
                     if (isLoading)
                         BisqTheme.colors.warning
-                    else if (isConnected && isVersionValid)
+                    else if (connectionState is ConnectionState.Connected)
                         BisqTheme.colors.primary
                     else
                         BisqTheme.colors.danger,
                 )
             }
             BisqGap.V3()
-            if (isConnected && !isVersionValid) {
+
+            val error = (connectionState as? ConnectionState.Disconnected)?.error
+            if (error is IncompatibleHttpApiVersionException) {
                 BisqText.baseRegular("mobile.trustedNodeSetup.version.expectedAPI".i18n(BuildConfig.BISQ_API_VERSION))
                 BisqText.baseRegular(
                     "mobile.trustedNodeSetup.version.nodeAPI".i18n(
-                        trustedNodeVersion
+                        error.serverVersion
                     )
                 )
             }
@@ -164,7 +166,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             modifier = Modifier.fillMaxWidth(),
         ) {
             item {
-                if (!isConnected) {
+                if (connectionState !is ConnectionState.Connected) {
                     BisqButton(
                         modifier = Modifier.animateItem(),
                         text = "mobile.trustedNodeSetup.testConnection".i18n(),

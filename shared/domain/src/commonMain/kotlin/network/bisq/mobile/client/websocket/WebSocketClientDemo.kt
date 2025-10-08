@@ -52,12 +52,13 @@ class WebSocketClientDemo(
 
     override fun isDemo(): Boolean = true
 
-    override suspend fun connect(isTest: Boolean) {
+    override suspend fun connect(timeout: Long): Throwable? {
         log.d { "Demo mode detected - skipping actual WebSocket connection" }
         _webSocketClientStatus.value = ConnectionState.Connected
+        return null
     }
 
-    override suspend fun disconnect(isTest: Boolean, isReconnect: Boolean) {
+    override suspend fun disconnect(isReconnect: Boolean) {
         log.d { "Demo mode - simulating disconnect" }
         _webSocketClientStatus.value = ConnectionState.Disconnected()
     }
@@ -66,7 +67,10 @@ class WebSocketClientDemo(
         log.d { "Demo mode - skipping reconnect" }
     }
 
-    override suspend fun sendRequestAndAwaitResponse(webSocketRequest: WebSocketRequest): WebSocketResponse? {
+    override suspend fun sendRequestAndAwaitResponse(
+        webSocketRequest: WebSocketRequest,
+        awaitConnection: Boolean,
+    ): WebSocketResponse? {
         return fakeResponse(webSocketRequest)
     }
 

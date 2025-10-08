@@ -1,11 +1,11 @@
 package network.bisq.mobile.client.websocket
 
 import io.ktor.client.HttpClient
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.domain.data.IODispatcher
@@ -27,33 +27,33 @@ class WebSocketClientProvider(
 ) : Logging {
     private var observeSettingsJob: Job? = null
     private val mutex = Mutex()
+    private val getMutex = Mutex()
+    private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
+    val connectionState = _connectionState.asStateFlow()
+
+    private var stateCollectionJob: Job? = null
 
     private val ioScope = CoroutineScope(IODispatcher)
 
     @Volatile
     private var currentClient: WebSocketClient? = null
-    private var connectionReady = CompletableDeferred<Boolean>()
 
     /**
      * Test connection to a new host/port
      */
-    suspend fun testClient(host: String, port: Int): Boolean {
+    suspend fun testClient(host: String, port: Int, timeout: Long = 15000L): Throwable? {
         val client = createClient(host, port)
-        val url = "ws://$host:$port/websocket"
-        return try {
-            if (client.isDemo()) {
-                ApplicationBootstrapFacade.isDemo = true
-                return true
+        try {
+            val error = client.connect(timeout)
+            if (error == null) {
+                // Wait 500ms to ensure connection is stable
+                kotlinx.coroutines.delay(500)
+            } else {
+                log.e(error) { "Error testing connection to ws://$host:$port/websocket" }
             }
-            // Connect and wait a moment to ensure connection is stable
-            client.connect(true)
-            kotlinx.coroutines.delay(500) // Wait 500ms to ensure connection is stable
-            true
-        } catch (e: Exception) {
-            log.e("Error testing connection to $url: ${e.message}")
-            false
+            return error
         } finally {
-            client.disconnect(true)
+            client.disconnect()
         }
     }
 
@@ -61,59 +61,63 @@ class WebSocketClientProvider(
         return webSocketClientFactory.createNewClient(httpClient, host, port)
     }
 
-    // UI usages of this call will have the currentClient available so
-    // no need to make it suspend as its used from IO coroutines
-    // to be safe never call this method from UI thread
-    fun get(): WebSocketClient {
-        if (currentClient == null) {
-            runBlocking {
-                initializeWithSavedSettings()
-                launchObserveSettingsChange()
-                connectionReady.await()
+    /**
+     * gets the websocket client if already exists, or
+     * creates the websocket client and connects to server according to saved settings and awaits it
+     */
+    suspend fun get(): WebSocketClient {
+        getMutex.withLock {
+            currentClient?.let {
+                return it
             }
+            val newClient = initializeWithSavedSettings() // waits for connection results
+            launchObserveSettingsChange()
+            return newClient
         }
-        return currentClient!!
     }
 
     /**
      * Initialize the client with saved settings if available, otherwise use defaults
      */
-    private suspend fun initializeWithSavedSettings() {
+    private suspend fun initializeWithSavedSettings(): WebSocketClient {
         mutex.withLock {
-            if (currentClient == null) {
-                // Fetch settings first
-                val settings = settingsRepository.fetch()
+            currentClient?.let {
+                return it
+            }
 
-                // Determine host and port from settings or defaults
-                var host = defaultHost
-                var port = defaultPort
+            // Fetch settings first
+            val settings = settingsRepository.fetch()
 
-                settings.bisqApiUrl.takeIf { it.isNotBlank() }?.let { url ->
-                    val address = AddressVO.from(url);
-                    if (address != null) {
-                        host = address.host
-                        port = address.port
-                        log.d { "Using saved settings for trusted node: $host:$port" }
-                    } else {
-                        log.e { "Error parsing saved URL $url, falling back to defaults" }
-                    }
-                }
+            // Determine host and port from settings or defaults
+            var host = defaultHost
+            var port = defaultPort
 
-                currentClient = createClient(host, port)
-                log.d { "Websocket client initialized with url $host:$port" }
-
-                val connected = try {
-                    currentClient?.connect()
-                    true
-                } catch (e: Exception) {
-                    log.e(e) { "Failed to connect to trusted node at $host:$port" }
-                    false
-                }
-
-                if (connected && !connectionReady.isCompleted) {
-                    connectionReady.complete(true)
+            settings.bisqApiUrl.takeIf { it.isNotBlank() }?.let { url ->
+                val address = AddressVO.from(url);
+                if (address != null) {
+                    host = address.host
+                    port = address.port
+                    log.d { "Using saved settings for trusted node: $host:$port" }
+                } else {
+                    log.e { "Error parsing saved URL $url, falling back to defaults" }
                 }
             }
+
+            val newClient = createClient(host, port)
+            currentClient = newClient
+            ApplicationBootstrapFacade.isDemo = newClient is WebSocketClientDemo
+            stateCollectionJob?.cancel()
+            stateCollectionJob = ioScope.launch {
+                newClient.webSocketClientStatus.collect {
+                    _connectionState.value = it
+                }
+            }
+            log.d { "WebSocket client initialized with url $host:$port" }
+
+            newClient.connect()
+
+            return newClient
+
         }
     }
 
@@ -130,44 +134,46 @@ class WebSocketClientProvider(
                 settingsRepository.data.collect { newSettings ->
                     mutex.withLock {
                         newSettings.bisqApiUrl.takeIf { it.isNotBlank() }?.let { url ->
-                            try {
-                                val address = AddressVO.from(url)
-                                if (address == null) {
-                                    log.e { "Error parsing new URL $url" }
-                                    return@let
-                                }
-                                val (newHost, newPort) = address
+                            val address = AddressVO.from(url)
+                            if (address == null) {
+                                log.e { "Error parsing new URL $url" }
+                                return@let
+                            }
+                            val (newHost, newPort) = address
 
-                                if (isDifferentFromCurrentClient(newHost, newPort)) {
-                                    if (currentClient != null) {
-                                        log.d { "trusted node changing from ${currentClient!!.host}:${currentClient!!.port} to $newHost:$newPort" }
-                                    }
-                                    if (currentClient?.isConnected() == true) {
-                                        currentClient?.disconnect()
-                                    }
-                                    currentClient = createClient(newHost, newPort)
-                                    log.d { "Websocket client updated with url $newHost:$newPort" }
-                                    log.d { "Websocket client - connecting" }
-                                    currentClient?.connect()
-                                    if (!connectionReady.isCompleted) {
-                                        connectionReady.complete(true)
-                                    }
-                                } else {
-                                    if (currentClient?.isConnected() == true) {
-                                        log.v { "skip url update, no change" }
-                                    } else {
-                                        log.v { "url update: no change but found client disconnected" }
-                                        currentClient?.let {
-                                            log.v { "url update: connecting with existing setup client" }
-                                            it.connect()
-                                            if (!connectionReady.isCompleted) {
-                                                connectionReady.complete(true)
-                                            }
-                                        }
+                            var error: Throwable? = null
+                            if (isDifferentFromCurrentClient(newHost, newPort)) {
+                                if (currentClient != null) {
+                                    log.d { "trusted node changing from ${currentClient!!.host}:${currentClient!!.port} to $newHost:$newPort" }
+                                }
+                                if (currentClient?.isConnected() == true) {
+                                    currentClient?.disconnect()
+                                }
+                                val newClient = createClient(newHost, newPort)
+                                currentClient = newClient
+                                stateCollectionJob?.cancel()
+                                stateCollectionJob = ioScope.launch {
+                                    newClient.webSocketClientStatus.collect {
+                                        _connectionState.value = it
                                     }
                                 }
-                            } catch (e: Exception) {
-                                log.e(e) { "Error connecting to new URL $url" }
+                                ApplicationBootstrapFacade.isDemo = newClient is WebSocketClientDemo
+                                log.d { "WebSocket client updated with url $newHost:$newPort" }
+                                log.d { "WebSocket client - connecting" }
+                                error = newClient.connect()
+                            } else {
+                                if (currentClient?.isConnected() == true) {
+                                    log.v { "skip url update, no change" }
+                                } else {
+                                    log.v { "url update: no change but found client disconnected" }
+                                    currentClient?.let {
+                                        log.v { "url update: connecting with existing setup client" }
+                                        error = it.connect()
+                                    }
+                                }
+                            }
+                            if (error != null) {
+                                log.e(error) { "Error connecting to new URL $url" }
                             }
                         }
                     }
@@ -180,4 +186,8 @@ class WebSocketClientProvider(
 
     private fun isDifferentFromCurrentClient(host: String, port: Int) =
         currentClient == null || currentClient!!.host != host || currentClient!!.port != port
+
+    fun isConnected(): Boolean {
+        return currentClient?.webSocketClientStatus?.value is ConnectionState.Connected
+    }
 }

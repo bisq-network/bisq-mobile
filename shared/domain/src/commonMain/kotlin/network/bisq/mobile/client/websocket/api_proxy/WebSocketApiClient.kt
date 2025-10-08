@@ -163,7 +163,7 @@ class WebSocketApiClient(
         }
     }
 
-    fun currentApiUrl(): String {
+    suspend fun currentApiUrl(): String {
         val wsClient = webSocketClientProvider.get()
 //        var defaultApiUrl = "http://$defaultHost:$defaultPort$apiPath"
         val apiURL = "http://${wsClient.host}:${wsClient.port}$apiPath"

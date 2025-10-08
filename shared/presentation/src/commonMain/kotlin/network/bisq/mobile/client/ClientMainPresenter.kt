@@ -1,9 +1,12 @@
 package network.bisq.mobile.client
 
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.client.websocket.ConnectionState
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
@@ -70,8 +73,8 @@ open class ClientMainPresenter(
     private fun listenForConnectivity() {
         connectivityService.startMonitoring()
         launchUI {
-            webSocketClientProvider.get().webSocketClientStatus.collect {
-                if (webSocketClientProvider.get().isConnected() && lastConnectedStatus != true) {
+            webSocketClientProvider.connectionState.collect {
+                if (it is ConnectionState.Connected && lastConnectedStatus != true) {
                     log.d { "connectivity status changed to $it - reconnecting services" }
                     reactivateServices()
                     lastConnectedStatus = true
@@ -84,8 +87,10 @@ open class ClientMainPresenter(
 
     private fun validateVersion() {
         launchUI {
-            val isApiCompatible = withContext(IODispatcher) { settingsServiceFacade.isApiCompatible() }
-            if (!isApiCompatible) {
+            delay(500) // a bit of delay for states to update properly
+            val connectionState = webSocketClientProvider.connectionState.value
+            val isApiIncompatible = connectionState is ConnectionState.Disconnected && connectionState.error is IncompatibleHttpApiVersionException
+            if (isApiIncompatible) {
                 log.w { "configured trusted node doesn't have a compatible api version" }
 
                 val trustedNodeVersion = withContext(IODispatcher) { settingsServiceFacade.getTrustedNodeVersion() }

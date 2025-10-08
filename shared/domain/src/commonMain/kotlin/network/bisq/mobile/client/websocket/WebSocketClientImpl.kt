@@ -6,10 +6,10 @@ import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.url
 import io.ktor.util.collections.ConcurrentMap
 import io.ktor.websocket.Frame
+import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
 import io.ktor.websocket.readText
 import kotlinx.atomicfu.atomic
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -21,20 +21,30 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.shared.BuildConfig
+import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.client.websocket.exception.MaximumRetryReachedException
+import network.bisq.mobile.client.websocket.exception.WebSocketIsReconnecting
+import network.bisq.mobile.client.websocket.exception.WebSocketSessionClosedEarly
 import network.bisq.mobile.client.websocket.messages.SubscriptionRequest
 import network.bisq.mobile.client.websocket.messages.SubscriptionResponse
 import network.bisq.mobile.client.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.websocket.messages.WebSocketMessage
 import network.bisq.mobile.client.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketResponse
+import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
+import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.data.IODispatcher
+import network.bisq.mobile.domain.data.replicated.settings.ApiVersionSettingsVO
+import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.SemanticVersion
 import network.bisq.mobile.domain.utils.createUuid
 
 class WebSocketClientImpl(
@@ -45,7 +55,6 @@ class WebSocketClientImpl(
 ) : WebSocketClient, Logging {
 
     companion object {
-        const val CONNECT_TIMEOUT = 10000L
         const val DELAY_TO_RECONNECT = 3000L
         const val MAX_RECONNECT_ATTEMPTS = 5
         const val MAX_RECONNECT_DELAY = 30000L // 30 seconds max delay
@@ -62,89 +71,95 @@ class WebSocketClientImpl(
     private var session: DefaultClientWebSocketSession? = null
     private val webSocketEventObservers = ConcurrentMap<String, WebSocketEventObserver>()
     private val requestResponseHandlers = mutableMapOf<String, RequestResponseHandler>()
-    private var connectionReady = CompletableDeferred<Boolean>()
     private val connectionMutex = Mutex()
     private val requestResponseHandlersMutex = Mutex()
 
     private val ioScope = CoroutineScope(IODispatcher)
 
-
-    private val _webSocketClientStatus = MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
+    private val _webSocketClientStatus =
+        MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
     override val webSocketClientStatus: StateFlow<ConnectionState> get() = _webSocketClientStatus.asStateFlow()
 
     private var listenerJob: Job? = null
 
     override fun isDemo(): Boolean = false
 
-    override suspend fun connect(isTest: Boolean) {
+    override suspend fun connect(timeout: Long): Throwable? {
         connectionMutex.withLock {
-            var needReconnect = false
             try {
+                // websocket wont attempt a connect while connecting due to connectionMutex lock
+                // so we always reach here either in connected or disconnected state
                 if (isConnected()) {
-                    throw IllegalStateException("Cannot connect an already connected client, please call disconnect first")
+                    return null
                 }
-                connectionReady = CompletableDeferred()
+                session?.close()
+                listenerJob?.cancel()
                 log.d { "WS connecting.." }
                 _webSocketClientStatus.value = ConnectionState.Connecting
-                val newSession = withTimeout(CONNECT_TIMEOUT) {
-                    httpClient.webSocketSession { url(webSocketUrl) }
+                val startTime = DateUtils.now()
+                val newSession = withContext(IODispatcher) {
+                    withTimeout(timeout) {
+                        httpClient.webSocketSession { url(webSocketUrl) }
+                    }
                 }
+                val elapsed = DateUtils.now() - startTime
+                val remainingTime = timeout - elapsed
                 session = newSession
-                if (session?.isActive == true) {
+                if (newSession.isActive) {
                     log.d { "WS connected successfully" }
+                    listenerJob = ioScope.launch { startListening(newSession) }
+
+                    withContext(IODispatcher) {
+                        withTimeout(remainingTime) {
+                            val nodeApiVersion = getApiVersion()
+                            if (!isApiCompatible(nodeApiVersion)) {
+                                doDisconnect()
+                                awaitDisconnection() // so that we update the disconnect reason correctly
+                                throw IncompatibleHttpApiVersionException(nodeApiVersion.version)
+                            }
+                        }
+                    }
+
                     _webSocketClientStatus.value = ConnectionState.Connected
-                    if (!isTest) {
-                        listenerJob = ioScope.launch { startListening() }
-                    }
-                    if (!connectionReady.isCompleted) {
-                        connectionReady.complete(true)
-                    }
 
                     // Reset reconnect attempts on successful connection
                     reconnectAttempts = 0
-                }
-            } catch (e: IllegalStateException) {
-                log.w { "Connection attempt ignored: ${e.message}" }
-                if (isTest) {
-                    throw e
+                } else {
+                    throw WebSocketSessionClosedEarly()
                 }
             } catch (e: Exception) {
-                log.e("Connecting websocket failed $webSocketUrl: ${e.message}", e)
+                log.e(e) { "WS connection failed to connect to $webSocketUrl" }
                 _webSocketClientStatus.value = ConnectionState.Disconnected(e)
-                needReconnect = !isTest
-                if (isTest) {
-                    throw e
-                }
+                return e
             }
-            if (needReconnect) reconnect()
+            return null
         }
     }
 
     /**
-     * @param isTest true if the connection of this client was a test connection
      * @param isReconnect true if this was called from a reconnect method
      */
-    override suspend fun disconnect(isTest: Boolean, isReconnect: Boolean) {
+    override suspend fun disconnect(isReconnect: Boolean) {
         connectionMutex.withLock {
-            log.d { "disconnecting socket isTest $isTest isReconnected $isReconnect" }
-            if (!isReconnect) {
-                reconnectJob?.cancel()
-                reconnectJob = null
-            }
-            listenerJob?.cancel()
-            listenerJob = null
-            requestResponseHandlersMutex.withLock {
-                requestResponseHandlers.values.forEach { it.dispose() }
-                requestResponseHandlers.clear()
-            }
-
-            session?.close()
-            session = null
-            _webSocketClientStatus.value = ConnectionState.Disconnected()
-            if (!isTest) {
-                log.d { "WS disconnected" }
-            }
+            doDisconnect(isReconnect)
         }
+    }
+
+    /**
+     * Disconnect and cleanup logic, without the lock for internal calls
+     */
+    private suspend fun doDisconnect(isReconnect: Boolean = false) {
+        log.d { "disconnecting socket isReconnect $isReconnect" }
+        if (!isReconnect) {
+            reconnectJob?.cancel()
+            reconnectJob = null
+        }
+        session?.close()
+        session = null
+
+        listenerJob?.cancel()
+        listenerJob = null
+        log.d { "WS disconnected" }
     }
 
     override fun reconnect() {
@@ -187,8 +202,10 @@ class WebSocketClientImpl(
     }
 
     // Blocking request until we get the associated response
-    override suspend fun sendRequestAndAwaitResponse(webSocketRequest: WebSocketRequest): WebSocketResponse? {
-        awaitConnection()
+    override suspend fun sendRequestAndAwaitResponse(webSocketRequest: WebSocketRequest, awaitConnection: Boolean): WebSocketResponse? {
+        if (awaitConnection) {
+            awaitConnection()
+        }
 
         val requestId = webSocketRequest.requestId
         val requestResponseHandler = RequestResponseHandler(this::send)
@@ -207,6 +224,10 @@ class WebSocketClientImpl(
 
     override suspend fun awaitConnection() {
         webSocketClientStatus.first { it is ConnectionState.Connected }
+    }
+
+    private suspend fun awaitDisconnection() {
+        webSocketClientStatus.first { it is ConnectionState.Disconnected }
     }
 
     override suspend fun subscribe(topic: Topic, parameter: String?): WebSocketEventObserver {
@@ -243,41 +264,53 @@ class WebSocketClientImpl(
     }
 
     private suspend fun send(message: WebSocketMessage) {
-        awaitConnection()
         log.i { "Send message $message" }
         val jsonString: String = json.encodeToString(message)
         log.i { "Send raw text $jsonString" }
         session?.send(Frame.Text(jsonString))
     }
 
-    private suspend fun startListening() {
-        session?.let { session ->
-            try {
-                for (frame in session.incoming) {
-                    if (frame is Frame.Text) {
-                        val message = frame.readText()
-                        //todo add input validation
-                        log.d { "Received raw text $message" }
-                        val webSocketMessage: WebSocketMessage =
-                            json.decodeFromString(WebSocketMessage.serializer(), message)
-                        log.i { "Received webSocketMessage $webSocketMessage" }
-                        if (webSocketMessage is WebSocketResponse) {
-                            onWebSocketResponse(webSocketMessage)
-                        } else if (webSocketMessage is WebSocketEvent) {
-                            onWebSocketEvent(webSocketMessage)
-                        }
+    private suspend fun startListening(session: WebSocketSession) {
+        var error: Throwable? = null
+        try {
+            for (frame in session.incoming) {
+                if (frame is Frame.Text) {
+                    val message = frame.readText()
+                    //todo add input validation
+                    log.d { "Received raw text $message" }
+                    val webSocketMessage: WebSocketMessage =
+                        json.decodeFromString(WebSocketMessage.serializer(), message)
+                    log.i { "Received webSocketMessage $webSocketMessage" }
+                    if (webSocketMessage is WebSocketResponse) {
+                        onWebSocketResponse(webSocketMessage)
+                    } else if (webSocketMessage is WebSocketEvent) {
+                        onWebSocketEvent(webSocketMessage)
                     }
                 }
+            }
 
-                // If we get here, the loop exited normally (session closed gracefully)
-                log.d { "WebSocket session closed normally" }
-                _webSocketClientStatus.value = ConnectionState.Disconnected()
-
-            } catch (e: Exception) {
-                log.e(e) { "Exception occurred whilst listening for WS messages - triggering reconnect" }
+            // If we get here, the loop exited normally (session closed gracefully)
+            log.d { "WebSocket session closed normally" }
+        } catch (e: Throwable) {
+            log.e(e) { "Exception occurred whilst listening for WS messages" }
+            error = e
+        } finally {
+            // Dispose request/response handlers
+            requestResponseHandlersMutex.withLock {
+                requestResponseHandlers.values.forEach { it.dispose() }
+                requestResponseHandlers.clear()
+            }
+            // Clear subscriptions
+            webSocketEventObservers.clear()
+            // Set the connection status
+            if (isReconnecting.value) {
+                _webSocketClientStatus.value =
+                    ConnectionState.Disconnected(WebSocketIsReconnecting())
+            } else {
+                _webSocketClientStatus.value = ConnectionState.Disconnected(error)
                 // Only reconnect on exception
-//                TODO this needs more work
-//                reconnect()
+                // TODO this needs more work
+                // reconnect()
             }
         }
     }
@@ -297,4 +330,30 @@ class WebSocketClientImpl(
         }
     }
 
+    private suspend fun getApiVersion(): ApiVersionSettingsVO {
+        val requestId = createUuid()
+        val webSocketRestApiRequest = WebSocketRestApiRequest(
+            requestId,
+            "GET",
+            "/api/v1/settings/version",
+            "",
+        )
+        val response = sendRequestAndAwaitResponse(webSocketRestApiRequest, false)
+        require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
+        val body = response.body
+        val decodeFromString = json.decodeFromString<ApiVersionSettingsVO>(body)
+        return decodeFromString
+    }
+
+    private fun isApiCompatible(apiVersion: ApiVersionSettingsVO): Boolean {
+        val requiredVersion = BuildConfig.BISQ_API_VERSION
+        val nodeApiVersion = apiVersion.version
+        log.d { "required trusted node api version is $requiredVersion and current is $nodeApiVersion" }
+        return try {
+            SemanticVersion.from(nodeApiVersion) >= SemanticVersion.from(requiredVersion)
+        } catch (e: Throwable) {
+            log.e(e) { "Failed to parse nodeApiVersion or requiredVersion into a sematic version for comparison" }
+            false
+        }
+    }
 }

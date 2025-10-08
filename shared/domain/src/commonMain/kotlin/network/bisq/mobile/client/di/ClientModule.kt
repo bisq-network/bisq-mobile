@@ -143,20 +143,20 @@ val clientModule = module {
         }
     }
 
-    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get(), get()) }
+    single<ApplicationBootstrapFacade> { ClientApplicationBootstrapFacade(get(), get()) }
 
     single { EnvironmentController() }
     single(named("ApiHost")) { get<EnvironmentController>().getApiHost() }
     single(named("ApiPort")) { get<EnvironmentController>().getApiPort() }
-    single(named("WebsocketApiHost")) { get<EnvironmentController>().getWebSocketHost() }
-    single(named("WebsocketApiPort")) { get<EnvironmentController>().getWebSocketPort() }
+    single(named("WebSocketApiHost")) { get<EnvironmentController>().getWebSocketHost() }
+    single(named("WebSocketApiPort")) { get<EnvironmentController>().getWebSocketPort() }
 
     single { WebSocketClientFactory(get()) }
 
     single {
         WebSocketClientProvider(
-            get(named("WebsocketApiHost")),
-            get(named("WebsocketApiPort")),
+            get(named("WebSocketApiHost")),
+            get(named("WebSocketApiPort")),
             get(),
             get(),
             get(),
@@ -172,8 +172,8 @@ val clientModule = module {
             get(),
             get(),
             get(),
-            get(named("WebsocketApiHost")),
-            get(named("WebsocketApiPort"))
+            get(named("WebSocketApiHost")),
+            get(named("WebSocketApiPort"))
         )
     }
 
