@@ -137,7 +137,7 @@ class OfferbookPresenter(
     private suspend fun processOffer(item: OfferItemPresentationModel): OfferItemPresentationModel {
         val userProfile = selectedUserProfile.value
         if (userProfile == null) {
-            throw IllegalStateException("selectedUserProfile was null at processOffer. this should not happen.")
+            log.w { "selectedUserProfile was null at processOffer. this should not happen. we return offer as invalid" }
         }
 
         val offer = item.bisqEasyOffer
@@ -162,7 +162,9 @@ class OfferbookPresenter(
 
         val formattedPrice = PriceSpecFormatter.getFormattedPriceSpec(offer.priceSpec)
 
-        val isInvalid = if (offer.direction == DirectionEnum.BUY) {
+        val isInvalid = if (userProfile == null) {
+            true
+        } else if (offer.direction == DirectionEnum.BUY) {
             BisqEasyTradeAmountLimits.isBuyOfferInvalid(
                 item = item,
                 useCache = true,
@@ -171,6 +173,7 @@ class OfferbookPresenter(
                 userProfileId = userProfile.id
             )
         } else false
+
 
         // Not doing copyWith of item to assign these properties.
         // Because `OfferItemPresentationModel` class has StateFlow props
@@ -267,7 +270,8 @@ class OfferbookPresenter(
     private suspend fun canTakeOffer(item: OfferItemPresentationModel): Boolean {
         val userProfile = selectedUserProfile.value
         if (userProfile == null) {
-            throw IllegalStateException("selectedUserProfile was null at canTakeOffer. this should not happen.")
+            log.w { "selectedUserProfile is null in canTakeOffer; returning false" }
+            return false
         }
         val bisqEasyOffer = item.bisqEasyOffer
         val requiredReputationScoreForMaxOrFixed = BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(

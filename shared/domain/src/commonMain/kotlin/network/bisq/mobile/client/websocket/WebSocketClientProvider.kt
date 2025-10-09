@@ -24,6 +24,7 @@ import network.bisq.mobile.domain.data.replicated.common.network.AddressVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
+import io.ktor.utils.io.CancellationException as KtorCancellationException
 
 private data class SubscriptionType(val topic: Topic, val parameter: String?)
 
@@ -122,6 +123,7 @@ class WebSocketClientProvider(
                             if (state.error != null) {
                                 if (state.error !is MaximumRetryReachedException &&
                                     state.error !is CancellationException &&
+                                    state.error !is KtorCancellationException &&
                                     state.error !is WebSocketIsReconnecting &&
                                     state.error.message?.contains("refused") != true
                                 ) {
@@ -165,23 +167,17 @@ class WebSocketClientProvider(
         // we collect subscriptions here and subscribe to them on a best effort basis
         // if client is not connected yet, it will be accumulated and then subscribed at
         // Connected status, otherwise it will be immediately subscribed
-        subscriptionMutex.withLock {
-            val type = SubscriptionType(
-                topic,
-                parameter,
-            )
-            val socketObserver = requestedSubscriptions.getOrPut(type) {
-                WebSocketEventObserver()
-            }
-
-            if (subscriptionsAreApplied) {
-                val client = getWsClient()
-                log.d { "we have already used applySubscriptions, subscribing to $topic individually" }
-                client.subscribe(topic, parameter, socketObserver)
-            }
-
-            return socketObserver
+        val (socketObserver, applyNow) = subscriptionMutex.withLock {
+            val type = SubscriptionType(topic, parameter)
+            val observer = requestedSubscriptions.getOrPut(type) { WebSocketEventObserver() }
+            observer to subscriptionsAreApplied
         }
+        if (applyNow) {
+            val client = getWsClient()
+            log.d { "subscriptions already applied; subscribing to $topic individually" }
+            client.subscribe(topic, parameter, socketObserver)
+        }
+        return socketObserver
     }
 
     private suspend fun applySubscriptions(client: WebSocketClient) {
