@@ -58,7 +58,7 @@ class OfferbookApiGateway(
 
     // Subscriptions
     suspend fun subscribeNumOffers(): WebSocketEventObserver {
-        return webSocketClientProvider.get().subscribe(Topic.NUM_OFFERS)
+        return webSocketClientProvider.subscribe(Topic.NUM_OFFERS)
     }
 
     /**
@@ -66,7 +66,7 @@ class OfferbookApiGateway(
      *              If null or empty string we receive for all markets the offer updates.
      */
     suspend fun subscribeOffers(code: String? = null): WebSocketEventObserver {
-        return webSocketClientProvider.get().subscribe(Topic.OFFERS, code)
+        return webSocketClientProvider.subscribe(Topic.OFFERS, code)
     }
 }
 

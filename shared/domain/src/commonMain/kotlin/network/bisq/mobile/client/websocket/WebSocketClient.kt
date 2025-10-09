@@ -17,10 +17,7 @@ interface WebSocketClient {
 
     suspend fun connect(timeout: Long = 10000L): Throwable?
 
-    /**
-     * @param isReconnect true if this was called from a reconnect method
-     */
-    suspend fun disconnect(isReconnect: Boolean = false)
+    suspend fun disconnect()
 
     fun reconnect()
 

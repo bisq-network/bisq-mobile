@@ -116,7 +116,7 @@ class WebSocketApiClient(
         )
         try {
             val startTime = DateUtils.now()
-            val response = webSocketClientProvider.get().sendRequestAndAwaitResponse(webSocketRestApiRequest)
+            val response = webSocketClientProvider.sendRequestAndAwaitResponse(webSocketRestApiRequest)
             ClientConnectivityService.newRequestRoundTripTime(DateUtils.now() - startTime)
             require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
             val body = response.body
@@ -163,10 +163,10 @@ class WebSocketApiClient(
         }
     }
 
+    // TODO: will be removed with introduction of httpclient service
     suspend fun currentApiUrl(): String {
-        val wsClient = webSocketClientProvider.get()
 //        var defaultApiUrl = "http://$defaultHost:$defaultPort$apiPath"
-        val apiURL = "http://${wsClient.host}:${wsClient.port}$apiPath"
+        val apiURL = "http://${webSocketClientProvider.getWebSocketHostname()}$apiPath"
         return apiURL
     }
 }

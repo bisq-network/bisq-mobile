@@ -58,7 +58,7 @@ class WebSocketClientDemo(
         return null
     }
 
-    override suspend fun disconnect(isReconnect: Boolean) {
+    override suspend fun disconnect() {
         log.d { "Demo mode - simulating disconnect" }
         _webSocketClientStatus.value = ConnectionState.Disconnected()
     }

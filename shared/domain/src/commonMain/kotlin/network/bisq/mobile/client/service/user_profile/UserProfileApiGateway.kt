@@ -67,6 +67,6 @@ class UserProfileApiGateway(
     }
 
     suspend fun subscribeNumUserProfiles(): WebSocketEventObserver {
-        return webSocketClientProvider.get().subscribe(Topic.NUM_USER_PROFILES)
+        return webSocketClientProvider.subscribe(Topic.NUM_USER_PROFILES)
     }
 }

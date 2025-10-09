@@ -18,6 +18,6 @@ class MarketPriceApiGateway(
     }
 
     suspend fun subscribeMarketPrice(): WebSocketEventObserver {
-        return webSocketClientProvider.get().subscribe(Topic.MARKET_PRICE)
+        return webSocketClientProvider.subscribe(Topic.MARKET_PRICE)
     }
 }

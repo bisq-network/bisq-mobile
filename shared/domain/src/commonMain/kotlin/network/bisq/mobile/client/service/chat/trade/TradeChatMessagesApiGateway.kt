@@ -48,11 +48,11 @@ class TradeChatMessagesApiGateway(
 
     // Subscriptions
     suspend fun subscribeTradeChats(): WebSocketEventObserver {
-        return webSocketClientProvider.get().subscribe(Topic.TRADE_CHATS)
+        return webSocketClientProvider.subscribe(Topic.TRADE_CHATS)
     }
 
     suspend fun subscribeChatReactions(): WebSocketEventObserver {
-        return webSocketClientProvider.get().subscribe(Topic.CHAT_REACTIONS)
+        return webSocketClientProvider.subscribe(Topic.CHAT_REACTIONS)
     }
 }
 

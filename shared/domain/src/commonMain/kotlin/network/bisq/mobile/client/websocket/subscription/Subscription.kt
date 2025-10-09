@@ -25,7 +25,7 @@ class Subscription<T>(
         require(job == null)
         job = ioScope.launch {
             // subscribe blocks until we get a response
-            val observer = webSocketClientProvider.get().subscribe(topic)
+            val observer = webSocketClientProvider.subscribe(topic)
             observer.webSocketEvent.collect { webSocketEvent ->
                 try {
                     if (webSocketEvent?.deferredPayload == null) {

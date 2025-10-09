@@ -35,13 +35,8 @@ class ClientSplashPresenter(
         return true
     }
 
-    private fun hasConnectivity(): Boolean {
-        return webSocketClientProvider.isConnected()
-    }
-
     override suspend fun navigateToNextScreen() {
-        // Check connectivity first
-        if (!hasConnectivity()) {
+        if (!webSocketClientProvider.isConnected()) {
             log.d { "No connectivity detected, navigating to trusted node setup" }
             navigateToTrustedNodeSetup()
             return

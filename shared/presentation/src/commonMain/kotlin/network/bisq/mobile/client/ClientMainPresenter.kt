@@ -1,14 +1,9 @@
 package network.bisq.mobile.client
 
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.client.websocket.ConnectionState
 import network.bisq.mobile.client.websocket.WebSocketClientProvider
-import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.domain.UrlLauncher
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -24,7 +19,6 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.service.OpenTradesNotificationService
-import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 
 /**
  * Contains all the share code for each client. Each specific app might extend this class if needed.
@@ -56,11 +50,8 @@ open class ClientMainPresenter(
     urlLauncher,
 ) {
 
-    private var lastConnectedStatus: Boolean? = null
-
     override fun onViewAttached() {
         super.onViewAttached()
-        validateVersion()
         activateServices()
         listenForConnectivity()
     }
@@ -72,36 +63,6 @@ open class ClientMainPresenter(
 
     private fun listenForConnectivity() {
         connectivityService.startMonitoring()
-        launchUI {
-            webSocketClientProvider.connectionState.collect {
-                if (it is ConnectionState.Connected && lastConnectedStatus != true) {
-                    log.d { "connectivity status changed to $it - reconnecting services" }
-                    reactivateServices()
-                    lastConnectedStatus = true
-                } else {
-                    lastConnectedStatus = false
-                }
-            }
-        }
-    }
-
-    private fun validateVersion() {
-        launchUI {
-            delay(500) // a bit of delay for states to update properly
-            val connectionState = webSocketClientProvider.connectionState.value
-            val isApiIncompatible = connectionState is ConnectionState.Disconnected && connectionState.error is IncompatibleHttpApiVersionException
-            if (isApiIncompatible) {
-                log.w { "configured trusted node doesn't have a compatible api version" }
-
-                val trustedNodeVersion = withContext(IODispatcher) { settingsServiceFacade.getTrustedNodeVersion() }
-                GenericErrorHandler.handleGenericError(
-                    "Your configured trusted node is running Bisq version $trustedNodeVersion.\n" +
-                            "Bisq Connect requires version ${BuildConfig.BISQ_API_VERSION} to run properly.\n"
-                )
-            } else {
-                log.d { "trusted node is compatible, continue" }
-            }
-        }
     }
 
     override fun reactivateServices() {

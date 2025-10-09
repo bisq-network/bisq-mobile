@@ -151,7 +151,7 @@ class TrustedNodeSetupPresenter(
         _status.value = "mobile.trustedNodeSetup.status.connecting".i18n()
         log.d { "Test: ${_host.value} isWorkflow $isWorkflow" }
 
-        launchUI {
+        launchIO {
             try {
                 // Add a timeout to prevent indefinite waiting
                 val error = port.value.toIntOrNull().let { portValue ->
@@ -182,25 +182,21 @@ class TrustedNodeSetupPresenter(
                     }
 
                     null -> {
-                        val previousUrl =
-                            withContext(IODispatcher) { settingsRepository.fetch().bisqApiUrl }
-                        withContext(IODispatcher) { updateSettings() } // trigger ws client update
-                        kotlinx.coroutines.delay(100) // Ensure settings observer completes before connecting
-                        val error = wsClientProvider.get().connect()
-                        kotlinx.coroutines.delay(100) // wait for state collector in wsClientProvider
+                        val previousUrl = settingsRepository.fetch().bisqApiUrl
+                        updateSettings() // trigger ws client update
+                        wsClientProvider.initialize() // ensure new client is setup correctly
+                        val error = wsClientProvider.connect()
                         _wsClientConnectionState.value = wsClientProvider.connectionState.value
                         if (error != null) {
                             onConnectionError(error)
-                            return@launchUI
+                            return@launchIO
                         }
                         _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
 
                         val newApiUrl = _host.value + ":" + _port.value
                         if (previousUrl != newApiUrl) {
                             log.d { "user setup a new trusted node $newApiUrl" }
-                            withContext(IODispatcher) {
-                                userRepository.clear()
-                            }
+                            userRepository.clear()
                         }
 
                         if (isWorkflow) {
