@@ -185,7 +185,9 @@ class TrustedNodeSetupPresenter(
                         val previousUrl =
                             withContext(IODispatcher) { settingsRepository.fetch().bisqApiUrl }
                         withContext(IODispatcher) { updateSettings() } // trigger ws client update
+                        kotlinx.coroutines.delay(100) // Ensure settings observer completes before connecting
                         val error = wsClientProvider.get().connect()
+                        kotlinx.coroutines.delay(100) // wait for state collector in wsClientProvider
                         _wsClientConnectionState.value = wsClientProvider.connectionState.value
                         if (error != null) {
                             onConnectionError(error)
