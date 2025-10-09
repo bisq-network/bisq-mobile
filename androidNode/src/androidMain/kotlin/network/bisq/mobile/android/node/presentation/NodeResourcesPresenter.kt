@@ -1,7 +1,6 @@
 package network.bisq.mobile.android.node.presentation
 
 import android.content.Context
-import io.matthewnelson.kmp.file.IOException
 import kotlinx.coroutines.CompletableDeferred
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.utils.copyDirectory
@@ -18,10 +17,11 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
 import org.koin.core.component.inject
-import org.kotlincrypto.error.GeneralSecurityException
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.io.IOException
 import java.io.InputStream
+import java.security.GeneralSecurityException
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
