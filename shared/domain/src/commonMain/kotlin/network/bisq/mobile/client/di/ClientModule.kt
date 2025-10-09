@@ -182,10 +182,10 @@ val clientModule = module {
     single<MarketPriceServiceFacade> { ClientMarketPriceServiceFacade(get(), get(), get()) }
 
     single { UserProfileApiGateway(get(), get()) }
-    single<UserProfileServiceFacade> { ClientUserProfileServiceFacade(get(), get(), get()) }
+    single<UserProfileServiceFacade> { ClientUserProfileServiceFacade(get(), get(), get(), get()) }
 
     single { OfferbookApiGateway(get(), get()) }
-    single<OffersServiceFacade> { ClientOffersServiceFacade(get(), get(), get()) }
+    single<OffersServiceFacade> { ClientOffersServiceFacade(get(), get(), get(), get()) }
 
     single { TradesApiGateway(get(), get()) }
     single<TradesServiceFacade> { ClientTradesServiceFacade(get(), get(), get()) }

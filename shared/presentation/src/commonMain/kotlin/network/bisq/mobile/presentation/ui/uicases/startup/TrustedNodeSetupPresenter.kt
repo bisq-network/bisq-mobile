@@ -227,7 +227,6 @@ class TrustedNodeSetupPresenter(
 
     private fun onConnectionError(error: Throwable?) {
         val errorMessage = error?.message
-        log.e(error) { "Error testing connection: $errorMessage" }
         if (errorMessage != null) {
             showSnackbar(
                 "mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(

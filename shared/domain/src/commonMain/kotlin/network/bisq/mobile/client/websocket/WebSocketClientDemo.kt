@@ -3,7 +3,6 @@ package network.bisq.mobile.client.websocket
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.websocket.messages.WebSocketRequest
@@ -74,18 +73,15 @@ class WebSocketClientDemo(
         return fakeResponse(webSocketRequest)
     }
 
-    override suspend fun awaitConnection() {
-        webSocketClientStatus.first { it is ConnectionState.Connected }
-    }
-
     override suspend fun subscribe(
         topic: Topic,
-        parameter: String?
+        parameter: String?,
+        webSocketEventObserver: WebSocketEventObserver,
     ): WebSocketEventObserver {
         val subscriberId = createUuid()
         log.i { "Subscribe for topic $topic and subscriberId $subscriberId" }
         log.i { "Demo mode active. Returning fake data for topic $topic." }
-        return getFakeSubscription(topic, subscriberId)
+        return getFakeSubscription(topic, subscriberId, webSocketEventObserver)
     }
 
     override suspend fun unSubscribe(
@@ -94,6 +90,10 @@ class WebSocketClientDemo(
     ) {
         log.d { "Demo mode - unsubscribe ignored for topic=$topic, requestId=$requestId" }
         // no-op, TODO
+    }
+
+    override suspend fun dispose() {
+        // no-op
     }
 
     private fun fakeResponse(webSocketRequest: WebSocketRequest): WebSocketResponse {
@@ -125,9 +125,12 @@ class WebSocketClientDemo(
     }
 
     // Function to return fake data when in demo mode
-    private fun getFakeSubscription(topic: Topic, subscriberId: String): WebSocketEventObserver {
+    private fun getFakeSubscription(
+        topic: Topic,
+        subscriberId: String,
+        webSocketEventObserver: WebSocketEventObserver,
+    ): WebSocketEventObserver {
         val fakePayload = getFakePayloadForTopic(topic) // Function that returns fake data
-        val webSocketEventObserver = WebSocketEventObserver()
 
         val webSocketEvent =
             WebSocketEvent(topic, subscriberId, fakePayload, ModificationType.REPLACE, 0)

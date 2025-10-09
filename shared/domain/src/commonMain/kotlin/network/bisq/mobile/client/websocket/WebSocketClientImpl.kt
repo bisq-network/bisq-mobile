@@ -13,7 +13,6 @@ import io.ktor.websocket.readText
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.DisposableHandle
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -25,7 +24,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -60,11 +58,11 @@ class WebSocketClientImpl(
     private val json: Json,
     override val host: String,
     override val port: Int
-) : WebSocketClient, Logging, DisposableHandle {
+) : WebSocketClient, Logging {
 
     companion object {
         const val DELAY_TO_RECONNECT = 3000L
-        const val MAX_RECONNECT_ATTEMPTS = 1
+        const val MAX_RECONNECT_ATTEMPTS = 5
         const val MAX_RECONNECT_DELAY = 30000L // 30 seconds max delay
     }
 
@@ -225,29 +223,32 @@ class WebSocketClientImpl(
         }
     }
 
-    override suspend fun awaitConnection() {
-        webSocketClientStatus.first { it is ConnectionState.Connected }
+    private suspend fun awaitConnection() {
+        withContext(ioScope.coroutineContext) {
+            webSocketClientStatus.first { it is ConnectionState.Connected }
+        }
     }
 
     private suspend fun awaitDisconnection() {
-        webSocketClientStatus.first { it is ConnectionState.Disconnected }
+        withContext(ioScope.coroutineContext) {
+            webSocketClientStatus.first { it is ConnectionState.Disconnected }
+        }
     }
 
-    override suspend fun subscribe(topic: Topic, parameter: String?): WebSocketEventObserver {
+    override suspend fun subscribe(
+        topic: Topic,
+        parameter: String?,
+        webSocketEventObserver: WebSocketEventObserver,
+    ): WebSocketEventObserver {
         val subscriberId = createUuid()
         log.i { "Subscribe for topic $topic and subscriberId $subscriberId" }
 
-        val subscriptionRequest = SubscriptionRequest(
-            subscriberId,
-            topic,
-            parameter
-        )
-        val response: WebSocketResponse? = sendRequestAndAwaitResponse(subscriptionRequest)
+        val response: WebSocketResponse? =
+            sendRequestAndAwaitResponse(SubscriptionRequest(topic, parameter, subscriberId))
         require(response is SubscriptionResponse)
         log.i {
             "Received SubscriptionResponse for topic $topic and subscriberId $subscriberId."
         }
-        val webSocketEventObserver = WebSocketEventObserver()
         webSocketEventObservers[subscriberId] = webSocketEventObserver
         val webSocketEvent = WebSocketEvent(
             topic,
@@ -359,10 +360,8 @@ class WebSocketClientImpl(
         }
     }
 
-    override fun dispose() {
-        runBlocking {
-            doDisconnect()
-            ioScope.cancel(CancellationException("WebSocket client disposed"))
-        }
+    override suspend fun dispose() {
+        disconnect()
+        ioScope.cancel(CancellationException("WebSocket client disposed"))
     }
 }

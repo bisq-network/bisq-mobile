@@ -1,12 +1,17 @@
 package network.bisq.mobile.client.service.offers
 
 import kotlinx.atomicfu.atomic
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.websocket.ConnectionState
+import network.bisq.mobile.client.websocket.WebSocketClientProvider
 import network.bisq.mobile.client.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
@@ -19,23 +24,14 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.service.offers.OffersServiceFacade
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import network.bisq.mobile.domain.formatters.AmountFormatter
-import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVOExtensions.getPriceQuoteVO
 import network.bisq.mobile.domain.service.offers.OfferFormattingUtil
+import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 
 class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val apiGateway: OfferbookApiGateway,
-    private val json: Json
+    private val json: Json,
+    private val webSocketClientProvider: WebSocketClientProvider,
 ) : OffersServiceFacade() {
 
     private var marketPriceUpdateJob: Job? = null
@@ -45,6 +41,8 @@ class ClientOffersServiceFacade(
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
     private var offersSequenceNumber = atomic(-1)
     private var hasSubscribedToOffers = atomic(false)
+
+    private var getMarketsJob: Job? = null
 
 
     // Life cycle
@@ -107,16 +105,24 @@ class ClientOffersServiceFacade(
 
     private fun observeAvailableMarkets() {
         launchIO {
-            val result = apiGateway.getMarkets()
-            if (result.isFailure) {
-                result.exceptionOrNull()?.let { log.e { "GetMarkets request failed with exception $it" } }
-                log.w { "GetMarkets failed, market list will remain empty" }
-                return@launchIO
-            }
+            offersMutex.withLock {
+                getMarketsJob?.cancel()
+                getMarketsJob = collectIO(webSocketClientProvider.connectionState) { state ->
+                    if (state is ConnectionState.Connected) {
+                        val result = apiGateway.getMarkets()
+                        if (result.isFailure) {
+                            result.exceptionOrNull()?.let { log.e { "GetMarkets request failed with exception $it" } }
+                            log.w { "GetMarkets failed, market list will remain empty" }
+                        } else {
+                            val markets = result.getOrThrow()
+                            fillMarketListItems(markets)
+                            subscribeNumOffers()
+                            getMarketsJob?.cancel() // we only need this once
+                        }
 
-            val markets = result.getOrThrow()
-            fillMarketListItems(markets)
-            subscribeNumOffers()
+                    }
+                }
+            }
         }
     }
 

@@ -71,21 +71,14 @@ class OfferbookPresenter(
 
     private var selectedOffer: OfferItemPresentationModel? = null
 
-    lateinit var selectedUserProfile: UserProfileVO
+    val selectedUserProfile get() = userProfileServiceFacade.selectedUserProfile
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun onViewAttached() {
         super.onViewAttached()
 
         selectedOffer = null
-
         launchIO {
-            userProfileServiceFacade.getSelectedUserProfile()?.let { selectedUserProfile = it }
-                ?: run {
-                    log.w { "No selected user profile; offer list skipped" }
-                    return@launchIO
-                }
-
             combine(
                 offersServiceFacade.offerbookListItems,
                 selectedDirection,
@@ -142,6 +135,11 @@ class OfferbookPresenter(
     }
 
     private suspend fun processOffer(item: OfferItemPresentationModel): OfferItemPresentationModel {
+        val userProfile = selectedUserProfile.value
+        if (userProfile == null) {
+            throw IllegalStateException("selectedUserProfile was null at processOffer. this should not happen.")
+        }
+
         val offer = item.bisqEasyOffer
 
         // todo: Reformatting should ideally only happen with language change
@@ -170,7 +168,7 @@ class OfferbookPresenter(
                 useCache = true,
                 marketPriceServiceFacade = marketPriceServiceFacade,
                 reputationServiceFacade = reputationServiceFacade,
-                userProfileId = selectedUserProfile.id
+                userProfileId = userProfile.id
             )
         } else false
 
@@ -267,6 +265,10 @@ class OfferbookPresenter(
     }
 
     private suspend fun canTakeOffer(item: OfferItemPresentationModel): Boolean {
+        val userProfile = selectedUserProfile.value
+        if (userProfile == null) {
+            throw IllegalStateException("selectedUserProfile was null at canTakeOffer. this should not happen.")
+        }
         val bisqEasyOffer = item.bisqEasyOffer
         val requiredReputationScoreForMaxOrFixed = BisqEasyTradeAmountLimits.findRequiredReputationScoreForMaxOrFixedAmount(
             marketPriceServiceFacade, bisqEasyOffer
@@ -295,7 +297,7 @@ class OfferbookPresenter(
         val userProfileId = if (bisqEasyOffer.direction == DirectionEnum.SELL) {
             bisqEasyOffer.makerNetworkId.pubKey.id // Offer maker is seller (wants to sell Bitcoin)
         } else {
-            selectedUserProfile.id // I am seller (taker selling to maker who wants to buy)
+            userProfile.id // I am seller (taker selling to maker who wants to buy)
         }
 
         val reputationResult: Result<ReputationScoreVO> = withContext(IODispatcher) {

@@ -21,12 +21,18 @@ interface WebSocketClient {
 
     fun reconnect()
 
-    suspend fun sendRequestAndAwaitResponse(webSocketRequest: WebSocketRequest, awaitConnection: Boolean = true): WebSocketResponse?
+    suspend fun sendRequestAndAwaitResponse(
+        webSocketRequest: WebSocketRequest,
+        awaitConnection: Boolean = true,
+    ): WebSocketResponse?
 
-    /** Suspends until `webSocketClientStatus` is `ConnectionState.Connected`. Use with caution, may suspend indefinitely. */
-    suspend fun awaitConnection()
-
-    suspend fun subscribe(topic: Topic, parameter: String? = null): WebSocketEventObserver
+    suspend fun subscribe(
+        topic: Topic,
+        parameter: String? = null,
+        webSocketEventObserver: WebSocketEventObserver = WebSocketEventObserver(),
+    ): WebSocketEventObserver
 
     suspend fun unSubscribe(topic: Topic, requestId: String)
+
+    suspend fun dispose()
 }
