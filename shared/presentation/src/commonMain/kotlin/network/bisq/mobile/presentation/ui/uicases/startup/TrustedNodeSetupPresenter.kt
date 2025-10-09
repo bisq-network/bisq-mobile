@@ -165,9 +165,7 @@ class TrustedNodeSetupPresenter(
                         ) // 15 second timeout
                     }
                 }
-                if (error == null) {
-                    _wsClientConnectionState.value = ConnectionState.Connected
-                } else {
+                if (error != null) {
                     _wsClientConnectionState.value = ConnectionState.Disconnected(error)
                 }
                 when (error) {
@@ -188,7 +186,11 @@ class TrustedNodeSetupPresenter(
                             withContext(IODispatcher) { settingsRepository.fetch().bisqApiUrl }
                         withContext(IODispatcher) { updateSettings() } // trigger ws client update
                         val error = wsClientProvider.get().connect()
-                        if (error != null) return@launchUI
+                        _wsClientConnectionState.value = wsClientProvider.connectionState.value
+                        if (error != null) {
+                            onConnectionError(error)
+                            return@launchUI
+                        }
                         _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
 
                         val newApiUrl = _host.value + ":" + _port.value
@@ -216,25 +218,28 @@ class TrustedNodeSetupPresenter(
 
                     else -> {
                         // other errors
-                        val errorMessage = error.message
-                        log.e(error) { "Error testing connection: $errorMessage" }
-                        if (errorMessage != null) {
-                            showSnackbar(
-                                "mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(
-                                    errorMessage
-                                )
-                            )
-                        } else {
-                            showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.unknownError".i18n())
-                        }
-
-                        _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
+                        onConnectionError(error)
                     }
                 }
             } finally {
                 _isLoading.value = false
             }
         }
+    }
+
+    private fun onConnectionError(error: Throwable?) {
+        val errorMessage = error?.message
+        log.e(error) { "Error testing connection: $errorMessage" }
+        if (errorMessage != null) {
+            showSnackbar(
+                "mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(
+                    errorMessage
+                )
+            )
+        } else {
+            showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.unknownError".i18n())
+        }
+        _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
     }
 
     private suspend fun updateSettings() {

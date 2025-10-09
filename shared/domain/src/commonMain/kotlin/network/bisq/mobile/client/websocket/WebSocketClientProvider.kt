@@ -188,6 +188,6 @@ class WebSocketClientProvider(
         currentClient == null || currentClient!!.host != host || currentClient!!.port != port
 
     fun isConnected(): Boolean {
-        return currentClient?.webSocketClientStatus?.value is ConnectionState.Connected
+        return connectionState.value is ConnectionState.Connected
     }
 }
