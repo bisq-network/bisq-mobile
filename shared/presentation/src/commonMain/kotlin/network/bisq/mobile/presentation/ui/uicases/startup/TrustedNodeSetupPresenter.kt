@@ -4,6 +4,8 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.ConnectionState
@@ -191,7 +193,11 @@ class TrustedNodeSetupPresenter(
                             onConnectionError(error)
                             return@launchIO
                         }
-                        _wsClientConnectionState.value = ConnectionState.Connected
+                        // wait till connectionState is changed to a final state
+                        wsClientProvider.connectionState.filter { it !is ConnectionState.Connecting }
+                            .first()
+                        _wsClientConnectionState.value =
+                            ConnectionState.Connected // this is a successful test regardless of final state
                         _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
 
                         val newApiUrl = _host.value + ":" + _port.value
