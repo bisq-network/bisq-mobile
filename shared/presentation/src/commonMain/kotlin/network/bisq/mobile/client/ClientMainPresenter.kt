@@ -35,8 +35,8 @@ open class ClientMainPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        activateServices()
-        validateVersion()
+//        activateServices()
+//        validateVersion()
         listenForConnectivity()
     }
 
