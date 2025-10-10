@@ -3,7 +3,6 @@ package network.bisq.mobile.client.websocket
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.websocket.messages.WebSocketRequest
@@ -126,7 +125,7 @@ class WebSocketClientDemo(
     }
 
     // Function to return fake data when in demo mode
-    private fun getFakeSubscription(
+    private suspend fun getFakeSubscription(
         topic: Topic,
         subscriberId: String,
         webSocketEventObserver: WebSocketEventObserver,
@@ -135,10 +134,7 @@ class WebSocketClientDemo(
 
         val webSocketEvent =
             WebSocketEvent(topic, subscriberId, fakePayload, ModificationType.REPLACE, 0)
-        // runBlocking is okay in demo
-        runBlocking {
-            webSocketEventObserver.setEvent(webSocketEvent)
-        }
+        webSocketEventObserver.setEvent(webSocketEvent)
 
         return webSocketEventObserver
     }
