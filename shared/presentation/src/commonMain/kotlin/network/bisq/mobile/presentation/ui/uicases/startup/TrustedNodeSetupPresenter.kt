@@ -186,11 +186,12 @@ class TrustedNodeSetupPresenter(
                         updateSettings() // trigger ws client update
                         wsClientProvider.initialize() // ensure new client is setup correctly
                         val error = wsClientProvider.connect()
-                        _wsClientConnectionState.value = wsClientProvider.connectionState.value
                         if (error != null) {
+                            _wsClientConnectionState.value = ConnectionState.Disconnected(error)
                             onConnectionError(error)
                             return@launchIO
                         }
+                        _wsClientConnectionState.value = ConnectionState.Connected
                         _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
 
                         val newApiUrl = _host.value + ":" + _port.value
@@ -199,19 +200,7 @@ class TrustedNodeSetupPresenter(
                             userRepository.clear()
                         }
 
-                        if (isWorkflow) {
-                            // Compare current host/port with saved settings to decide navigation
-                            val currentApiUrl = "${_host.value}:${_port.value}"
-                            if (previousUrl.isBlank() || previousUrl != currentApiUrl) {
-                                // No saved URL or different URL -> create profile
-                                navigateToCreateProfile()
-                            } else {
-                                // Same URL as saved -> go to home
-                                navigateToHome()
-                            }
-                        } else {
-                            navigateBack()
-                        }
+                        navigateToSplashScreen() // to trigger navigateToNextScreen again
                     }
 
                     else -> {
@@ -252,10 +241,10 @@ class TrustedNodeSetupPresenter(
         }
     }
 
-    private fun navigateToHome() {
+    private fun navigateToSplashScreen() {
         launchUI {
-            navigateTo(NavRoute.TabContainer) {
-                it.popUpTo(NavRoute.TrustedNodeSetup) { inclusive = true }
+            navigateTo(NavRoute.Splash) {
+                it.popUpTo(NavRoute.Splash) { inclusive = true }
             }
         }
     }

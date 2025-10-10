@@ -70,8 +70,8 @@ abstract class SplashPresenter(
                     // Scenario 2: Loading up for first time for both androidNode and xClients
                     navigateToOnboarding()
                 } else {
-                    // Scenario 3: Handle others based on app type
-                    doCustomNavigationLogic(deviceSettings, hasProfile)
+                    // Scenario 3: Create profile
+                    navigateToCreateProfile()
                 }
             }
         }.onFailure {
@@ -104,8 +104,6 @@ abstract class SplashPresenter(
             it.popUpTo(NavRoute.Splash) { inclusive = true }
         }
     }
-
-    abstract fun doCustomNavigationLogic(settings: Settings, hasProfile: Boolean): Boolean
 
     fun onTimeoutDialogContinue() {
         applicationBootstrapFacade.extendTimeout()

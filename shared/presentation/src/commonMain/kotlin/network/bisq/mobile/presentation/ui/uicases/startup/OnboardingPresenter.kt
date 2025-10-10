@@ -66,14 +66,14 @@ abstract class OnboardingPresenter(
     override fun onNextButtonClick(coroutineScope: CoroutineScope, pagerState: PagerState) {
         launchIO {
             if (pagerState.currentPage == filteredPages.lastIndex) {
-                val deviceSettings = settingsRepository.fetch()
-
                 settingsRepository.setFirstLaunch(false)
-
-                val remoteBisqUrl = deviceSettings.bisqApiUrl
                 val hasProfile: Boolean = userProfileService.hasUserProfile()
                 launchUI {
-                    doCustomNavigationLogic(remoteBisqUrl.isNotEmpty(), hasProfile)
+                    if (!hasProfile) {
+                        navigateToCreateProfile()
+                    } else {
+                        navigateToHome()
+                    }
                 }
             } else {
                 // Let the UI handle the animation in the composable
@@ -89,7 +89,11 @@ abstract class OnboardingPresenter(
         navigateTo(NavRoute.CreateProfile)
     }
 
-    abstract fun doCustomNavigationLogic(isBisqUrlSet: Boolean, hasProfile: Boolean)
+    protected fun navigateToHome() {
+        navigateTo(NavRoute.TabContainer) {
+            it.popUpTo(NavRoute.Splash) { inclusive = true }
+        }
+    }
 
     abstract fun evaluateButtonText(deviceSettings: Settings?): String
 }

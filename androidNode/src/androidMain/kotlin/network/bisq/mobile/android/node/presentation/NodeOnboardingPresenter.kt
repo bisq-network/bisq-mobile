@@ -19,10 +19,6 @@ class NodeOnboardingPresenter(
 
     override val headline: String = "mobile.onboarding.fullMode.headline".i18n()
 
-    override fun doCustomNavigationLogic(isBisqUrlSet: Boolean, hasProfile: Boolean) {
-        navigateToCreateProfile()
-    }
-
     override fun evaluateButtonText(deviceSettings: Settings?): String {
         return "mobile.onboarding.createProfile".i18n()
     }

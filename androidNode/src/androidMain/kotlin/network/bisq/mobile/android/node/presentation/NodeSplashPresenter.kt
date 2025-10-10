@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
@@ -51,10 +50,5 @@ class NodeSplashPresenter(
         ) { stateAndNumConnections ->
             _state.value = stateAndNumConnections
         }
-    }
-
-    override fun doCustomNavigationLogic(settings: Settings, hasProfile: Boolean): Boolean {
-        navigateToCreateProfile()
-        return false
     }
 }
