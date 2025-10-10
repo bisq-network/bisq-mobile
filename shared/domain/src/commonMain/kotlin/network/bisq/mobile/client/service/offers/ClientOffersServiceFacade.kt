@@ -39,7 +39,6 @@ class ClientOffersServiceFacade(
     // Misc
     private val offersMutex = Mutex()
     private var offerbookListItemsByMarket: MutableMap<String, MutableMap<String, OfferItemPresentationModel>> = mutableMapOf()
-    private var offersSequenceNumber = atomic(-1)
     private var hasSubscribedToOffers = atomic(false)
 
     private var getMarketsJob: Job? = null
@@ -171,17 +170,10 @@ class ClientOffersServiceFacade(
 
     private fun subscribeOffers() {
         serviceScope.launch {
-            offersSequenceNumber.value = -1
             // We subscribe for all markets
             val observer = apiGateway.subscribeOffers()
             observer.webSocketEvent.collect { webSocketEvent ->
                 if (webSocketEvent?.deferredPayload == null) {
-                    return@collect
-                }
-                if (offersSequenceNumber.value >= webSocketEvent.sequenceNumber) {
-                    log.w {
-                        "Sequence number is larger or equal than the one we " + "received from the backend. We ignore that event."
-                    }
                     return@collect
                 }
 
@@ -194,8 +186,6 @@ class ClientOffersServiceFacade(
                     log.d { "WebSocket offer update - Type: ${webSocketEvent.modificationType}, Count: ${payload.size}" }
                     updateOffersByMarket(webSocketEvent, payload)
                     applyOffersToSelectedMarket()
-                }.onSuccess {
-                    offersSequenceNumber.value = webSocketEvent.sequenceNumber
                 }.onFailure { e ->
                     log.e(e) { "Error processing offers WebSocket event (seq=${webSocketEvent.sequenceNumber})" }
                 }

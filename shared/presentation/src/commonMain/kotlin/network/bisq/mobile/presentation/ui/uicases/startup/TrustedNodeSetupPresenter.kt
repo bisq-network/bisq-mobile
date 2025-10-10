@@ -167,52 +167,34 @@ class TrustedNodeSetupPresenter(
                         ) // 15 second timeout
                     }
                 }
+                val newApiUrl = _host.value + ":" + _port.value
+
                 if (error != null) {
                     _wsClientConnectionState.value = ConnectionState.Disconnected(error)
-                }
-                when (error) {
-                    is TimeoutCancellationException -> {
-                        log.e(error) { "Connection test timed out after 15 seconds" }
-                        showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionTimedOut".i18n())
-                        _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
+                    onConnectionError(error, newApiUrl)
+                } else {
+                    val previousUrl = settingsRepository.fetch().bisqApiUrl
+                    updateSettings() // trigger ws client update
+                    wsClientProvider.initialize() // ensure new client is setup correctly
+                    val error = wsClientProvider.connect()
+                    if (error != null) {
+                        _wsClientConnectionState.value = ConnectionState.Disconnected(error)
+                        onConnectionError(error, newApiUrl)
+                        return@launchIO
+                    }
+                    // wait till connectionState is changed to a final state
+                    wsClientProvider.connectionState.filter { it !is ConnectionState.Connecting }
+                        .first()
+                    _wsClientConnectionState.value =
+                        ConnectionState.Connected // this is a successful test regardless of final state
+                    _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
+
+                    if (previousUrl != newApiUrl) {
+                        log.d { "user setup a new trusted node $newApiUrl" }
+                        userRepository.clear()
                     }
 
-                    is IncompatibleHttpApiVersionException -> {
-                        log.d { "Invalid version cannot connect" }
-                        showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.incompatible".i18n())
-                        _status.value = "mobile.trustedNodeSetup.status.invalidVersion".i18n()
-                    }
-
-                    null -> {
-                        val previousUrl = settingsRepository.fetch().bisqApiUrl
-                        updateSettings() // trigger ws client update
-                        wsClientProvider.initialize() // ensure new client is setup correctly
-                        val error = wsClientProvider.connect()
-                        if (error != null) {
-                            _wsClientConnectionState.value = ConnectionState.Disconnected(error)
-                            onConnectionError(error)
-                            return@launchIO
-                        }
-                        // wait till connectionState is changed to a final state
-                        wsClientProvider.connectionState.filter { it !is ConnectionState.Connecting }
-                            .first()
-                        _wsClientConnectionState.value =
-                            ConnectionState.Connected // this is a successful test regardless of final state
-                        _status.value = "mobile.trustedNodeSetup.status.connected".i18n()
-
-                        val newApiUrl = _host.value + ":" + _port.value
-                        if (previousUrl != newApiUrl) {
-                            log.d { "user setup a new trusted node $newApiUrl" }
-                            userRepository.clear()
-                        }
-
-                        navigateToSplashScreen() // to trigger navigateToNextScreen again
-                    }
-
-                    else -> {
-                        // other errors
-                        onConnectionError(error)
-                    }
+                    navigateToSplashScreen() // to trigger navigateToNextScreen again
                 }
             } finally {
                 _isLoading.value = false
@@ -220,18 +202,42 @@ class TrustedNodeSetupPresenter(
         }
     }
 
-    private fun onConnectionError(error: Throwable?) {
-        val errorMessage = error?.message
-        if (errorMessage != null) {
-            showSnackbar(
-                "mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(
-                    errorMessage
-                )
-            )
-        } else {
-            showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.unknownError".i18n())
+    private fun onConnectionError(error: Throwable, newApiUrl: String) {
+        when (error) {
+            is TimeoutCancellationException -> {
+                log.e(error) { "Connection test timed out after 15 seconds" }
+                showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionTimedOut".i18n())
+                _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
+            }
+
+            is IncompatibleHttpApiVersionException -> {
+                log.d { "Invalid version cannot connect" }
+                showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.incompatible".i18n())
+                _status.value = "mobile.trustedNodeSetup.status.invalidVersion".i18n()
+            }
+
+            else -> {
+                if (error::class.simpleName == "ConnectException") {
+                    showSnackbar(
+                        "mobile.trustedNodeSetup.connectionJob.messages.couldNotConnect".i18n(
+                            newApiUrl
+                        )
+                    )
+                } else {
+                    val errorMessage = error.message
+                    if (errorMessage != null) {
+                        showSnackbar(
+                            "mobile.trustedNodeSetup.connectionJob.messages.connectionError".i18n(
+                                errorMessage
+                            )
+                        )
+                    } else {
+                        showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.unknownError".i18n())
+                    }
+                }
+                _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
+            }
         }
-        _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
     }
 
     private suspend fun updateSettings() {

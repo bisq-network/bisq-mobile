@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.websocket.subscription
 
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -19,7 +18,6 @@ class Subscription<T>(
     // Misc
     private val ioScope = CoroutineScope(IODispatcher)
     private var job: Job? = null
-    private var sequenceNumber = atomic(-1)
 
     fun subscribe() {
         require(job == null)
@@ -31,16 +29,6 @@ class Subscription<T>(
                     if (webSocketEvent?.deferredPayload == null) {
                         return@collect
                     }
-                    if (sequenceNumber.value >= webSocketEvent.sequenceNumber) {
-                        log.w {
-                            "Sequence number is larger or equal than the one we " +
-                                    "received from the backend. We ignore that event."
-                        }
-                        return@collect
-                    }
-
-                    sequenceNumber.value = webSocketEvent.sequenceNumber
-
                     log.d { "deferredPayload = ${webSocketEvent.deferredPayload}" }
                     val webSocketEventPayload: WebSocketEventPayload<List<T>> =
                         WebSocketEventPayload.from(json, webSocketEvent)

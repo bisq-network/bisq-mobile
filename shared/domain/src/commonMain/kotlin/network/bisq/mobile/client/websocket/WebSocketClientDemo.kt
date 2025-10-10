@@ -125,7 +125,7 @@ class WebSocketClientDemo(
     }
 
     // Function to return fake data when in demo mode
-    private fun getFakeSubscription(
+    private suspend fun getFakeSubscription(
         topic: Topic,
         subscriberId: String,
         webSocketEventObserver: WebSocketEventObserver,
