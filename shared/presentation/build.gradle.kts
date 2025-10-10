@@ -76,6 +76,7 @@ kotlin {
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)
+            //implementation(libs.androidx.activity.ktx)
             implementation(libs.koin.android)
         }
         androidUnitTest.dependencies {

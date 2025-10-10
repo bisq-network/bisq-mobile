@@ -35,6 +35,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainActivity
 import network.bisq.mobile.presentation.service.OpenTradesNotificationService
 import okio.Path.Companion.toPath
+import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.coroutines.cancellation.CancellationException
@@ -157,6 +158,39 @@ class NodeApplicationLifecycleService(
                 // Trigger rebirth on the main thread
                 withContext(Dispatchers.Main) {
                     ProcessPhoenix.triggerRebirth(appContext)
+                }
+            }
+        }
+    }
+
+
+    fun restartForRestoreDataDirectory(applicationContext: Context) {
+        // One-shot guard to avoid double-triggered restarts
+        if (!isRestarting.compareAndSet(false, true)) {
+            log.w { "restartApp called multiple times; ignoring duplicate" }
+            return
+        }
+
+        // Stop foreground notifications early to avoid flicker during restart
+        runCatching { openTradesNotificationService.stopNotificationService() }
+
+        launchIO {
+            try {
+                // Perform shutdown off the UI thread
+                shutdownServicesAndTor()
+            } catch (e: Exception) {
+                log.e("Error at shutdownServicesAndTor", e)
+            } finally {
+                // After we have shut down the services we delete the private and settings directories.
+                // Those will get restored from our backup at next startup.
+                val dbDir = File(applicationContext.filesDir, "Bisq2_mobile/db")
+                listOf("private", "settings").forEach { subDirName ->
+                    File(dbDir, subDirName).takeIf { it.exists() }?.deleteRecursively()
+                }
+
+                // Trigger rebirth on the main thread
+                withContext(Dispatchers.Main) {
+                    ProcessPhoenix.triggerRebirth(applicationContext)
                 }
             }
         }

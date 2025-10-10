@@ -11,6 +11,8 @@ import bisq.common.network.clear_net_address_types.LANAddressTypeFacade
 import kotlinx.coroutines.runBlocking
 import network.bisq.mobile.android.node.di.androidNodeModule
 import network.bisq.mobile.android.node.di.serviceModule
+import network.bisq.mobile.android.node.presentation.backupFileName
+import network.bisq.mobile.android.node.utils.moveDirReplace
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.di.domainModule
 import network.bisq.mobile.presentation.MainApplication
@@ -18,6 +20,7 @@ import network.bisq.mobile.presentation.di.presentationModule
 import org.bouncycastle.jce.provider.BouncyCastleProvider
 import org.koin.android.ext.android.get
 import org.koin.core.module.Module
+import java.io.File
 import java.security.Security
 
 /**
@@ -40,6 +43,8 @@ class NodeMainApplication : MainApplication() {
             setupBisqCoreStatics()
         }
 
+        maybeRestoreDataDirectory()
+
         // We start here the initialisation (non blocking) of the core services and tor.
         // The lifecycle of those is tied to the lifecycle of the Application/Process not to the lifecycle of the MainActivity.
         // As Android does not provide any callback when the process gets terminated we cannot gracefully shutdown the services and tor.
@@ -48,6 +53,38 @@ class NodeMainApplication : MainApplication() {
         nodeApplicationLifecycleService.initialize(filesDir.toPath(), applicationContext)
 
         log.i { "Bisq Easy Node Application Created" }
+    }
+
+    private fun maybeRestoreDataDirectory() {
+        val backupDir = File(filesDir, backupFileName)
+        if (backupDir.exists()) {
+            log.i { "Restore from backup" }
+            val dbDir = File(filesDir, "Bisq2_mobile/db")
+
+            val backupPrivate = File(backupDir, "private")
+            val targetPrivate = File(dbDir, "private")
+            val backupSettings = File(backupDir, "settings")
+            val targetSettings = File(dbDir, "settings")
+            moveDirReplace(
+                backupPrivate,
+                targetPrivate
+            )
+            moveDirReplace(
+                backupSettings,
+                targetSettings
+            )
+            val restoreSucceeded = !backupPrivate.exists() && targetPrivate.exists() &&
+                    !backupSettings.exists() && targetSettings.exists()
+            if (restoreSucceeded) {
+                if (backupDir.deleteRecursively()) {
+                    log.i { "We restored successfully from a backup" }
+                } else {
+                    log.w { "Could not delete backup dir at restore from backup" }
+                }
+            } else {
+                log.w { "Restore incomplete; keeping backup dir at ${backupDir.absolutePath}" }
+            }
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration) {
