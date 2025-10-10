@@ -3,6 +3,7 @@ package network.bisq.mobile.client.websocket
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.websocket.messages.WebSocketRequest
@@ -134,7 +135,10 @@ class WebSocketClientDemo(
 
         val webSocketEvent =
             WebSocketEvent(topic, subscriberId, fakePayload, ModificationType.REPLACE, 0)
-        webSocketEventObserver.setEvent(webSocketEvent)
+        // runBlocking is okay in demo
+        runBlocking {
+            webSocketEventObserver.setEvent(webSocketEvent)
+        }
 
         return webSocketEventObserver
     }

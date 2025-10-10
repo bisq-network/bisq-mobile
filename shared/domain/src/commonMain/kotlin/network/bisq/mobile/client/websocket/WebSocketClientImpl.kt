@@ -323,13 +323,15 @@ class WebSocketClientImpl(
     }
 
     private fun onWebSocketEvent(event: WebSocketEvent) {
-        // We have the payload not serialized yet as we would not know the expected type.
-        // We delegate that at the caller who is aware of the expected type
-        val webSocketEventObserver = webSocketEventObservers[event.subscriberId]
-        if (webSocketEventObserver != null) {
-            webSocketEventObserver.setEvent(event)
-        } else {
-            log.w { "We received a WebSocketEvent but no webSocketEventObserver was found for subscriberId ${event.subscriberId}" }
+        ioScope.launch {
+            // We have the payload not serialized yet as we would not know the expected type.
+            // We delegate that at the caller who is aware of the expected type
+            val webSocketEventObserver = webSocketEventObservers[event.subscriberId]
+            if (webSocketEventObserver != null) {
+                webSocketEventObserver.setEvent(event)
+            } else {
+                log.w { "We received a WebSocketEvent but no webSocketEventObserver was found for subscriberId ${event.subscriberId}" }
+            }
         }
     }
 
