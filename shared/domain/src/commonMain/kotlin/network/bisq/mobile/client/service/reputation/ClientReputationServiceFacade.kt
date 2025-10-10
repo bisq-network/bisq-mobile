@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.service.reputation
 
-import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
@@ -22,9 +21,6 @@ class ClientReputationServiceFacade(
 
     // Properties
     override val scoreByUserProfileId: Map<String, Long> get() = reputationByUserProfileId.value.mapValues { (_, v) -> v.totalScore }
-
-    // Misc
-    private var reputationSequenceNumber = atomic(-1)
 
     // Life cycle
     override fun activate() {
@@ -71,14 +67,6 @@ class ClientReputationServiceFacade(
             if (webSocketEvent?.deferredPayload == null) {
                 return@collect
             }
-            if (reputationSequenceNumber.value >= webSocketEvent.sequenceNumber) {
-                log.w {
-                    "Sequence number is larger or equal than the one we " + "received from the backend. We ignore that event."
-                }
-                return@collect
-            }
-            reputationSequenceNumber.value = webSocketEvent.sequenceNumber
-
             runCatching {
                 WebSocketEventPayload.from<Map<String, ReputationScoreVO>>(json, webSocketEvent).payload
             }.onSuccess { payload ->

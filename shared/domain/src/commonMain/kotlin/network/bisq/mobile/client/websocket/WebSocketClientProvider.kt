@@ -175,6 +175,7 @@ class WebSocketClientProvider(
         if (applyNow) {
             val client = getWsClient()
             log.d { "subscriptions already applied; subscribing to $topic individually" }
+            socketObserver.resetSequence()
             client.subscribe(topic, parameter, socketObserver)
         }
         return socketObserver
@@ -188,6 +189,7 @@ class WebSocketClientProvider(
                 log.d { "applying subscriptions on WS client, entry count: ${requestedSubscriptions.size}" }
             }
             requestedSubscriptions.forEach { entry ->
+                entry.value.resetSequence()
                 client.subscribe(
                     entry.key.topic,
                     entry.key.parameter,
@@ -197,7 +199,6 @@ class WebSocketClientProvider(
             subscriptionsAreApplied = true
         }
     }
-
     suspend fun sendRequestAndAwaitResponse(webSocketRequest: WebSocketRequest): WebSocketResponse? {
         return getWsClient().sendRequestAndAwaitResponse(webSocketRequest)
     }
