@@ -8,29 +8,29 @@ import androidx.compose.ui.unit.dp
 import bisqapps.shared.presentation.generated.resources.Res
 import bisqapps.shared.presentation.generated.resources.bisq_logo
 import bisqapps.shared.presentation.generated.resources.bisq_logo_circle
-import bisqapps.shared.presentation.generated.resources.bisq_logo_mark_grey
+import bisqapps.shared.presentation.generated.resources.bisq_logo_grey
 import bisqapps.shared.presentation.generated.resources.bisq_logo_small
 import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun BisqLogo(modifier: Modifier = Modifier) {
-    Image(painterResource(Res.drawable.bisq_logo), "Bisq Logo", modifier = modifier)
+    Image(painterResource(Res.drawable.bisq_logo), "Bisq logo", modifier = modifier)
 }
 
 @Composable
 fun BisqLogoSmall(modifier: Modifier = Modifier) {
-    Image(painterResource(Res.drawable.bisq_logo_small), "Bisq Logo small", modifier = modifier)
+    Image(painterResource(Res.drawable.bisq_logo_small), "Bisq logo small", modifier = modifier)
 }
 
 @Composable
-fun BisqLogoCircle(modifier: Modifier = Modifier) {
-    Image(painterResource(Res.drawable.bisq_logo_circle), "Bisq Logo circle", modifier = modifier)
+fun BisqLogoGreen(modifier: Modifier = Modifier) {
+    Image(painterResource(Res.drawable.bisq_logo_circle), "Bisq logo green", modifier = modifier)
 }
 
 @Composable
-fun BisqLogoMarkGrey(modifier: Modifier = Modifier.size(50.dp)) {
-    Image(painterResource(Res.drawable.bisq_logo_mark_grey), "Bisq Logo mark grey", modifier = modifier)
+fun BisqLogoGrey(modifier: Modifier = Modifier) {
+    Image(painterResource(Res.drawable.bisq_logo_grey), "Bisq logo grey", modifier = modifier)
 }
 
 @Composable

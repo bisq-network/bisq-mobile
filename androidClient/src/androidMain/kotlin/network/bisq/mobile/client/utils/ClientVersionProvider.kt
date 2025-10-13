@@ -9,6 +9,12 @@ class ClientVersionProvider() : VersionProvider {
         val demo = if (isDemo) "-demo-" else ""
         val appVersion = demo + if (isIOS) BuildConfig.IOS_APP_VERSION else BuildConfig.ANDROID_APP_VERSION
         return "mobile.resources.versionDetails.client".i18n(BuildConfig.APP_NAME, appVersion, BuildConfig.BISQ_API_VERSION)
+    }
 
+    override fun getAppNameAndVersion(isDemo: Boolean, isIOS: Boolean): String {
+        val demo = if (isDemo) "-demo-" else ""
+        val appVersion = demo + if (isIOS) BuildConfig.IOS_APP_VERSION else BuildConfig.ANDROID_APP_VERSION
+        val appName = demo + BuildConfig.APP_NAME
+        return "$appName v${appVersion}"
     }
 }

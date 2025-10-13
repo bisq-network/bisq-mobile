@@ -9,6 +9,7 @@ import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
@@ -20,12 +21,14 @@ class NodeSplashPresenter(
     settingsRepository: SettingsRepository,
     settingsServiceFacade: SettingsServiceFacade,
     networkServiceFacade: NetworkServiceFacade,
+    versionProvider: VersionProvider
 ) : SplashPresenter(
     mainPresenter,
     applicationBootstrapFacade,
     userProfileService,
     settingsRepository,
     settingsServiceFacade,
+    versionProvider
 ) {
 
     private val _state = MutableStateFlow("")

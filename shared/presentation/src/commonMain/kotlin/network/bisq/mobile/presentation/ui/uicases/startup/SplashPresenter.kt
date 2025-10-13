@@ -1,13 +1,16 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
@@ -19,6 +22,7 @@ abstract class SplashPresenter(
     private val userProfileService: UserProfileServiceFacade,
     private val settingsRepository: SettingsRepository,
     private val settingsServiceFacade: SettingsServiceFacade,
+    private val versionProvider: VersionProvider,
 ) : BasePresenter(mainPresenter) {
 
     abstract val state: StateFlow<String>
@@ -28,6 +32,9 @@ abstract class SplashPresenter(
     val isBootstrapFailed: StateFlow<Boolean> get() = applicationBootstrapFacade.isBootstrapFailed
     val currentBootstrapStage: StateFlow<String> get() = applicationBootstrapFacade.currentBootstrapStage
     val shouldShowProgressToast: StateFlow<Boolean> get() = applicationBootstrapFacade.shouldShowProgressToast
+
+    private val _appNameAndVersion: MutableStateFlow<String> = MutableStateFlow("")
+    val appNameAndVersion: StateFlow<String> get() = _appNameAndVersion.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -48,6 +55,8 @@ abstract class SplashPresenter(
                 applicationBootstrapFacade.setShouldShowProgressToast(false)
             }
         }
+
+        _appNameAndVersion.value = versionProvider.getAppNameAndVersion(isDemo, isIOS())
     }
 
     protected open suspend fun navigateToNextScreen() {

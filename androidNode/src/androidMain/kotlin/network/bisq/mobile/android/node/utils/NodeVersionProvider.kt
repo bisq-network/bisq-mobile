@@ -5,7 +5,6 @@ import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.i18n.i18n
 
 class NodeVersionProvider() : VersionProvider {
-
     override fun getVersionInfo(isDemo: Boolean, isIOS: Boolean): String {
         val demo = if (isDemo) "-demo-" else ""
         val appName = demo + BuildNodeConfig.APP_NAME
@@ -16,5 +15,11 @@ class NodeVersionProvider() : VersionProvider {
             BuildNodeConfig.TOR_VERSION,
             BuildNodeConfig.BISQ_CORE_VERSION,
         )
+    }
+
+    override fun getAppNameAndVersion(isDemo: Boolean, isIOS: Boolean): String {
+        val demo = if (isDemo) "-demo-" else ""
+        val appName = demo + BuildNodeConfig.APP_NAME
+        return "$appName v${BuildNodeConfig.APP_VERSION}"
     }
 }

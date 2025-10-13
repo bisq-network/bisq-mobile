@@ -17,10 +17,11 @@ import androidx.compose.ui.unit.dp
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqProgressBar
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
-import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoCircle
+import network.bisq.mobile.presentation.ui.components.atoms.icons.BisqLogoGrey
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
 
 @Composable
@@ -33,6 +34,7 @@ fun SplashScreen() {
     val isTimeoutDialogVisible by presenter.isTimeoutDialogVisible.collectAsState()
     val isBootstrapFailed by presenter.isBootstrapFailed.collectAsState()
     val currentBootstrapStage by presenter.currentBootstrapStage.collectAsState()
+    val appNameAndVersion by presenter.appNameAndVersion.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         BisqStaticScaffold(
@@ -43,7 +45,7 @@ fun SplashScreen() {
                 modifier = Modifier.fillMaxSize().weight(1f),
                 contentAlignment = Alignment.Center
             ) {
-                BisqLogoCircle(modifier = Modifier.size(140.dp))
+                BisqLogoGrey(modifier = Modifier.size(155.dp))
             }
             Column(
                 modifier = Modifier
@@ -51,6 +53,12 @@ fun SplashScreen() {
                     .padding(bottom = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                BisqText.baseLight(
+                    text = appNameAndVersion,
+                    color = BisqTheme.colors.mid_grey20,
+                    modifier = Modifier.padding(bottom = 20.dp)
+                )
+
                 BisqProgressBar(progress)
 
                 BisqText.baseRegularGrey(
