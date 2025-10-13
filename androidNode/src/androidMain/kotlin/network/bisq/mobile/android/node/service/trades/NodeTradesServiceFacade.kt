@@ -91,6 +91,9 @@ class NodeTradesServiceFacade(
 
     // Properties
     private val _openTradeItems = MutableStateFlow<List<TradeItemPresentationModel>>(emptyList())
+
+    // purposedly avoid get() to ensure same instance is used for registration/deregistration
+    // core fix for nasty crash on notifications
     override val openTradeItems: StateFlow<List<TradeItemPresentationModel>> = _openTradeItems.asStateFlow()
 
     private val _selectedTrade = MutableStateFlow<TradeItemPresentationModel?>(null)
