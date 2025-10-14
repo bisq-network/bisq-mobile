@@ -131,6 +131,10 @@ open class MainPresenter(
         super.onDestroying()
     }
 
+    open fun reactivateServices() {
+        // do nth
+    }
+
     private fun stopOpenTradeNotificationsService() {
         openTradesNotificationService.stopNotificationService()
     }

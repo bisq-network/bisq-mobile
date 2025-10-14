@@ -11,9 +11,9 @@
       "type": "SINGLE",
       "filters": [],
       "attributes": [],
-      "versionCode": 14,
-      "versionName": "0.1.1",
-      "outputFile": "Bisq_Easy-0.1.1.apk"
+      "versionCode": 17,
+      "versionName": "0.1.3",
+      "outputFile": "Bisq_Easy-0.1.3.apk"
     }
   ],
   "elementType": "File",
@@ -22,14 +22,14 @@
       "minApi": 28,
       "maxApi": 30,
       "baselineProfiles": [
-        "baselineProfiles/1/Bisq_Easy-0.1.1.dm"
+        "baselineProfiles/1/Bisq_Easy-0.1.3.dm"
       ]
     },
     {
       "minApi": 31,
       "maxApi": 2147483647,
       "baselineProfiles": [
-        "baselineProfiles/0/Bisq_Easy-0.1.1.dm"
+        "baselineProfiles/0/Bisq_Easy-0.1.3.dm"
       ]
     }
   ],
