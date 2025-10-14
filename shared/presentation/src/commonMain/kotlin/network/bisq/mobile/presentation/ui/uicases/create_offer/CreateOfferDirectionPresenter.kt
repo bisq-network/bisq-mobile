@@ -23,9 +23,27 @@ class CreateOfferDirectionPresenter(
     private val reputationServiceFacade: ReputationServiceFacade
 ) : BasePresenter(mainPresenter) {
 
-    lateinit var direction: DirectionEnum
-    lateinit var headline: String
-    var marketName: String? = null
+    var direction: DirectionEnum = createOfferPresenter.createOfferModel.direction
+    val marketName: String?
+        get() = createOfferPresenter.createOfferModel.market?.let { market ->
+            CurrencyUtils.getLocaleFiatCurrencyName(
+                market.quoteCurrencyCode,
+                market.quoteCurrencyName
+            )
+        }
+    val headline: String
+        get() {
+            val market = createOfferPresenter.createOfferModel.market
+            return if (market != null) {
+                val fiatName = CurrencyUtils.getLocaleFiatCurrencyName(
+                    market.quoteCurrencyCode,
+                    market.quoteCurrencyName
+                )
+                "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineWithMarket".i18n(fiatName)
+            } else {
+                "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineNoMarket".i18n()
+            }
+        }
     private val _reputation = MutableStateFlow<ReputationScoreVO?>(null)
 
     private val _showSellerReputationWarning = MutableStateFlow(false)
@@ -36,20 +54,6 @@ class CreateOfferDirectionPresenter(
 
     override fun onViewAttached() {
         super.onViewAttached()
-        direction = createOfferPresenter.createOfferModel.direction
-        val market = createOfferPresenter.createOfferModel.market
-        headline = if (market != null) {
-            val fiatName = CurrencyUtils.getLocaleFiatCurrencyName(
-                market.quoteCurrencyCode,
-                market.quoteCurrencyName
-            )
-            marketName = fiatName
-            "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineWithMarket".i18n(fiatName)
-        } else {
-            marketName = null
-            "mobile.bisqEasy.tradeWizard.directionAndMarket.headlineNoMarket".i18n()
-        }
-
         launchIO {
             val profile = userProfileServiceFacade.getSelectedUserProfile() ?: return@launchIO
             val reputation = reputationServiceFacade.getReputation(profile.id).getOrNull()
