@@ -3,6 +3,9 @@ package network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -101,9 +104,12 @@ private fun NonDialogBottomSheet(
                     color = containerColor,
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Box(modifier = Modifier.padding(bottom = 16.dp)) {
+                    Column(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
                         DragHandle()
-                        // Inner content
+                        Spacer(modifier = Modifier.height(8.dp))
                         content()
                     }
                 }
