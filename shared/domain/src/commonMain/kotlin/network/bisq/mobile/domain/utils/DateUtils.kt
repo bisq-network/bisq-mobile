@@ -22,8 +22,8 @@ object DateUtils {
      */
     fun periodFrom(timetamp: Long): Triple<Int, Int, Int> {
         val creationInstant = Instant.fromEpochMilliseconds(timetamp)
-        val creationDate = creationInstant.toLocalDateTime(TimeZone.currentSystemDefault()).date
-        val currentDate = clock.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
+        val creationDate = creationInstant.toLocalDateTime(TimeZone.UTC).date
+        val currentDate = clock.now().toLocalDateTime(TimeZone.UTC).date
 
         // Calculate the difference
         val period = creationDate.until(currentDate, DateTimeUnit.DAY)

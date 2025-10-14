@@ -1,13 +1,12 @@
 package network.bisq.mobile.presentation
 
-import androidx.compose.ui.graphics.painter.Painter
-import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
-
-expect fun getPlatformPainter(platformImage: PlatformImage): Painter
 
 expect fun getPlatformCurrentTimeProvider(): TimeProvider
 
 expect fun moveAppToBackground(view: Any?)
 
 expect fun getScreenWidthDp(): Int
+
+// Returns true on Android devices known to crash with dialog-based ModalBottomSheet when toggling window flags
+expect fun isAffectedBottomSheetDevice(): Boolean

@@ -6,17 +6,12 @@ import android.content.ContextWrapper
 import android.content.Intent
 import android.content.res.Resources
 import android.view.View
-import androidx.compose.ui.graphics.painter.BitmapPainter
-import androidx.compose.ui.graphics.painter.Painter
-import network.bisq.mobile.domain.PlatformImage
+import android.os.Build
+
 import network.bisq.mobile.domain.utils.getLogger
 import network.bisq.mobile.presentation.ui.helpers.AndroidCurrentTimeProvider
 import network.bisq.mobile.presentation.ui.helpers.TimeProvider
 import kotlin.math.roundToInt
-
-actual fun getPlatformPainter(platformImage: PlatformImage): Painter {
-    return BitmapPainter(platformImage.bitmap)
-}
 
 actual fun getPlatformCurrentTimeProvider(): TimeProvider = AndroidCurrentTimeProvider()
 
@@ -54,4 +49,12 @@ fun Context.findActivity(): Activity? = when (this) {
 actual fun getScreenWidthDp(): Int {
     val displayMetrics = Resources.getSystem().displayMetrics
     return (displayMetrics.widthPixels / displayMetrics.density).roundToInt()
+}
+
+actual fun isAffectedBottomSheetDevice(): Boolean {
+    // Motorola devices on Android 14+ have been observed to crash when dialog-based sheets update
+    // window flags. Add other particular devices if needed.
+    // when we do compose upgrade to next stable version we might getaway removing this
+    return Build.VERSION.SDK_INT >= 34 &&
+            Build.MANUFACTURER.equals("motorola", ignoreCase = true)
 }
