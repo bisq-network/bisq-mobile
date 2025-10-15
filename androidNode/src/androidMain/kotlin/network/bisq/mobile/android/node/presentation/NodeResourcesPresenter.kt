@@ -52,6 +52,8 @@ class NodeResourcesPresenter(
                 val dataDir = File(context.filesDir, "Bisq2_mobile")
                 val dbDir = File(dataDir, "db")
                 val destDir = File(cacheDir, "bisq_db").apply { mkdirs() }
+                // Dedicated share directory exposed via FileProvider (see file_paths.xml)
+                val shareDir = File(cacheDir, "backups").apply { mkdirs() }
 
                 // Copy db dir excluding cache and network_db sub dirs to context.cacheDir/bisq_db
                 copyDirectory(
@@ -64,11 +66,12 @@ class NodeResourcesPresenter(
                 zipDirectory(destDir, zipFile)
                 destDir.deleteRecursively()
 
-                deleteFileInDirectory(targetDir = cacheDir, fileFilter = { it.name.startsWith(backupPrefix) })
+                // Clean up any previously exported backups in the share directory
+                deleteFileInDirectory(targetDir = shareDir, fileFilter = { it.name.startsWith(backupPrefix) })
 
                 val useEncryption = !password.isNullOrEmpty()
                 val outName = getCurrentBackupFileName(useEncryption)
-                val outFile = File(cacheDir, outName)
+                val outFile = File(shareDir, outName)
                 try {
                     if (useEncryption) {
                         encrypt(zipFile, outFile, password)

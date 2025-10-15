@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
+    <!-- Restrict exposure to only cache/backups directory for exported backup files -->
     <cache-path
-        name="cache"
-        path="." />
+        name="backups"
+        path="backups" />
 </paths>
