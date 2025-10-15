@@ -104,26 +104,75 @@ fun deleteFileInDirectory(targetDir: File, fileFilter: (File) -> Boolean = { tru
 }
 
 fun moveDirReplace(sourceDir: File, targetDir: File) {
-    if (!sourceDir.exists() || !sourceDir.isDirectory) return
+    require(sourceDir.exists() && sourceDir.isDirectory) { "Source dir does not exist or is not a directory: ${sourceDir.absolutePath}" }
 
-    // Delete target if it exists
+    val logger = getLogger("moveDirReplace")
+    logger.i { "KMP moveDirReplace: start source='${sourceDir.absolutePath}' target='${targetDir.absolutePath}'" }
+
+    val parent = targetDir.parentFile ?: throw IOException("Target has no parent: ${targetDir.absolutePath}")
+    if (!parent.exists()) parent.mkdirs()
+
+    val tempOld = File(parent, "${targetDir.name}.old")
+    if (tempOld.exists() && !tempOld.deleteRecursively()) {
+        throw IOException("Cannot clear temp backup: ${tempOld.absolutePath}")
+    }
+
+    var hadOld = false
     if (targetDir.exists()) {
-        if (!targetDir.deleteRecursively()) {
-            getLogger("moveDirReplace").w { "Could not delete $targetDir" }
+        hadOld = true
+        logger.i { "KMP moveDirReplace: backing up existing target to '${tempOld.absolutePath}'" }
+        if (!targetDir.renameTo(tempOld)) {
+            logger.i { "KMP moveDirReplace: rename backup failed, falling back to copy+delete" }
+            if (!targetDir.copyRecursively(tempOld, overwrite = true)) {
+                throw IOException("Cannot backup existing target: ${targetDir.absolutePath}")
+            }
+            if (!targetDir.deleteRecursively()) {
+                // Cleanup copied backup to avoid leaving stale temp if we failed to remove original target
+                tempOld.deleteRecursively()
+                throw IOException("Cannot remove existing target: ${targetDir.absolutePath}")
+            }
         }
     }
 
-    // Ensure parent directories exist
-    targetDir.parentFile?.mkdirs()
-
-    // Move by renaming if possible (fast), otherwise copy recursively
-    if (!sourceDir.renameTo(targetDir)) {
-        // fallback: copy recursively
-        if (!sourceDir.copyRecursively(targetDir, overwrite = true)) {
-            getLogger("moveDirReplace").w { "Could not copyRecursively $sourceDir to $targetDir" }
+    try {
+        logger.i { "KMP moveDirReplace: replacing target with source" }
+        if (!sourceDir.renameTo(targetDir)) {
+            logger.i { "KMP moveDirReplace: rename replace failed, falling back to copy+delete" }
+            if (!sourceDir.copyRecursively(targetDir, overwrite = true)) {
+                throw IOException("Cannot copy source to target: ${sourceDir.absolutePath} -> ${targetDir.absolutePath}")
+            }
+            if (!sourceDir.deleteRecursively()) {
+                // Rollback: remove partial target and restore old content if present
+                logger.w { "KMP moveDirReplace: delete source after copy failed; rolling back" }
+                targetDir.deleteRecursively()
+                if (hadOld && tempOld.exists()) {
+                    if (!tempOld.renameTo(targetDir)) {
+                        if (!tempOld.copyRecursively(targetDir, overwrite = true) || !tempOld.deleteRecursively()) {
+                            logger.w { "KMP moveDirReplace: rollback left temp at ${tempOld.absolutePath}" }
+                        }
+                    }
+                }
+                throw IOException("Cannot remove source after copy: ${sourceDir.absolutePath}")
+            }
         }
-        if (!sourceDir.deleteRecursively()) {
-            getLogger("moveDirReplace").w { "Could not deleteRecursively $sourceDir" }
+        logger.i { "KMP moveDirReplace: replace succeeded" }
+    } catch (e: Exception) {
+        // General rollback on failure
+        logger.w(e) { "KMP moveDirReplace: failure; rolling back" }
+        targetDir.deleteRecursively()
+        if (hadOld && tempOld.exists()) {
+            if (!tempOld.renameTo(targetDir)) {
+                if (!tempOld.copyRecursively(targetDir, overwrite = true) || !tempOld.deleteRecursively()) {
+                    logger.w { "KMP moveDirReplace: rollback left temp at ${tempOld.absolutePath}" }
+                }
+            }
+        }
+        throw if (e is IOException) e else IOException(e.message ?: "moveDirReplace failed", e)
+    } finally {
+        if (tempOld.exists()) {
+            if (!tempOld.deleteRecursively()) {
+                logger.w { "KMP moveDirReplace: could not delete temp backup: ${tempOld.absolutePath}" }
+            }
         }
     }
 }

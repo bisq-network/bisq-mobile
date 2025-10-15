@@ -65,23 +65,31 @@ class NodeMainApplication : MainApplication() {
             val targetPrivate = File(dbDir, "private")
             val backupSettings = File(backupDir, "settings")
             val targetSettings = File(dbDir, "settings")
-            moveDirReplace(
-                backupPrivate,
-                targetPrivate
-            )
-            moveDirReplace(
-                backupSettings,
-                targetSettings
-            )
-            val restoreSucceeded = !backupPrivate.exists() && targetPrivate.exists() &&
-                    !backupSettings.exists() && targetSettings.exists()
-            if (restoreSucceeded) {
+
+            var privateMoved = false
+            var settingsMoved = false
+            try {
+                moveDirReplace(backupPrivate, targetPrivate)
+                privateMoved = true
+                moveDirReplace(backupSettings, targetSettings)
+                settingsMoved = true
+
                 if (backupDir.deleteRecursively()) {
                     log.i { "We restored successfully from a backup" }
                 } else {
                     log.w { "Could not delete backup dir at restore from backup" }
                 }
-            } else {
+            } catch (e: Exception) {
+                log.w(e) { "Restore from backup failed; attempting rollback" }
+                // Rollback to keep backup intact for future retries
+                if (settingsMoved) {
+                    runCatching { moveDirReplace(targetSettings, backupSettings) }
+                        .onFailure { ex -> log.w(ex) { "Rollback settings failed" } }
+                }
+                if (privateMoved) {
+                    runCatching { moveDirReplace(targetPrivate, backupPrivate) }
+                        .onFailure { ex -> log.w(ex) { "Rollback private failed" } }
+                }
                 log.w { "Restore incomplete; keeping backup dir at ${backupDir.absolutePath}" }
             }
         }
