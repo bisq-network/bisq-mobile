@@ -6,9 +6,9 @@ import kotlinx.coroutines.delay
 
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.utils.copyDirectory
-import network.bisq.mobile.android.node.utils.decrypt
+import network.bisq.mobile.domain.utils.decrypt
 import network.bisq.mobile.android.node.utils.deleteFileInDirectory
-import network.bisq.mobile.android.node.utils.encrypt
+import network.bisq.mobile.domain.utils.encrypt
 import network.bisq.mobile.android.node.utils.getShareableUriForFile
 import network.bisq.mobile.android.node.utils.shareBackup
 import network.bisq.mobile.android.node.utils.unzipToDirectory
