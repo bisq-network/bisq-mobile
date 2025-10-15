@@ -193,8 +193,6 @@ fun BackupPasswordOverlay(
             confirmedPassword.isNotBlank() && confirmedPassword != password -> "validation.password.notMatching".i18n()
             else -> null
         }
-        getLogger("").e { "validationError " + validationError }
-
         arePasswordsValidOrEmpty =
             password.isBlank() && confirmedPassword.isBlank() ||
                     (password.isNotBlank() && confirmedPassword == password && password.length >= 8)
