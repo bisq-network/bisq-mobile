@@ -39,4 +39,8 @@ data class AddressVO(val host: String, val port: Int) {
             return AddressVO(host, port)
         }
     }
+
+    override fun toString(): String {
+        return "$host:$port"
+    }
 }

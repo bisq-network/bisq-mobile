@@ -2,6 +2,9 @@
 
 package network.bisq.mobile.domain
 
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.darwin.Darwin
 import kotlinx.cinterop.BetaInteropApi
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.MemScope
@@ -14,7 +17,9 @@ import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
+import network.bisq.mobile.client.httpclient.BisqProxyConfig
 import org.koin.core.scope.Scope
+import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSApplicationSupportDirectory
 import platform.Foundation.NSBundle
 import platform.Foundation.NSCharacterSet
@@ -45,7 +50,6 @@ import platform.Foundation.dataWithContentsOfFile
 import platform.Foundation.languageCode
 import platform.Foundation.localeWithLocaleIdentifier
 import platform.Foundation.stringByAddingPercentEncodingWithAllowedCharacters
-import platform.CoreGraphics.CGSizeMake
 import platform.UIKit.UIApplication
 import platform.UIKit.UIDevice
 import platform.UIKit.UIGraphicsBeginImageContextWithOptions
@@ -376,4 +380,15 @@ actual fun Scope.getStorageDir(): String {
         if (!success) throw IllegalStateException("Failed to create application support subdirectory")
     }
     return url.path ?: appSupport
+}
+
+actual fun createHttpClient(
+    proxyConfig: BisqProxyConfig?,
+    config: HttpClientConfig<*>.() -> Unit
+): HttpClient = HttpClient(Darwin) {
+    config(this)
+    engine {
+        proxy = proxyConfig?.config
+        // TODO: check DNS leaks when iOS SOCKS proxy support is implemented
+    }
 }

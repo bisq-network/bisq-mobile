@@ -43,6 +43,17 @@ class SettingsRepositoryMock : SettingsRepository, Logging {
         }
     }
 
+    override suspend fun setProxyUrl(value: String) {
+        _data.update {
+            it.copy(proxyUrl = value)
+        }
+    }
+
+    override suspend fun update(transform: suspend (Settings) -> Settings) {
+        _data.value = transform(_data.value)
+    }
+
+
     override suspend fun clear() {
         _data.update {
             Settings()

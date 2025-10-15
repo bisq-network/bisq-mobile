@@ -11,7 +11,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.ConnectionState
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.client.websocket.messages.WebSocketEvent
 import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
@@ -31,7 +31,7 @@ class ClientOffersServiceFacade(
     private val marketPriceServiceFacade: MarketPriceServiceFacade,
     private val apiGateway: OfferbookApiGateway,
     private val json: Json,
-    private val webSocketClientProvider: WebSocketClientProvider,
+    private val webSocketClientService: WebSocketClientService,
 ) : OffersServiceFacade() {
 
     private var marketPriceUpdateJob: Job? = null
@@ -106,7 +106,7 @@ class ClientOffersServiceFacade(
         launchIO {
             offersMutex.withLock {
                 getMarketsJob?.cancel()
-                getMarketsJob = collectIO(webSocketClientProvider.connectionState) { state ->
+                getMarketsJob = collectIO(webSocketClientService.connectionState) { state ->
                     if (state is ConnectionState.Connected) {
                         val result = apiGateway.getMarkets()
                         if (result.isFailure) {

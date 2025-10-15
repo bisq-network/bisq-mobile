@@ -2,7 +2,7 @@ package network.bisq.mobile.client
 
 import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -22,7 +22,7 @@ open class ClientMainPresenter(
     userProfileServiceFacade: UserProfileServiceFacade,
     openTradesNotificationService: OpenTradesNotificationService,
     tradeReadStateRepository: TradeReadStateRepository,
-    private val webSocketClientProvider: WebSocketClientProvider,
+    private val webSocketClientService: WebSocketClientService,
     urlLauncher: UrlLauncher
 ) : MainPresenter(
     tradesServiceFacade,

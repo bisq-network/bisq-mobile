@@ -11,10 +11,15 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.net.toUri
+import io.ktor.client.HttpClient
+import io.ktor.client.HttpClientConfig
+import io.ktor.client.engine.okhttp.OkHttp
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toInstant
 import kotlinx.serialization.Serializable
+import network.bisq.mobile.client.httpclient.BisqProxyConfig
+import network.bisq.mobile.client.httpclient.NoDns
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.scope.Scope
 import java.io.ByteArrayOutputStream
@@ -177,3 +182,16 @@ actual fun getLocaleCurrencyName(currencyCode: String): String {
 actual fun Scope.getStorageDir(): String {
     return androidContext().filesDir.absolutePath
 }
+
+actual fun createHttpClient(proxyConfig: BisqProxyConfig?, config: HttpClientConfig<*>.() -> Unit) =
+    HttpClient(OkHttp) {
+        config(this)
+        engine {
+            proxy = proxyConfig?.config
+            config {
+                if (proxyConfig?.isTorProxy == true) {
+                    dns(NoDns())
+                }
+            }
+        }
+    }

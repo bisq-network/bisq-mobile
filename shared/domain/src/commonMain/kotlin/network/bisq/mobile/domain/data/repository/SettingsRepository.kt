@@ -21,5 +21,9 @@ interface SettingsRepository {
 
     suspend fun setNotificationPermissionState(value: NotificationPermissionState)
 
+    suspend fun setProxyUrl(value: String)
+
+    suspend fun update(transform: suspend (t: Settings) -> Settings)
+
     suspend fun clear()
 }

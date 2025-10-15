@@ -1,7 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
 import kotlinx.coroutines.flow.StateFlow
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
@@ -16,7 +16,7 @@ class ClientSplashPresenter(
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     settingsRepository: SettingsRepository,
     settingsServiceFacade: SettingsServiceFacade,
-    private val webSocketClientProvider: WebSocketClientProvider,
+    private val webSocketClientService: WebSocketClientService,
     versionProvider: VersionProvider
 ) : SplashPresenter(
     mainPresenter,
@@ -29,7 +29,7 @@ class ClientSplashPresenter(
     override val state: StateFlow<String> get() = applicationBootstrapFacade.state
 
     override suspend fun navigateToNextScreen() {
-        if (!webSocketClientProvider.isConnected()) {
+        if (!webSocketClientService.isConnected()) {
             log.d { "No connectivity detected, navigating to trusted node setup" }
             navigateToTrustedNodeSetup()
             return

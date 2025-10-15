@@ -7,13 +7,13 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withTimeout
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.service.network.ConnectivityService
 import network.bisq.mobile.domain.utils.Logging
 import kotlin.concurrent.Volatile
 
 class ClientConnectivityService(
-    private val webSocketClientProvider: WebSocketClientProvider
+    private val webSocketClientService: WebSocketClientService
 ) : ConnectivityService(), Logging {
 
     companion object {
@@ -172,6 +172,6 @@ class ClientConnectivityService(
     }
 
     private fun isConnected(): Boolean {
-        return webSocketClientProvider.isConnected()
+        return webSocketClientService.isConnected()
     }
 }

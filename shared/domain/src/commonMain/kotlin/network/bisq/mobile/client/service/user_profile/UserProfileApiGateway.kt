@@ -1,7 +1,7 @@
 package network.bisq.mobile.client.service.user_profile
 
 import io.ktor.http.encodeURLPath
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
@@ -9,7 +9,7 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 
 class UserProfileApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
-    private val webSocketClientProvider: WebSocketClientProvider,
+    private val webSocketClientService: WebSocketClientService,
 ) {
     private val basePath = "user-identities"
     private val profileBasePath = "user-profiles"
@@ -67,6 +67,6 @@ class UserProfileApiGateway(
     }
 
     suspend fun subscribeNumUserProfiles(): WebSocketEventObserver {
-        return webSocketClientProvider.subscribe(Topic.NUM_USER_PROFILES)
+        return webSocketClientService.subscribe(Topic.NUM_USER_PROFILES)
     }
 }

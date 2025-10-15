@@ -1,5 +1,7 @@
 package network.bisq.mobile.client
 
+import network.bisq.mobile.client.httpclient.HttpClientService
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -18,6 +20,8 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 
 class ClientApplicationLifecycleService(
+    private val httpClientService: HttpClientService,
+    private val webSocketClientService: WebSocketClientService,
     private val accountsServiceFacade: AccountsServiceFacade,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
@@ -41,6 +45,8 @@ class ClientApplicationLifecycleService(
         launchIO {
             runCatching {
                 networkServiceFacade.activate()
+                httpClientService.activate()
+                webSocketClientService.activate()
                 applicationBootstrapFacade.activate()
                 activateServiceFacades()
             }.onFailure { e ->

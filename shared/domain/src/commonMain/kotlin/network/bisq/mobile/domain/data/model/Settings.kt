@@ -9,6 +9,10 @@ data class Settings (
     val showChatRulesWarnBox: Boolean = true,
     val selectedMarketCode: String = "BTC/USD",
     val notificationPermissionState: NotificationPermissionState = NotificationPermissionState.NOT_GRANTED,
+    // client node specific:
+    val useExternalProxy: Boolean = false,
+    val proxyUrl: String = "",
+    val isTorProxy: Boolean = true,
 )
 
 @Serializable

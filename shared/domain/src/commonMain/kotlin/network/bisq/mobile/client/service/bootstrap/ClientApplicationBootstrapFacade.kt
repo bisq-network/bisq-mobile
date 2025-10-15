@@ -3,14 +3,14 @@ package network.bisq.mobile.client.service.bootstrap
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.i18n.i18n
 
 class ClientApplicationBootstrapFacade(
     private val settingsRepository: SettingsRepository,
-    private val webSocketClientProvider: WebSocketClientProvider,
+    private val webSocketClientService: WebSocketClientService,
 ) : ApplicationBootstrapFacade() {
 
     private var bootstrapJob: Job? = null
@@ -33,8 +33,7 @@ class ClientApplicationBootstrapFacade(
                 setProgress(0.5f)
                 setState("mobile.clientApplicationBootstrap.connectingToTrustedNode".i18n())
 
-                webSocketClientProvider.initialize()
-                val error = webSocketClientProvider.connect()
+                val error = webSocketClientService.connect()
                 delay(200) // small delay to allow connection state to be collected // FIXME: refactor needed to remove this delay
                 if (error == null) {
                     setState("mobile.bootstrap.connectedToTrustedNode".i18n())

@@ -1,6 +1,6 @@
 package network.bisq.mobile.client.service.reputation
 
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
@@ -9,7 +9,7 @@ import network.bisq.mobile.domain.utils.Logging
 
 class ReputationApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
-    private val webSocketClientProvider: WebSocketClientProvider,
+    private val webSocketClientService: WebSocketClientService,
 ) : Logging {
     private val basePath = "reputation"
 
@@ -19,7 +19,7 @@ class ReputationApiGateway(
 
     suspend fun subscribeUserReputation(): WebSocketEventObserver {
         try {
-            return webSocketClientProvider.subscribe(Topic.USER_REPUTATION)
+            return webSocketClientService.subscribe(Topic.USER_REPUTATION)
         } catch (e: Exception) {
             log.e(e) { "Failed to subscribe to reputation events: ${e.message}" }
             throw e

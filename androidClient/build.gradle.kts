@@ -38,8 +38,6 @@ kotlin {
             implementation(libs.koin.core)
             implementation(project(":shared:presentation"))
             implementation(project(":shared:domain"))
-            // FIXME hack to avoid the issue that org.slf4j is not found as we exclude it in shared
-            implementation(libs.ktor.client.cio)
 
             implementation(libs.logging.kermit)
         }
@@ -47,6 +45,7 @@ kotlin {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
+            implementation(libs.ktor.client.okhttp) // for sl4j dependency issue
 
             implementation(libs.androidx.core.splashscreen)
         }

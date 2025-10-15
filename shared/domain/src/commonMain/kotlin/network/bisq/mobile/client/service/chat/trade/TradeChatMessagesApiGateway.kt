@@ -1,6 +1,6 @@
 package network.bisq.mobile.client.service.chat.trade
 
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.client.websocket.api_proxy.WebSocketApiClient
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
@@ -12,7 +12,7 @@ import network.bisq.mobile.domain.utils.Logging
 
 class TradeChatMessagesApiGateway(
     private val webSocketApiClient: WebSocketApiClient,
-    private val webSocketClientProvider: WebSocketClientProvider,
+    private val webSocketClientService: WebSocketClientService,
 ) : Logging {
     private val basePath = "trade-chat-channels"
 
@@ -48,11 +48,11 @@ class TradeChatMessagesApiGateway(
 
     // Subscriptions
     suspend fun subscribeTradeChats(): WebSocketEventObserver {
-        return webSocketClientProvider.subscribe(Topic.TRADE_CHATS)
+        return webSocketClientService.subscribe(Topic.TRADE_CHATS)
     }
 
     suspend fun subscribeChatReactions(): WebSocketEventObserver {
-        return webSocketClientProvider.subscribe(Topic.CHAT_REACTIONS)
+        return webSocketClientService.subscribe(Topic.CHAT_REACTIONS)
     }
 }
 

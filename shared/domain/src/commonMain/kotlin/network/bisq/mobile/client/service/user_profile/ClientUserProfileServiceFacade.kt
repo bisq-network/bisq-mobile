@@ -13,7 +13,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.ConnectionState
-import network.bisq.mobile.client.websocket.WebSocketClientProvider
+import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.createEmptyImage
@@ -33,7 +33,7 @@ class ClientUserProfileServiceFacade(
     private val apiGateway: UserProfileApiGateway,
     private val clientCatHashService: ClientCatHashService<PlatformImage>,
     private val json: Json,
-    private val webSocketClientProvider: WebSocketClientProvider,
+    private val webSocketClientService: WebSocketClientService,
 ) : ServiceFacade(), UserProfileServiceFacade {
     private var keyMaterialResponse: KeyMaterialResponse? = null
 
@@ -56,7 +56,7 @@ class ClientUserProfileServiceFacade(
     override fun activate() {
         super<ServiceFacade>.activate()
 
-        collectIO(webSocketClientProvider.connectionState) {
+        collectIO(webSocketClientService.connectionState) {
             if (it is ConnectionState.Connected) {
                 // Initialize selected user profile with proper error handling
                 runCatching {

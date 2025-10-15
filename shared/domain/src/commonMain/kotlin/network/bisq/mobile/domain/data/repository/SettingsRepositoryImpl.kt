@@ -53,6 +53,16 @@ class SettingsRepositoryImpl(
         }
     }
 
+    override suspend fun setProxyUrl(value: String) {
+        settingsStore.updateData {
+            it.copy(proxyUrl = value)
+        }
+    }
+
+    override suspend fun update(transform: suspend (t: Settings) -> Settings) {
+        settingsStore.updateData(transform)
+    }
+
     override suspend fun clear() {
         settingsStore.updateData {
             Settings()
