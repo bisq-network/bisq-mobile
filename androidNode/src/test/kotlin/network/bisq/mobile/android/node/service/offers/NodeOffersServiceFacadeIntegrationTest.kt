@@ -1,42 +1,37 @@
 package network.bisq.mobile.android.node.service.offers
 
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlinx.coroutines.flow.MutableStateFlow
-import network.bisq.mobile.android.node.AndroidApplicationService
-import network.bisq.mobile.client.service.offers.OfferbookApiGateway
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flowOf
 import network.bisq.mobile.domain.data.model.MarketPriceItem
+import network.bisq.mobile.domain.data.model.NotificationPermissionState
+import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.offerbook.MarketListItem
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory.fromPrice
+import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
+import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
+import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVOExtensions.getPriceQuoteVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
-import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
-import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
 import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
+import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.formatters.AmountFormatter
 import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVOExtensions.getPriceQuoteVO
-
-import network.bisq.mobile.domain.data.repository.SettingsRepository
-import network.bisq.mobile.domain.data.model.Settings
-import network.bisq.mobile.domain.data.model.NotificationPermissionState
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import network.bisq.mobile.domain.service.offers.OfferFormattingUtil
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
 
 class NodeOffersServiceFacadeIntegrationTest {
 
@@ -48,6 +43,10 @@ class NodeOffersServiceFacadeIntegrationTest {
         override suspend fun setShowChatRulesWarnBox(value: Boolean) {}
         override suspend fun setSelectedMarketCode(value: String) {}
         override suspend fun setNotificationPermissionState(value: NotificationPermissionState) {}
+        override suspend fun setProxyUrl(value: String) {}
+
+        override suspend fun update(transform: suspend (Settings) -> Settings) {}
+
         override suspend fun clear() {}
     }
 
