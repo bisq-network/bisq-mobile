@@ -62,25 +62,89 @@ fun zipDirectory(sourceDir: File, zipFile: File) {
 }
 
 fun unzipToDirectory(inputStream: InputStream, targetDir: File) {
+    val logger = getLogger("unzipToDirectory")
+
+    val allowedTopLevel = setOf("private", "settings")
+    val MAX_TOTAL_UNCOMPRESSED_BYTES = 200L * 1024 * 1024 // 200 MiB
+    val MAX_ENTRY_UNCOMPRESSED_BYTES = 50L * 1024 * 1024  // 50 MiB per file
+    val MAX_ENTRIES = 10_000
+    val MAX_DEPTH = 10
+    val MAX_COMPRESSION_RATIO = 200.0 // uncompressed/compressed
+
     ZipInputStream(BufferedInputStream(inputStream)).use { zis ->
         var entry: ZipEntry? = zis.nextEntry
         val targetCanonical = targetDir.canonicalPath + File.separator
+        var totalUncompressedBytes = 0L
+        var entryCount = 0
+        val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
 
         while (entry != null) {
-            val outFile = File(targetDir, entry.name)
+            entryCount += 1
+            if (entryCount > MAX_ENTRIES) {
+                throw IOException("Zip contains too many entries")
+            }
+
+            val name = entry.name
+
+            // Basic name checks
+            if (name.startsWith('/') || name.contains("..")) {
+                throw IOException("Illegal zip entry path: $name")
+            }
+
+            // Enforce allowed top-level directories only
+            val topLevel = name.substringBefore('/')
+            if (topLevel.isNotEmpty() && topLevel !in allowedTopLevel) {
+                throw IOException("Disallowed top-level entry: $topLevel")
+            }
+
+            // Depth limit
+            val depth = name.count { it == '/' }
+            if (depth > MAX_DEPTH) {
+                throw IOException("Zip entry too deep: $name")
+            }
+
+            val outFile = File(targetDir, name)
             val outCanonical = outFile.canonicalPath
 
-            // prevent ZipSlip
+            // Prevent ZipSlip by canonical path check relative to target
             if (!outCanonical.startsWith(targetCanonical)) {
-                throw IOException("Illegal zip entry path: ${entry.name}")
+                throw IOException("Illegal zip entry path: $name")
             }
 
             if (entry.isDirectory) {
                 outFile.mkdirs()
             } else {
                 outFile.parentFile?.mkdirs()
+                var entryBytes = 0L
                 FileOutputStream(outFile).use { fos ->
-                    zis.copyTo(fos)
+                    var read = zis.read(buffer)
+                    while (read > 0) {
+                        entryBytes += read
+                        totalUncompressedBytes += read
+
+                        if (entryBytes > MAX_ENTRY_UNCOMPRESSED_BYTES) {
+                            fos.flush()
+                            outFile.delete()
+                            throw IOException("Zip entry too large: $name")
+                        }
+                        if (totalUncompressedBytes > MAX_TOTAL_UNCOMPRESSED_BYTES) {
+                            fos.flush()
+                            outFile.delete()
+                            throw IOException("Zip content exceeds maximum allowed size")
+                        }
+
+                        fos.write(buffer, 0, read)
+                        read = zis.read(buffer)
+                    }
+                }
+
+                val compressedSize = entry.compressedSize
+                if (compressedSize > 0) {
+                    val ratio = entryBytes.toDouble() / compressedSize.toDouble()
+                    if (ratio > MAX_COMPRESSION_RATIO) {
+                        outFile.delete()
+                        throw IOException("Suspicious compression ratio for entry: $name")
+                    }
                 }
             }
 

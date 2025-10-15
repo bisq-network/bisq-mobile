@@ -69,12 +69,13 @@ class NodeResourcesPresenter(
                 // Clean up any previously exported backups in the share directory
                 deleteFileInDirectory(targetDir = shareDir, fileFilter = { it.name.startsWith(backupPrefix) })
 
-                val useEncryption = !password.isNullOrEmpty()
+                val sanitizedPassword = password?.trim()?.takeIf { it.isNotEmpty() }
+                val useEncryption = !sanitizedPassword.isNullOrEmpty()
                 val outName = getCurrentBackupFileName(useEncryption)
                 val outFile = File(shareDir, outName)
                 try {
                     if (useEncryption) {
-                        encrypt(zipFile, outFile, password)
+                        encrypt(zipFile, outFile, sanitizedPassword)
                         zipFile.delete()
                     } else if (!zipFile.renameTo(outFile)) {
                         zipFile.copyTo(outFile, overwrite = true)
