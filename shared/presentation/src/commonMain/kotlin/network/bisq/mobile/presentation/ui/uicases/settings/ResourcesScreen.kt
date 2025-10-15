@@ -177,6 +177,7 @@ fun BackupPasswordOverlay(
     var confirmedPassword: String by remember { mutableStateOf("") }
     var validationError by remember { mutableStateOf<String?>(null) }
     var arePasswordsValidOrEmpty by remember { mutableStateOf(true) }
+    var showNoPasswordConfirm by remember { mutableStateOf(false) }
 
     val encryptAndBackup by remember {
         derivedStateOf {
@@ -232,7 +233,13 @@ fun BackupPasswordOverlay(
         Column {
             BisqButton(
                 text = encryptAndBackup,
-                onClick = { onBackupDataDir(password) },
+                onClick = {
+                    if (password.isBlank()) {
+                        showNoPasswordConfirm = true
+                    } else {
+                        onBackupDataDir(password)
+                    }
+                },
                 disabled = !arePasswordsValidOrEmpty,
                 fullWidth = true,
                 modifier = Modifier.semantics { contentDescription = encryptAndBackup },
@@ -246,6 +253,21 @@ fun BackupPasswordOverlay(
                 modifier = Modifier.semantics { contentDescription = "action.cancel".i18n() },
             )
         }
+    }
+
+    if (showNoPasswordConfirm) {
+        network.bisq.mobile.presentation.ui.components.molecules.dialog.WarningConfirmationDialog(
+            headline = "popup.headline.warning".i18n(),
+            message = "mobile.resources.backup.noPassword.confirmation".i18n(),
+            confirmButtonText = "confirmation.yes".i18n(),
+            dismissButtonText = "action.cancel".i18n(),
+            verticalButtonPlacement = true,
+            onConfirm = {
+                showNoPasswordConfirm = false
+                onBackupDataDir("")
+            },
+            onDismiss = { showNoPasswordConfirm = false }
+        )
     }
 }
 
