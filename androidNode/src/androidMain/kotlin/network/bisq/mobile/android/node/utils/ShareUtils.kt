@@ -1,5 +1,6 @@
 package network.bisq.mobile.android.node.utils
 
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -9,9 +10,11 @@ import java.io.File
 
 fun shareBackup(context: Context, contentUriString: String, chooserTitle: String = "Share Bisq backup") {
     val uri = contentUriString.toUri()
+    val clipData = ClipData.newUri(context.contentResolver, "Backup", uri)
     val share = Intent(Intent.ACTION_SEND).apply {
         type = "application/octet-stream"
-        putExtra(Intent.EXTRA_STREAM, uri)
+        setClipData(clipData)
+//        putExtra(Intent.EXTRA_STREAM, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
     }
     val chooser = Intent.createChooser(share, chooserTitle)
