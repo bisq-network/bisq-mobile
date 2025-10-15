@@ -2,6 +2,8 @@ package network.bisq.mobile.android.node.presentation
 
 import android.content.Context
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
+
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.utils.copyDirectory
 import network.bisq.mobile.android.node.utils.decrypt
@@ -84,6 +86,7 @@ class NodeResourcesPresenter(
                 }
                 val uri = getShareableUriForFile(outFile, context)
 
+                mainPresenter.showSnackbar("mobile.resources.backup.success".i18n(), isError = false)
                 shareBackup(context, uri.toString())
             } catch (e: Exception) {
                 log.e(e) { "Failed to backup data directory" }
@@ -140,8 +143,11 @@ class NodeResourcesPresenter(
                         throw IOException(errorMessage)
                     }
 
-                    nodeApplicationLifecycleService.restartForRestoreDataDirectory(context)
+                    // Delay restart slightly so the UI can surface the success toast before the process restarts.
+                    // 1500ms chosen as a pragmatic balance between user feedback and flow speed.
                     result.complete(null)
+                    delay(1500)
+                    nodeApplicationLifecycleService.restartForRestoreDataDirectory(context)
                 } else {
                     val errorMessage = "mobile.resources.restore.error.missingBackupDir".i18n()
                     throw IOException(errorMessage)

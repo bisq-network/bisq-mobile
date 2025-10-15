@@ -39,12 +39,17 @@ import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialo
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
+import network.bisq.mobile.presentation.MainPresenter
+import org.koin.compose.koinInject
+
 const val backupPrefix = "bisq2_mobile-backup-"
 private const val MAX_BACKUP_SIZE_BYTES = 200L * 1024 * 1024
 
 @Composable
 actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> CompletableDeferred<String?>) {
     val context = LocalContext.current
+    val presenter: MainPresenter = koinInject()
+
     val scope = rememberCoroutineScope()
     val log: Logger = remember { getLogger("ImportBackupFile") }
     val onRestoreUpdated by rememberUpdatedState(onRestoreBackup)
@@ -78,6 +83,9 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Comple
                             return@launch
                         }
 
+                        // Note: Reading entire file into memory can cause OOM on low-RAM devices
+                        // The callback signature requires ByteArray, preventing streaming approach
+                        // MAX_BACKUP_SIZE_BYTES provides some protection but may still be too large for some devices
                         val bytes = context.contentResolver.openInputStream(selectedUri)?.use { input ->
                             input.readBytes()
                         }
@@ -106,14 +114,19 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Comple
                                 selectedFileData = bytes
                                 showPasswordOverlay = true
                             } else {
-                                val deferredErrorMessage: CompletableDeferred<String?> = onRestoreBackup(fileName, null, bytes)
-                                deferredErrorMessage.invokeOnCompletion { throwable ->
-                                    scope.launch(Dispatchers.Main) {
-                                        if (throwable != null) {
-                                            errorMessage = throwable.message ?: throwable.toString().take(20)
+                                val restore = onRestoreUpdated
+                                val deferredErrorMessage: CompletableDeferred<String?> = restore(fileName, null, bytes)
+                                scope.launch(Dispatchers.Main) {
+                                    try {
+                                        val result = deferredErrorMessage.await()
+                                        if (result != null) {
+                                            errorMessage = result
                                         } else {
+                                            presenter.showSnackbar("mobile.resources.restore.success".i18n(), isError = false)
                                             showPasswordOverlay = false
                                         }
+                                    } catch (t: Throwable) {
+                                        errorMessage = t.message ?: t.toString().take(20)
                                     }
                                 }
                             }
@@ -152,21 +165,41 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Comple
                     val deferredErrorMessage: CompletableDeferred<String?> = onRestoreUpdated(fileName, password, data)
                     deferredErrorMessage.invokeOnCompletion { throwable ->
                         scope.launch(Dispatchers.Main) {
-                            if (throwable != null) {
-                                errorMessage = throwable.message ?: throwable.toString().take(20)
-                            } else {
-                                showPasswordOverlay = false
+                            try {
+                                if (throwable != null) {
+                                    errorMessage = throwable.message ?: throwable.toString().take(20)
+                                } else {
+                                    val result = try {
+                                        deferredErrorMessage.await()
+                                    } catch (t: Throwable) {
+                                        t.message
+                                    }
+                                    if (result != null) {
+                                        errorMessage = result
+                                    } else {
+                                        presenter.showSnackbar("mobile.resources.restore.success".i18n(), isError = false)
+                                        showPasswordOverlay = false
+                                    }
+                                }
+                            } finally {
+                                selectedFileName = null
+                                selectedFileData = null
                             }
                         }
                     }
+                } else {
+                    scope.launch(Dispatchers.Main) {
+                        selectedFileName = null
+                        selectedFileData = null
+                    }
                 }
-                selectedFileName = null
-                selectedFileData = null
             },
             onDismissOverlay = {
-                showPasswordOverlay = false
-                selectedFileName = null
-                selectedFileData = null
+                scope.launch(Dispatchers.Main) {
+                    showPasswordOverlay = false
+                    selectedFileName = null
+                    selectedFileData = null
+                }
             }
         )
     }

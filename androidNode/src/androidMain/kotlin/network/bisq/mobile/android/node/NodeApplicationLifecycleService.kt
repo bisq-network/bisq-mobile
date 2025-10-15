@@ -167,7 +167,7 @@ class NodeApplicationLifecycleService(
     fun restartForRestoreDataDirectory(applicationContext: Context) {
         // One-shot guard to avoid double-triggered restarts
         if (!isRestarting.compareAndSet(false, true)) {
-            log.w { "restartApp called multiple times; ignoring duplicate" }
+            log.w { "restartForRestoreDataDirectory called multiple times; ignoring duplicate" }
             return
         }
 
@@ -185,7 +185,15 @@ class NodeApplicationLifecycleService(
                 // Those will get restored from our backup at next startup.
                 val dbDir = File(applicationContext.filesDir, "Bisq2_mobile/db")
                 listOf("private", "settings").forEach { subDirName ->
-                    File(dbDir, subDirName).takeIf { it.exists() }?.deleteRecursively()
+                    val dir = File(dbDir, subDirName)
+                    if (dir.exists()) {
+                        val deleted = dir.deleteRecursively()
+                        if (deleted) {
+                            log.i { "Successfully deleted $subDirName directory" }
+                        } else {
+                            log.w { "Failed to delete $subDirName directory - restore may be incomplete" }
+                        }
+                    }
                 }
 
                 // Trigger rebirth on the main thread

@@ -16,6 +16,7 @@ fun copyDirectory(
     destDir: File,
     excludedDirs: List<String>
 ) {
+    require(sourceDir.exists() && sourceDir.isDirectory) { "Source dir does not exist or is not a directory: ${sourceDir.absolutePath}" }
     if (!destDir.exists()) {
         destDir.mkdirs()
     }
