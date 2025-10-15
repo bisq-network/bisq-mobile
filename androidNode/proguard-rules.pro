@@ -63,6 +63,19 @@
     public <methods>;
 }
 
+# Preserve Kotlinx Serialization serializers and entry points
+-keep class **$$serializer { *; }
+-keepclassmembers class **$Companion {
+    public static kotlinx.serialization.KSerializer serializer(...);
+}
+-keepclassmembers class ** {
+    public static kotlinx.serialization.KSerializer serializer(...);
+}
+-keepnames @kotlinx.serialization.Serializable class ** { *; }
+
+# Preserve Tor service classes moved to shared/domain
+-keep class network.bisq.mobile.domain.service.network.** { *; }
+
 ###########################################
 # Core Bisq Protobuf preservation rules
 ###########################################
