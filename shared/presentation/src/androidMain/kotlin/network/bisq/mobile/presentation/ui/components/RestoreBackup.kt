@@ -188,30 +188,21 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Comple
                 if (fileName != null && data != null) {
                     showRestoringOverlay = true
                     val deferredErrorMessage: CompletableDeferred<String?> = onRestoreUpdated(fileName, password, data)
-                    deferredErrorMessage.invokeOnCompletion { throwable ->
-                        scope.launch(Dispatchers.Main) {
-                            try {
-                                if (throwable != null) {
-                                    errorMessage = throwable.message ?: throwable.toString().take(20)
-                                } else {
-                                    val result = try {
-                                        deferredErrorMessage.await()
-                                    } catch (t: Throwable) {
-                                        t.message
-                                    }
-                                    if (result != null) {
-                                        errorMessage = result
-                                    } else {
-                                        presenter.showSnackbar("mobile.resources.restore.success".i18n(), isError = false)
-                                        showPasswordOverlay = false
-                                        selectedFileName = null
-                                        selectedFileData = null
-                                    }
-                                }
-                            } finally {
-                                // Keep selected file to allow retry on wrong password
-                                showRestoringOverlay = false
+                    scope.launch(Dispatchers.Main) {
+                        try {
+                            val result = deferredErrorMessage.await()
+                            if (result != null) {
+                                errorMessage = result
+                            } else {
+                                presenter.showSnackbar("mobile.resources.restore.success".i18n(), isError = false)
+                                showPasswordOverlay = false
+                                selectedFileName = null
+                                selectedFileData = null
                             }
+                        } catch (t: Throwable) {
+                            errorMessage = t.message ?: t.toString().take(20)
+                        } finally {
+                            showRestoringOverlay = false
                         }
                     }
                 } else {

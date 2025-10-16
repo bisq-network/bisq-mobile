@@ -4,6 +4,9 @@ import android.content.Context
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.utils.copyDirectory
 import network.bisq.mobile.domain.utils.decrypt
@@ -76,7 +79,10 @@ class NodeResourcesPresenter(
                 val outFile = File(shareDir, outName)
                 try {
                     if (useEncryption) {
-                        encrypt(zipFile, outFile, sanitizedPassword)
+                        // Run CPU-heavy PBKDF2/AES on Default to keep IO threads responsive
+                        withContext(Dispatchers.Default) {
+                            encrypt(zipFile, outFile, sanitizedPassword)
+                        }
                         zipFile.delete()
                     } else if (!zipFile.renameTo(outFile)) {
                         zipFile.copyTo(outFile, overwrite = true)
@@ -127,7 +133,12 @@ class NodeResourcesPresenter(
                 var decryptedTempFile: File? = null
                 val inputStream: InputStream = if (!password.isNullOrEmpty()) {
                     try {
-                        decrypt(rawInputStream, password).also { decryptedTempFile = it }.inputStream()
+                        // Run CPU-heavy PBKDF2/AES on Default to keep IO threads responsive
+                        val decryptedFile = withContext(Dispatchers.Default) {
+                            decrypt(rawInputStream, password)
+                        }
+                        decryptedTempFile = decryptedFile
+                        decryptedFile.inputStream()
                     } catch (e: Exception) {
                         val errorMessage = "mobile.resources.restore.error.decryptionFailed".i18n()
                         throw GeneralSecurityException(errorMessage, e)
