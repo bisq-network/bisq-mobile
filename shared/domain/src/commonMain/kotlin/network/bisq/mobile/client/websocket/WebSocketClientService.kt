@@ -18,7 +18,6 @@ import network.bisq.mobile.client.websocket.messages.WebSocketResponse
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.data.replicated.common.network.AddressVO
-import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -27,12 +26,13 @@ import io.ktor.utils.io.CancellationException as KtorCancellationException
 private data class SubscriptionType(val topic: Topic, val parameter: String?)
 
 /**
- * Provider to handle dynamic host/port changes
+ * Listens to httpclient service client changes and creates a new websocket client accordingly
+ *
+ * Manages websocket subscriptions and resubscribes to events when new websocket clients are instantiated
  */
 class WebSocketClientService(
     private val defaultHost: String,
     private val defaultPort: Int,
-    private val settingsRepository: SettingsRepository,
     private val httpClientService: HttpClientService,
     private val webSocketClientFactory: WebSocketClientFactory
 ) : ServiceFacade(), Logging {

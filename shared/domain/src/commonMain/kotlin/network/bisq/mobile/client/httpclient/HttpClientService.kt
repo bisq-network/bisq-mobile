@@ -25,6 +25,11 @@ import network.bisq.mobile.domain.createHttpClient
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 
+/**
+ *  Listens to settings changes and creates a new httpclient accordingly
+ *
+ *  Calls made using this service will be suspended until a httpclient is instantiated
+ */
 class HttpClientService(
     private val settingsRepository: SettingsRepository,
     private val jsonConfig: Json,

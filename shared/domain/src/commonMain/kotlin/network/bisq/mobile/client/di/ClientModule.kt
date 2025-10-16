@@ -154,7 +154,6 @@ val clientModule = module {
             get(named("WebSocketApiPort")),
             get(),
             get(),
-            get(),
         )
     }
 
