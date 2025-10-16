@@ -33,6 +33,7 @@ fun BuyerState1a(
     val description by presenter.description.collectAsState()
     val bitcoinPaymentData by presenter.bitcoinPaymentData.collectAsState()
     val addressFieldType by presenter.bitcoinLnAddressFieldType.collectAsState()
+    val triggerBitcoinLnAddressValidation by presenter.triggerBitcoinLnAddressValidation.collectAsState()
 
     Column {
         BisqGap.V1()
@@ -47,6 +48,8 @@ fun BuyerState1a(
                 presenter.onBitcoinPaymentDataInput(it, isValid)
             },
             type = addressFieldType,
+            onBarcodeClick = presenter::onBarcodeClick,
+            triggerValidation = triggerBitcoinLnAddressValidation
         )
 
         BisqGap.V1()
