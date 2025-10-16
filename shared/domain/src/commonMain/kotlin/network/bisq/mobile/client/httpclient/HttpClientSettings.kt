@@ -20,12 +20,12 @@ data class HttpClientSettings(
     }
 
     fun bisqProxyConfig(): BisqProxyConfig? {
-        if (!this.proxyUrl.isNullOrBlank()) {
-            val address = AddressVO.from(this.proxyUrl)
+        if (!proxyUrl.isNullOrBlank()) {
+            val address = AddressVO.from(proxyUrl)
             if (address != null) {
                 return BisqProxyConfig(
                     ProxyBuilder.socks(address.host, address.port),
-                    this.isTorProxy
+                    isTorProxy
                 )
             }
         }
