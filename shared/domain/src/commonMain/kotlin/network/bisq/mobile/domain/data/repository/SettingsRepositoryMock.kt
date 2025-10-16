@@ -50,7 +50,7 @@ class SettingsRepositoryMock : SettingsRepository, Logging {
     }
 
     override suspend fun update(transform: suspend (Settings) -> Settings) {
-        _data.value = transform(_data.value)
+        _data.update { transform(it) }
     }
 
 

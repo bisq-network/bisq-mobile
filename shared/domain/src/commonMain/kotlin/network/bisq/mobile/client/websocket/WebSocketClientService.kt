@@ -70,9 +70,11 @@ class WebSocketClientService(
      * This can be used before a connect call to await instantiation of client due to settings change.
      */
     suspend fun disposeClient() {
-        httpClientService.disposeClient()
-        currentClient.value?.dispose()
-        currentClient.value = null
+        clientUpdateMutex.withLock {
+            httpClientService.disposeClient()
+            currentClient.value?.dispose()
+            currentClient.value = null
+        }
     }
 
     /**

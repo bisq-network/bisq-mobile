@@ -202,7 +202,7 @@ val clientModule = module {
     single { SettingsApiGateway(get()) }
     single<SettingsServiceFacade> { ClientSettingsServiceFacade(get()) }
 
-    single { AccountsApiGateway(get(), get()) }
+    single { AccountsApiGateway(get()) }
     single<AccountsServiceFacade> { ClientAccountsServiceFacade(get()) }
 
     single<LanguageServiceFacade> { ClientLanguageServiceFacade() }

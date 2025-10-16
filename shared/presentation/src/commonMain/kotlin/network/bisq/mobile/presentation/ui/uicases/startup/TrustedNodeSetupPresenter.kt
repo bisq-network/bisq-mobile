@@ -83,8 +83,8 @@ class TrustedNodeSetupPresenter(
     }.stateIn(presenterScope, SharingStarted.Eagerly, true)
 
     val isProxyUrlValid: StateFlow<Boolean> = proxyHost.combine(proxyPort) { h, p ->
-        if (_useExternalProxy.value) validateProxyHost(_proxyHost.value) == null &&
-                validatePort(_proxyPort.value) == null
+        if (_useExternalProxy.value) validateProxyHost(h) == null &&
+                validatePort(p) == null
         else true
     }.stateIn(presenterScope, SharingStarted.Eagerly, true)
 

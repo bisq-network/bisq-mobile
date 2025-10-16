@@ -18,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.domain.createHttpClient
 import network.bisq.mobile.domain.data.repository.SettingsRepository
@@ -65,7 +66,9 @@ class HttpClientService(
      * to instantiate it's websocket client.
      */
     suspend fun getClient(): HttpClient {
-        return _httpClient.filterNotNull().first()
+        return withContext(serviceScope.coroutineContext) {
+            _httpClient.filterNotNull().first()
+        }
     }
 
     fun disposeClient() {
