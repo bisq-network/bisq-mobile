@@ -77,8 +77,8 @@ class TrustedNodeSetupPresenter(
     }.stateIn(presenterScope, SharingStarted.Lazily, false)
 
 
-    val isApiUrlValid: StateFlow<Boolean> = host.combine(port) { h, p ->
-        validateHost(h) == null &&
+    val isApiUrlValid: StateFlow<Boolean> = combine(host, port, selectedNetworkType) { h, p, networkType ->
+        validateHost(h, networkType) == null &&
                 validatePort(p) == null
     }.stateIn(presenterScope, SharingStarted.Eagerly, true)
 
@@ -357,14 +357,14 @@ class TrustedNodeSetupPresenter(
         }
     }
 
-    fun validateHost(value: String): String? {
+    fun validateHost(value: String, networkType: NetworkType): String? {
         if (value.isEmpty()) {
             return "mobile.trustedNodeSetup.host.invalid.empty".i18n()
         }
 
         if (value == "demo.bisq") return null
 
-        if (selectedNetworkType.value == NetworkType.LAN) {
+        if (networkType == NetworkType.LAN) {
             // We only support IPv4 as we only support LAN addresses
             // Accept "localhost" on any platform; on Android, normalize it to 10.0.2.2 (emulator host).
             val normalized = if (value.equals(LOCALHOST, ignoreCase = true) && !isIOS()) {

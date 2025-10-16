@@ -118,7 +118,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         KeyboardType.Text
                     },
                     disabled = isLoading,
-                    validation = { return@BisqTextField presenter.validateHost(it) }
+                    validation = { return@BisqTextField presenter.validateHost(it, selectedNetworkType) }
                 )
                 BisqTextField(
                     modifier = Modifier.weight(0.2f),
