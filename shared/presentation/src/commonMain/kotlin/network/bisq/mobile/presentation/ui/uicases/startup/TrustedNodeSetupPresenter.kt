@@ -82,8 +82,8 @@ class TrustedNodeSetupPresenter(
                 validatePort(p) == null
     }.stateIn(presenterScope, SharingStarted.Eagerly, true)
 
-    val isProxyUrlValid: StateFlow<Boolean> = proxyHost.combine(proxyPort) { h, p ->
-        if (_useExternalProxy.value) validateProxyHost(h) == null &&
+    val isProxyUrlValid: StateFlow<Boolean> = combine(proxyHost, proxyPort, useExternalProxy, selectedNetworkType) { h, p, useExternal, networkType ->
+        if (networkType == NetworkType.TOR && useExternal) validateProxyHost(h) == null &&
                 validatePort(p) == null
         else true
     }.stateIn(presenterScope, SharingStarted.Eagerly, true)
@@ -333,7 +333,7 @@ class TrustedNodeSetupPresenter(
     }
 
     fun onSave() {
-        if (!isApiUrlValid.value) {
+        if (!isApiUrlValid.value || !isProxyUrlValid.value) {
             showSnackbar("mobile.trustedNodeSetup.status.failed".i18n())
             return
         }

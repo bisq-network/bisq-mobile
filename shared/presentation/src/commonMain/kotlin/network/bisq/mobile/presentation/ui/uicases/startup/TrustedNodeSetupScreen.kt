@@ -208,7 +208,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         modifier = Modifier.animateItem(),
                         text = "mobile.trustedNodeSetup.testConnection".i18n(),
                         color = if (host.isEmpty()) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
-                        disabled = isLoading || !isApiUrlValid || (if (useExternalProxy) !isProxyUrlValid else false),
+                        disabled = isLoading || !isApiUrlValid || !isProxyUrlValid,
                         onClick = {
                             if (isNewApiUrl) {
                                 showConfirmDialog.value = true
