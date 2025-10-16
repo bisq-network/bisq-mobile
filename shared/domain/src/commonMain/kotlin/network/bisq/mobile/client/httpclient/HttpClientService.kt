@@ -5,9 +5,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.WebSockets
-import io.ktor.client.plugins.websocket.webSocketSession
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.get
@@ -96,12 +94,6 @@ class HttpClientService(
 
     suspend fun delete(block: HttpRequestBuilder.() -> Unit): HttpResponse {
         return getClient().delete {
-            block(this)
-        }
-    }
-
-    suspend fun webSocketSession(block: HttpRequestBuilder.() -> Unit): DefaultClientWebSocketSession {
-        return getClient().webSocketSession {
             block(this)
         }
     }
