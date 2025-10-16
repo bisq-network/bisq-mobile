@@ -8,7 +8,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.shared.BuildConfig
@@ -71,11 +70,10 @@ class TrustedNodeSetupPresenter(
     private val _proxyPort = MutableStateFlow("9050")
     val proxyPort: StateFlow<String> get() = _proxyPort.asStateFlow()
 
-    val isNewApiUrl: StateFlow<Boolean> = settingsRepository.data.map {
-        val newApiUrl = _host.value + ":" + _port.value
-        it.bisqApiUrl.isNotBlank() && it.bisqApiUrl != newApiUrl
+    val isNewApiUrl: StateFlow<Boolean> = combine(settingsRepository.data, host, port) { settings, h, p ->
+        val newApiUrl = "$h:$p"
+        settings.bisqApiUrl.isNotBlank() && settings.bisqApiUrl != newApiUrl
     }.stateIn(presenterScope, SharingStarted.Lazily, false)
-
 
     val isApiUrlValid: StateFlow<Boolean> = combine(host, port, selectedNetworkType) { h, p, networkType ->
         validateHost(h, networkType) == null &&
