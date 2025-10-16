@@ -12,14 +12,17 @@ import android.provider.MediaStore
 import androidx.core.net.toUri
 import java.io.File
 
-fun shareBackup(context: Context, contentUriString: String, chooserTitle: String = "Share Bisq backup") {
+fun shareBackup(context: Context, contentUriString: String, chooserTitle: String = "Share Bisq backup", mimeType: String? = null) {
     val uri = contentUriString.toUri()
     val clipData = ClipData.newUri(context.contentResolver, "Backup", uri)
+    val actualMime = mimeType ?: "application/octet-stream"
     val share = Intent(Intent.ACTION_SEND).apply {
-        type = "application/octet-stream"
+        type = actualMime
         setClipData(clipData)
         putExtra(Intent.EXTRA_STREAM, uri)
         addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        // Some apps (e.g., Gmail) behave better with explicit data + type
+        setDataAndType(uri, actualMime)
     }
     val chooser = Intent.createChooser(share, chooserTitle)
         .apply {

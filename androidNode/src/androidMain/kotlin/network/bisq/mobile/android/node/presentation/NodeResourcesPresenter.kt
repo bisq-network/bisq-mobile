@@ -106,7 +106,8 @@ class NodeResourcesPresenter(
                     }
                 }
 
-                shareBackup(context, uri.toString())
+                val shareMime = if (useEncryption) "application/octet-stream" else "application/zip"
+                shareBackup(context, uri.toString(), mimeType = shareMime)
             } catch (e: Exception) {
                 log.e(e) { "Failed to backup data directory" }
             }

@@ -19,6 +19,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.material3.CircularProgressIndicator
+
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -69,6 +71,8 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Comple
 
     val scope = rememberCoroutineScope()
     val log: Logger = remember { getLogger("ImportBackupFile") }
+    var showRestoringOverlay: Boolean by remember { mutableStateOf(false) }
+
     val onRestoreUpdated by rememberUpdatedState(onRestoreBackup)
 
     var showPasswordOverlay: Boolean by remember { mutableStateOf(false) }
@@ -132,6 +136,7 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Comple
                                 showPasswordOverlay = true
                             } else {
                                 val restore = onRestoreUpdated
+                                showRestoringOverlay = true
                                 val deferredErrorMessage: CompletableDeferred<String?> = restore(fileName, null, bytes)
                                 scope.launch(Dispatchers.Main) {
                                     try {
@@ -144,6 +149,8 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Comple
                                         }
                                     } catch (t: Throwable) {
                                         errorMessage = t.message ?: t.toString().take(20)
+                                    } finally {
+                                        showRestoringOverlay = false
                                     }
                                 }
                             }
@@ -179,6 +186,7 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Comple
                 val fileName = selectedFileName
                 val data = selectedFileData
                 if (fileName != null && data != null) {
+                    showRestoringOverlay = true
                     val deferredErrorMessage: CompletableDeferred<String?> = onRestoreUpdated(fileName, password, data)
                     deferredErrorMessage.invokeOnCompletion { throwable ->
                         scope.launch(Dispatchers.Main) {
@@ -196,11 +204,13 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Comple
                                     } else {
                                         presenter.showSnackbar("mobile.resources.restore.success".i18n(), isError = false)
                                         showPasswordOverlay = false
+                                        selectedFileName = null
+                                        selectedFileData = null
                                     }
                                 }
                             } finally {
-                                selectedFileName = null
-                                selectedFileData = null
+                                // Keep selected file to allow retry on wrong password
+                                showRestoringOverlay = false
                             }
                         }
                     }
@@ -220,6 +230,11 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Comple
             }
         )
     }
+
+    if (showRestoringOverlay) {
+        RestoringOverlay()
+    }
+
 }
 
 @Composable
@@ -289,6 +304,18 @@ fun ErrorOverlay(
         BisqText.baseLight(errorMessage)
     }
 }
+
+@Composable
+fun RestoringOverlay() {
+    BisqDialog(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        marginTop = BisqUIConstants.ScreenPadding,
+        onDismissRequest = { /* non-dismissable while restoring */ }
+    ) {
+        CircularProgressIndicator()
+    }
+}
+
 
 private fun getFileName(context: Context, uri: Uri): String {
     var fileName = "data.na".i18n()
