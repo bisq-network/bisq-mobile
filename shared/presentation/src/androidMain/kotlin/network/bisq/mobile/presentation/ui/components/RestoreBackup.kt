@@ -38,9 +38,26 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-
 import network.bisq.mobile.presentation.MainPresenter
 import org.koin.compose.koinInject
+
+import android.app.Activity
+import androidx.activity.result.contract.ActivityResultContract
+
+private class OpenDocumentWithPersist : ActivityResultContract<Array<String>, Uri?>() {
+    override fun createIntent(context: Context, input: Array<String>): Intent {
+        return Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = if (input.isNotEmpty()) input.first() else "*/*"
+            putExtra(Intent.EXTRA_MIME_TYPES, input)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION)
+        }
+    }
+
+    override fun parseResult(resultCode: Int, intent: Intent?): Uri? {
+        return if (resultCode == Activity.RESULT_OK) intent?.data else null
+    }
+}
 
 const val backupPrefix = "bisq2_mobile-backup-"
 private const val MAX_BACKUP_SIZE_BYTES = 200L * 1024 * 1024
@@ -61,7 +78,7 @@ actual fun RestoreBackup(onRestoreBackup: (String, String?, ByteArray) -> Comple
     var selectedFileData: ByteArray? by remember { mutableStateOf(null) }
 
     val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
+        contract = OpenDocumentWithPersist(),
         onResult = { uri ->
             uri?.let { selectedUri ->
                 try {

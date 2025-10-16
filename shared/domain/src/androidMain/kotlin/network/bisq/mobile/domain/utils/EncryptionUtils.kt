@@ -30,10 +30,10 @@ fun encrypt(input: File, output: File, password: String) {
     val secureRandom = SecureRandom()
     val salt = ByteArray(SALT_LEN).also { secureRandom.nextBytes(it) }
     val iv = ByteArray(IV_LEN).also { secureRandom.nextBytes(it) }
-    val key = deriveKey(password, salt)
+    val keyBytes = deriveKey(password, salt)
     try {
         val cipher = getCipher()
-        cipher.init(Cipher.ENCRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
+        cipher.init(Cipher.ENCRYPT_MODE, SecretKeySpec(keyBytes, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
 
         FileOutputStream(output, false).use { fos ->
             // Write format header first
@@ -52,7 +52,7 @@ fun encrypt(input: File, output: File, password: String) {
         // Clear sensitive data
         salt.fill(0)
         iv.fill(0)
-        key.encoded?.fill(0)
+        keyBytes.fill(0)
     }
 }
 
@@ -73,11 +73,11 @@ fun decrypt(inputStream: InputStream, password: String): File {
 
     val salt = ByteArray(SALT_LEN).also { src.readChunk(it) }
     val iv = ByteArray(IV_LEN).also { src.readChunk(it) }
-    val key = deriveKey(password, salt)
+    val keyBytes = deriveKey(password, salt)
 
     try {
         val cipher = getCipher()
-        cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(GCM_TAG_BITS, iv))
+        cipher.init(Cipher.DECRYPT_MODE, SecretKeySpec(keyBytes, "AES"), GCMParameterSpec(GCM_TAG_BITS, iv))
 
         val tempFile = File.createTempFile("decrypted_", ".zip")
         CipherInputStream(src, cipher).use { cis ->
@@ -91,17 +91,20 @@ fun decrypt(inputStream: InputStream, password: String): File {
         // Clear sensitive data
         salt.fill(0)
         iv.fill(0)
-        key.encoded?.fill(0)
+        keyBytes.fill(0)
     }
 }
 
-private fun deriveKey(password: String, salt: ByteArray): SecretKeySpec {
+private fun deriveKey(password: String, salt: ByteArray): ByteArray {
     val passwordChars = password.toCharArray()
-    try {
+    return try {
         val factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256")
         val spec = PBEKeySpec(passwordChars, salt, PBKDF2_ITER, KEY_LEN_BITS)
-        val keyBytes = factory.generateSecret(spec).encoded
-        return SecretKeySpec(keyBytes, "AES")
+        try {
+            factory.generateSecret(spec).encoded
+        } finally {
+            spec.clearPassword()
+        }
     } finally {
         passwordChars.fill('\u0000')
     }

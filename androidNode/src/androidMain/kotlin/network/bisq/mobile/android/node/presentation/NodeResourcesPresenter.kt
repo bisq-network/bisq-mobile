@@ -13,6 +13,7 @@ import network.bisq.mobile.android.node.utils.getShareableUriForFile
 import network.bisq.mobile.android.node.utils.shareBackup
 import network.bisq.mobile.android.node.utils.unzipToDirectory
 import network.bisq.mobile.android.node.utils.zipDirectory
+import network.bisq.mobile.android.node.utils.saveToDownloads
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
 import network.bisq.mobile.i18n.i18n
@@ -91,6 +92,20 @@ class NodeResourcesPresenter(
                 val uri = getShareableUriForFile(outFile, context)
 
                 mainPresenter.showSnackbar("mobile.resources.backup.success".i18n(), isError = false)
+
+                // In debug/dev mode, also save a copy to Downloads for easy local testing
+                if (isDevMode()) {
+                    try {
+                        val mimeType = if (useEncryption) "application/octet-stream" else "application/zip"
+                        val saved = saveToDownloads(context, outFile, outName, mimeType)
+                        if (saved != null) {
+                            mainPresenter.showSnackbar("Saved to Downloads (debug): $outName", isError = false)
+                        }
+                    } catch (t: Throwable) {
+                        log.w(t) { "KMP: Failed to save backup to Downloads in debug mode" }
+                    }
+                }
+
                 shareBackup(context, uri.toString())
             } catch (e: Exception) {
                 log.e(e) { "Failed to backup data directory" }
