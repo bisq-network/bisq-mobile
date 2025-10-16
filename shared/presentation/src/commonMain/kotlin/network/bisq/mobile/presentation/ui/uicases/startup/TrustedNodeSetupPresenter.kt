@@ -75,17 +75,6 @@ class TrustedNodeSetupPresenter(
         settings.bisqApiUrl.isNotBlank() && settings.bisqApiUrl != newApiUrl
     }.stateIn(presenterScope, SharingStarted.Lazily, false)
 
-    val isApiUrlValid: StateFlow<Boolean> = combine(host, port, selectedNetworkType) { h, p, networkType ->
-        validateHost(h, networkType) == null &&
-                validatePort(p) == null
-    }.stateIn(presenterScope, SharingStarted.Eagerly, true)
-
-    val isProxyUrlValid: StateFlow<Boolean> = combine(proxyHost, proxyPort, useExternalProxy, selectedNetworkType) { h, p, useExternal, networkType ->
-        if (networkType == NetworkType.TOR && useExternal) validateProxyHost(h) == null &&
-                validatePort(p) == null
-        else true
-    }.stateIn(presenterScope, SharingStarted.Eagerly, true)
-
     private val _hostPrompt = MutableStateFlow(
         if (BuildConfig.IS_DEBUG) localHost() else IPV4_EXAMPLE
     )
@@ -102,6 +91,17 @@ class TrustedNodeSetupPresenter(
 
     private val _useExternalProxy = MutableStateFlow(false)
     val useExternalProxy: StateFlow<Boolean> get() = _useExternalProxy.asStateFlow()
+
+    val isApiUrlValid: StateFlow<Boolean> = combine(host, port, selectedNetworkType) { h, p, networkType ->
+        validateHost(h, networkType) == null &&
+                validatePort(p) == null
+    }.stateIn(presenterScope, SharingStarted.Lazily, false)
+
+    val isProxyUrlValid: StateFlow<Boolean> = combine(proxyHost, proxyPort, useExternalProxy, selectedNetworkType) { h, p, useExternal, networkType ->
+        if (networkType == NetworkType.TOR && useExternal) validateProxyHost(h) == null &&
+                validatePort(p) == null
+        else true
+    }.stateIn(presenterScope, SharingStarted.Lazily, false)
 
     override fun onViewAttached() {
         super.onViewAttached()
