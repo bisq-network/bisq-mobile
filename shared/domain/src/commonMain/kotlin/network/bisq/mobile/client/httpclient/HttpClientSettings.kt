@@ -22,10 +22,8 @@ data class HttpClientSettings(
                     // kmpTorService.getSocksPort() // TODO: fix after kmp tor is fixed
                     "22"
                 } else {
-                    // we intentionally want to fail instead of not setting the proxy
-                    // we don't use 9050 to not accidentally use a running proxy on 9050
-                    // that may or may not be tor
-                    "22"
+                    // we intentionally want to fail fast instead of not setting the proxy
+                    "0"
                 }
                 proxyUrl = "127.0.0.1:$socksPort"
                 isProxyUrlTor = true
