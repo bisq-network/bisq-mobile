@@ -14,6 +14,7 @@ import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -42,7 +43,7 @@ import okio.SYSTEM
  *    The bisq 2 tor lib will detect the external tor and use that.
  *
  */
-class KmpTorService : BaseService(), Logging {
+class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     enum class State {
         IDLE,
         STARTING,
@@ -53,7 +54,6 @@ class KmpTorService : BaseService(), Logging {
         STOPPING_FAILED
     }
 
-    private lateinit var baseDir: Path
     private var torRuntime: TorRuntime? = null
     private var deferredSocksPort = CompletableDeferred<Int>()
     private var torDaemonStarted = CompletableDeferred<Boolean>()
@@ -66,8 +66,7 @@ class KmpTorService : BaseService(), Logging {
     private val _state: MutableStateFlow<State> = MutableStateFlow(State.IDLE)
     val state: StateFlow<State> get() = _state.asStateFlow()
 
-    fun startTor(baseDir: Path): CompletableDeferred<Boolean> {
-        this.baseDir = baseDir
+    fun startTor(): CompletableDeferred<Boolean> {
         log.i("Start kmp-tor")
         val torStartupCompleted = CompletableDeferred<Boolean>()
 
@@ -383,6 +382,9 @@ class KmpTorService : BaseService(), Logging {
     }
 
     private fun resetAndDispose() {
+        if (deferredSocksPort.isActive) {
+            deferredSocksPort.cancel("KmpTorService resetAndDispose called before socks port became available")
+        }
         deferredSocksPort = CompletableDeferred()
         torDaemonStarted = CompletableDeferred()
         configJob?.cancel()
@@ -394,5 +396,12 @@ class KmpTorService : BaseService(), Logging {
     private fun disposeControlPortFileObserver() {
         controlPortFileObserverJob?.cancel()
         controlPortFileObserverJob = null
+    }
+
+    /**
+     * Suspends until socks port is available
+     */
+    suspend fun getSocksPort(): Int {
+        return deferredSocksPort.await()
     }
 }

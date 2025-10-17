@@ -34,7 +34,6 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.MainActivity
 import network.bisq.mobile.presentation.service.OpenTradesNotificationService
-import okio.Path.Companion.toPath
 import java.io.File
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicBoolean
@@ -266,9 +265,8 @@ class NodeApplicationLifecycleService(
 
             try {
                 log.i { "Starting Tor" }
-                val baseDir: Path = applicationService.config.baseDir
                 // We block until Tor is ready, or timeout after 60 sec
-                withTimeout(TIMEOUT_SEC * 1000) { kmpTorService.startTor(baseDir.toString().toPath(true)).await() }
+                withTimeout(TIMEOUT_SEC * 1000) { kmpTorService.startTor().await() }
                 log.i { "Tor successfully started" }
                 result.complete(true)
             } catch (e: TimeoutCancellationException) {

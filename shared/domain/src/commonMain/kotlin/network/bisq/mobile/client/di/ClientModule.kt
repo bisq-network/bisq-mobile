@@ -62,6 +62,7 @@ import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecV
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FloatPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.MarketPriceSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
+import network.bisq.mobile.domain.getStorageDir
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
@@ -71,12 +72,14 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import okio.Path.Companion.toPath
 import org.koin.core.qualifier.named
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -218,4 +221,6 @@ val clientModule = module {
     single<ReputationServiceFacade> { ClientReputationServiceFacade(get(), get()) }
 
     single<MessageDeliveryServiceFacade> { ClientMessageDeliveryServiceFacade() }
+
+    single<KmpTorService> { KmpTorService(getStorageDir().toPath(true)) }
 }

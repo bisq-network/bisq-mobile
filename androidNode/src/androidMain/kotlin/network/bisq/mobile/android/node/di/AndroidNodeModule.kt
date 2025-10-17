@@ -1,5 +1,6 @@
 package network.bisq.mobile.android.node.di
 
+import bisq.application.ApplicationService
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.presentation.NodeDashboardPresenter
@@ -57,6 +58,7 @@ import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.SettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.IOnboardingPresenter
 import network.bisq.mobile.presentation.ui.uicases.startup.SplashPresenter
+import okio.Path.Companion.toOkioPath
 import org.koin.android.ext.koin.androidContext
 import org.koin.dsl.bind
 import org.koin.dsl.module
@@ -77,7 +79,7 @@ val androidNodeModule = module {
 
     single { NodeNetworkServiceFacade(get()) } bind NetworkServiceFacade::class
 
-    single<KmpTorService> { KmpTorService() }
+    single<KmpTorService> { KmpTorService(get<ApplicationService>().config.baseDir.toOkioPath(true)) }
 
     single { NodeApplicationBootstrapFacade(get(), get()) } bind ApplicationBootstrapFacade::class
 
