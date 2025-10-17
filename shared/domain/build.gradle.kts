@@ -114,6 +114,7 @@ kotlin {
             implementation(libs.ktor.client.core)
             implementation(libs.kotlinx.serialization.core)
             implementation(libs.ktor.serialization.kotlinx.json)
+            implementation(libs.ktor.network)
             implementation(libs.ktor.client.content.negotiation)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.ktor.client.websockets)

@@ -146,6 +146,7 @@ kmp-tor-resource-noexec = { module = "io.matthewnelson.kmp-tor:resource-noexec-t
 bignum = { module = "com.ionspin.kotlin:bignum", version.ref = "bignum-lib" }
 
 # -------------------- Networking --------------------
+ktor-network = { module = "io.ktor:ktor-network", version.ref = "ktor" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp", version.ref = "ktor" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin", version.ref = "ktor" }
 ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
