@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
+import network.bisq.mobile.client.httpclient.NetworkType
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.ConnectionState
 import network.bisq.mobile.client.websocket.WebSocketClientService
@@ -40,13 +41,6 @@ class TrustedNodeSetupPresenter(
         const val LOCALHOST = "localhost"
         const val ANDROID_LOCALHOST = "10.0.2.2"
         const val IPV4_EXAMPLE = "192.168.1.10"
-    }
-
-    enum class NetworkType(private val i18nKey: String) {
-        LAN("mobile.trustedNodeSetup.networkType.lan"),
-        TOR("mobile.trustedNodeSetup.networkType.tor");
-
-        val displayString: String get() = i18nKey.i18n()
     }
 
     // Must not be injected in constructor as node has not defined the WebSocketClientProvider dependency
@@ -121,6 +115,7 @@ class TrustedNodeSetupPresenter(
                 val settings = withContext(IODispatcher) {
                     settingsRepository.fetch()
                 }
+                _selectedNetworkType.value = settings.selectedNetworkType
                 if (settings.bisqApiUrl.isBlank()) {
                     if (_host.value.isNotBlank()) onHostChanged(_host.value)
                 } else {
@@ -195,25 +190,26 @@ class TrustedNodeSetupPresenter(
                 val newApiUrl = "$newHost:$newPort"
                 val newProxyHost = proxyHost.value
                 val newProxyPort = proxyPort.value.toIntOrNull()
-                val networkType = selectedNetworkType.value
+                // TODO: this will be refactored with next PR when kmptor is used when useExternalProxy is false
+                val useExternalProxy = selectedNetworkType.value == NetworkType.TOR && useExternalProxy.value
 
                 val error = if (newPort == null) {
                     IllegalArgumentException("Invalid port value was provided")
-                } else if (networkType == NetworkType.TOR && newProxyPort == null) {
+                } else if (useExternalProxy && newProxyPort == null) {
                     IllegalArgumentException("Invalid proxy port value was provided")
                 } else {
-                    if (networkType == NetworkType.LAN) {
-                        wsClientService.testConnection(
-                            newHost,
-                            newPort,
-                        )
-                    } else {
+                    if (useExternalProxy) {
                         wsClientService.testConnection(
                             newHost,
                             newPort,
                             newProxyHost,
                             newProxyPort,
                             true,
+                        )
+                    } else {
+                        wsClientService.testConnection(
+                            newHost,
+                            newPort,
                         )
                     }
                 }
@@ -301,16 +297,15 @@ class TrustedNodeSetupPresenter(
      */
     private fun transformSettingsWithPresenterValues(settings: Settings): Settings {
         val newBisqUrl = host.value + ":" + port.value
-        val newProxyUrl = if (selectedNetworkType.value == NetworkType.TOR) {
-            proxyHost.value + ":" + proxyPort.value
-        } else {
-            ""
-        }
+        val selectedNetworkType = selectedNetworkType.value
+        val useExternalProxy = selectedNetworkType == NetworkType.TOR && useExternalProxy.value
+        val newProxyUrl = proxyHost.value + ":" + proxyPort.value
         return settings.copy(
             bisqApiUrl = newBisqUrl,
             proxyUrl = newProxyUrl,
-            isTorProxy = true, // we only support tor proxy for now
-            useExternalProxy = useExternalProxy.value,
+            isProxyUrlTor = true, // we only support tor proxy for now
+            selectedNetworkType = selectedNetworkType,
+            useExternalProxy = useExternalProxy,
         )
     }
 

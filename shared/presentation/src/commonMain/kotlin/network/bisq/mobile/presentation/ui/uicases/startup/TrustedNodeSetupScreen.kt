@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.client.httpclient.NetworkType
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.ConnectionState
 import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException
@@ -44,7 +45,6 @@ import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.helpers.spaceBetweenWithMin
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.ui.uicases.startup.TrustedNodeSetupPresenter.NetworkType
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalFoundationApi::class)

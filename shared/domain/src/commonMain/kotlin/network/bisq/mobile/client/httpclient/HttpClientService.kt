@@ -45,7 +45,7 @@ class HttpClientService(
         super.activate()
 
         collectIO(settingsRepository.data) {
-            val newConfig = HttpClientSettings.from(it)
+            val newConfig = HttpClientSettings.from(it, null) // TODO: fix after kmp tor is setup
             if (lastConfig != newConfig) {
                 lastConfig = newConfig
                 _httpClient.value?.close()

@@ -1,6 +1,7 @@
 package network.bisq.mobile.domain.data.model
 
 import kotlinx.serialization.Serializable
+import network.bisq.mobile.client.httpclient.NetworkType
 
 @Serializable
 data class Settings (
@@ -10,9 +11,11 @@ data class Settings (
     val selectedMarketCode: String = "BTC/USD",
     val notificationPermissionState: NotificationPermissionState = NotificationPermissionState.NOT_GRANTED,
     // client node specific:
+    val isInternalTorEnabled: Boolean = false,
+    val selectedNetworkType: NetworkType = NetworkType.LAN,
     val useExternalProxy: Boolean = false,
     val proxyUrl: String = "",
-    val isTorProxy: Boolean = true,
+    val isProxyUrlTor: Boolean = true,
 )
 
 @Serializable
