@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
@@ -179,10 +178,10 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         BisqTheme.colors.danger,
                 )
             }
-            BisqGap.V3()
 
             val error = (connectionState as? ConnectionState.Disconnected)?.error
             if (error is IncompatibleHttpApiVersionException) {
+                BisqGap.V3()
                 BisqText.baseRegular("mobile.trustedNodeSetup.version.expectedAPI".i18n(BuildConfig.BISQ_API_VERSION))
                 BisqText.baseRegular(
                     "mobile.trustedNodeSetup.version.nodeAPI".i18n(
@@ -192,45 +191,28 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             }
         }
 
+        if (!isWorkflow) {
+            BisqText.baseRegular("mobile.trustedNodeSetup.testConnection.message".i18n(), BisqTheme.colors.warning)
+        }
+
         BisqGap.V3()
 
-        LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(
-                BisqUIConstants.ScreenPadding,
-                Alignment.CenterHorizontally
-            ),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
+        Row(
+            horizontalArrangement = Arrangement.Center,
         ) {
-            item {
-                if (connectionState !is ConnectionState.Connected) {
-                    BisqButton(
-                        modifier = Modifier.animateItem(),
-                        text = "mobile.trustedNodeSetup.testConnection".i18n(),
-                        color = if (host.isEmpty()) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
-                        disabled = isLoading || !isApiUrlValid || !isProxyUrlValid,
-                        onClick = {
-                            if (isNewApiUrl) {
-                                showConfirmDialog.value = true
-                            } else {
-                                presenter.testConnection(isWorkflow)
-                            }
-                        },
-                        padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
-                    )
-                } else {
-                    BisqButton(
-                        modifier = Modifier.animateItem(),
-                        text = if (isWorkflow) "mobile.trustedNodeSetup.createProfile".i18n() else "action.save".i18n(),
-                        color = BisqTheme.colors.light_grey10,
-                        onClick = {
-                            if (isWorkflow) presenter.navigateToCreateProfile()
-                            else presenter.onSave()
-                        },
-                        padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
-                    )
-                }
-            }
+            BisqButton(
+                text = "mobile.trustedNodeSetup.testAndSave".i18n(),
+                color = if (host.isEmpty()) BisqTheme.colors.mid_grey10 else BisqTheme.colors.light_grey10,
+                disabled = !isWorkflow || isLoading || !isApiUrlValid || !isProxyUrlValid,
+                onClick = {
+                    if (isNewApiUrl) {
+                        showConfirmDialog.value = true
+                    } else {
+                        presenter.onTestAndSavePressed(isWorkflow)
+                    }
+                },
+                padding = PaddingValues(horizontal = 32.dp, vertical = 12.dp),
+            )
         }
     }
 
@@ -274,7 +256,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         text = "mobile.trustedNodeSetup.continue".i18n(),
                         onClick = {
                             showConfirmDialog.value = false
-                            presenter.testConnection(isWorkflow)
+                            presenter.onTestAndSavePressed(isWorkflow)
                         }
                     )
                 }

@@ -8,6 +8,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.httpclient.NetworkType
@@ -69,11 +70,6 @@ class TrustedNodeSetupPresenter(
         settings.bisqApiUrl.isNotBlank() && settings.bisqApiUrl != newApiUrl
     }.stateIn(presenterScope, SharingStarted.Lazily, false)
 
-    private val _hostPrompt = MutableStateFlow(
-        if (BuildConfig.IS_DEBUG) localHost() else IPV4_EXAMPLE
-    )
-    val hostPrompt: StateFlow<String> get() = _hostPrompt.asStateFlow()
-
     private val _status = MutableStateFlow("")
     val status: StateFlow<String> get() = _status.asStateFlow()
 
@@ -82,6 +78,18 @@ class TrustedNodeSetupPresenter(
 
     private val _selectedNetworkType = MutableStateFlow(NetworkType.LAN)
     val selectedNetworkType: StateFlow<NetworkType> get() = _selectedNetworkType.asStateFlow()
+
+    val hostPrompt: StateFlow<String> = selectedNetworkType.map {
+        if (selectedNetworkType.value == NetworkType.LAN) {
+            if (BuildConfig.IS_DEBUG) {
+                localHost()
+            } else {
+                IPV4_EXAMPLE
+            }
+        } else {
+            "mobile.trustedNodeSetup.host.prompt".i18n()
+        }
+    }.stateIn(presenterScope, SharingStarted.Lazily, "")
 
     private val _useExternalProxy = MutableStateFlow(false)
     val useExternalProxy: StateFlow<Boolean> get() = _useExternalProxy.asStateFlow()
@@ -105,7 +113,6 @@ class TrustedNodeSetupPresenter(
     private fun initialize() {
         log.i { "View attached to Trusted node presenter" }
 
-        updateHostPrompt()
         if (BuildConfig.IS_DEBUG) {
             _host.value = localHost()
         }
@@ -153,7 +160,6 @@ class TrustedNodeSetupPresenter(
 
     fun onNetworkType(value: NetworkType) {
         _selectedNetworkType.value = value
-        updateHostPrompt()
     }
 
     fun onProxyHostChanged(host: String) {
@@ -168,7 +174,7 @@ class TrustedNodeSetupPresenter(
         _useExternalProxy.value = value
     }
 
-    fun testConnection(isWorkflow: Boolean) {
+    fun onTestAndSavePressed(isWorkflow: Boolean) {
         if (!isWorkflow) {
             // TODO implement feature to allow changing from settings
             // this is not trivial from UI perspective, its making NavGraph related code to crash when
@@ -309,14 +315,6 @@ class TrustedNodeSetupPresenter(
         )
     }
 
-    fun navigateToCreateProfile() {
-        launchUI {
-            navigateTo(NavRoute.CreateProfile) {
-                it.popUpTo(NavRoute.TrustedNodeSetup) { inclusive = true }
-            }
-        }
-    }
-
     private fun navigateToSplashScreen() {
         launchUI {
             navigateTo(NavRoute.Splash) {
@@ -335,18 +333,6 @@ class TrustedNodeSetupPresenter(
                 settingsRepository.update(::transformSettingsWithPresenterValues)
             }
             navigateBack()
-        }
-    }
-
-    private fun updateHostPrompt() {
-        if (selectedNetworkType.value == NetworkType.LAN) {
-            if (BuildConfig.IS_DEBUG) {
-                _hostPrompt.value = localHost()
-            } else {
-                _hostPrompt.value = IPV4_EXAMPLE
-            }
-        } else {
-            _hostPrompt.value = "mobile.trustedNodeSetup.host.prompt".i18n()
         }
     }
 
