@@ -1,6 +1,5 @@
 package network.bisq.mobile.android.node.di
 
-import bisq.application.ApplicationService
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.presentation.NodeDashboardPresenter
@@ -79,7 +78,10 @@ val androidNodeModule = module {
 
     single { NodeNetworkServiceFacade(get()) } bind NetworkServiceFacade::class
 
-    single<KmpTorService> { KmpTorService(get<ApplicationService>().config.baseDir.toOkioPath(true)) }
+    single<KmpTorService> {
+        val provider = get<AndroidApplicationService.Provider>()
+        KmpTorService(provider.applicationService.config.baseDir.toOkioPath(true))
+    }
 
     single { NodeApplicationBootstrapFacade(get(), get()) } bind ApplicationBootstrapFacade::class
 

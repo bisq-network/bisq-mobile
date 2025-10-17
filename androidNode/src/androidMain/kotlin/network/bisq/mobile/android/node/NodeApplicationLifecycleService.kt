@@ -87,7 +87,7 @@ class NodeApplicationLifecycleService(
                 val networkServiceConfig: NetworkServiceConfig = applicationService.networkServiceConfig
                 if (isTorSupported(networkServiceConfig)) {
                     // Block until tor is ready or a timeout exception is thrown
-                    initializeTor(applicationService).await()
+                    initializeTor().await()
                 }
 
                 log.i { "Start initializing applicationService" }
@@ -259,10 +259,9 @@ class NodeApplicationLifecycleService(
         }
     }
 
-    private fun initializeTor(applicationService: AndroidApplicationService): CompletableDeferred<Boolean> {
+    private fun initializeTor(): CompletableDeferred<Boolean> {
         val result = CompletableDeferred<Boolean>()
         launchIO {
-
             try {
                 log.i { "Starting Tor" }
                 // We block until Tor is ready, or timeout after 60 sec
