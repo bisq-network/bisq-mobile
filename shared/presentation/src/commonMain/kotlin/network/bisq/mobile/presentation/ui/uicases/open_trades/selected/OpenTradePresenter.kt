@@ -32,7 +32,6 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
-import network.bisq.mobile.presentation.ui.helpers.EMPTY_STRING
 import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -270,6 +269,10 @@ class OpenTradePresenter(
 
     fun onTradeNotFoundDialogDismiss() {
         _showTradeNotFoundDialog.value = false
+        navigateBack()
+    }
+
+    fun onBackPressed() {
         navigateBack()
     }
 }

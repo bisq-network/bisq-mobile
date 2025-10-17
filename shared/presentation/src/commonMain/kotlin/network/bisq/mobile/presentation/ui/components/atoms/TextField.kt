@@ -194,7 +194,11 @@ fun BisqTextField(
     // Applicable in cases, where the validation() changes based on
     // change in other parameters like BitcoinLnAddressField::type
     LaunchedEffect(validation) {
-        validationError = validation?.invoke(value)
+        if (value.isNotEmpty()) {
+            hasInteracted = true
+        }
+        val result = validation?.invoke(value)
+        validationError = result
     }
 
     val finalBorderRadius by remember(isFocused) {
@@ -223,6 +227,7 @@ fun BisqTextField(
             if (processedValue == value) return@BasicTextField
             validationError = validation?.invoke(processedValue)
             onValueChange?.invoke(processedValue, validationError.isNullOrEmpty())
+            hasInteracted = true
         },
         modifier = modifier
             .fillMaxWidth()
