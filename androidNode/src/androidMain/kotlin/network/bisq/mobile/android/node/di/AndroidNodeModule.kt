@@ -72,15 +72,23 @@ val androidNodeModule = module {
         AndroidNodeCatHashService(context, context.filesDir.toPath())
     }
 
-    single { AndroidApplicationService.Provider() }
+    single<AndroidApplicationService> {
+        AndroidApplicationService(get(), androidContext(), androidContext().filesDir.toPath())
+    }
+
+    single {
+        val provider = AndroidApplicationService.Provider()
+        provider.applicationService = get<AndroidApplicationService>()
+        provider
+    }
 
     single<MessageDeliveryServiceFacade> { NodeMessageDeliveryServiceFacade(get()) }
 
     single { NodeNetworkServiceFacade(get()) } bind NetworkServiceFacade::class
 
     single<KmpTorService> {
-        val provider = get<AndroidApplicationService.Provider>()
-        KmpTorService(provider.applicationService.config.baseDir.toOkioPath(true))
+        val applicationService = get<AndroidApplicationService>()
+        KmpTorService(applicationService.config.baseDir.toOkioPath(true))
     }
 
     single { NodeApplicationBootstrapFacade(get(), get()) } bind ApplicationBootstrapFacade::class

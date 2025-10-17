@@ -50,7 +50,7 @@ class NodeMainApplication : MainApplication() {
         // As Android does not provide any callback when the process gets terminated we cannot gracefully shutdown the services and tor.
         // Only if the user shutdown or restart we can do that.
         val nodeApplicationLifecycleService: NodeApplicationLifecycleService = get()
-        nodeApplicationLifecycleService.initialize(filesDir.toPath(), applicationContext)
+        nodeApplicationLifecycleService.initialize()
 
         log.i { "Bisq Easy Node Application Created" }
     }
