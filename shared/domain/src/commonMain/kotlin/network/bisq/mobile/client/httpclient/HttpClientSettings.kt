@@ -20,7 +20,7 @@ data class HttpClientSettings(
             if (selectedNetworkType == NetworkType.TOR && !settings.useExternalProxy) {
                 val socksPort = if (settings.isInternalTorEnabled && kmpTorService != null) {
                     // kmpTorService.getSocksPort() // TODO: fix after kmp tor is fixed
-                    "22"
+                    "0"
                 } else {
                     // we intentionally want to fail fast instead of not setting the proxy
                     "0"
