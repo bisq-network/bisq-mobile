@@ -20,7 +20,7 @@ val appName = project.findProperty("node.name") as String
 kotlin {
     // using JDK21 for full bisq2 compatibility
     jvmToolchain(21)
-    
+
     androidTarget {
         @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
@@ -205,6 +205,18 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
         }
+        create("profile") {
+            initWith(getByName("release"))
+            // Make debuggable so Android Studio can attach allocation tracking on all devices
+            isDebuggable = true
+            // Easier symbol readability in profiler; flip to true to mimic release exactly
+            isMinifyEnabled = false
+            isShrinkResources = false
+            applicationIdSuffix = ".profile"
+            versionNameSuffix = "-profile"
+            matchingFallbacks += listOf("release")
+        }
+
     }
     applicationVariants.all {
         val variant = this
