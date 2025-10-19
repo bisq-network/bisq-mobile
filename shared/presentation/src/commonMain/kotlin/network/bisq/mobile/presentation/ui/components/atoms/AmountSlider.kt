@@ -24,26 +24,34 @@ fun AmountSlider(
     rightMarker: Float? = null,
     modifier: Modifier = Modifier,
 ) {
-    require(min < max) { "min must be less than max" }
+    // Gracefully handle a degenerate range (min >= max): render at fixed position and disable dragging
+    val hasRange = max > min
+    val range = if (hasRange) (max - min) else 1f
 
     // Normalize a real value to [0f..1f] range
-    fun Float.normalized(): Float = ((this - min) / (max - min)).coerceIn(0f, 1f)
+    fun Float.normalized(): Float = if (hasRange) ((this - min) / range).coerceIn(0f, 1f) else 0f
 
     val normalizedValue = value.normalized()
     val normalizedLeftMarker = leftMarker?.normalized()
     val normalizedRightMarker = rightMarker?.normalized()
 
     val dragState = rememberDraggableState { delta ->
-        val range = max - min
+        if (!hasRange) return@rememberDraggableState
         val deltaValue = (delta / 1000f) * range
         val newValue = (value + deltaValue).coerceIn(min, max)
         onValueChange(newValue)
     }
 
+    val dragModifier = if (hasRange) {
+        Modifier.draggable(orientation = Orientation.Horizontal, state = dragState)
+    } else {
+        Modifier
+    }
+
     Box(
-        modifier = modifier.fillMaxWidth().draggable(
-                orientation = Orientation.Horizontal, state = dragState
-            )
+        modifier = modifier
+            .fillMaxWidth()
+            .then(dragModifier)
     ) {
         Canvas(modifier = Modifier.fillMaxSize().height(40.dp)) {
             val thumbRadius = 12.dp.toPx()
