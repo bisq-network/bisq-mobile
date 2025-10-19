@@ -156,7 +156,7 @@ val androidNodeModule = module {
         )
     } bind AppPresenter::class
 
-    single<SplashPresenter> {
+    factory<SplashPresenter> {
         NodeSplashPresenter(
             get(),
             get(),
@@ -168,7 +168,7 @@ val androidNodeModule = module {
         )
     }
 
-    single<DashboardPresenter> {
+    factory<DashboardPresenter> {
         NodeDashboardPresenter(
             get(),
             get(),
@@ -181,9 +181,9 @@ val androidNodeModule = module {
         )
     }
 
-    single<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
+    factory<MiscItemsPresenter> { NodeMiscItemsPresenter(get(), get()) }
 
-    single<ResourcesPresenter> { NodeResourcesPresenter(get(), get(), get(), get()) }
+    factory<ResourcesPresenter> { NodeResourcesPresenter(get(), get(), get(), get()) }
 
     single<DeviceInfoProvider> { AndroidDeviceInfoProvider(androidContext()) }
 
@@ -191,7 +191,7 @@ val androidNodeModule = module {
 
     factory<SettingsPresenter> { NodeSettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
-    single<IOnboardingPresenter> {
+    factory<IOnboardingPresenter> {
         NodeOnboardingPresenter(
             get(),
             get(),
