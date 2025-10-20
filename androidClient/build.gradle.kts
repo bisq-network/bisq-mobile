@@ -89,7 +89,7 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            // the following exclude are needeD to avoid protobuf hanging build when merging release resources for java
+            // the following excludes are needed to avoid protobuf hanging build when merging release resources for java
             // Exclude the conflicting META-INF files
             excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
             excludes.add("META-INF/DEPENDENCIES")
@@ -97,7 +97,6 @@ android {
             excludes.add("META-INF/NOTICE*.md")
             excludes.add("META-INF/INDEX.LIST")
             excludes.add("META-INF/NOTICE.markdown")
-            pickFirsts.add("**/protobuf/**/*.class")
             pickFirsts += listOf(
                 "META-INF/LICENSE*",
                 "META-INF/NOTICE*",
