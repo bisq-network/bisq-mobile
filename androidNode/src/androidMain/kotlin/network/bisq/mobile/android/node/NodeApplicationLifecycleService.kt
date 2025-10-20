@@ -149,6 +149,10 @@ class NodeApplicationLifecycleService(
             } catch (e: Exception) {
                 log.e("Error at shutdownServicesAndTor", e)
             } finally {
+                // Ensure Tor is fully stopped, wait for control port to close, then purge the Tor dir
+                runCatching { kmpTorService.stopAndPurgeWorkingDir() }
+                    .onFailure { e -> log.w(e) { "Failed to fully stop and purge Tor before restart" } }
+
                 // Trigger rebirth on the main thread
                 withContext(Dispatchers.Main) {
                     ProcessPhoenix.triggerRebirth(appContext)
@@ -186,9 +190,15 @@ class NodeApplicationLifecycleService(
                             log.i { "Successfully deleted $subDirName directory" }
                         } else {
                             log.w { "Failed to delete $subDirName directory - restore may be incomplete" }
+
+
                         }
                     }
                 }
+
+                // Ensure Tor is fully stopped, wait for control port to close, then purge the Tor dir
+                runCatching { kmpTorService.stopAndPurgeWorkingDir() }
+                    .onFailure { e -> log.w(e) { "Failed to fully stop and purge Tor before restore-restart" } }
 
                 // Trigger rebirth on the main thread
                 withContext(Dispatchers.Main) {
