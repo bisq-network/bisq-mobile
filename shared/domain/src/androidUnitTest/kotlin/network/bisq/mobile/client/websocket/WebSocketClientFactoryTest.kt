@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.websocket
 
 import io.ktor.client.HttpClient
+import io.ktor.http.parseUrl
 import io.mockk.mockk
 import kotlinx.serialization.json.Json
 import kotlin.test.Test
@@ -16,7 +17,7 @@ class WebSocketClientFactoryTest {
         val demoHost = "demo.bisq"
         val demoPort = 21
 
-        assertIs<WebSocketClientDemo>(factory.createNewClient(httpClient, "http://$demoHost:$demoPort"))
+        assertIs<WebSocketClientDemo>(factory.createNewClient(httpClient, parseUrl("http://$demoHost:$demoPort")!!))
     }
 
     @Test
@@ -27,6 +28,6 @@ class WebSocketClientFactoryTest {
         val demoHost = "foo.bar"
         val demoPort = 21
 
-        assertIs<WebSocketClientImpl>(factory.createNewClient(httpClient, "http://$demoHost:$demoPort"))
+        assertIs<WebSocketClientImpl>(factory.createNewClient(httpClient, parseUrl("http://$demoHost:$demoPort")!!))
     }
 }
