@@ -1,5 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -86,12 +89,24 @@ class TakeOfferAmountPresenter(
         }
     }
 
+    private var dragUpdateJob: Job? = null
+    // Sample heavy updates during drags to reduce allocation churn on main thread.
+    // 32ms ~ 30 FPS. Rationale: keep UI responsive and informative while limiting GC pressure.
+    private val dragUpdateSampleMs: Long = 32
+
     fun onSliderValueChanged(sliderPosition: Float) {
         _amountValid.value = sliderPosition in 0f..1f
         _sliderPosition.value = sliderPosition
+
+        dragUpdateJob?.cancel()
+        dragUpdateJob = presenterScope.launch {
+            delay(dragUpdateSampleMs)
+            applySliderValue(this@TakeOfferAmountPresenter.sliderPosition.value)
+        }
     }
 
     fun onSliderDragFinished() {
+        dragUpdateJob?.cancel()
         applySliderValue(sliderPosition.value)
     }
 
@@ -170,6 +185,9 @@ class TakeOfferAmountPresenter(
         } catch (e: Exception) {
             // cater for random quoteAmount = 0 issue
             log.e(e) { "Failed to apply slider value on take offer" }
+        } finally {
+            // clear pending job if any after applying
+            dragUpdateJob = null
         }
     }
 
