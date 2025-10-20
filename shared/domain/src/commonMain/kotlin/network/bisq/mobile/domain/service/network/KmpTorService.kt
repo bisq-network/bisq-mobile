@@ -227,7 +227,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                         )
                         break
                     }
-                    log.i("readControlPort iterations=$iterations")
+
                     val currentMetadata = FileSystem.SYSTEM.metadataOrNull(controlPortFile)
                     if (currentMetadata != null) {
                         val currentModified = currentMetadata.lastModifiedAtMillis ?: 0L
