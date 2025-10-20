@@ -9,6 +9,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.onSizeChanged
+
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.unit.dp
@@ -24,10 +31,26 @@ fun AmountSlider(
     rightMarker: Float? = null,
     modifier: Modifier = Modifier,
     onValueChangeFinished: (() -> Unit)? = null,
+    sensitivityMultiplier: Float = 2.5f,
 ) {
     // Gracefully handle a degenerate range (min >= max): render at fixed position and disable dragging
     val hasRange = max > min
     val range = if (hasRange) (max - min) else 1f
+
+    // Track width (px) for delta -> value conversion; captured via onSizeChanged
+    var trackWidthPx by remember { mutableFloatStateOf(0f) }
+
+    // Avoid stale captures by reading latest values inside drag callbacks
+    val currentValue = rememberUpdatedState(value)
+    val currentMin = rememberUpdatedState(min)
+    val currentMax = rememberUpdatedState(max)
+    val currentRange = rememberUpdatedState(range)
+    val currentHasRange = rememberUpdatedState(hasRange)
+    val currentOnValueChange = rememberUpdatedState(onValueChange)
+    val currentOnValueChangeFinished = rememberUpdatedState(onValueChangeFinished)
+    val currentSensitivity = rememberUpdatedState(sensitivityMultiplier)
+    val currentLeftMarker = rememberUpdatedState(leftMarker)
+    val currentRightMarker = rememberUpdatedState(rightMarker)
 
     // Normalize a real value to [0f..1f] range
     fun Float.normalized(): Float = if (hasRange) ((this - min) / range).coerceIn(0f, 1f) else 0f
@@ -37,17 +60,28 @@ fun AmountSlider(
     val normalizedRightMarker = rightMarker?.normalized()
 
     val dragState = rememberDraggableState { delta ->
-        if (!hasRange) return@rememberDraggableState
-        val deltaValue = (delta / 1000f) * range
-        val newValue = (value + deltaValue).coerceIn(min, max)
-        onValueChange(newValue)
+        if (!currentHasRange.value) return@rememberDraggableState
+        val width = trackWidthPx
+        val denom = if (width > 0f) width else 1000f
+
+        // Basis for sensitivity: prefer marker span when both markers provided; fall back to full range.
+        // Apply a small floor (20% of full range) to avoid extremely slow drags when marker span is tiny.
+        val left = currentLeftMarker.value
+        val right = currentRightMarker.value
+        val markerSpan = if (left != null && right != null) (right - left).coerceAtLeast(0f) else null
+        val minBasis = currentRange.value * 0.2f
+        val basis = (markerSpan ?: currentRange.value).coerceAtLeast(minBasis)
+
+        val deltaValue = (delta / denom) * basis * currentSensitivity.value
+        val newValue = (currentValue.value + deltaValue).coerceIn(currentMin.value, currentMax.value)
+        currentOnValueChange.value(newValue)
     }
 
     val dragModifier = if (hasRange) {
         Modifier.draggable(
             orientation = Orientation.Horizontal,
             state = dragState,
-            onDragStopped = { _ -> onValueChangeFinished?.invoke() }
+            onDragStopped = { _ -> currentOnValueChangeFinished.value?.invoke() }
         )
     } else {
         Modifier
@@ -56,6 +90,7 @@ fun AmountSlider(
     Box(
         modifier = modifier
             .fillMaxWidth()
+            .onSizeChanged { trackWidthPx = it.width.toFloat() }
             .then(dragModifier)
     ) {
         Canvas(modifier = Modifier.fillMaxSize().height(40.dp)) {

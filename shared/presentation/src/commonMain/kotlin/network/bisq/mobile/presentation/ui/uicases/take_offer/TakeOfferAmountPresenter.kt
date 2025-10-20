@@ -99,14 +99,17 @@ class TakeOfferAmountPresenter(
         _sliderPosition.value = sliderPosition
 
         dragUpdateJob?.cancel()
-        dragUpdateJob = presenterScope.launch {
+        var job: Job? = null
+        job = presenterScope.launch {
             delay(dragUpdateSampleMs)
-            applySliderValue(this@TakeOfferAmountPresenter.sliderPosition.value)
+            applySliderValue(this@TakeOfferAmountPresenter.sliderPosition.value, trackedJob = job)
         }
+        dragUpdateJob = job
     }
 
     fun onSliderDragFinished() {
         dragUpdateJob?.cancel()
+        dragUpdateJob = null
         applySliderValue(sliderPosition.value)
     }
 
@@ -169,7 +172,7 @@ class TakeOfferAmountPresenter(
         }
     }
 
-    private fun applySliderValue(sliderPosition: Float) {
+    private fun applySliderValue(sliderPosition: Float, trackedJob: Job? = null) {
         try {
             _amountValid.value = sliderPosition in 0f..1f
             _sliderPosition.value = sliderPosition
@@ -186,8 +189,10 @@ class TakeOfferAmountPresenter(
             // cater for random quoteAmount = 0 issue
             log.e(e) { "Failed to apply slider value on take offer" }
         } finally {
-            // clear pending job if any after applying
-            dragUpdateJob = null
+            // Only clear if we're the currently tracked job, to avoid racing with a newer job
+            if (trackedJob != null && dragUpdateJob === trackedJob) {
+                dragUpdateJob = null
+            }
         }
     }
 
