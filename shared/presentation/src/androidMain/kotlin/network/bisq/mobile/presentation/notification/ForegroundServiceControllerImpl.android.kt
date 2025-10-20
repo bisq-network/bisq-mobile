@@ -74,7 +74,7 @@ class ForegroundServiceControllerImpl(
             try {
                 flow.collect { onStateChange(it) }
             } catch (e: Exception) {
-                log.e(e) { "Error in flow observer, flow collection terminated" }
+                log.w(e) { "Error in flow observer, flow collection terminated" }
             }
         }
         observerJobs[flow] = job
