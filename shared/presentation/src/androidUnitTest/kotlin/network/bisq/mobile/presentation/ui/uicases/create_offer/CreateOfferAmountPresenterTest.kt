@@ -308,5 +308,76 @@ class CreateOfferAmountPresenterTest {
         assertEquals(midQuote, amountPresenter.formattedQuoteSideFixedAmount.value)
         assertEquals(midBase, amountPresenter.formattedBaseSideFixedAmount.value)
     }
+
+    @Test
+    fun range_slider_updates_progressively_and_limit_info_updates_on_release() = runTest {
+        // Arrange market prices map (100 USD per BTC)
+        val marketUSD = MarketVOFactory.USD
+        val marketUSDItem = MarketPriceItem(marketUSD, with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) }, formattedPrice = "100 USD")
+        val prices = mapOf(marketUSD to marketUSDItem)
+
+        // Mock MarketPriceServiceFacade to avoid Koin
+        val marketPriceServiceFacade = mockk<MarketPriceServiceFacade>(relaxed = true).apply {
+            every { findMarketPriceItem(any()) } answers {
+                val arg = firstArg<MarketVO>()
+                prices.values.firstOrNull { it.market.baseCurrencyCode == arg.baseCurrencyCode && it.market.quoteCurrencyCode == arg.quoteCurrencyCode }
+            }
+            every { findUSDMarketPriceItem() } returns prices[marketUSD]
+            every { refreshSelectedFormattedMarketPrice() } returns Unit
+            every { selectMarket(any()) } returns Unit
+        }
+
+        // Mock the Android top-level function accessed by MainPresenter
+        mockkStatic("network.bisq.mobile.presentation.PlatformPresentationAbstractions_androidKt")
+        every { getScreenWidthDp() } returns 480
+
+        val mainPresenter = makeMainPresenter()
+
+        val offersServiceFacade = mockk<OffersServiceFacade>(relaxed = true)
+        val createOfferPresenter = CreateOfferPresenter(
+            mainPresenter,
+            marketPriceServiceFacade,
+            offersServiceFacade,
+            FakeSettingsServiceFacade(),
+        )
+        // Prepare model with market set
+        createOfferPresenter.createOfferModel = CreateOfferPresenter.CreateOfferModel().also { m ->
+            m.market = marketUSD
+        }
+
+        val amountPresenter = CreateOfferAmountPresenter(
+            mainPresenter,
+            marketPriceServiceFacade,
+            createOfferPresenter,
+            FakeUserProfileServiceFacade(),
+            FakeReputationServiceFacade(),
+        )
+
+        // Let initial init coroutines run
+        runCurrent()
+
+        val initialOverlayInfo = amountPresenter.amountLimitInfoOverlayInfo.value
+        val beforeMinSlider = amountPresenter.minRangeSliderValue.value
+        val beforeMaxSlider = amountPresenter.maxRangeSliderValue.value
+
+        // Act: progressive updates on drag for range (simulate each thumb moving)
+        amountPresenter.onMinRangeSliderValueChange(0.3f)
+        amountPresenter.onMaxRangeSliderValueChange(0.7f)
+        val midMinSlider = amountPresenter.minRangeSliderValue.value
+        val midMaxSlider = amountPresenter.maxRangeSliderValue.value
+        assertNotEquals(beforeMinSlider, midMinSlider)
+        assertNotEquals(beforeMaxSlider, midMaxSlider)
+
+        // Heavy reputation/limit overlay should not run during drag
+        assertEquals(initialOverlayInfo, amountPresenter.amountLimitInfoOverlayInfo.value)
+
+        // On release, heavy path is allowed to run; ensure stability of slider positions
+        amountPresenter.onSliderDragFinished()
+        advanceTimeBy(0)
+        runCurrent()
+        assertEquals(midMinSlider, amountPresenter.minRangeSliderValue.value)
+        assertEquals(midMaxSlider, amountPresenter.maxRangeSliderValue.value)
+    }
+
 }
 
