@@ -102,6 +102,7 @@ class WebSocketClientImpl(
                     withTimeout(timeout) {
                         httpClient.webSocketSession {
                             url {
+                                // apiUrl.protocol is guaranteed to be HTTP or HTTPS due to upstream validation
                                 protocol =
                                     if (apiUrl.protocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
                                 host = apiUrl.host
