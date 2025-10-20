@@ -54,7 +54,7 @@ class SettingsRepositoryImpl(
         }
     }
 
-    override suspend fun setExternalTorProxyUrl(value: String) {
+    override suspend fun setExternalProxyUrl(value: String) {
         settingsStore.updateData {
             it.copy(externalProxyUrl = value)
         }

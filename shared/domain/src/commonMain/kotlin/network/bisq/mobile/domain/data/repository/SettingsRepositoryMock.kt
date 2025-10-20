@@ -44,7 +44,7 @@ class SettingsRepositoryMock : SettingsRepository, Logging {
         }
     }
 
-    override suspend fun setExternalTorProxyUrl(value: String) {
+    override suspend fun setExternalProxyUrl(value: String) {
         _data.update {
             it.copy(externalProxyUrl = value)
         }

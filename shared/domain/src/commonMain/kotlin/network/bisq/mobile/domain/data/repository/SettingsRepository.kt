@@ -22,7 +22,7 @@ interface SettingsRepository {
 
     suspend fun setNotificationPermissionState(value: NotificationPermissionState)
 
-    suspend fun setExternalTorProxyUrl(value: String)
+    suspend fun setExternalProxyUrl(value: String)
 
     suspend fun setSelectedProxyOption(value: BisqProxyOption)
 
