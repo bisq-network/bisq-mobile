@@ -1,5 +1,7 @@
 package network.bisq.mobile.client.websocket
 
+import io.ktor.http.Url
+import io.ktor.http.parseUrl
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,7 +19,6 @@ import network.bisq.mobile.client.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketResponse
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
-import network.bisq.mobile.domain.data.replicated.common.network.AddressVO
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
@@ -82,21 +83,19 @@ class WebSocketClientService(
      */
     private suspend fun updateWebSocketClient(httpClientSettings: HttpClientSettings) {
         clientUpdateMutex.withLock {
-            val newAddress = httpClientSettings.apiUrl?.takeIf { it.isNotBlank() }?.let {
-                AddressVO.from(it)
-            } ?: AddressVO(defaultHost, defaultPort)
+            val newApiUrl: Url = httpClientSettings.apiUrl?.takeIf { it.isNotBlank() }?.let {
+                parseUrl(it)
+            } ?: parseUrl("http://$defaultHost:$defaultPort")!!
 
-            val (newHost, newPort) = newAddress
 
             currentClient.value = currentClient.value?.let {
-                log.d { "trusted node changing from ${it.host}:${it.port} to $newAddress. proxy url: ${httpClientSettings.proxyUrl}" }
+                log.d { "trusted node changing from ${it.apiUrl} to $newApiUrl. proxy url: ${httpClientSettings.proxyUrl}" }
                 it.dispose()
                 null
             }
             val newClient = webSocketClientFactory.createNewClient(
                 httpClientService.getClient(),
-                newHost,
-                newPort,
+                newApiUrl,
             )
             currentClient.value = newClient
             ApplicationBootstrapFacade.isDemo = newClient is WebSocketClientDemo
@@ -125,13 +124,13 @@ class WebSocketClientService(
                     }
                 }
             }
-            log.d { "WebSocket client updated with url $newHost:$newPort" }
+            log.d { "WebSocket client updated with url $newApiUrl" }
         }
     }
 
     suspend fun connect(): Throwable? {
         val client = getWsClient()
-        val timeout = determineTimeout(client.host)
+        val timeout = determineTimeout(client.apiUrl.host)
         return client.connect(timeout)
     }
 
@@ -203,8 +202,7 @@ class WebSocketClientService(
      * @return `null` if the connection test is successful, [Throwable] otherwise.
      */
     suspend fun testConnection(
-        host: String,
-        port: Int,
+        apiUrl: Url,
         proxyHost: String? = null,
         proxyPort: Int? = null,
         isTorProxy: Boolean = true,
@@ -212,18 +210,17 @@ class WebSocketClientService(
         val hasProxy = proxyHost != null && proxyPort != null
         val httpClient = httpClientService.createNewInstance(
             HttpClientSettings(
-                apiUrl = "$host:$port",
+                apiUrl = apiUrl.toString(),
                 proxyUrl = if (hasProxy) "$proxyHost:$proxyPort" else null,
                 isTorProxy = isTorProxy,
             )
         )
         val wsClient = webSocketClientFactory.createNewClient(
             httpClient,
-            host,
-            port,
+            apiUrl,
         )
         try {
-            val timeout = determineTimeout(host)
+            val timeout = determineTimeout(apiUrl.host)
             val error = wsClient.connect(timeout)
             if (error == null) {
                 // Wait 500ms to ensure connection is stable

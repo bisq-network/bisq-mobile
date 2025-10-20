@@ -1,6 +1,7 @@
 package network.bisq.mobile.client.websocket
 
 import io.ktor.client.HttpClient
+import io.ktor.http.Url
 import kotlinx.serialization.json.Json
 
 /**
@@ -8,15 +9,14 @@ import kotlinx.serialization.json.Json
  */
 class WebSocketClientFactory(private val jsonConfig: Json) {
 
-    fun createNewClient(httpClient: HttpClient, host: String, port: Int): WebSocketClient {
-        return if (host == "demo.bisq" && port == 21) {
+    fun createNewClient(httpClient: HttpClient, apiUrl: Url): WebSocketClient {
+        return if (apiUrl.host == "demo.bisq" && apiUrl.port == 21) {
             WebSocketClientDemo(jsonConfig)
         } else {
             WebSocketClientImpl(
                 httpClient,
                 jsonConfig,
-                host,
-                port,
+                apiUrl,
             )
         }
     }

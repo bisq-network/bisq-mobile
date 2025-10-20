@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.websocket
 
+import io.ktor.http.parseUrl
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -42,8 +43,7 @@ class WebSocketClientDemo(
     private val json: Json,
 ) : WebSocketClient, Logging {
 
-    override val host = "demo.bisq"
-    override val port = 21
+    override val apiUrl = parseUrl("http://demo.bisq:21")!!
 
     private val _webSocketClientStatus =
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())

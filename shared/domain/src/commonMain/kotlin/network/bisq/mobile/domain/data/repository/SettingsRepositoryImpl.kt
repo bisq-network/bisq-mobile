@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.core.IOException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.domain.data.model.NotificationPermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.utils.Logging
@@ -53,9 +54,15 @@ class SettingsRepositoryImpl(
         }
     }
 
-    override suspend fun setProxyUrl(value: String) {
+    override suspend fun setExternalTorProxyUrl(value: String) {
         settingsStore.updateData {
-            it.copy(proxyUrl = value)
+            it.copy(externalProxyUrl = value)
+        }
+    }
+
+    override suspend fun setSelectedProxyOption(value: BisqProxyOption) {
+        settingsStore.updateData {
+            it.copy(selectedProxyOption = value)
         }
     }
 

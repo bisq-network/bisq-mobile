@@ -2,6 +2,7 @@ package network.bisq.mobile.domain.data.repository
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.domain.data.model.NotificationPermissionState
 import network.bisq.mobile.domain.data.model.Settings
 
@@ -21,7 +22,9 @@ interface SettingsRepository {
 
     suspend fun setNotificationPermissionState(value: NotificationPermissionState)
 
-    suspend fun setProxyUrl(value: String)
+    suspend fun setExternalTorProxyUrl(value: String)
+
+    suspend fun setSelectedProxyOption(value: BisqProxyOption)
 
     suspend fun update(transform: suspend (t: Settings) -> Settings)
 

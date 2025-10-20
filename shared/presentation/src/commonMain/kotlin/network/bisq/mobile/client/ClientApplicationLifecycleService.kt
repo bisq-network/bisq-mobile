@@ -12,6 +12,7 @@ import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServiceFacade
 import network.bisq.mobile.domain.service.network.ConnectivityService
+import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -20,6 +21,7 @@ import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 
 class ClientApplicationLifecycleService(
+    private val kmpTorService: KmpTorService,
     private val httpClientService: HttpClientService,
     private val webSocketClientService: WebSocketClientService,
     private val accountsServiceFacade: AccountsServiceFacade,
@@ -39,18 +41,22 @@ class ClientApplicationLifecycleService(
     private val connectivityService: ConnectivityService,
 ) : BaseService() {
 
+    companion object {
+        const val TIMEOUT_SEC: Long = 60
+    }
+
     fun initialize() {
         log.i { "Initialize core services and Tor" }
 
         launchIO {
             runCatching {
+                applicationBootstrapFacade.activate() // sets bootstraps states and listeners
                 networkServiceFacade.activate()
                 httpClientService.activate()
                 webSocketClientService.activate()
-                applicationBootstrapFacade.activate()
                 activateServiceFacades()
             }.onFailure { e ->
-                log.e("Error at initializeTorAndServices", e)
+                log.e("Error at ClientApplicationLifecycleService.initialize", e)
                 runCatching { networkServiceFacade.deactivate() }
                 applicationBootstrapFacade.handleBootstrapFailure(e)
             }.also {

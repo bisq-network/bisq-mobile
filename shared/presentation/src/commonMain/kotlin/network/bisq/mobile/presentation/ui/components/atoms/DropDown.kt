@@ -44,6 +44,7 @@ fun BisqDropDown(
     chipShowOnlyKey: Boolean = false,
     maxSelectionLimit: Int? = null,
     outlineChip: Boolean = false,
+    disabled: Boolean = false,
 ) {
     val showError = remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
@@ -67,6 +68,7 @@ fun BisqDropDown(
         }
 
         BisqButton(
+            disabled = disabled,
             onClick = {
                 val limitReached = chipMultiSelect && maxSelectionLimit != null && selected.size >= maxSelectionLimit
                 if (limitReached) {

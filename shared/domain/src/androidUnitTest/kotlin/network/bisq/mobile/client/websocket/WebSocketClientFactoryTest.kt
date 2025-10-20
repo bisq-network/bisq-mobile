@@ -16,7 +16,7 @@ class WebSocketClientFactoryTest {
         val demoHost = "demo.bisq"
         val demoPort = 21
 
-        assertIs<WebSocketClientDemo>(factory.createNewClient(httpClient, demoHost, demoPort))
+        assertIs<WebSocketClientDemo>(factory.createNewClient(httpClient, "http://$demoHost:$demoPort"))
     }
 
     @Test
@@ -27,6 +27,6 @@ class WebSocketClientFactoryTest {
         val demoHost = "foo.bar"
         val demoPort = 21
 
-        assertIs<WebSocketClientImpl>(factory.createNewClient(httpClient, demoHost, demoPort))
+        assertIs<WebSocketClientImpl>(factory.createNewClient(httpClient, "http://$demoHost:$demoPort"))
     }
 }

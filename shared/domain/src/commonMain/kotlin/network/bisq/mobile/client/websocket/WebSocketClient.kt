@@ -1,5 +1,6 @@
 package network.bisq.mobile.client.websocket
 
+import io.ktor.http.Url
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.client.websocket.messages.WebSocketRequest
 import network.bisq.mobile.client.websocket.messages.WebSocketResponse
@@ -7,8 +8,7 @@ import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 
 interface WebSocketClient {
-    val host: String
-    val port: Int
+    val apiUrl: Url
     val webSocketClientStatus: StateFlow<ConnectionState>
 
     fun isConnected(): Boolean = webSocketClientStatus.value is ConnectionState.Connected

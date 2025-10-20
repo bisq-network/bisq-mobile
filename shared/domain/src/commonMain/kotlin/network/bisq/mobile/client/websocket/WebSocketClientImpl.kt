@@ -3,7 +3,9 @@ package network.bisq.mobile.client.websocket
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
-import io.ktor.client.request.url
+import io.ktor.http.URLProtocol
+import io.ktor.http.Url
+import io.ktor.http.path
 import io.ktor.util.collections.ConcurrentMap
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
@@ -56,8 +58,7 @@ import network.bisq.mobile.domain.utils.createUuid
 class WebSocketClientImpl(
     private val httpClient: HttpClient,
     private val json: Json,
-    override val host: String,
-    override val port: Int
+    override val apiUrl: Url,
 ) : WebSocketClient, Logging {
 
     companion object {
@@ -69,8 +70,6 @@ class WebSocketClientImpl(
     private var reconnectAttempts = 0
     private var isReconnecting = atomic(false)
     private var reconnectJob: Job? = null
-
-    private val webSocketUrl: String = "ws://$host:$port/websocket"
     private var session: DefaultClientWebSocketSession? = null
     private val webSocketEventObservers = ConcurrentMap<String, WebSocketEventObserver>()
     private val requestResponseHandlers = mutableMapOf<String, RequestResponseHandler>()
@@ -101,7 +100,15 @@ class WebSocketClientImpl(
                 val startTime = DateUtils.now()
                 val newSession = withContext(IODispatcher) {
                     withTimeout(timeout) {
-                        httpClient.webSocketSession { url(webSocketUrl) }
+                        httpClient.webSocketSession {
+                            url {
+                                protocol =
+                                    if (apiUrl.protocol == URLProtocol.HTTPS) URLProtocol.WSS else URLProtocol.WS
+                                host = apiUrl.host
+                                port = apiUrl.port
+                                path("/websocket")
+                            }
+                        }
                     }
                 }
                 val elapsed = DateUtils.now() - startTime
@@ -130,7 +137,7 @@ class WebSocketClientImpl(
                     throw WebSocketSessionClosedEarly()
                 }
             } catch (e: Exception) {
-                log.e(e) { "WS connection failed to connect to $webSocketUrl" }
+                log.e(e) { "WS connection failed to connect" }
                 _webSocketClientStatus.value = ConnectionState.Disconnected(e)
                 return e
             }

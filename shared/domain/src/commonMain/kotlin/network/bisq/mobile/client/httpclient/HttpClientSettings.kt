@@ -8,33 +8,46 @@ import network.bisq.mobile.domain.service.network.KmpTorService
 
 data class HttpClientSettings(
     val apiUrl: String?,
-    val selectedNetworkType: NetworkType = NetworkType.LAN,
+    val selectedProxyOption: BisqProxyOption = BisqProxyOption.NONE,
     val proxyUrl: String? = null,
     val isTorProxy: Boolean = false,
 ) {
     companion object {
+        /**
+         * Warning: Suspends until [KmpTorService] is started if selected proxy option is [BisqProxyOption.INTERNAL_TOR]
+         */
         suspend fun from(settings: Settings, kmpTorService: KmpTorService?): HttpClientSettings {
-            val selectedNetworkType = settings.selectedNetworkType
-            var isProxyUrlTor = settings.isProxyUrlTor
-            var proxyUrl: String? = null
-            if (selectedNetworkType == NetworkType.TOR && !settings.useExternalProxy) {
-                val socksPort = if (settings.isInternalTorEnabled && kmpTorService != null) {
-                    // kmpTorService.getSocksPort() // TODO: fix after kmp tor is fixed
-                    "0"
-                } else {
-                    // we intentionally want to fail fast instead of not setting the proxy
-                    "0"
+            val selectedProxyOption = settings.selectedProxyOption
+            var proxyUrl: String?
+            val isTorProxy: Boolean
+            when (selectedProxyOption) {
+                BisqProxyOption.INTERNAL_TOR -> {
+                    val socksPort = kmpTorService?.getSocksPort()
+                        ?: "0" // we intentionally want to fail fast instead of not setting the proxy
+                    proxyUrl = "127.0.0.1:$socksPort"
+                    isTorProxy = true
                 }
-                proxyUrl = "127.0.0.1:$socksPort"
-                isProxyUrlTor = true
-            } else if (settings.useExternalProxy) {
-                proxyUrl = settings.proxyUrl
+
+                BisqProxyOption.EXTERNAL_TOR -> {
+                    proxyUrl = settings.externalProxyUrl
+                    isTorProxy = true
+                }
+
+                BisqProxyOption.SOCKS_PROXY -> {
+                    proxyUrl = settings.externalProxyUrl
+                    isTorProxy = false
+                }
+
+                BisqProxyOption.NONE -> {
+                    proxyUrl = null
+                    isTorProxy = false
+                }
             }
             return HttpClientSettings(
                 settings.bisqApiUrl,
-                selectedNetworkType,
+                selectedProxyOption,
                 proxyUrl,
-                isProxyUrlTor,
+                isTorProxy,
             )
         }
     }

@@ -39,4 +39,30 @@ object NetworkUtils {
         val num = toIntOrNull() ?: return false
         return num in 1..65535
     }
+
+    fun String.isPrivateIPv4(): Boolean {
+        val parts = this.split(".")
+        if (parts.size != 4) return false
+        val nums = parts.mapNotNull { it.toIntOrNull() }
+        if (nums.size != 4 || nums.any { it !in 0..255 }) return false
+
+        val (a, b, c, d) = nums
+
+        // 10.0.0.0 – 10.255.255.255
+        if (a == 10) return true
+
+        // 172.16.0.0 – 172.31.255.255
+        if (a == 172 && b in 16..31) return true
+
+        // 192.168.0.0 – 192.168.255.255
+        if (a == 192 && b == 168) return true
+
+        // 127.0.0.0 – 127.255.255.255 (loopback, often considered private)
+        if (a == 127) return true
+
+        // 169.254.0.0 – 169.254.255.255 (link-local)
+        if (a == 169 && b == 254) return true
+
+        return false
+    }
 }

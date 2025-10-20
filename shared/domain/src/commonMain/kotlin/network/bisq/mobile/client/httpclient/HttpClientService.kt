@@ -23,6 +23,7 @@ import kotlinx.serialization.json.Json
 import network.bisq.mobile.domain.createHttpClient
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.ServiceFacade
+import network.bisq.mobile.domain.service.network.KmpTorService
 
 /**
  *  Listens to settings changes and creates a new httpclient accordingly
@@ -30,6 +31,7 @@ import network.bisq.mobile.domain.service.ServiceFacade
  *  Calls made using this service will be suspended until a httpclient is instantiated
  */
 class HttpClientService(
+    private val kmpTorService: KmpTorService,
     private val settingsRepository: SettingsRepository,
     private val jsonConfig: Json,
     private val defaultHost: String,
@@ -45,7 +47,7 @@ class HttpClientService(
         super.activate()
 
         collectIO(settingsRepository.data) {
-            val newConfig = HttpClientSettings.from(it, null) // TODO: fix after kmp tor is setup
+            val newConfig = HttpClientSettings.from(it, kmpTorService)
             if (lastConfig != newConfig) {
                 lastConfig = newConfig
                 _httpClient.value?.close()
@@ -106,9 +108,8 @@ class HttpClientService(
         if (proxy != null) {
             log.d { "Using proxy from settings: $proxy" }
         }
-        // TODO: apiURL should contain scheme based on user settings to allow secure connections on clearnet
-        val apiUrl = if (clientSettings.apiUrl != null && clientSettings.apiUrl.isNotBlank()) {
-            "http://${clientSettings.apiUrl}"
+        val apiUrl = if (!clientSettings.apiUrl.isNullOrBlank()) {
+            clientSettings.apiUrl
         } else {
             "http://$defaultHost:$defaultPort"
         }

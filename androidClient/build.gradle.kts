@@ -89,9 +89,41 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            excludes.add("META-INF/LICENSE.md")
-            excludes.add("META-INF/NOTICE.md")
+            // the following exclude are needeD to avoid protobuf hanging build when merging release resources for java
+            // Exclude the conflicting META-INF files
+            excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
+            excludes.add("META-INF/DEPENDENCIES")
+            excludes.add("META-INF/LICENSE*.md")
+            excludes.add("META-INF/NOTICE*.md")
+            excludes.add("META-INF/INDEX.LIST")
             excludes.add("META-INF/NOTICE.markdown")
+            pickFirsts.add("**/protobuf/**/*.class")
+            pickFirsts += listOf(
+                "META-INF/LICENSE*",
+                "META-INF/NOTICE*",
+                "META-INF/services/**",
+                "META-INF/*.version"
+            )
+        }
+        jniLibs {
+            // for apk release builds after tor inclusion
+            // If multiple .so files exist across dependencies, pick the first and avoid conflicts
+            pickFirsts += listOf(
+                "lib/**/libtor.so",
+                "lib/**/libcrypto.so",
+                "lib/**/libevent*.so",
+                "lib/**/libssl.so",
+                "lib/**/libsqlite*.so",
+                // Data store
+                "lib/**/libdatastore_shared_counter.so",
+            )
+            // Exclude problematic native libraries
+            excludes += listOf(
+                "**/libmagtsync.so",
+                "**/libMEOW*.so"
+            )
+            // Required for kmp-tor exec resources - helps prevent EOCD corruption
+            useLegacyPackaging = true
         }
     }
     buildTypes {

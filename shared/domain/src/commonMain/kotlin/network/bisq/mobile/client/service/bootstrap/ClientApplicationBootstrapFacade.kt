@@ -1,19 +1,18 @@
 package network.bisq.mobile.client.service.bootstrap
 
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
 
 class ClientApplicationBootstrapFacade(
     private val settingsRepository: SettingsRepository,
     private val webSocketClientService: WebSocketClientService,
-) : ApplicationBootstrapFacade() {
-
-    private var bootstrapJob: Job? = null
+    private val kmpTorService: KmpTorService,
+) : ApplicationBootstrapFacade(kmpTorService) {
 
     override fun activate() {
         super.activate()
@@ -21,7 +20,20 @@ class ClientApplicationBootstrapFacade(
         setState("mobile.clientApplicationBootstrap.bootstrapping".i18n())
         setProgress(0f)
 
-        bootstrapJob = serviceScope.launch {
+        serviceScope.launch {
+            val settings = settingsRepository.fetch()
+            if (settings.selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
+                observeTorState()
+                kmpTorService.startTor().await()
+            } else {
+                onTorStartedOrSkipped()
+            }
+        }
+    }
+
+     fun onTorStartedOrSkipped() {
+        onInitialized()
+        serviceScope.launch {
             val url = settingsRepository.fetch().bisqApiUrl
             log.d { "Settings url $url" }
 
@@ -34,7 +46,6 @@ class ClientApplicationBootstrapFacade(
                 setState("mobile.clientApplicationBootstrap.connectingToTrustedNode".i18n())
 
                 val error = webSocketClientService.connect()
-                delay(200) // small delay to allow connection state to be collected // FIXME: refactor needed to remove this delay
                 if (error == null) {
                     setState("mobile.bootstrap.connectedToTrustedNode".i18n())
                     setProgress(1.0f)
@@ -45,14 +56,13 @@ class ClientApplicationBootstrapFacade(
                 }
             }
         }
+    }
 
-        log.d { "Running bootstrap finished." }
+    override fun onTorStarted() {
+        onTorStartedOrSkipped()
     }
 
     override fun deactivate() {
-        bootstrapJob?.cancel()
-        bootstrapJob = null
-
         super.deactivate()
     }
 }

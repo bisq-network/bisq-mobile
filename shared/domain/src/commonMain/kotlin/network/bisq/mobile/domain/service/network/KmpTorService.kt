@@ -4,6 +4,7 @@ import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.aSocket
 import io.matthewnelson.kmp.file.File
 import io.matthewnelson.kmp.tor.runtime.Action
+import io.matthewnelson.kmp.tor.runtime.Action.Companion.stopDaemonAsync
 import io.matthewnelson.kmp.tor.runtime.Action.Companion.stopDaemonSync
 import io.matthewnelson.kmp.tor.runtime.TorRuntime
 import io.matthewnelson.kmp.tor.runtime.core.OnEvent
@@ -24,6 +25,7 @@ import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.i18n.i18n
 import okio.FileSystem
 import okio.Path
 import okio.SYSTEM
@@ -44,14 +46,17 @@ import okio.SYSTEM
  *
  */
 class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
-    enum class State {
-        IDLE,
-        STARTING,
-        STARTED,
-        STOPPING,
-        STOPPED,
-        STARTING_FAILED,
-        STOPPING_FAILED
+
+    enum class State(private val i18nKey: String) {
+        IDLE("mobile.kmpTorService.state.idle"),
+        STARTING("mobile.kmpTorService.state.starting"),
+        STARTED("mobile.kmpTorService.state.started"),
+        STOPPING("mobile.kmpTorService.state.stopping"),
+        STOPPED("mobile.kmpTorService.state.stopped"),
+        STARTING_FAILED("mobile.kmpTorService.state.starting_failed"),
+        STOPPING_FAILED("mobile.kmpTorService.state.stopping_failed");
+
+        val displayString: String get() = i18nKey.i18n()
     }
 
     private var torRuntime: TorRuntime? = null
@@ -102,6 +107,27 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             }
         )
         return torStartupCompleted
+    }
+
+    suspend fun stopTorAsync() {
+        _state.value = State.STOPPING
+        if (torRuntime == null) {
+            log.w("Tor runtime is null at stopTor")
+            return
+        }
+
+        try {
+            torRuntime!!.stopDaemonAsync()
+            log.i { "Tor daemon stopped" }
+            _state.value = State.STOPPED
+        } catch (e: Exception) {
+            handleError("Failed to stop Tor daemon: $e")
+            _state.value = State.STOPPING_FAILED
+            throw e
+        } finally {
+            resetAndDispose()
+            torRuntime = null
+        }
     }
 
     fun stopTorSync() {

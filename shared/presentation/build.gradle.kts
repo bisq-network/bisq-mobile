@@ -73,6 +73,9 @@ kotlin {
             implementation(libs.coil.compose)
 
             implementation(libs.atomicfu)
+
+            // for parsing urls with io.ktor.http.parseUrl
+            implementation(libs.ktor.client.core)
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)

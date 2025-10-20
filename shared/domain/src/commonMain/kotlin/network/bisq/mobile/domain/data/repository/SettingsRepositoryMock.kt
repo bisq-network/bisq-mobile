@@ -4,6 +4,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
+import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.domain.data.model.NotificationPermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.utils.Logging
@@ -43,9 +44,15 @@ class SettingsRepositoryMock : SettingsRepository, Logging {
         }
     }
 
-    override suspend fun setProxyUrl(value: String) {
+    override suspend fun setExternalTorProxyUrl(value: String) {
         _data.update {
-            it.copy(proxyUrl = value)
+            it.copy(externalProxyUrl = value)
+        }
+    }
+
+    override suspend fun setSelectedProxyOption(value: BisqProxyOption) {
+        _data.update {
+            it.copy(selectedProxyOption = value)
         }
     }
 

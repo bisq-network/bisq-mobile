@@ -135,7 +135,7 @@ val presentationModule = module {
         )
     }
 
-    single<TrustedNodeSetupPresenter> { TrustedNodeSetupPresenter(get(), get(), get()) }
+    single<TrustedNodeSetupPresenter> { TrustedNodeSetupPresenter(get(), get(), get(), get()) }
 
     factory { SettingsPresenter(get(), get(), get()) } bind IGeneralSettingsPresenter::class
 
