@@ -280,27 +280,27 @@ class CreateOfferAmountPresenter(
 
     fun onFixedAmountSliderValueChange(value: Float) {
         applyFixedAmountSliderValue(value)
-        updateAmountLimitInfo()
     }
 
     fun onMinRangeSliderValueChange(value: Float) {
         applyMinRangeAmountSliderValue(value)
-        updateAmountLimitInfo()
     }
 
     fun onMaxRangeSliderValueChange(value: Float) {
         applyMaxRangeAmountSliderValue(value)
-        updateAmountLimitInfo()
     }
 
     fun onRangeAmountSliderChanged(value: ClosedFloatingPointRange<Float>) {
         applyRangeAmountSliderValue(value)
-        updateAmountLimitInfo()
     }
 
     fun onBack() {
         commitToModel()
         navigateBack()
+    }
+
+    fun onSliderDragFinished() {
+        updateAmountLimitInfo()
     }
 
     fun onClose() {

@@ -23,6 +23,7 @@ fun AmountSlider(
     leftMarker: Float? = null,
     rightMarker: Float? = null,
     modifier: Modifier = Modifier,
+    onValueChangeFinished: (() -> Unit)? = null,
 ) {
     // Gracefully handle a degenerate range (min >= max): render at fixed position and disable dragging
     val hasRange = max > min
@@ -43,7 +44,11 @@ fun AmountSlider(
     }
 
     val dragModifier = if (hasRange) {
-        Modifier.draggable(orientation = Orientation.Horizontal, state = dragState)
+        Modifier.draggable(
+            orientation = Orientation.Horizontal,
+            state = dragState,
+            onDragStopped = { _ -> onValueChangeFinished?.invoke() }
+        )
     } else {
         Modifier
     }

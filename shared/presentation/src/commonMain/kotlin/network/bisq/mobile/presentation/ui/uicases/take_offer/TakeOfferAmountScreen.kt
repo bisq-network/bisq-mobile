@@ -59,6 +59,7 @@ fun TakeOfferTradeAmountScreen() {
             onTextValueChange = presenter::onTextValueChanged,
             validateTextField = presenter::validateTextField,
             sliderPosition = sliderPosition,
+            onSliderValueChangeFinished = presenter::onSliderDragFinished,
         )
     }
 }

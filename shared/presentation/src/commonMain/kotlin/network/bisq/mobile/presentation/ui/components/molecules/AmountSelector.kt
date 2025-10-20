@@ -32,6 +32,7 @@ fun BisqAmountSelector(
     onSliderValueChange: (sliderValue: Float) -> Unit,
     onTextValueChange: (String) -> Unit,
     validateTextField: ((String) -> String?)? = null,
+    onSliderValueChangeFinished: (() -> Unit)? = null,
 ) {
     val decimalSeparator = getDecimalSeparator()
     val formattedFiatAmountValueInt = formattedFiatAmount.substringBefore(decimalSeparator)
@@ -64,7 +65,8 @@ fun BisqAmountSelector(
                 max = maxSliderValue ?: 1f,
                 leftMarker = leftMarkerSliderValue,
                 rightMarker = rightMarkerSliderValue,
-                onValueChange = { onSliderValueChange(it) }
+                onValueChange = { onSliderValueChange(it) },
+                onValueChangeFinished = onSliderValueChangeFinished
             )
 
             BisqGap.V1()

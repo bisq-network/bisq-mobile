@@ -102,6 +102,7 @@ fun CreateOfferAmountScreen() {
                 onSliderValueChange = { presenter.onFixedAmountSliderValueChange(it) },
                 onTextValueChange = { presenter.onFixedAmountTextValueChange(it) },
                 validateTextField = { presenter.validateTextField(it) },
+                onSliderValueChangeFinished = presenter::onSliderDragFinished,
             )
         } else {
             RangeAmountSelector(
@@ -122,6 +123,7 @@ fun CreateOfferAmountScreen() {
                 onMaxAmountTextValueChange = { presenter.onMaxAmountTextValueChange(it) },
                 validateRangeMinTextField = { presenter.validateTextField(it) },
                 validateRangeMaxTextField = { presenter.validateTextField(it) },
+                onRangeSliderChangeFinished = presenter::onSliderDragFinished,
             )
         }
 

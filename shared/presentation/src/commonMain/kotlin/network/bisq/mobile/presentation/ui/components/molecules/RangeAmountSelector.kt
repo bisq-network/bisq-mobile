@@ -39,6 +39,7 @@ fun RangeAmountSelector(
     onMaxAmountTextValueChange: (String) -> Unit,
     validateRangeMinTextField: ((String) -> String?)? = null,
     validateRangeMaxTextField: ((String) -> String?)? = null,
+    onRangeSliderChangeFinished: (() -> Unit)? = null,
 ) {
     val decimalSeparator = getDecimalSeparator()
     val quoteSideMinRangeAmountWithoutDecimal = formattedQuoteSideMinRangeAmount.substringBefore(decimalSeparator)
@@ -100,6 +101,7 @@ fun RangeAmountSelector(
                 maxValue = maxSliderValue,
                 leftMarkerValue = leftMarkerSliderValue,
                 rightMarkerValue = rightMarkerSliderValue,
+                onRangeChangeFinished = onRangeSliderChangeFinished,
             )
 
             BisqGap.V1()

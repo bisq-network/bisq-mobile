@@ -14,6 +14,7 @@ fun RangeAmountSlider(
     maxValue: Float? = null,
     leftMarkerValue: Float? = null,
     rightMarkerValue: Float? = null,
+    onRangeChangeFinished: (() -> Unit)? = null,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(32.dp)) {
         AmountSlider(
@@ -26,7 +27,8 @@ fun RangeAmountSlider(
                     onMaxRangeValueChange(value)
                 }
                 onMinRangeValueChange(value)
-            }
+            },
+            onValueChangeFinished = onRangeChangeFinished
         )
 
         AmountSlider(
@@ -39,7 +41,8 @@ fun RangeAmountSlider(
                     onMinRangeValueChange(value)
                 }
                 onMaxRangeValueChange(value)
-            }
+            },
+            onValueChangeFinished = onRangeChangeFinished
         )
     }
 }

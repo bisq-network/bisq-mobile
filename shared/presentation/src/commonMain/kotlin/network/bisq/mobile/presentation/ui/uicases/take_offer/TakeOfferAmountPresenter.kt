@@ -87,7 +87,12 @@ class TakeOfferAmountPresenter(
     }
 
     fun onSliderValueChanged(sliderPosition: Float) {
-        applySliderValue(sliderPosition)
+        _amountValid.value = sliderPosition in 0f..1f
+        _sliderPosition.value = sliderPosition
+    }
+
+    fun onSliderDragFinished() {
+        applySliderValue(sliderPosition.value)
     }
 
     fun onTextValueChanged(textInput: String) {
