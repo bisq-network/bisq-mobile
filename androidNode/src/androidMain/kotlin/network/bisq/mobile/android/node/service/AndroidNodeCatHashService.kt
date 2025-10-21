@@ -52,7 +52,7 @@ class AndroidNodeCatHashService(private val context: Context, baseDir: Path?) :
     }
 
     override fun getSizeOfCachedIcons(): Double {
-        return DEFAULT_SIZE
+        return DEFAULT_SIZE * 2
     }
 
     override fun getMaxCacheSize(): Int {
