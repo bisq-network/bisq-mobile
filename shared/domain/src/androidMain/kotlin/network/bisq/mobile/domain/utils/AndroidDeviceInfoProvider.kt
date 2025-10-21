@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.BatteryManager
 import android.os.Build
+import android.os.Debug
 import android.os.Environment
 import android.os.StatFs
 import network.bisq.mobile.i18n.i18n
@@ -13,18 +14,31 @@ import network.bisq.mobile.i18n.i18n
 class AndroidDeviceInfoProvider(
     private var context: Context
 ) : DeviceInfoProvider, Logging {
+
+    private var deviceMemInfo: ActivityManager.MemoryInfo = ActivityManager.MemoryInfo()
+    private val appMemInfo: Debug.MemoryInfo = Debug.MemoryInfo()
+    private val runtime = Runtime.getRuntime()
+
     override fun getDeviceInfo(): String {
         // Memory info
         val na = "data.na".i18n()
-        var totalMem = na
-        var availMem = na
+        var deviceUsedMB = na
+        var deviceAvailMB = na
+        var deviceTotalMB = na
         val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
         activityManager?.let {
-            val memInfo = ActivityManager.MemoryInfo()
-            it.getMemoryInfo(memInfo)
-            totalMem = ByteUnitUtil.formatBytesPrecise(memInfo.totalMem)
-            availMem = ByteUnitUtil.formatBytesPrecise(memInfo.availMem)
+            it.getMemoryInfo(deviceMemInfo)
+            val totalMem = deviceMemInfo.totalMem
+            val availMem = deviceMemInfo.availMem
+            val used = totalMem - availMem
+            deviceUsedMB = ByteUnitUtil.formatBytesPrecise(used, 0)
+            deviceTotalMB = ByteUnitUtil.formatBytesPrecise(totalMem, 0)
+            deviceAvailMB = ByteUnitUtil.formatBytesPrecise(availMem, 0)
         }
+
+        // App memory
+        Debug.getMemoryInfo(appMemInfo)
+        val appUsedMB = ByteUnitUtil.formatBytesPrecise(appMemInfo.totalPss * 1024L, 0)
 
         // Storage info
         var totalStorage = na
@@ -55,7 +69,8 @@ class AndroidDeviceInfoProvider(
         return "mobile.resources.deviceInfo.android".i18n(
             manufacturer, Build.MODEL,
             Build.VERSION.RELEASE, Build.VERSION.SDK_INT.toString(),
-            availMem, totalMem,
+            deviceAvailMB, deviceUsedMB, deviceTotalMB,
+            appUsedMB,
             availStorage, totalStorage,
             batteryLevel
         )
