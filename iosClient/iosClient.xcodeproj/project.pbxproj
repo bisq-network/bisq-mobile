@@ -149,6 +149,7 @@
 				74831B712D5088E600B729F4 /* Frameworks */,
 				74831B732D5088E600B729F4 /* Resources */,
 				74831B762D5088E600B729F4 /* [CP] Embed Pods Frameworks */,
+				940A6BA0EB51E55AD3C5FE91 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -169,6 +170,7 @@
 				B92378962B6B1156000C7307 /* Frameworks */,
 				7555FF79242A565900829871 /* Resources */,
 				3281115E126FA938007845C3 /* [CP] Embed Pods Frameworks */,
+				AB348030364B2B03100D8174 /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -330,6 +332,40 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		940A6BA0EB51E55AD3C5FE91 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect/Pods-Bisq Connect-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		AB348030364B2B03100D8174 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Bisq Connect Debug/Pods-Bisq Connect Debug-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		F36B1CEB2AD83DDC00CB74D5 /* Compile Kotlin Framework */ = {
