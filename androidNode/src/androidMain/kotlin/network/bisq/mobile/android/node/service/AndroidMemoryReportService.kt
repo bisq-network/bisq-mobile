@@ -24,8 +24,6 @@ class AndroidMemoryReportService(context: Context) : MemoryReportService, Loggin
     private val runtime = Runtime.getRuntime()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var peakTotalPssMB = -1L
-
-    private fun kbToMb(kb: Int) = kb / 1024
     private fun bytesToMb(bytes: Long) = bytes / 1024 / 1024
 
     override fun initialize(): CompletableFuture<Boolean> {
@@ -42,28 +40,32 @@ class AndroidMemoryReportService(context: Context) : MemoryReportService, Loggin
 
     override fun shutdown(): CompletableFuture<Boolean> {
         return CompletableFuture.supplyAsync {
-            scope.cancel();
+            scope.cancel()
             // Shutdown logic here if needed
             true
         }
     }
 
     override fun logReport() {
-        val deviceTotalMB = getTotalMemoryInMB()
-        val deviceAvailMB = getFreeMemoryInMB()
-        val deviceUsedMB = deviceTotalMB - deviceAvailMB
-        val deviceUsedPct = if (deviceTotalMB > 0) (deviceUsedMB.toDouble() * 100.0 / deviceTotalMB) else 0.0
+        runCatching {
+            val deviceTotalMB = getTotalMemoryInMB()
+            val deviceAvailMB = getFreeMemoryInMB()
+            val deviceUsedMB = deviceTotalMB - deviceAvailMB
+            val deviceUsedPct = if (deviceTotalMB > 0) (deviceUsedMB.toDouble() * 100.0 / deviceTotalMB) else 0.0
 
-        val totalPssMB = bytesToMb(getUsedMemoryInBytes())
-        peakTotalPssMB = max(peakTotalPssMB, totalPssMB)
-        val javaUsedMB = bytesToMb(runtime.totalMemory() - runtime.freeMemory())
-        val javaMaxMB = bytesToMb(runtime.maxMemory())
-        val nativeUsedMB = bytesToMb(Debug.getNativeHeapAllocatedSize())
-        val nativeFreeMB = bytesToMb(Debug.getNativeHeapFreeSize())
+            val totalPssMB = bytesToMb(getUsedMemoryInBytes())
+            peakTotalPssMB = max(peakTotalPssMB, totalPssMB)
+            val javaUsedMB = bytesToMb(runtime.totalMemory() - runtime.freeMemory())
+            val javaMaxMB = bytesToMb(runtime.maxMemory())
+            val nativeUsedMB = bytesToMb(Debug.getNativeHeapAllocatedSize())
+            val nativeFreeMB = bytesToMb(Debug.getNativeHeapFreeSize())
 
-        log.i {
-            "Device memory: Used=$deviceUsedMB MB ($deviceUsedPct%), Available=$deviceAvailMB MB, Total=$deviceTotalMB MB\n" +
-                    "App memory: PSS=$totalPssMB MB (peak=$peakTotalPssMB MB); Java heap: Used=$javaUsedMB MB, Max=$javaMaxMB MB; Native heap: Used=$nativeUsedMB MB, Free=$nativeFreeMB MB"
+            log.i {
+                "Device memory: Used=$deviceUsedMB MB (${"%.1f".format(deviceUsedPct)}%), Available=$deviceAvailMB MB, Total=$deviceTotalMB MB\n" +
+                        "App memory: PSS=$totalPssMB MB (peak=$peakTotalPssMB MB); Java heap: Used=$javaUsedMB MB, Max=$javaMaxMB MB; Native heap: Used=$nativeUsedMB MB, Free=$nativeFreeMB MB"
+            }
+        }.onFailure { exception ->
+            log.e(exception) { "Failed to log memory report" }
         }
     }
 
