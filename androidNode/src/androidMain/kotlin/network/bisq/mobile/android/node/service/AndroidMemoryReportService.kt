@@ -2,59 +2,88 @@ package network.bisq.mobile.android.node.service
 
 import android.app.ActivityManager
 import android.content.Context
+import android.os.Debug
 import bisq.common.platform.MemoryReportService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.utils.Logging
 import java.util.concurrent.CompletableFuture
+import kotlin.math.max
 
-/**
- * Memory report for bisq jars calculations
- */
 class AndroidMemoryReportService(context: Context) : MemoryReportService, Logging {
-
     private val activityManager =
         context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
 
-    override fun logReport() {
-        val usedMemory = usedMemoryInMB
-        val freeMemory = freeMemoryInMB
-        val totalMemory = totalMemoryInMB
-        log.i("Memory Report - Used: ${usedMemory}MB, Free: ${freeMemory}MB, Total: ${totalMemory}MB")
-    }
+    private var deviceMemInfo = ActivityManager.MemoryInfo()
+    private val appMemInfo = Debug.MemoryInfo()
+    private val runtime = Runtime.getRuntime()
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    private var peakTotalPssMB = -1L
 
-    override fun getUsedMemoryInBytes(): Long {
-        val memoryInfo = ActivityManager.MemoryInfo().also { activityManager.getMemoryInfo(it) }
-        return memoryInfo.totalMem - memoryInfo.availMem
-    }
-
-    override fun getUsedMemoryInMB(): Long {
-        return bytesToMegabytes(getUsedMemoryInBytes())
-    }
-
-    override fun getFreeMemoryInMB(): Long {
-        val memoryInfo = ActivityManager.MemoryInfo().also { activityManager.getMemoryInfo(it) }
-        return bytesToMegabytes(memoryInfo.availMem)
-    }
-
-    override fun getTotalMemoryInMB(): Long {
-        val memoryInfo = ActivityManager.MemoryInfo().also { activityManager.getMemoryInfo(it) }
-        return bytesToMegabytes(memoryInfo.totalMem)
-    }
+    private fun kbToMb(kb: Int) = kb / 1024
+    private fun bytesToMb(bytes: Long) = bytes / 1024 / 1024
 
     override fun initialize(): CompletableFuture<Boolean> {
         return CompletableFuture.supplyAsync {
-            // Initialization logic here if needed
+            scope.launch {
+                while (isActive) {
+                    logReport()
+                    delay(10_000)
+                }
+            }
             true
         }
     }
 
     override fun shutdown(): CompletableFuture<Boolean> {
         return CompletableFuture.supplyAsync {
+            scope.cancel();
             // Shutdown logic here if needed
             true
         }
     }
 
-    private fun bytesToMegabytes(bytes: Long): Long {
-        return bytes / (1024 * 1024)
+    override fun logReport() {
+        val deviceTotalMB = getTotalMemoryInMB()
+        val deviceAvailMB = getFreeMemoryInMB()
+        val deviceUsedMB = deviceTotalMB - deviceAvailMB
+        val deviceUsedPct = if (deviceTotalMB > 0) (deviceUsedMB.toDouble() * 100.0 / deviceTotalMB) else 0.0
+
+        val totalPssMB = bytesToMb(getUsedMemoryInBytes())
+        peakTotalPssMB = max(peakTotalPssMB, totalPssMB)
+        val javaUsedMB = bytesToMb(runtime.totalMemory() - runtime.freeMemory())
+        val javaMaxMB = bytesToMb(runtime.maxMemory())
+        val nativeUsedMB = bytesToMb(Debug.getNativeHeapAllocatedSize())
+        val nativeFreeMB = bytesToMb(Debug.getNativeHeapFreeSize())
+
+        log.i {
+            "Device memory: Used=$deviceUsedMB MB ($deviceUsedPct%), Available=$deviceAvailMB MB, Total=$deviceTotalMB MB\n" +
+                    "App memory: PSS=$totalPssMB MB (peak=$peakTotalPssMB MB); Java heap: Used=$javaUsedMB MB, Max=$javaMaxMB MB; Native heap: Used=$nativeUsedMB MB, Free=$nativeFreeMB MB"
+        }
+    }
+
+    override fun getUsedMemoryInBytes(): Long {
+        // Approximate app memory via PSS (KB → bytes)
+        Debug.getMemoryInfo(appMemInfo)
+        return appMemInfo.totalPss.toLong() * 1024L
+    }
+
+    override fun getUsedMemoryInMB(): Long {
+        return bytesToMb(getUsedMemoryInBytes())
+    }
+
+    override fun getFreeMemoryInMB(): Long {
+        activityManager.getMemoryInfo(deviceMemInfo)
+        return bytesToMb(deviceMemInfo.availMem)
+    }
+
+    override fun getTotalMemoryInMB(): Long {
+        activityManager.getMemoryInfo(deviceMemInfo)
+        return bytesToMb(deviceMemInfo.totalMem)
     }
 }

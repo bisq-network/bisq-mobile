@@ -14,6 +14,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -57,6 +58,7 @@ class NodeApplicationLifecycleService(
     private val userProfileServiceFacade: UserProfileServiceFacade,
     private val provider: AndroidApplicationService.Provider,
     private val androidApplicationService: AndroidApplicationService,
+    private val androidMemoryReportService: AndroidMemoryReportService,
     private val kmpTorService: KmpTorService,
     private val networkServiceFacade: NetworkServiceFacade,
     private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
@@ -76,6 +78,7 @@ class NodeApplicationLifecycleService(
 
         launchIO {
             runCatching {
+                androidMemoryReportService.initialize()
                 networkServiceFacade.activate()
                 applicationBootstrapFacade.activate()
 
@@ -104,6 +107,7 @@ class NodeApplicationLifecycleService(
 
     fun shutdown() {
         log.i { "Destroying NodeMainPresenter" }
+        androidMemoryReportService.shutdown()
         shutdownServicesAndTor()
     }
 
