@@ -1,5 +1,8 @@
 package network.bisq.mobile.android.node.di
 
+import android.app.ActivityManager
+import android.content.Context
+import android.os.Debug
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.presentation.NodeDashboardPresenter
@@ -48,6 +51,7 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
+import network.bisq.mobile.node.BuildConfig
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.uicases.DashboardPresenter
@@ -63,8 +67,15 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 
 val androidNodeModule = module {
+    // System services for memory reporting
+    single<ActivityManager> { androidContext().getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager }
+    single { ActivityManager.MemoryInfo() }
+    single { Debug.MemoryInfo() }
+    single { Runtime.getRuntime() }
+
     single<AndroidMemoryReportService> {
-        AndroidMemoryReportService(androidContext())
+        val isDebug = BuildConfig.DEBUG
+        AndroidMemoryReportService(get(), get(), get(), get(), isDebug)
     }
 
     single<AndroidNodeCatHashService> {

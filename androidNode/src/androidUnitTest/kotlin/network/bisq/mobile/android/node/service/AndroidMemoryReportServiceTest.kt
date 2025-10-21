@@ -1,7 +1,7 @@
 package network.bisq.mobile.android.node.service
 
 import android.app.ActivityManager
-import android.content.Context
+
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -16,13 +16,17 @@ import kotlin.test.assertTrue
 class AndroidMemoryReportServiceTest {
 
     private lateinit var memoryReportService: AndroidMemoryReportService
-    private val context = mockk<Context>(relaxed = true)
     private val activityManager = mockk<ActivityManager>(relaxed = true)
 
     @Before
     fun setUp() {
-        every { context.getSystemService(Context.ACTIVITY_SERVICE) } returns activityManager
-        memoryReportService = AndroidMemoryReportService(context)
+        val deviceMemInfo = ActivityManager.MemoryInfo()
+        val appMemInfo = android.os.Debug.MemoryInfo()
+        val runtime = mockk<Runtime>(relaxed = true)
+        every { runtime.totalMemory() } returns 256L * 1024L * 1024L
+        every { runtime.freeMemory() } returns 128L * 1024L * 1024L
+        every { runtime.maxMemory() } returns 512L * 1024L * 1024L
+        memoryReportService = AndroidMemoryReportService(activityManager, deviceMemInfo, appMemInfo, runtime, true)
     }
 
     @Test

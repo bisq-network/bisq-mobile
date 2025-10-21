@@ -171,7 +171,7 @@ fun moveDirReplace(sourceDir: File, targetDir: File) {
     require(sourceDir.exists() && sourceDir.isDirectory) { "Source dir does not exist or is not a directory: ${sourceDir.absolutePath}" }
 
     val logger = getLogger("moveDirReplace")
-    logger.i { "KMP moveDirReplace: start source='${sourceDir.absolutePath}' target='${targetDir.absolutePath}'" }
+    logger.i { "moveDirReplace: start source='${sourceDir.absolutePath}' target='${targetDir.absolutePath}'" }
 
     val parent = targetDir.parentFile ?: throw IOException("Target has no parent: ${targetDir.absolutePath}")
     if (!parent.exists()) parent.mkdirs()
@@ -184,9 +184,9 @@ fun moveDirReplace(sourceDir: File, targetDir: File) {
     var hadOld = false
     if (targetDir.exists()) {
         hadOld = true
-        logger.i { "KMP moveDirReplace: backing up existing target to '${tempOld.absolutePath}'" }
+        logger.i { "moveDirReplace: backing up existing target to '${tempOld.absolutePath}'" }
         if (!targetDir.renameTo(tempOld)) {
-            logger.i { "KMP moveDirReplace: rename backup failed, falling back to copy+delete" }
+            logger.i { "moveDirReplace: rename backup failed, falling back to copy+delete" }
             if (!targetDir.copyRecursively(tempOld, overwrite = true)) {
                 throw IOException("Cannot backup existing target: ${targetDir.absolutePath}")
             }
@@ -199,35 +199,35 @@ fun moveDirReplace(sourceDir: File, targetDir: File) {
     }
 
     try {
-        logger.i { "KMP moveDirReplace: replacing target with source" }
+        logger.i { "moveDirReplace: replacing target with source" }
         if (!sourceDir.renameTo(targetDir)) {
-            logger.i { "KMP moveDirReplace: rename replace failed, falling back to copy+delete" }
+            logger.i { "moveDirReplace: rename replace failed, falling back to copy+delete" }
             if (!sourceDir.copyRecursively(targetDir, overwrite = true)) {
                 throw IOException("Cannot copy source to target: ${sourceDir.absolutePath} -> ${targetDir.absolutePath}")
             }
             if (!sourceDir.deleteRecursively()) {
                 // Rollback: remove partial target and restore old content if present
-                logger.w { "KMP moveDirReplace: delete source after copy failed; rolling back" }
+                logger.w { "moveDirReplace: delete source after copy failed; rolling back" }
                 targetDir.deleteRecursively()
                 if (hadOld && tempOld.exists()) {
                     if (!tempOld.renameTo(targetDir)) {
                         if (!tempOld.copyRecursively(targetDir, overwrite = true) || !tempOld.deleteRecursively()) {
-                            logger.w { "KMP moveDirReplace: rollback left temp at ${tempOld.absolutePath}" }
+                            logger.w { "moveDirReplace: rollback left temp at ${tempOld.absolutePath}" }
                         }
                     }
                 }
                 throw IOException("Cannot remove source after copy: ${sourceDir.absolutePath}")
             }
         }
-        logger.i { "KMP moveDirReplace: replace succeeded" }
+        logger.i { "moveDirReplace: replace succeeded" }
     } catch (e: Exception) {
         // General rollback on failure
-        logger.w(e) { "KMP moveDirReplace: failure; rolling back" }
+        logger.w(e) { "moveDirReplace: failure; rolling back" }
         targetDir.deleteRecursively()
         if (hadOld && tempOld.exists()) {
             if (!tempOld.renameTo(targetDir)) {
                 if (!tempOld.copyRecursively(targetDir, overwrite = true) || !tempOld.deleteRecursively()) {
-                    logger.w { "KMP moveDirReplace: rollback left temp at ${tempOld.absolutePath}" }
+                    logger.w { "moveDirReplace: rollback left temp at ${tempOld.absolutePath}" }
                 }
             }
         }
@@ -235,7 +235,7 @@ fun moveDirReplace(sourceDir: File, targetDir: File) {
     } finally {
         if (tempOld.exists()) {
             if (!tempOld.deleteRecursively()) {
-                logger.w { "KMP moveDirReplace: could not delete temp backup: ${tempOld.absolutePath}" }
+                logger.w { "moveDirReplace: could not delete temp backup: ${tempOld.absolutePath}" }
             }
         }
     }
