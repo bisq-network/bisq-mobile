@@ -365,6 +365,9 @@ class TrustedNodeSetupPresenter(
 
     fun validateApiUrl(value: String, proxyOption: BisqProxyOption): String? {
         if (value.isEmpty()) {
+            if (proxyOption == BisqProxyOption.INTERNAL_TOR) {
+                _selectedProxyOption.value = BisqProxyOption.NONE
+            }
             return "mobile.trustedNodeSetup.apiUrl.invalid.empty".i18n()
         }
 
@@ -385,7 +388,7 @@ class TrustedNodeSetupPresenter(
         }
 
         if (!proxyOption.isTorProxyOption && apiUrl.host.endsWith(".onion")) {
-            return "mobile.trustedNodeSetup.apiUrl.forbidden.onionWithoutProxy".i18n()
+            _selectedProxyOption.value = BisqProxyOption.INTERNAL_TOR
         }
 
         if (apiUrl.host.endsWith(".onion")) {
@@ -394,6 +397,8 @@ class TrustedNodeSetupPresenter(
             } else {
                 null
             }
+        } else if (proxyOption == BisqProxyOption.INTERNAL_TOR) {
+            _selectedProxyOption.value = BisqProxyOption.NONE
         }
 
         if (apiUrl.host.isValidIpv4() && !apiUrl.host.isPrivateIPv4() && apiUrl.protocol != URLProtocol.HTTPS) {
