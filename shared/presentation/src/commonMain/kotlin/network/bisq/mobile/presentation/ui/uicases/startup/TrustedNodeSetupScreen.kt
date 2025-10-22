@@ -105,6 +105,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     value = apiUrl,
                     placeholder = apiUrlPrompt,
                     disabled = isLoading,
+                    showPaste = true,
                     validation = {
                         presenter.validateApiUrl(
                             it, selectedProxyOption,
