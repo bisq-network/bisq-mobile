@@ -28,6 +28,7 @@ fun ScannerUI(
     zoomRatio: Float,
     zoomRatioOnChange: (Float) -> Unit,
     maxZoomRatio: Float,
+    scannerHeaderTitle: String,
     colors: ScannerColors = scannerColors(),
 ) {
     Column(
@@ -42,6 +43,7 @@ fun ScannerUI(
             navigationIconColor = colors.headerNavigationIconColor,
             titleColor = colors.headerTitleColor,
             actionIconColor = colors.headerActionIconColor,
+            scannerHeaderTitle = scannerHeaderTitle
         )
 
         Spacer(Modifier.weight(1f))

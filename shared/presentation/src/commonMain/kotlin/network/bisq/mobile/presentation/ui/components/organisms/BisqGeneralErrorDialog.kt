@@ -13,11 +13,13 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
+import network.bisq.mobile.presentation.ui.helpers.EMPTY_STRING
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
-// TODO should be like Bisq Easy generic error popup
 @Composable
-fun GenericErrorPanel(
+fun BisqGeneralErrorDialog(
+    errorTitle: String = "popup.headline.error".i18n(),
     errorMessage: String,
     onClose: () -> Unit,
 ) {
@@ -30,11 +32,11 @@ fun GenericErrorPanel(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
 
-                BisqText.h4Regular(
-                    text = "popup.headline.error".i18n(),
-                    color = BisqTheme.colors.light_grey10,
-                    textAlign = TextAlign.Center
-                )
+            BisqText.h4Regular(
+                text = errorTitle,
+                color = BisqTheme.colors.light_grey10,
+                textAlign = TextAlign.Center
+            )
 
             BisqText.baseRegularGrey(
                 text = errorMessage,
@@ -46,5 +48,28 @@ fun GenericErrorPanel(
                 onClick = onClose,
             )
         }
+    }
+}
+
+@Preview
+@Composable
+private fun BisqGeneralErrorDialogPreview() {
+    BisqTheme.Preview {
+        BisqGeneralErrorDialog(
+            errorMessage = "Something went wrong while processing your request. Please try again later.",
+            onClose = {}
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun BisqGeneralErrorDialogPreview_EmptyTitle() {
+    BisqTheme.Preview {
+        BisqGeneralErrorDialog(
+            errorTitle = EMPTY_STRING,
+            errorMessage = "Something went wrong while processing your request. Please try again later.",
+            onClose = {}
+        )
     }
 }

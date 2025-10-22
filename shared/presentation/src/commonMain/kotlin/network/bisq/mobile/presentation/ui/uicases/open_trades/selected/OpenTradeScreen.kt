@@ -32,6 +32,7 @@ import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.WarningConfirmationDialog
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
+import network.bisq.mobile.presentation.ui.components.organisms.BisqGeneralErrorDialog
 import network.bisq.mobile.presentation.ui.components.organisms.chat.UndoIgnoreDialog
 import network.bisq.mobile.presentation.ui.components.organisms.trades.CancelTradeDialog
 import network.bisq.mobile.presentation.ui.components.organisms.trades.CloseTradeDialog
@@ -89,6 +90,7 @@ fun OpenTradeScreen(tradeId: String) {
     val buyerState4ShowCloseTradeDialog by buyerState4Presenter.showCloseTradeDialog.collectAsState()
     val sellerState4ShowCloseTradeDialog by sellerState4Presenter.showCloseTradeDialog.collectAsState()
     val showBarcodeViewFromBuyerState1a by buyerState1aPresenter.showBarcodeView.collectAsState()
+    val showBarcodeError by buyerState1aPresenter.showBarcodeError.collectAsState()
 
     val shouldBlurBg by remember {
         derivedStateOf {
@@ -191,10 +193,18 @@ fun OpenTradeScreen(tradeId: String) {
     if (showBarcodeViewFromBuyerState1a) {
         BarcodeScannerView(
             onCanceled = buyerState1aPresenter::onBarcodeViewDismiss,
-            onFailed = { buyerState1aPresenter.onBarcodeViewDismiss() }
+            onFailed = { buyerState1aPresenter.onBarcodeFail() }
         ) {
             buyerState1aPresenter.onBarcodeResult(it.data)
         }
+    }
+
+    if (showBarcodeError) {
+        BisqGeneralErrorDialog(
+            errorTitle = "mobile.barcode.error.title".i18n(),
+            errorMessage = "mobile.barcode.error.message".i18n(),
+            onClose = buyerState1aPresenter::onBarcodeErrorClose
+        )
     }
 
     if (showTradeNotFoundDialog) {

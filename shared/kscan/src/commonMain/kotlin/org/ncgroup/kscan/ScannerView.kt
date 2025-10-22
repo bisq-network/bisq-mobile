@@ -22,6 +22,7 @@ expect fun ScannerView(
     colors: ScannerColors = scannerColors(),
     showUi: Boolean = true,
     scannerController: ScannerController? = null,
+    scannerHeaderTitle: String,
     filter: (Barcode) -> Boolean = { true },
     result: (BarcodeResult) -> Unit,
 )

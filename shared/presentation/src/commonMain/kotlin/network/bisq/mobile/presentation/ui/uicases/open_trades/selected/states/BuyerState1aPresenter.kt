@@ -39,6 +39,9 @@ class BuyerState1aPresenter(
     private val _showBarcodeView = MutableStateFlow(false)
     val showBarcodeView: StateFlow<Boolean> = _showBarcodeView.asStateFlow()
 
+    private val _showBarcodeError = MutableStateFlow(false)
+    val showBarcodeError: StateFlow<Boolean> = _showBarcodeError.asStateFlow()
+
     private val _triggerBitcoinLnAddressValidation = MutableStateFlow(0)
     val triggerBitcoinLnAddressValidation = _triggerBitcoinLnAddressValidation.asStateFlow()
 
@@ -78,6 +81,15 @@ class BuyerState1aPresenter(
 
     fun onBarcodeClick() {
         _showBarcodeView.value = true
+    }
+
+    fun onBarcodeFail() {
+        _showBarcodeView.value = false
+        _showBarcodeError.value = true
+    }
+
+    fun onBarcodeErrorClose() {
+        _showBarcodeError.value = false
     }
 
     fun onBarcodeViewDismiss() {

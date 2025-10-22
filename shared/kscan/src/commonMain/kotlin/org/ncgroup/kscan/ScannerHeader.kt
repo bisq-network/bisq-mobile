@@ -37,11 +37,12 @@ internal fun ScannerHeader(
     navigationIconColor: Color = Color.White,
     titleColor: Color = Color.White,
     actionIconColor: Color = Color.White,
+    scannerHeaderTitle: String,
 ) {
     CenterAlignedTopAppBar(
         title = {
             Text(
-                text = "Scan Code",
+                text = scannerHeaderTitle,
             )
         },
         navigationIcon = {

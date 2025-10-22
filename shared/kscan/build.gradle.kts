@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.ExperimentalWasmDsl
-
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
     alias(libs.plugins.android.library)
@@ -12,8 +10,6 @@ kotlin {
         publishLibraryVariants("release")
     }
 
-    jvm()
-
     listOf(
         iosX64(),
         iosArm64(),
@@ -25,8 +21,6 @@ kotlin {
         }
     }
 
-    @OptIn(ExperimentalWasmDsl::class)
-    wasmJs()
     sourceSets {
         androidMain.dependencies {
             implementation(libs.android.mlkit.barcode.scanning)

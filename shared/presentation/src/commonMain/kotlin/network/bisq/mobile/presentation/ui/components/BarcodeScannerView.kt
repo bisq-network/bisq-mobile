@@ -19,6 +19,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.helpers.rememberCameraPermissionLauncher
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -71,6 +72,7 @@ fun BarcodeScannerView(
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(8.dp)),
                 codeTypes = codeTypes,
+                scannerHeaderTitle = "mobile.barcode.header".i18n(),
                 colors = ScannerColors(
                     headerContainerColor = BisqTheme.colors.dark_grey10,
                     barcodeFrameColor = BisqTheme.colors.primary,

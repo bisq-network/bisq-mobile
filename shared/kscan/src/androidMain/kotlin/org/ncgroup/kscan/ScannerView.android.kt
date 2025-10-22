@@ -44,6 +44,7 @@ actual fun ScannerView(
     colors: ScannerColors,
     showUi: Boolean,
     scannerController: ScannerController?,
+    scannerHeaderTitle: String,
     filter: (Barcode) -> Boolean,
     result: (BarcodeResult) -> Unit,
 ) {
@@ -180,6 +181,7 @@ actual fun ScannerView(
                 zoomRatioOnChange = { ratio -> cameraControl?.setZoomRatio(ratio) },
                 maxZoomRatio = maxZoomRatio,
                 colors = colors,
+                scannerHeaderTitle = scannerHeaderTitle
             )
         }
     }
