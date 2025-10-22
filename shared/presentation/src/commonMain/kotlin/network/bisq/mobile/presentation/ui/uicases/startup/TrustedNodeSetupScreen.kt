@@ -40,6 +40,8 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import network.bisq.mobile.presentation.ui.helpers.rememberBlurTriggerSetup
+import network.bisq.mobile.presentation.ui.helpers.setBlurTrigger
 import network.bisq.mobile.presentation.ui.helpers.spaceBetweenWithMin
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
@@ -65,6 +67,8 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val torState by presenter.torState.collectAsState()
     val proxyOptions = presenter.proxyOptions
     val isIOS = presenter.isIOS()
+
+    val blurTriggerSetup = rememberBlurTriggerSetup()
 
     // Add state for dialog
     val showConfirmDialog = remember { mutableStateOf(false) }
@@ -95,7 +99,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 horizontalArrangement = Arrangement.spaceBetweenWithMin(BisqUIConstants.ScreenPadding),
             ) {
                 BisqTextField(
-                    modifier = Modifier.weight(0.8f),
+                    modifier = Modifier.weight(0.8f).setBlurTrigger(blurTriggerSetup),
                     label = "mobile.trustedNodeSetup.apiUrl".i18n(),
                     onValueChange = { apiUrl, _ -> if (isWorkflow) presenter.onApiUrlChanged(apiUrl) },
                     value = apiUrl,
@@ -114,7 +118,10 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     label = "mobile.trustedNodeSetup.proxy".i18n(),
                     items = proxyOptions,
                     value = selectedProxyOption.name,
-                    onValueChanged = presenter::onProxyOptionChanged,
+                    onValueChanged = {
+                        presenter.onProxyOptionChanged(it)
+                        blurTriggerSetup.triggerBlur()
+                    },
                     disabled = isLoading || !isWorkflow,
                 )
                 if (selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
