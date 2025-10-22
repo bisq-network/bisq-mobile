@@ -117,6 +117,8 @@ class TrustedNodeSetupPresenter(
     val torState =
         kmpTorService.state.stateIn(presenterScope, SharingStarted.Lazily, KmpTorService.State.IDLE)
 
+    private val _userExplicitlyChangedProxy = MutableStateFlow(false)
+
     override fun onViewAttached() {
         super.onViewAttached()
         initialize()
@@ -171,6 +173,7 @@ class TrustedNodeSetupPresenter(
 
     fun onProxyOptionChanged(value: Pair<String, String>) {
         _selectedProxyOption.value = BisqProxyOption.valueOf(value.first)
+        _userExplicitlyChangedProxy.value = true
     }
 
     fun onTestAndSavePressed(isWorkflow: Boolean) {
@@ -365,7 +368,7 @@ class TrustedNodeSetupPresenter(
 
     fun validateApiUrl(value: String, proxyOption: BisqProxyOption): String? {
         if (value.isEmpty()) {
-            if (proxyOption == BisqProxyOption.INTERNAL_TOR) {
+            if (!_userExplicitlyChangedProxy.value && proxyOption == BisqProxyOption.INTERNAL_TOR) {
                 _selectedProxyOption.value = BisqProxyOption.NONE
             }
             return "mobile.trustedNodeSetup.apiUrl.invalid.empty".i18n()
@@ -402,7 +405,7 @@ class TrustedNodeSetupPresenter(
             } else {
                 null
             }
-        } else if (proxyOption == BisqProxyOption.INTERNAL_TOR) {
+        } else if (!_userExplicitlyChangedProxy.value && proxyOption == BisqProxyOption.INTERNAL_TOR) {
             _selectedProxyOption.value = BisqProxyOption.NONE
         }
 
