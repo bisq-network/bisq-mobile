@@ -97,7 +97,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 BisqTextField(
                     modifier = Modifier.weight(0.8f),
                     label = "mobile.trustedNodeSetup.apiUrl".i18n(),
-                    onValueChange = { apiUrl, _ -> presenter.onApiUrlChanged(apiUrl) },
+                    onValueChange = { apiUrl, _ -> if (isWorkflow) presenter.onApiUrlChanged(apiUrl) },
                     value = apiUrl,
                     placeholder = apiUrlPrompt,
                     disabled = isLoading,
@@ -115,7 +115,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     items = proxyOptions,
                     value = selectedProxyOption.name,
                     onValueChanged = presenter::onProxyOptionChanged,
-                    disabled = isLoading,
+                    disabled = isLoading || !isWorkflow,
                 )
                 if (selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
                     Row(horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)) {
