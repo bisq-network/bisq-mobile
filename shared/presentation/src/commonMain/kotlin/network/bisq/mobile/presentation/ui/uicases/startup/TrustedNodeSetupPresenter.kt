@@ -239,7 +239,7 @@ class TrustedNodeSetupPresenter(
                 val error = if (newApiUrl == null) {
                     IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n())
                 } else if (isExternalProxy && newProxyPort == null) {
-                    IllegalArgumentException("Invalid proxy port value was provided")
+                    IllegalArgumentException("mobile.trustedNodeSetup.proxyPort.invalid".i18n())
                 } else {
                     val timeoutSecs = wsClientService.determineTimeout(newApiUrl.host) / 1000
                     val countdownJob = launchUI {
