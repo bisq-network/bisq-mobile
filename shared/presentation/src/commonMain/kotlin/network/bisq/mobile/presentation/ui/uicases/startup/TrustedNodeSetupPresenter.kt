@@ -48,7 +48,7 @@ class TrustedNodeSetupPresenter(
         const val ANDROID_LOCALHOST = "10.0.2.2"
         const val IPV4_EXAMPLE = "192.168.1.10"
 
-        val validUrls = Regex("""^https?://([a-zA-Z0-9-]+\.?)+([a-zA-Z]{2,})?(:\d{1,5})?$""", RegexOption.IGNORE_CASE)
+        val validUrls = Regex("""^https?://(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|[a-zA-Z0-9-]+)(:\d{1,5})?$""", RegexOption.IGNORE_CASE)
     }
 
     // Must not be injected in constructor as node has not defined the WebSocketClientProvider dependency
