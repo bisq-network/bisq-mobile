@@ -40,7 +40,7 @@ class WebSocketClientService(
 
     companion object {
         const val CLEARNET_CONNECT_TIMEOUT = 15_000L
-        const val TOR_CONNECT_TIMEOUT = 60_000L
+        const val TOR_CONNECT_TIMEOUT = 30_000L
     }
 
     private val clientUpdateMutex = Mutex()
