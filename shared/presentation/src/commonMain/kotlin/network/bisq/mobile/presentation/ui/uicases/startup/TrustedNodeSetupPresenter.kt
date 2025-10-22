@@ -283,10 +283,8 @@ class TrustedNodeSetupPresenter(
                     }
 
                     if (newProxyOption != BisqProxyOption.INTERNAL_TOR) {
-                        launchIO {
-                            runCatching {
-                                kmpTorService.stopTorAsync()
-                            }
+                        runCatching {
+                            kmpTorService.stopTorAsync()
                         }
                     }
 
@@ -390,7 +388,12 @@ class TrustedNodeSetupPresenter(
         }
 
         if (!proxyOption.isTorProxyOption && apiUrl.host.endsWith(".onion")) {
-            _selectedProxyOption.value = BisqProxyOption.INTERNAL_TOR
+            // TODO: remove ios condition once proxy is supported on ios
+            if (!isIOS()) {
+                _selectedProxyOption.value = BisqProxyOption.INTERNAL_TOR
+            } else {
+                "mobile.trustedNodeSetup.apiUrl.forbidden.onionWithoutProxy".i18n()
+            }
         }
 
         if (apiUrl.host.endsWith(".onion")) {

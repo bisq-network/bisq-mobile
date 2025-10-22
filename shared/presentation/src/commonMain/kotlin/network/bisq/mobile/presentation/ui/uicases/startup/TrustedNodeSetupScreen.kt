@@ -29,6 +29,7 @@ import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.ConnectionState
 import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException
+import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
@@ -125,7 +126,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     },
                     disabled = isLoading || !isWorkflow,
                 )
-                if (selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
+                if (selectedProxyOption == BisqProxyOption.INTERNAL_TOR || torState != KmpTorService.State.IDLE) {
                     Row(horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)) {
                         BisqText.baseRegular("mobile.trustedNodeSetup.torState".i18n())
                         BisqText.baseRegular(torState.displayString)
