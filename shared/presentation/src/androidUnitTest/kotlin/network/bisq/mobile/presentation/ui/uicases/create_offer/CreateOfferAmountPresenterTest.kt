@@ -15,6 +15,7 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.createEmptyImage
 import network.bisq.mobile.domain.data.model.MarketPriceItem
@@ -23,8 +24,6 @@ import network.bisq.mobile.domain.data.model.TradeReadStateMap
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.settings.settingsVODemoObj
@@ -38,6 +37,8 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TakeOfferStatus
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
+import network.bisq.mobile.domain.utils.CoroutineJobsManager
+import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.getScreenWidthDp
 import network.bisq.mobile.presentation.notification.ForegroundServiceController
@@ -45,8 +46,6 @@ import network.bisq.mobile.presentation.notification.NotificationController
 import network.bisq.mobile.presentation.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.service.OpenTradesNotificationService
 import network.bisq.mobile.presentation.ui.navigation.manager.NavigationManager
-import network.bisq.mobile.domain.utils.CoroutineJobsManager
-import network.bisq.mobile.domain.utils.DefaultCoroutineJobsManager
 import org.koin.core.context.startKoin
 import org.koin.core.context.stopKoin
 import org.koin.dsl.module
@@ -88,7 +87,8 @@ class CreateOfferAmountPresenterTest {
         override suspend fun setShowChatRulesWarnBox(value: Boolean) {}
         override suspend fun setSelectedMarketCode(value: String) {}
         override suspend fun setNotificationPermissionState(value: network.bisq.mobile.domain.data.model.NotificationPermissionState) {}
-        override suspend fun setProxyUrl(value: String) {}
+        override suspend fun setExternalProxyUrl(value: String) {}
+        override suspend fun setSelectedProxyOption(value: BisqProxyOption) {}
         override suspend fun update(transform: suspend (t: Settings) -> Settings) { _data.value = transform(_data.value) }
         override suspend fun clear() { _data.value = Settings() }
     }

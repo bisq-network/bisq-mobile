@@ -75,7 +75,9 @@ kotlin {
             implementation(libs.atomicfu)
 
             // for parsing urls with io.ktor.http.parseUrl
-            implementation(libs.ktor.http)
+            implementation(libs.ktor.http.get().toString()) {
+                exclude(group = "org.slf4j", module = "slf4j-api") // prevent sl4j exact version problem
+            }
         }
         androidMain.dependencies {
             implementation(libs.androidx.activity.compose)

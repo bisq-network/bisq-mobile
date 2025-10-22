@@ -1,28 +1,20 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
+import io.mockk.every
+import io.mockk.mockkStatic
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flowOf
-import io.mockk.every
-import io.mockk.mockkStatic
-import network.bisq.mobile.presentation.getScreenWidthDp
-
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import kotlinx.coroutines.test.advanceTimeBy
-import kotlinx.coroutines.test.runCurrent
-import kotlin.test.BeforeTest
-import kotlin.test.AfterTest
-
-import kotlin.test.Test
-import kotlin.test.assertEquals
-import kotlin.test.assertNotEquals
-import kotlin.test.assertTrue
+import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.createEmptyImage
 import network.bisq.mobile.domain.data.model.MarketPriceItem
@@ -31,40 +23,43 @@ import network.bisq.mobile.domain.data.model.TradeReadStateMap
 import network.bisq.mobile.domain.data.replicated.chat.notifications.ChatChannelNotificationTypeEnum
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
+import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
+import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
+import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
-import network.bisq.mobile.domain.data.replicated.common.network.AddressByTransportTypeMapVO
-import network.bisq.mobile.domain.data.replicated.network.identity.NetworkIdVO
-import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
-import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
-
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationDto
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
+import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
+import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
+import network.bisq.mobile.domain.data.replicated.settings.settingsVODemoObj
 import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
+import network.bisq.mobile.domain.service.ForegroundDetector
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
-import network.bisq.mobile.domain.data.replicated.settings.settingsVODemoObj
+import network.bisq.mobile.domain.service.trades.TakeOfferStatus
+import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
-import network.bisq.mobile.domain.service.ForegroundDetector
 import network.bisq.mobile.presentation.MainPresenter
+import network.bisq.mobile.presentation.getScreenWidthDp
 import network.bisq.mobile.presentation.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.notification.NotificationController
 import network.bisq.mobile.presentation.notification.model.NotificationConfig
 import network.bisq.mobile.presentation.service.OpenTradesNotificationService
-import network.bisq.mobile.domain.service.trades.TradesServiceFacade
-import network.bisq.mobile.domain.service.trades.TakeOfferStatus
-import network.bisq.mobile.domain.data.replicated.common.monetary.MonetaryVO
-import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
+import kotlin.test.Test
+import kotlin.test.assertEquals
+import kotlin.test.assertNotEquals
+import kotlin.test.assertTrue
 import network.bisq.mobile.domain.data.replicated.offer.bisq_easy.BisqEasyOfferVO as OfferVO
-
-
 
 
 class TakeOfferAmountPresenterTest {
@@ -91,7 +86,8 @@ class TakeOfferAmountPresenterTest {
         override suspend fun setShowChatRulesWarnBox(value: Boolean) {}
         override suspend fun setSelectedMarketCode(value: String) {}
         override suspend fun setNotificationPermissionState(value: network.bisq.mobile.domain.data.model.NotificationPermissionState) {}
-        override suspend fun setProxyUrl(value: String) {}
+        override suspend fun setExternalProxyUrl(value: String) {}
+        override suspend fun setSelectedProxyOption(value: BisqProxyOption) {}
         override suspend fun update(transform: suspend (t: Settings) -> Settings) { _data.value = transform(_data.value) }
         override suspend fun clear() { _data.value = Settings() }
     }
