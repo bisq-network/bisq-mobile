@@ -4,6 +4,7 @@ import io.ktor.http.URLProtocol
 import io.ktor.http.Url
 import io.ktor.http.parseUrl
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -118,6 +119,9 @@ class TrustedNodeSetupPresenter(
         kmpTorService.state.stateIn(presenterScope, SharingStarted.Lazily, KmpTorService.State.IDLE)
 
     private val _userExplicitlyChangedProxy = MutableStateFlow(false)
+
+    private val _timeoutCounter = MutableStateFlow(0L)
+    val timeoutCounter = _timeoutCounter.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -237,12 +241,22 @@ class TrustedNodeSetupPresenter(
                 } else if (isExternalProxy && newProxyPort == null) {
                     IllegalArgumentException("Invalid proxy port value was provided")
                 } else {
-                    wsClientService.testConnection(
+                    val timeoutSecs = wsClientService.determineTimeout(newApiUrl.host) / 1000
+                    val countdownJob = launchUI {
+                        for (i in timeoutSecs downTo 0) {
+                            _timeoutCounter.value = i
+                            delay(1000)
+                        }
+                    }
+                    _wsClientConnectionState.value = ConnectionState.Connecting
+                    val result = wsClientService.testConnection(
                         newApiUrl,
                         newProxyHost,
                         newProxyPort,
                         newProxyIsTor,
                     )
+                    countdownJob.cancel()
+                    result
                 }
 
                 if (error != null) {

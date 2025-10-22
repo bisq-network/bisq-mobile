@@ -188,7 +188,7 @@ class WebSocketClientService(
         return getWsClient().sendRequestAndAwaitResponse(webSocketRequest)
     }
 
-    private fun determineTimeout(host: String): Long {
+    fun determineTimeout(host: String): Long {
         return if (host.endsWith(".onion")) {
             TOR_CONNECT_TIMEOUT
         } else {

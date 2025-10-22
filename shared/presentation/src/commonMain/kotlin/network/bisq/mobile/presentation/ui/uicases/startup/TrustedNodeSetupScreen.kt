@@ -66,6 +66,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val proxyPort by presenter.proxyPort.collectAsState()
     val isNewApiUrl by presenter.isNewApiUrl.collectAsState()
     val torState by presenter.torState.collectAsState()
+    val timeoutCounter by presenter.timeoutCounter.collectAsState()
     val proxyOptions = presenter.proxyOptions
     val isIOS = presenter.isIOS()
 
@@ -163,7 +164,10 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 }
             }
             BisqGap.V2()
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
+            ) {
                 BisqText.largeRegular(
                     status,
                     color =
@@ -174,6 +178,9 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         else
                             BisqTheme.colors.danger,
                 )
+                if (connectionState is ConnectionState.Connecting) {
+                    BisqText.largeRegular(timeoutCounter.toString(), color = BisqTheme.colors.warning)
+                }
             }
 
             val error = (connectionState as? ConnectionState.Disconnected)?.error
