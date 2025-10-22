@@ -48,7 +48,8 @@ class TrustedNodeSetupPresenter(
         const val ANDROID_LOCALHOST = "10.0.2.2"
         const val IPV4_EXAMPLE = "192.168.1.10"
 
-        val validUrls = Regex("""^https?://(([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}|[a-zA-Z0-9-]+)(:\d{1,5})?$""", RegexOption.IGNORE_CASE)
+        val publicDomains = Regex("""^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}$""", RegexOption.IGNORE_CASE)
+        val commonLocalNetworkSuffixes = setOf(".local", ".lan", ".internal")
     }
 
     // Must not be injected in constructor as node has not defined the WebSocketClientProvider dependency
@@ -113,7 +114,8 @@ class TrustedNodeSetupPresenter(
         }
     }.stateIn(presenterScope, SharingStarted.Lazily, "")
 
-    val torState = kmpTorService.state.stateIn(presenterScope, SharingStarted.Lazily, KmpTorService.State.IDLE)
+    val torState =
+        kmpTorService.state.stateIn(presenterScope, SharingStarted.Lazily, KmpTorService.State.IDLE)
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -405,7 +407,11 @@ class TrustedNodeSetupPresenter(
             return "mobile.trustedNodeSetup.apiUrl.forbidden.clearnet".i18n()
         }
 
-        if (!apiUrl.host.isValidIpv4() && validUrls.matches(apiUrl.toString()) && apiUrl.protocol != URLProtocol.HTTPS) {
+        if (!apiUrl.host.isValidIpv4() &&
+            publicDomains.matches(apiUrl.host) &&
+            commonLocalNetworkSuffixes.none { apiUrl.host.contains(it) } &&
+            apiUrl.protocol != URLProtocol.HTTPS
+        ) {
             return "mobile.trustedNodeSetup.apiUrl.forbidden.clearnet".i18n()
         }
 
