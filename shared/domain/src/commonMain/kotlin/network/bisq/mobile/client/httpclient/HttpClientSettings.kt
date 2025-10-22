@@ -16,14 +16,13 @@ data class HttpClientSettings(
         /**
          * Warning: Suspends until [KmpTorService] is started if selected proxy option is [BisqProxyOption.INTERNAL_TOR]
          */
-        suspend fun from(settings: Settings, kmpTorService: KmpTorService?): HttpClientSettings {
+        suspend fun from(settings: Settings, kmpTorService: KmpTorService): HttpClientSettings {
             val selectedProxyOption = settings.selectedProxyOption
             var proxyUrl: String?
             val isTorProxy: Boolean
             when (selectedProxyOption) {
                 BisqProxyOption.INTERNAL_TOR -> {
-                    val socksPort = kmpTorService?.getSocksPort()
-                        ?: "0" // we intentionally want to fail fast instead of not setting the proxy
+                    val socksPort = kmpTorService.getSocksPort()
                     proxyUrl = "127.0.0.1:$socksPort"
                     isTorProxy = true
                 }
