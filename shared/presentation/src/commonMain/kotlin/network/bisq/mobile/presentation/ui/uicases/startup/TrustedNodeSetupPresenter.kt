@@ -228,7 +228,7 @@ class TrustedNodeSetupPresenter(
                     newProxyOption == BisqProxyOption.EXTERNAL_TOR || newProxyOption == BisqProxyOption.SOCKS_PROXY
 
                 val error = if (newApiUrl == null) {
-                    IllegalArgumentException("Invalid api url was provided")
+                    IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n())
                 } else if (isExternalProxy && newProxyPort == null) {
                     IllegalArgumentException("Invalid proxy port value was provided")
                 } else {
