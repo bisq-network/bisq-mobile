@@ -7,14 +7,14 @@ import network.bisq.mobile.domain.service.ServiceFacade
 abstract class LanguageServiceFacade : ServiceFacade() {
     companion object {
          val DEFAULT_TRANSLATABLE_LANGUAGES = mapOf(
-//            "af-ZA" to "Afrikaans (Afrikaans)",
+            "af-ZA" to "Afrikaans (Afrikaans)",
             "cs" to "Czech (\u010de\u0161tina)",
             "de" to "German (Deutsch)",
             "en" to "English",
             "es" to "Spanish (Espa\u00f1ol)",
             "it" to "Italian (Italiano)",
-//            "pcm" to "Pidgin (Naij\u00e1)",
-//            "pt-BR" to "Portuguese (Portugu\u00eas)",
+            "pcm" to "Pidgin (Naij\u00e1)",
+            "pt-BR" to "Portuguese (Portugu\u00eas)",
             "ru" to "Russian (\u0440\u0443\u0441\u0441\u043a\u0438\u0439)"
         )
 
