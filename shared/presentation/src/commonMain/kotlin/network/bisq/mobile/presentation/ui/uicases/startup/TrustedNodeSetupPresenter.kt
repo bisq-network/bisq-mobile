@@ -261,7 +261,7 @@ class TrustedNodeSetupPresenter(
 
                 if (error != null) {
                     _wsClientConnectionState.value = ConnectionState.Disconnected(error)
-                    onConnectionError(error, newApiUrlString)
+                    onConnectionError(error, newApiUrl?.toNormalizedString() ?: newApiUrlString)
                 } else {
                     val newApiUrl = newApiUrl!!
                     // we only dispose client if we are sure new settings differ from the old one
@@ -285,7 +285,7 @@ class TrustedNodeSetupPresenter(
                     val error = wsClientService.connect() // waits till new clients are initialized
                     if (error != null) {
                         _wsClientConnectionState.value = ConnectionState.Disconnected(error)
-                        onConnectionError(error, newApiUrlString)
+                        onConnectionError(error, newApiUrl.toNormalizedString())
                         return@launchIO
                     }
                     // wait till connectionState is changed to a final state
@@ -311,6 +311,10 @@ class TrustedNodeSetupPresenter(
                 _isLoading.value = false
             }
         }
+    }
+
+    private fun Url.toNormalizedString(): String {
+        return "${this.protocol.name}://${this.host}:${this.port}"
     }
 
     private fun normalizeProxyHost(value: String): String {
@@ -376,7 +380,7 @@ class TrustedNodeSetupPresenter(
                 "http://$value"
             }
         )?.let {
-            parseUrl("${it.protocol.name}://${it.host}:${it.port}")!!
+            parseUrl(it.toNormalizedString())!!
         }
     }
 
