@@ -23,6 +23,7 @@ import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersion
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
+import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.domain.utils.NetworkUtils.isPrivateIPv4
 import network.bisq.mobile.domain.utils.NetworkUtils.isValidIpv4
@@ -42,6 +43,7 @@ class TrustedNodeSetupPresenter(
     private val userRepository: UserRepository,
     private val settingsRepository: SettingsRepository,
     private val kmpTorService: KmpTorService,
+    private val applicationBootstrapFacade: ApplicationBootstrapFacade,
 ) : BasePresenter(mainPresenter) {
 
     companion object {
@@ -305,6 +307,9 @@ class TrustedNodeSetupPresenter(
                         }
                     }
 
+                    // change the states before going back
+                    applicationBootstrapFacade.setState("mobile.bootstrap.connectedToTrustedNode".i18n())
+                    applicationBootstrapFacade.setProgress(1.0f)
                     navigateToSplashScreen() // to trigger navigateToNextScreen again
                 }
             } finally {
@@ -329,7 +334,7 @@ class TrustedNodeSetupPresenter(
     private fun onConnectionError(error: Throwable, newApiUrl: String) {
         when (error) {
             is TimeoutCancellationException -> {
-                log.e(error) { "Connection test timed out after 15 seconds" }
+                log.e(error) { "Connection test timed out" }
                 showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.connectionTimedOut".i18n())
                 _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
             }
