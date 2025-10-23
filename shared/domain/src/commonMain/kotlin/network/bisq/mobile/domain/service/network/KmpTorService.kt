@@ -110,11 +110,11 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     suspend fun stopTorAsync() {
-        _state.value = State.STOPPING
         if (torRuntime == null) {
             log.w("Tor runtime is null at stopTor")
             return
         }
+        _state.value = State.STOPPING
 
         try {
             torRuntime!!.stopDaemonAsync()
@@ -131,11 +131,11 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     fun stopTorSync() {
-        _state.value = State.STOPPING
         if (torRuntime == null) {
             log.w("Tor runtime is null at stopTorSync")
             return
         }
+        _state.value = State.STOPPING
 
         try {
             torRuntime!!.stopDaemonSync()
