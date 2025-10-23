@@ -130,7 +130,6 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     }
                 )
             }
-            BisqGap.V1()
             if (!isIOS) {
                 AdvancedOptionsDrawer(
                     showAdvancedOptions,
@@ -147,6 +146,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         disabled = isLoading || !isWorkflow,
                     )
                 }
+                BisqGap.V1()
             }
 
             if (selectedProxyOption == BisqProxyOption.INTERNAL_TOR || torState != KmpTorService.State.IDLE) {
