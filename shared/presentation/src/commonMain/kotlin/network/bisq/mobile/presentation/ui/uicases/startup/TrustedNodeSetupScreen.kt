@@ -1,9 +1,13 @@
 package network.bisq.mobile.presentation.ui.uicases.startup
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,16 +16,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.hideFromAccessibility
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -36,7 +48,9 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqDropDown
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
+import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.BisqDialog
@@ -46,6 +60,7 @@ import network.bisq.mobile.presentation.ui.helpers.setBlurTrigger
 import network.bisq.mobile.presentation.ui.helpers.spaceBetweenWithMin
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -72,8 +87,8 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
 
     val blurTriggerSetup = rememberBlurTriggerSetup()
 
-    // Add state for dialog
-    val showConfirmDialog = remember { mutableStateOf(false) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
+    var showAdvancedOptions by remember { mutableStateOf(false) }
 
     BisqScrollScaffold(
         topBar = if (!isWorkflow) {
@@ -117,23 +132,30 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             }
             BisqGap.V1()
             if (!isIOS) {
-                BisqDropDown(
-                    label = "mobile.trustedNodeSetup.proxy".i18n(),
-                    items = proxyOptions,
-                    value = selectedProxyOption.name,
-                    onValueChanged = {
-                        presenter.onProxyOptionChanged(it)
-                        blurTriggerSetup.triggerBlur()
-                    },
-                    disabled = isLoading || !isWorkflow,
-                )
-                if (selectedProxyOption == BisqProxyOption.INTERNAL_TOR || torState != KmpTorService.State.IDLE) {
-                    Row(horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)) {
-                        BisqText.baseRegular("mobile.trustedNodeSetup.torState".i18n())
-                        BisqText.baseRegular(torState.displayString)
-                    }
+                AdvancedOptionsDrawer(
+                    showAdvancedOptions,
+                    { showAdvancedOptions = !showAdvancedOptions },
+                ) {
+                    BisqDropDown(
+                        label = "mobile.trustedNodeSetup.proxy".i18n(),
+                        items = proxyOptions,
+                        value = selectedProxyOption.name,
+                        onValueChanged = {
+                            presenter.onProxyOptionChanged(it)
+                            blurTriggerSetup.triggerBlur()
+                        },
+                        disabled = isLoading || !isWorkflow,
+                    )
                 }
             }
+
+            if (selectedProxyOption == BisqProxyOption.INTERNAL_TOR || torState != KmpTorService.State.IDLE) {
+                Row(horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)) {
+                    BisqText.baseRegular("mobile.trustedNodeSetup.torState".i18n())
+                    BisqText.baseRegular(torState.displayString)
+                }
+            }
+
             val isExternalProxyOption =
                 selectedProxyOption == BisqProxyOption.EXTERNAL_TOR || selectedProxyOption == BisqProxyOption.SOCKS_PROXY
             AnimatedVisibility(isExternalProxyOption) {
@@ -179,7 +201,10 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                             BisqTheme.colors.danger,
                 )
                 if (connectionState is ConnectionState.Connecting) {
-                    BisqText.largeRegular(timeoutCounter.toString(), color = BisqTheme.colors.warning)
+                    BisqText.largeRegular(
+                        timeoutCounter.toString(),
+                        color = BisqTheme.colors.warning
+                    )
                 }
             }
 
@@ -213,7 +238,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 disabled = !isWorkflow || isLoading || !isApiUrlValid || !isProxyUrlValid,
                 onClick = {
                     if (isNewApiUrl) {
-                        showConfirmDialog.value = true
+                        showConfirmDialog = true
                     } else {
                         presenter.onTestAndSavePressed(isWorkflow)
                     }
@@ -226,9 +251,9 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     }
 
     // Add dialog component
-    if (showConfirmDialog.value) {
+    if (showConfirmDialog) {
         BisqDialog(
-            onDismissRequest = { showConfirmDialog.value = false }
+            onDismissRequest = { showConfirmDialog = false }
         ) {
             Column(modifier = Modifier.padding(16.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -257,19 +282,72 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         modifier = Modifier.fillMaxHeight(),
                         text = "mobile.trustedNodeSetup.cancel".i18n(),
                         type = BisqButtonType.Grey,
-                        onClick = { showConfirmDialog.value = false }
+                        onClick = { showConfirmDialog = false }
                     )
 
                     BisqButton(
                         modifier = Modifier.fillMaxHeight(),
                         text = "mobile.trustedNodeSetup.continue".i18n(),
                         onClick = {
-                            showConfirmDialog.value = false
+                            showConfirmDialog = false
                             presenter.onTestAndSavePressed(isWorkflow)
                         }
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+fun AdvancedOptionsDrawer(
+    expanded: Boolean = false,
+    onToggle: () -> Unit,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val rotation by animateFloatAsState(targetValue = if (expanded) 180f else 0f)
+
+    Column {
+        Row(
+            modifier = Modifier.clickable(onClick = onToggle).semantics(true) {
+                contentDescription =
+                    if (expanded) "mobile.action.hide".i18n() else "mobile.action.show".i18n()
+            },
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(
+                BisqUIConstants.ScreenPadding
+            ),
+        ) {
+            BisqText.smallRegularGrey("mobile.trustedNodeSetup.advancedOptions".i18n())
+            BisqHDivider(modifier = Modifier.weight(1f))
+            OutlinedIconButton(
+                onClick = onToggle,
+                modifier = Modifier.size(24.dp).clearAndSetSemantics { hideFromAccessibility() },
+                border = BorderStroke(1.dp, BisqTheme.colors.mid_grey10),
+            ) {
+                ArrowDownIcon(modifier = Modifier.size(12.dp).rotate(rotation))
+            }
+        }
+        AnimatedVisibility(expanded) {
+            content()
+        }
+    }
+}
+
+@Preview
+@Composable
+fun AdvancedOptionsDrawerCollapsedPreview() {
+    BisqTheme.Preview {
+        AdvancedOptionsDrawer(false, {}) {}
+    }
+}
+
+@Preview
+@Composable
+fun AdvancedOptionsDrawerExpandedPreview() {
+    BisqTheme.Preview {
+        AdvancedOptionsDrawer(true, {}) {
+            BisqText.baseRegular("this is content")
         }
     }
 }
