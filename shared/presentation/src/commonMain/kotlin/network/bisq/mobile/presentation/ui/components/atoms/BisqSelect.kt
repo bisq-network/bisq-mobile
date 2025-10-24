@@ -125,7 +125,7 @@ fun <T> BisqMultiSelect(
                     key(it.key) { // key is for proper detection of changes & animations
                         BisqChip(
                             label = optionLabelPair.second,
-                            showRemove = selectedKeys.size != 1,
+                            showRemove = selectedKeys.size > minSelectionLimit,
                             type = chipType,
                             onRemove = {
                                 errorText = null

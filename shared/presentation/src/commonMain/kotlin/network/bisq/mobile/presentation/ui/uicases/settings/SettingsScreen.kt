@@ -100,7 +100,7 @@ fun SettingsScreen() {
             optionKey = { it.key },
             optionLabel = { it.value },
             selectedKey = selectedLanguage,
-            onSelected = {  presenter.setLanguageCode(it.key) },
+            onSelected = { presenter.setLanguageCode(it.key) },
         )
 
         BisqMultiSelect(
@@ -111,13 +111,9 @@ fun SettingsScreen() {
             optionLabel = { it.value },
             selectedKeys = supportedLanguageCodes,
             onSelectionChanged = { option, selected ->
-                val newCodes = if (selected) {
-                    supportedLanguageCodes + option.key
-                } else {
-                    supportedLanguageCodes - option.key
-                }
-
-                presenter.setSupportedLanguageCodes(newCodes)
+                val current = presenter.supportedLanguageCodes.value
+                val next = if (selected) current + option.key else current - option.key
+                presenter.setSupportedLanguageCodes(next)
             },
             searchable = true,
             maxSelectionLimit = 5,
