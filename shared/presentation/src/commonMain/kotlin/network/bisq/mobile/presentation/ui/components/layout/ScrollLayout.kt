@@ -98,7 +98,7 @@ fun BisqScrollLayout(
                 onClicked = { scope.launch { scrollState.animateScrollTo(scrollState.maxValue) } },
                 modifier = Modifier.align(Alignment.BottomEnd)
                     .offset(x = -BisqUIConstants.ScreenPadding),
-                jumpOffset = 90,
+                jumpOffset = 12,
             )
         }
     }
