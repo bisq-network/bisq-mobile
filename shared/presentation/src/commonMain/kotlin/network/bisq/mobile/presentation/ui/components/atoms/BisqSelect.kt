@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MenuItemColors
@@ -183,6 +185,7 @@ fun <T> BisqSelect(
 
     val keyLabelOptionEntries = remember(
         options,
+        optionKey,
         optionLabel,
     ) { options.associate { optionKey(it) to Pair(it, optionLabel(it)) } }
 
@@ -270,8 +273,8 @@ fun <T> BisqSelect(
                 )
             }
 
-            filteredOptions.forEach { item ->
-                key(item.key) { // key is for proper detection of changes & animations
+            LazyColumn {
+                items(filteredOptions.entries.toList(), key = { it.key }) { item ->
                     itemContent(item, onDismiss)
                 }
             }
