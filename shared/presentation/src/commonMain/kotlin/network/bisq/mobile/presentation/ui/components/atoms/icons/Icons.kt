@@ -120,7 +120,7 @@ fun ArrowDownIcon(modifier: Modifier = Modifier.size(12.dp)) {
 
 @Composable
 fun ExpandAllIcon(modifier: Modifier = Modifier.size(20.dp)) {
-    Image(painterResource(Res.drawable.icon_expand_all), "Down arrow icon", modifier = modifier)
+    Image(painterResource(Res.drawable.icon_expand_all), "Expand all icon", modifier = modifier)
 }
 
 @Composable
