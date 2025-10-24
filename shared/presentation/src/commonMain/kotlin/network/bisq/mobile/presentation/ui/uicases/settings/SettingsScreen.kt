@@ -23,6 +23,15 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.unit.dp
+import network.bisq.mobile.presentation.ui.theme.BisqTheme
+
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.Modifier
+
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
@@ -78,6 +87,7 @@ fun SettingsScreen() {
     val ignorePow by presenter.ignorePow.collectAsState()
     val shouldShowPoWAdjustmentFactor by presenter.shouldShowPoWAdjustmentFactor.collectAsState()
 
+    Box(modifier = Modifier.fillMaxSize()) {
     // Make the title reactive to language changes
     val title by remember(selectedLanguage) {
         derivedStateOf { "mobile.settings.title".i18n() }
@@ -100,6 +110,7 @@ fun SettingsScreen() {
             optionKey = { it.key },
             optionLabel = { it.value },
             selectedKey = selectedLanguage,
+            disabled = !isInteractive,
             onSelected = { presenter.setLanguageCode(it.key) },
             searchable = true,
         )
@@ -109,6 +120,7 @@ fun SettingsScreen() {
             helpText = "settings.language.supported.subHeadLine".i18n(),
             options = allLanguagePairs.entries,
             optionKey = { it.key },
+            disabled = !isInteractive,
             optionLabel = { it.value },
             selectedKeys = supportedLanguageCodes,
             onSelectionChanged = { option, selected ->
@@ -217,6 +229,16 @@ fun SettingsScreen() {
                 label = "settings.network.difficultyAdjustmentFactor.ignoreValueFromSecManager".i18n(),
                 checked = ignorePow,
                 onSwitch = { presenter.setIgnorePow(it) }
+            )
+        }
+
+    }
+
+        if (!isInteractive) {
+            CircularProgressIndicator(
+                modifier = Modifier.align(Alignment.Center).size(60.dp),
+                color = BisqTheme.colors.primary,
+                strokeWidth = 1.dp
             )
         }
 

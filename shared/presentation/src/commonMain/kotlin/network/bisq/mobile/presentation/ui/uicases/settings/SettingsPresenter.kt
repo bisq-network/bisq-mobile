@@ -1,8 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +24,7 @@ open class SettingsPresenter(
 
     override val i18nPairs get() = languageServiceFacade.i18nPairs
     override val allLanguagePairs get() = languageServiceFacade.allPairs
+    override val blockInteractivityOnAttached: Boolean = true
 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
     override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()
@@ -42,11 +40,6 @@ open class SettingsPresenter(
                 settingsServiceFacade.setLanguageCode(langCode) // Update lang in bisq2 lib / WS
                 _languageCode.value = langCode
                 log.i { "Successfully set language code to: $langCode" }
-
-                // As per chat with @Henrik Feb 4, it's okay not to translate `supported languages` lists into selected languages, for now.
-                // To update display values in i18Pairs, allLanguagePairs with the new language
-                // languageServiceFacade.setDefaultLanguage(langCode)
-                // languageServiceFacade.sync()
             } catch (e: Exception) {
                 log.e(e) { "Failed to set language code to: $langCode" }
                 // Reset to previous language on error
@@ -187,8 +180,6 @@ open class SettingsPresenter(
 
     override val shouldShowPoWAdjustmentFactor: StateFlow<Boolean> = MutableStateFlow(false).asStateFlow()
 
-    private var jobs: MutableSet<Job> = mutableSetOf()
-
     private var isUserInitiatedLanguageChange = false
 
     init {
@@ -204,12 +195,6 @@ open class SettingsPresenter(
     override fun onViewAttached() {
         super.onViewAttached()
         launchFetchSettings()
-    }
-
-    override fun onViewUnattaching() {
-        jobs.forEach { it.cancel() }
-        jobs.clear()
-        super.onViewUnattaching()
     }
 
     private fun launchFetchSettings() {
