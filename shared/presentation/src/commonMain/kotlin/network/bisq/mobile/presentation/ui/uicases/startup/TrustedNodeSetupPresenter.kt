@@ -84,7 +84,6 @@ class TrustedNodeSetupPresenter(
     private val _isLoading = MutableStateFlow(true)
     val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
-    val proxyOptions = BisqProxyOption.entries.map { it.name to it.displayString }
     private val _selectedProxyOption = MutableStateFlow(BisqProxyOption.NONE)
     val selectedProxyOption = _selectedProxyOption.asStateFlow()
 
@@ -177,8 +176,8 @@ class TrustedNodeSetupPresenter(
         _proxyPort.value = port
     }
 
-    fun onProxyOptionChanged(value: Pair<String, String>) {
-        _selectedProxyOption.value = BisqProxyOption.valueOf(value.first)
+    fun onProxyOptionChanged(value: BisqProxyOption) {
+        _selectedProxyOption.value = value
         _userExplicitlyChangedProxy.value = true
     }
 

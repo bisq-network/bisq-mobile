@@ -1,13 +1,12 @@
 package network.bisq.mobile.domain.service.common
 
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.domain.service.ServiceFacade
 
 abstract class LanguageServiceFacade : ServiceFacade() {
     companion object {
-         val DEFAULT_TRANSLATABLE_LANGUAGES = listOf(
+         val DEFAULT_TRANSLATABLE_LANGUAGES = mapOf(
 //            "af-ZA" to "Afrikaans (Afrikaans)",
             "cs" to "Czech (\u010de\u0161tina)",
             "de" to "German (Deutsch)",
@@ -19,7 +18,7 @@ abstract class LanguageServiceFacade : ServiceFacade() {
             "ru" to "Russian (\u0440\u0443\u0441\u0441\u043a\u0438\u0439)"
         )
 
-        val DEFAULT_SUPPORTED_LANGUAGES = listOf(
+        val DEFAULT_SUPPORTED_LANGUAGES = mapOf(
             "af-ZA" to "Afrikaans (Afrikaans)",
             "sq" to "Albanian (shqip)",
             "am" to "Amharic (አማርኛ)",
@@ -98,13 +97,11 @@ abstract class LanguageServiceFacade : ServiceFacade() {
         )
     }
 
-    protected val _i18nPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(
-        DEFAULT_TRANSLATABLE_LANGUAGES)
-    val i18nPairs: StateFlow<List<Pair<String, String>>> get() = _i18nPairs.asStateFlow()
+    protected val _i18nPairs = MutableStateFlow(DEFAULT_TRANSLATABLE_LANGUAGES)
+    val i18nPairs = _i18nPairs.asStateFlow()
 
-    protected val _allPairs: MutableStateFlow<List<Pair<String, String>>> = MutableStateFlow(
-        DEFAULT_SUPPORTED_LANGUAGES)
-    val allPairs: StateFlow<List<Pair<String, String>>> get() = _allPairs.asStateFlow()
+    protected val _allPairs = MutableStateFlow(DEFAULT_SUPPORTED_LANGUAGES)
+    val allPairs = _allPairs.asStateFlow()
 
     abstract fun setDefaultLanguage(languageCode: String)
 

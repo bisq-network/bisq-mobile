@@ -45,7 +45,7 @@ import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
-import network.bisq.mobile.presentation.ui.components.atoms.BisqDropDown
+import network.bisq.mobile.presentation.ui.components.atoms.BisqSelect
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
@@ -82,7 +82,6 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val isNewApiUrl by presenter.isNewApiUrl.collectAsState()
     val torState by presenter.torState.collectAsState()
     val timeoutCounter by presenter.timeoutCounter.collectAsState()
-    val proxyOptions = presenter.proxyOptions
     val isIOS = presenter.isIOS()
 
     val blurTriggerSetup = rememberBlurTriggerSetup()
@@ -135,11 +134,13 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     showAdvancedOptions,
                     { showAdvancedOptions = !showAdvancedOptions },
                 ) {
-                    BisqDropDown(
+                    BisqSelect(
                         label = "mobile.trustedNodeSetup.proxy".i18n(),
-                        items = proxyOptions,
-                        value = selectedProxyOption.name,
-                        onValueChanged = {
+                        options = BisqProxyOption.entries,
+                        selectedKey = selectedProxyOption.name,
+                        optionLabel = { it.displayString },
+                        optionKey = { it.name },
+                        onSelected = {
                             presenter.onProxyOptionChanged(it)
                             blurTriggerSetup.triggerBlur()
                         },

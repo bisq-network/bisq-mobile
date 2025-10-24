@@ -21,8 +21,8 @@ open class SettingsPresenter(
     private val mainPresenter: MainPresenter
 ) : BasePresenter(mainPresenter), IGeneralSettingsPresenter {
 
-    override val i18nPairs: StateFlow<List<Pair<String, String>>> get() = languageServiceFacade.i18nPairs
-    override val allLanguagePairs: StateFlow<List<Pair<String, String>>> get() = languageServiceFacade.allPairs
+    override val i18nPairs get() = languageServiceFacade.i18nPairs
+    override val allLanguagePairs get() = languageServiceFacade.allPairs
 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
     override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()

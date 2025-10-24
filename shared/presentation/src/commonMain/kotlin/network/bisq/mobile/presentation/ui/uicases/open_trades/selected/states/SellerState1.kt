@@ -4,10 +4,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
-import network.bisq.mobile.presentation.ui.components.atoms.BisqDropDown
+import network.bisq.mobile.presentation.ui.components.atoms.BisqSelect
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
@@ -23,7 +22,6 @@ fun SellerState1(
     val paymentAccountData by presenter.paymentAccountData.collectAsState()
     val paymentAccountName by presenter.paymentAccountName.collectAsState()
     val accounts by presenter.accounts.collectAsState()
-    val accountPairs = remember(accounts) { accounts.map { it.accountName to it.accountPayload.accountData } }
 
     Column {
         BisqGap.V1()
@@ -35,16 +33,17 @@ fun SellerState1(
         )
 
         BisqGap.V1()
-        if (accountPairs.isNotEmpty()) {
-            BisqDropDown(
+        if (accounts.isNotEmpty()) {
+            BisqSelect(
                 label = "paymentAccounts.headline".i18n(),
-                items = accountPairs,
-                value = paymentAccountName,
-                showKey = true,
-                onValueChanged = {
-                    presenter.setPaymentAccountName(it.first)
-                    presenter.onPaymentDataInput(it.second, true)
-                }
+                options = accounts,
+                optionKey = { it.accountName },
+                optionLabel = { it.accountName },
+                selectedKey = paymentAccountName,
+                onSelected = {
+                    presenter.setPaymentAccountName(it.accountName)
+                    presenter.onPaymentDataInput(it.accountPayload.accountData, true)
+                },
             )
         }
         BisqTextField(

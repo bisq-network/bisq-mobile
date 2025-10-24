@@ -12,7 +12,9 @@ import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
-import network.bisq.mobile.presentation.ui.components.atoms.BisqDropDown
+import network.bisq.mobile.presentation.ui.components.atoms.BisqChipType
+import network.bisq.mobile.presentation.ui.components.atoms.BisqMultiSelect
+import network.bisq.mobile.presentation.ui.components.atoms.BisqSelect
 import network.bisq.mobile.presentation.ui.components.atoms.BisqSwitch
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.BisqTextField
@@ -25,8 +27,8 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
 interface IGeneralSettingsPresenter : ViewPresenter {
-    val i18nPairs: StateFlow<List<Pair<String, String>>>
-    val allLanguagePairs: StateFlow<List<Pair<String, String>>>
+    val i18nPairs: StateFlow<Map<String, String>>
+    val allLanguagePairs: StateFlow<Map<String, String>>
 
     val languageCode: StateFlow<String>
     fun setLanguageCode(langCode: String)
@@ -92,27 +94,35 @@ fun SettingsScreen() {
 
         BisqGap.V1()
 
-        BisqDropDown(
+        BisqSelect(
             label = "settings.language.headline".i18n(),
-            items = i18nPairs,
-            value = selectedLanguage,
-            onValueChanged = { presenter.setLanguageCode(it.first) },
+            options = i18nPairs.entries,
+            optionKey = { it.key },
+            optionLabel = { it.value },
+            selectedKey = selectedLanguage,
+            onSelected = {  presenter.setLanguageCode(it.key) },
         )
 
-        BisqDropDown(
+        BisqMultiSelect(
             label = "settings.language.supported.headline".i18n(),
             helpText = "settings.language.supported.subHeadLine".i18n(),
-            items = allLanguagePairs,
-            value = if (supportedLanguageCodes.isNotEmpty()) supportedLanguageCodes.last() else selectedLanguage,
-            values = supportedLanguageCodes,
-            onSetChanged = { set ->
-                val codes = set.map { it.first }.toSet()
-                presenter.setSupportedLanguageCodes(codes)
+            options = allLanguagePairs.entries,
+            optionKey = { it.key },
+            optionLabel = { it.value },
+            selectedKeys = supportedLanguageCodes,
+            onSelectionChanged = { option, selected ->
+                val newCodes = if (selected) {
+                    supportedLanguageCodes + option.key
+                } else {
+                    supportedLanguageCodes - option.key
+                }
+
+                presenter.setSupportedLanguageCodes(newCodes)
             },
             searchable = true,
-            chipMultiSelect = true,
             maxSelectionLimit = 5,
-            outlineChip = true,
+            minSelectionLimit = 1,
+            chipType = BisqChipType.Outline,
         )
 
         BisqHDivider()

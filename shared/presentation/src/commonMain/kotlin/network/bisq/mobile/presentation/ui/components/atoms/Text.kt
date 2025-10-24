@@ -24,6 +24,30 @@ object BisqText {
     private val defaultTextAlign = TextAlign.Start
     private val defaultTextOverflow = TextOverflow.Clip
 
+    /**
+     * Uses local provided colors
+     */
+    @Composable
+    fun local(
+        text: String,
+        textAlign: TextAlign = defaultTextAlign,
+        style: TextStyle = BisqTheme.typography.baseRegular,
+        lineHeight: TextUnit = getDefaultLineHeight(style.fontSize),
+        maxLines: Int = Int.MAX_VALUE,
+        overflow: TextOverflow = defaultTextOverflow,
+        modifier: Modifier = Modifier,
+    ) {
+        Text(
+            text = text,
+            style = style,
+            textAlign = textAlign,
+            lineHeight = lineHeight,
+            maxLines = maxLines,
+            overflow = overflow,
+            modifier = modifier,
+        )
+    }
+
     @Composable
     fun styledText(
         text: AnnotatedString,
