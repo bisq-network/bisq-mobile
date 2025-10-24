@@ -453,7 +453,7 @@ class TrustedNodeSetupPresenter(
 
     fun validateProxyHost(value: String): String? {
         if (value.isEmpty()) {
-            return "mobile.trustedNodeSetup.host.invalid.empty".i18n()
+            return "mobile.trustedNodeSetup.proxyHost.invalid.empty".i18n()
         }
         if (value == "localhost") {
             return null
