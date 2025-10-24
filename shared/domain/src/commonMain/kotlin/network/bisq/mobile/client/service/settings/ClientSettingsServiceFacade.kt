@@ -36,24 +36,13 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
     override suspend fun setLanguageCode(value: String) {
         try {
             log.i { "Client attempting to set language code to: $value" }
-
-            // For languages that the backend doesn't support (like "pcm"),
-            // we handle them locally without calling the API
-            if (value == "pcm") {
-                log.i { "Client handling PCM language locally (not supported by backend)" }
+            val result = apiGateway.setLanguageCode(value)
+            if (result.isSuccess) {
                 _languageCode.value = value
-                log.i { "Client successfully set language code to: $value (local handling)" }
+                log.i { "Client successfully set language code to: $value (via API)" }
             } else {
-                // For languages supported by the backend, use the normal API flow
-                val result = apiGateway.setLanguageCode(value)
-                if (result.isSuccess) {
-                    _languageCode.value = value
-                    log.i { "Client successfully set language code to: $value (via API)" }
-                } else {
-                    log.e { "Client API call failed for language code: $value" }
-                }
+                log.e { "Client API call failed for language code: $value" }
             }
-
             I18nSupport.setLanguage(value)
         } catch (e: Exception) {
             log.e(e) { "Client failed to set language code to: $value" }
@@ -142,22 +131,13 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
             result.getOrThrow().let { settings ->
                 _isTacAccepted.value = settings.isTacAccepted
                 _tradeRulesConfirmed.value = settings.tradeRulesConfirmed
-
-                // Only update language code from API if we're not using a locally-handled language
-                if (_languageCode.value != "pcm") {
-                    _languageCode.value = settings.languageCode
-                }
-
+                _languageCode.value = settings.languageCode
                 _maxTradePriceDeviation.value = settings.maxTradePriceDeviation
                 _supportedLanguageCodes.value = settings.supportedLanguageCodes
                 _closeMyOfferWhenTaken.value = settings.closeMyOfferWhenTaken
                 _useAnimations.value = settings.useAnimations
                 _numDaysAfterRedactingTradeData.value = settings.numDaysAfterRedactingTradeData
-
-                // If we're using a locally-handled language, override the returned settings
-                val actualLanguageCode = if (_languageCode.value == "pcm") "pcm" else settings.languageCode
-                val correctedSettings = settings.copy(languageCode = actualLanguageCode)
-                return Result.success(correctedSettings)
+                return Result.success(settings)
             }
         }
         return result
