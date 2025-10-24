@@ -34,6 +34,7 @@ class SettingsApiGateway(
     }
 
     suspend fun setLanguageCode(value: String): Result<Unit> {
+        log.i { "settings: setLanguageCode via API value=$value" }
         return webSocketApiClient.patch(
             basePath,
             SettingsChangeRequest(languageCode = value)

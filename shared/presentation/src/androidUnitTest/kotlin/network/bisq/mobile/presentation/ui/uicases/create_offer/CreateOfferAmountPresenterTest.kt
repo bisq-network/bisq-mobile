@@ -74,8 +74,11 @@ class CreateOfferAmountPresenterTest {
 
     @AfterTest
     fun tearDown() {
-        Dispatchers.resetMain()
-        stopKoin()
+        try {
+            Dispatchers.resetMain()
+        } finally {
+            stopKoin()
+        }
     }
 
     // --- Fakes ---
@@ -240,7 +243,7 @@ class CreateOfferAmountPresenterTest {
 
 
     @Test
-    fun fixed_slider_updates_progressively_and_limit_info_updates_on_release() = runTest {
+    fun fixed_slider_updates_progressively_and_limit_info_updates_on_release() = runTest(testDispatcher) {
         // Arrange market prices map (100 USD per BTC)
         val marketUSD = MarketVOFactory.USD
         val marketUSDItem = MarketPriceItem(marketUSD, with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) }, formattedPrice = "100 USD")
@@ -310,7 +313,7 @@ class CreateOfferAmountPresenterTest {
     }
 
     @Test
-    fun range_slider_updates_progressively_and_limit_info_updates_on_release() = runTest {
+    fun range_slider_updates_progressively_and_limit_info_updates_on_release() = runTest(testDispatcher) {
         // Arrange market prices map (100 USD per BTC)
         val marketUSD = MarketVOFactory.USD
         val marketUSDItem = MarketPriceItem(marketUSD, with(PriceQuoteVOFactory) { fromPrice(100_00L, marketUSD) }, formattedPrice = "100 USD")

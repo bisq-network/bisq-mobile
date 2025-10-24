@@ -61,6 +61,7 @@ class WebSocketApiClient(
 
     suspend inline fun <reified T, reified R> patch(path: String, requestBody: R): Result<T> {
         if (useHttpClient) {
+            log.d { "HTTP PATCH to ${apiPath + path}" }
             try {
                 val response: HttpResponse = httpClientService.patch {
                     url {
@@ -70,12 +71,15 @@ class WebSocketApiClient(
                     accept(ContentType.Application.Json)
                     setBody(requestBody)
                 }
+                log.d { "HTTP PATCH done status=${response.status}" }
                 return getResultFromHttpResponse<T>(response)
             } catch (e: Exception) {
+                log.e(e) { "HTTP PATCH failed for ${apiPath + path}: ${e.message}" }
                 return Result.failure(e)
             }
         } else {
             val bodyAsJson = json.encodeToString(requestBody)
+            log.d { "WS PATCH to ${apiPath + path}" }
             return request<T>("PATCH", path, bodyAsJson)
         }
     }

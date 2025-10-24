@@ -1,10 +1,14 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.withContext
+import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.formatters.NumberFormatter
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
@@ -209,8 +213,12 @@ open class SettingsPresenter(
     }
 
     private fun launchFetchSettings() {
-        launchIO {
-            fetchSettings()
+        launchUI {
+            disableInteractive()
+            withContext(IODispatcher) {
+                fetchSettings()
+            }
+            enableInteractive()
         }
     }
 
@@ -228,10 +236,7 @@ open class SettingsPresenter(
         }
 
         _languageCode.value = langCode
-        _supportedLanguageCodes.value = if (settings.supportedLanguageCodes.isNotEmpty())
-            settings.supportedLanguageCodes
-        else
-            setOf("en")
+        _supportedLanguageCodes.value = settings.supportedLanguageCodes.ifEmpty { setOf("en") }
         _closeOfferWhenTradeTaken.value = settings.closeMyOfferWhenTaken
         _tradePriceTolerance.value = NumberFormatter.format(settings.maxTradePriceDeviation * 100)
         _useAnimations.value = settings.useAnimations

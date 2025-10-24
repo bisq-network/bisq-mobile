@@ -108,11 +108,16 @@ class HttpClientService(
         if (proxy != null) {
             log.d { "Using proxy from settings: $proxy" }
         }
-        val apiUrl = if (!clientSettings.apiUrl.isNullOrBlank()) {
-            clientSettings.apiUrl
+        val rawBase = if (!clientSettings.apiUrl.isNullOrBlank()) {
+            clientSettings.apiUrl!!
         } else {
             "http://$defaultHost:$defaultPort"
         }
+        val baseUrl = sanitizeBaseUrl(rawBase, defaultPort)
+        if (baseUrl != rawBase) {
+            log.w { "Sanitized baseUrl from '$rawBase' to '$baseUrl'" }
+        }
+        log.d { "HttpClient baseUrl set to $baseUrl" }
         return createHttpClient(proxy) {
             install(WebSockets)
             install(ContentNegotiation) {
@@ -128,8 +133,9 @@ class HttpClientService(
                 }
             }
             defaultRequest {
-                url(apiUrl)
+                url(baseUrl)
             }
         }
     }
+
 }
