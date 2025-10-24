@@ -31,7 +31,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
-import network.bisq.mobile.presentation.ui.components.atoms.icons.ArrowDownIcon
+import network.bisq.mobile.presentation.ui.components.atoms.icons.ExpandAllIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.BisqBottomSheet
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -227,7 +227,7 @@ fun <T> BisqSelect(
             backgroundColor = BisqTheme.colors.secondary,
             text = selectedLabel,
             textAlign = TextAlign.Start,
-            rightIcon = { ArrowDownIcon() }
+            rightIcon = { ExpandAllIcon() }
         )
 
         BisqGap.VHalf()
