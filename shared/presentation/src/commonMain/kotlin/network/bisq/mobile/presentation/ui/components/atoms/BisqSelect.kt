@@ -1,16 +1,20 @@
 package network.bisq.mobile.presentation.ui.components.atoms
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MenuItemColors
 import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -18,8 +22,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import network.bisq.mobile.i18n.i18n
@@ -252,7 +258,7 @@ fun <T> BisqSelect(
             onDismissRequest = {
                 expanded = false
                 searchText = ""
-            }
+            },
         ) {
             if (searchable) {
                 BisqTextField(
@@ -267,6 +273,21 @@ fun <T> BisqSelect(
             filteredOptions.forEach { item ->
                 key(item.key) { // key is for proper detection of changes & animations
                     itemContent(item, onDismiss)
+                }
+            }
+
+            if (searchable && filteredOptions.isEmpty()) {
+                Surface(
+                    color = BisqTheme.colors.dark_grey40,
+                    shape = RoundedCornerShape(BisqUIConstants.ScreenPadding),
+                    modifier = Modifier.padding(BisqUIConstants.ScreenPadding).fillMaxWidth(),
+                ) {
+                    Box(
+                        Modifier.fillMaxWidth().height(130.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        BisqText.largeRegular("mobile.components.select.empty".i18n())
+                    }
                 }
             }
         }

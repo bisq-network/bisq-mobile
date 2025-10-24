@@ -101,6 +101,7 @@ fun SettingsScreen() {
             optionLabel = { it.value },
             selectedKey = selectedLanguage,
             onSelected = { presenter.setLanguageCode(it.key) },
+            searchable = true,
         )
 
         BisqMultiSelect(
