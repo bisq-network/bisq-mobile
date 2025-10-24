@@ -1,8 +1,10 @@
 package network.bisq.mobile.client.httpclient
 
 import io.ktor.client.engine.ProxyBuilder
+import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.replicated.common.network.AddressVO
+import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.network.KmpTorService
 
 
@@ -51,12 +53,21 @@ data class HttpClientSettings(
         }
     }
 
+    private fun normalizeProxyHost(value: String): String {
+        return if (getPlatformInfo().type == PlatformType.IOS && value == "127.0.0.1") {
+            // see https://github.com/iCepa/Tor.framework/blob/a02fe7b71737041a231f7412e0c9d4a305cd4524/Tor/Classes/Core/TORController.m#L629-L632
+            "localhost"
+        } else {
+            value
+        }
+    }
+
     fun bisqProxyConfig(): BisqProxyConfig? {
         if (!proxyUrl.isNullOrBlank()) {
             val address = AddressVO.from(proxyUrl)
             if (address != null) {
                 return BisqProxyConfig(
-                    ProxyBuilder.socks(address.host, address.port),
+                    ProxyBuilder.socks(normalizeProxyHost(address.host), address.port),
                     isTorProxy
                 )
             }

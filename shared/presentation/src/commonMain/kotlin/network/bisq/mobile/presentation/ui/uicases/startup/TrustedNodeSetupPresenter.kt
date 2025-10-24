@@ -211,19 +211,19 @@ class TrustedNodeSetupPresenter(
                         if (kmpTorService.state.value != KmpTorService.State.STARTED) {
                             kmpTorService.startTor().await()
                         }
-                        newProxyHost = normalizeProxyHost("127.0.0.1")
+                        newProxyHost = "127.0.0.1"
                         newProxyPort = kmpTorService.getSocksPort()
                         newProxyIsTor = true
                     }
 
                     BisqProxyOption.EXTERNAL_TOR -> {
-                        newProxyHost = normalizeProxyHost(proxyHost.value)
+                        newProxyHost = proxyHost.value
                         newProxyPort = proxyPort.value.toIntOrNull()
                         newProxyIsTor = true
                     }
 
                     BisqProxyOption.SOCKS_PROXY -> {
-                        newProxyHost = normalizeProxyHost(proxyHost.value)
+                        newProxyHost = proxyHost.value
                         newProxyPort = proxyPort.value.toIntOrNull()
                         newProxyIsTor = false
                     }
@@ -320,15 +320,6 @@ class TrustedNodeSetupPresenter(
 
     private fun Url.toNormalizedString(): String {
         return "${this.protocol.name}://${this.host}:${this.port}"
-    }
-
-    private fun normalizeProxyHost(value: String): String {
-        return if (isIOS() && value == "127.0.0.1") {
-            // see https://github.com/iCepa/Tor.framework/blob/a02fe7b71737041a231f7412e0c9d4a305cd4524/Tor/Classes/Core/TORController.m#L629-L632
-            "localhost"
-        } else {
-            value
-        }
     }
 
     private fun onConnectionError(error: Throwable, newApiUrl: String) {
