@@ -75,9 +75,9 @@ class CreateOfferAmountPresenterTest {
     @AfterTest
     fun tearDown() {
         try {
-            Dispatchers.resetMain()
-        } finally {
             stopKoin()
+        } finally {
+            Dispatchers.resetMain()
         }
     }
 

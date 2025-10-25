@@ -4,6 +4,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
@@ -25,6 +27,7 @@ open class SettingsPresenter(
     override val i18nPairs get() = languageServiceFacade.i18nPairs
     override val allLanguagePairs get() = languageServiceFacade.allPairs
     override val blockInteractivityOnAttached: Boolean = true
+    private val fetchMutex = Mutex()
 
     private val _languageCode: MutableStateFlow<String> = MutableStateFlow("en")
     override val languageCode: StateFlow<String> get() = _languageCode.asStateFlow()
@@ -200,10 +203,17 @@ open class SettingsPresenter(
     private fun launchFetchSettings() {
         launchUI {
             disableInteractive()
-            withContext(IODispatcher) {
-                fetchSettings()
+            try {
+                fetchMutex.withLock {
+                    withContext(IODispatcher) {
+                        fetchSettings()
+                    }
+                }
+            } catch (e: Exception) {
+                log.e(e) { "Failed to fetch settings" }
+            } finally {
+                enableInteractive()
             }
-            enableInteractive()
         }
     }
 

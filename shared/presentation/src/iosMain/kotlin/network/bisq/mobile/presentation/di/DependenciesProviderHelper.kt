@@ -19,12 +19,11 @@ class DependenciesProviderHelper {
     fun initKoin() {
         // Guard against multiple initializations
         if (_koin != null) {
-            // println("Koin already initialized, skipping")
+            println("Koin already initialized, skipping")
             return
         }
 
         try {
-            // println("Initializing Koin...")
             val instance = startKoin {
                 modules(
                     listOf(
@@ -39,10 +38,7 @@ class DependenciesProviderHelper {
             }
 
             _koin = instance.koin
-            // println("Koin initialized successfully")
         } catch (e: Exception) {
-            // println("Error initializing Koin: ${e.message}")
-            // e.printStackTrace()
             throw e
         }
     }
@@ -59,20 +55,14 @@ class DependenciesProviderHelper {
 fun Koin.get(objCClass: ObjCClass): Any {
     // println("get() called with objCClass: $objCClass")
     return try {
-        // println("Getting original Kotlin class...")
         val kClazz = getOriginalKotlinClass(objCClass)
-        // println("Original Kotlin class: $kClazz")
         if (kClazz == null) {
             throw IllegalStateException("Could not get original Kotlin class for $objCClass")
         }
-        // println("Resolving class: ${kClazz.simpleName}")
         val result: Any = get(kClazz, null, null)
-        // println("Successfully resolved: ${kClazz.simpleName}")
         result
     } catch (e: Exception) {
-        // println("ERROR resolving dependency: ${e.message}")
-        // println("Exception type: ${e::class.simpleName}")
-        // e.printStackTrace()
+//        e.printStackTrace()
         throw e
     }
 }
