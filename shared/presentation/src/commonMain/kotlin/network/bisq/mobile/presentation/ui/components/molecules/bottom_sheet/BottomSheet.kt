@@ -42,7 +42,16 @@ fun BisqBottomSheet(
     containerColor: Color = BisqTheme.colors.dark_grey50,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    if (isAffectedBottomSheetDevice()) {
+    val inPreview = androidx.compose.ui.platform.LocalInspectionMode.current
+    if (inPreview) {
+        // Preview-friendly inline version (Popups often don't render in Previews)
+        InlinePreviewBottomSheet(
+            onDismissRequest = onDismissRequest,
+            containerColor = containerColor,
+        ) {
+            content()
+        }
+    } else if (isAffectedBottomSheetDevice()) {
         // Non-dialog fallback to avoid window flag updates on affected devices
         NonDialogBottomSheet(
             onDismissRequest = onDismissRequest,
@@ -121,6 +130,8 @@ private fun NonDialogBottomSheet(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         DragHandle()
+
+
                         Spacer(modifier = Modifier.height(8.dp))
                         content()
                     }
@@ -175,6 +186,32 @@ private fun NonDialogBottomSheetPreview() {
                 onFilterChange = {}
             )
             Spacer(Modifier.fillMaxHeight())
+        }
+    }
+}
+
+
+@Composable
+private fun InlinePreviewBottomSheet(
+    onDismissRequest: () -> Unit,
+    containerColor: Color,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    // Inline preview: render sheet content directly (no Popup) so Compose Preview shows it
+    Box(modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 16.dp, top = 12.dp)) {
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            color = containerColor,
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.heightIn(max = MAX_SHEET_HEIGHT.dp).padding(bottom = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                DragHandle()
+                Spacer(modifier = Modifier.height(8.dp))
+                content()
+            }
         }
     }
 }
