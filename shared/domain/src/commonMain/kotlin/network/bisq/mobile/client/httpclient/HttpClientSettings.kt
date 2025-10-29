@@ -13,6 +13,7 @@ data class HttpClientSettings(
     val selectedProxyOption: BisqProxyOption = BisqProxyOption.NONE,
     val proxyUrl: String? = null,
     val isTorProxy: Boolean = false,
+    val password: String? = null,
 ) {
     companion object {
         /**
@@ -49,6 +50,7 @@ data class HttpClientSettings(
                 selectedProxyOption,
                 proxyUrl,
                 isTorProxy,
+                settings.bisqApiPassword,
             )
         }
     }

@@ -2,7 +2,9 @@ package network.bisq.mobile.client.httpclient
 
 
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.websocket.WebSockets
@@ -12,6 +14,8 @@ import io.ktor.client.request.get
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.statement.HttpResponse
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.OutgoingContent
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,11 +23,15 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.domain.createHttpClient
+import network.bisq.mobile.domain.crypto.getSha256
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
+import kotlin.concurrent.Volatile
 
 /**
  *  Listens to settings changes and creates a new httpclient accordingly
@@ -37,6 +45,8 @@ class HttpClientService(
     private val defaultHost: String,
     private val defaultPort: Int,
 ) : ServiceFacade() {
+
+    @Volatile
     private var lastConfig: HttpClientSettings? = null
 
     private var _httpClient: MutableStateFlow<HttpClient?> = MutableStateFlow(null)
@@ -135,6 +145,42 @@ class HttpClientService(
             defaultRequest {
                 url(baseUrl)
             }
+            HttpResponseValidator {
+                validateResponse { response ->
+                    if (response.status == HttpStatusCode.Unauthorized) {
+                        throw PasswordIncorrectOrMissingException()
+                    }
+                }
+            }
+            install(createClientPlugin("RequestHashAuth") {
+                onRequest { request, content ->
+                    val password = lastConfig?.password
+                    if (!password.isNullOrBlank()) {
+                        val method = request.method.value
+                        val timestamp = Clock.System.now().toEpochMilliseconds().toString()
+                        val normalizedPathAndQuery = getNormalizedPathAndQuery(request.url.build())
+                        val bodySha256Hex = when (content) {
+                            is OutgoingContent.ByteArrayContent -> {
+                                getSha256(content.bytes()).toHexString()
+                            }
+
+                            else -> null
+                        }
+
+                        val hash =
+                            generateAuthHash(
+                                password,
+                                timestamp,
+                                method,
+                                normalizedPathAndQuery,
+                                bodySha256Hex
+                            )
+
+                        request.headers.append("auth-token", hash)
+                        request.headers.append("auth-ts", timestamp)
+                    }
+                }
+            })
         }
     }
 
