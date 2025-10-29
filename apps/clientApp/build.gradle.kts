@@ -9,16 +9,20 @@ plugins {
     alias(libs.plugins.compose.compiler)
 }
 
+// -------------------- Version Configuration --------------------
 version = project.findProperty("client.android.version") as String
 val versionCodeValue = (project.findProperty("client.android.version.code") as String).toInt()
 val sharedVersion = project.findProperty("shared.version") as String
 val appName = project.findProperty("client.name") as String
 val iosVersion = project.findProperty("client.ios.version") as String
+
+// -------------------- Module References --------------------
 val clientFrameworkBaseName = "ClientApp"
 val clientAppModuleName = "clientApp"
 val sharedPresentationModule = ":shared:presentation"
 val sharedDomainModule = ":shared:domain"
 
+// -------------------- Kotlin Multiplatform Configuration --------------------
 kotlin {
     androidTarget {
         compilerOptions {
@@ -61,22 +65,26 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.logging.kermit)
         }
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
-            implementation(libs.ktor.client.okhttp) // for sl4j dependency issue
+            implementation(libs.ktor.client.okhttp) // For slf4j dependency issue
             implementation(libs.androidx.core.splashscreen)
         }
+
         androidUnitTest.dependencies {
             implementation(libs.kotlin.test)
         }
     }
 }
 
+// -------------------- Local Properties --------------------
 val localProperties = Properties()
 localProperties.load(File(rootDir, "local.properties").inputStream())
 
+// -------------------- Android Configuration --------------------
 android {
     namespace = "network.bisq.mobile.client"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -98,6 +106,7 @@ android {
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = versionCodeValue
         versionName = version.toString()
+
         buildConfigField("String", "APP_VERSION", "\"${version}\"")
         buildConfigField("String", "SHARED_VERSION", "\"${sharedVersion}\"")
     }
@@ -105,7 +114,7 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            // the following excludes are needed to avoid protobuf hanging build when merging release resources for java
+            // The following excludes are needed to avoid protobuf hanging build when merging release resources for java
             // Exclude the conflicting META-INF files
             excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
             excludes.add("META-INF/DEPENDENCIES")
@@ -113,6 +122,7 @@ android {
             excludes.add("META-INF/NOTICE*.md")
             excludes.add("META-INF/INDEX.LIST")
             excludes.add("META-INF/NOTICE.markdown")
+
             pickFirsts += listOf(
                 "META-INF/LICENSE*",
                 "META-INF/NOTICE*",
@@ -121,7 +131,7 @@ android {
             )
         }
         jniLibs {
-            // for apk release builds after tor inclusion
+            // For apk release builds after tor inclusion
             // If multiple .so files exist across dependencies, pick the first and avoid conflicts
             pickFirsts += listOf(
                 "lib/**/libtor.so",
@@ -129,8 +139,7 @@ android {
                 "lib/**/libevent*.so",
                 "lib/**/libssl.so",
                 "lib/**/libsqlite*.so",
-                // Data store
-                "lib/**/libdatastore_shared_counter.so",
+                "lib/**/libdatastore_shared_counter.so"
             )
             // Exclude problematic native libraries
             excludes += listOf(
@@ -141,6 +150,7 @@ android {
             useLegacyPackaging = true
         }
     }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
@@ -155,13 +165,16 @@ android {
                 includeInBundle = false
             }
             isDebuggable = false
+            isCrunchPngs = true
         }
+
         getByName("debug") {
             isDebuggable = true
             applicationIdSuffix = ".debug"
             versionNameSuffix = "-debug"
         }
     }
+
     applicationVariants.all {
         val variant = this
         outputs.all {
@@ -171,25 +184,26 @@ android {
             output.outputFileName = fileName
         }
     }
+
     buildFeatures {
         buildConfig = true
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
-    // needed for aab files renaming
+
+    // Needed for aab files renaming
     setProperty("archivesBaseName", getArtifactName(defaultConfig))
 }
 
+// -------------------- Dependencies --------------------
 dependencies {
     debugImplementation(compose.uiTooling)
 }
 
-// Configure ProGuard mapping file management using shared script
-extra["moduleName"] = clientAppModuleName
-apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")
-
+// -------------------- Build Tasks Configuration --------------------
 // Ensure generateResourceBundles runs before Android build tasks
 afterEvaluate {
     val generateResourceBundlesTask = project(sharedDomainModule).tasks.findByName("generateResourceBundles")
@@ -205,6 +219,11 @@ afterEvaluate {
     }
 }
 
+// -------------------- Helper Functions --------------------
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {
     return "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 }
+
+// -------------------- ProGuard Mapping Configuration --------------------
+extra["moduleName"] = clientAppModuleName
+apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")

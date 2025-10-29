@@ -1,6 +1,5 @@
 import com.google.protobuf.gradle.proto
 import org.apache.tools.ant.taskdefs.condition.Os
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
@@ -12,17 +11,23 @@ plugins {
     alias(libs.plugins.protobuf)
 }
 
+// -------------------- Version Configuration --------------------
 version = project.findProperty("node.android.version") as String
 val versionCodeValue = (project.findProperty("node.android.version.code") as String).toInt()
 val sharedVersion = project.findProperty("shared.version") as String
 val appName = project.findProperty("node.name") as String
 
+// -------------------- Module References --------------------
+val sharedPresentationModule = ":shared:presentation"
+val sharedDomainModule = ":shared:domain"
+val nodeAppModuleName = "nodeApp"
+
+// -------------------- Kotlin Multiplatform Configuration --------------------
 kotlin {
     // using JDK21 for full bisq2 compatibility
     jvmToolchain(21)
 
     androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_21)
         }
@@ -32,38 +37,35 @@ kotlin {
         commonMain.dependencies {
             implementation(libs.koin.core)
         }
+
         androidMain.dependencies {
             implementation(compose.preview)
             implementation(libs.androidx.activity.compose)
         }
-        val androidMain by getting {
-            androidMain.dependencies {
-                implementation(compose.preview)
-                implementation(libs.androidx.activity.compose)
-            }
-            androidUnitTest.dependencies {
-                implementation(libs.mockk)
-                implementation(libs.kotlin.test.junit)
-                implementation(libs.junit)
-                implementation(libs.robolectric)
-            }
-            androidInstrumentedTest.dependencies {
-                implementation(libs.mockk)
-                implementation(libs.kotlin.test.junit)
-                implementation(libs.junit)
 
-                implementation(libs.androidx.test.espresso.core)
-                implementation(libs.androidx.test.core)
-                implementation(libs.androidx.test.junit)
-            }
-            kotlin.srcDirs("src/androidMain/kotlin")
+        androidUnitTest.dependencies {
+            implementation(libs.mockk)
+            implementation(libs.kotlin.test.junit)
+            implementation(libs.junit)
+            implementation(libs.robolectric)
+        }
+
+        androidInstrumentedTest.dependencies {
+            implementation(libs.mockk)
+            implementation(libs.kotlin.test.junit)
+            implementation(libs.junit)
+            implementation(libs.androidx.test.espresso.core)
+            implementation(libs.androidx.test.core)
+            implementation(libs.androidx.test.junit)
         }
     }
 }
 
+// -------------------- Local Properties --------------------
 val localProperties = Properties()
 localProperties.load(File(rootDir, "local.properties").inputStream())
 
+// -------------------- Android Configuration --------------------
 android {
     namespace = "network.bisq.mobile.node"
     compileSdk = libs.versions.android.compileSdk.get().toInt()
@@ -118,7 +120,7 @@ android {
         // Default: extended heap. Turn false to test for mem leaks reducing heap size.
         manifestPlaceholders["largeHeap"] = "true"
 
-        // for apk release build after tor inclusion
+        // ABI filters for APK release build after Tor inclusion
         ndk {
             //noinspection ChromeOsAbiSupport
             abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
@@ -135,14 +137,14 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
-            // the following exclude are needeD to avoid protobuf hanging build when merging release resources for java
-            // Exclude the conflicting META-INF files
+            // Exclude conflicting META-INF files to avoid protobuf build issues
             excludes.add("META-INF/versions/9/OSGI-INF/MANIFEST.MF")
             excludes.add("META-INF/DEPENDENCIES")
             excludes.add("META-INF/LICENSE*.md")
             excludes.add("META-INF/NOTICE*.md")
             excludes.add("META-INF/INDEX.LIST")
             excludes.add("META-INF/NOTICE.markdown")
+
             pickFirsts.add("**/protobuf/**/*.class")
             pickFirsts += listOf(
                 "META-INF/LICENSE*",
@@ -152,16 +154,14 @@ android {
             )
         }
         jniLibs {
-            // for apk release builds after tor inclusion
-            // If multiple .so files exist across dependencies, pick the first and avoid conflicts
+            // Pick first for duplicate native libraries across dependencies
             pickFirsts += listOf(
                 "lib/**/libtor.so",
                 "lib/**/libcrypto.so",
                 "lib/**/libevent*.so",
                 "lib/**/libssl.so",
                 "lib/**/libsqlite*.so",
-                // Data store
-                "lib/**/libdatastore_shared_counter.so",
+                "lib/**/libdatastore_shared_counter.so"
             )
             // Exclude problematic native libraries
             excludes += listOf(
@@ -172,6 +172,7 @@ android {
             useLegacyPackaging = true
         }
     }
+
     buildTypes {
         getByName("release") {
             isMinifyEnabled = true
@@ -188,8 +189,6 @@ android {
             }
             isDebuggable = false
             isCrunchPngs = true
-
-            manifestPlaceholders["largeHeap"] = "true"
         }
         getByName("debug") {
             isDebuggable = true
@@ -197,9 +196,6 @@ android {
             versionNameSuffix = "-debug"
             // Reduce GC logging noise in debug builds
             buildConfigField("String", "GC_LOG_LEVEL", "\"WARN\"")
-
-            // Turn false to use standard heap in debug for leak detection
-            manifestPlaceholders["largeHeap"] = "true"
 
             // Disable minification in debug to avoid lock verification issues
             isMinifyEnabled = false
@@ -231,9 +227,8 @@ android {
         buildConfig = true
     }
 
-    // ABI splits disabled to prevent packaging conflicts with kmp-tor native libraries
     compileOptions {
-        // for bisq2 jars full compatibility
+        // For bisq2 jars full compatibility
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
         isCoreLibraryDesugaringEnabled = true
@@ -241,25 +236,12 @@ android {
     testOptions {
         unitTests.isIncludeAndroidResources = true
     }
-    // needed for aab files renaming
+
+    // Needed for aab files renaming
     setProperty("archivesBaseName", getArtifactName(defaultConfig))
 }
 
-// Ensure generateResourceBundles runs before Android build tasks
-afterEvaluate {
-    val generateResourceBundlesTask = project(":shared:domain").tasks.findByName("generateResourceBundles")
-    if (generateResourceBundlesTask != null) {
-        tasks.matching { task ->
-            task.name.startsWith("compile") ||
-            task.name.startsWith("assemble") ||
-            task.name.startsWith("bundle") ||
-            task.name.contains("Build")
-        }.configureEach {
-            dependsOn(generateResourceBundlesTask)
-        }
-    }
-}
-
+// -------------------- Protobuf Configuration --------------------
 // Compatible with macOS on Apple Silicon
 val archSuffix = if (Os.isFamily(Os.FAMILY_MAC)) ":osx-x86_64" else ""
 
@@ -276,13 +258,23 @@ protobuf {
         }
     }
 }
+
+// -------------------- Dependencies --------------------
 dependencies {
-    implementation(project(":shared:presentation"))
-    implementation(project(":shared:domain"))
+    // Project modules
+    implementation(project(sharedPresentationModule))
+    implementation(project(sharedDomainModule))
+
+    // Debug tools
     debugImplementation(compose.uiTooling)
 
-    // bisq2 core dependencies
+    // Android libraries
     implementation(libs.androidx.multidex)
+    implementation(libs.androidx.core.splashscreen)
+    implementation(libs.process.phoenix)
+    coreLibraryDesugaring(libs.desugar.jdk.libs)
+
+    // Bisq2 core dependencies
     implementation(libs.google.guava)
     compileOnly(libs.lombok)
     annotationProcessor(libs.lombok)
@@ -291,19 +283,11 @@ dependencies {
     implementation(libs.bouncycastle)
     implementation(libs.bouncycastle.pg)
 
+    // Bisq2 core modules
     implementation(libs.bisq.core.common)
     implementation(libs.bisq.core.i18n)
     implementation(libs.bisq.core.persistence)
     implementation(libs.bisq.core.security)
-    // # bisq:core:network#
-    implementation(libs.bisq.core.network.network)
-    implementation(libs.bisq.core.network.network.identity)
-    implementation(libs.bisq.core.network.socks5.socket.channel)
-    implementation(libs.bisq.core.network.i2p) //todo should not be needed
-    implementation(libs.chimp.jsocks)
-    implementation(libs.failsafe)
-    implementation(libs.apache.httpcomponents.httpclient)
-    // ##### network ######
     implementation(libs.bisq.core.identity)
     implementation(libs.bisq.core.account)
     implementation(libs.bisq.core.settings)
@@ -318,33 +302,54 @@ dependencies {
     implementation(libs.bisq.core.presentation)
     implementation(libs.bisq.core.bisq.easy)
 
-    // protobuf
+    // Bisq2 network modules
+    implementation(libs.bisq.core.network.network)
+    implementation(libs.bisq.core.network.network.identity)
+    implementation(libs.bisq.core.network.socks5.socket.channel)
+    implementation(libs.bisq.core.network.i2p)
+    implementation(libs.chimp.jsocks)
+    implementation(libs.failsafe)
+    implementation(libs.apache.httpcomponents.httpclient)
+
+    // Protobuf
     implementation(libs.protoc)
 
+    // Dependency injection & logging
     implementation(libs.koin.android)
     implementation(libs.logging.kermit)
-
-
-    coreLibraryDesugaring(libs.desugar.jdk.libs)
-
-    implementation(libs.androidx.core.splashscreen)
-
-    implementation(libs.process.phoenix)
 }
 
-// ensure tests run on the same Java version as the main code
+// -------------------- Build Tasks Configuration --------------------
+// Ensure tests run on the same Java version as the main code
 tasks.withType<Test> {
     javaLauncher.set(
         javaToolchains.launcherFor {
-            languageVersion.set(JavaLanguageVersion.of(21)) // Update from 17 to 21
+            languageVersion.set(JavaLanguageVersion.of(21))
         }
     )
 }
 
+// Ensure generateResourceBundles runs before Android build tasks
+afterEvaluate {
+    val generateResourceBundlesTask =
+        project(sharedDomainModule).tasks.findByName("generateResourceBundles")
+    if (generateResourceBundlesTask != null) {
+        tasks.matching { task ->
+            task.name.startsWith("compile") ||
+                    task.name.startsWith("assemble") ||
+                    task.name.startsWith("bundle") ||
+                    task.name.contains("Build")
+        }.configureEach {
+            dependsOn(generateResourceBundlesTask)
+        }
+    }
+}
+
+// -------------------- Helper Functions --------------------
 fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {
     return "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 }
 
-// Configure ProGuard mapping file management using shared script
-extra["moduleName"] = "androidNode"
+// -------------------- ProGuard Mapping Configuration --------------------
+extra["moduleName"] = nodeAppModuleName
 apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")
