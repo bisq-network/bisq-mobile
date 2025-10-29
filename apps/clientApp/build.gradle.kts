@@ -46,7 +46,7 @@ kotlin {
         homepage = "X"
         version = iosVersion
         ios.deploymentTarget = "16.0"
-        podfile = project.file("../iosClient/Podfile")
+        podfile = project.file("../../iosClient/Podfile")
         framework {
             baseName = clientFrameworkBaseName
             isStatic = true

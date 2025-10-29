@@ -2,15 +2,15 @@ PODS:
   - clientApp (0.0.7)
 
 DEPENDENCIES:
-  - clientApp (from `../clientApp`)
+  - clientApp (from `../apps/clientApp`)
 
 EXTERNAL SOURCES:
   clientApp:
-    :path: "../clientApp"
+    :path: "../apps/clientApp"
 
 SPEC CHECKSUMS:
-  clientApp: 33e86c0479ef3f0dec8dd5d3877b14c02b09a934
+  clientApp: 4e77137b13ca19e7cf9570edb158e510d28834bf
 
-PODFILE CHECKSUM: 8b51b1757f03977ce2ffc79988ac026106fa1f26
+PODFILE CHECKSUM: ec5b5b69704747770d600d7bd4f638a5cf9a33c8
 
 COCOAPODS: 1.16.2
