@@ -1,4 +1,4 @@
-package network.bisq.mobile.presentation
+package network.bisq.mobile
 
 import androidx.compose.ui.window.ComposeUIViewController
 import network.bisq.mobile.presentation.ui.App

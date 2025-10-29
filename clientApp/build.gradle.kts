@@ -1,9 +1,9 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import java.util.Properties
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
+    alias(libs.plugins.kotlin.cocoapods)
     alias(libs.plugins.android.application)
     alias(libs.plugins.jetbrains.compose)
     alias(libs.plugins.compose.compiler)
@@ -13,32 +13,52 @@ version = project.findProperty("client.android.version") as String
 val versionCodeValue = (project.findProperty("client.android.version.code") as String).toInt()
 val sharedVersion = project.findProperty("shared.version") as String
 val appName = project.findProperty("client.name") as String
+val iosVersion = project.findProperty("client.ios.version") as String
+val clientFrameworkBaseName = "ClientApp"
+val clientAppModuleName = "clientApp"
+val sharedPresentationModule = ":shared:presentation"
+val sharedDomainModule = ":shared:domain"
 
 kotlin {
     androidTarget {
-        @OptIn(ExperimentalKotlinGradlePluginApi::class)
         compilerOptions {
             jvmTarget.set(JvmTarget.JVM_11)
         }
     }
 
+    fun org.jetbrains.kotlin.gradle.plugin.mpp.Framework.configureSharedExports() {
+        export(project(sharedPresentationModule))
+        export(project(sharedDomainModule))
+    }
+
     listOf(
-        iosX64(),
         iosArm64(),
         iosSimulatorArm64()
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "AndroidClient"
-            isStatic = false
+            baseName = clientFrameworkBaseName
+            configureSharedExports()
+        }
+    }
+
+    cocoapods {
+        summary = "Bisq Connect Application"
+        homepage = "X"
+        version = iosVersion
+        ios.deploymentTarget = "16.0"
+        podfile = project.file("../iosClient/Podfile")
+        framework {
+            baseName = clientFrameworkBaseName
+            isStatic = true
+            configureSharedExports()
         }
     }
 
     sourceSets {
         commonMain.dependencies {
+            api(project(sharedPresentationModule))
+            api(project(sharedDomainModule))
             implementation(libs.koin.core)
-            implementation(project(":shared:presentation"))
-            implementation(project(":shared:domain"))
-
             implementation(libs.logging.kermit)
         }
         androidMain.dependencies {
@@ -46,14 +66,10 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.koin.android)
             implementation(libs.ktor.client.okhttp) // for sl4j dependency issue
-
             implementation(libs.androidx.core.splashscreen)
         }
         androidUnitTest.dependencies {
             implementation(libs.kotlin.test)
-        }
-        iosMain.dependencies {
-            implementation(compose.runtime)
         }
     }
 }
@@ -170,18 +186,13 @@ dependencies {
     debugImplementation(compose.uiTooling)
 }
 
-fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {
-//    val date = SimpleDateFormat("yyyyMMdd").format(Date())
-    return "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
-}
-
 // Configure ProGuard mapping file management using shared script
-extra["moduleName"] = "androidClient"
+extra["moduleName"] = clientAppModuleName
 apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")
 
 // Ensure generateResourceBundles runs before Android build tasks
 afterEvaluate {
-    val generateResourceBundlesTask = project(":shared:domain").tasks.findByName("generateResourceBundles")
+    val generateResourceBundlesTask = project(sharedDomainModule).tasks.findByName("generateResourceBundles")
     if (generateResourceBundlesTask != null) {
         tasks.matching { task ->
             task.name.startsWith("compile") ||
@@ -192,4 +203,8 @@ afterEvaluate {
             dependsOn(generateResourceBundlesTask)
         }
     }
+}
+
+fun getArtifactName(defaultConfig: com.android.build.gradle.internal.dsl.DefaultConfig): String {
+    return "${appName.replace(" ", "")}-${defaultConfig.versionName}_${defaultConfig.versionCode}"
 }

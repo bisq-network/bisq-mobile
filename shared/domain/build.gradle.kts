@@ -5,7 +5,6 @@ import kotlin.io.path.Path
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
-    alias(libs.plugins.kotlin.cocoapods)
     alias(libs.plugins.android.library)
     alias(libs.plugins.buildconfig)
     alias(libs.plugins.kotlin.serialization)
@@ -84,18 +83,6 @@ kotlin {
     iosX64()
     iosArm64()
     iosSimulatorArm64()
-
-    cocoapods {
-        summary = "Shared Domain business logic and KOJOs"
-        homepage = "X"
-        version = project.version.toString()
-        ios.deploymentTarget = "16.0"
-        podfile = project.file("../../iosClient/Podfile")
-        framework {
-            baseName = "domain"
-            isStatic = false
-        }
-    }
 
     sourceSets {
         androidMain.dependencies {

@@ -1,2 +1,0 @@
-${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/domain.framework
-${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/presentation.framework

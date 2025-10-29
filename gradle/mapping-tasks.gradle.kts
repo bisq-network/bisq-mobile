@@ -6,7 +6,7 @@
  * Usage: 
  * In module build.gradle.kts:
  * apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")
- * extra["moduleName"] = "androidNode" // or "androidClient"
+ * extra["moduleName"] = "androidNode" // or "clientApp"
  */
 
 // Get the module name from extra properties
