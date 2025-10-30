@@ -113,4 +113,12 @@ interface UserProfileServiceFacade : LifeCycleAware {
      * Returns the current snapshot of ignored profile IDs.
      */
     suspend fun getIgnoredUserProfileIds(): Set<String>
+
+    /**
+     * Reports a user profile to moderators.
+     * @param accusedUserProfile The profile being reported.
+     * @param message A non‑blank, trimmed message.
+     */
+    suspend fun reportUserProfile(accusedUserProfile: UserProfileVO, message: String): Result<Unit>
+
 }

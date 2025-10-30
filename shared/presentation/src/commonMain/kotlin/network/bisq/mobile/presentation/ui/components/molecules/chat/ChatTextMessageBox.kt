@@ -53,7 +53,6 @@ fun ChatTextMessageBox(
     val isMyMessage = message.isMyMessage
     val chatAlign = if (isMyMessage) Alignment.End else Alignment.Start
     val contentAlign = if (isMyMessage) Alignment.CenterEnd else Alignment.CenterStart
-    val menuPosition = if (isMyMessage) Alignment.Start else Alignment.CenterHorizontally
     val bubbleBGColor =
         if (isMyMessage) BisqTheme.colors.primaryDisabled else BisqTheme.colors.dark_grey40
     val chatPadding =
@@ -148,7 +147,6 @@ fun ChatTextMessageBox(
 
         ChatMessageContextMenu(
             message = message,
-            menuPosition = menuPosition,
             showMenu = showMenu,
             onSetShowMenu = { value -> setShowMenu(value) },
             onAddReaction = onAddReaction,

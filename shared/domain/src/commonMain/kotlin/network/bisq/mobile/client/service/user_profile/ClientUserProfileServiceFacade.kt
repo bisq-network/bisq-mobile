@@ -335,6 +335,17 @@ class ClientUserProfileServiceFacade(
         }
     }
 
+    override suspend fun reportUserProfile(
+        accusedUserProfile: UserProfileVO,
+        message: String
+    ): Result<Unit> {
+        val trimmedMessage = message.trim()
+        if (trimmedMessage.isBlank()) {
+            return Result.failure(IllegalArgumentException("Report message cannot be blank"))
+        }
+        return apiGateway.reportUserProfile(accusedUserProfile.networkId.pubKey.id, trimmedMessage)
+    }
+
     private fun observeNumUserProfiles() {
         serviceScope.launch {
             try {

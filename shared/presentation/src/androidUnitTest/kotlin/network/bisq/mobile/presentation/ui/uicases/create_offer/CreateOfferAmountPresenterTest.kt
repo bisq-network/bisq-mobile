@@ -27,6 +27,7 @@ import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactor
 import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOFactory
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.settings.settingsVODemoObj
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.ForegroundDetector
@@ -144,6 +145,10 @@ class CreateOfferAmountPresenterTest {
         override suspend fun undoIgnoreUserProfile(profileId: String) {}
         override suspend fun isUserIgnored(profileId: String): Boolean = false
         override suspend fun getIgnoredUserProfileIds(): Set<String> = emptySet()
+        override suspend fun reportUserProfile(
+            accusedUserProfile: UserProfileVO,
+            message: String
+        ): Result<Unit> = Result.failure(Exception("unused in test"))
     }
 
     private class FakeReputationServiceFacade : ReputationServiceFacade {

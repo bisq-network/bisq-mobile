@@ -51,6 +51,7 @@ import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.S
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.SellerStateMainChain3bPresenter
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states.TradeStatesProvider
 import network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat.TradeChatPresenter
+import network.bisq.mobile.presentation.ui.uicases.report_user.ReportUserPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IGeneralSettingsPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IIgnoredUsersPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.IPaymentAccountSettingsPresenter
@@ -203,4 +204,6 @@ val presentationModule = module {
     factory<TimeProvider> { getPlatformCurrentTimeProvider() }
 
     single<NavigationManager> { NavigationManagerImpl(get()) }
+
+    factory { ReportUserPresenter(get(), get()) }
 }

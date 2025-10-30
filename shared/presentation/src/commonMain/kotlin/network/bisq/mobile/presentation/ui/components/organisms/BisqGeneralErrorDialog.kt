@@ -31,7 +31,6 @@ fun BisqGeneralErrorDialog(
             verticalArrangement = Arrangement.spacedBy(24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-
             BisqText.h4Regular(
                 text = errorTitle,
                 color = BisqTheme.colors.light_grey10,

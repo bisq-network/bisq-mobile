@@ -37,6 +37,7 @@ import network.bisq.mobile.domain.data.replicated.presentation.open_trades.Trade
 import network.bisq.mobile.domain.data.replicated.security.keys.PubKeyVO
 import network.bisq.mobile.domain.data.replicated.security.keys.PublicKeyVO
 import network.bisq.mobile.domain.data.replicated.settings.settingsVODemoObj
+import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.createMockUserProfile
 import network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
@@ -178,6 +179,10 @@ class TakeOfferAmountPresenterTest {
         override suspend fun undoIgnoreUserProfile(profileId: String) {}
         override suspend fun isUserIgnored(profileId: String): Boolean = false
         override suspend fun getIgnoredUserProfileIds(): Set<String> = emptySet()
+        override suspend fun reportUserProfile(
+            accusedUserProfile: UserProfileVO,
+            message: String
+        ): Result<Unit> = Result.failure(Exception("unused in test"))
     }
 
     private class FakeNotificationController : NotificationController {

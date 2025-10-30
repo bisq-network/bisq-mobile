@@ -104,6 +104,7 @@ fun BisqTextField(
     onFocus: () -> Unit = {},
     type: BisqTextFieldType = BisqTextFieldType.Default,
     isPasswordField: Boolean = false,
+    showCharacterCounter: Boolean = false,
 ) {
     var hasInteracted by remember { mutableStateOf(false) }
     var isFocused by remember { mutableStateOf(false) }
@@ -118,6 +119,17 @@ fun BisqTextField(
             visualTransformation = VisualTransformation.None
         }
     }
+
+    @Composable
+    fun CharacterCounter() {
+        if (showCharacterCounter && maxLength > 0) {
+            BisqText.smallLightGrey(
+                text = "${value.length} / $maxLength",
+                modifier = Modifier.padding(end = 4.dp, top = 1.dp, bottom = 4.dp),
+            )
+        }
+    }
+
     val animatedLineProgress by animateFloatAsState(
         targetValue = if (isFocused && enableAnimation) 1f else 0f,
         animationSpec = tween(durationMillis = 300),
@@ -218,14 +230,14 @@ fun BisqTextField(
         visualTransformation = visualTransformation,
         onValueChange = { newTextValue ->
             val processedValue = processText(
-                newTextValue,
-                finalTextValue,
-                valuePrefix,
-                valueSuffix,
-                maxLength,
-                numberWithTwoDecimals,
-                decimalSeparator,
-                decimalLoosePattern
+                newValue = newTextValue,
+                oldValue = finalTextValue,
+                valuePrefix = valuePrefix,
+                valueSuffix = valueSuffix,
+                maxLength = maxLength,
+                numberWithTwoDecimals = numberWithTwoDecimals,
+                decimalSeparator = decimalSeparator,
+                decimalLoosePattern = decimalLoosePattern
             )
             if (processedValue == value) return@BasicTextField
             validationError = validation?.invoke(processedValue)
@@ -355,17 +367,43 @@ fun BisqTextField(
                 val error = validationError
                 if (error != null && error.isNotEmpty() && hasInteracted && !isFocused) {
                     BisqGap.VQuarter()
-                    BisqText.smallLight(
-                        text = error,
-                        modifier = Modifier.padding(start = 4.dp, top = 1.dp, bottom = 4.dp),
-                        color = BisqTheme.colors.danger
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BisqText.smallLight(
+                            text = error,
+                            modifier = Modifier
+                                .padding(start = 4.dp, top = 1.dp, bottom = 4.dp)
+                                .weight(1f),
+                            color = BisqTheme.colors.danger
+                        )
+                        CharacterCounter()
+                    }
                 } else if (helperText.isNotEmpty()) {
                     BisqGap.VQuarter()
-                    BisqText.smallLightGrey(
-                        text = helperText,
-                        modifier = Modifier.padding(start = 4.dp, top = 1.dp, bottom = 4.dp),
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BisqText.smallLightGrey(
+                            text = helperText,
+                            modifier = Modifier
+                                .padding(start = 4.dp, top = 1.dp, bottom = 4.dp)
+                                .weight(1f),
+                        )
+                        CharacterCounter()
+                    }
+                } else if (showCharacterCounter && maxLength > 0) {
+                    BisqGap.VQuarter()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        CharacterCounter()
+                    }
                 }
             }
         }
@@ -563,6 +601,44 @@ private fun BisqTextFieldPreview_LabelWithSuffix() {
                 value = "100.00",
                 onValueChange = { _, _ -> },
                 labelRightSuffix = { BisqText.smallLightGrey(text = "Optional") }
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun BisqTextFieldPreview_WithCharacterCounter() {
+    var text by remember { mutableStateOf("Hello World") }
+    BisqTheme.Preview {
+        Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
+            BisqTextField(
+                label = "Message",
+                value = text,
+                onValueChange = { newText, _ -> text = newText },
+                placeholder = "Enter your message...",
+                maxLength = 100,
+                showCharacterCounter = true,
+                helperText = "Enter a long message, if you like. Enter a long message, if you like."
+            )
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun BisqTextFieldPreview_WithCharacterCounterAndError() {
+    var text by remember { mutableStateOf("Hello World") }
+    BisqTheme.Preview {
+        Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(16.dp)) {
+            BisqTextField(
+                label = "Message",
+                value = text,
+                onValueChange = { newText, _ -> text = newText },
+                validation = { "This field has an error. This field has an error. This field has an error." },
+                placeholder = "Enter your message...",
+                maxLength = 100,
+                showCharacterCounter = true,
             )
         }
     }
