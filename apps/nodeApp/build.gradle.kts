@@ -49,15 +49,6 @@ kotlin {
             implementation(libs.junit)
             implementation(libs.robolectric)
         }
-
-        androidInstrumentedTest.dependencies {
-            implementation(libs.mockk)
-            implementation(libs.kotlin.test.junit)
-            implementation(libs.junit)
-            implementation(libs.androidx.test.espresso.core)
-            implementation(libs.androidx.test.core)
-            implementation(libs.androidx.test.junit)
-        }
     }
 }
 
