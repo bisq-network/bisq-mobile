@@ -27,6 +27,7 @@ import network.bisq.mobile.i18n.I18nSupport
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.AppPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
+import network.bisq.mobile.presentation.ui.components.organisms.BisqSnackbarVisuals
 import network.bisq.mobile.presentation.ui.error.GenericErrorHandler
 import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.navigation.TabNavRoute
@@ -144,9 +145,16 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
         message: String,
         isError: Boolean,
         duration: SnackbarDuration,
+
     ) {
         launchUI(Dispatchers.Main) {
-            snackbarHostState.showSnackbar(message, withDismissAction = true, duration = duration)
+            snackbarHostState.showSnackbar(
+                BisqSnackbarVisuals(
+                    message = message,
+                    isError = isError,
+                    duration = duration,
+                )
+            )
         }
     }
 

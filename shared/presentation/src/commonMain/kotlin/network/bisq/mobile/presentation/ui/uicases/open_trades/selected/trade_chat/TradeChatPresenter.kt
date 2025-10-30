@@ -1,5 +1,6 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat
 
+import androidx.compose.material3.SnackbarDuration
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -30,6 +31,7 @@ import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.notification.NotificationController
 import network.bisq.mobile.presentation.notification.NotificationIds
+import network.bisq.mobile.presentation.ui.helpers.EMPTY_STRING
 import network.bisq.mobile.presentation.ui.navigation.NavRoute
 
 class TradeChatPresenter(
@@ -75,6 +77,16 @@ class TradeChatPresenter(
 
     private val _showTradeNotFoundDialog = MutableStateFlow(false)
     val showTradeNotFoundDialog: StateFlow<Boolean> get() = _showTradeNotFoundDialog.asStateFlow()
+
+    private val _showReportUserDialog = MutableStateFlow(false)
+    val showReportUserDialog: StateFlow<Boolean> get() = _showReportUserDialog.asStateFlow()
+
+    private val _reportUserTradeMessage = MutableStateFlow<BisqEasyOpenTradeMessageModel?>(null)
+    val reportUserTradeMessage: StateFlow<BisqEasyOpenTradeMessageModel?> get() = _reportUserTradeMessage.asStateFlow()
+
+    private val _reportUserMessage = MutableStateFlow<String?>(null)
+    val reportUserMessage: StateFlow<String?> get() = _reportUserMessage.asStateFlow()
+
     val readCount =
         selectedTrade.combine(tradeReadStateRepository.data.map { it.map }) { trade, readStates ->
             if (trade?.tradeId != null) {
@@ -88,7 +100,8 @@ class TradeChatPresenter(
             initialValue = -1,
         )
 
-    private val observedChatMessages = MutableStateFlow<Set<BisqEasyOpenTradeMessageModel>>(emptySet())
+    private val observedChatMessages =
+        MutableStateFlow<Set<BisqEasyOpenTradeMessageModel>>(emptySet())
 
     fun initialize(tradeId: String) {
         tradesServiceFacade.selectOpenTrade(tradeId)
@@ -248,7 +261,24 @@ class TradeChatPresenter(
         this.hideUndoIgnoreUserPopup();
     }
 
-    fun onReportUser(message: BisqEasyOpenTradeMessageModel) {
+    fun onReportUser(tradeMessage: BisqEasyOpenTradeMessageModel) {
+        _reportUserTradeMessage.value = tradeMessage
+        _showReportUserDialog.value = true
+    }
+
+    fun onDismissReportUserDialog() {
+        _showReportUserDialog.value = false
+        _reportUserMessage.value = EMPTY_STRING
+    }
+
+    fun onReportUserError(errorMessage: String, reportMessage: String) {
+        _reportUserMessage.value = reportMessage
+        _showReportUserDialog.value = false
+        showSnackbar(
+            message = errorMessage,
+            isError = true,
+            duration = SnackbarDuration.Short
+        )
     }
 
     fun onOpenChatRules() {

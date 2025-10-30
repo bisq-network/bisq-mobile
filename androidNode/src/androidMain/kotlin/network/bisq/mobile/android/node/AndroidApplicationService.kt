@@ -39,6 +39,7 @@ import bisq.settings.DontShowAgainService
 import bisq.settings.FavouriteMarketsService
 import bisq.settings.SettingsService
 import bisq.support.SupportService
+import bisq.support.moderator.ModerationRequestService
 import bisq.trade.TradeService
 import bisq.user.UserService
 import bisq.user.reputation.ReputationService
@@ -115,6 +116,9 @@ class AndroidApplicationService(
             Supplier { applicationService.languageRepository }
         var reputationService: Supplier<ReputationService> =
             Supplier { applicationService.userService.reputationService }
+
+        var moderationRequestService: Supplier<ModerationRequestService> =
+            Supplier { applicationService.supportService.moderationRequestService }
     }
 
     companion object {
