@@ -6,6 +6,7 @@ import bisq.common.observable.Pin
 import bisq.security.DigestUtil
 import bisq.security.SecurityService
 import bisq.security.pow.ProofOfWork
+import bisq.support.moderator.ModerationRequestService
 import bisq.user.UserService
 import bisq.user.identity.NymIdGenerator
 import bisq.user.profile.UserProfileService
@@ -27,6 +28,7 @@ import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import java.security.KeyPair
 import java.util.Random
+import kotlin.IllegalArgumentException
 import kotlin.math.max
 import kotlin.math.min
 
@@ -44,6 +46,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     }
 
     // Dependencies
+    private val moderationRequestService: ModerationRequestService by lazy { applicationService.moderationRequestService.get() }
     private val securityService: SecurityService by lazy { applicationService.securityService.get() }
     private val userService: UserService by lazy { applicationService.userService.get() }
     private val userProfileService: UserProfileService by lazy { userService.userProfileService }
@@ -270,5 +273,22 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         val ids = userProfileService.ignoredUserProfileIds
         _ignoredProfileIds.value = ids.toSet() // to create a new set to trigger updates correctly
         return ids
+    }
+
+    override suspend fun reportUserProfile(
+        accusedUserProfile: UserProfileVO,
+        message: String
+    ): Result<Unit> {
+        val trimmedMessage = message.trim()
+        if (trimmedMessage.isBlank()) {
+            return Result.failure(IllegalArgumentException("Report message cannot be blank"))
+        }
+        return try {
+            val userProfile = Mappings.UserProfileMapping.toBisq2Model(accusedUserProfile)
+            moderationRequestService.reportUserProfile(userProfile, trimmedMessage)
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
     }
 }

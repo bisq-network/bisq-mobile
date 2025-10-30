@@ -22,6 +22,7 @@ import network.bisq.mobile.presentation.ui.helpers.EMPTY_STRING
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.helpers.toClipEntry
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.uicases.report_user.ReportUserDialog
 import org.koin.compose.koinInject
 
 @Composable
@@ -44,6 +45,9 @@ fun TradeChatScreen(tradeId: String) {
     val showChatRulesWarnBox by presenter.showChatRulesWarnBox.collectAsState()
     val readCount by presenter.readCount.collectAsState()
     val showTradeNotFoundDialog by presenter.showTradeNotFoundDialog.collectAsState()
+    val showReportUserDialog by presenter.showReportUserDialog.collectAsState()
+    val reportUserTradeMessage by presenter.reportUserTradeMessage.collectAsState()
+    val reportUserMessage by presenter.reportUserMessage.collectAsState()
 
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
@@ -57,6 +61,7 @@ fun TradeChatScreen(tradeId: String) {
             )
         },
         isInteractive = isInteractive,
+        snackbarHostState = presenter.getSnackState()
     ) {
 
         if (readCount == -1) {
@@ -96,6 +101,17 @@ fun TradeChatScreen(tradeId: String) {
             onMessageSent = presenter::sendChatMessage,
             onCloseReply = { presenter.onReply(null) }
         )
+
+        reportUserTradeMessage?.let { message ->
+            if (showReportUserDialog) {
+                ReportUserDialog(
+                    chatMessage = message,
+                    reportMessage = reportUserMessage,
+                    onReportFailure = presenter::onReportUserError,
+                    onDismiss = presenter::onDismissReportUserDialog
+                )
+            }
+        }
 
         if (showIgnoreUserWarnBox) {
             ConfirmationDialog(

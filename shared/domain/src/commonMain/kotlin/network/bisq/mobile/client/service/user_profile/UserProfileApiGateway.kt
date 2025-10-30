@@ -69,4 +69,9 @@ class UserProfileApiGateway(
     suspend fun subscribeNumUserProfiles(): WebSocketEventObserver {
         return webSocketClientService.subscribe(Topic.NUM_USER_PROFILES)
     }
+
+    suspend fun reportUserProfile(userId: String, message: String): Result<Unit> {
+        val body = ReportUserProfileRequest(message)
+        return webSocketApiClient.post("$profileBasePath/report/${userId.encodeURLPath()}", body)
+    }
 }
