@@ -37,6 +37,7 @@ import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.httpclient.generateAuthHash
+import network.bisq.mobile.client.httpclient.generateNonce
 import network.bisq.mobile.client.httpclient.getNormalizedPathAndQuery
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException
@@ -233,6 +234,7 @@ class WebSocketClientImpl(
 
         try {
             if (webSocketRequest is WebSocketRestApiRequest && !password.isNullOrBlank()) {
+                val nonce = generateNonce()
                 val timestamp = Clock.System.now().toEpochMilliseconds().toString()
                 val parsedPath = parseUrl("http://dummy${webSocketRequest.path}")
                     ?: throw IllegalArgumentException("Invalid path provided: $webSocketRequest.path")
@@ -244,13 +246,14 @@ class WebSocketClientImpl(
                 }
                 val authToken = generateAuthHash(
                     password,
+                    nonce,
                     timestamp,
                     webSocketRequest.method.uppercase(),
                     normalizedPath,
                     bodySha256Hex,
                 )
                 val replacementRequest =
-                    webSocketRequest.copy(authToken = authToken, authTs = timestamp)
+                    webSocketRequest.copy(authToken = authToken, authTs = timestamp, authNonce = nonce)
                 return requestResponseHandler.request(replacementRequest)
             } else {
                 return requestResponseHandler.request(webSocketRequest)

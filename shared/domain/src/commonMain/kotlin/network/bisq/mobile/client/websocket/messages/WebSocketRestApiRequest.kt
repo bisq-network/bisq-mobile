@@ -12,4 +12,5 @@ data class WebSocketRestApiRequest(
     val body: String,
     val authToken: String? = null,
     val authTs: String? = null,
+    val authNonce: String? = null,
 ) : WebSocketRequest

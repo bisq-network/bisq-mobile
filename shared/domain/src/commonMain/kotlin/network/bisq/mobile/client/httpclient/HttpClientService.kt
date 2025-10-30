@@ -119,7 +119,7 @@ class HttpClientService(
             log.d { "Using proxy from settings: $proxy" }
         }
         val rawBase = if (!clientSettings.apiUrl.isNullOrBlank()) {
-            clientSettings.apiUrl!!
+            clientSettings.apiUrl
         } else {
             "http://$defaultHost:$defaultPort"
         }
@@ -158,6 +158,7 @@ class HttpClientService(
                     if (!password.isNullOrBlank()) {
                         val method = request.method.value
                         val timestamp = Clock.System.now().toEpochMilliseconds().toString()
+                        val nonce = generateNonce()
                         val normalizedPathAndQuery = getNormalizedPathAndQuery(request.url.build())
                         val bodySha256Hex = when (content) {
                             is OutgoingContent.ByteArrayContent -> {
@@ -170,14 +171,16 @@ class HttpClientService(
                         val hash =
                             generateAuthHash(
                                 password,
+                                nonce,
                                 timestamp,
                                 method,
                                 normalizedPathAndQuery,
-                                bodySha256Hex
+                                bodySha256Hex,
                             )
 
-                        request.headers.append("auth-token", hash)
-                        request.headers.append("auth-ts", timestamp)
+                        request.headers.append("AUTH-TOKEN", hash)
+                        request.headers.append("AUTH-TS", timestamp)
+                        request.headers.append("AUTH-NONCE", nonce)
                     }
                 }
             })
