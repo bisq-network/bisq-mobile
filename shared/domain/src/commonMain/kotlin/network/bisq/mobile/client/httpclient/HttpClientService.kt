@@ -50,6 +50,10 @@ class HttpClientService(
     private val defaultPort: Int,
 ) : ServiceFacade() {
 
+    companion object {
+        private const val MAX_BODY_SIZE_BYTES: Long = 5 * 1024 * 1024 // 5 MB limit
+    }
+
     @Volatile
     private var lastConfig: HttpClientSettings? = null
 
@@ -167,25 +171,38 @@ class HttpClientService(
                         val normalizedPathAndQuery = getNormalizedPathAndQuery(request.url.build())
                         val bodySha256Hex = when (content) {
                             is OutgoingContent.ByteArrayContent -> {
-                                getSha256(content.bytes()).toHexString()
+                                val bytes = content.bytes()
+                                if (bytes.size > MAX_BODY_SIZE_BYTES) {
+                                    throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
+                                }
+                                getSha256(bytes).toHexString()
                             }
 
                             is OutgoingContent.ReadChannelContent -> {
-                                // Read the channel content
-                                val bytes = content.readFrom().readRemaining().readByteArray()
+                                val bytes = content.readFrom()
+                                    .readRemaining(MAX_BODY_SIZE_BYTES + 1) // + 1 to detect if max size has reached
+                                    .readByteArray()
+                                if (bytes.size > MAX_BODY_SIZE_BYTES) {
+                                    throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
+                                }
                                 reconstructedBody =
                                     ByteArrayContent(bytes, content.contentType, content.status)
                                 getSha256(bytes).toHexString()
                             }
 
                             is OutgoingContent.WriteChannelContent -> {
-                                // For kotlinx.serialization, capture bytes from the write channel
                                 val channel = ByteChannel(autoFlush = true)
-                                content.writeTo(channel)
-                                val bytes = channel.readRemaining().readByteArray()
-                                reconstructedBody =
-                                    ByteArrayContent(bytes, content.contentType, content.status)
-                                getSha256(bytes).toHexString()
+                                try {
+                                    content.writeTo(channel)
+                                    val bytes =
+                                        channel.readRemaining(MAX_BODY_SIZE_BYTES + 1)
+                                            .readByteArray()
+                                    reconstructedBody =
+                                        ByteArrayContent(bytes, content.contentType, content.status)
+                                    getSha256(bytes).toHexString()
+                                } finally {
+                                    channel.close()
+                                }
                             }
 
                             else -> null
@@ -210,5 +227,4 @@ class HttpClientService(
             })
         }
     }
-
 }
