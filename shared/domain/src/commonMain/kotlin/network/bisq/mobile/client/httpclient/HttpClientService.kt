@@ -197,6 +197,9 @@ class HttpClientService(
                                     val bytes =
                                         channel.readRemaining(MAX_BODY_SIZE_BYTES + 1)
                                             .readByteArray()
+                                    if (bytes.size > MAX_BODY_SIZE_BYTES) {
+                                        throw IllegalArgumentException("Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes")
+                                    }
                                     reconstructedBody =
                                         ByteArrayContent(bytes, content.contentType, content.status)
                                     getSha256(bytes).toHexString()

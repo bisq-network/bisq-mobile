@@ -155,6 +155,8 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                         label = "mobile.trustedNodeSetup.password".i18n(),
                         value = password,
                         onValueChange = {value, _ -> presenter.onPasswordChanged(value)},
+                        keyboardType = KeyboardType.Password,
+                        isPasswordField = true,
                         disabled = isLoading || !isWorkflow,
                     )
                 }
