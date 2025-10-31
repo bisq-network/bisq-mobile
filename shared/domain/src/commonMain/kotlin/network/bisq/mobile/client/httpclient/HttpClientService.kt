@@ -15,8 +15,11 @@ import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.content.ByteArrayContent
 import io.ktor.http.content.OutgoingContent
 import io.ktor.serialization.kotlinx.json.json
+import io.ktor.utils.io.ByteChannel
+import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -24,6 +27,7 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
+import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.domain.createHttpClient
@@ -152,9 +156,10 @@ class HttpClientService(
                     }
                 }
             }
-            install(createClientPlugin("RequestHashAuth") {
-                onRequest { request, content ->
+            install(createClientPlugin("HttpApiAuthPlugin") {
+                transformRequestBody { request, content, bodyType ->
                     val password = lastConfig?.password
+                    var reconstructedBody: ByteArrayContent? = null
                     if (!password.isNullOrBlank()) {
                         val method = request.method.value
                         val timestamp = Clock.System.now().toEpochMilliseconds().toString()
@@ -163,6 +168,24 @@ class HttpClientService(
                         val bodySha256Hex = when (content) {
                             is OutgoingContent.ByteArrayContent -> {
                                 getSha256(content.bytes()).toHexString()
+                            }
+
+                            is OutgoingContent.ReadChannelContent -> {
+                                // Read the channel content
+                                val bytes = content.readFrom().readRemaining().readByteArray()
+                                reconstructedBody =
+                                    ByteArrayContent(bytes, content.contentType, content.status)
+                                getSha256(bytes).toHexString()
+                            }
+
+                            is OutgoingContent.WriteChannelContent -> {
+                                // For kotlinx.serialization, capture bytes from the write channel
+                                val channel = ByteChannel(autoFlush = true)
+                                content.writeTo(channel)
+                                val bytes = channel.readRemaining().readByteArray()
+                                reconstructedBody =
+                                    ByteArrayContent(bytes, content.contentType, content.status)
+                                getSha256(bytes).toHexString()
                             }
 
                             else -> null
@@ -182,6 +205,7 @@ class HttpClientService(
                         request.headers.append("AUTH-TS", timestamp)
                         request.headers.append("AUTH-NONCE", nonce)
                     }
+                    reconstructedBody ?: content as OutgoingContent?
                 }
             })
         }
