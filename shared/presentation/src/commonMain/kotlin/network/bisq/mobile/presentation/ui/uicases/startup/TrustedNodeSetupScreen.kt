@@ -130,12 +130,13 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                     }
                 )
             }
-            if (!isIOS) {
-                AdvancedOptionsDrawer(
-                    showAdvancedOptions,
-                    { showAdvancedOptions = !showAdvancedOptions },
-                ) {
-                    Column {
+
+            AdvancedOptionsDrawer(
+                showAdvancedOptions,
+                { showAdvancedOptions = !showAdvancedOptions },
+            ) {
+                Column {
+                    if (!isIOS) {
                         BisqSelect(
                             label = "mobile.trustedNodeSetup.proxy".i18n(),
                             options = BisqProxyOption.entries,
@@ -148,17 +149,17 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                             },
                             disabled = isLoading || !isWorkflow,
                         )
-
-                        BisqTextField(
-                            label = "mobile.trustedNodeSetup.password".i18n(),
-                            value = password,
-                            onValueChange = {value, _ -> presenter.onPasswordChanged(value)},
-                            disabled = isLoading || !isWorkflow,
-                        )
                     }
+
+                    BisqTextField(
+                        label = "mobile.trustedNodeSetup.password".i18n(),
+                        value = password,
+                        onValueChange = {value, _ -> presenter.onPasswordChanged(value)},
+                        disabled = isLoading || !isWorkflow,
+                    )
                 }
-                BisqGap.V1()
             }
+            BisqGap.V1()
 
             if (selectedProxyOption == BisqProxyOption.INTERNAL_TOR || torState != KmpTorService.State.IDLE) {
                 Row(horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)) {
