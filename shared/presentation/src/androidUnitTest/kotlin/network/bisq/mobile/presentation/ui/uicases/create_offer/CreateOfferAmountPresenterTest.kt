@@ -92,6 +92,7 @@ class CreateOfferAmountPresenterTest {
         override suspend fun setNotificationPermissionState(value: network.bisq.mobile.domain.data.model.NotificationPermissionState) {}
         override suspend fun setExternalProxyUrl(value: String) {}
         override suspend fun setSelectedProxyOption(value: BisqProxyOption) {}
+        override suspend fun setBisqApiPassword(value: String) {}
         override suspend fun update(transform: suspend (t: Settings) -> Settings) { _data.value = transform(_data.value) }
         override suspend fun clear() { _data.value = Settings() }
     }

@@ -66,6 +66,12 @@ class SettingsRepositoryImpl(
         }
     }
 
+    override suspend fun setBisqApiPassword(value: String) {
+        settingsStore.updateData {
+            it.copy(bisqApiPassword = value)
+        }
+    }
+
     override suspend fun update(transform: suspend (t: Settings) -> Settings) {
         settingsStore.updateData(transform)
     }

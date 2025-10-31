@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.httpclient.BisqProxyOption
+import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.ConnectionState
 import network.bisq.mobile.client.websocket.WebSocketClientService
@@ -72,6 +73,9 @@ class TrustedNodeSetupPresenter(
 
     private val _proxyPort = MutableStateFlow("9050")
     val proxyPort: StateFlow<String> = _proxyPort.asStateFlow()
+
+    private val _password = MutableStateFlow("")
+    val password: StateFlow<String> = _password.asStateFlow()
 
     val isNewApiUrl: StateFlow<Boolean> =
         combine(settingsRepository.data, apiUrl) { settings, newUrl ->
@@ -141,6 +145,7 @@ class TrustedNodeSetupPresenter(
                 val settings = withContext(IODispatcher) {
                     settingsRepository.fetch()
                 }
+                _password.value = settings.bisqApiPassword
                 _selectedProxyOption.value = settings.selectedProxyOption
                 if (settings.bisqApiUrl.isBlank()) {
                     if (apiUrl.value.isNotBlank()) onApiUrlChanged(apiUrl.value)
@@ -176,6 +181,13 @@ class TrustedNodeSetupPresenter(
         _proxyPort.value = port
     }
 
+    fun onPasswordChanged(value: String) {
+        _password.value = value
+        launchIO {
+            settingsRepository.setBisqApiPassword(value)
+        }
+    }
+
     fun onProxyOptionChanged(value: BisqProxyOption) {
         _selectedProxyOption.value = value
         _userExplicitlyChangedProxy.value = true
@@ -205,6 +217,7 @@ class TrustedNodeSetupPresenter(
                 val newProxyPort: Int?
                 val newProxyIsTor: Boolean
                 val newProxyOption = selectedProxyOption.value
+                val password = _password.value
                 when (newProxyOption) {
                     BisqProxyOption.INTERNAL_TOR -> {
                         if (kmpTorService.state.value != KmpTorService.State.STARTED) {
@@ -255,6 +268,7 @@ class TrustedNodeSetupPresenter(
                         newProxyHost,
                         newProxyPort,
                         newProxyIsTor,
+                        password,
                     )
                     countdownJob.cancel()
                     result
@@ -277,6 +291,7 @@ class TrustedNodeSetupPresenter(
                             else -> ""
                         },
                         selectedProxyOption = newProxyOption,
+                        bisqApiPassword = password,
                     )
                     if (currentSettings != updatedSettings) {
                         wsClientService.disposeClient()
@@ -333,6 +348,10 @@ class TrustedNodeSetupPresenter(
                 log.d { "Invalid version cannot connect" }
                 showSnackbar("mobile.trustedNodeSetup.connectionJob.messages.incompatible".i18n())
                 _status.value = "mobile.trustedNodeSetup.status.invalidVersion".i18n()
+            }
+
+            is PasswordIncorrectOrMissingException -> {
+                _status.value = "mobile.trustedNodeSetup.status.passwordIncorrectOrMissing".i18n()
             }
 
             else -> {

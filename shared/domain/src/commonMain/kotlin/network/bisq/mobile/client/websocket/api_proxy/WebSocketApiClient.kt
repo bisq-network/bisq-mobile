@@ -13,6 +13,7 @@ import io.ktor.http.path
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.httpclient.HttpClientService
+import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.client.websocket.messages.WebSocketRestApiRequest
@@ -133,6 +134,8 @@ class WebSocketApiClient(
                     val decodeFromString = json.decodeFromString<T>(body)
                     return Result.success(decodeFromString)
                 }
+            } else if (response.httpStatusCode == HttpStatusCode.Unauthorized) {
+                return Result.failure(PasswordIncorrectOrMissingException())
             } else {
                 val trimmed = body.trimStart()
                 if (trimmed.startsWith("{") || trimmed.startsWith("[")) {

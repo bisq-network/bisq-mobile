@@ -96,6 +96,7 @@ class WebSocketClientService(
             val newClient = webSocketClientFactory.createNewClient(
                 httpClientService.getClient(),
                 newApiUrl,
+                httpClientSettings.password,
             )
             currentClient.value = newClient
             ApplicationBootstrapFacade.isDemo = newClient is WebSocketClientDemo
@@ -206,6 +207,7 @@ class WebSocketClientService(
         proxyHost: String? = null,
         proxyPort: Int? = null,
         isTorProxy: Boolean = true,
+        password: String? = null,
     ): Throwable? {
         val hasProxy = proxyHost != null && proxyPort != null
         val httpClient = httpClientService.createNewInstance(
@@ -213,11 +215,13 @@ class WebSocketClientService(
                 apiUrl = apiUrl.toString(),
                 proxyUrl = if (hasProxy) "$proxyHost:$proxyPort" else null,
                 isTorProxy = isTorProxy,
+                password = password,
             )
         )
         val wsClient = webSocketClientFactory.createNewClient(
             httpClient,
             apiUrl,
+            password,
         )
         try {
             val timeout = determineTimeout(apiUrl.host)

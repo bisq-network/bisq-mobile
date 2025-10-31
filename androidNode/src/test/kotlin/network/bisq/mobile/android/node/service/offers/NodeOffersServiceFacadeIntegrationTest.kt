@@ -46,6 +46,7 @@ class NodeOffersServiceFacadeIntegrationTest {
         override suspend fun setNotificationPermissionState(value: NotificationPermissionState) {}
         override suspend fun setExternalProxyUrl(value: String) {}
         override suspend fun setSelectedProxyOption(value: BisqProxyOption) {}
+        override suspend fun setBisqApiPassword(value: String) {}
 
         override suspend fun update(transform: suspend (Settings) -> Settings) {}
 
