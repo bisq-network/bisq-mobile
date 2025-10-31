@@ -97,10 +97,10 @@ EOM
   esac
 }
 if [[ "$CONFIGURATION" == "Debug" ]]; then
-  install_resource "${PODS_ROOT}/../../shared/presentation/build/compose/cocoapods/compose-resources"
+  install_resource "${PODS_ROOT}/../../apps/clientApp/build/compose/cocoapods/compose-resources"
 fi
 if [[ "$CONFIGURATION" == "Release" ]]; then
-  install_resource "${PODS_ROOT}/../../shared/presentation/build/compose/cocoapods/compose-resources"
+  install_resource "${PODS_ROOT}/../../apps/clientApp/build/compose/cocoapods/compose-resources"
 fi
 
 mkdir -p "${TARGET_BUILD_DIR}/${UNLOCALIZED_RESOURCES_FOLDER_PATH}"

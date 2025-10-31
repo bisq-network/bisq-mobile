@@ -1,5 +1,5 @@
 import Foundation
-import presentation
+import ClientApp
 
 func get<A: AnyObject>() -> A {
     return DependenciesProviderHelper.companion.koin.get(objCClass: A.self) as! A

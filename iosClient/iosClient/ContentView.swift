@@ -1,8 +1,6 @@
 import UIKit
 import SwiftUI
-
-import presentation
-import domain
+import ClientApp
 
 struct ComposeView: UIViewControllerRepresentable {
     

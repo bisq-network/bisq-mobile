@@ -1,21 +1,16 @@
 PODS:
-  - domain (0.2.0)
-  - presentation (0.2.0)
+  - clientApp (0.0.7)
 
 DEPENDENCIES:
-  - domain (from `../shared/domain`)
-  - presentation (from `../shared/presentation`)
+  - clientApp (from `../apps/clientApp`)
 
 EXTERNAL SOURCES:
-  domain:
-    :path: "../shared/domain"
-  presentation:
-    :path: "../shared/presentation"
+  clientApp:
+    :path: "../apps/clientApp"
 
 SPEC CHECKSUMS:
-  domain: 7426a5a88ca8ba85d253f425f5a3971406b2726a
-  presentation: d0d413049b627ca2c81e63cd5100794506dd4d91
+  clientApp: 4e77137b13ca19e7cf9570edb158e510d28834bf
 
-PODFILE CHECKSUM: 5a36d95b68265bb0bb0575c57143d1b6e0d6fb38
+PODFILE CHECKSUM: ec5b5b69704747770d600d7bd4f638a5cf9a33c8
 
 COCOAPODS: 1.16.2

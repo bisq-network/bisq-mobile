@@ -1,7 +1,7 @@
 import SwiftUI
-import presentation
 import UIKit
 import UserNotifications
+import ClientApp
 
 class AppDelegate: NSObject, UIApplicationDelegate {
     

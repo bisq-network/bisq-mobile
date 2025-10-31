@@ -81,11 +81,15 @@ jobs:
         if: startsWith(matrix.os, 'ubuntu')
         env:
           CI: true
-        run: ./gradlew clean test -x :androidNode:testDebugUnitTest -x :androidNode:testReleaseUnitTest -x :androidNode:test --info
+        run: ./gradlew clean test -x :apps:nodeApp:testDebugUnitTest -x :apps:nodeApp:testReleaseUnitTest -x :apps:nodeApp:test --info
+
+      - name: Generate dummy framework for CocoaPods (Mac only)
+        if: startsWith(matrix.os, 'macos')
+        run: ./gradlew :apps:clientApp:generateDummyFramework
 
       - name: Android compile-only (Mac only)
         if: startsWith(matrix.os, 'macos')
-        run: ./gradlew :androidClient:assembleDebug -x test -x lint
+        run: ./gradlew :apps:clientApp:assembleDebug -x test -x lint
 
 #      TODO seems GH default ci doesn't have support for this
 #      - name: Headless Android emulator and run instrumentation tests
@@ -99,12 +103,8 @@ jobs:
 #          profile: pixel_5
 #          emulator-options: -no-snapshot -no-window -gpu swiftshader_indirect
 #          disable-animations: true
-#          script: ./gradlew androidClient:testDebugUnitTest androidClient:connectedDebugAndroidTest
+#          script: ./gradlew clientApp:testDebugUnitTest clientApp:connectedDebugAndroidTest
 
-      - name: Generate KMP dummy frameworks (Mac only)
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          ./gradlew :shared:domain:generateDummyFramework :shared:presentation:generateDummyFramework --no-daemon
 
 #      If we figure out how to fix the Build iOS client task re-enable this
 #      - name: Install CocoaPods dependencies (Mac only)
@@ -206,5 +206,5 @@ jobs:
 
       - name: Build Node Project with Maven Secrets
         run: |
-          ./gradlew androidNode:clean androidNode:bundleDebug --refresh-dependencies --info
-          ./gradlew androidNode:test
+          ./gradlew apps:nodeApp:clean apps:nodeApp:bundleDebug --refresh-dependencies --info
+          ./gradlew apps:nodeApp:test

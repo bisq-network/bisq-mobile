@@ -50,5 +50,5 @@ rootProject.name = "BisqApps"
 include(":shared:domain")
 include(":shared:presentation")
 include(":shared:kscan")
-include(":androidClient")
-include(":androidNode")
+include(":apps:clientApp")
+include(":apps:nodeApp")
