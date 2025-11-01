@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,8 +29,8 @@ fun ScannerUI(
     zoomRatio: Float,
     zoomRatioOnChange: (Float) -> Unit,
     maxZoomRatio: Float,
-    scannerHeaderTitle: String,
     colors: ScannerColors = scannerColors(),
+    options: ScannerUiOptions = ScannerUiOptions(),
 ) {
     Column(
         modifier = Modifier.fillMaxSize(),
@@ -37,13 +38,14 @@ fun ScannerUI(
     ) {
         ScannerHeader(
             onCancel = onCancel,
+            showTorch = options.showTorch,
             torchEnabled = torchEnabled,
             onTorchEnabled = onTorchEnabled,
+            title = options.headerTitle,
             containerColor = colors.headerContainerColor,
             navigationIconColor = colors.headerNavigationIconColor,
             titleColor = colors.headerTitleColor,
             actionIconColor = colors.headerActionIconColor,
-            scannerHeaderTitle = scannerHeaderTitle
         )
 
         Spacer(Modifier.weight(1f))
@@ -56,13 +58,15 @@ fun ScannerUI(
         Spacer(Modifier.height(10.dp))
         Spacer(Modifier.weight(1f))
 
-//        ScannerZoomAdjuster(
-//            modifier = Modifier.padding(bottom = 5.dp),
-//            zoomRatio = zoomRatio,
-//            zoomRatioOnChange = zoomRatioOnChange,
-//            maxZoomRatio = maxZoomRatio,
-//            containerColor = colors.zoomControllerContainerColor,
-//            contentColor = colors.zoomControllerContentColor,
-//        )
+        if (options.showZoom) {
+            ScannerZoomAdjuster(
+                modifier = Modifier.padding(bottom = 5.dp),
+                zoomRatio = zoomRatio,
+                zoomRatioOnChange = zoomRatioOnChange,
+                maxZoomRatio = maxZoomRatio,
+                containerColor = colors.zoomControllerContainerColor,
+                contentColor = colors.zoomControllerContentColor,
+            )
+        }
     }
 }

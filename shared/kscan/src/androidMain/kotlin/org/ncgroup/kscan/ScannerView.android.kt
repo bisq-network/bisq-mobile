@@ -27,24 +27,13 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.LocalLifecycleOwner
 
-/**
- * Composable function that displays a camera preview for scanning barcodes.
- *
- * @param modifier The modifier to be applied to the scanner view.
- * @param codeTypes A list of barcode formats to be scanned.
- * @param colors The colors to be used for the scanner UI.
- * @param showUi A boolean indicating whether to show the scanner UI.
- * @param scannerController An optional controller for managing scanner actions.
- * @param result A callback function that receives the barcode scanning result.
- */
 @Composable
 actual fun ScannerView(
     modifier: Modifier,
     codeTypes: List<BarcodeFormat>,
     colors: ScannerColors,
-    showUi: Boolean,
+    scannerUiOptions: ScannerUiOptions?,
     scannerController: ScannerController?,
-    scannerHeaderTitle: String,
     filter: (Barcode) -> Boolean,
     result: (BarcodeResult) -> Unit,
 ) {
@@ -168,11 +157,10 @@ actual fun ScannerView(
                     },
                 )
             }
-
             else -> {}
         }
 
-        if (showUi) {
+        if (scannerUiOptions != null) {
             ScannerUI(
                 onCancel = { result(BarcodeResult.OnCanceled) },
                 torchEnabled = torchEnabled,
@@ -181,7 +169,7 @@ actual fun ScannerView(
                 zoomRatioOnChange = { ratio -> cameraControl?.setZoomRatio(ratio) },
                 maxZoomRatio = maxZoomRatio,
                 colors = colors,
-                scannerHeaderTitle = scannerHeaderTitle
+                options = scannerUiOptions,
             )
         }
     }

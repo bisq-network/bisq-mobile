@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
@@ -8,6 +7,7 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,6 +28,7 @@ import org.ncgroup.kscan.BarcodeFormat
 import org.ncgroup.kscan.BarcodeFormats
 import org.ncgroup.kscan.BarcodeResult
 import org.ncgroup.kscan.ScannerColors
+import org.ncgroup.kscan.ScannerUiOptions
 import org.ncgroup.kscan.ScannerView
 
 @Composable
@@ -56,15 +57,16 @@ fun BarcodeScannerView(
     if (showScanner) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.6f))
-                .clickable(
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Surface(
+                color = Color.Black.copy(alpha = 0.6f),
+                modifier = Modifier.fillMaxSize().clickable(
                     onClick = onCanceled,
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
-                ),
-            contentAlignment = Alignment.Center
-        ) {
+                )) {}
             ScannerView(
                 modifier = Modifier
                     .fillMaxSize()
@@ -72,7 +74,10 @@ fun BarcodeScannerView(
                     .aspectRatio(1f)
                     .clip(RoundedCornerShape(8.dp)),
                 codeTypes = codeTypes,
-                scannerHeaderTitle = "mobile.barcode.header".i18n(),
+                scannerUiOptions = ScannerUiOptions(
+                    headerTitle = "mobile.barcode.header".i18n(),
+                    showZoom = false,
+                ),
                 colors = ScannerColors(
                     headerContainerColor = BisqTheme.colors.dark_grey10,
                     barcodeFrameColor = BisqTheme.colors.primary,

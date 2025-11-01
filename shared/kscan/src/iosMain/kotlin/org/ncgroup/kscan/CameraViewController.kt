@@ -28,6 +28,7 @@ import platform.AVFoundation.AVMetadataObjectTypePDF417Code
 import platform.AVFoundation.AVMetadataObjectTypeQRCode
 import platform.AVFoundation.AVMetadataObjectTypeUPCECode
 import platform.AVFoundation.videoZoomFactor
+import platform.Foundation.NSLog
 import platform.UIKit.UIApplication
 import platform.UIKit.UIColor
 import platform.UIKit.UIInterfaceOrientation
@@ -196,15 +197,17 @@ class CameraViewController(
 
     @OptIn(ExperimentalForeignApi::class)
     fun setZoom(ratio: Float) {
+        var locked = false
         try {
-            device.lockForConfiguration(null)
-
-            val maxZoom = device.activeFormat.videoMaxZoomFactor.toFloat().coerceAtMost(5.0f)
-
-            device.videoZoomFactor = ratio.toDouble().coerceIn(1.0, maxZoom.toDouble())
-            device.unlockForConfiguration()
+            locked = device.lockForConfiguration(null)
+            if (locked) {
+                val maxZoom = device.activeFormat.videoMaxZoomFactor.toFloat().coerceAtMost(5.0f)
+                device.videoZoomFactor = ratio.toDouble().coerceIn(1.0, maxZoom.toDouble())
+            }
         } catch (e: Exception) {
-            print("Failed to update zoom: ${e.message}")
+            NSLog("Failed to update zoom: %@", e.message ?: "unknown")
+        } finally {
+            if (locked) device.unlockForConfiguration()
         }
     }
 
@@ -268,4 +271,26 @@ class CameraViewController(
         AV_TO_APP_FORMAT_MAP.entries.associateBy({ it.value }) { it.key }
 
     val ALL_SUPPORTED_AV_TYPES: List<AVMetadataObjectType> = AV_TO_APP_FORMAT_MAP.keys.toList()
+
+    fun dispose() {
+        // Best-effort cleanup to avoid retaining camera resources
+        runCatching {
+            if (::captureSession.isInitialized) {
+                if (captureSession.isRunning()) captureSession.stopRunning()
+                // Remove inputs/outputs to break potential retain cycles
+                (captureSession.outputs as? List<AVCaptureOutput>)?.forEach { output ->
+                    runCatching { captureSession.removeOutput(output) }
+                }
+                (captureSession.inputs as? List<AVCaptureDeviceInput>)?.forEach { input ->
+                    runCatching { captureSession.removeInput(input) }
+                }
+            }
+        }
+        runCatching {
+            if (::previewLayer.isInitialized) {
+                previewLayer.removeFromSuperlayer()
+            }
+        }
+        barcodesDetected.clear()
+    }
 }
