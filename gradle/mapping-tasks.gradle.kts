@@ -2,8 +2,8 @@
  * Shared Gradle script for configuring ProGuard mapping file management.
  * This script creates tasks to automatically save mapping files, configuration, and metadata
  * after successful release builds.
- * 
- * Usage: 
+ *
+ * Usage:
  * In module build.gradle.kts:
  * apply(from = "$rootDir/gradle/mapping-tasks.gradle.kts")
  * extra["moduleName"] = "androidNode" // or "clientApp"
@@ -16,15 +16,23 @@ val moduleName = project.extra["moduleName"] as? String
 // Validate module name
 require(moduleName.isNotBlank()) { "Module name cannot be blank" }
 
+
+// Map new module names to legacy directory names for continuity of mappings
+val legacyModuleDirName = when (moduleName) {
+    "nodeApp" -> "androidNode"
+    "clientApp" -> "androidClient"
+    else -> moduleName
+}
+
 // Task to save ProGuard mapping files after successful release builds
 tasks.register("saveMappingFiles") {
     group = "bisq"
-    description = "Save ProGuard mapping files to mappings/$moduleName directory"
+    description = "Save ProGuard mapping files to mappings/$legacyModuleDirName directory"
 
     // Configuration cache compatible - capture values at configuration time
-    val mappingsDirPath = "${rootProject.projectDir}/mappings/$moduleName"
+    val mappingsDirPath = "${rootProject.projectDir}/mappings/$legacyModuleDirName"
     val outputsDirProvider = layout.buildDirectory.dir("outputs")
-    val moduleNameForLogging = moduleName
+    val moduleNameForLogging = legacyModuleDirName
 
     doLast {
         val mappingsDir = File(mappingsDirPath)
@@ -75,12 +83,12 @@ tasks.register("saveMappingFiles") {
 // Task to save output metadata after assembleRelease
 tasks.register("saveOutputMetadata") {
     group = "bisq"
-    description = "Save output-metadata.json to mappings/$moduleName directory"
+    description = "Save output-metadata.json to mappings/$legacyModuleDirName directory"
 
     // Configuration cache compatible - capture values at configuration time
-    val mappingsDirPath = "${rootProject.projectDir}/mappings/$moduleName"
+    val mappingsDirPath = "${rootProject.projectDir}/mappings/$legacyModuleDirName"
     val outputsDirProvider = layout.buildDirectory.dir("outputs")
-    val moduleNameForLogging = moduleName
+    val moduleNameForLogging = legacyModuleDirName
 
     doLast {
         val mappingsDir = File(mappingsDirPath)
