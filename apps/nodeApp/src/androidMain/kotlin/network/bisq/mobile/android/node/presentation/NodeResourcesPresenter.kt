@@ -108,7 +108,7 @@ class NodeResourcesPresenter(
                             mainPresenter.showSnackbar("Saved to Downloads (debug): $outName", isError = false)
                         }
                     } catch (t: Throwable) {
-                        log.w(t) { "KMP: Failed to save backup to Downloads in debug mode" }
+                        log.w(t) { "Failed to save backup to Downloads in debug mode" }
                     }
                 }
 
