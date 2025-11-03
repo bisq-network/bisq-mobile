@@ -137,6 +137,7 @@ class HttpClientService(
             log.w { "Sanitized baseUrl from '$rawBase' to '$baseUrl'" }
         }
         log.d { "HttpClient baseUrl set to $baseUrl" }
+        val password = clientSettings.password
         return createHttpClient(proxy) {
             install(WebSockets)
             install(ContentNegotiation) {
@@ -163,7 +164,6 @@ class HttpClientService(
             }
             install(createClientPlugin("HttpApiAuthPlugin") {
                 transformRequestBody { request, content, bodyType ->
-                    val password = lastConfig?.password
                     var reconstructedBody: ByteArrayContent? = null
                     if (!password.isNullOrBlank()) {
                         val method = request.method.value
