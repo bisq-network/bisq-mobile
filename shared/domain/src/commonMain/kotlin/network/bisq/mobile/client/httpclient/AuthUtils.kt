@@ -1,3 +1,5 @@
+package network.bisq.mobile.client.httpclient
+
 import io.ktor.http.Url
 import kotlinx.io.bytestring.encodeToByteString
 import network.bisq.mobile.crypto.hmacSha256

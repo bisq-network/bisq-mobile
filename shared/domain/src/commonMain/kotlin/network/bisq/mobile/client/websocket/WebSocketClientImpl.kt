@@ -1,6 +1,5 @@
 package network.bisq.mobile.client.websocket
 
-import AuthUtils
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
@@ -36,6 +35,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.httpclient.AuthUtils
 import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException

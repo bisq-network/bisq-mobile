@@ -1,7 +1,5 @@
 package network.bisq.mobile.client.httpclient
 
-
-import AuthUtils
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpResponseValidator
 import io.ktor.client.plugins.HttpTimeout
