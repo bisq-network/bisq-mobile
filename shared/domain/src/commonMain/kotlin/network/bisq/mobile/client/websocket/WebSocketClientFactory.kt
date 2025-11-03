@@ -9,7 +9,7 @@ import kotlinx.serialization.json.Json
  */
 class WebSocketClientFactory(private val jsonConfig: Json) {
 
-    fun createNewClient(httpClient: HttpClient, apiUrl: Url): WebSocketClient {
+    fun createNewClient(httpClient: HttpClient, apiUrl: Url, password: String? = null): WebSocketClient {
         return if (apiUrl.host == "demo.bisq" && apiUrl.port == 21) {
             WebSocketClientDemo(jsonConfig)
         } else {
@@ -17,6 +17,7 @@ class WebSocketClientFactory(private val jsonConfig: Json) {
                 httpClient,
                 jsonConfig,
                 apiUrl,
+                password,
             )
         }
     }

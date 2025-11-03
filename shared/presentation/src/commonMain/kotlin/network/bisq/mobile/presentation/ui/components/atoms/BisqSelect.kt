@@ -233,14 +233,16 @@ fun <T> BisqSelect(
         BisqGap.VHalf()
 
         if (errorText.isNullOrBlank()) {
-            BisqText.smallLight(
-                text = helpText,
-                modifier = Modifier.padding(
-                    start = BisqUIConstants.ScreenPaddingQuarter,
-                    top = BisqUIConstants.ScreenPadding1,
-                    bottom = BisqUIConstants.ScreenPaddingQuarter
-                ),
-            )
+            if (helpText.isNotBlank()) {
+                BisqText.smallLight(
+                    text = helpText,
+                    modifier = Modifier.padding(
+                        start = BisqUIConstants.ScreenPaddingQuarter,
+                        top = BisqUIConstants.ScreenPadding1,
+                        bottom = BisqUIConstants.ScreenPaddingQuarter
+                    ),
+                )
+            }
         } else {
             BisqText.smallLight(
                 text = errorText,

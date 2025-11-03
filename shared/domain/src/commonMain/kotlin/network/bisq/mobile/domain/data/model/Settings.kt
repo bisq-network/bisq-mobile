@@ -13,6 +13,7 @@ data class Settings (
     // client node specific:
     val selectedProxyOption: BisqProxyOption = BisqProxyOption.NONE,
     val externalProxyUrl: String = "",
+    val bisqApiPassword: String = "",
 )
 
 @Serializable

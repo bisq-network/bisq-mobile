@@ -1,12 +1,16 @@
 package network.bisq.mobile.client.websocket
 
+import AuthUtils
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.websocket.DefaultClientWebSocketSession
 import io.ktor.client.plugins.websocket.webSocketSession
+import io.ktor.http.HttpStatusCode
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
+import io.ktor.http.parseUrl
 import io.ktor.http.path
 import io.ktor.util.collections.ConcurrentMap
+import io.ktor.utils.io.core.toByteArray
 import io.ktor.websocket.Frame
 import io.ktor.websocket.WebSocketSession
 import io.ktor.websocket.close
@@ -30,7 +34,9 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
+import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
+import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.client.websocket.exception.MaximumRetryReachedException
@@ -48,6 +54,7 @@ import network.bisq.mobile.client.websocket.messages.WebSocketRestApiResponse
 import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
+import network.bisq.mobile.crypto.getSha256
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.settings.ApiVersionSettingsVO
 import network.bisq.mobile.domain.utils.DateUtils
@@ -59,6 +66,7 @@ class WebSocketClientImpl(
     private val httpClient: HttpClient,
     private val json: Json,
     override val apiUrl: Url,
+    private val password: String? = null,
 ) : WebSocketClient, Logging {
 
     companion object {
@@ -137,7 +145,7 @@ class WebSocketClientImpl(
                 } else {
                     throw WebSocketSessionClosedEarly()
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 log.e(e) { "WS connection failed to connect" }
                 _webSocketClientStatus.value = ConnectionState.Disconnected(e)
                 return e
@@ -223,7 +231,35 @@ class WebSocketClientImpl(
         }
 
         try {
-            return requestResponseHandler.request(webSocketRequest)
+            if (webSocketRequest is WebSocketRestApiRequest && !password.isNullOrBlank()) {
+                val nonce = AuthUtils.generateNonce()
+                val timestamp = Clock.System.now().toEpochMilliseconds().toString()
+                val parsedPath = parseUrl("http://dummy${webSocketRequest.path}")
+                    ?: throw IllegalArgumentException("Invalid path provided: $webSocketRequest.path")
+                val normalizedPath = AuthUtils.getNormalizedPathAndQuery(parsedPath)
+                val bodySha256Hex = if (webSocketRequest.body.isNotBlank()) {
+                    getSha256(webSocketRequest.body.toByteArray()).toHexString()
+                } else {
+                    null
+                }
+                val authToken = AuthUtils.generateAuthHash(
+                    password,
+                    nonce,
+                    timestamp,
+                    webSocketRequest.method.uppercase(),
+                    normalizedPath,
+                    bodySha256Hex,
+                )
+                val replacementRequest =
+                    webSocketRequest.copy(
+                        authToken = authToken,
+                        authTs = timestamp,
+                        authNonce = nonce
+                    )
+                return requestResponseHandler.request(replacementRequest)
+            } else {
+                return requestResponseHandler.request(webSocketRequest)
+            }
         } finally {
             requestResponseHandlersMutex.withLock {
                 requestResponseHandlers.remove(requestId)
@@ -351,6 +387,9 @@ class WebSocketClientImpl(
         )
         val response = sendRequestAndAwaitResponse(webSocketRestApiRequest, false)
         require(response is WebSocketRestApiResponse) { "Response not of expected type. response=$response" }
+        if (response.httpStatusCode == HttpStatusCode.Unauthorized) {
+            throw PasswordIncorrectOrMissingException()
+        }
         val body = response.body
         val decodeFromString = json.decodeFromString<ApiVersionSettingsVO>(body)
         return decodeFromString
