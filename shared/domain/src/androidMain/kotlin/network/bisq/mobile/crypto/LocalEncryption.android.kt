@@ -28,23 +28,19 @@ private object LocalEncryption {
     }
 
     private fun createKey(keyAlias: String): SecretKey {
-        return KeyGenerator
-            .getInstance(ALGORITHM)
-            .apply {
-                init(
-                    KeyGenParameterSpec.Builder(
-                        keyAlias,
-                        KeyProperties.PURPOSE_ENCRYPT or
-                                KeyProperties.PURPOSE_DECRYPT
-                    )
-                        .setBlockModes(BLOCK_MODE)
-                        .setEncryptionPaddings(PADDING)
-                        .setRandomizedEncryptionRequired(true)
-                        .setUserAuthenticationRequired(false)
-                        .build()
-                )
-            }
-            .generateKey()
+        val keyGenerator = KeyGenerator.getInstance(ALGORITHM, "AndroidKeyStore")
+        val parameterSpec = KeyGenParameterSpec.Builder(
+            keyAlias,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+            .setBlockModes(BLOCK_MODE)
+            .setEncryptionPaddings(PADDING)
+            .setRandomizedEncryptionRequired(true)
+            .setUserAuthenticationRequired(false)
+            .build()
+
+        keyGenerator.init(parameterSpec)
+        return keyGenerator.generateKey()
     }
 
     fun encrypt(bytes: ByteArray, keyAlias: String): ByteArray {
