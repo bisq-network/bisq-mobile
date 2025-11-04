@@ -34,14 +34,17 @@ class TakeOfferAmountPresenter(
     private val _sliderPosition: MutableStateFlow<Float> = MutableStateFlow(0.5f)
     val sliderPosition: StateFlow<Float> get() = _sliderPosition.asStateFlow()
 
-    lateinit var quoteCurrencyCode: String
-    lateinit var formattedMinAmount: String
-    lateinit var formattedMinAmountWithCode: String
-    lateinit var formattedMaxAmountWithCode: String
+    var quoteCurrencyCode: String = ""
+    var formattedMinAmount: String = ""
+    var formattedMinAmountWithCode: String = ""
+    var formattedMaxAmountWithCode: String = ""
     private val _formattedQuoteAmount = MutableStateFlow("")
     val formattedQuoteAmount: StateFlow<String> get() = _formattedQuoteAmount.asStateFlow()
     private val _formattedBaseAmount = MutableStateFlow("")
     val formattedBaseAmount: StateFlow<String> get() = _formattedBaseAmount.asStateFlow()
+
+    // Guard to prevent interactions when initialization fails
+    private var initializationFailed: Boolean = false
 
     private lateinit var takeOfferModel: TakeOfferPresenter.TakeOfferModel
     private var minAmount: Long = 0L
@@ -51,8 +54,13 @@ class TakeOfferAmountPresenter(
     private lateinit var quoteAmount: FiatVO
     private lateinit var baseAmount: CoinVO
 
-    private val _amountValid: MutableStateFlow<Boolean> = MutableStateFlow(true)
+    private val _amountValid: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val amountValid: StateFlow<Boolean> get() = _amountValid.asStateFlow()
+
+    private var dragUpdateJob: Job? = null
+    // Sample heavy updates during drags to reduce allocation churn on main thread.
+    // 32ms ~ 30 FPS. Rationale: keep UI responsive and informative while limiting GC pressure.
+    private val dragUpdateSampleMs: Long = 32
 
     init {
         runCatching {
@@ -85,14 +93,18 @@ class TakeOfferAmountPresenter(
             _sliderPosition.value = valueInFraction
             applySliderValue(sliderPosition.value)
         }.onFailure { e ->
-            log.e(e) { "Failed to init" }
+            log.e(e) { "Failed to init take offer data" }
+            // Mark initialization failure and put UI in safe state
+            initializationFailed = true
+            quoteCurrencyCode = ""
+            formattedMinAmount = ""
+            formattedMinAmountWithCode = ""
+            formattedMaxAmountWithCode = ""
+            _formattedQuoteAmount.value = ""
+            _formattedBaseAmount.value = ""
+            _amountValid.value = false
         }
     }
-
-    private var dragUpdateJob: Job? = null
-    // Sample heavy updates during drags to reduce allocation churn on main thread.
-    // 32ms ~ 30 FPS. Rationale: keep UI responsive and informative while limiting GC pressure.
-    private val dragUpdateSampleMs: Long = 32
 
     fun onSliderValueChanged(sliderPosition: Float) {
         _amountValid.value = sliderPosition in 0f..1f
@@ -114,29 +126,30 @@ class TakeOfferAmountPresenter(
     }
 
     fun onTextValueChanged(textInput: String) {
-        val _value = textInput.toDoubleOrNullLocaleAware()
-        if (_value != null) {
-            // Compute exact minor units from user input
-            val exactMinor = FiatVOFactory.faceValueToLong(_value)
-
-            // Check if value is within valid range
-            val isInRange = exactMinor in minAmount..maxAmount
-            _amountValid.value = isInRange
-
-            // Store the UNCLAMPED value so user sees what they typed
-            // This fixes issue #785: typing "5" then "0" now produces "50" instead of "60"
-            quoteAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
-            _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount)
-
-            priceQuote = takeOfferPresenter.getMostRecentPriceQuote()
-            baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
-            _formattedBaseAmount.value = AmountFormatter.formatAmount(baseAmount, false)
-
-            // Update slider with clamped value for visual feedback
-            val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmount)
-            _sliderPosition.value = MonetarySlider.minorToFraction(clampedForSlider, minAmount, maxAmount)
-        } else {
+        if (initializationFailed) {
             _formattedQuoteAmount.value = ""
+            _amountValid.value = false
+            return
+        }
+        runCatching {
+            val _value = textInput.toDoubleOrNullLocaleAware()
+            if (_value != null) {
+                val exactMinor = FiatVOFactory.faceValueToLong(_value)
+                val isInRange = exactMinor in minAmount..maxAmount
+                _amountValid.value = isInRange
+                quoteAmount = FiatVOFactory.from(exactMinor, quoteCurrencyCode)
+                _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount)
+                priceQuote = takeOfferPresenter.getMostRecentPriceQuote()
+                baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
+                _formattedBaseAmount.value = AmountFormatter.formatAmount(baseAmount, false)
+                val clampedForSlider = exactMinor.coerceIn(minAmount, maxAmount)
+                _sliderPosition.value = MonetarySlider.minorToFraction(clampedForSlider, minAmount, maxAmount)
+            } else {
+                _formattedQuoteAmount.value = ""
+                _amountValid.value = false
+            }
+        }.onFailure { e ->
+            log.e(e) { "Failed to handle text value change on take offer" }
             _amountValid.value = false
         }
     }
@@ -173,23 +186,25 @@ class TakeOfferAmountPresenter(
     }
 
     private fun applySliderValue(sliderPosition: Float, trackedJob: Job? = null) {
+        if (initializationFailed) {
+            _amountValid.value = false
+            if (trackedJob != null && dragUpdateJob === trackedJob) {
+                dragUpdateJob = null
+            }
+            return
+        }
         try {
             _amountValid.value = sliderPosition in 0f..1f
             _sliderPosition.value = sliderPosition
             val roundedFiatValue: Long = MonetarySlider.fractionToAmountLong(sliderPosition, minAmount, maxAmount, 10_000L)
-
-            // We do not apply the data to the model yet to avoid unnecessary model clones
             quoteAmount = FiatVOFactory.from(roundedFiatValue, quoteCurrencyCode)
             _formattedQuoteAmount.value = AmountFormatter.formatAmount(quoteAmount)
-
             priceQuote = takeOfferPresenter.getMostRecentPriceQuote()
             baseAmount = priceQuote.toBaseSideMonetary(quoteAmount) as CoinVO
             _formattedBaseAmount.value = AmountFormatter.formatAmount(baseAmount, false)
         } catch (e: Exception) {
-            // cater for random quoteAmount = 0 issue
             log.e(e) { "Failed to apply slider value on take offer" }
         } finally {
-            // Only clear if we're the currently tracked job, to avoid racing with a newer job
             if (trackedJob != null && dragUpdateJob === trackedJob) {
                 dragUpdateJob = null
             }
