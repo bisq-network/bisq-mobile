@@ -9,6 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
@@ -60,6 +62,50 @@ fun OfferbookScreen() {
             selectedDirection,
             onStateChange = { direction -> presenter.onSelectDirection(direction) }
         )
+
+        // Phase 2: inline mocked filter controller state (UI only)
+        val defaultPayments = listOf("SEPA", "REVOLUT", "WISE", "CASH_APP", "PIX")
+        val defaultSettlements = listOf("BTC", "LIGHTNING")
+
+        fun paymentIconPath(id: String) = "drawable/payment/fiat/${id.lowercase().replace("-", "_")}.png"
+        fun settlementIconPath(id: String) = when (id.uppercase()) {
+            "BTC", "MAIN_CHAIN", "ONCHAIN", "ON_CHAIN" -> "drawable/payment/bitcoin/main_chain.png"
+            "LIGHTNING", "LN" -> "drawable/payment/bitcoin/ln.png"
+            else -> "drawable/payment/bitcoin/${id.lowercase().replace("-", "_")}.png"
+        }
+
+        var filterState by androidx.compose.runtime.remember {
+            androidx.compose.runtime.mutableStateOf(
+                OfferbookFilterUiState(
+                    payment = defaultPayments.map { MethodIconState(it, it, paymentIconPath(it), selected = true) },
+                    settlement = defaultSettlements.map { MethodIconState(it, it, settlementIconPath(it), selected = true) },
+                    onlyMyOffers = false,
+                    hasActiveFilters = false,
+                )
+            )
+        }
+        fun recomputeHasActive(u: OfferbookFilterUiState) =
+            u.payment.any { !it.selected } || u.settlement.any { !it.selected }
+
+        BisqGap.V1()
+
+        OfferbookFilterController(
+            state = filterState,
+            onTogglePayment = { id ->
+                val updated = filterState.copy(
+                    payment = filterState.payment.map { if (it.id == id) it.copy(selected = !it.selected) else it }
+                )
+                filterState = updated.copy(hasActiveFilters = recomputeHasActive(updated))
+            },
+            onToggleSettlement = { id ->
+                val updated = filterState.copy(
+                    settlement = filterState.settlement.map { if (it.id == id) it.copy(selected = !it.selected) else it }
+                )
+                filterState = updated.copy(hasActiveFilters = recomputeHasActive(updated))
+            },
+            onOnlyMyOffersChange = { /* Phase 7 */ },
+        )
+
 
         if (sortedFilteredOffers.isEmpty()) {
             NoOffersSection(presenter)
