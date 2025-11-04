@@ -3,12 +3,16 @@ package network.bisq.mobile.domain.di
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import network.bisq.mobile.domain.data.datastore.createDataStore
+import network.bisq.mobile.domain.data.datastore.serializer.SensitiveSettingsSerializer
 import network.bisq.mobile.domain.data.datastore.serializer.SettingsSerializer
 import network.bisq.mobile.domain.data.datastore.serializer.TradeReadStateMapSerializer
 import network.bisq.mobile.domain.data.datastore.serializer.UserSerializer
+import network.bisq.mobile.domain.data.model.SensitiveSettings
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.TradeReadStateMap
 import network.bisq.mobile.domain.data.model.User
+import network.bisq.mobile.domain.data.repository.SensitiveSettingsRepository
+import network.bisq.mobile.domain.data.repository.SensitiveSettingsRepositoryImpl
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.data.repository.SettingsRepositoryImpl
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
@@ -33,6 +37,15 @@ val domainModule = module {
         )
     }
 
+    single<DataStore<SensitiveSettings>>(named("SensitiveSettings")) {
+        createDataStore(
+            "SensitiveSettings",
+            getStorageDir(),
+            SensitiveSettingsSerializer,
+            ReplaceFileCorruptionHandler { SensitiveSettings() },
+        )
+    }
+
     single<DataStore<User>>(named("User")) {
         createDataStore(
             "User",
@@ -53,6 +66,7 @@ val domainModule = module {
 
     // Repositories
     single<SettingsRepository> { SettingsRepositoryImpl(get(named("Settings"))) }
+    single<SensitiveSettingsRepository> { SensitiveSettingsRepositoryImpl(get(named("SensitiveSettings"))) }
     single<UserRepository> { UserRepositoryImpl(get(named("User"))) }
     single<TradeReadStateRepository> { TradeReadStateRepositoryImpl(get(named("TradeReadStateMap"))) }
 

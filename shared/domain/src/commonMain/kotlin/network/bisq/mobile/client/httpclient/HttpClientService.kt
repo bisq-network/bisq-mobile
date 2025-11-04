@@ -31,7 +31,7 @@ import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.crypto.getSha256
 import network.bisq.mobile.domain.createHttpClient
-import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.data.repository.SensitiveSettingsRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
 import kotlin.concurrent.Volatile
@@ -43,7 +43,7 @@ import kotlin.concurrent.Volatile
  */
 class HttpClientService(
     private val kmpTorService: KmpTorService,
-    private val settingsRepository: SettingsRepository,
+    private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val jsonConfig: Json,
     private val defaultHost: String,
     private val defaultPort: Int,
@@ -63,7 +63,7 @@ class HttpClientService(
     override fun activate() {
         super.activate()
 
-        collectIO(settingsRepository.data) {
+        collectIO(sensitiveSettingsRepository.data) {
             val newConfig = HttpClientSettings.from(it, kmpTorService)
             if (lastConfig != newConfig) {
                 lastConfig = newConfig

@@ -2,7 +2,6 @@ package network.bisq.mobile.android.node.service.offers
 
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
-import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.model.NotificationPermissionState
 import network.bisq.mobile.domain.data.model.Settings
@@ -39,14 +38,10 @@ class NodeOffersServiceFacadeIntegrationTest {
     // Minimal fake SettingsRepository
     private class FakeSettingsRepo : SettingsRepository {
         override val data: Flow<Settings> = flowOf(Settings())
-        override suspend fun setBisqApiUrl(value: String) {}
         override suspend fun setFirstLaunch(value: Boolean) {}
         override suspend fun setShowChatRulesWarnBox(value: Boolean) {}
         override suspend fun setSelectedMarketCode(value: String) {}
         override suspend fun setNotificationPermissionState(value: NotificationPermissionState) {}
-        override suspend fun setExternalProxyUrl(value: String) {}
-        override suspend fun setSelectedProxyOption(value: BisqProxyOption) {}
-        override suspend fun setBisqApiPassword(value: String) {}
 
         override suspend fun update(transform: suspend (Settings) -> Settings) {}
 

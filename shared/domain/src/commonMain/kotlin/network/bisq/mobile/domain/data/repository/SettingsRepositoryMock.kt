@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
-import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.domain.data.model.NotificationPermissionState
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.utils.Logging
@@ -13,12 +12,6 @@ class SettingsRepositoryMock : SettingsRepository, Logging {
 
     private val _data = MutableStateFlow(Settings())
     override val data: StateFlow<Settings> get() = _data.asStateFlow()
-
-    override suspend fun setBisqApiUrl(value: String) {
-        _data.update {
-            it.copy(bisqApiUrl = value)
-        }
-    }
 
     override suspend fun setFirstLaunch(value: Boolean) {
         _data.update {
@@ -41,24 +34,6 @@ class SettingsRepositoryMock : SettingsRepository, Logging {
     override suspend fun setNotificationPermissionState(value: NotificationPermissionState) {
         _data.update {
             it.copy(notificationPermissionState = value)
-        }
-    }
-
-    override suspend fun setExternalProxyUrl(value: String) {
-        _data.update {
-            it.copy(externalProxyUrl = value)
-        }
-    }
-
-    override suspend fun setSelectedProxyOption(value: BisqProxyOption) {
-        _data.update {
-            it.copy(selectedProxyOption = value)
-        }
-    }
-
-    override suspend fun setBisqApiPassword(value: String) {
-        _data.update {
-            it.copy(bisqApiPassword = value)
         }
     }
 

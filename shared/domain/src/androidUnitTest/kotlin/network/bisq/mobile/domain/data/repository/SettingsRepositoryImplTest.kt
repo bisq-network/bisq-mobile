@@ -23,7 +23,6 @@ class SettingsRepositoryImplTest {
     fun `data flow should return settings data from datastore`() = runTest {
         // Given
         val expectedSettings = Settings(
-            bisqApiUrl = "https://api.bisq.network",
             firstLaunch = false,
             showChatRulesWarnBox = false,
             selectedMarketCode = "BTC/EUR"
@@ -70,39 +69,12 @@ class SettingsRepositoryImplTest {
     }
 
     @Test
-    fun `setBisqApiUrl should update bisq API URL`() = runTest {
-        // Given
-        val updateSlot = slot<suspend (Settings) -> Settings>()
-        coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
-        
-        val originalSettings = Settings(
-            bisqApiUrl = "old-url",
-            firstLaunch = false,
-            selectedMarketCode = "BTC/EUR"
-        )
-        val newUrl = "https://new-api.bisq.network"
-
-        // When
-        repository.setBisqApiUrl(newUrl)
-
-        // Then
-        coVerify { mockDataStore.updateData(any()) }
-        
-        val updatedSettings = updateSlot.captured(originalSettings)
-        assertEquals(newUrl, updatedSettings.bisqApiUrl)
-        // Verify other fields are preserved
-        assertEquals(false, updatedSettings.firstLaunch)
-        assertEquals("BTC/EUR", updatedSettings.selectedMarketCode)
-    }
-
-    @Test
     fun `setFirstLaunch should update first launch flag`() = runTest {
         // Given
         val updateSlot = slot<suspend (Settings) -> Settings>()
         coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
         
         val originalSettings = Settings(
-            bisqApiUrl = "https://api.bisq.network",
             firstLaunch = true,
             selectedMarketCode = "BTC/USD"
         )
@@ -116,7 +88,6 @@ class SettingsRepositoryImplTest {
         val updatedSettings = updateSlot.captured(originalSettings)
         assertEquals(false, updatedSettings.firstLaunch)
         // Verify other fields are preserved
-        assertEquals("https://api.bisq.network", updatedSettings.bisqApiUrl)
         assertEquals("BTC/USD", updatedSettings.selectedMarketCode)
     }
 
@@ -127,7 +98,6 @@ class SettingsRepositoryImplTest {
         coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
         
         val originalSettings = Settings(
-            bisqApiUrl = "https://api.bisq.network",
             showChatRulesWarnBox = true,
             selectedMarketCode = "BTC/GBP"
         )
@@ -141,7 +111,6 @@ class SettingsRepositoryImplTest {
         val updatedSettings = updateSlot.captured(originalSettings)
         assertEquals(false, updatedSettings.showChatRulesWarnBox)
         // Verify other fields are preserved
-        assertEquals("https://api.bisq.network", updatedSettings.bisqApiUrl)
         assertEquals("BTC/GBP", updatedSettings.selectedMarketCode)
     }
 
@@ -152,7 +121,6 @@ class SettingsRepositoryImplTest {
         coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
         
         val originalSettings = Settings(
-            bisqApiUrl = "https://api.bisq.network",
             firstLaunch = false,
             selectedMarketCode = "BTC/USD"
         )
@@ -167,7 +135,6 @@ class SettingsRepositoryImplTest {
         val updatedSettings = updateSlot.captured(originalSettings)
         assertEquals(newMarketCode, updatedSettings.selectedMarketCode)
         // Verify other fields are preserved
-        assertEquals("https://api.bisq.network", updatedSettings.bisqApiUrl)
         assertEquals(false, updatedSettings.firstLaunch)
     }
 
@@ -178,7 +145,6 @@ class SettingsRepositoryImplTest {
         coEvery { mockDataStore.updateData(capture(updateSlot)) } returns Settings()
         
         val originalSettings = Settings(
-            bisqApiUrl = "https://custom-api.bisq.network",
             firstLaunch = false,
             showChatRulesWarnBox = false,
             selectedMarketCode = "BTC/EUR"
@@ -198,7 +164,6 @@ class SettingsRepositoryImplTest {
     fun `fetch should return first item from data flow`() = runTest {
         // Given
         val expectedSettings = Settings(
-            bisqApiUrl = "https://fetched-api.bisq.network",
             firstLaunch = false
         )
         every { mockDataStore.data } returns flowOf(expectedSettings)
@@ -217,14 +182,12 @@ class SettingsRepositoryImplTest {
         coEvery { mockDataStore.updateData(capture(updateSlots)) } returns Settings()
         
         val originalSettings = Settings(
-            bisqApiUrl = "https://original.bisq.network",
             firstLaunch = true,
             showChatRulesWarnBox = true,
             selectedMarketCode = "BTC/USD"
         )
 
         // When - perform multiple updates
-        repository.setBisqApiUrl("https://new.bisq.network")
         repository.setFirstLaunch(false)
         repository.setSelectedMarketCode("BTC/EUR")
 
@@ -233,21 +196,18 @@ class SettingsRepositoryImplTest {
         
         // First update: setBisqApiUrl
         val afterUrlUpdate = updateSlots[0](originalSettings)
-        assertEquals("https://new.bisq.network", afterUrlUpdate.bisqApiUrl)
         assertEquals(true, afterUrlUpdate.firstLaunch) // preserved
         assertEquals(true, afterUrlUpdate.showChatRulesWarnBox) // preserved
         assertEquals("BTC/USD", afterUrlUpdate.selectedMarketCode) // preserved
         
         // Second update: setFirstLaunch
         val afterFirstLaunchUpdate = updateSlots[1](afterUrlUpdate)
-        assertEquals("https://new.bisq.network", afterFirstLaunchUpdate.bisqApiUrl) // preserved
         assertEquals(false, afterFirstLaunchUpdate.firstLaunch)
         assertEquals(true, afterFirstLaunchUpdate.showChatRulesWarnBox) // preserved
         assertEquals("BTC/USD", afterFirstLaunchUpdate.selectedMarketCode) // preserved
         
         // Third update: setSelectedMarketCode
         val afterMarketUpdate = updateSlots[2](afterFirstLaunchUpdate)
-        assertEquals("https://new.bisq.network", afterMarketUpdate.bisqApiUrl) // preserved
         assertEquals(false, afterMarketUpdate.firstLaunch) // preserved
         assertEquals(true, afterMarketUpdate.showChatRulesWarnBox) // preserved
         assertEquals("BTC/EUR", afterMarketUpdate.selectedMarketCode)

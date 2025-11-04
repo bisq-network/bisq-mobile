@@ -49,7 +49,6 @@ class DataStoreSerializationTest {
     fun `Settings serialization should preserve all fields`() {
         // Given
         val settings = Settings(
-            bisqApiUrl = "https://api.bisq.network/test",
             firstLaunch = false,
             showChatRulesWarnBox = true,
             selectedMarketCode = "BTC/EUR"
@@ -61,7 +60,6 @@ class DataStoreSerializationTest {
 
         // Then
         assertEquals(settings, deserialized)
-        assertEquals(settings.bisqApiUrl, deserialized.bisqApiUrl)
         assertEquals(settings.firstLaunch, deserialized.firstLaunch)
         assertEquals(settings.showChatRulesWarnBox, deserialized.showChatRulesWarnBox)
         assertEquals(settings.selectedMarketCode, deserialized.selectedMarketCode)

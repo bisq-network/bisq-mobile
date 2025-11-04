@@ -3,13 +3,13 @@ package network.bisq.mobile.client.service.bootstrap
 import kotlinx.coroutines.launch
 import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.client.websocket.WebSocketClientService
-import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.data.repository.SensitiveSettingsRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.i18n.i18n
 
 class ClientApplicationBootstrapFacade(
-    private val settingsRepository: SettingsRepository,
+    private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val webSocketClientService: WebSocketClientService,
     private val kmpTorService: KmpTorService,
 ) : ApplicationBootstrapFacade(kmpTorService) {
@@ -21,7 +21,7 @@ class ClientApplicationBootstrapFacade(
         setProgress(0f)
 
         serviceScope.launch {
-            val settings = settingsRepository.fetch()
+            val settings = sensitiveSettingsRepository.fetch()
             if (settings.selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
                 observeTorState()
                 kmpTorService.startTor().await()
@@ -34,7 +34,7 @@ class ClientApplicationBootstrapFacade(
      fun onTorStartedOrSkipped() {
         onInitialized()
         serviceScope.launch {
-            val url = settingsRepository.fetch().bisqApiUrl
+            val url = sensitiveSettingsRepository.fetch().bisqApiUrl
             log.d { "Settings url $url" }
 
             if (url.isBlank()) {

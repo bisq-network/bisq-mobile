@@ -6,11 +6,7 @@ import bisqapps.shared.presentation.generated.resources.img_bisq_Easy
 import bisqapps.shared.presentation.generated.resources.img_connect
 import bisqapps.shared.presentation.generated.resources.img_p2p_tor
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.repository.SettingsRepository
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.i18n.i18n
@@ -24,9 +20,6 @@ abstract class OnboardingPresenter(
     private val settingsRepository: SettingsRepository,
     private val userProfileService: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter), IOnboardingPresenter {
-
-    private val _buttonText = MutableStateFlow("")
-    override val buttonText: StateFlow<String> get() = _buttonText.asStateFlow()
 
     private val pages = listOf(
         PagerViewItem(
@@ -55,11 +48,6 @@ abstract class OnboardingPresenter(
 
         filteredPages = pages.filterIndexed { index, _ ->
             indexesToShow.contains(index)
-        }
-
-        launchIO {
-            val deviceSettings = settingsRepository.fetch()
-            _buttonText.value = evaluateButtonText(deviceSettings)
         }
     }
 
@@ -94,6 +82,4 @@ abstract class OnboardingPresenter(
             it.popUpTo(NavRoute.Splash) { inclusive = true }
         }
     }
-
-    abstract fun evaluateButtonText(deviceSettings: Settings?): String
 }

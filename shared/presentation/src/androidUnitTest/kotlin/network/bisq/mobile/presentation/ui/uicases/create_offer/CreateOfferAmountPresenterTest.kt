@@ -15,7 +15,6 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
-import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.createEmptyImage
 import network.bisq.mobile.domain.data.model.MarketPriceItem
@@ -85,14 +84,10 @@ class CreateOfferAmountPresenterTest {
     private class FakeSettingsRepository : SettingsRepository {
         private val _data = MutableStateFlow(Settings())
         override val data: StateFlow<Settings> = _data
-        override suspend fun setBisqApiUrl(value: String) {}
         override suspend fun setFirstLaunch(value: Boolean) {}
         override suspend fun setShowChatRulesWarnBox(value: Boolean) {}
         override suspend fun setSelectedMarketCode(value: String) {}
         override suspend fun setNotificationPermissionState(value: network.bisq.mobile.domain.data.model.NotificationPermissionState) {}
-        override suspend fun setExternalProxyUrl(value: String) {}
-        override suspend fun setSelectedProxyOption(value: BisqProxyOption) {}
-        override suspend fun setBisqApiPassword(value: String) {}
         override suspend fun update(transform: suspend (t: Settings) -> Settings) { _data.value = transform(_data.value) }
         override suspend fun clear() { _data.value = Settings() }
     }

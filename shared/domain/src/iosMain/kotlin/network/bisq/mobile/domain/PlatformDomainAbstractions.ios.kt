@@ -304,6 +304,7 @@ actual fun createEmptyImage(): PlatformImage {
 }
 
 // Helper extensions for NSData conversion:
+// TODO: check and remove interop utils here in favor of InteropUtils.kt
 @OptIn(ExperimentalForeignApi::class)
 fun NSData.toByteArray(): ByteArray {
     val byteArray = ByteArray(this.length.toInt())

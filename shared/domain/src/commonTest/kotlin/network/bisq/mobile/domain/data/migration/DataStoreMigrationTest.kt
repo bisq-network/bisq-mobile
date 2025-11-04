@@ -1,6 +1,5 @@
 package network.bisq.mobile.domain.data.migration
 
-import io.ktor.util.date.getTimeMillis
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.model.User
@@ -44,7 +43,6 @@ class DataStoreMigrationTest {
         // Given - Settings JSON that might be missing newer fields
         val legacySettingsJson = """
         {
-            "bisqApiUrl": "https://legacy.bisq.network",
             "firstLaunch": true
         }
         """.trimIndent()
@@ -53,7 +51,6 @@ class DataStoreMigrationTest {
         val settings = json.decodeFromString(Settings.serializer(), legacySettingsJson)
 
         // Then - should use default values for missing fields
-        assertEquals("https://legacy.bisq.network", settings.bisqApiUrl)
         assertEquals(true, settings.firstLaunch)
         assertEquals(Settings().showChatRulesWarnBox, settings.showChatRulesWarnBox) // default
         assertEquals(Settings().selectedMarketCode, settings.selectedMarketCode) // default
@@ -127,7 +124,6 @@ class DataStoreMigrationTest {
         assertEquals(null, user.statement) // User model allows null
 
         val settings = json.decodeFromString(Settings.serializer(), settingsWithMissingFields)
-        assertEquals(Settings().bisqApiUrl, settings.bisqApiUrl) // default
         assertEquals(Settings().selectedMarketCode, settings.selectedMarketCode) // default
         assertEquals(true, settings.firstLaunch) // from JSON
     }
@@ -165,7 +161,6 @@ class DataStoreMigrationTest {
         )
 
         val originalSettings = Settings(
-            bisqApiUrl = "https://api.bisq.network",
             firstLaunch = false,
             showChatRulesWarnBox = true,
             selectedMarketCode = "BTC/USD"

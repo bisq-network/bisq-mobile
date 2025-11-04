@@ -22,7 +22,7 @@ import network.bisq.mobile.client.websocket.ConnectionState
 import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException
 import network.bisq.mobile.domain.data.IODispatcher
-import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.data.repository.SensitiveSettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
@@ -42,7 +42,7 @@ import org.koin.core.component.inject
 class TrustedNodeSetupPresenter(
     mainPresenter: MainPresenter,
     private val userRepository: UserRepository,
-    private val settingsRepository: SettingsRepository,
+    private val sensitiveSettingsRepository: SensitiveSettingsRepository,
     private val kmpTorService: KmpTorService,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
 ) : BasePresenter(mainPresenter) {
@@ -78,7 +78,7 @@ class TrustedNodeSetupPresenter(
     val password: StateFlow<String> = _password.asStateFlow()
 
     val isNewApiUrl: StateFlow<Boolean> =
-        combine(settingsRepository.data, apiUrl) { settings, newUrl ->
+        combine(sensitiveSettingsRepository.data, apiUrl) { settings, newUrl ->
             settings.bisqApiUrl.isNotBlank() && settings.bisqApiUrl != newUrl
         }.stateIn(presenterScope, SharingStarted.Lazily, false)
 
@@ -143,7 +143,7 @@ class TrustedNodeSetupPresenter(
         launchUI {
             try {
                 val settings = withContext(IODispatcher) {
-                    settingsRepository.fetch()
+                    sensitiveSettingsRepository.fetch()
                 }
                 _password.value = settings.bisqApiPassword
                 _selectedProxyOption.value = settings.selectedProxyOption
@@ -183,9 +183,6 @@ class TrustedNodeSetupPresenter(
 
     fun onPasswordChanged(value: String) {
         _password.value = value
-        launchIO {
-            settingsRepository.setBisqApiPassword(value)
-        }
     }
 
     fun onProxyOptionChanged(value: BisqProxyOption) {
@@ -281,7 +278,7 @@ class TrustedNodeSetupPresenter(
                     val newApiUrl = newApiUrl!!
                     // we only dispose client if we are sure new settings differ from the old one
                     // because it wont emit if they are the same, and new clients wont be instantiated
-                    val currentSettings = settingsRepository.fetch()
+                    val currentSettings = sensitiveSettingsRepository.fetch()
                     val updatedSettings = currentSettings.copy(
                         bisqApiUrl = newApiUrl.toString(),
                         externalProxyUrl = when (newProxyOption) {
@@ -296,7 +293,7 @@ class TrustedNodeSetupPresenter(
                     if (currentSettings != updatedSettings) {
                         wsClientService.disposeClient()
                         // we need to do it in 1 update to not trigger unnecessary flow emits
-                        settingsRepository.update { updatedSettings }
+                        sensitiveSettingsRepository.update { updatedSettings }
                     }
                     val error = wsClientService.connect() // waits till new clients are initialized
                     if (error != null) {

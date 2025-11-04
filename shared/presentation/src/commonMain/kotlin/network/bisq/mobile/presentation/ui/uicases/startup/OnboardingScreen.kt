@@ -3,15 +3,12 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ViewPresenter
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
@@ -27,8 +24,6 @@ import org.koin.compose.koinInject
 interface IOnboardingPresenter : ViewPresenter {
     val headline: String
 
-    val buttonText: StateFlow<String>
-
     val filteredPages: List<PagerViewItem>
 
     val indexesToShow: List<Int>
@@ -43,7 +38,6 @@ fun OnboardingScreen() {
 
     val coroutineScope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = { presenter.filteredPages.size })
-    val buttonText by presenter.buttonText.collectAsState()
 
     BisqScrollScaffold {
         BisqGap.VHalf()
@@ -56,7 +50,7 @@ fun OnboardingScreen() {
 
         BisqButton(
             text = if (pagerState.currentPage == presenter.indexesToShow.lastIndex)
-                buttonText
+                "mobile.onboarding.createProfile".i18n()
             else
                 "action.next".i18n(),
             onClick = { presenter.onNextButtonClick(coroutineScope, pagerState) },
