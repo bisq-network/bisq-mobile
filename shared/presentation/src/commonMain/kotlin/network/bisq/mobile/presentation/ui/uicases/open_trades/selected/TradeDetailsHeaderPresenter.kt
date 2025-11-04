@@ -29,18 +29,6 @@ class TradeDetailsHeaderPresenter(
     val userProfileServiceFacade: UserProfileServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
-    companion object {
-
-        /**
-         * Determines if a throwable should be treated as a "no mediator available" error.
-         * This centralizes the logic for identifying mediator-related errors.
-         */
-        fun isMediatorError(throwable: Throwable): Boolean {
-            return throwable is MediatorNotAvailableException ||
-                    throwable.message?.contains("no mediator", ignoreCase = true) == true
-        }
-    }
-
     enum class TradeCloseType {
         REJECT,
         CANCEL,
@@ -305,28 +293,29 @@ class TradeDetailsHeaderPresenter(
 
     fun onOpenMediation() {
         if (!isInteractive.value) return
-        disableInteractive()
         _showMediationConfirmationDialog.value = false
+        val trade = selectedTrade.value
+        if (trade == null) {
+            _mediationError.value = "mobile.bisqEasy.tradeState.mediationFailed".i18n()
+            return
+        }
         launchIO {
-            try {
-                val result = mediationServiceFacade.reportToMediator(selectedTrade.value!!)
-                if (result.isFailure) {
-                    val err = result.exceptionOrNull()
-                    if (err != null && isMediatorError(err)) {
-                        // With support chats in mobile:
-                        // bisqEasy.takeOffer.noMediatorAvailable.warning // =There is no mediator available. You have to use the support chat instead.
-                        _mediationError.value = "mobile.takeOffer.noMediatorAvailable.warning".i18n()
-                    } else {
-                        _mediationError.value = "mobile.bisqEasy.tradeState.mediationFailed".i18n()
+            disableInteractive()
+            mediationServiceFacade.reportToMediator(trade)
+                .onFailure { exception ->
+                    when (exception) {
+                        is MediatorNotAvailableException -> {
+                            _mediationError.value =
+                                "mobile.takeOffer.noMediatorAvailable.warning".i18n()
+                        }
+
+                        else -> {
+                            _mediationError.value =
+                                "mobile.bisqEasy.tradeState.mediationFailed".i18n()
+                        }
                     }
-                    log.e(err) { "Failed to proceed to report to mediation - ${err?.message}" }
                 }
-            } catch (e: Exception) {
-                _mediationError.value = "mobile.bisqEasy.tradeState.mediationFailed".i18n()
-                log.e(e) { "Failed to proceed to report to mediation - ${e.message}" }
-            } finally {
-                enableInteractive()
-            }
+            enableInteractive()
         }
     }
 

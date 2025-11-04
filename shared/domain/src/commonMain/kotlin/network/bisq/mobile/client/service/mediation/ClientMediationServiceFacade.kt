@@ -6,7 +6,9 @@ import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.mediation.MediationServiceFacade
 import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 
-class ClientMediationServiceFacade(val apiGateway: MediationApiGateway) : ServiceFacade(), MediationServiceFacade {
+class ClientMediationServiceFacade(val apiGateway: MediationApiGateway) :
+    ServiceFacade(), MediationServiceFacade {
+
     override fun activate() {
         super<ServiceFacade>.activate()
     }
@@ -21,23 +23,17 @@ class ClientMediationServiceFacade(val apiGateway: MediationApiGateway) : Servic
             result.fold(
                 onSuccess = { Result.success(it) },
                 onFailure = { exception ->
-                    // Map API errors to appropriate typed exceptions for consistency with NodeMediationServiceFacade
                     when {
-                        exception is WebSocketRestApiException &&
-                                exception.message?.contains("no mediator", ignoreCase = true) == true -> {
-                            Result.failure(MediatorNotAvailableException(exception.message ?: ""))
+                        exception is WebSocketRestApiException && exception.httpStatusCode.value == 409 -> {
+                            Result.failure(MediatorNotAvailableException())
                         }
+
                         else -> Result.failure(exception)
                     }
                 }
             )
         } catch (e: Exception) {
-            // Handle any other exceptions that might occur
-            if (e.message?.contains("no mediator", ignoreCase = true) == true) {
-                Result.failure(MediatorNotAvailableException(e.message ?: "No mediator available"))
-            } else {
-                Result.failure(e)
-            }
+            Result.failure(e)
         }
     }
 }

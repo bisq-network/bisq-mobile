@@ -38,7 +38,7 @@ class NodeMediationServiceFacade(applicationService: AndroidApplicationService.P
                 mediationRequestService.requestMediation(channel, contract)
                 return Result.success(Unit)
             } else {
-                return Result.failure(MediatorNotAvailableException("No mediator found"))
+                return Result.failure(MediatorNotAvailableException())
             }
         } else {
             return Result.failure(RuntimeException("No channel found for trade ID $tradeId"))
