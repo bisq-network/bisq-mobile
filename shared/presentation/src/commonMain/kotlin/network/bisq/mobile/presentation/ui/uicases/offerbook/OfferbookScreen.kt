@@ -63,10 +63,7 @@ fun OfferbookScreen() {
             onStateChange = { direction -> presenter.onSelectDirection(direction) }
         )
 
-        // Phase 2: inline mocked filter controller state (UI only)
-        val defaultPayments = listOf("SEPA", "REVOLUT", "WISE", "CASH_APP", "PIX")
-        val defaultSettlements = listOf("BTC", "LIGHTNING")
-
+        // Phase 3: derive available payment/settlement methods from live offers
         fun paymentIconPath(id: String) = "drawable/payment/fiat/${id.lowercase().replace("-", "_")}.png"
         fun settlementIconPath(id: String) = when (id.uppercase()) {
             "BTC", "MAIN_CHAIN", "ONCHAIN", "ON_CHAIN" -> "drawable/payment/bitcoin/main_chain.png"
@@ -74,34 +71,51 @@ fun OfferbookScreen() {
             else -> "drawable/payment/bitcoin/${id.lowercase().replace("-", "_")}.png"
         }
 
-        var filterState by androidx.compose.runtime.remember {
-            androidx.compose.runtime.mutableStateOf(
-                OfferbookFilterUiState(
-                    payment = defaultPayments.map { MethodIconState(it, it, paymentIconPath(it), selected = true) },
-                    settlement = defaultSettlements.map { MethodIconState(it, it, settlementIconPath(it), selected = true) },
-                    onlyMyOffers = false,
-                    hasActiveFilters = false,
-                )
-            )
+        val availablePaymentIds = OfferbookFilterDerivations.paymentMethodIds(sortedFilteredOffers)
+        val availableSettlementIds = OfferbookFilterDerivations.settlementMethodIds(sortedFilteredOffers)
+
+        // Keep selections stable across recompositions and offer set changes.
+        var selectedPaymentIds by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet()) }
+        var selectedSettlementIds by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet()) }
+        var prevAvailPayment by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet()) }
+        var prevAvailSettlement by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet()) }
+
+        // Initialize defaults (all selected) and handle changes in available sets.
+        if (prevAvailPayment != availablePaymentIds) {
+            val newlyAdded = availablePaymentIds - prevAvailPayment
+            selectedPaymentIds = (selectedPaymentIds intersect availablePaymentIds) + newlyAdded
+            prevAvailPayment = availablePaymentIds
         }
-        fun recomputeHasActive(u: OfferbookFilterUiState) =
-            u.payment.any { !it.selected } || u.settlement.any { !it.selected }
+        if (prevAvailSettlement != availableSettlementIds) {
+            val newlyAdded = availableSettlementIds - prevAvailSettlement
+            selectedSettlementIds = (selectedSettlementIds intersect availableSettlementIds) + newlyAdded
+            prevAvailSettlement = availableSettlementIds
+        }
+
+        val paymentUi = availablePaymentIds.toList().sorted().map { id ->
+            MethodIconState(id = id, label = id, iconPath = paymentIconPath(id), selected = id in selectedPaymentIds)
+        }
+        val settlementUi = availableSettlementIds.toList().sorted().map { id ->
+            MethodIconState(id = id, label = id, iconPath = settlementIconPath(id), selected = id in selectedSettlementIds)
+        }
+
+        val hasActiveFilters = paymentUi.any { !it.selected } || settlementUi.any { !it.selected }
+        val filterState = OfferbookFilterUiState(
+            payment = paymentUi,
+            settlement = settlementUi,
+            onlyMyOffers = false,
+            hasActiveFilters = hasActiveFilters,
+        )
 
         BisqGap.V1()
 
         OfferbookFilterController(
             state = filterState,
             onTogglePayment = { id ->
-                val updated = filterState.copy(
-                    payment = filterState.payment.map { if (it.id == id) it.copy(selected = !it.selected) else it }
-                )
-                filterState = updated.copy(hasActiveFilters = recomputeHasActive(updated))
+                selectedPaymentIds = if (id in selectedPaymentIds) selectedPaymentIds - id else selectedPaymentIds + id
             },
             onToggleSettlement = { id ->
-                val updated = filterState.copy(
-                    settlement = filterState.settlement.map { if (it.id == id) it.copy(selected = !it.selected) else it }
-                )
-                filterState = updated.copy(hasActiveFilters = recomputeHasActive(updated))
+                selectedSettlementIds = if (id in selectedSettlementIds) selectedSettlementIds - id else selectedSettlementIds + id
             },
             onOnlyMyOffersChange = { /* Phase 7 */ },
         )

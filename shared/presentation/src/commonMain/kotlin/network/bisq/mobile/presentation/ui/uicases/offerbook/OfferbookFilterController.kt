@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.layout.fillMaxSize
+
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -113,11 +115,11 @@ fun OfferbookFilterController(
 
                     // Payments
                     BisqText.baseLight("bisqEasy.offerbook.offerList.table.columns.paymentMethod".i18n())
-                    FilterIconsRow(items = state.payment, onToggle = onTogglePayment)
+                    FilterIconsRow(items = state.payment, onToggle = onTogglePayment, isPaymentRow = true)
 
                     // Settlement
                     BisqText.baseLight("bisqEasy.offerbook.offerList.table.columns.settlementMethod".i18n())
-                    FilterIconsRow(items = state.settlement, onToggle = onToggleSettlement)
+                    FilterIconsRow(items = state.settlement, onToggle = onToggleSettlement, isPaymentRow = false)
 
                     // Only my offers (disabled for Phase 1 functionality-wise)
                     BisqCheckbox(
@@ -139,6 +141,7 @@ private fun FilterIconsRow(
     items: List<MethodIconState>,
     onToggle: (id: String) -> Unit,
     compact: Boolean = false,
+    isPaymentRow: Boolean = false,
 ) {
     val iconSize = if (compact) 18.dp else 24.dp
 
@@ -148,38 +151,7 @@ private fun FilterIconsRow(
         modifier = if (compact) Modifier else Modifier.fillMaxWidth()
     ) {
         items(items) { item ->
-            val alpha = if (item.selected) 1f else 0.35f
-            val inPreview = androidx.compose.ui.platform.LocalInspectionMode.current
-            if (inPreview) {
-                androidx.compose.foundation.Image(
-                    painter = org.jetbrains.compose.resources.painterResource(previewDrawableFromPath(item.iconPath)),
-                    contentDescription = item.label,
-                    modifier = Modifier
-                        .size(iconSize)
-                        .alpha(alpha)
-                        .clickable(
-                            enabled = !compact, // disable clicks in compact summary
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }
-                        ) { onToggle(item.id) }
-                        .semantics { contentDescription = "filter_icon_${item.id}" }
-                )
-
-            } else {
-                DynamicImage(
-                    path = item.iconPath,
-                    modifier = Modifier
-                        .size(iconSize)
-                        .alpha(alpha)
-                        .clickable(
-                            enabled = !compact, // disable clicks in compact summary
-                            indication = null,
-                            interactionSource = remember { MutableInteractionSource() }
-                        ) { onToggle(item.id) }
-                        .semantics { contentDescription = "filter_icon_${item.id}" },
-                    contentDescription = item.label,
-                )
-            }
+            FilterIcon(item = item, size = iconSize, compact = compact, onToggle = onToggle, isPayment = isPaymentRow)
         }
     }
 }
@@ -201,7 +173,7 @@ private fun CollapsedHeaderBar(
                 modifier = Modifier.clipToBounds()
             ) {
                 payment.forEach { item ->
-                    FilterIcon(item = item, size = iconSize, compact = true, onToggle = {})
+                    FilterIcon(item = item, size = iconSize, compact = true, onToggle = {}, isPayment = true)
                 }
             }
             // Center arrow
@@ -213,7 +185,7 @@ private fun CollapsedHeaderBar(
                 modifier = Modifier.clipToBounds()
             ) {
                 settlement.take(2).forEach { item ->
-                    FilterIcon(item = item, size = iconSize, compact = true, onToggle = {})
+                    FilterIcon(item = item, size = iconSize, compact = true, onToggle = {}, isPayment = false)
                 }
             }
         }
@@ -280,37 +252,64 @@ private fun FilterIcon(
     size: androidx.compose.ui.unit.Dp,
     compact: Boolean,
     onToggle: (String) -> Unit,
+    isPayment: Boolean = false,
 ) {
     val alpha = if (item.selected) 1f else 0.35f
+
+    // For unknown payment methods, mirror the fallback used in PaymentMethods:
+    // - Use one of the custom_payment_* icons deterministically
+    // - Overlay the first letter as a label
+    val (isMissingPayment, fallbackPath, overlayLetter) = if (isPayment) {
+        val (_, missing) = network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod(item.id)
+        if (missing) {
+            val customIds = listOf(
+                "custom_payment_1",
+                "custom_payment_2",
+                "custom_payment_3",
+                "custom_payment_4",
+                "custom_payment_5",
+                "custom_payment_6",
+            )
+            val idx = network.bisq.mobile.presentation.ui.helpers.customPaymentIconIndex(item.id, customIds.size)
+            Triple(true, "drawable/payment/fiat/${customIds[idx]}.png", item.id.firstOrNull()?.uppercase() ?: "?")
+        } else Triple(false, null, null)
+    } else Triple(false, null, null)
+
     val inPreview = androidx.compose.ui.platform.LocalInspectionMode.current
-    if (inPreview) {
-        androidx.compose.foundation.Image(
-            painter = org.jetbrains.compose.resources.painterResource(previewDrawableFromPath(item.iconPath)),
-            contentDescription = item.label,
-            modifier = Modifier
-                .size(size)
-                .alpha(alpha)
-                .clickable(
-                    enabled = !compact, // disable clicks in compact summary
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) { onToggle(item.id) }
-                .semantics { contentDescription = "filter_icon_${item.id}" }
-        )
-    } else {
-        DynamicImage(
-            path = item.iconPath,
-            modifier = Modifier
-                .size(size)
-                .alpha(alpha)
-                .clickable(
-                    enabled = !compact, // disable clicks in compact summary
-                    indication = null,
-                    interactionSource = remember { MutableInteractionSource() }
-                ) { onToggle(item.id) }
-                .semantics { contentDescription = "filter_icon_${item.id}" },
-            contentDescription = item.label,
-        )
+    var imageModifier = Modifier
+        .size(size)
+        .alpha(alpha)
+        .semantics { contentDescription = "filter_icon_${item.id}" }
+    if (!compact) {
+        imageModifier = imageModifier.clickable(
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() }
+        ) { onToggle(item.id) }
+    }
+
+    Box(modifier = imageModifier, contentAlignment = Alignment.Center) {
+        if (inPreview) {
+            val previewPath = fallbackPath ?: item.iconPath
+            androidx.compose.foundation.Image(
+                painter = org.jetbrains.compose.resources.painterResource(previewDrawableFromPath(previewPath)),
+                contentDescription = item.label,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            DynamicImage(
+                path = item.iconPath,
+                fallbackPath = fallbackPath,
+                contentDescription = item.label,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
+        if (isMissingPayment && overlayLetter != null) {
+            network.bisq.mobile.presentation.ui.components.atoms.BisqText.baseBold(
+                text = overlayLetter,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                color = network.bisq.mobile.presentation.ui.theme.BisqTheme.colors.dark_grey20,
+            )
+        }
     }
 }
 
