@@ -25,8 +25,8 @@ object AuthUtils {
         return url.encodedPath.let { if (it.length > 1) it.trimEnd('/') else it } + url.encodedQuery.let { if (it.isNotBlank()) "?$it" else "" }
     }
 
-    fun generateNonce(): String {
-        val nonceBytes = ByteArray(6)
+    fun generateNonce(bytes: Int = 8): String {
+        val nonceBytes = ByteArray(bytes)
         nextBytes(nonceBytes)
         return nonceBytes.toHexString()
     }
