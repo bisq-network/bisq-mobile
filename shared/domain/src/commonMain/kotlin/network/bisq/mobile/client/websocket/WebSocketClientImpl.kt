@@ -148,6 +148,9 @@ class WebSocketClientImpl(
             } catch (e: Throwable) {
                 log.e(e) { "WS connection failed to connect" }
                 _webSocketClientStatus.value = ConnectionState.Disconnected(e)
+                if (e is CancellationException) {
+                    throw e
+                }
                 return e
             }
             return null
