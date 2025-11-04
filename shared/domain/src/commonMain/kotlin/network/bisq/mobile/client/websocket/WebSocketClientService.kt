@@ -13,6 +13,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.httpclient.HttpClientService
 import network.bisq.mobile.client.httpclient.HttpClientSettings
+import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.websocket.exception.MaximumRetryReachedException
 import network.bisq.mobile.client.websocket.exception.WebSocketIsReconnecting
 import network.bisq.mobile.client.websocket.messages.WebSocketRequest
@@ -22,7 +23,6 @@ import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
-import io.ktor.utils.io.CancellationException as KtorCancellationException
 
 private data class SubscriptionType(val topic: Topic, val parameter: String?)
 
@@ -110,12 +110,7 @@ class WebSocketClientService(
                             subscriptionsAreApplied = false
                         }
                         if (state.error != null) {
-                            if (state.error !is MaximumRetryReachedException &&
-                                state.error !is CancellationException &&
-                                state.error !is KtorCancellationException &&
-                                state.error !is WebSocketIsReconnecting &&
-                                state.error.message?.contains("refused") != true
-                            ) {
+                            if (shouldAttemptReconnect(state.error)) {
                                 // We disconnected abnormally and we have not reached maximum retry
                                 newClient.reconnect()
                             }
@@ -126,6 +121,18 @@ class WebSocketClientService(
                 }
             }
             log.d { "WebSocket client updated with url $newApiUrl" }
+        }
+    }
+
+    private fun shouldAttemptReconnect(error: Throwable): Boolean {
+        return when (error) {
+            is PasswordIncorrectOrMissingException,
+            is MaximumRetryReachedException,
+            is CancellationException,
+            is WebSocketIsReconnecting -> false
+            else ->  {
+                error.message?.contains("refused", ignoreCase = true) == true
+            }
         }
     }
 
