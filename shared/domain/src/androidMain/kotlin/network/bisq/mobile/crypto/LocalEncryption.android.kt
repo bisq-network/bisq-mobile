@@ -14,7 +14,7 @@ private object LocalEncryption {
     private const val PADDING = KeyProperties.ENCRYPTION_PADDING_PKCS7
     private const val TRANSFORMATION = "$ALGORITHM/$BLOCK_MODE/$PADDING"
 
-    private val cipher = Cipher.getInstance(TRANSFORMATION)
+    private fun newCipher(): Cipher = Cipher.getInstance(TRANSFORMATION)
     private val keyStore = KeyStore
         .getInstance("AndroidKeyStore")
         .apply {
@@ -48,6 +48,7 @@ private object LocalEncryption {
     }
 
     fun encrypt(bytes: ByteArray, keyAlias: String): ByteArray {
+        val cipher = newCipher()
         cipher.init(Cipher.ENCRYPT_MODE, getKey(keyAlias))
         val iv = cipher.iv
         val encrypted = cipher.doFinal(bytes)
@@ -55,6 +56,7 @@ private object LocalEncryption {
     }
 
     fun decrypt(bytes: ByteArray, keyAlias: String): ByteArray {
+        val cipher = newCipher()
         val iv = bytes.copyOfRange(0, cipher.blockSize)
         val data = bytes.copyOfRange(cipher.blockSize, bytes.size)
         cipher.init(Cipher.DECRYPT_MODE, getKey(keyAlias), IvParameterSpec(iv))
