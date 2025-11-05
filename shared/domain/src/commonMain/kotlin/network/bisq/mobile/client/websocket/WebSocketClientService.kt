@@ -131,7 +131,8 @@ class WebSocketClientService(
             is CancellationException,
             is WebSocketIsReconnecting -> false
             else ->  {
-                error.message?.contains("refused", ignoreCase = true) == true
+                // we dont want to retry if message contains "refused"
+                error.message?.contains("refused", ignoreCase = true) != true
             }
         }
     }
