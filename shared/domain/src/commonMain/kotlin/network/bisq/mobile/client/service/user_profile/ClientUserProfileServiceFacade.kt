@@ -261,7 +261,8 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun userActivityDetected() {
-        // TODO: Call to userActivityDetected endpoint
+        apiGateway.triggerUserActivityDetection()
+            .onFailure { e -> log.d { "Failed to trigger user activity detection: ${e.message}" } }
     }
 
     override suspend fun ignoreUserProfile(profileId: String) {

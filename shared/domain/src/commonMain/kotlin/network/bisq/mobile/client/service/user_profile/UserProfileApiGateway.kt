@@ -74,4 +74,9 @@ class UserProfileApiGateway(
         val body = ReportUserProfileRequest(message)
         return webSocketApiClient.post("$profileBasePath/report/${userId.encodeURLPath()}", body)
     }
+
+    suspend fun triggerUserActivityDetection(): Result<Unit> {
+        return webSocketApiClient.post("$profileBasePath/activity", "")
+    }
+
 }
