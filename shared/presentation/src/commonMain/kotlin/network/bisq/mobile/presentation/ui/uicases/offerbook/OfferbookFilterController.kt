@@ -90,11 +90,17 @@ fun OfferbookFilterController(
                     .fillMaxWidth()
                     .padding(horizontal = BisqUIConstants.ScreenPadding, vertical = BisqUIConstants.ScreenPaddingHalf)
             ) {
-                // Dynamic collapsed header: icons hug the ↔ and ↔ centers by default
-                CollapsedHeaderBar(
-                    payment = state.payment,
-                    settlement = state.settlement,
-                )
+                // Dynamic collapsed header: icons hug the ↔ centers by default, reserve space for chevron
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 32.dp)
+                ) {
+                    CollapsedHeaderBar(
+                        payment = state.payment,
+                        settlement = state.settlement,
+                    )
+                }
                 ExpandAllIcon(
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
@@ -126,6 +132,7 @@ fun OfferbookFilterController(
                             text = "bisqEasy.offerbook.offerList.table.filters.paymentMethods.clearFilters".i18n(),
                             underline = true,
                             modifier = Modifier
+                                .padding(start = 12.dp)
                                 .alpha(clearAlpha)
                                 .clickable(enabled = clearEnabled) { onClearAll() }
                         )
