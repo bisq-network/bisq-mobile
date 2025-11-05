@@ -13,7 +13,7 @@ class SensitiveSettingsRepositoryMock : SensitiveSettingsRepository, Logging {
     override val data: StateFlow<SensitiveSettings> get() = _data.asStateFlow()
 
     override suspend fun update(transform: suspend (SensitiveSettings) -> SensitiveSettings) {
-        _data.update { transform(it) }
+        _data.value = transform(_data.value)
     }
 
 
