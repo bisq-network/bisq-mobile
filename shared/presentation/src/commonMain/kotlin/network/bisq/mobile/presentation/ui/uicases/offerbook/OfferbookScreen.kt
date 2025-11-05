@@ -128,6 +128,14 @@ fun OfferbookScreen() {
                 presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
                 presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
             },
+            onSetPaymentSelection = { ids ->
+                selectedPaymentIds = ids
+                presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
+            },
+            onSetSettlementSelection = { ids ->
+                selectedSettlementIds = ids
+                presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
+            },
         )
 
 

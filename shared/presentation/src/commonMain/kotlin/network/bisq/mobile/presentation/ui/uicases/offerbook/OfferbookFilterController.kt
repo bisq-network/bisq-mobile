@@ -14,6 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.width
+
 
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Surface
@@ -41,6 +43,9 @@ import network.bisq.mobile.presentation.ui.components.atoms.DynamicImage
 import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.BisqBottomSheet
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import androidx.compose.runtime.saveable.rememberSaveable
+import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BisqSearchField
+
 
 /** UI model for a toggleable method icon (payment or settlement). */
 data class MethodIconState(
@@ -65,6 +70,8 @@ fun OfferbookFilterController(
     onToggleSettlement: (id: String) -> Unit,
     onOnlyMyOffersChange: (Boolean) -> Unit,
     onClearAll: () -> Unit,
+    onSetPaymentSelection: (Set<String>) -> Unit,
+    onSetSettlementSelection: (Set<String>) -> Unit,
     modifier: Modifier = Modifier,
     initialExpanded: Boolean = false,
 ) {
@@ -135,16 +142,94 @@ fun OfferbookFilterController(
                                 .padding(start = 12.dp)
                                 .alpha(clearAlpha)
                                 .clickable(enabled = clearEnabled) { onClearAll() }
-                        )
+)
+                    }
+                    var search by rememberSaveable { mutableStateOf("") }
+                    BisqSearchField(
+                        value = search,
+                        onValueChanged = { text, _ -> search = text },
+                        placeholder = "action.search".i18n()
+                    )
+
+                    val filteredPayment = if (search.isBlank()) state.payment else state.payment.filter {
+                        it.label.contains(search, ignoreCase = true) || it.id.contains(search, ignoreCase = true)
+                    }
+                    val filteredSettlement = if (search.isBlank()) state.settlement else state.settlement.filter {
+                        it.label.contains(search, ignoreCase = true) || it.id.contains(search, ignoreCase = true)
                     }
 
+                    val selectedPaymentIds = state.payment.filter { it.selected }.map { it.id }.toSet()
+                    val visiblePaymentIds = filteredPayment.map { it.id }.toSet()
+                    val canSelectAllPayment = visiblePaymentIds.any { it !in selectedPaymentIds }
+                    val canSelectNonePayment = visiblePaymentIds.any { it in selectedPaymentIds }
+
+                    val selectedSettlementIds = state.settlement.filter { it.selected }.map { it.id }.toSet()
+                    val visibleSettlementIds = filteredSettlement.map { it.id }.toSet()
+                    val canSelectAllSettlement = visibleSettlementIds.any { it !in selectedSettlementIds }
+                    val canSelectNoneSettlement = visibleSettlementIds.any { it in selectedSettlementIds }
+
                     // Payments
-                    BisqText.baseLight("bisqEasy.offerbook.offerList.table.columns.paymentMethod".i18n())
-                    FilterIconsRow(items = state.payment, onToggle = onTogglePayment, isPaymentRow = true)
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        BisqText.baseLight("bisqEasy.offerbook.offerList.table.columns.paymentMethod".i18n())
+                        Spacer(Modifier.weight(1f))
+                        val alphaAllP = if (canSelectAllPayment) 1f else 0.4f
+                        BisqText.baseRegular(
+                            text = "mobile.offerbook.filters.selectAll".i18n(),
+                            underline = true,
+                            modifier = Modifier
+                                .padding(start = 12.dp)
+                                .alpha(alphaAllP)
+                                .clickable(enabled = canSelectAllPayment) {
+                                    val newSet = selectedPaymentIds + visiblePaymentIds
+                                    onSetPaymentSelection(newSet)
+                                }
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        val alphaNoneP = if (canSelectNonePayment) 1f else 0.4f
+                        BisqText.baseRegular(
+                            text = "mobile.offerbook.filters.selectNone".i18n(),
+                            underline = true,
+                            modifier = Modifier
+                                .alpha(alphaNoneP)
+                                .clickable(enabled = canSelectNonePayment) {
+                                    val newSet = selectedPaymentIds - visiblePaymentIds
+                                    onSetPaymentSelection(newSet)
+                                }
+                        )
+                    }
+                    FilterIconsRow(items = filteredPayment, onToggle = onTogglePayment, isPaymentRow = true)
 
                     // Settlement
-                    BisqText.baseLight("bisqEasy.offerbook.offerList.table.columns.settlementMethod".i18n())
-                    FilterIconsRow(items = state.settlement, onToggle = onToggleSettlement, isPaymentRow = false)
+                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                        BisqText.baseLight("bisqEasy.offerbook.offerList.table.columns.settlementMethod".i18n())
+                        Spacer(Modifier.weight(1f))
+                        val alphaAllS = if (canSelectAllSettlement) 1f else 0.4f
+                        BisqText.baseRegular(
+                            text = "mobile.offerbook.filters.selectAll".i18n(),
+                            underline = true,
+                            modifier = Modifier
+                                .padding(start = 12.dp)
+                                .alpha(alphaAllS)
+                                .clickable(enabled = canSelectAllSettlement) {
+                                    val newSet = selectedSettlementIds + visibleSettlementIds
+                                    onSetSettlementSelection(newSet)
+                                }
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        val alphaNoneS = if (canSelectNoneSettlement) 1f else 0.4f
+                        BisqText.baseRegular(
+                            text = "mobile.offerbook.filters.selectNone".i18n(),
+                            underline = true,
+                            modifier = Modifier
+                                .alpha(alphaNoneS)
+                                .clickable(enabled = canSelectNoneSettlement) {
+                                    val newSet = selectedSettlementIds - visibleSettlementIds
+                                    onSetSettlementSelection(newSet)
+                                }
+                        )
+                    }
+                    FilterIconsRow(items = filteredSettlement, onToggle = onToggleSettlement, isPaymentRow = false)
+
 
                     // Only my offers (disabled for Phase 1 functionality-wise)
                     BisqCheckbox(
@@ -412,6 +497,8 @@ private fun Preview_OfferbookFilterController_AllSelected() {
                 onToggleSettlement = {},
                 onOnlyMyOffersChange = {},
                 onClearAll = {},
+                onSetPaymentSelection = {},
+                onSetSettlementSelection = {},
             )
         }
     }
@@ -429,6 +516,8 @@ private fun Preview_OfferbookFilterController_PartialFilters() {
                 onToggleSettlement = {},
                 onOnlyMyOffersChange = {},
                 onClearAll = {},
+                onSetPaymentSelection = {},
+                onSetSettlementSelection = {},
             )
         }
     }
@@ -475,6 +564,8 @@ private fun Preview_OfferbookFilterController_ManyPayments() {
                 onToggleSettlement = {},
                 onOnlyMyOffersChange = {},
                 onClearAll = {},
+                onSetPaymentSelection = {},
+                onSetSettlementSelection = {},
             )
         }
     }
@@ -492,6 +583,8 @@ private fun Preview_OfferbookFilterController_Expanded() {
                 onToggleSettlement = {},
                 onOnlyMyOffersChange = {},
                 onClearAll = {},
+                onSetPaymentSelection = {},
+                onSetSettlementSelection = {},
                 initialExpanded = true
             )
         }
