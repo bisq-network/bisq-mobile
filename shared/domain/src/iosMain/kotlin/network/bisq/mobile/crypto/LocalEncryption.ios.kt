@@ -70,6 +70,7 @@ private object LocalEncryption {
                     kSecAttrLabel to keyAlias,
                     kSecAttrAccount to "Account $keyAlias",
                     kSecAttrService to "Service $SERVICE_NAME",
+                    kSecUseDataProtectionKeychain to kCFBooleanTrue,
                     kSecReturnAttributes to kCFBooleanTrue,
                     kSecValueData to keyData
                 ), result.ptr

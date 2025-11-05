@@ -162,7 +162,10 @@ fun DeferScope.createCFDictionary(pairs: CFDictionaryInitScope.()->Unit) =
     CFDictionaryInitScope.resolve(this, pairs)
 
 inline operator fun <reified T> CFDictionaryRef.get(key: Any?): T = memScoped {
-    CFDictionaryGetValue(this@get, giveToCF(key)).also(::CFRetain).takeFromCF<T>()
+    val raw = CFDictionaryGetValue(this@get, giveToCF(key))
+        ?: throw NoSuchElementException("Key $key not found in CFDictionary")
+    CFRetain(raw)
+    raw.takeFromCF<T>()
 }
 
 
