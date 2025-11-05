@@ -53,12 +53,14 @@ class OfferbookPresenter(
     private val _selectedDirection = MutableStateFlow(DirectionEnum.BUY)
     val selectedDirection: StateFlow<DirectionEnum> get() = _selectedDirection.asStateFlow()
 
-    // Phase 4: method filters
+    // Phase 4+: filters
     // Semantics: empty selection means "exclude all" (yields no offers)
     private val _selectedPaymentMethodIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedPaymentMethodIds: StateFlow<Set<String>> get() = _selectedPaymentMethodIds.asStateFlow()
     private val _selectedSettlementMethodIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedSettlementMethodIds: StateFlow<Set<String>> get() = _selectedSettlementMethodIds.asStateFlow()
+    private val _onlyMyOffers = MutableStateFlow(false)
+    val onlyMyOffers: StateFlow<Boolean> get() = _onlyMyOffers.asStateFlow()
 
     private val _sortedFilteredOffers = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
     val sortedFilteredOffers: StateFlow<List<OfferItemPresentationModel>> get() = _sortedFilteredOffers.asStateFlow()
@@ -101,6 +103,7 @@ class OfferbookPresenter(
                 val selectedProfile: UserProfileVO?,
                 val payments: Set<String>,
                 val settlements: Set<String>,
+                val onlyMine: Boolean,
             )
 
             combine(
@@ -111,6 +114,7 @@ class OfferbookPresenter(
                 userProfileServiceFacade.selectedUserProfile,
                 selectedPaymentMethodIds,
                 selectedSettlementMethodIds,
+                onlyMyOffers,
             ) { values: Array<Any?> ->
                 @Suppress("UNCHECKED_CAST")
                 Inputs(
@@ -120,6 +124,7 @@ class OfferbookPresenter(
                     selectedProfile = values[4] as UserProfileVO?,
                     payments = values[5] as Set<String>,
                     settlements = values[6] as Set<String>,
+                    onlyMine = values[7] as Boolean,
                 )
             }
                 .mapLatest { inp ->
@@ -129,16 +134,18 @@ class OfferbookPresenter(
                     val selectedProfile = inp.selectedProfile
                     val payments = inp.payments
                     val settlements = inp.settlements
+                    val onlyMine = inp.onlyMine
 
-                    log.d { "OfferbookPresenter filtering - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir: $direction, In: ${offers.size}, paySel=${payments.size}, setSel=${settlements.size}" }
+                    log.d { "OfferbookPresenter filtering - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir: $direction, In: ${offers.size}, paySel=${payments.size}, setSel=${settlements.size}, onlyMine=$onlyMine" }
 
                     val filtered = mutableListOf<OfferItemPresentationModel>()
                     if (selectedProfile == null) return@mapLatest filtered to selectedProfile
                     var directionFilteredCount = 0
                     var ignoredUserFilteredCount = 0
                     var methodFilteredCount = 0
+                    var onlyMyFilteredCount = 0
 
-                    // Baseline availability (direction + ignored-user only)
+                    // Baseline availability (direction + ignored-user + only-my if enabled), independent of method selections
                     val availablePayments = mutableSetOf<String>()
                     val availableSettlements = mutableSetOf<String>()
 
@@ -147,7 +154,7 @@ class OfferbookPresenter(
                         val offerDirection = item.bisqEasyOffer.direction.mirror
                         val isIgnoredUser = isOfferFromIgnoredUserCached(item.bisqEasyOffer)
 
-                        log.v { "Offer ${item.offerId} - Currency: $offerCurrency, Direction: $offerDirection, IsIgnored: $isIgnoredUser" }
+                        log.v { "Offer ${item.offerId} - Currency: $offerCurrency, Direction: $offerDirection, IsIgnored: $isIgnoredUser, isMy=${item.isMyOffer}" }
 
                         if (offerDirection != direction) {
                             log.v { "Offer ${item.offerId} filtered out (wrong direction: $offerDirection != $direction)" }
@@ -158,6 +165,12 @@ class OfferbookPresenter(
                         if (isIgnoredUser) {
                             ignoredUserFilteredCount++
                             log.v { "Offer ${item.offerId} filtered out (ignored user)" }
+                            continue
+                        }
+
+                        if (onlyMine && !item.isMyOffer) {
+                            onlyMyFilteredCount++
+                            log.v { "Offer ${item.offerId} filtered out (only my offers enabled)" }
                             continue
                         }
 
@@ -180,11 +193,11 @@ class OfferbookPresenter(
                         log.v { "Offer ${item.offerId} included - Currency: $offerCurrency, Amount: ${item.formattedQuoteAmount}" }
                     }
 
-                    // Publish baseline availability independent of current selections
+                    // Publish baseline availability independent of current method selections
                     _availablePaymentMethodIds.value = availablePayments
                     _availableSettlementMethodIds.value = availableSettlements
 
-                    log.d { "OfferbookPresenter filtering results - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir matches: $directionFilteredCount, Ignored: $ignoredUserFilteredCount, Methods: $methodFilteredCount, Final: ${filtered.size}" }
+                    log.d { "OfferbookPresenter filtering results - Market: ${selectedMarket.market.quoteCurrencyCode}, Dir matches: $directionFilteredCount, Ignored: $ignoredUserFilteredCount, OnlyMy: $onlyMyFilteredCount, Methods: $methodFilteredCount, Final: ${filtered.size}" }
                     filtered to selectedProfile
                 }
                 .collectLatest { (filtered, selectedProfile) ->
@@ -424,6 +437,10 @@ class OfferbookPresenter(
 
     fun onSelectDirection(direction: DirectionEnum) {
         _selectedDirection.value = direction
+    }
+
+    fun setOnlyMyOffers(enabled: Boolean) {
+        _onlyMyOffers.value = enabled
     }
 
     // Phase 4: UI informs these to drive offer filtering

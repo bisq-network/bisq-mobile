@@ -41,6 +41,7 @@ fun OfferbookScreen() {
     val showNotEnoughReputationDialog by presenter.showNotEnoughReputationDialog.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
     val selectedMarket by presenter.selectedMarket.collectAsState()
+    val onlyMyOffers by presenter.onlyMyOffers.collectAsState()
 
     BisqStaticScaffold(
         topBar = {
@@ -101,11 +102,11 @@ fun OfferbookScreen() {
             MethodIconState(id = id, label = id, iconPath = settlementIconPath(id), selected = id in selectedSettlementIds)
         }
 
-        val hasActiveFilters = paymentUi.any { !it.selected } || settlementUi.any { !it.selected }
+        val hasActiveFilters = onlyMyOffers || paymentUi.any { !it.selected } || settlementUi.any { !it.selected }
         val filterState = OfferbookFilterUiState(
             payment = paymentUi,
             settlement = settlementUi,
-            onlyMyOffers = false,
+            onlyMyOffers = onlyMyOffers,
             hasActiveFilters = hasActiveFilters,
         )
 
@@ -121,12 +122,13 @@ fun OfferbookScreen() {
                 selectedSettlementIds = if (id in selectedSettlementIds) selectedSettlementIds - id else selectedSettlementIds + id
                 presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
             },
-            onOnlyMyOffersChange = { /* Phase 7 */ },
+            onOnlyMyOffersChange = { enabled -> presenter.setOnlyMyOffers(enabled) },
             onClearAll = {
                 selectedPaymentIds = availablePaymentIds
                 selectedSettlementIds = availableSettlementIds
                 presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
                 presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
+                presenter.setOnlyMyOffers(false)
             },
             onSetPaymentSelection = { ids ->
                 selectedPaymentIds = ids

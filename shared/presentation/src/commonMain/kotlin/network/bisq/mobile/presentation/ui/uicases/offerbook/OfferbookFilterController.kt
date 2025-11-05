@@ -231,11 +231,10 @@ fun OfferbookFilterController(
                     FilterIconsRow(items = filteredSettlement, onToggle = onToggleSettlement, isPaymentRow = false)
 
 
-                    // Only my offers (disabled for Phase 1 functionality-wise)
+                    // Only my offers
                     BisqCheckbox(
                         label = "mobile.offerbook.filters.onlyMyOffers".i18n(),
                         checked = state.onlyMyOffers,
-                        disabled = true,
                         onCheckedChange = { onOnlyMyOffersChange(it) }
                     )
 
