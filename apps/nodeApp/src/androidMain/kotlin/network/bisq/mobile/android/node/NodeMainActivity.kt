@@ -3,6 +3,7 @@ package network.bisq.mobile.android.node
 import android.os.Bundle
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import network.bisq.mobile.presentation.MainActivity
+import network.bisq.mobile.presentation.MainApplication
 
 /**
  * Bisq Android Node Main Activity
@@ -12,7 +13,13 @@ class NodeMainActivity : MainActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         // Install splash screen before super.onCreate to prevent UI blocking
         installSplashScreen()
-        super.onCreate(savedInstanceState)
+
+        if (MainApplication.wasProcessDead.getAndSet(false)) {
+            // this is to enforce proper initialization if process was killed by OS
+            super.onCreate(null)
+        } else {
+            super.onCreate(savedInstanceState)
+        }
 
         // Enforce enable hardware acceleration for better graphics performance
         // tested with better results than manifest flag

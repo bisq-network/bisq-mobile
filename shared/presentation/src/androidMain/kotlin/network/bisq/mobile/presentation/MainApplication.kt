@@ -19,11 +19,18 @@ import network.bisq.mobile.presentation.notification.NotificationChannels
 import org.koin.android.ext.koin.androidContext
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
+import java.util.concurrent.atomic.AtomicBoolean
 
 /**
  * Base class for Bisq Android Applications
  */
 abstract class MainApplication : Application(), Logging {
+
+    companion object {
+        @Volatile
+        var wasProcessDead = AtomicBoolean(true)
+    }
+
     override fun onCreate() {
         super.onCreate()
 
