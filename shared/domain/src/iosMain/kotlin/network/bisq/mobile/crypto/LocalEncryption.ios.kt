@@ -51,7 +51,6 @@ private object LocalEncryption {
 
 
     private fun generateAndStoreSymmetricKey(keyAlias: String) {
-        // Generate 256-bit key
         val keyData = NSMutableData.dataWithLength(KEY_SIZE.toULong()) as NSMutableData
         val randomResult = SecRandomCopyBytes(
             kSecRandomDefault,
@@ -63,7 +62,6 @@ private object LocalEncryption {
         }
 
         memScoped {
-            val result = alloc<CFTypeRefVar>()
             val status = SecItemAdd(
                 cfDictionaryOf(
                     kSecClass to kSecClassGenericPassword,
@@ -71,9 +69,9 @@ private object LocalEncryption {
                     kSecAttrAccount to "Account $keyAlias",
                     kSecAttrService to "Service $SERVICE_NAME",
                     kSecUseDataProtectionKeychain to kCFBooleanTrue,
-                    kSecReturnAttributes to kCFBooleanTrue,
                     kSecValueData to keyData
-                ), result.ptr
+                ),
+                null,
             )
             if (status != errSecSuccess && status != errSecDuplicateItem) {
                 throw IllegalStateException("Failed to store '$keyAlias' key with status: $status")
