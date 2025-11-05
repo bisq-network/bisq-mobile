@@ -192,22 +192,16 @@ class SettingsRepositoryImplTest {
         repository.setSelectedMarketCode("BTC/EUR")
 
         // Then - verify each update preserves other fields
-        assertEquals(3, updateSlots.size)
-        
-        // First update: setBisqApiUrl
-        val afterUrlUpdate = updateSlots[0](originalSettings)
-        assertEquals(true, afterUrlUpdate.firstLaunch) // preserved
-        assertEquals(true, afterUrlUpdate.showChatRulesWarnBox) // preserved
-        assertEquals("BTC/USD", afterUrlUpdate.selectedMarketCode) // preserved
-        
-        // Second update: setFirstLaunch
-        val afterFirstLaunchUpdate = updateSlots[1](afterUrlUpdate)
+        assertEquals(2, updateSlots.size)
+
+        // first update: setFirstLaunch
+        val afterFirstLaunchUpdate = updateSlots[0](originalSettings)
         assertEquals(false, afterFirstLaunchUpdate.firstLaunch)
         assertEquals(true, afterFirstLaunchUpdate.showChatRulesWarnBox) // preserved
         assertEquals("BTC/USD", afterFirstLaunchUpdate.selectedMarketCode) // preserved
         
-        // Third update: setSelectedMarketCode
-        val afterMarketUpdate = updateSlots[2](afterFirstLaunchUpdate)
+        // second update: setSelectedMarketCode
+        val afterMarketUpdate = updateSlots[1](afterFirstLaunchUpdate)
         assertEquals(false, afterMarketUpdate.firstLaunch) // preserved
         assertEquals(true, afterMarketUpdate.showChatRulesWarnBox) // preserved
         assertEquals("BTC/EUR", afterMarketUpdate.selectedMarketCode)

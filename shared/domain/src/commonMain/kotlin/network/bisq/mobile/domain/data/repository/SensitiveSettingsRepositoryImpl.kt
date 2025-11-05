@@ -15,7 +15,7 @@ class SensitiveSettingsRepositoryImpl(
         get() =
             sensitiveSettingsStore.data.catch { exception ->
                 if (exception is IOException) {
-                    log.e("Error reading Settings datastore", exception)
+                    log.e("Error reading SensitiveSettings datastore", exception)
                     emit(SensitiveSettings())
                 } else {
                     throw exception
