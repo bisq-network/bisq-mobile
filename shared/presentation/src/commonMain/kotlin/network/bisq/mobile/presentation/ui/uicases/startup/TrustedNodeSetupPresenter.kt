@@ -420,10 +420,6 @@ class TrustedNodeSetupPresenter(
         }
 
         if (!proxyOption.isTorProxyOption && apiUrl.host.endsWith(".onion")) {
-            // TODO: remove ios condition once proxy is supported on ios
-            if (isIOS()) {
-                return "mobile.trustedNodeSetup.apiUrl.forbidden.onionWithoutProxy".i18n()
-            }
             _selectedProxyOption.value = BisqProxyOption.INTERNAL_TOR
         }
 

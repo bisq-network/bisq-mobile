@@ -83,7 +83,6 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val isNewApiUrl by presenter.isNewApiUrl.collectAsState()
     val torState by presenter.torState.collectAsState()
     val timeoutCounter by presenter.timeoutCounter.collectAsState()
-    val isIOS = presenter.isIOS()
 
     val blurTriggerSetup = rememberBlurTriggerSetup()
 
@@ -136,20 +135,18 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
                 { showAdvancedOptions = !showAdvancedOptions },
             ) {
                 Column {
-                    if (!isIOS) {
-                        BisqSelect(
-                            label = "mobile.trustedNodeSetup.proxy".i18n(),
-                            options = BisqProxyOption.entries,
-                            selectedKey = selectedProxyOption.name,
-                            optionLabel = { it.displayString },
-                            optionKey = { it.name },
-                            onSelected = {
-                                presenter.onProxyOptionChanged(it)
-                                blurTriggerSetup.triggerBlur()
-                            },
-                            disabled = isLoading || !isWorkflow,
-                        )
-                    }
+                    BisqSelect(
+                        label = "mobile.trustedNodeSetup.proxy".i18n(),
+                        options = BisqProxyOption.entries,
+                        selectedKey = selectedProxyOption.name,
+                        optionLabel = { it.displayString },
+                        optionKey = { it.name },
+                        onSelected = {
+                            presenter.onProxyOptionChanged(it)
+                            blurTriggerSetup.triggerBlur()
+                        },
+                        disabled = isLoading || !isWorkflow,
+                    )
 
                     BisqTextField(
                         label = "mobile.trustedNodeSetup.password".i18n(),

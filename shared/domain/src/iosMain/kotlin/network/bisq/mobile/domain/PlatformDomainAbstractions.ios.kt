@@ -390,6 +390,5 @@ actual fun createHttpClient(
     config(this)
     engine {
         proxy = proxyConfig?.config
-        // TODO: check DNS leaks when iOS SOCKS proxy support is implemented
     }
 }
