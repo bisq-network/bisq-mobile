@@ -64,6 +64,7 @@ fun OfferbookFilterController(
     onTogglePayment: (id: String) -> Unit,
     onToggleSettlement: (id: String) -> Unit,
     onOnlyMyOffersChange: (Boolean) -> Unit,
+    onClearAll: () -> Unit,
     modifier: Modifier = Modifier,
     initialExpanded: Boolean = false,
 ) {
@@ -111,7 +112,24 @@ fun OfferbookFilterController(
                         .padding(all = BisqUIConstants.ScreenPadding),
                     verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)
                 ) {
-                    BisqText.h4Light("mobile.offerbook.filters.title".i18n())
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BisqText.h4Light(
+                            text = "mobile.offerbook.filters.title".i18n(),
+                            modifier = Modifier.weight(1f)
+                        )
+                        val clearEnabled = state.hasActiveFilters
+                        val clearAlpha = if (clearEnabled) 1f else 0.4f
+                        BisqText.baseRegular(
+                            text = "bisqEasy.offerbook.offerList.table.filters.paymentMethods.clearFilters".i18n(),
+                            underline = true,
+                            modifier = Modifier
+                                .alpha(clearAlpha)
+                                .clickable(enabled = clearEnabled) { onClearAll() }
+                        )
+                    }
 
                     // Payments
                     BisqText.baseLight("bisqEasy.offerbook.offerList.table.columns.paymentMethod".i18n())
@@ -385,7 +403,8 @@ private fun Preview_OfferbookFilterController_AllSelected() {
                 state = ui,
                 onTogglePayment = {},
                 onToggleSettlement = {},
-                onOnlyMyOffersChange = {}
+                onOnlyMyOffersChange = {},
+                onClearAll = {},
             )
         }
     }
@@ -401,7 +420,8 @@ private fun Preview_OfferbookFilterController_PartialFilters() {
                 state = ui.copy(hasActiveFilters = true),
                 onTogglePayment = {},
                 onToggleSettlement = {},
-                onOnlyMyOffersChange = {}
+                onOnlyMyOffersChange = {},
+                onClearAll = {},
             )
         }
     }
@@ -446,7 +466,8 @@ private fun Preview_OfferbookFilterController_ManyPayments() {
                 state = ui,
                 onTogglePayment = {},
                 onToggleSettlement = {},
-                onOnlyMyOffersChange = {}
+                onOnlyMyOffersChange = {},
+                onClearAll = {},
             )
         }
     }
@@ -463,6 +484,7 @@ private fun Preview_OfferbookFilterController_Expanded() {
                 onTogglePayment = {},
                 onToggleSettlement = {},
                 onOnlyMyOffersChange = {},
+                onClearAll = {},
                 initialExpanded = true
             )
         }

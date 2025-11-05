@@ -71,8 +71,8 @@ fun OfferbookScreen() {
             else -> "drawable/payment/bitcoin/${id.lowercase().replace("-", "_")}.png"
         }
 
-        val availablePaymentIds = OfferbookFilterDerivations.paymentMethodIds(sortedFilteredOffers)
-        val availableSettlementIds = OfferbookFilterDerivations.settlementMethodIds(sortedFilteredOffers)
+        val availablePaymentIds by presenter.availablePaymentMethodIds.collectAsState()
+        val availableSettlementIds by presenter.availableSettlementMethodIds.collectAsState()
 
         // Keep selections stable across recompositions and offer set changes.
         var selectedPaymentIds by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet()) }
@@ -84,11 +84,13 @@ fun OfferbookScreen() {
         if (prevAvailPayment != availablePaymentIds) {
             val newlyAdded = availablePaymentIds - prevAvailPayment
             selectedPaymentIds = (selectedPaymentIds intersect availablePaymentIds) + newlyAdded
+            presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
             prevAvailPayment = availablePaymentIds
         }
         if (prevAvailSettlement != availableSettlementIds) {
             val newlyAdded = availableSettlementIds - prevAvailSettlement
             selectedSettlementIds = (selectedSettlementIds intersect availableSettlementIds) + newlyAdded
+            presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
             prevAvailSettlement = availableSettlementIds
         }
 
@@ -113,11 +115,19 @@ fun OfferbookScreen() {
             state = filterState,
             onTogglePayment = { id ->
                 selectedPaymentIds = if (id in selectedPaymentIds) selectedPaymentIds - id else selectedPaymentIds + id
+                presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
             },
             onToggleSettlement = { id ->
                 selectedSettlementIds = if (id in selectedSettlementIds) selectedSettlementIds - id else selectedSettlementIds + id
+                presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
             },
             onOnlyMyOffersChange = { /* Phase 7 */ },
+            onClearAll = {
+                selectedPaymentIds = availablePaymentIds
+                selectedSettlementIds = availableSettlementIds
+                presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
+                presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
+            },
         )
 
 
