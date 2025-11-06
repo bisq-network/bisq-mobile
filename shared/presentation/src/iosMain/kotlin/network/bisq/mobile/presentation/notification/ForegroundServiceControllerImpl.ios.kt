@@ -17,12 +17,17 @@ import platform.BackgroundTasks.BGProcessingTaskRequest
 import platform.BackgroundTasks.BGTaskScheduler
 import platform.Foundation.NSDate
 
+import platform.Foundation.NSBundle
+
 
 class ForegroundServiceControllerImpl(private val notificationController: NotificationController) :
     ForegroundServiceController, Logging {
 
     companion object {
-        const val BACKGROUND_TASK_ID = "network.bisq.mobile.iosUC4273Y485"
+        val BACKGROUND_TASK_ID: String by lazy {
+            val base = NSBundle.mainBundle.bundleIdentifier ?: "network.bisq.mobile.ios"
+            "$base.background-processing"
+        }
         const val CHECK_NOTIFICATIONS_DELAY = 15 * 10000L
     }
 
