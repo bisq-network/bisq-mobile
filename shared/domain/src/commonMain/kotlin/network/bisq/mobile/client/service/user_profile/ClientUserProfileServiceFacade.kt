@@ -35,6 +35,13 @@ class ClientUserProfileServiceFacade(
     private val json: Json,
     private val webSocketClientService: WebSocketClientService,
 ) : ServiceFacade(), UserProfileServiceFacade {
+    companion object {
+        private const val MIN_PAUSE_TO_NEXT_REPUBLISH = 5 * 60 * 1000L // 5 minutes in milliseconds
+    }
+
+    private var lastPublished: Long = 0L
+    private val lastPublishedMutex = Mutex()
+
     private var keyMaterialResponse: KeyMaterialResponse? = null
 
     // Properties
@@ -261,8 +268,16 @@ class ClientUserProfileServiceFacade(
     }
 
     override suspend fun userActivityDetected() {
-        apiGateway.triggerUserActivityDetection()
-            .onFailure { e -> log.d { "Failed to trigger user activity detection: ${e.message}" } }
+        lastPublishedMutex.withLock {
+            val now = Clock.System.now().toEpochMilliseconds()
+            if (now - lastPublished < MIN_PAUSE_TO_NEXT_REPUBLISH) {
+                log.d { "Ignoring user activity detection due to recent activity" }
+                return@withLock
+            }
+            apiGateway.triggerUserActivityDetection()
+                .onSuccess { lastPublished = now }
+                .onFailure { e -> log.d { "Failed to trigger user activity detection: ${e.message}" } }
+        }
     }
 
     override suspend fun ignoreUserProfile(profileId: String) {
