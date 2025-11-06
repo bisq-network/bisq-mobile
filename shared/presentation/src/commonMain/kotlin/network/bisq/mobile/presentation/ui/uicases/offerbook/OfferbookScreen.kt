@@ -9,6 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 
 import androidx.compose.ui.Alignment
@@ -75,10 +77,10 @@ fun OfferbookScreen() {
         val availableSettlementIds by presenter.availableSettlementMethodIds.collectAsState()
 
         // Keep selections stable across recompositions and offer set changes.
-        var selectedPaymentIds by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet()) }
-        var selectedSettlementIds by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet()) }
-        var prevAvailPayment by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet()) }
-        var prevAvailSettlement by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Set<String>>(emptySet()) }
+        var selectedPaymentIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+        var selectedSettlementIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+        var prevAvailPayment by remember { mutableStateOf<Set<String>>(emptySet()) }
+        var prevAvailSettlement by remember { mutableStateOf<Set<String>>(emptySet()) }
 
         // Initialize defaults (all selected) and handle changes in available sets.
         if (prevAvailPayment != availablePaymentIds) {
