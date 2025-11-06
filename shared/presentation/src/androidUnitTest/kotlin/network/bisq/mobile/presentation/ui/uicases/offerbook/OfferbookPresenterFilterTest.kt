@@ -4,6 +4,8 @@ import io.mockk.coEvery
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.mockkStatic
+import io.mockk.unmockkStatic
+
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,6 +17,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
@@ -97,29 +100,68 @@ class OfferbookPresenterFilterTest {
 
     @AfterTest
     fun tearDown() {
+        // Restore any static mocks to prevent bleed-over into other tests
+        unmockkStatic("network.bisq.mobile.presentation.PlatformPresentationAbstractions_androidKt")
         Dispatchers.resetMain()
         stopKoin()
     }
 
-    private class FakeForegroundDetector : network.bisq.mobile.domain.service.ForegroundDetector {
-        private val _isForeground = MutableStateFlow(true)
-        override val isForeground: StateFlow<Boolean> = _isForeground
+    // --- Shared helpers for building presenters and awaiting state ---
+    private fun makeOffer(
+        id: String,
+        isMy: Boolean,
+        quoteMethods: List<String>,
+        baseMethods: List<String>,
+        makerId: String = id
+    ): OfferItemPresentationModel {
+        val market = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
+        val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L)
+        val priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_00L, market) })
+        val makerNetworkId = NetworkIdVO(
+            AddressByTransportTypeMapVO(mapOf()),
+            PubKeyVO(PublicKeyVO("pub"), keyId = makerId, hash = makerId, id = makerId)
+        )
+        val offer = BisqEasyOfferVO(
+            id = id,
+            date = 0L,
+            makerNetworkId = makerNetworkId,
+            direction = DirectionEnum.SELL, // mirror -> BUY
+            market = market,
+            amountSpec = amountSpec,
+            priceSpec = priceSpec,
+            protocolTypes = emptyList(),
+            baseSidePaymentMethodSpecs = emptyList(),
+            quoteSidePaymentMethodSpecs = emptyList(),
+            offerOptions = emptyList(),
+            supportedLanguageCodes = listOf("en")
+        )
+        val user: UserProfileVO = createMockUserProfile("maker-$makerId")
+        val reputation = ReputationScoreVO(0, 0.0, 0)
+        val dto = OfferItemPresentationDto(
+            bisqEasyOffer = offer,
+            isMyOffer = isMy,
+            userProfile = user,
+            formattedDate = "",
+            formattedQuoteAmount = "",
+            formattedBaseAmount = "",
+            formattedPrice = "",
+            formattedPriceSpec = "",
+            quoteSidePaymentMethods = quoteMethods,
+            baseSidePaymentMethods = baseMethods,
+            reputationScore = reputation
+        )
+        return OfferItemPresentationModel(dto)
     }
 
-    @Test
-    fun onlyMyOffers_and_emptySelection_semantics_and_baseline_stability() = runTest(testDispatcher) {
+    private fun buildPresenterWithOffers(allOffers: List<OfferItemPresentationModel>): OfferbookPresenter {
         // --- Mocks and fakes for MainPresenter ---
         val tradesServiceFacade = mockk<TradesServiceFacade>()
         every { tradesServiceFacade.openTradeItems } returns MutableStateFlow(emptyList())
-
         val userProfileServiceForMain = FakeUserProfileServiceFacade()
-
         val openTradesNotificationService = mockk<OpenTradesNotificationService>(relaxed = true)
-
         val settingsService = FakeSettingsServiceFacade()
         val tradeReadStateRepository = FakeTradeReadStateRepository()
         val urlLauncher = mockk<UrlLauncher>(relaxed = true)
-
         val mainPresenter = MainPresenter(
             tradesServiceFacade,
             userProfileServiceForMain,
@@ -128,7 +170,6 @@ class OfferbookPresenterFilterTest {
             tradeReadStateRepository,
             urlLauncher
         )
-
         // --- Dependencies for OfferbookPresenter ---
         val offersFlow = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
         val marketFlow = MutableStateFlow(
@@ -138,61 +179,6 @@ class OfferbookPresenterFilterTest {
         every { offersService.offerbookListItems } returns offersFlow
         every { offersService.selectedOfferbookMarket } returns marketFlow
         coEvery { offersService.deleteOffer(any()) } returns Result.success(true)
-
-        // Direction SELL -> mirror is BUY (default presenter's selectedDirection)
-        fun makeOffer(
-            id: String,
-            isMy: Boolean,
-            quoteMethods: List<String>,
-            baseMethods: List<String>,
-            makerId: String = id
-        ): OfferItemPresentationModel {
-            val market = MarketVO("BTC", "USD", "Bitcoin", "US Dollar")
-            val amountSpec = QuoteSideRangeAmountSpecVO(minAmount = 10_0000L, maxAmount = 100_0000L)
-            val priceSpec = FixPriceSpecVO(with(PriceQuoteVOFactory) { fromPrice(100_00L, market) })
-            val makerNetworkId = NetworkIdVO(
-                AddressByTransportTypeMapVO(mapOf()),
-                PubKeyVO(PublicKeyVO("pub"), keyId = makerId, hash = makerId, id = makerId)
-            )
-            val offer = BisqEasyOfferVO(
-                id = id,
-                date = 0L,
-                makerNetworkId = makerNetworkId,
-                direction = DirectionEnum.SELL, // mirror -> BUY
-                market = market,
-                amountSpec = amountSpec,
-                priceSpec = priceSpec,
-                protocolTypes = emptyList(),
-                baseSidePaymentMethodSpecs = emptyList(),
-                quoteSidePaymentMethodSpecs = emptyList(),
-                offerOptions = emptyList(),
-                supportedLanguageCodes = listOf("en")
-            )
-            val user: UserProfileVO = createMockUserProfile("maker-$makerId")
-            val reputation = ReputationScoreVO(0, 0.0, 0)
-            val dto = OfferItemPresentationDto(
-                bisqEasyOffer = offer,
-                isMyOffer = isMy,
-                userProfile = user,
-                formattedDate = "",
-                formattedQuoteAmount = "",
-                formattedBaseAmount = "",
-                formattedPrice = "",
-                formattedPriceSpec = "",
-                quoteSidePaymentMethods = quoteMethods,
-                baseSidePaymentMethods = baseMethods,
-                reputationScore = reputation
-            )
-            return OfferItemPresentationModel(dto)
-        }
-
-        val allOffers = listOf(
-            makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
-            makeOffer("o2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING")),
-            makeOffer("o3", isMy = false, quoteMethods = listOf("CASH_APP"), baseMethods = listOf("MAIN_CHAIN")),
-        )
-        offersFlow.value = allOffers
-
         // User profile facade for OfferbookPresenter
         val offerUserProfileService = mockk<UserProfileServiceFacade>(relaxed = true)
         val me = createMockUserProfile("me")
@@ -200,8 +186,7 @@ class OfferbookPresenterFilterTest {
         coEvery { offerUserProfileService.isUserIgnored(any()) } returns false
         coEvery { offerUserProfileService.getUserProfileIcon(any(), any()) } returns mockk(relaxed = true)
         coEvery { offerUserProfileService.getUserProfileIcon(any()) } returns mockk(relaxed = true)
-
-        // Market price and reputation services are not exercised (SELL offers skip rep check)
+        // Market price and reputation services (not exercised in these SELL-offer tests)
         val marketPriceServiceFacade = object : MarketPriceServiceFacade(mockk(relaxed = true)) {
             override fun findMarketPriceItem(marketVO: MarketVO) = null
             override fun findUSDMarketPriceItem() = null
@@ -209,10 +194,8 @@ class OfferbookPresenterFilterTest {
             override fun selectMarket(marketListItem: network.bisq.mobile.domain.data.model.offerbook.MarketListItem) {}
         }
         val reputationService = mockk<ReputationServiceFacade>(relaxed = true)
-
         val takeOfferPresenter = mockk<network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter>(relaxed = true)
         val createOfferPresenter = mockk<network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter>(relaxed = true)
-
         val presenter = OfferbookPresenter(
             mainPresenter,
             offersService,
@@ -222,82 +205,136 @@ class OfferbookPresenterFilterTest {
             offerUserProfileService,
             reputationService
         )
+        offersFlow.value = allOffers
         presenter.onViewAttached()
+        return presenter
+    }
+
+    private suspend fun awaitBaseline(
+        presenter: OfferbookPresenter,
+        expectedPay: Set<String>,
+        expectedSettle: Set<String>
+    ) {
+        combine(
+            presenter.availablePaymentMethodIds,
+            presenter.availableSettlementMethodIds
+        ) { pay, settle -> pay to settle }
+            .filter { (pay, settle) -> pay == expectedPay && settle == expectedSettle }
+            .first()
+    }
+
+    private suspend fun awaitSortedCount(
+        presenter: OfferbookPresenter,
+        expected: Int
+    ) {
+        presenter.sortedFilteredOffers
+            .filter { it.size == expected }
+            .first()
+    }
+
+    @Test
+    fun test_onlyMyOffers_filters_to_user_offers() = runTest(testDispatcher) {
+        val allOffers = listOf(
+            makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
+            makeOffer("o2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING")),
+            makeOffer("o3", isMy = false, quoteMethods = listOf("CASH_APP"), baseMethods = listOf("MAIN_CHAIN")),
+        )
+        val presenter = buildPresenterWithOffers(allOffers)
         runCurrent()
-
-        // helper: await baseline availability to be populated by presenter combine (runs on test dispatcher)
-        suspend fun awaitBaseline(expectedPay: Set<String>, expectedSettle: Set<String>) {
-            repeat(20) {
-                runCurrent()
-                val pay = presenter.availablePaymentMethodIds.value
-                val sett = presenter.availableSettlementMethodIds.value
-                if (pay == expectedPay && sett == expectedSettle) return
-            }
-            // fall-through: let asserts show mismatch if any
-        }
-
-        // helper: await until the sorted result count matches (processing uses IO/Main in presenter)
-        suspend fun awaitSortedCount(expected: Int) {
-            presenter.sortedFilteredOffers
-                .filter { it.size == expected }
-                .first()
-        }
 
         val expectedPayments = allOffers.flatMap { it.quoteSidePaymentMethods }.toSet()
         val expectedSettlements = allOffers.flatMap { it.baseSidePaymentMethods }.toSet()
-        awaitBaseline(expectedPayments, expectedSettlements)
+        awaitBaseline(presenter, expectedPayments, expectedSettlements)
 
-        // Act: attach and let initial combine run
-        presenter.onViewAttached()
-        runCurrent()
+        presenter.setSelectedPaymentMethodIds(expectedPayments)
+        presenter.setSelectedSettlementMethodIds(expectedSettlements)
+        awaitSortedCount(presenter, allOffers.size)
 
-        // Baseline availability should reflect all offers (direction+ignored-user filtered)
-        val availablePayments = presenter.availablePaymentMethodIds.value
-        val availableSettlements = presenter.availableSettlementMethodIds.value
-        assertEquals(expectedPayments, availablePayments)
-        assertEquals(expectedSettlements, availableSettlements)
-
-        println("[TEST] baseline available payments=" + availablePayments + ", settlements=" + availableSettlements)
-
-        // Initialize selections to all available (UI does this on first render)
-        presenter.setSelectedPaymentMethodIds(availablePayments)
-        presenter.setSelectedSettlementMethodIds(availableSettlements)
-        awaitSortedCount(allOffers.size)
-
-        // With all selected and onlyMy=false, we should see all offers
-        assertEquals(allOffers.size, presenter.sortedFilteredOffers.value.size)
-
-        println("[TEST] after select: filteredCount=" + presenter.sortedFilteredOffers.value.size)
-
-        // Enable Only My Offers -> should filter down to my single offer
         presenter.setOnlyMyOffers(true)
-        awaitSortedCount(1)
+        awaitSortedCount(presenter, 1)
         assertEquals(1, presenter.sortedFilteredOffers.value.size)
         assertTrue(presenter.sortedFilteredOffers.value.all { it.isMyOffer })
+    }
 
-        // Disable Only My Offers -> all offers again
-        presenter.setOnlyMyOffers(false)
-        awaitSortedCount(allOffers.size)
-        assertEquals(allOffers.size, presenter.sortedFilteredOffers.value.size)
+    @Test
+    fun test_empty_selection_shows_all_offers() = runTest(testDispatcher) {
+        val allOffers = listOf(
+            makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
+            makeOffer("o2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING")),
+            makeOffer("o3", isMy = false, quoteMethods = listOf("CASH_APP"), baseMethods = listOf("MAIN_CHAIN")),
+        )
+        val presenter = buildPresenterWithOffers(allOffers)
+        runCurrent()
 
-        // Empty selection semantics: empty = exclude all
+        val expectedPayments = allOffers.flatMap { it.quoteSidePaymentMethods }.toSet()
+        val expectedSettlements = allOffers.flatMap { it.baseSidePaymentMethods }.toSet()
+        awaitBaseline(presenter, expectedPayments, expectedSettlements)
+
+        presenter.setSelectedPaymentMethodIds(expectedPayments)
+        presenter.setSelectedSettlementMethodIds(expectedSettlements)
+        awaitSortedCount(presenter, allOffers.size)
+
         presenter.setSelectedPaymentMethodIds(emptySet())
-        awaitSortedCount(0)
-        assertEquals(0, presenter.sortedFilteredOffers.value.size)
-        // Baseline availability remains stable
-        assertEquals(setOf("SEPA", "CASH_APP"), presenter.availablePaymentMethodIds.value)
+        awaitSortedCount(presenter, allOffers.size)
+        assertEquals(allOffers.size, presenter.sortedFilteredOffers.value.size)
+        assertEquals(expectedPayments, presenter.availablePaymentMethodIds.value)
 
         presenter.setSelectedSettlementMethodIds(emptySet())
-        awaitSortedCount(0)
-        assertEquals(0, presenter.sortedFilteredOffers.value.size)
-        assertEquals(setOf("MAIN_CHAIN", "LIGHTNING"), presenter.availableSettlementMethodIds.value)
+        awaitSortedCount(presenter, allOffers.size)
+        assertEquals(allOffers.size, presenter.sortedFilteredOffers.value.size)
+        assertEquals(expectedSettlements, presenter.availableSettlementMethodIds.value)
+    }
 
-        // Restore selections -> offers visible again
-        presenter.setSelectedPaymentMethodIds(availablePayments)
-        presenter.setSelectedSettlementMethodIds(availableSettlements)
-        awaitSortedCount(allOffers.size)
+    @Test
+    fun test_baseline_availability_remains_stable() = runTest(testDispatcher) {
+        val allOffers = listOf(
+            makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
+            makeOffer("o2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING")),
+            makeOffer("o3", isMy = false, quoteMethods = listOf("CASH_APP"), baseMethods = listOf("MAIN_CHAIN")),
+        )
+        val presenter = buildPresenterWithOffers(allOffers)
+        runCurrent()
+
+        val expectedPayments = allOffers.flatMap { it.quoteSidePaymentMethods }.toSet()
+        val expectedSettlements = allOffers.flatMap { it.baseSidePaymentMethods }.toSet()
+        awaitBaseline(presenter, expectedPayments, expectedSettlements)
+        assertEquals(expectedPayments, presenter.availablePaymentMethodIds.value)
+        assertEquals(expectedSettlements, presenter.availableSettlementMethodIds.value)
+
+        presenter.setSelectedPaymentMethodIds(emptySet())
+        awaitSortedCount(presenter, allOffers.size)
+        assertEquals(expectedPayments, presenter.availablePaymentMethodIds.value)
+
+        presenter.setSelectedSettlementMethodIds(emptySet())
+        awaitSortedCount(presenter, allOffers.size)
+        assertEquals(expectedSettlements, presenter.availableSettlementMethodIds.value)
+    }
+
+    @Test
+    fun test_selection_restoration_shows_all_offers() = runTest(testDispatcher) {
+        val allOffers = listOf(
+            makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
+            makeOffer("o2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING")),
+            makeOffer("o3", isMy = false, quoteMethods = listOf("CASH_APP"), baseMethods = listOf("MAIN_CHAIN")),
+        )
+        val presenter = buildPresenterWithOffers(allOffers)
+        runCurrent()
+
+        val expectedPayments = allOffers.flatMap { it.quoteSidePaymentMethods }.toSet()
+        val expectedSettlements = allOffers.flatMap { it.baseSidePaymentMethods }.toSet()
+        awaitBaseline(presenter, expectedPayments, expectedSettlements)
+
+        // Clear selections, then restore
+        presenter.setSelectedPaymentMethodIds(emptySet())
+        presenter.setSelectedSettlementMethodIds(emptySet())
+        awaitSortedCount(presenter, allOffers.size)
+
+        presenter.setSelectedPaymentMethodIds(expectedPayments)
+        presenter.setSelectedSettlementMethodIds(expectedSettlements)
+        awaitSortedCount(presenter, allOffers.size)
         assertEquals(allOffers.size, presenter.sortedFilteredOffers.value.size)
     }
+
 
     // --- Minimal helpers/types for tests ---
 

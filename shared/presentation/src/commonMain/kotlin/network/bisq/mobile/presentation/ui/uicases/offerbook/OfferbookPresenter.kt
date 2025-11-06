@@ -177,10 +177,15 @@ class OfferbookPresenter(
                         availableSettlements.addAll(item.baseSidePaymentMethods)
 
                         // Method filter:
-                        // - If a category selection is empty, treat it as an active filter that excludes all offers for that category
-                        // - Otherwise, item must have at least one method in the selected set
-                        val paymentOk = if (payments.isEmpty()) false else item.quoteSidePaymentMethods.any { it in payments }
-                        val settlementOk = if (settlements.isEmpty()) false else item.baseSidePaymentMethods.any { it in settlements }
+                        // - When onlyMyOffers is enabled, skip method filtering entirely (all my offers pass)
+                        // - Otherwise, empty selections are treated as "no filter" for that category
+                        if (onlyMine) {
+                            filtered += item
+                            log.v { "Offer ${item.offerId} included (onlyMyOffers=true, method filters skipped)" }
+                            continue
+                        }
+                        val paymentOk = payments.isEmpty() || item.quoteSidePaymentMethods.any { it in payments }
+                        val settlementOk = settlements.isEmpty() || item.baseSidePaymentMethods.any { it in settlements }
                         if (!paymentOk || !settlementOk) {
                             methodFilteredCount++
                             log.v { "Offer ${item.offerId} filtered out (methods) payOk=$paymentOk setOk=$settlementOk" }
