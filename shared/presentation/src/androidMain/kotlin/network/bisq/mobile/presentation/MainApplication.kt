@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 abstract class MainApplication : Application(), Logging {
 
     companion object {
-        var wasProcessDead = AtomicBoolean(true)
+        val wasProcessDead = AtomicBoolean(true)
     }
 
     override fun onCreate() {
