@@ -3,7 +3,7 @@ package network.bisq.mobile.client.httpclient
 import io.ktor.http.Url
 import kotlinx.io.bytestring.encodeToByteString
 import network.bisq.mobile.crypto.hmacSha256
-import kotlin.random.Random.Default.nextBytes
+import network.bisq.mobile.crypto.nextSecureRandomBytes
 
 object AuthUtils {
     fun generateAuthHash(
@@ -25,9 +25,7 @@ object AuthUtils {
         return url.encodedPath.let { if (it.length > 1) it.trimEnd('/') else it } + url.encodedQuery.let { if (it.isNotBlank()) "?$it" else "" }
     }
 
-    fun generateNonce(bytes: Int = 8): String {
-        val nonceBytes = ByteArray(bytes)
-        nextBytes(nonceBytes)
-        return nonceBytes.toHexString()
+    fun generateNonce(bytesCount: Int = 8): String {
+        return nextSecureRandomBytes(bytesCount).toHexString()
     }
 }
