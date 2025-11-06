@@ -45,7 +45,12 @@ abstract class MainActivity : ComponentActivity(), Logging {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+        if (MainApplication.wasProcessDead.getAndSet(false)) {
+            // this is to enforce proper initialization if process was killed by OS
+            super.onCreate(null)
+        } else {
+            super.onCreate(savedInstanceState)
+        }
 
         // Set up coroutine exception handler after DI is initialized
         GenericErrorHandler.setupCoroutineExceptionHandler(exceptionHandlerSetup)
