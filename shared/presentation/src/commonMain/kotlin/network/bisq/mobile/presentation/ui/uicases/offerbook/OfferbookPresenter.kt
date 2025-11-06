@@ -53,8 +53,6 @@ class OfferbookPresenter(
     private val _selectedDirection = MutableStateFlow(DirectionEnum.BUY)
     val selectedDirection: StateFlow<DirectionEnum> get() = _selectedDirection.asStateFlow()
 
-    // Phase 4+: filters
-    // Semantics: empty selection means "exclude all" (yields no offers)
     private val _selectedPaymentMethodIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedPaymentMethodIds: StateFlow<Set<String>> get() = _selectedPaymentMethodIds.asStateFlow()
     private val _selectedSettlementMethodIds = MutableStateFlow<Set<String>>(emptySet())
@@ -443,8 +441,6 @@ class OfferbookPresenter(
         _onlyMyOffers.value = enabled
     }
 
-    // Phase 4: UI informs these to drive offer filtering
-    // Note: empty selection excludes all offers for that category
     fun setSelectedPaymentMethodIds(ids: Set<String>) {
         _selectedPaymentMethodIds.value = ids
     }

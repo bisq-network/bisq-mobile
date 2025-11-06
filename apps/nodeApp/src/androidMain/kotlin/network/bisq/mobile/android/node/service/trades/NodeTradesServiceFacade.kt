@@ -223,7 +223,6 @@ class NodeTradesServiceFacade(
         }
     }
 
-    // Phase 1
     override suspend fun sellerSendsPaymentAccount(paymentAccountData: String): Result<Unit> {
         try {
             val (channel, trade, userName) = getTradeChannelUserNameTriple()
@@ -258,7 +257,6 @@ class NodeTradesServiceFacade(
         }
     }
 
-    // Phase 2
     override suspend fun sellerConfirmFiatReceipt(): Result<Unit> {
         try {
             val (channel, trade, userName) = getTradeChannelUserNameTriple()
@@ -291,7 +289,6 @@ class NodeTradesServiceFacade(
         }
     }
 
-    // Phase 3
     override suspend fun sellerConfirmBtcSent(paymentProof: String?): Result<Unit> {
         try {
             val (channel, trade, userName) = getTradeChannelUserNameTriple()

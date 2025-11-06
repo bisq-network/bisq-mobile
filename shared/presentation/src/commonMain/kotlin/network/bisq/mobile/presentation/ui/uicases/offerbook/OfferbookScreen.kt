@@ -64,7 +64,6 @@ fun OfferbookScreen() {
             onStateChange = { direction -> presenter.onSelectDirection(direction) }
         )
 
-        // Phase 3: derive available payment/settlement methods from live offers
         fun paymentIconPath(id: String) = "drawable/payment/fiat/${id.lowercase().replace("-", "_")}.png"
         fun settlementIconPath(id: String) = when (id.uppercase()) {
             "BTC", "MAIN_CHAIN", "ONCHAIN", "ON_CHAIN" -> "drawable/payment/bitcoin/main_chain.png"
