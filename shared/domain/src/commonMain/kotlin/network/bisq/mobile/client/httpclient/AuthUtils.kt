@@ -14,11 +14,9 @@ object AuthUtils {
         normalizedPath: String,
         bodySha256Hex: String?
     ): String {
-        return hmacSha256(
-            password.encodeToByteString().toByteArray(),
-            "$nonce\n$timestamp\n${method.uppercase()}\n$normalizedPath\n${bodySha256Hex ?: ""}".encodeToByteString()
-                .toByteArray(),
-        ).toHexString()
+        val key = password.encodeToByteArray()
+        val canonical = "$nonce\n$timestamp\n${method.uppercase()}\n$normalizedPath\n${bodySha256Hex ?: ""}"
+        return hmacSha256(key, canonical.encodeToByteArray()).toHexString()
     }
 
     fun getNormalizedPathAndQuery(url: Url): String {
