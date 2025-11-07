@@ -137,35 +137,39 @@ fun OfferbookScreen() {
             hasActiveFilters = hasActiveFilters,
         )
 
-        BisqGap.V1()
-
-        OfferbookFilterController(
-            state = filterState,
-            onTogglePayment = { id ->
-                selectedPaymentIds = if (id in selectedPaymentIds) selectedPaymentIds - id else selectedPaymentIds + id
-                presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
-            },
-            onToggleSettlement = { id ->
-                selectedSettlementIds = if (id in selectedSettlementIds) selectedSettlementIds - id else selectedSettlementIds + id
-                presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
-            },
-            onOnlyMyOffersChange = { enabled -> presenter.setOnlyMyOffers(enabled) },
-            onClearAll = {
-                selectedPaymentIds = availablePaymentIds
-                selectedSettlementIds = availableSettlementIds
-                presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
-                presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
-                presenter.setOnlyMyOffers(false)
-            },
-            onSetPaymentSelection = { ids ->
-                selectedPaymentIds = ids
-                presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
-            },
-            onSetSettlementSelection = { ids ->
-                selectedSettlementIds = ids
-                presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
-            },
-        )
+        // Hide the filter controller when there are no offers and no filters are active.
+        // It will reappear automatically when offers arrive or filters become active.
+        val shouldShowFilter = hasActiveFilters || sortedFilteredOffers.isNotEmpty()
+        if (shouldShowFilter) {
+            BisqGap.V1()
+            OfferbookFilterController(
+                state = filterState,
+                onTogglePayment = { id ->
+                    selectedPaymentIds = if (id in selectedPaymentIds) selectedPaymentIds - id else selectedPaymentIds + id
+                    presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
+                },
+                onToggleSettlement = { id ->
+                    selectedSettlementIds = if (id in selectedSettlementIds) selectedSettlementIds - id else selectedSettlementIds + id
+                    presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
+                },
+                onOnlyMyOffersChange = { enabled -> presenter.setOnlyMyOffers(enabled) },
+                onClearAll = {
+                    selectedPaymentIds = availablePaymentIds
+                    selectedSettlementIds = availableSettlementIds
+                    presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
+                    presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
+                    presenter.setOnlyMyOffers(false)
+                },
+                onSetPaymentSelection = { ids ->
+                    selectedPaymentIds = ids
+                    presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
+                },
+                onSetSettlementSelection = { ids ->
+                    selectedSettlementIds = ids
+                    presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
+                },
+            )
+        }
 
 
         if (sortedFilteredOffers.isEmpty()) {
