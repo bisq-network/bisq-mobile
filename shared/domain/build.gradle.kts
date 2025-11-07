@@ -181,12 +181,10 @@ kotlin {
                     includeDirs.allHeaders(rootDir.absolutePath + "/iosClient/iosClient/interop/")
                 }
             }
-            bridgeModules.forEach { moduleName ->
-                target.compilations.getByName("test") {
-                    cinterops.create(moduleName) {
-                        definitionFile.set(file("${rootDir.absolutePath}/iosClient/iosClient/interop/${moduleName}.def"))
-                        includeDirs.allHeaders(rootDir.absolutePath + "/iosClient/iosClient/interop/")
-                    }
+            target.compilations.getByName("test") {
+                cinterops.create(moduleName) {
+                    definitionFile.set(file("${rootDir.absolutePath}/iosClient/iosClient/interop/${moduleName}.def"))
+                    includeDirs.allHeaders(rootDir.absolutePath + "/iosClient/iosClient/interop/")
                 }
             }
         }
