@@ -68,13 +68,6 @@ fun OfferbookScreen() {
             onStateChange = { direction -> presenter.onSelectDirection(direction) }
         )
 
-        fun paymentIconPath(id: String) = "drawable/payment/fiat/${id.lowercase().replace("-", "_")}.png"
-        fun settlementIconPath(id: String) = when (id.uppercase()) {
-            "BTC", "MAIN_CHAIN", "ONCHAIN", "ON_CHAIN" -> "drawable/payment/bitcoin/main_chain.png"
-            "LIGHTNING", "LN" -> "drawable/payment/bitcoin/ln.png"
-            else -> "drawable/payment/bitcoin/${id.lowercase().replace("-", "_")}.png"
-        }
-
         val availablePaymentIds by presenter.availablePaymentMethodIds.collectAsState()
         val availableSettlementIds by presenter.availableSettlementMethodIds.collectAsState()
 
@@ -83,21 +76,32 @@ fun OfferbookScreen() {
         var selectedSettlementIds by remember { mutableStateOf<Set<String>>(emptySet()) }
         var prevAvailPayment by remember { mutableStateOf<Set<String>>(emptySet()) }
         var prevAvailSettlement by remember { mutableStateOf<Set<String>>(emptySet()) }
+        var hasManualPaymentFilter by remember { mutableStateOf(false) }
+        var hasManualSettlementFilter by remember { mutableStateOf(false) }
+
 
         // Initialize defaults (all selected) and handle changes in available sets via side-effects
         LaunchedEffect(availablePaymentIds) {
             if (prevAvailPayment != availablePaymentIds) {
                 val newlyAdded = availablePaymentIds - prevAvailPayment
-                selectedPaymentIds = (selectedPaymentIds intersect availablePaymentIds) + newlyAdded
-                presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
+                val newSelection = (selectedPaymentIds intersect availablePaymentIds) +
+                    if (hasManualPaymentFilter) emptySet() else newlyAdded
+                if (newSelection != selectedPaymentIds) {
+                    selectedPaymentIds = newSelection
+                }
+                presenter.setSelectedPaymentMethodIds(newSelection)
                 prevAvailPayment = availablePaymentIds
             }
         }
         LaunchedEffect(availableSettlementIds) {
             if (prevAvailSettlement != availableSettlementIds) {
                 val newlyAdded = availableSettlementIds - prevAvailSettlement
-                selectedSettlementIds = (selectedSettlementIds intersect availableSettlementIds) + newlyAdded
-                presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
+                val newSelection = (selectedSettlementIds intersect availableSettlementIds) +
+                    if (hasManualSettlementFilter) emptySet() else newlyAdded
+                if (newSelection != selectedSettlementIds) {
+                    selectedSettlementIds = newSelection
+                }
+                presenter.setSelectedSettlementMethodIds(newSelection)
                 prevAvailSettlement = availableSettlementIds
             }
         }
@@ -155,26 +159,32 @@ fun OfferbookScreen() {
                 state = filterState,
                 onTogglePayment = { id ->
                     selectedPaymentIds = if (id in selectedPaymentIds) selectedPaymentIds - id else selectedPaymentIds + id
+                    hasManualPaymentFilter = selectedPaymentIds != availablePaymentIds
                     presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
                 },
                 onToggleSettlement = { id ->
                     selectedSettlementIds = if (id in selectedSettlementIds) selectedSettlementIds - id else selectedSettlementIds + id
+                    hasManualSettlementFilter = selectedSettlementIds != availableSettlementIds
                     presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
                 },
                 onOnlyMyOffersChange = { enabled -> presenter.setOnlyMyOffers(enabled) },
                 onClearAll = {
                     selectedPaymentIds = availablePaymentIds
                     selectedSettlementIds = availableSettlementIds
+                    hasManualPaymentFilter = false
+                    hasManualSettlementFilter = false
                     presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
                     presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
                     presenter.setOnlyMyOffers(false)
                 },
                 onSetPaymentSelection = { ids ->
                     selectedPaymentIds = ids
+                    hasManualPaymentFilter = selectedPaymentIds != availablePaymentIds
                     presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
                 },
                 onSetSettlementSelection = { ids ->
                     selectedSettlementIds = ids
+                    hasManualSettlementFilter = selectedSettlementIds != availableSettlementIds
                     presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
                 },
                 isExpanded = filterExpanded,

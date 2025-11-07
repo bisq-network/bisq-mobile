@@ -58,6 +58,15 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BisqSearchField
 
 
+private val CUSTOM_PAYMENT_IDS = listOf(
+    "custom_payment_1",
+    "custom_payment_2",
+    "custom_payment_3",
+    "custom_payment_4",
+    "custom_payment_5",
+    "custom_payment_6",
+)
+
 /** UI model for a toggleable method icon (payment or settlement). */
 data class MethodIconState(
     val id: String,
@@ -329,7 +338,7 @@ private fun FilterIconsRow(
                         .align(Alignment.CenterStart)
                         .background(
                             brush = Brush.horizontalGradient(
-                                colors = listOf(BisqTheme.colors.backgroundColor, Color.Transparent)
+                                colors = listOf(BisqTheme.colors.dark_grey50, Color.Transparent)
                             )
                         )
                 )
@@ -342,7 +351,7 @@ private fun FilterIconsRow(
                         .align(Alignment.CenterEnd)
                         .background(
                             brush = Brush.horizontalGradient(
-                                colors = listOf(Color.Transparent, BisqTheme.colors.backgroundColor)
+                                colors = listOf(Color.Transparent, BisqTheme.colors.dark_grey50)
                             )
                         )
                 )
@@ -457,16 +466,8 @@ private fun FilterIcon(
     val (isMissingPayment, fallbackPath, overlayLetter) = if (isPayment) {
         val (_, missing) = network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod(item.id)
         if (missing) {
-            val customIds = listOf(
-                "custom_payment_1",
-                "custom_payment_2",
-                "custom_payment_3",
-                "custom_payment_4",
-                "custom_payment_5",
-                "custom_payment_6",
-            )
-            val idx = network.bisq.mobile.presentation.ui.helpers.customPaymentIconIndex(item.id, customIds.size)
-            Triple(true, "drawable/payment/fiat/${customIds[idx]}.png", item.id.firstOrNull()?.uppercase() ?: "?")
+            val idx = network.bisq.mobile.presentation.ui.helpers.customPaymentIconIndex(item.id, CUSTOM_PAYMENT_IDS.size)
+            Triple(true, "drawable/payment/fiat/${CUSTOM_PAYMENT_IDS[idx]}.png", item.id.firstOrNull()?.uppercase() ?: "?")
         } else Triple(false, null, null)
     } else Triple(false, null, null)
 
@@ -551,16 +552,8 @@ private fun MethodChip(
             val (_, missing) = network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod(item.id)
             Pair(missing, item.id.firstOrNull()?.uppercase() ?: "?")
         } else Pair(false, null)
-        val customIds = listOf(
-            "custom_payment_1",
-            "custom_payment_2",
-            "custom_payment_3",
-            "custom_payment_4",
-            "custom_payment_5",
-            "custom_payment_6",
-        )
-        val idx = network.bisq.mobile.presentation.ui.helpers.customPaymentIconIndex(item.id, customIds.size)
-        val paymentFallbackPath = if (isPaymentRow) "drawable/payment/fiat/${customIds[idx]}.png" else null
+        val idx = network.bisq.mobile.presentation.ui.helpers.customPaymentIconIndex(item.id, CUSTOM_PAYMENT_IDS.size)
+        val paymentFallbackPath = if (isPaymentRow) "drawable/payment/fiat/${CUSTOM_PAYMENT_IDS[idx]}.png" else null
 
         Box(modifier = Modifier.size(iconSize), contentAlignment = Alignment.Center) {
             DynamicImage(
@@ -588,17 +581,6 @@ private fun MethodChip(
         BisqText.baseLight(text = item.label, singleLine = true)
     }
 }
-
-// Helpers to build icon paths similar to offer cards
-private fun paymentIconPath(id: String): String =
-    "drawable/payment/fiat/${id.lowercase().replace("-", "_")}.png"
-
-private fun settlementIconPath(id: String): String =
-    when (id.uppercase()) {
-        "BTC", "MAIN_CHAIN", "ONCHAIN", "ON_CHAIN" -> "drawable/payment/bitcoin/main_chain.png"
-        "LIGHTNING", "LN" -> "drawable/payment/bitcoin/ln.png"
-        else -> "drawable/payment/bitcoin/${id.lowercase().replace("-", "_")}.png"
-    }
 
 
 // Preview-only helper: build a DrawableResource from a path without typed accessors
