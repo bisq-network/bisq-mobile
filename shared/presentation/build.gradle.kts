@@ -124,3 +124,132 @@ afterEvaluate {
         }
     }
 }
+
+// ---- iOS Swift bridge (LocalEncryptionBridge) wiring for tests ----
+// Discover bridge modules from .def files in iosClient/iosClient/interop
+val interopDir = file("${rootDir.absolutePath}/iosClient/iosClient/interop")
+val bridgeModules = interopDir.listFiles()?.filter { it.extension == "def" }?.map { it.nameWithoutExtension } ?: emptyList()
+
+kotlin {
+    val iosTargets = listOf(iosX64(), iosArm64(), iosSimulatorArm64())
+
+    iosTargets.forEach { target ->
+        // Create cinterops for all discovered bridge modules (main and test)
+        bridgeModules.forEach { moduleName ->
+            target.compilations.getByName("main") {
+                cinterops.create(moduleName) {
+                    definitionFile.set(file("${rootDir.absolutePath}/iosClient/iosClient/interop/${moduleName}.def"))
+                    includeDirs.allHeaders(rootDir.absolutePath + "/iosClient/iosClient/interop/")
+                }
+            }
+            target.compilations.getByName("test") {
+                cinterops.create(moduleName) {
+                    definitionFile.set(file("${rootDir.absolutePath}/iosClient/iosClient/interop/${moduleName}.def"))
+                    includeDirs.allHeaders(rootDir.absolutePath + "/iosClient/iosClient/interop/")
+                }
+            }
+        }
+
+        // Link Swift bridge object files and Swift stdlibs for simulator test binaries
+        target.binaries.all {
+            val objectFiles = bridgeModules.map { "${buildDir}/swift-bridge/${it}.o" }
+            val isMac = System.getProperty("os.name").toLowerCase().contains("mac")
+            if (isMac) {
+                try {
+                    val swiftLibPath = getSwiftLibPath()
+                    linkerOpts(
+                        *objectFiles.toTypedArray(),
+                        "-L$swiftLibPath",
+                        "-lswiftCore",
+                        "-lswiftFoundation",
+                        "-lswiftDispatch",
+                        "-lswiftObjectiveC",
+                        "-lswiftDarwin",
+                        "-lswiftCoreFoundation",
+                    )
+                } catch (e: Exception) {
+                    logger.warn("Could not determine Swift library path: ${e.message}")
+                }
+            }
+        }
+    }
+}
+
+// Output directory for Swift bridge object files
+val swiftOutputDir = file("${buildDir}/swift-bridge")
+
+// Get Swift stdlib path (config-cache friendly)
+fun getSwiftLibPath(): String {
+    val developerPath = System.getenv("DEVELOPER_DIR")
+        ?: "/Applications/Xcode.app/Contents/Developer"
+    return "$developerPath/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/iphonesimulator"
+}
+
+// Detect simulator architecture
+val simulatorArch = System.getProperty("os.arch").let { arch ->
+    when {
+        arch == "aarch64" || arch == "arm64" -> "arm64"
+        arch == "x86_64" || arch == "amd64" -> "x86_64"
+        else -> "arm64"
+    }
+}
+
+// Create a compile task per Swift bridge module
+val compileSwiftBridgeTasks = bridgeModules.map { bridgeModuleName ->
+    tasks.register<Exec>("compileSwiftBridge_${bridgeModuleName}") {
+        group = "build"
+        description = "Compile Swift bridge module: $bridgeModuleName for iOS tests"
+        notCompatibleWithConfigurationCache("Swift bridge compile Exec is not configuration cache friendly")
+
+        val swiftFile = file("${interopDir}/${bridgeModuleName}.swift")
+        val headerFile = file("${interopDir}/${bridgeModuleName}.h")
+        val objectFile = file("${swiftOutputDir}/${bridgeModuleName}.o")
+
+        inputs.files(swiftFile, headerFile)
+        outputs.file(objectFile)
+
+        onlyIf {
+            val isMac = System.getProperty("os.name").toLowerCase().contains("mac")
+            if (!isMac) logger.info("Skipping Swift bridge compilation on non-macOS platform")
+            isMac
+        }
+
+        doFirst {
+            swiftOutputDir.mkdirs()
+            logger.info("Compiling Swift bridge for architecture: $simulatorArch")
+        }
+
+        commandLine(
+            "xcrun",
+            "-sdk", "iphonesimulator",
+            "swiftc",
+            "-emit-object",
+            "-parse-as-library",
+            "-o", objectFile.absolutePath,
+            "-module-name", bridgeModuleName,
+            "-import-objc-header", headerFile.absolutePath,
+            "-target", "${simulatorArch}-apple-ios13.0-simulator",
+            swiftFile.absolutePath
+        )
+
+        doLast {
+            logger.info("Successfully compiled ${bridgeModuleName} Swift bridge for $simulatorArch")
+        }
+    }
+}
+
+// Aggregate task
+val compileSwiftBridge = tasks.register("compileSwiftBridge") {
+    group = "build"
+    description = "Compile all Swift bridge modules for iOS tests"
+    dependsOn(compileSwiftBridgeTasks)
+}
+
+// Ensure Swift bridge is built before linking simulator test binaries
+tasks.matching { it.name.startsWith("link") && it.name.contains("TestIosSimulatorArm64") }.configureEach {
+    dependsOn(compileSwiftBridge)
+}
+// Safety net: also before compiling test Kotlin for simulator
+tasks.matching { it.name == "compileTestKotlinIosSimulatorArm64" }.configureEach {
+    dependsOn(compileSwiftBridge)
+}
