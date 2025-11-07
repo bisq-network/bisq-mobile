@@ -127,7 +127,7 @@ afterEvaluate {
 }
 
 /**
- * Extension class to provide type-safe access to Swift bridge configuration functions.
+ * Helper class to setup Swift bridge interops
  */
 class SwiftBridgeConfiguration {
 
