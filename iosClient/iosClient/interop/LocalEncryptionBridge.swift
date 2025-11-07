@@ -54,7 +54,7 @@ public class LocalEncryptionBridge: NSObject {
             return
         }
         
-        var query: [String: Any] = [
+        let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrLabel as String: keyAlias,
             kSecAttrAccount as String: "Account \(keyAlias)",
@@ -62,11 +62,6 @@ public class LocalEncryptionBridge: NSObject {
             kSecValueData as String: keyData,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
-        
-        // Only use data protection keychain on actual devices (not simulator)
-        #if !targetEnvironment(simulator)
-        query[kSecUseDataProtectionKeychain as String] = true
-        #endif
         
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess || status == errSecDuplicateItem else {
@@ -81,17 +76,13 @@ public class LocalEncryptionBridge: NSObject {
             return memoryKeyStore[keyAlias]
         }
         
-        var query: [String: Any] = [
+        let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: "Account \(keyAlias)",
             kSecAttrService as String: "Service \(LocalEncryptionBridge.SERVICE_NAME)",
-            kSecReturnData as String: true
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
         ]
-        
-        // Only use data protection keychain on actual devices (not simulator)
-        #if !targetEnvironment(simulator)
-        query[kSecUseDataProtectionKeychain as String] = true
-        #endif
         
         var result: CFTypeRef?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
