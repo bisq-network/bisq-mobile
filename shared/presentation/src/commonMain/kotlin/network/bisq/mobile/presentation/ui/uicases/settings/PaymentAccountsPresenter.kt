@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountPayloadVO
@@ -19,6 +21,24 @@ open class PaymentAccountsPresenter(
 
     override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = accountsServiceFacade.selectedAccount
 
+    private val _isBlockingLoading = MutableStateFlow(false)
+    val isBlockingLoading: StateFlow<Boolean> get() = _isBlockingLoading.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> get() = _isLoading.asStateFlow()
+
+    override fun onViewAttached() {
+        super.onViewAttached()
+        launchIO {
+            try {
+                _isLoading.value = true
+                accountsServiceFacade.getAccounts()
+                accountsServiceFacade.getSelectedAccount()
+            } finally {
+                _isLoading.value = false
+            }
+        }
+    }
 
     override fun selectAccount(account: UserDefinedFiatAccountVO) {
         disableInteractive()
@@ -34,14 +54,11 @@ open class PaymentAccountsPresenter(
     }
 
     override fun addAccount(newName: String, newDescription: String) {
-        disableInteractive()
-
         if (accounts.value.find { it.accountName == newName } != null) {
             showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n())
-            enableInteractive()
             return
         }
-
+        _isBlockingLoading.value = true
         launchIO {
             try {
                 val newAccount = UserDefinedFiatAccountVO(
@@ -53,19 +70,17 @@ open class PaymentAccountsPresenter(
                 accountsServiceFacade.addAccount(newAccount)
                 showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountCreated".i18n())
             } finally {
-                enableInteractive()
+                _isBlockingLoading.value = false
             }
         }
     }
 
     override fun saveAccount(newName: String, newDescription: String) {
-        disableInteractive()
         if (selectedAccount.value?.accountName != newName && accounts.value.find { it.accountName == newName } != null) {
             showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n())
-            enableInteractive()
             return
         }
-
+        _isBlockingLoading.value = true
         if (selectedAccount.value != null) {
             launchIO {
                 try {
@@ -78,17 +93,17 @@ open class PaymentAccountsPresenter(
                     accountsServiceFacade.saveAccount(newAccount)
                     showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n())
                 } finally {
-                    enableInteractive()
+                    _isBlockingLoading.value = false
                 }
             }
         } else {
-            enableInteractive()
+            _isBlockingLoading.value = false
         }
     }
 
     override fun deleteCurrentAccount() {
-        disableInteractive()
         if (selectedAccount.value != null) {
+            _isBlockingLoading.value = true
             launchIO {
                 try {
                     accountsServiceFacade.removeAccount(selectedAccount.value!!)
@@ -98,17 +113,10 @@ open class PaymentAccountsPresenter(
                     showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(selectedAccount.value?.accountName ?: ""))
 
                 } finally {
-                    enableInteractive()
+                    _isBlockingLoading.value = false
                 }
             }
         }
     }
 
-    override fun onViewAttached() {
-        super.onViewAttached()
-        launchIO {
-            accountsServiceFacade.getAccounts()
-            accountsServiceFacade.getSelectedAccount()
-        }
-    }
 }

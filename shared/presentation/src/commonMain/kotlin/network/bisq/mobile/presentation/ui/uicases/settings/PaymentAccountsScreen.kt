@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -30,6 +31,7 @@ import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.BisqBottomSheet
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.components.organisms.settings.AppPaymentAccountCard
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -51,16 +53,21 @@ private const val MAX_ACCOUNT_FIELD_LENGTH = 1024
 
 @Composable
 fun PaymentAccountsScreen() {
-    val presenter: IPaymentAccountSettingsPresenter = koinInject()
+    val presenter: PaymentAccountsPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
+    val isBlockingLoading by presenter.isBlockingLoading.collectAsState()
     val accounts by presenter.accounts.collectAsState()
     val selectedAccount by presenter.selectedAccount.collectAsState()
+    val isLoading by presenter.isLoading.collectAsState()
 
     var accountName by remember { mutableStateOf(selectedAccount?.accountName ?: "") }
     var accountNameValid by remember { mutableStateOf(true) }
-    var accountDescription by remember { mutableStateOf(selectedAccount?.accountPayload?.accountData ?: "") }
+    var accountDescription by remember {
+        mutableStateOf(
+            selectedAccount?.accountPayload?.accountData ?: ""
+        )
+    }
     var accountDescriptionValid by remember { mutableStateOf(true) }
 
     var showConfirmationDialog by remember { mutableStateOf(false) }
@@ -77,7 +84,6 @@ fun PaymentAccountsScreen() {
         topBar = { TopBar("paymentAccounts.headline".i18n()) },
         verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding),
         snackbarHostState = presenter.getSnackState(),
-        isInteractive = isInteractive,
         shouldBlurBg = showConfirmationDialog,
     ) {
         if (showBottomSheet) {
@@ -95,112 +101,123 @@ fun PaymentAccountsScreen() {
             }
         }
 
-        if (accounts.isEmpty()) {
-            Column(
-                modifier = Modifier.fillMaxSize(),
-                verticalArrangement = Arrangement.Top,
-            ) {
-
-                BisqText.baseLightGrey("paymentAccounts.noAccounts.info".i18n())
-                BisqGap.V2()
-                BisqText.h2Light("paymentAccounts.noAccounts.whySetup".i18n())
-                BisqGap.V1()
-                BisqText.baseLight("paymentAccounts.noAccounts.whySetup.info".i18n())
-                BisqGap.V2()
-                BisqText.baseLightGrey("paymentAccounts.noAccounts.whySetup.note".i18n())
-
-                BisqGap.V2()
-
-                BisqButton(
-                    text = "paymentAccounts.createAccount".i18n(),
-                    onClick = { showBottomSheet = !showBottomSheet },
-                    modifier = Modifier.padding(all = 8.dp)
+        when {
+            isLoading -> {
+                CircularProgressIndicator(
+                    color = BisqTheme.colors.primary,
+                    strokeWidth = 2.dp,
                 )
             }
-            return@BisqScrollScaffold
-        }
 
-        BisqButton(
-            text = "paymentAccounts.legacy.createAccount.headline".i18n(),
-            onClick = { showBottomSheet = !showBottomSheet },
-            padding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
-        )
+            accounts.isEmpty() -> {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Top,
+                ) {
 
-        BisqGap.V1()
+                    BisqText.baseLightGrey("paymentAccounts.noAccounts.info".i18n())
+                    BisqGap.V2()
+                    BisqText.h2Light("paymentAccounts.noAccounts.whySetup".i18n())
+                    BisqGap.V1()
+                    BisqText.baseLight("paymentAccounts.noAccounts.whySetup.info".i18n())
+                    BisqGap.V2()
+                    BisqText.baseLightGrey("paymentAccounts.noAccounts.whySetup.note".i18n())
 
-        BisqEditableDropDown(
-            value = accountName,
-            items = accounts.map { it.accountName },
-            // TODO use accounts key
-            label = "mobile.user.paymentAccounts.createAccount.paymentAccount.label".i18n(),
-            onValueChanged = { name, isValid ->
-                var account = accounts.firstOrNull { it.accountName == name }
-                if (account == null) {
-                    account = accounts.firstOrNull { it.accountPayload.accountData == accountDescription }
+                    BisqGap.V2()
+
+                    BisqButton(
+                        text = "paymentAccounts.createAccount".i18n(),
+                        onClick = { showBottomSheet = !showBottomSheet },
+                        modifier = Modifier.padding(all = 8.dp)
+                    )
                 }
-                if (account != null) {
-                    presenter.selectAccount(account)
-                }
-                accountName = name
-                accountNameValid = isValid
-            },
-            validation = {
-                if (it.length < 3) {
-                    return@BisqEditableDropDown "paymentAccounts.legacy.createAccount.paymentAccount.validations.minLength".i18n()
-                }
-
-                if (it.length > MAX_ACCOUNT_FIELD_LENGTH) {
-                    return@BisqEditableDropDown "paymentAccounts.legacy.createAccount.paymentAccount.validations.maxLength".i18n()
-                }
-
-                return@BisqEditableDropDown null
             }
-        )
 
-        BisqGap.V1()
+            accounts.isNotEmpty() -> {
+                BisqButton(
+                    text = "paymentAccounts.legacy.createAccount.headline".i18n(),
+                    onClick = { showBottomSheet = !showBottomSheet },
+                    padding = PaddingValues(horizontal = 8.dp, vertical = 4.dp)
+                )
 
-        BisqTextField(
-            value = accountDescription,
-            onValueChange = { value, isValid ->
-                accountDescription = value
-                accountDescriptionValid = isValid
-            },
-            label = "paymentAccounts.legacy.accountData".i18n(),
-            isTextArea = true,
-            minLines = 4,
-            validation = {
+                BisqGap.V1()
 
-                if (it.length < 3) {
-                    return@BisqTextField "paymentAccounts.legacy.accountData.paymentAccount.validations.minLength".i18n()
+                BisqEditableDropDown(
+                    value = accountName,
+                    items = accounts.map { it.accountName },
+                    // TODO use accounts key
+                    label = "mobile.user.paymentAccounts.createAccount.paymentAccount.label".i18n(),
+                    onValueChanged = { name, isValid ->
+                        var account = accounts.firstOrNull { it.accountName == name }
+                        if (account == null) {
+                            account =
+                                accounts.firstOrNull { it.accountPayload.accountData == accountDescription }
+                        }
+                        if (account != null) {
+                            presenter.selectAccount(account)
+                        }
+                        accountName = name
+                        accountNameValid = isValid
+                    },
+                    validation = {
+                        if (it.length < 3) {
+                            return@BisqEditableDropDown "paymentAccounts.legacy.createAccount.paymentAccount.validations.minLength".i18n()
+                        }
+
+                        if (it.length > MAX_ACCOUNT_FIELD_LENGTH) {
+                            return@BisqEditableDropDown "paymentAccounts.legacy.createAccount.paymentAccount.validations.maxLength".i18n()
+                        }
+
+                        return@BisqEditableDropDown null
+                    }
+                )
+
+                BisqGap.V1()
+
+                BisqTextField(
+                    value = accountDescription,
+                    onValueChange = { value, isValid ->
+                        accountDescription = value
+                        accountDescriptionValid = isValid
+                    },
+                    label = "paymentAccounts.legacy.accountData".i18n(),
+                    isTextArea = true,
+                    minLines = 4,
+                    validation = {
+
+                        if (it.length < 3) {
+                            return@BisqTextField "paymentAccounts.legacy.accountData.paymentAccount.validations.minLength".i18n()
+                        }
+
+                        if (it.length > MAX_ACCOUNT_FIELD_LENGTH) {
+                            return@BisqTextField "paymentAccounts.legacy.accountData.paymentAccount.validations.maxLength".i18n()
+                        }
+
+                        return@BisqTextField null
+                    }
+                )
+
+                BisqGap.V1()
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    BisqButton(
+                        text = "paymentAccounts.deleteAccount".i18n(),
+                        type = BisqButtonType.Grey,
+                        onClick = { showConfirmationDialog = true },
+                        disabled = selectedAccount == null
+                    )
+                    BisqButton(
+                        text = "action.save".i18n(),
+                        onClick = {
+                            presenter.saveAccount(accountName, accountDescription)
+                        },
+                        disabled = !accountNameValid || !accountDescriptionValid
+                    )
                 }
-
-                if (it.length > MAX_ACCOUNT_FIELD_LENGTH) {
-                    return@BisqTextField "paymentAccounts.legacy.accountData.paymentAccount.validations.maxLength".i18n()
-                }
-
-                return@BisqTextField null
             }
-        )
-
-        BisqGap.V1()
-
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            BisqButton(
-                text = "paymentAccounts.deleteAccount".i18n(),
-                type = BisqButtonType.Grey,
-                onClick = { showConfirmationDialog = true },
-                disabled = selectedAccount == null
-            )
-            BisqButton(
-                text = "action.save".i18n(),
-                onClick = {
-                    presenter.saveAccount(accountName, accountDescription)
-                },
-                disabled = !accountNameValid || !accountDescriptionValid
-            )
         }
     }
 
@@ -216,4 +233,7 @@ fun PaymentAccountsScreen() {
         )
     }
 
+    if (isBlockingLoading) {
+        LoadingDialog()
+    }
 }

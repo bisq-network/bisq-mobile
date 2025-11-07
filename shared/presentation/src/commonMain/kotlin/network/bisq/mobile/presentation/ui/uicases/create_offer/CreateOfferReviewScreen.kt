@@ -16,6 +16,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.MultiScreenWizardScaffold
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBox
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxCurrency
 import network.bisq.mobile.presentation.ui.components.molecules.info.InfoBoxSats
@@ -31,7 +32,7 @@ fun CreateOfferReviewOfferScreen() {
     val createPresenter: CreateOfferPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isInteractive by presenter.isInteractive.collectAsState()
+    val isLoading by presenter.isLoading.collectAsState()
 
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.review.headline.maker".i18n(),
@@ -40,7 +41,6 @@ fun CreateOfferReviewOfferScreen() {
         prevOnClick = { presenter.onBack() },
         nextButtonText = "bisqEasy.tradeWizard.review.nextButton.createOffer".i18n(),
         nextOnClick = { presenter.onCreateOffer() },
-        isInteractive = isInteractive,
         showUserAvatar = false,
         closeAction = true,
         onConfirmedClose = presenter::onClose,
@@ -77,7 +77,10 @@ fun CreateOfferReviewOfferScreen() {
                                     modifier = Modifier.alignByBaseline(),
                                 )
                                 BisqGap.HHalf()
-                                BisqText.baseRegularGrey("BTC", modifier = Modifier.alignByBaseline())
+                                BisqText.baseRegularGrey(
+                                    "BTC",
+                                    modifier = Modifier.alignByBaseline()
+                                )
                             }
                         }
                     )
@@ -106,7 +109,10 @@ fun CreateOfferReviewOfferScreen() {
                                     modifier = Modifier.alignByBaseline(),
                                 )
                                 BisqGap.HHalf()
-                                BisqText.baseRegularGrey("BTC", modifier = Modifier.alignByBaseline())
+                                BisqText.baseRegularGrey(
+                                    "BTC",
+                                    modifier = Modifier.alignByBaseline()
+                                )
                             }
                         }
                     )
@@ -169,5 +175,9 @@ fun CreateOfferReviewOfferScreen() {
                 subvalue = presenter.feeDetails,
             )
         }
+    }
+
+    if (isLoading) {
+        LoadingDialog()
     }
 }

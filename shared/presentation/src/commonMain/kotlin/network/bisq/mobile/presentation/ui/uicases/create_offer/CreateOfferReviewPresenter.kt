@@ -1,5 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
@@ -37,6 +40,8 @@ class CreateOfferReviewPresenter(
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> get() = _isLoading.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -147,8 +152,7 @@ class CreateOfferReviewPresenter(
     }
 
     fun onCreateOffer() {
-        disableInteractive()
-
+        _isLoading.value = true
         launchUI {
             try {
                 val result = withContext(IODispatcher) {
@@ -164,7 +168,7 @@ class CreateOfferReviewPresenter(
                 log.e(e) { "Failed to create offer: ${e.message}" }
                 showSnackbar("mobile.bisqEasy.createOffer.failed".i18n())
             } finally {
-                enableInteractive()
+                _isLoading.value = false
             }
         }
     }
