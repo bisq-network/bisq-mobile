@@ -40,7 +40,10 @@ public class LocalEncryptionBridge: NSObject {
     private func generateSymmetricKeyData() throws -> Data {
         var keyData = Data(count: LocalEncryptionBridge.KEY_SIZE)
         let result = keyData.withUnsafeMutableBytes { bytes in
-            SecRandomCopyBytes(kSecRandomDefault, LocalEncryptionBridge.KEY_SIZE, bytes.baseAddress!)
+            guard let baseAddress = bytes.baseAddress else {
+                return errSecParam
+            }
+            return SecRandomCopyBytes(kSecRandomDefault, LocalEncryptionBridge.KEY_SIZE, baseAddress)
         }
         
         guard result == errSecSuccess else {
