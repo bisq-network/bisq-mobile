@@ -58,8 +58,8 @@ public class LocalEncryptionBridge: NSObject {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrLabel as String: keyAlias,
-            kSecAttrAccount as String: "Account \(keyAlias)",
-            kSecAttrService as String: "Service \(LocalEncryptionBridge.SERVICE_NAME)",
+            kSecAttrAccount as String: keyAlias,
+            kSecAttrService as String: LocalEncryptionBridge.SERVICE_NAME,
             kSecValueData as String: keyData,
             kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
         ]
@@ -74,8 +74,8 @@ public class LocalEncryptionBridge: NSObject {
     private func retrieveKeyFromKeychain(keyAlias: String) throws -> Data? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: "Account \(keyAlias)",
-            kSecAttrService as String: "Service \(LocalEncryptionBridge.SERVICE_NAME)",
+            kSecAttrAccount as String: keyAlias,
+            kSecAttrService as String: LocalEncryptionBridge.SERVICE_NAME,
             kSecReturnData as String: true,
             kSecMatchLimit as String: kSecMatchLimitOne
         ]
