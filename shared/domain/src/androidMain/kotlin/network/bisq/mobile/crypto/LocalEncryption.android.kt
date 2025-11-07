@@ -58,6 +58,9 @@ private object LocalEncryption {
 
     fun decrypt(bytes: ByteArray, keyAlias: String): ByteArray {
         val cipher = newCipher()
+        if (bytes.size < IV_LENGTH_BYTES + GCM_TAG_LENGTH / 8) {
+            throw IllegalStateException("Encrypted payload too short to contain IV and authentication tag")
+        }
         val iv = bytes.copyOfRange(0, IV_LENGTH_BYTES)
         val data = bytes.copyOfRange(IV_LENGTH_BYTES, bytes.size)
         cipher.init(Cipher.DECRYPT_MODE, getKey(keyAlias), GCMParameterSpec(GCM_TAG_LENGTH, iv))
