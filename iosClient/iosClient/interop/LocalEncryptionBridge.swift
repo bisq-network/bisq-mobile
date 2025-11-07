@@ -13,6 +13,7 @@ public class LocalEncryptionBridge: NSObject {
     
     // In-memory key storage for testing when keychain is not available
     private var memoryKeyStore: [String: Data] = [:]
+    private let memoryKeyStoreLock = NSLock()
     private var useMemoryStore = false
     
     private override init() {
@@ -36,24 +37,21 @@ public class LocalEncryptionBridge: NSObject {
     }
     
     // MARK: - Key Management
-    
-    private func generateAndStoreSymmetricKey(keyAlias: String) throws {
+    private func generateSymmetricKeyData() throws -> Data {
         var keyData = Data(count: LocalEncryptionBridge.KEY_SIZE)
         let result = keyData.withUnsafeMutableBytes { bytes in
             SecRandomCopyBytes(kSecRandomDefault, LocalEncryptionBridge.KEY_SIZE, bytes.baseAddress!)
         }
         
         guard result == errSecSuccess else {
-            throw NSError(domain: "LocalEncryption", code: Int(result), 
-                         userInfo: [NSLocalizedDescriptionKey: "Failed to generate random bytes"])
+            throw NSError(domain: "LocalEncryption", code: Int(result),
+                        userInfo: [NSLocalizedDescriptionKey: "Failed to generate random bytes"])
         }
         
-        if useMemoryStore {
-            // Store in memory for testing
-            memoryKeyStore[keyAlias] = keyData
-            return
-        }
-        
+        return keyData
+    }
+
+    private func storeKeyInKeychain(keyData: Data, keyAlias: String) throws {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrLabel as String: keyAlias,
@@ -66,16 +64,11 @@ public class LocalEncryptionBridge: NSObject {
         let status = SecItemAdd(query as CFDictionary, nil)
         guard status == errSecSuccess || status == errSecDuplicateItem else {
             throw NSError(domain: "LocalEncryption", code: Int(status),
-                         userInfo: [NSLocalizedDescriptionKey: "Failed to store key: \(status)"])
+                        userInfo: [NSLocalizedDescriptionKey: "Failed to store key: \(status)"])
         }
     }
-    
-    private func retrieveSymmetricKey(keyAlias: String) throws -> Data? {
-        if useMemoryStore {
-            // Retrieve from memory for testing
-            return memoryKeyStore[keyAlias]
-        }
-        
+
+    private func retrieveKeyFromKeychain(keyAlias: String) throws -> Data? {
         let query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
             kSecAttrAccount as String: "Account \(keyAlias)",
@@ -93,25 +86,45 @@ public class LocalEncryptionBridge: NSObject {
         
         guard status == errSecSuccess else {
             throw NSError(domain: "LocalEncryption", code: Int(status),
-                         userInfo: [NSLocalizedDescriptionKey: "Failed to retrieve key: \(status)"])
+                        userInfo: [NSLocalizedDescriptionKey: "Failed to retrieve key: \(status)"])
         }
         
         return result as? Data
     }
-    
+
     private func getOrCreateKey(keyAlias: String) throws -> Data {
-        if let existingKey = try retrieveSymmetricKey(keyAlias: keyAlias) {
-            return existingKey
+        if useMemoryStore {
+            // Lock the entire check-and-set operation for memory store
+            memoryKeyStoreLock.lock()
+            defer { memoryKeyStoreLock.unlock() }
+            
+            // Check if key exists
+            if let existingKey = memoryKeyStore[keyAlias] {
+                return existingKey
+            }
+            
+            // Generate and store new key
+            let keyData = try generateSymmetricKeyData()
+            memoryKeyStore[keyAlias] = keyData
+            return keyData
+        } else {
+            // For keychain, check if key exists
+            if let existingKey = try retrieveKeyFromKeychain(keyAlias: keyAlias) {
+                return existingKey
+            }
+            
+            // Generate and store new key
+            let keyData = try generateSymmetricKeyData()
+            try storeKeyInKeychain(keyData: keyData, keyAlias: keyAlias)
+            
+            // Retrieve to confirm storage (handles race condition where another thread stored first)
+            guard let key = try retrieveKeyFromKeychain(keyAlias: keyAlias) else {
+                throw NSError(domain: "LocalEncryption", code: -1,
+                            userInfo: [NSLocalizedDescriptionKey: "Failed to retrieve generated key"])
+            }
+            
+            return key
         }
-        
-        try generateAndStoreSymmetricKey(keyAlias: keyAlias)
-        
-        guard let key = try retrieveSymmetricKey(keyAlias: keyAlias) else {
-            throw NSError(domain: "LocalEncryption", code: -1,
-                         userInfo: [NSLocalizedDescriptionKey: "Failed to retrieve generated key"])
-        }
-        
-        return key
     }
     
     // MARK: - Encryption
