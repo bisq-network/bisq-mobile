@@ -1,4 +1,6 @@
+import com.android.build.gradle.tasks.factory.AndroidUnitTest
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.InputStreamReader
 import java.util.Properties
 import kotlin.io.path.Path
@@ -168,6 +170,7 @@ kotlin {
     }
 
     val iosTargets = listOf(iosX64(), iosArm64(), iosSimulatorArm64())
+    val iosSimulatorTargets = listOf(iosSimulatorArm64())
 
     iosTargets.forEach { target ->
         // Create cinterops for all discovered bridge modules
@@ -178,17 +181,22 @@ kotlin {
                     includeDirs.allHeaders(rootDir.absolutePath + "/iosClient/iosClient/interop/")
                 }
             }
-            target.compilations.getByName("test") {
-                cinterops.create(moduleName) {
-                    definitionFile.set(file("${rootDir.absolutePath}/iosClient/iosClient/interop/${moduleName}.def"))
-                    includeDirs.allHeaders(rootDir.absolutePath + "/iosClient/iosClient/interop/")
+            bridgeModules.forEach { moduleName ->
+                target.compilations.getByName("test") {
+                    cinterops.create(moduleName) {
+                        definitionFile.set(file("${rootDir.absolutePath}/iosClient/iosClient/interop/${moduleName}.def"))
+                        includeDirs.allHeaders(rootDir.absolutePath + "/iosClient/iosClient/interop/")
+                    }
                 }
             }
         }
+    }
 
+    iosSimulatorTargets.forEach { target ->
         // Link all Swift bridge implementations for test binaries
         target.binaries.all {
-            val objectFiles = bridgeModules.map { "${layout.buildDirectory}/swift-bridge/${it}.o" }
+            val objectFiles = bridgeModules.map { layout.buildDirectory.file("swift-bridge/${it}.o").get().asFile.absolutePath }
+
             val isMac = System.getProperty("os.name").lowercase().contains("mac")
 
             if (isMac) {
@@ -368,12 +376,12 @@ tasks.register<GenerateResourceBundlesTask>("generateResourceBundles") {
 }
 
 // Make all compile tasks depend on generateResourceBundles
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+tasks.withType<KotlinCompile>().configureEach {
     dependsOn("generateResourceBundles")
 }
 
 // For Android compilation tasks
-tasks.withType<com.android.build.gradle.tasks.factory.AndroidUnitTest>().configureEach {
+tasks.withType<AndroidUnitTest>().configureEach {
     dependsOn("generateResourceBundles")
 }
 
@@ -383,7 +391,7 @@ tasks.matching { it.name.contains("compile", ignoreCase = true) }.configureEach 
 }
 
 // Task to compile Swift bridge for iOS tests
-val swiftOutputDir = file("${layout.buildDirectory}/swift-bridge")
+val swiftOutputDir = layout.buildDirectory.file("swift-bridge").get().asFile
 
 // Helper function to get Swift lib path without spawning external processes (config cache friendly)
 fun getSwiftLibPath(): String {

@@ -132,9 +132,10 @@ val bridgeModules = interopDir.listFiles()?.filter { it.extension == "def" }?.ma
 
 kotlin {
     val iosTargets = listOf(iosX64(), iosArm64(), iosSimulatorArm64())
+    val iosSimulatorTargets = listOf(iosSimulatorArm64())
 
     iosTargets.forEach { target ->
-        // Create cinterops for all discovered bridge modules (main and test)
+        // Create cinterops for all discovered bridge modules
         bridgeModules.forEach { moduleName ->
             target.compilations.getByName("main") {
                 cinterops.create(moduleName) {
@@ -142,18 +143,23 @@ kotlin {
                     includeDirs.allHeaders(rootDir.absolutePath + "/iosClient/iosClient/interop/")
                 }
             }
-            target.compilations.getByName("test") {
-                cinterops.create(moduleName) {
-                    definitionFile.set(file("${rootDir.absolutePath}/iosClient/iosClient/interop/${moduleName}.def"))
-                    includeDirs.allHeaders(rootDir.absolutePath + "/iosClient/iosClient/interop/")
+            bridgeModules.forEach { moduleName ->
+                target.compilations.getByName("test") {
+                    cinterops.create(moduleName) {
+                        definitionFile.set(file("${rootDir.absolutePath}/iosClient/iosClient/interop/${moduleName}.def"))
+                        includeDirs.allHeaders(rootDir.absolutePath + "/iosClient/iosClient/interop/")
+                    }
                 }
             }
         }
+    }
 
-        // Link Swift bridge object files and Swift stdlibs for simulator test binaries
+    iosSimulatorTargets.forEach { target ->
+        // Link all Swift bridge implementations for test binaries
         target.binaries.all {
-            val objectFiles = bridgeModules.map { "${layout.buildDirectory}/swift-bridge/${it}.o" }
+            val objectFiles = bridgeModules.map { layout.buildDirectory.file("swift-bridge/${it}.o").get().asFile.absolutePath }
             val isMac = System.getProperty("os.name").lowercase().contains("mac")
+
             if (isMac) {
                 try {
                     val swiftLibPath = getSwiftLibPath()
@@ -165,7 +171,7 @@ kotlin {
                         "-lswiftDispatch",
                         "-lswiftObjectiveC",
                         "-lswiftDarwin",
-                        "-lswiftCoreFoundation",
+                        "-lswiftCoreFoundation"
                     )
                 } catch (e: Exception) {
                     logger.warn("Could not determine Swift library path: ${e.message}")
@@ -176,7 +182,7 @@ kotlin {
 }
 
 // Output directory for Swift bridge object files
-val swiftOutputDir = file("${layout.buildDirectory}/swift-bridge")
+val swiftOutputDir = layout.buildDirectory.file("swift-bridge").get().asFile
 
 // Get Swift stdlib path (config-cache friendly)
 fun getSwiftLibPath(): String {
