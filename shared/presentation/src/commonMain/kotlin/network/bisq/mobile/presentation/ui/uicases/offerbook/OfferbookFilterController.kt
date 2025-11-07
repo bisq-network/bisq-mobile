@@ -17,7 +17,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.ui.text.PlatformTextStyle
+
+
+import network.bisq.mobile.presentation.ui.platform.platformTextStyleNoFontPadding
 
 import androidx.compose.foundation.layout.width
 
@@ -567,7 +569,7 @@ private fun MethodChip(
                     style = network.bisq.mobile.presentation.ui.theme.BisqTheme.typography.baseBold.copy(
                         fontSize = androidx.compose.ui.unit.TextUnit(letterSizeSp, androidx.compose.ui.unit.TextUnitType.Sp),
                         lineHeight = androidx.compose.ui.unit.TextUnit(letterSizeSp, androidx.compose.ui.unit.TextUnitType.Sp),
-                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                        platformStyle = platformTextStyleNoFontPadding()
                     ),
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                     color = network.bisq.mobile.presentation.ui.theme.BisqTheme.colors.dark_grey20,
