@@ -13,13 +13,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.fillMaxSize
+
 import androidx.compose.foundation.layout.width
 
 
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,6 +37,9 @@ import androidx.compose.ui.semantics.semantics
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import androidx.compose.ui.unit.dp
+
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 
@@ -253,14 +259,61 @@ private fun FilterIconsRow(
     isPaymentRow: Boolean = false,
 ) {
     val iconSize = if (compact) 18.dp else 24.dp
+    val rowHeight = iconSize
 
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(10.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = if (compact) Modifier else Modifier.fillMaxWidth()
-    ) {
-        items(items) { item ->
-            FilterIcon(item = item, size = iconSize, compact = compact, onToggle = onToggle, isPayment = isPaymentRow)
+    val listState = rememberLazyListState()
+    val canScrollBack by remember(listState) {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 }
+    }
+    val canScrollForward by remember(listState) {
+        derivedStateOf {
+            val info = listState.layoutInfo
+            val last = info.visibleItemsInfo.lastOrNull()
+            last != null && (last.index < info.totalItemsCount - 1 || (last.offset + last.size) > info.viewportEndOffset)
+        }
+    }
+
+    val rowModifier = if (compact) Modifier.height(rowHeight) else Modifier.fillMaxWidth().height(rowHeight)
+
+    Box(modifier = rowModifier) {
+        LazyRow(
+            state = listState,
+            horizontalArrangement = Arrangement.spacedBy(10.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth().height(rowHeight)
+        ) {
+            items(items) { item ->
+                FilterIcon(item = item, size = iconSize, compact = compact, onToggle = onToggle, isPayment = isPaymentRow)
+            }
+        }
+
+        // Subtle edge fades to indicate horizontal scrollability
+        val fadeWidth = 12.dp
+        if (canScrollBack) {
+            Box(
+                modifier = Modifier
+                    .height(rowHeight)
+                    .width(fadeWidth)
+                    .align(Alignment.CenterStart)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(BisqTheme.colors.backgroundColor, Color.Transparent)
+                        )
+                    )
+            )
+        }
+        if (canScrollForward) {
+            Box(
+                modifier = Modifier
+                    .height(rowHeight)
+                    .width(fadeWidth)
+                    .align(Alignment.CenterEnd)
+                    .background(
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(Color.Transparent, BisqTheme.colors.backgroundColor)
+                        )
+                    )
+            )
         }
     }
 }
