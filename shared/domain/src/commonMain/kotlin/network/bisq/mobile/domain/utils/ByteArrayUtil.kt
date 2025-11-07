@@ -24,15 +24,6 @@ object ByteArrayAsBase64Serializer : KSerializer<ByteArray> {
     }
 }
 
-fun ByteArray.toHex(): String {
-    return joinToString("") {
-        it.toUByte()
-            .toString(16)
-            .padStart(2, '0')
-    }
-}
-
-
 fun String.base64ToByteArray(): ByteArray? {
     return decodeBase64()?.toByteArray()
 }

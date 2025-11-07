@@ -11,7 +11,6 @@ import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExte
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.concat
-import network.bisq.mobile.domain.utils.toHex
 import okio.ByteString.Companion.decodeBase64
 import okio.FileSystem
 import okio.Path
@@ -61,12 +60,12 @@ abstract class BaseClientCatHashService(private val baseDirPath: String) :
         try {
             val combined = concat(powSolution, pubKeyHash)
             val catHashInput = BigInteger.fromByteArray(combined, sign = Sign.POSITIVE)
-            val userProfileId = pubKeyHash.toHex()
+            val userProfileId = pubKeyHash.toHexString()
             val subPath = "db/cache/cat_hash_icons/v$avatarVersion"
             val iconsDir = baseDirPath.toPath().resolve(subPath.toPath())
             val iconFilePath = iconsDir.resolve("$userProfileId.raw")
 
-            val profileId = pubKeyHash.toHex()
+            val profileId = pubKeyHash.toHexString()
             val cacheKey = "$profileId-v$avatarVersion"
             val useCache = size <= getSizeOfCachedIcons()
             if (useCache) {

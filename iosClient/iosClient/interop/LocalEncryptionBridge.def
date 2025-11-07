@@ -1,0 +1,3 @@
+language = Objective-C
+headers = LocalEncryptionBridge.h
+package = network.bisq.mobile.crypto

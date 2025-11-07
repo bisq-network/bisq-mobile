@@ -2,17 +2,22 @@ package network.bisq.mobile.crypto
 
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
-import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.GCMParameterSpec
 
+// All android 10+ devices support GCM
 private object LocalEncryption {
     private const val ALGORITHM = KeyProperties.KEY_ALGORITHM_AES
-    private const val BLOCK_MODE = KeyProperties.BLOCK_MODE_CBC
-    private const val PADDING = KeyProperties.ENCRYPTION_PADDING_PKCS7
+    private const val BLOCK_MODE = KeyProperties.BLOCK_MODE_GCM
+    private const val PADDING = KeyProperties.ENCRYPTION_PADDING_NONE
     private const val TRANSFORMATION = "$ALGORITHM/$BLOCK_MODE/$PADDING"
+    private const val IV_LENGTH_BYTES = 12
+    private const val GCM_TAG_LENGTH = 128
 
     private fun newCipher(): Cipher = Cipher.getInstance(TRANSFORMATION)
     private val keyStore = KeyStore
@@ -53,17 +58,21 @@ private object LocalEncryption {
 
     fun decrypt(bytes: ByteArray, keyAlias: String): ByteArray {
         val cipher = newCipher()
-        val iv = bytes.copyOfRange(0, cipher.blockSize)
-        val data = bytes.copyOfRange(cipher.blockSize, bytes.size)
-        cipher.init(Cipher.DECRYPT_MODE, getKey(keyAlias), IvParameterSpec(iv))
+        val iv = bytes.copyOfRange(0, IV_LENGTH_BYTES)
+        val data = bytes.copyOfRange(IV_LENGTH_BYTES, bytes.size)
+        cipher.init(Cipher.DECRYPT_MODE, getKey(keyAlias), GCMParameterSpec(GCM_TAG_LENGTH, iv))
         return cipher.doFinal(data)
     }
 }
 
-actual fun encrypt(data: ByteArray, keyAlias: String): ByteArray {
-    return LocalEncryption.encrypt(data, keyAlias)
+actual suspend fun encrypt(data: ByteArray, keyAlias: String): ByteArray {
+    return withContext(Dispatchers.Default) {
+        LocalEncryption.encrypt(data, keyAlias)
+    }
 }
 
-actual fun decrypt(data: ByteArray, keyAlias: String): ByteArray {
-    return LocalEncryption.decrypt(data, keyAlias)
+actual suspend fun decrypt(data: ByteArray, keyAlias: String): ByteArray {
+    return withContext(Dispatchers.Default) {
+        LocalEncryption.decrypt(data, keyAlias)
+    }
 }
