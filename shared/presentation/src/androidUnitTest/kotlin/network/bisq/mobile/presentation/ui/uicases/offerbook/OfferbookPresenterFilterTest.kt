@@ -336,6 +336,35 @@ class OfferbookPresenterFilterTest {
     }
 
 
+    @Test
+    fun test_onlyMyOffers_respects_method_filters() = runTest(testDispatcher) {
+        val allOffers = listOf(
+            makeOffer("m1", isMy = true, quoteMethods = listOf("NATIONAL_BANK"), baseMethods = listOf("MAIN_CHAIN")),
+            makeOffer("m2", isMy = true, quoteMethods = listOf("WISE"), baseMethods = listOf("MAIN_CHAIN")),
+            makeOffer("o3", isMy = false, quoteMethods = listOf("WISE"), baseMethods = listOf("LIGHTNING")),
+        )
+        val presenter = buildPresenterWithOffers(allOffers)
+        runCurrent()
+
+        val expectedPayments = allOffers.flatMap { it.quoteSidePaymentMethods }.toSet()
+        val expectedSettlements = allOffers.flatMap { it.baseSidePaymentMethods }.toSet()
+        awaitBaseline(presenter, expectedPayments, expectedSettlements)
+
+        presenter.setSelectedPaymentMethodIds(expectedPayments)
+        presenter.setSelectedSettlementMethodIds(expectedSettlements)
+        awaitSortedCount(presenter, allOffers.size)
+
+        presenter.setOnlyMyOffers(true)
+        awaitSortedCount(presenter, 2)
+        assertTrue(presenter.sortedFilteredOffers.value.all { it.isMyOffer })
+
+        // Unselect WISE -> should keep only NATIONAL_BANK my offer
+        presenter.setSelectedPaymentMethodIds(setOf("NATIONAL_BANK"))
+        awaitSortedCount(presenter, 1)
+        assertEquals(1, presenter.sortedFilteredOffers.value.size)
+        assertTrue(presenter.sortedFilteredOffers.value.first().quoteSidePaymentMethods.contains("NATIONAL_BANK"))
+    }
+
     // --- Minimal helpers/types for tests ---
 
     private class TestCoroutineJobsManager(private val dispatcher: CoroutineDispatcher) : CoroutineJobsManager {
