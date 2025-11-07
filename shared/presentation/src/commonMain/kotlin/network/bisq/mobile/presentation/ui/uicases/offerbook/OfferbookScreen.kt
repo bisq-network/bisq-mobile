@@ -12,6 +12,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+
 
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -82,18 +84,22 @@ fun OfferbookScreen() {
         var prevAvailPayment by remember { mutableStateOf<Set<String>>(emptySet()) }
         var prevAvailSettlement by remember { mutableStateOf<Set<String>>(emptySet()) }
 
-        // Initialize defaults (all selected) and handle changes in available sets.
-        if (prevAvailPayment != availablePaymentIds) {
-            val newlyAdded = availablePaymentIds - prevAvailPayment
-            selectedPaymentIds = (selectedPaymentIds intersect availablePaymentIds) + newlyAdded
-            presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
-            prevAvailPayment = availablePaymentIds
+        // Initialize defaults (all selected) and handle changes in available sets via side-effects
+        LaunchedEffect(availablePaymentIds) {
+            if (prevAvailPayment != availablePaymentIds) {
+                val newlyAdded = availablePaymentIds - prevAvailPayment
+                selectedPaymentIds = (selectedPaymentIds intersect availablePaymentIds) + newlyAdded
+                presenter.setSelectedPaymentMethodIds(selectedPaymentIds)
+                prevAvailPayment = availablePaymentIds
+            }
         }
-        if (prevAvailSettlement != availableSettlementIds) {
-            val newlyAdded = availableSettlementIds - prevAvailSettlement
-            selectedSettlementIds = (selectedSettlementIds intersect availableSettlementIds) + newlyAdded
-            presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
-            prevAvailSettlement = availableSettlementIds
+        LaunchedEffect(availableSettlementIds) {
+            if (prevAvailSettlement != availableSettlementIds) {
+                val newlyAdded = availableSettlementIds - prevAvailSettlement
+                selectedSettlementIds = (selectedSettlementIds intersect availableSettlementIds) + newlyAdded
+                presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
+                prevAvailSettlement = availableSettlementIds
+            }
         }
 
         fun humanizePaymentId(id: String): String {
@@ -137,9 +143,12 @@ fun OfferbookScreen() {
             hasActiveFilters = hasActiveFilters,
         )
 
-        // Hide the filter controller when there are no offers and no filters are active.
-        // It will reappear automatically when offers arrive or filters become active.
-        val shouldShowFilter = hasActiveFilters || sortedFilteredOffers.isNotEmpty()
+        // Track bottom sheet expansion at the screen level to avoid auto-closing when we temporarily hide.
+        var filterExpanded by remember { mutableStateOf(false) }
+
+        // Hide the filter controller when there are no offers and no filters are active,
+        // but keep it visible if the bottom sheet is currently expanded.
+        val shouldShowFilter = hasActiveFilters || sortedFilteredOffers.isNotEmpty() || filterExpanded
         if (shouldShowFilter) {
             BisqGap.V1()
             OfferbookFilterController(
@@ -168,6 +177,8 @@ fun OfferbookScreen() {
                     selectedSettlementIds = ids
                     presenter.setSelectedSettlementMethodIds(selectedSettlementIds)
                 },
+                isExpanded = filterExpanded,
+                onExpandedChange = { filterExpanded = it },
             )
         }
 

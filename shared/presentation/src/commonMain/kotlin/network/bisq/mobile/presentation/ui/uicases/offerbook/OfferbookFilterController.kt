@@ -85,8 +85,12 @@ fun OfferbookFilterController(
     onSetSettlementSelection: (Set<String>) -> Unit,
     modifier: Modifier = Modifier,
     initialExpanded: Boolean = false,
+    isExpanded: Boolean? = null,
+    onExpandedChange: ((Boolean) -> Unit)? = null,
 ) {
-    var expanded by remember { mutableStateOf(initialExpanded) }
+    // Controlled/uncontrolled expansion state
+    var internalExpanded by remember { mutableStateOf(initialExpanded) }
+    val expanded = isExpanded ?: internalExpanded
 
     // Collapsed trigger bar
     val headerBg = if (state.hasActiveFilters) BisqTheme.colors.primary2 else BisqTheme.colors.secondary
@@ -100,7 +104,9 @@ fun OfferbookFilterController(
                 .clickable(
                     indication = null,
                     interactionSource = remember { MutableInteractionSource() }
-                ) { expanded = true }
+                ) {
+                    onExpandedChange?.invoke(true) ?: run { internalExpanded = true }
+                }
                 .semantics { contentDescription = "offerbook_filters_header" }
         ) {
             Box(
@@ -129,7 +135,9 @@ fun OfferbookFilterController(
 
         // Bottom sheet content
         if (expanded) {
-            BisqBottomSheet(onDismissRequest = { expanded = false }) {
+            BisqBottomSheet(onDismissRequest = {
+                onExpandedChange?.invoke(false) ?: run { internalExpanded = false }
+            }) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
