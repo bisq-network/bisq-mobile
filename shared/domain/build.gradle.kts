@@ -188,8 +188,8 @@ kotlin {
 
         // Link all Swift bridge implementations for test binaries
         target.binaries.all {
-            val objectFiles = bridgeModules.map { "${buildDir}/swift-bridge/${it}.o" }
-            val isMac = System.getProperty("os.name").toLowerCase().contains("mac")
+            val objectFiles = bridgeModules.map { "${layout.buildDirectory}/swift-bridge/${it}.o" }
+            val isMac = System.getProperty("os.name").lowercase().contains("mac")
 
             if (isMac) {
                 try {
@@ -383,7 +383,7 @@ tasks.matching { it.name.contains("compile", ignoreCase = true) }.configureEach 
 }
 
 // Task to compile Swift bridge for iOS tests
-val swiftOutputDir = file("${buildDir}/swift-bridge")
+val swiftOutputDir = file("${layout.buildDirectory}/swift-bridge")
 
 // Helper function to get Swift lib path without spawning external processes (config cache friendly)
 fun getSwiftLibPath(): String {
@@ -419,7 +419,7 @@ val compileSwiftBridgeTasks = bridgeModules.map { bridgeModuleName ->
 
         // Only run on macOS
         onlyIf {
-            val isMac = System.getProperty("os.name").toLowerCase().contains("mac")
+            val isMac = System.getProperty("os.name").lowercase().contains("mac")
             if (!isMac) {
                 logger.info("Skipping Swift bridge compilation on non-macOS platform")
             }
@@ -446,7 +446,7 @@ val compileSwiftBridgeTasks = bridgeModules.map { bridgeModuleName ->
         )
 
         doLast {
-            logger.info("Successfully compiled ${bridgeModuleName} Swift bridge for $simulatorArch")
+            logger.info("Successfully compiled $bridgeModuleName Swift bridge for $simulatorArch")
         }
     }
 }
