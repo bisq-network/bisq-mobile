@@ -257,7 +257,7 @@ class OfferbookPresenterFilterTest {
     }
 
     @Test
-    fun test_empty_selection_shows_all_offers() = runTest(testDispatcher) {
+    fun test_empty_selection_shows_no_offers() = runTest(testDispatcher) {
         val allOffers = listOf(
             makeOffer("o1", isMy = true, quoteMethods = listOf("SEPA"), baseMethods = listOf("MAIN_CHAIN")),
             makeOffer("o2", isMy = false, quoteMethods = listOf("SEPA"), baseMethods = listOf("LIGHTNING")),
@@ -275,13 +275,13 @@ class OfferbookPresenterFilterTest {
         awaitSortedCount(presenter, allOffers.size)
 
         presenter.setSelectedPaymentMethodIds(emptySet())
-        awaitSortedCount(presenter, allOffers.size)
-        assertEquals(allOffers.size, presenter.sortedFilteredOffers.value.size)
+        awaitSortedCount(presenter, 0)
+        assertEquals(0, presenter.sortedFilteredOffers.value.size)
         assertEquals(expectedPayments, presenter.availablePaymentMethodIds.value)
 
         presenter.setSelectedSettlementMethodIds(emptySet())
-        awaitSortedCount(presenter, allOffers.size)
-        assertEquals(allOffers.size, presenter.sortedFilteredOffers.value.size)
+        awaitSortedCount(presenter, 0)
+        assertEquals(0, presenter.sortedFilteredOffers.value.size)
         assertEquals(expectedSettlements, presenter.availableSettlementMethodIds.value)
     }
 
@@ -302,11 +302,11 @@ class OfferbookPresenterFilterTest {
         assertEquals(expectedSettlements, presenter.availableSettlementMethodIds.value)
 
         presenter.setSelectedPaymentMethodIds(emptySet())
-        awaitSortedCount(presenter, allOffers.size)
+        awaitSortedCount(presenter, 0)
         assertEquals(expectedPayments, presenter.availablePaymentMethodIds.value)
 
         presenter.setSelectedSettlementMethodIds(emptySet())
-        awaitSortedCount(presenter, allOffers.size)
+        awaitSortedCount(presenter, 0)
         assertEquals(expectedSettlements, presenter.availableSettlementMethodIds.value)
     }
 
@@ -327,7 +327,7 @@ class OfferbookPresenterFilterTest {
         // Clear selections, then restore
         presenter.setSelectedPaymentMethodIds(emptySet())
         presenter.setSelectedSettlementMethodIds(emptySet())
-        awaitSortedCount(presenter, allOffers.size)
+        awaitSortedCount(presenter, 0)
 
         presenter.setSelectedPaymentMethodIds(expectedPayments)
         presenter.setSelectedSettlementMethodIds(expectedSettlements)

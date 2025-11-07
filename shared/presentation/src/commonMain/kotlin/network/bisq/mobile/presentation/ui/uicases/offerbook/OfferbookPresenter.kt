@@ -178,14 +178,14 @@ class OfferbookPresenter(
 
                         // Method filter:
                         // - When onlyMyOffers is enabled, skip method filtering entirely (all my offers pass)
-                        // - Otherwise, empty selections are treated as "no filter" for that category
+                        // - Otherwise, empty selections mean "filter none" (explicit NONE in UI hides all)
                         if (onlyMine) {
                             filtered += item
                             log.v { "Offer ${item.offerId} included (onlyMyOffers=true, method filters skipped)" }
                             continue
                         }
-                        val paymentOk = payments.isEmpty() || item.quoteSidePaymentMethods.any { it in payments }
-                        val settlementOk = settlements.isEmpty() || item.baseSidePaymentMethods.any { it in settlements }
+                        val paymentOk = if (payments.isEmpty()) false else item.quoteSidePaymentMethods.any { it in payments }
+                        val settlementOk = if (settlements.isEmpty()) false else item.baseSidePaymentMethods.any { it in settlements }
                         if (!paymentOk || !settlementOk) {
                             methodFilteredCount++
                             log.v { "Offer ${item.offerId} filtered out (methods) payOk=$paymentOk setOk=$settlementOk" }

@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.ui.text.PlatformTextStyle
 
 import androidx.compose.foundation.layout.width
 
@@ -258,62 +261,82 @@ private fun FilterIconsRow(
     compact: Boolean = false,
     isPaymentRow: Boolean = false,
 ) {
-    val iconSize = if (compact) 18.dp else 24.dp
-    val rowHeight = iconSize
-
-    val listState = rememberLazyListState()
-    val canScrollBack by remember(listState) {
-        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 }
-    }
-    val canScrollForward by remember(listState) {
-        derivedStateOf {
-            val info = listState.layoutInfo
-            val last = info.visibleItemsInfo.lastOrNull()
-            last != null && (last.index < info.totalItemsCount - 1 || (last.offset + last.size) > info.viewportEndOffset)
-        }
-    }
-
+    // Keep row height stable; chips are taller than bare icons
+    val rowHeight = if (compact) 18.dp else 32.dp
     val rowModifier = if (compact) Modifier.height(rowHeight) else Modifier.fillMaxWidth().height(rowHeight)
 
     Box(modifier = rowModifier) {
-        LazyRow(
-            state = listState,
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth().height(rowHeight)
-        ) {
-            items(items) { item ->
-                FilterIcon(item = item, size = iconSize, compact = compact, onToggle = onToggle, isPayment = isPaymentRow)
+        if (items.isEmpty()) {
+            // Stable empty state: no layout jump, subtle hint
+            BisqText.baseLight(
+                text = if (isPaymentRow)
+                    "mobile.offerbook.filters.noPaymentMatches".i18n()
+                else
+                    "mobile.offerbook.filters.noSettlementMatches".i18n(),
+                color = BisqTheme.colors.mid_grey20,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .semantics {
+                        contentDescription = if (isPaymentRow) "no_payment_matches" else "no_settlement_matches"
+                    }
+            )
+        } else {
+            val listState = rememberLazyListState()
+            val canScrollBack by remember(listState) {
+                derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 }
             }
-        }
+            val canScrollForward by remember(listState) {
+                derivedStateOf {
+                    val info = listState.layoutInfo
+                    val last = info.visibleItemsInfo.lastOrNull()
+                    last != null && (last.index < info.totalItemsCount - 1 || (last.offset + last.size) > info.viewportEndOffset)
+                }
+            }
 
-        // Subtle edge fades to indicate horizontal scrollability
-        val fadeWidth = 12.dp
-        if (canScrollBack) {
-            Box(
-                modifier = Modifier
-                    .height(rowHeight)
-                    .width(fadeWidth)
-                    .align(Alignment.CenterStart)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(BisqTheme.colors.backgroundColor, Color.Transparent)
+            LazyRow(
+                state = listState,
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().height(rowHeight)
+            ) {
+                items(items, key = { it.id }) { item ->
+                    if (compact) {
+                        // Collapsed header: keep icon-only
+                        FilterIcon(item = item, size = 18.dp, compact = true, onToggle = {}, isPayment = isPaymentRow)
+                    } else {
+                        MethodChip(item = item, isPaymentRow = isPaymentRow, onToggle = onToggle, height = rowHeight)
+                    }
+                }
+            }
+
+            // Subtle edge fades to indicate horizontal scrollability (only when not empty)
+            val fadeWidth = 12.dp
+            if (canScrollBack) {
+                Box(
+                    modifier = Modifier
+                        .height(rowHeight)
+                        .width(fadeWidth)
+                        .align(Alignment.CenterStart)
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(BisqTheme.colors.backgroundColor, Color.Transparent)
+                            )
                         )
-                    )
-            )
-        }
-        if (canScrollForward) {
-            Box(
-                modifier = Modifier
-                    .height(rowHeight)
-                    .width(fadeWidth)
-                    .align(Alignment.CenterEnd)
-                    .background(
-                        brush = Brush.horizontalGradient(
-                            colors = listOf(Color.Transparent, BisqTheme.colors.backgroundColor)
+                )
+            }
+            if (canScrollForward) {
+                Box(
+                    modifier = Modifier
+                        .height(rowHeight)
+                        .width(fadeWidth)
+                        .align(Alignment.CenterEnd)
+                        .background(
+                            brush = Brush.horizontalGradient(
+                                colors = listOf(Color.Transparent, BisqTheme.colors.backgroundColor)
+                            )
                         )
-                    )
-            )
+                )
+            }
         }
     }
 }
@@ -454,6 +477,8 @@ private fun FilterIcon(
             val previewPath = fallbackPath ?: item.iconPath
             androidx.compose.foundation.Image(
                 painter = org.jetbrains.compose.resources.painterResource(previewDrawableFromPath(previewPath)),
+
+
                 contentDescription = item.label,
                 modifier = Modifier.fillMaxSize()
             )
@@ -475,6 +500,84 @@ private fun FilterIcon(
     }
 }
 
+
+
+@Composable
+private fun MethodChip(
+    item: MethodIconState,
+    isPaymentRow: Boolean,
+    onToggle: (String) -> Unit,
+    height: androidx.compose.ui.unit.Dp,
+) {
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(50)
+    val containerColor = if (item.selected) BisqTheme.colors.secondary else BisqTheme.colors.dark_grey40
+    val borderColor = if (item.selected) BisqTheme.colors.primary else Color.Transparent
+
+    val chipModifier = Modifier
+        .height(height)
+        .then(
+            Modifier.border(
+                androidx.compose.foundation.BorderStroke(1.dp, borderColor),
+                shape
+            )
+        )
+        .background(containerColor, shape)
+        .clickable(
+            indication = null,
+            interactionSource = remember { MutableInteractionSource() }
+        ) { onToggle(item.id) }
+        .semantics { contentDescription = "filter_chip_${item.id}" }
+        .padding(horizontal = 10.dp)
+
+    val iconSize = if (height >= 28.dp) 16.dp else 14.dp
+
+    Row(
+        modifier = chipModifier,
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        // Always provide a fallback custom icon for payment methods; overlay letter only when i18n is missing.
+        val (isMissingPayment, overlayLetter) = if (isPaymentRow) {
+            val (_, missing) = network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod(item.id)
+            Pair(missing, item.id.firstOrNull()?.uppercase() ?: "?")
+        } else Pair(false, null)
+        val customIds = listOf(
+            "custom_payment_1",
+            "custom_payment_2",
+            "custom_payment_3",
+            "custom_payment_4",
+            "custom_payment_5",
+            "custom_payment_6",
+        )
+        val idx = network.bisq.mobile.presentation.ui.helpers.customPaymentIconIndex(item.id, customIds.size)
+        val paymentFallbackPath = if (isPaymentRow) "drawable/payment/fiat/${customIds[idx]}.png" else null
+
+        Box(modifier = Modifier.size(iconSize), contentAlignment = Alignment.Center) {
+            DynamicImage(
+                path = item.iconPath,
+                fallbackPath = paymentFallbackPath,
+                contentDescription = item.label,
+                modifier = Modifier.size(iconSize)
+            )
+            if (isMissingPayment && overlayLetter != null) {
+                val letterSizeSp = if (iconSize < 16.dp) 11f else 12f
+                // Use tighter lineHeight and no font padding to keep the letter visually centered in small boxes
+                network.bisq.mobile.presentation.ui.components.atoms.BisqText.styledText(
+                    text = overlayLetter,
+                    style = network.bisq.mobile.presentation.ui.theme.BisqTheme.typography.baseBold.copy(
+                        fontSize = androidx.compose.ui.unit.TextUnit(letterSizeSp, androidx.compose.ui.unit.TextUnitType.Sp),
+                        lineHeight = androidx.compose.ui.unit.TextUnit(letterSizeSp, androidx.compose.ui.unit.TextUnitType.Sp),
+                        platformStyle = PlatformTextStyle(includeFontPadding = false)
+                    ),
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    color = network.bisq.mobile.presentation.ui.theme.BisqTheme.colors.dark_grey20,
+                )
+            }
+        }
+
+        BisqText.baseLight(text = item.label, singleLine = true)
+    }
+}
 
 // Helpers to build icon paths similar to offer cards
 private fun paymentIconPath(id: String): String =
@@ -544,6 +647,10 @@ private fun Preview_OfferbookFilterController_AllSelected() {
     BisqTheme.Preview {
         Box(Modifier.background(BisqTheme.colors.backgroundColor).padding(12.dp)) {
             OfferbookFilterController(
+
+
+
+
                 state = ui,
                 onTogglePayment = {},
                 onToggleSettlement = {},

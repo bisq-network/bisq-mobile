@@ -96,11 +96,37 @@ fun OfferbookScreen() {
             prevAvailSettlement = availableSettlementIds
         }
 
+        fun humanizePaymentId(id: String): String {
+            // Prefer i18n; if missing, make a readable fallback (preserve common acronyms)
+            val (name, missing) = network.bisq.mobile.presentation.ui.helpers.i18NPaymentMethod(id)
+            if (!missing) return name
+            val acronyms = setOf("SEPA", "SWIFT", "ACH", "UPI", "PIX", "ZELLE", "F2F")
+            return id.split('_', '-').joinToString(" ") { part ->
+                val up = part.uppercase()
+                if (up in acronyms) up else part.lowercase().replaceFirstChar { it.titlecase() }
+            }
+        }
+
         val paymentUi = availablePaymentIds.toList().sorted().map { id ->
-            MethodIconState(id = id, label = id, iconPath = paymentIconPath(id), selected = id in selectedPaymentIds)
+            MethodIconState(
+                id = id,
+                label = humanizePaymentId(id),
+                iconPath = paymentIconPath(id),
+                selected = id in selectedPaymentIds
+            )
         }
         val settlementUi = availableSettlementIds.toList().sorted().map { id ->
-            MethodIconState(id = id, label = id, iconPath = settlementIconPath(id), selected = id in selectedSettlementIds)
+            val label = when (id.uppercase()) {
+                "BTC", "MAIN_CHAIN", "ONCHAIN", "ON_CHAIN" -> "mobile.settlement.bitcoin".i18n()
+                "LIGHTNING", "LN" -> "mobile.settlement.lightning".i18n()
+                else -> id
+            }
+            MethodIconState(
+                id = id,
+                label = label,
+                iconPath = settlementIconPath(id),
+                selected = id in selectedSettlementIds
+            )
         }
 
         val hasActiveFilters = onlyMyOffers || paymentUi.any { !it.selected } || settlementUi.any { !it.selected }
