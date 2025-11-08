@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.layout.fillMaxSize
 
+import androidx.compose.foundation.layout.heightIn
+
 
 import network.bisq.mobile.presentation.ui.platform.platformTextStyleNoFontPadding
 
@@ -36,6 +38,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clipToBounds
+
+import androidx.compose.ui.semantics.selected
 
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -557,7 +561,7 @@ private fun MethodChip(
     val borderColor = if (item.selected) BisqTheme.colors.primary else Color.Transparent
 
     val chipModifier = Modifier
-        .height(height)
+        .heightIn(min = height)
         .then(
             Modifier.border(
                 androidx.compose.foundation.BorderStroke(1.dp, borderColor),
@@ -569,7 +573,10 @@ private fun MethodChip(
             indication = null,
             interactionSource = remember { MutableInteractionSource() }
         ) { onToggle(item.id) }
-        .semantics { contentDescription = "filter_chip_${item.id}" }
+        .semantics {
+            contentDescription = item.label
+            selected = item.selected
+        }
         .padding(horizontal = 10.dp)
 
     val iconSize = if (height >= 28.dp) 16.dp else 14.dp
