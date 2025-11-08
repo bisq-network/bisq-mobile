@@ -75,20 +75,20 @@ android {
             java {
                 srcDir("src/main/resources")
                 // Debug build only includes debug proto sources
-                srcDir("${layout.buildDirectory}/generated/source/proto/debug/java")
+                srcDir(layout.buildDirectory.dir("/generated/source/proto/debug/java"))
             }
             proto {
-                srcDir("${layout.buildDirectory}/extracted-include-protos/debug")
+                srcDir(layout.buildDirectory.dir("/extracted-include-protos/debug"))
             }
         }
         getByName("release") {
             java {
                 srcDir("src/release/resources")
                 // Release build only includes release proto sources
-                srcDir("${layout.buildDirectory}/generated/source/proto/release/java")
+                srcDir(layout.buildDirectory.dir("/generated/source/proto/release/java"))
             }
             proto {
-                srcDir("${layout.buildDirectory}/extracted-include-protos/release")
+                srcDir(layout.buildDirectory.dir("/extracted-include-protos/release"))
             }
         }
     }
@@ -238,7 +238,7 @@ protobuf {
     }
     generateProtoTasks {
         all().forEach { task ->
-            task.inputs.dir("${layout.buildDirectory.get()}/extracted-include-protos/debug")
+            task.inputs.dir(layout.buildDirectory.dir("/extracted-include-protos/debug"))
             task.builtins {
                 create("java")
             }
