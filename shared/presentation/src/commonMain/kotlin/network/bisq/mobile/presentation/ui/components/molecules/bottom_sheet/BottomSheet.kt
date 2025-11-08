@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupProperties
@@ -42,7 +43,7 @@ fun BisqBottomSheet(
     containerColor: Color = BisqTheme.colors.dark_grey50,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    val inPreview = androidx.compose.ui.platform.LocalInspectionMode.current
+    val inPreview = LocalInspectionMode.current
     if (inPreview) {
         // Preview-friendly inline version (Popups often don't render in Previews)
         InlinePreviewBottomSheet(

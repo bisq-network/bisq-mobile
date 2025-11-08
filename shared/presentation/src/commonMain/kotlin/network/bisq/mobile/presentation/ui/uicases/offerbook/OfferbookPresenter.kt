@@ -1,6 +1,5 @@
 package network.bisq.mobile.presentation.ui.uicases.offerbook
 
-import com.ionspin.kotlin.bignum.integer.Quadruple
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -94,16 +93,6 @@ class OfferbookPresenter(
         selectedOffer = null
         launchIO {
             // pack strongly-typed, use vararg combine -> Array, then map
-            data class Inputs(
-                val offers: List<OfferItemPresentationModel>,
-                val direction: DirectionEnum,
-                val selectedMarket: network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket,
-                val selectedProfile: UserProfileVO?,
-                val payments: Set<String>,
-                val settlements: Set<String>,
-                val onlyMine: Boolean,
-            )
-
             combine(
                 offersServiceFacade.offerbookListItems,
                 selectedDirection,
@@ -115,7 +104,7 @@ class OfferbookPresenter(
                 onlyMyOffers,
             ) { values: Array<Any?> ->
                 @Suppress("UNCHECKED_CAST")
-                Inputs(
+                OfferbookPresenterInputs(
                     offers = values[0] as List<OfferItemPresentationModel>,
                     direction = values[1] as DirectionEnum,
                     selectedMarket = values[2] as network.bisq.mobile.domain.data.model.offerbook.OfferbookMarket,

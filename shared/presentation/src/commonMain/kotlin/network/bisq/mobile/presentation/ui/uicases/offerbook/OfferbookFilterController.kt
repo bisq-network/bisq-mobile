@@ -260,11 +260,43 @@ fun OfferbookFilterController(
 
 
                     // Only my offers
-                    BisqCheckbox(
-                        label = "mobile.offerbook.filters.onlyMyOffers".i18n(),
-                        checked = state.onlyMyOffers,
-                        onCheckedChange = { onOnlyMyOffersChange(it) }
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        BisqText.baseLight(
+                            "mobile.offerbook.filters.onlyMyOffers".i18n(),
+                            modifier = Modifier
+                                .weight(1f)
+                                .clickable(
+                                    enabled = true,
+                                    onClick = { onOnlyMyOffersChange(!state.onlyMyOffers) },
+                                    interactionSource = remember { MutableInteractionSource() },
+                                    indication = null,
+                                )
+                        )
+                        androidx.compose.material3.Checkbox(
+                            checked = state.onlyMyOffers,
+                            onCheckedChange = onOnlyMyOffersChange,
+                            colors = androidx.compose.material3.CheckboxColors(
+                                uncheckedBoxColor = BisqTheme.colors.secondary,
+                                uncheckedBorderColor = BisqTheme.colors.mid_grey20,
+                                uncheckedCheckmarkColor = BisqTheme.colors.secondary,
+
+                                checkedBoxColor = BisqTheme.colors.secondary,
+                                checkedBorderColor = BisqTheme.colors.primaryDim,
+                                checkedCheckmarkColor = BisqTheme.colors.primary,
+
+                                disabledBorderColor = BisqTheme.colors.backgroundColor,
+                                disabledUncheckedBorderColor = BisqTheme.colors.backgroundColor,
+                                disabledIndeterminateBorderColor = BisqTheme.colors.backgroundColor,
+
+                                disabledCheckedBoxColor = BisqTheme.colors.secondary,
+                                disabledUncheckedBoxColor = BisqTheme.colors.secondary,
+                                disabledIndeterminateBoxColor = BisqTheme.colors.secondary,
+                            )
+                        )
+                    }
 
                     Spacer(modifier = Modifier.height(BisqUIConstants.ScreenPadding))
                 }
@@ -521,7 +553,7 @@ private fun MethodChip(
     height: androidx.compose.ui.unit.Dp,
 ) {
     val shape = androidx.compose.foundation.shape.RoundedCornerShape(50)
-    val containerColor = if (item.selected) BisqTheme.colors.secondary else BisqTheme.colors.dark_grey40
+    val containerColor = if (item.selected) BisqTheme.colors.secondary else BisqTheme.colors.mid_grey10
     val borderColor = if (item.selected) BisqTheme.colors.primary else Color.Transparent
 
     val chipModifier = Modifier
