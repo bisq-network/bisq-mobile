@@ -75,20 +75,20 @@ android {
             java {
                 srcDir("src/main/resources")
                 // Debug build only includes debug proto sources
-                srcDir(layout.buildDirectory.dir("/generated/source/proto/debug/java"))
+                srcDir(layout.buildDirectory.dir("generated/source/proto/debug/java"))
             }
             proto {
-                srcDir(layout.buildDirectory.dir("/extracted-include-protos/debug"))
+                srcDir(layout.buildDirectory.dir("extracted-include-protos/debug"))
             }
         }
         getByName("release") {
             java {
                 srcDir("src/release/resources")
                 // Release build only includes release proto sources
-                srcDir(layout.buildDirectory.dir("/generated/source/proto/release/java"))
+                srcDir(layout.buildDirectory.dir("generated/source/proto/release/java"))
             }
             proto {
-                srcDir(layout.buildDirectory.dir("/extracted-include-protos/release"))
+                srcDir(layout.buildDirectory.dir("extracted-include-protos/release"))
             }
         }
     }
@@ -238,7 +238,9 @@ protobuf {
     }
     generateProtoTasks {
         all().forEach { task ->
-            task.inputs.dir(layout.buildDirectory.dir("/extracted-include-protos/debug"))
+            val variantName = Regex("(debug|release|profile)", RegexOption.IGNORE_CASE)
+                .find(task.name)?.value?.lowercase() ?: "debug"
+            task.inputs.dir(layout.buildDirectory.dir("extracted-include-protos/$variantName"))
             task.builtins {
                 create("java")
             }
