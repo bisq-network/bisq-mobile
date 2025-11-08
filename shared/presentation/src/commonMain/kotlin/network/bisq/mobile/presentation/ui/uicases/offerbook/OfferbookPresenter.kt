@@ -53,7 +53,7 @@ class OfferbookPresenter(
     val selectedDirection: StateFlow<DirectionEnum> get() = _selectedDirection.asStateFlow()
 
     private val _selectedPaymentMethodIds = MutableStateFlow<Set<String>>(emptySet())
-    val selectedPaymentMethodIds: StateFlow<Set<String>> get() = _selectedPaymentMethodIds.asStateFlow()
+    val selectedPaymentMethodIds: StateFlow<Set<String>> = _selectedPaymentMethodIds.asStateFlow()
     private val _selectedSettlementMethodIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedSettlementMethodIds: StateFlow<Set<String>> get() = _selectedSettlementMethodIds.asStateFlow()
     private val _onlyMyOffers = MutableStateFlow(false)
