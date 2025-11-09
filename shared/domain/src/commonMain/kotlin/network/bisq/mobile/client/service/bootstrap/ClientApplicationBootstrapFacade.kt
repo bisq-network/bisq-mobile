@@ -24,7 +24,7 @@ class ClientApplicationBootstrapFacade(
             val settings = sensitiveSettingsRepository.fetch()
             if (settings.selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
                 observeTorState()
-                kmpTorService.startTor().await()
+                kmpTorService.startTor()
             } else {
                 onTorStartedOrSkipped()
             }

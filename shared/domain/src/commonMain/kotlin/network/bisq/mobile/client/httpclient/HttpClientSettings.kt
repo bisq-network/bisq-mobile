@@ -25,7 +25,7 @@ data class HttpClientSettings(
             val isTorProxy: Boolean
             when (selectedProxyOption) {
                 BisqProxyOption.INTERNAL_TOR -> {
-                    val socksPort = kmpTorService.getSocksPort()
+                    val socksPort = kmpTorService.awaitSocksPort()
                     proxyUrl = "127.0.0.1:$socksPort"
                     isTorProxy = true
                 }

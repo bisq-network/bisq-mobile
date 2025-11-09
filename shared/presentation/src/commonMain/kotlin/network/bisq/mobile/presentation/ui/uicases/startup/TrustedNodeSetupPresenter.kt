@@ -11,10 +11,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.shared.BuildConfig
@@ -121,7 +123,18 @@ class TrustedNodeSetupPresenter(
     }.stateIn(presenterScope, SharingStarted.Lazily, "")
 
     val torState =
-        kmpTorService.state.stateIn(presenterScope, SharingStarted.Lazily, KmpTorService.State.IDLE)
+        kmpTorService.state.stateIn(
+            presenterScope,
+            SharingStarted.Lazily,
+            KmpTorService.TorState.Stopped()
+        )
+
+    val torProgress =
+        kmpTorService.bootstrapProgress.stateIn(
+            presenterScope,
+            SharingStarted.Lazily,
+            KmpTorService.TorState.Stopped()
+        )
 
     private val _userExplicitlyChangedProxy = MutableStateFlow(false)
 
@@ -201,15 +214,27 @@ class TrustedNodeSetupPresenter(
         }
 
         if (!isApiUrlValid.value || !isProxyUrlValid.value) return
+
         _isLoading.value = true
-        _status.value = "mobile.trustedNodeSetup.status.connecting".i18n()
+
+        _status.value = "mobile.trustedNodeSetup.status.settingUpConnection".i18n()
+
         val newApiUrlString = apiUrl.value
         log.d { "Test: $newApiUrlString isWorkflow $isWorkflow" }
+        val newApiUrl =
+            parseAndNormalizeUrl(newApiUrlString)
 
-        launchIO {
+        if (newApiUrl == null) {
+            onConnectionError(
+                IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n()),
+                newApiUrlString
+            )
+            _isLoading.value = false
+            return
+        }
+
+        launchUI {
             try {
-                val newApiUrl =
-                    parseAndNormalizeUrl(newApiUrlString)
                 val newProxyHost: String?
                 val newProxyPort: Int?
                 val newProxyIsTor: Boolean
@@ -217,11 +242,13 @@ class TrustedNodeSetupPresenter(
                 val password = _password.value
                 when (newProxyOption) {
                     BisqProxyOption.INTERNAL_TOR -> {
-                        if (kmpTorService.state.value != KmpTorService.State.STARTED) {
-                            kmpTorService.startTor().await()
+                        if (kmpTorService.state.value !is KmpTorService.TorState.Started) {
+                            _status.value = "mobile.trustedNodeSetup.status.startingTor".i18n()
+                            kmpTorService.startTor()
                         }
                         newProxyHost = "127.0.0.1"
-                        newProxyPort = kmpTorService.getSocksPort()
+                        newProxyPort = kmpTorService.socksPort.filterNotNull()
+                            .first() // suspends till available
                         newProxyIsTor = true
                     }
 
@@ -247,11 +274,16 @@ class TrustedNodeSetupPresenter(
                 val isExternalProxy =
                     newProxyOption == BisqProxyOption.EXTERNAL_TOR || newProxyOption == BisqProxyOption.SOCKS_PROXY
 
-                val error = if (newApiUrl == null) {
-                    IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n())
-                } else if (isExternalProxy && newProxyPort == null) {
+                val error = if (isExternalProxy && newProxyPort == null) {
                     IllegalArgumentException("mobile.trustedNodeSetup.proxyPort.invalid".i18n())
                 } else {
+                    if (newProxyOption == BisqProxyOption.INTERNAL_TOR && kmpTorService.state.value is KmpTorService.TorState.Starting) {
+                        withTimeout(30_000) {
+                            // wait till tor finish bootstrapping
+                            _status.value = "mobile.trustedNodeSetup.status.waitingForTor".i18n()
+                            kmpTorService.awaitBootstrapped()
+                        }
+                    }
                     val timeoutSecs = wsClientService.determineTimeout(newApiUrl.host) / 1000
                     val countdownJob = launchUI {
                         for (i in timeoutSecs downTo 0) {
@@ -259,6 +291,7 @@ class TrustedNodeSetupPresenter(
                             delay(1000)
                         }
                     }
+                    _status.value = "mobile.trustedNodeSetup.status.connecting".i18n()
                     _wsClientConnectionState.value = ConnectionState.Connecting
                     val result = wsClientService.testConnection(
                         newApiUrl,
@@ -273,9 +306,8 @@ class TrustedNodeSetupPresenter(
 
                 if (error != null) {
                     _wsClientConnectionState.value = ConnectionState.Disconnected(error)
-                    onConnectionError(error, newApiUrl?.toNormalizedString() ?: newApiUrlString)
+                    onConnectionError(error, newApiUrl.toNormalizedString())
                 } else {
-                    val newApiUrl = newApiUrl!!
                     // we only dispose client if we are sure new settings differ from the old one
                     // because it wont emit if they are the same, and new clients wont be instantiated
                     val currentSettings = sensitiveSettingsRepository.fetch()
@@ -299,7 +331,7 @@ class TrustedNodeSetupPresenter(
                     if (error != null) {
                         _wsClientConnectionState.value = ConnectionState.Disconnected(error)
                         onConnectionError(error, newApiUrl.toNormalizedString())
-                        return@launchIO
+                        return@launchUI
                     }
                     // wait till connectionState is changed to a final state
                     wsClientService.connectionState.filter { it !is ConnectionState.Connecting }
@@ -314,7 +346,7 @@ class TrustedNodeSetupPresenter(
 
                     if (newProxyOption != BisqProxyOption.INTERNAL_TOR) {
                         runCatching {
-                            kmpTorService.stopTorAsync()
+                            kmpTorService.stopTor()
                         }
                     }
 
@@ -323,6 +355,10 @@ class TrustedNodeSetupPresenter(
                     applicationBootstrapFacade.setProgress(1.0f)
                     navigateToSplashScreen() // to trigger navigateToNextScreen again
                 }
+            } catch (e: Throwable) {
+                // Handles timeout error message
+                onConnectionError(e, newApiUrl.toNormalizedString())
+                throw e
             } finally {
                 _isLoading.value = false
             }

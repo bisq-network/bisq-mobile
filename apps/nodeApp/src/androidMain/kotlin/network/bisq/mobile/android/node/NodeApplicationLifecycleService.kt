@@ -105,13 +105,13 @@ class NodeApplicationLifecycleService(
         }
     }
 
-    fun shutdown() {
+    suspend fun shutdown() {
         log.i { "Destroying NodeMainPresenter" }
         androidMemoryReportService.shutdown()
         shutdownServicesAndTor()
     }
 
-    private fun shutdownServicesAndTor() {
+    private suspend fun shutdownServicesAndTor() {
         try {
             log.i { "Stopping service facades" }
             deactivateServiceFacades()
@@ -128,7 +128,7 @@ class NodeApplicationLifecycleService(
 
         try {
             log.i { "Stopping Tor" }
-            kmpTorService.stopTorSync()
+            kmpTorService.stopTor()
             log.i { "Tor stopped" }
         } catch (e: Exception) {
             log.e("Error at stopTor", e)
@@ -274,7 +274,10 @@ class NodeApplicationLifecycleService(
             try {
                 log.i { "Starting Tor" }
                 // We block until Tor is ready, or timeout after 60 sec
-                withTimeout(TIMEOUT_SEC * 1000) { kmpTorService.startTor().await() }
+                withTimeout(TIMEOUT_SEC * 1000) {
+                    kmpTorService.startTor()
+                    kmpTorService.awaitBootstrapped()
+                }
                 log.i { "Tor successfully started" }
                 result.complete(true)
             } catch (e: TimeoutCancellationException) {
@@ -284,7 +287,12 @@ class NodeApplicationLifecycleService(
                 result.cancel(e)
                 throw e
             } catch (e: Exception) {
-                val failure = kmpTorService.startupFailure.value
+                val state = kmpTorService.state.value
+                val failure = if (state is KmpTorService.TorState.Stopped) {
+                    state.error
+                } else {
+                    null
+                }
                 val errorMessage = listOfNotNull(
                     failure?.message,
                     failure?.cause?.message

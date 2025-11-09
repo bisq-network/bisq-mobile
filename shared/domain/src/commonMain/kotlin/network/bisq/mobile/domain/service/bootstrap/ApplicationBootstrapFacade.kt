@@ -9,13 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
-import network.bisq.mobile.domain.service.network.KmpTorService.State.IDLE
-import network.bisq.mobile.domain.service.network.KmpTorService.State.STARTED
-import network.bisq.mobile.domain.service.network.KmpTorService.State.STARTING
-import network.bisq.mobile.domain.service.network.KmpTorService.State.STARTING_FAILED
-import network.bisq.mobile.domain.service.network.KmpTorService.State.STOPPED
-import network.bisq.mobile.domain.service.network.KmpTorService.State.STOPPING
-import network.bisq.mobile.domain.service.network.KmpTorService.State.STOPPING_FAILED
+import network.bisq.mobile.domain.service.network.KmpTorService.TorState
 import network.bisq.mobile.i18n.i18n
 import kotlin.concurrent.Volatile
 
@@ -84,34 +78,31 @@ abstract class ApplicationBootstrapFacade(
         serviceScope.launch {
             kmpTorService.state.collect { newState ->
                 when (newState) {
-                    IDLE -> {}
-                    STARTING -> {
+                    is TorState.Starting -> {
                         setState("mobile.bootstrap.tor.starting".i18n())
                         setProgress(0.1f)
                         startTimeoutForStage()
                     }
 
-                    STARTED -> {
+                    is TorState.Started -> {
                         setState("mobile.bootstrap.tor.started".i18n())
                         setProgress(0.25f)
                         onTorStarted()
                     }
 
-                    STOPPING -> {}
-                    STOPPED -> {}
-                    STARTING_FAILED -> {
-                        val failure = kmpTorService.startupFailure.value
-                        val errorMessage = listOfNotNull(
-                            failure?.message,
-                            failure?.cause?.message
-                        ).firstOrNull() ?: "Unknown Tor error"
-                        setState("mobile.bootstrap.tor.failed".i18n() + ": $errorMessage")
-                        cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
-                        setBootstrapFailed(true)
-                        log.e { "Bootstrap: Tor initialization failed - $errorMessage" }
+                    is TorState.Stopping -> {}
+                    is TorState.Stopped -> {
+                        if (newState.error != null) {
+                            val errorMessage = listOfNotNull(
+                                newState.error.message,
+                                newState.error.cause?.message
+                            ).firstOrNull() ?: "Unknown Tor error"
+                            setState("mobile.bootstrap.tor.failed".i18n() + ": $errorMessage")
+                            cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
+                            setBootstrapFailed(true)
+                            log.e { "Bootstrap: Tor initialization failed - $errorMessage" }
+                        }
                     }
-
-                    STOPPING_FAILED -> {}
                 }
             }
         }

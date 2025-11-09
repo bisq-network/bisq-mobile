@@ -3,23 +3,23 @@ package network.bisq.mobile.domain.service.network
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.aSocket
 import io.matthewnelson.kmp.file.File
-import io.matthewnelson.kmp.tor.runtime.Action
+import io.matthewnelson.kmp.tor.runtime.Action.Companion.startDaemonAsync
 import io.matthewnelson.kmp.tor.runtime.Action.Companion.stopDaemonAsync
-import io.matthewnelson.kmp.tor.runtime.Action.Companion.stopDaemonSync
 import io.matthewnelson.kmp.tor.runtime.TorRuntime
 import io.matthewnelson.kmp.tor.runtime.core.OnEvent
 import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.data.IODispatcher
@@ -47,111 +47,106 @@ import okio.SYSTEM
  */
 class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
 
-    enum class State(private val i18nKey: String) {
-        IDLE("mobile.kmpTorService.state.idle"),
-        STARTING("mobile.kmpTorService.state.starting"),
-        STARTED("mobile.kmpTorService.state.started"),
-        STOPPING("mobile.kmpTorService.state.stopping"),
-        STOPPED("mobile.kmpTorService.state.stopped"),
-        STARTING_FAILED("mobile.kmpTorService.state.starting_failed"),
-        STOPPING_FAILED("mobile.kmpTorService.state.stopping_failed");
+    sealed class TorState {
+        protected abstract val i18nKey: String
+
+        data class Stopped(val error: Throwable? = null) : TorState() {
+            override val i18nKey = "mobile.kmpTorService.state.stopped"
+        }
+
+        object Stopping : TorState() {
+            override val i18nKey = "mobile.kmpTorService.state.stopping"
+        }
+
+        object Starting : TorState() {
+            override val i18nKey = "mobile.kmpTorService.state.starting"
+        }
+
+        object Started : TorState() {
+            override val i18nKey = "mobile.kmpTorService.state.started"
+        }
 
         val displayString: String get() = i18nKey.i18n()
     }
 
     private var torRuntime: TorRuntime? = null
-    private var deferredSocksPort = CompletableDeferred<Int>()
-    private var torDaemonStarted = CompletableDeferred<Boolean>()
-    private var controlPortFileObserverJob: Job? = null
-    private var configJob: Job? = null
+    private var controlMutex = Mutex()
 
-    private val _startupFailure: MutableStateFlow<KmpTorException?> = MutableStateFlow(null)
-    val startupFailure: StateFlow<KmpTorException?> get() = _startupFailure.asStateFlow()
+    private val _state = MutableStateFlow<TorState>(TorState.Stopped())
+    val state = _state.asStateFlow()
 
-    private val _state: MutableStateFlow<State> = MutableStateFlow(State.IDLE)
-    val state: StateFlow<State> get() = _state.asStateFlow()
+    private val _socksPort: MutableStateFlow<Int?> = MutableStateFlow(null)
+    val socksPort = _socksPort.asStateFlow()
 
-    fun startTor(): CompletableDeferred<Boolean> {
-        log.i("Start kmp-tor")
-        val torStartupCompleted = CompletableDeferred<Boolean>()
+    private val _bootstrapProgress: MutableStateFlow<Int> = MutableStateFlow(0)
+    val bootstrapProgress: StateFlow<Int> = _bootstrapProgress.asStateFlow()
 
-        require(torRuntime == null) { "torRuntime is expected to be null at startTor" }
-        _state.value = State.STARTING
-        setupTorRuntime()
+    private val bootstrapRegex = Regex("""Bootstrapped (\d+)%""")
 
-        val configCompleted = configTor()
+    suspend fun startTor(): Boolean {
+        controlMutex.withLock {
+            if (_state.value is TorState.Started || _state.value is TorState.Starting) return true
+            log.i("Start kmp-tor")
+            _state.value = TorState.Starting // Started will be set when bootstrap is 100%
 
-        torRuntime!!.enqueue(
-            Action.StartDaemon,
-            { error ->
-                resetAndDispose()
-                handleError("Starting tor daemon failed: $error")
-                torStartupCompleted.takeIf { !it.isCompleted }?.completeExceptionally(
-                    KmpTorException("Starting tor daemon failed: $error")
-                )
-                // Cancel the running config coroutine
-                configJob?.cancel()
-                configJob = null
-                _state.value = State.STARTING_FAILED
-            },
-            {
-                log.i("Tor daemon started")
-                torDaemonStarted.takeIf { !it.isCompleted }?.complete(true)
-
-                launchIO {
-                    configCompleted.await()
-                    log.i("kmp-tor startup completed")
-                    torStartupCompleted.takeIf { !it.isCompleted }?.complete(true)
-                    _state.value = State.STARTED
+            val runtime = getTorRuntime()
+            try {
+                withContext(Dispatchers.IO) {
+                    runtime.startDaemonAsync()
+                    configTor()
                 }
+                return true
+            } catch (error: Exception) {
+                log.e(error) { "Starting tor daemon failed" }
+                try {
+                    withContext(Dispatchers.IO) {
+                        runtime.stopDaemonAsync()
+                    }
+                } catch (_: Exception) {
+                    // ignore
+                }
+                cleanupService()
+                _state.value = TorState.Stopped(error)
+                return false
             }
-        )
-        return torStartupCompleted
-    }
-
-    suspend fun stopTorAsync() {
-        if (torRuntime == null) {
-            log.w("Tor runtime is null at stopTor")
-            return
-        }
-        _state.value = State.STOPPING
-
-        try {
-            torRuntime!!.stopDaemonAsync()
-            log.i { "Tor daemon stopped" }
-            _state.value = State.STOPPED
-        } catch (e: Exception) {
-            handleError("Failed to stop Tor daemon: $e")
-            _state.value = State.STOPPING_FAILED
-            throw e
-        } finally {
-            resetAndDispose()
-            torRuntime = null
         }
     }
 
-    fun stopTorSync() {
-        if (torRuntime == null) {
-            log.w("Tor runtime is null at stopTorSync")
-            return
-        }
-        _state.value = State.STOPPING
-
-        try {
-            torRuntime!!.stopDaemonSync()
-            log.i { "Tor daemon stopped" }
-            _state.value = State.STOPPED
-        } catch (e: Exception) {
-            handleError("Failed to stop Tor daemon: $e")
-            _state.value = State.STOPPING_FAILED
-            throw e
-        } finally {
-            resetAndDispose()
-            torRuntime = null
+    suspend fun awaitBootstrapped() {
+        withContext(serviceScope.coroutineContext) {
+            state.filterNotNull().filter { it is TorState.Started }.first()
         }
     }
 
-    private fun setupTorRuntime() {
+    suspend fun awaitSocksPort() {
+        withContext(serviceScope.coroutineContext) {
+            socksPort.filterNotNull().first()
+        }
+    }
+
+    suspend fun stopTor() {
+        controlMutex.withLock {
+            if (_state.value is TorState.Stopped || _state.value is TorState.Stopping) return
+            _state.value = TorState.Stopping
+            try {
+                val runtime = getTorRuntime()
+                withContext(Dispatchers.IO) {
+                    runtime.stopDaemonAsync()
+                }
+                log.i { "Tor daemon stopped successfully" }
+                _state.value = TorState.Stopped()
+            } catch (e: Exception) {
+                log.e(e) { "Tor daemon stopped with error" }
+                _state.value = TorState.Stopped(e)
+            } finally {
+                cleanupService()
+            }
+        }
+    }
+
+    private fun getTorRuntime(): TorRuntime {
+        torRuntime?.let { return it }
+
         val torDir = getTorDir()
         val cacheDirectory = getTorCacheDir()
         val controlPortFile = getControlPortFile()
@@ -161,15 +156,16 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             loader = ::torResourceLoader,
         )
 
-        torRuntime = TorRuntime.Builder(environment) {
+        val runtime = TorRuntime.Builder(environment) {
             required(TorEvent.ERR)
             observerStatic(TorEvent.ERR, OnEvent.Executor.Immediate) { data ->
-                handleError("Tor error event: $data")
+                log.e("Tor error event: $data")
             }
 
             required(TorEvent.NOTICE)
             observerStatic(TorEvent.NOTICE, OnEvent.Executor.Immediate) { data ->
                 tryParseSockPort(data)
+                tryParseBootstrapProgress(data)
             }
 
             // See https://github.com/05nelsonm/kmp-tor-resource/blob/master/docs/tor-man.adoc#DataDirectory
@@ -185,6 +181,9 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                 TorOption.TruncateLogFile.configure(true)
             }
         }
+
+        torRuntime = runtime
+        return runtime
     }
 
     private fun tryParseSockPort(data: String) {
@@ -194,114 +193,106 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             val portAsString = data
                 .removePrefix("Socks listener listening on port ")
                 .trimEnd('.')
-            val socksPort = portAsString.toInt()
-            log.i { "Socks port: $socksPort" }
-            deferredSocksPort.takeIf { !it.isCompleted }?.complete(socksPort)
+                .trim()
+            val parsedPort = portAsString.toIntOrNull()
+            if (parsedPort == null) {
+                log.e { "Failed to parse socks port from: $data" }
+            } else {
+                log.i { "Socks port: $parsedPort" }
+                _socksPort.value = parsedPort
+            }
         }
     }
 
-    private fun configTor(): CompletableDeferred<Boolean> {
-        val configCompleted = CompletableDeferred<Boolean>()
-        configJob = launchIO {
-            try {
-                val socksPort = deferredSocksPort.await()
-                val controlPort = readControlPort().await()
-                disposeControlPortFileObserver()
+    private fun tryParseBootstrapProgress(data: String) {
+        // Expected string: `Bootstrapped 00%: Starting` or `Bootstrapped 100%: Done`
+        bootstrapRegex.find(data)?.let { matchResult ->
+            val percentage = matchResult.groupValues[1].toIntOrNull()
+            if (percentage == null) {
+                log.w { "Failed to parse bootstrap progress from: $data" }
+            } else {
+                _bootstrapProgress.value = percentage
+                log.i { "Tor bootstrap progress: $percentage%" }
 
-                writeExternalTorConfig(socksPort, controlPort)
-                torDaemonStarted.await()
-                verifyControlPortAccessible(controlPort)
-                delay(100L)
-
-                log.i { "Tor configuration completed successfully" }
-                configCompleted.takeIf { !it.isCompleted }?.complete(true)
-            } catch (error: Exception) {
-                log.e(error) { "Configuring tor failed" }
-                handleError("Configuring tor failed: $error")
-                configCompleted.takeIf { !it.isCompleted }?.completeExceptionally(error)
-            } finally {
-                if (configJob === this@launchIO) {
-                    configJob = null
+                if (percentage == 100) {
+                    log.i { "Tor successfully connected (100% bootstrapped)" }
+                    _state.value = TorState.Started
                 }
             }
         }
-        return configCompleted
     }
 
-    private fun readControlPort(): Deferred<Int> {
-        val deferred = CompletableDeferred<Int>()
-        controlPortFileObserverJob = launchIO {
-            val controlPortFile = getControlPortFile()
-            log.i("Path to controlPortFile: $controlPortFile")
-            try {
-                // We can't use FileObserver because it misses events between event processing.
-                // Tor writes the port to a swap file first, and renames it afterward.
-                // The FileObserver can miss the second operation, causing a deadlock.
-                // See Bisq Easy tor implementation at: bisq.network.tor.process.control_port.ControlPortFilePoller
+    private suspend fun configTor() {
+        try {
+            val socksPort = socksPort.filterNotNull().first()
+            val controlPort = readControlPort()
 
-                var lastModified = 0L
-                var iterations = 0
-                val delay: Long = 100
-                val maxIterations = 30 * 1000 / delay // 30 seconds with 100ms delays
-                val startTime = Clock.System.now().toEpochMilliseconds()
-                val timeoutMs = 60_000 // 60 second timeout
-                while (!deferred.isCompleted && iterations < maxIterations) {
-                    iterations++
-                    if (Clock.System.now().toEpochMilliseconds() - startTime > timeoutMs) {
-                        deferred.completeExceptionally(
-                            KmpTorException("Timeout waiting for control port file")
-                        )
-                        break
-                    }
+            writeExternalTorConfig(socksPort, controlPort)
+            verifyControlPortAccessible(controlPort)
+            delay(100L)
 
-                    val currentMetadata = FileSystem.SYSTEM.metadataOrNull(controlPortFile)
-                    if (currentMetadata != null) {
-                        val currentModified = currentMetadata.lastModifiedAtMillis ?: 0L
-                        if (currentModified != lastModified) {
-                            lastModified = currentModified
-                            log.i("We detected modification change of controlPortFile: $controlPortFile")
-                            readControlPortFile(controlPortFile, deferred)
-                        }
-                    }
-                    if (!deferred.isCompleted) {
-                        delay(delay)
-                    }
-                }
-                if (!deferred.isCompleted) {
-                    deferred.completeExceptionally(
-                        KmpTorException("Failed to read control port after $iterations iterations")
-                    )
-                }
-            } catch (e: Exception) {
-                handleError("Observing file controlPortFile failed: ${e.message}")
-                deferred.completeExceptionally(e)
-            } finally {
-                if (controlPortFileObserverJob === this@launchIO) {
-                    controlPortFileObserverJob = null
-                }
-            }
+            log.i { "Tor configuration completed successfully" }
+        } catch (error: Exception) {
+            throw error
         }
-        return deferred
     }
 
-    private fun readControlPortFile(file: Path, deferred: CompletableDeferred<Int>) {
+    private suspend fun readControlPort(): Int {
+        val controlPortFile = getControlPortFile()
+        log.i("Path to controlPortFile: $controlPortFile")
+        try {
+            // We can't use FileObserver because it misses events between event processing.
+            // Tor writes the port to a swap file first, and renames it afterward.
+            // The FileObserver can miss the second operation, causing a deadlock.
+            // See Bisq Easy tor implementation at: bisq.network.tor.process.control_port.ControlPortFilePoller
+
+            var iterations = 0
+            val delay: Long = 100
+            val maxIterations = 30 * 1000 / delay // 30 seconds with 100ms delays
+            val startTime = Clock.System.now().toEpochMilliseconds()
+            val timeoutMs = 60_000 // 60 second timeout
+            while (iterations < maxIterations) {
+                iterations++
+                if (Clock.System.now().toEpochMilliseconds() - startTime > timeoutMs) {
+                    throw KmpTorException("Timeout waiting for control port file")
+                }
+
+                val currentMetadata = withContext(Dispatchers.IO) {
+                    FileSystem.SYSTEM.metadataOrNull(controlPortFile)
+                }
+                if (currentMetadata != null) {
+                    return parsePortFromFile(controlPortFile)
+                }
+                delay(delay)
+            }
+            throw KmpTorException("Failed to read control port after $iterations iterations")
+        } catch (e: Exception) {
+            log.e(e) { "Observing file controlPortFile failed" }
+            throw e
+        }
+    }
+
+    private suspend fun parsePortFromFile(file: Path): Int {
         try {
             // Expected string in file: `PORT=127.0.0.1:{port}`
-            val lines = FileSystem.SYSTEM.read(file) {
-                readUtf8().lines()
+            val lines = withContext(Dispatchers.IO) {
+                FileSystem.SYSTEM.read(file) {
+                    readUtf8().lines()
+                }
             }
-            val line = lines.firstOrNull { it.startsWith("PORT=127.0.0.1:") }
+            val line = lines.firstOrNull { it.contains("PORT=") }
                 ?: error("No PORT line found")
-            val port = line.removePrefix("PORT=127.0.0.1:").toInt()
-            deferred.takeIf { !it.isCompleted }?.complete(port)
+            val portRegex = Regex("""PORT=.*:(\d+)""")
+            val port = portRegex.find(line)?.groupValues?.get(1)?.toInt()
+                ?: error("Failed to parse port from line: $line")
             log.i("Control port read from control.txt file: $port")
-
             // Rename the file so the observer doesn't pick up an old file
             val backup = getControlPortBackupFile()
             FileSystem.SYSTEM.atomicMove(getControlPortFile(), backup)
+            return port
         } catch (error: Exception) {
-            handleError("Failed to read control port from control.txt file: $error")
-            deferred.completeExceptionally(error)
+            log.e(error) { "Failed to read control port from control.txt file" }
+            throw error
         }
     }
 
@@ -330,12 +321,16 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
 
             log.i { "Wrote external_tor.config to ${configFile}\n\n$configContent\n\n" }
         } catch (error: Exception) {
-            handleError("Failed to write external_tor.config: $error")
+            log.e("Failed to write external_tor.config: $error")
             throw error
         }
     }
 
-    private suspend fun validateExternalTorConfig(configFile: Path, expectedSocksPort: Int, expectedControlPort: Int) {
+    private suspend fun validateExternalTorConfig(
+        configFile: Path,
+        expectedSocksPort: Int,
+        expectedControlPort: Int
+    ) {
         try {
             withContext(IODispatcher) {
                 if (!FileSystem.SYSTEM.exists(configFile)) {
@@ -407,7 +402,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
      * Deletes the Tor working directory (including cache) to allow a fresh start on next run.
      * Should be called only when Tor is fully stopped.
      */
-    fun purgeWorkingDir() {
+    private fun purgeWorkingDir() {
         val fs = FileSystem.SYSTEM
         val torDir = getTorDir()
         fun deleteRecursivelyFs(path: Path) {
@@ -428,93 +423,69 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
         }
     }
 
-	/**
-	 * Stops Tor (if running), waits for its control port to become unavailable, then purges the Tor directory.
-	 * Safe to call even if Tor was not started in this process; we detect lingering daemons via last-known control port.
-	 */
-	suspend fun stopAndPurgeWorkingDir(timeoutMs: Long = 7_000) {
-	    // Attempt graceful stop if we own a runtime
-	    runCatching { stopTorSync() }
-	        .onFailure { e -> log.w(e) { "stopTorSync failed; will still wait for port to close and purge" } }
-
-	    // Try to read a last-known control port (backup first, then current)
-	    val lastKnownPort = runCatching { readLastKnownControlPort() }.getOrNull()
-	    if (lastKnownPort != null) {
-	        waitForControlPortClosed(lastKnownPort, timeoutMs)
-	    }
-
-	    // Finally purge
-	    purgeWorkingDir()
-	}
-
-	private fun readLastKnownControlPort(): Int? {
-	    val fs = FileSystem.SYSTEM
-	    val backup = getControlPortBackupFile()
-	    val current = getControlPortFile()
-	    fun parse(file: Path): Int? {
-	        if (!fs.exists(file)) return null
-	        return runCatching {
-	            fs.read(file) { readUtf8() }
-	                .lineSequence()
-	                .firstOrNull { it.startsWith("PORT=127.0.0.1:") }
-	                ?.removePrefix("PORT=127.0.0.1:")
-	                ?.toInt()
-	        }.getOrNull()
-	    }
-	    return parse(backup) ?: parse(current)
-	}
-
-	suspend fun waitForControlPortClosed(port: Int, timeoutMs: Long = 7_000) {
-	    val selectorManager = SelectorManager(Dispatchers.IO)
-	    try {
-	        val start = Clock.System.now().toEpochMilliseconds()
-	        while (true) {
-	            val stillOpen = runCatching {
-	                val socket = aSocket(selectorManager).tcp().connect("127.0.0.1", port)
-	                socket.close(); true
-	            }.getOrElse { false }
-	            if (!stillOpen) {
-	                log.i { "Control port $port is closed" }
-	                return
-	            }
-	            if (Clock.System.now().toEpochMilliseconds() - start > timeoutMs) {
-	                log.w { "Control port $port still open after ${timeoutMs}ms; continuing with purge" }
-	                return
-	            }
-	            delay(200)
-	        }
-	    } finally {
-	        selectorManager.close()
-	    }
-	}
-
-
-    private fun handleError(messageString: String) {
-        log.e(messageString)
-        _startupFailure.value = KmpTorException(messageString)
-    }
-
-    private fun resetAndDispose() {
-        if (deferredSocksPort.isActive) {
-            deferredSocksPort.cancel("KmpTorService resetAndDispose called before socks port became available")
-        }
-        deferredSocksPort = CompletableDeferred()
-        torDaemonStarted = CompletableDeferred()
-        configJob?.cancel()
-        configJob = null
-        disposeControlPortFileObserver()
-        _startupFailure.value = null
-    }
-
-    private fun disposeControlPortFileObserver() {
-        controlPortFileObserverJob?.cancel()
-        controlPortFileObserverJob = null
-    }
-
     /**
-     * Suspends until socks port is available
+     * Stops Tor (if running), waits for its control port to become unavailable, then purges the Tor directory.
+     * Safe to call even if Tor was not started in this process; we detect lingering daemons via last-known control port.
      */
-    suspend fun getSocksPort(): Int {
-        return deferredSocksPort.await()
+    suspend fun stopAndPurgeWorkingDir(timeoutMs: Long = 7_000) {
+        // Attempt graceful stop if we own a runtime
+        runCatching { stopTor() }
+            .onFailure { e -> log.w(e) { "stopTorSync failed; will still wait for port to close and purge" } }
+
+        // Try to read a last-known control port (backup first, then current)
+        val lastKnownPort = runCatching { readLastKnownControlPort() }.getOrNull()
+        if (lastKnownPort != null) {
+            waitForControlPortClosed(lastKnownPort, timeoutMs)
+        }
+
+        // Finally purge
+        purgeWorkingDir()
+    }
+
+    private fun readLastKnownControlPort(): Int? {
+        val fs = FileSystem.SYSTEM
+        val backup = getControlPortBackupFile()
+        val current = getControlPortFile()
+        fun parse(file: Path): Int? {
+            if (!fs.exists(file)) return null
+            return runCatching {
+                fs.read(file) { readUtf8() }
+                    .lineSequence()
+                    .firstOrNull { it.startsWith("PORT=127.0.0.1:") }
+                    ?.removePrefix("PORT=127.0.0.1:")
+                    ?.toInt()
+            }.getOrNull()
+        }
+        return parse(backup) ?: parse(current)
+    }
+
+    private suspend fun waitForControlPortClosed(port: Int, timeoutMs: Long = 7_000) {
+        val selectorManager = SelectorManager(Dispatchers.IO)
+        try {
+            val start = Clock.System.now().toEpochMilliseconds()
+            while (true) {
+                val stillOpen = runCatching {
+                    val socket = aSocket(selectorManager).tcp().connect("127.0.0.1", port)
+                    socket.close(); true
+                }.getOrElse { false }
+                if (!stillOpen) {
+                    log.i { "Control port $port is closed" }
+                    return
+                }
+                if (Clock.System.now().toEpochMilliseconds() - start > timeoutMs) {
+                    log.w { "Control port $port still open after ${timeoutMs}ms; continuing with purge" }
+                    return
+                }
+                delay(200)
+            }
+        } finally {
+            selectorManager.close()
+        }
+    }
+
+    private fun cleanupService() {
+        _bootstrapProgress.value = 0
+        _socksPort.value = null
+        torRuntime = null
     }
 }

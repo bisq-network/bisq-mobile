@@ -82,6 +82,7 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
     val password by presenter.password.collectAsState()
     val isNewApiUrl by presenter.isNewApiUrl.collectAsState()
     val torState by presenter.torState.collectAsState()
+    val torProgress by presenter.torProgress.collectAsState()
     val timeoutCounter by presenter.timeoutCounter.collectAsState()
 
     val blurTriggerSetup = rememberBlurTriggerSetup()
@@ -160,10 +161,13 @@ fun TrustedNodeSetupScreen(isWorkflow: Boolean = true) {
             }
             BisqGap.V1()
 
-            if (selectedProxyOption == BisqProxyOption.INTERNAL_TOR || torState != KmpTorService.State.IDLE) {
-                Row(horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding)) {
+            if (selectedProxyOption == BisqProxyOption.INTERNAL_TOR || torState !is KmpTorService.TorState.Stopped) {
+                Row(horizontalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPaddingHalf)) {
                     BisqText.baseRegular("mobile.trustedNodeSetup.torState".i18n())
                     BisqText.baseRegular(torState.displayString)
+                    if (torState is KmpTorService.TorState.Starting) {
+                        BisqText.baseRegular(" $torProgress%")
+                    }
                 }
             }
 
