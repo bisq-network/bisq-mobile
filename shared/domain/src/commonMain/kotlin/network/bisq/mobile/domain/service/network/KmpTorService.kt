@@ -104,12 +104,11 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                     var remainingTime = 0L
                     controlMutex.withLock {
                         if (_state.value !is TorState.Stopped) {
-                            // state may have changed since we last checked it
-                            return _state.filter { it !is TorState.Starting }.first() is TorState.Started
+                            return@withLock
                         }
                         log.i("Starting kmp-tor")
                         _state.value = TorState.Starting
-                        startDefer = serviceScope.async {
+                        val newStartDefer = serviceScope.async {
                             val runtime = getTorRuntime()
                             val startTime = Clock.System.now().toEpochMilliseconds()
                             withContext(Dispatchers.IO) {
@@ -121,26 +120,15 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                             val durationMs = Clock.System.now().toEpochMilliseconds() - startTime
                             remainingTime = (timeoutMs - durationMs).coerceAtLeast(0)
                         }
-                        startDefer?.await()
+                        startDefer = newStartDefer
+                        newStartDefer.await()
                     }
-                    withTimeout(remainingTime) {
+                    val bootstrapped = withTimeout(remainingTime) {
                         awaitBootstrapped()
                     }
-                    _state.value = TorState.Started
-                    log.i("Started kmp-tor successfully")
-                    return true
+                    return bootstrapped
                 } catch (error: Throwable) {
-                    try {
-                        withContext(Dispatchers.IO) {
-                            val runtime = getTorRuntime()
-                            runtime.stopDaemonAsync()
-                        }
-                    } catch (_: Exception) {
-                        // ignore
-                    }
-                    cleanupService()
-                    _state.value = TorState.Stopped(error)
-
+                    stopTor(error)
                     val errorMessage = listOfNotNull(
                         error.message,
                         error.cause?.message
@@ -154,10 +142,9 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                 }
             }
         }
-
     }
 
-    private suspend fun awaitBootstrapped() {
+    private suspend fun awaitBootstrapped(): Boolean {
         return coroutineScope {
             val bootstrapDeferred = async {
                 withContext(serviceScope.coroutineContext) {
@@ -167,8 +154,12 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             val stopDetectionJob = launch { awaitStopped(); bootstrapDeferred.cancel() }
             try {
                 bootstrapDeferred.await()
+                true
             } catch (_: CancellationException) {
                 currentCoroutineContext().ensureActive()
+                // If we reach here, cancellation was due to stopDetectionJob (service stopped)
+                log.i { "Tor bootstrap interrupted - service stopped" }
+                false
             } finally {
                 stopDetectionJob.cancel()
             }
@@ -198,7 +189,8 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             try {
                 portDeferred.await()
             } catch (_: CancellationException) {
-                currentCoroutineContext().ensureActive() // job cancellation is separate from current coroutine cancellation
+                currentCoroutineContext().ensureActive()
+                // If we reach here, cancellation was due to stopDetectionJob (service stopped)
                 null
             } finally {
                 stopDetectionJob.cancel()
@@ -206,7 +198,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
         }
     }
 
-    suspend fun stopTor() {
+    suspend fun stopTor(reason: Throwable? = null) {
         startDefer?.cancel()
         controlMutex.withLock {
             when (_state.value) {
@@ -219,7 +211,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                             runtime.stopDaemonAsync()
                         }
                         log.i { "Tor daemon stopped successfully" }
-                        _state.value = TorState.Stopped()
+                        _state.value = TorState.Stopped(reason)
                     } catch (e: Exception) {
                         log.e(e) { "Tor daemon stopped with error" }
                         _state.value = TorState.Stopped(e)
@@ -301,7 +293,8 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                 log.i { "Tor bootstrap progress: $percentage%" }
 
                 if (percentage == 100) {
-                    log.i { "Tor successfully connected (100% bootstrapped)" }
+                    log.i("Started kmp-tor successfully  (100% bootstrapped)")
+                    _state.value = TorState.Started
                 }
             }
         }

@@ -77,7 +77,10 @@ class NodeApplicationLifecycleService(
                 if (isTorSupported(networkServiceConfig)) {
                     // Block until tor is started to initialize or a timeout exception is thrown
                     // We handle bootstrap timeout of tor in ApplicationBootstrapFacade
-                    kmpTorService.startTor()
+                    val torStarted = kmpTorService.startTor()
+                    if (!torStarted) {
+                        throw IllegalStateException("Failed to start Tor - cannot initialize application")
+                    }
                 }
 
                 log.i { "Start initializing applicationService" }
