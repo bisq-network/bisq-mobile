@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
 import io.ktor.http.parseUrl
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -412,6 +413,11 @@ class TrustedNodeSetupPresenter(
                     }
                 }
                 _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
+
+                if (error is CancellationException) {
+                    // Rethrow to allow proper coroutine cancellation
+                    throw error
+                }
             }
         }
     }
