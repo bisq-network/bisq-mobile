@@ -19,12 +19,14 @@ import io.ktor.http.content.OutgoingContent
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.readRemaining
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.io.readByteArray
@@ -61,6 +63,7 @@ class HttpClientService(
     private val _httpClientChangedFlow = MutableSharedFlow<HttpClientSettings>(1)
     val httpClientChangedFlow get() = _httpClientChangedFlow.asSharedFlow()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun activate() {
         super.activate()
 
@@ -71,23 +74,19 @@ class HttpClientService(
             combine(
                 sensitiveSettingsRepository.data,
                 kmpTorService.state
-            ) { settings, state ->
-                if (settings.selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
-                    val kmpTorSocksPort =
-                        if (state !is KmpTorService.TorState.Stopped) {
-                            kmpTorService.awaitSocksPort()
-                        } else {
+            ) { settings, state -> settings to state }
+                .mapLatest { (settings, state) ->
+                    if (settings.selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
+                        if (state is KmpTorService.TorState.Stopped) {
                             null
+                        } else {
+                            kmpTorService.awaitSocksPort()
+                                ?.let { HttpClientSettings.from(settings, it) }
                         }
-                    if (kmpTorSocksPort != null) {
-                        HttpClientSettings.from(settings, kmpTorSocksPort)
                     } else {
-                        null
+                        HttpClientSettings.from(settings, null)
                     }
-                } else {
-                    HttpClientSettings.from(settings, null)
-                }
-            }.filterNotNull()
+                }.filterNotNull()
         ) { newConfig ->
             if (lastConfig != newConfig) {
                 lastConfig = newConfig
