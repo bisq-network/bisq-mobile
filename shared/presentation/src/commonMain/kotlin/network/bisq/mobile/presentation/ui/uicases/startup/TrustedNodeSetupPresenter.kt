@@ -363,6 +363,7 @@ class TrustedNodeSetupPresenter(
                 }
             } catch (e: Throwable) {
                 onConnectionError(e, newApiUrl.toNormalizedString())
+                currentCoroutineContext().ensureActive()
             } finally {
                 _isLoading.value = false
             }
@@ -373,7 +374,7 @@ class TrustedNodeSetupPresenter(
         return "${this.protocol.name}://${this.host}:${this.port}"
     }
 
-    private suspend fun onConnectionError(error: Throwable, newApiUrl: String) {
+    private fun onConnectionError(error: Throwable, newApiUrl: String) {
         when (error) {
             is TimeoutCancellationException -> {
                 log.e(error) { "Connection test timed out" }
@@ -413,7 +414,6 @@ class TrustedNodeSetupPresenter(
                 _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
             }
         }
-        currentCoroutineContext().ensureActive()
     }
 
     private fun navigateToSplashScreen() {
