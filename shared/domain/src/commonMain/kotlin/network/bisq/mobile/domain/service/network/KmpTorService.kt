@@ -100,10 +100,14 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             }
 
             is TorState.Stopped -> {
-                log.i("Starting kmp-tor")
                 try {
                     var remainingTime = 0L
                     controlMutex.withLock {
+                        if (_state.value !is TorState.Stopped) {
+                            // state may have changed since we last checked it
+                            return _state.filter { it !is TorState.Starting }.first() is TorState.Started
+                        }
+                        log.i("Starting kmp-tor")
                         _state.value = TorState.Starting
                         startDefer = serviceScope.async {
                             val runtime = getTorRuntime()
