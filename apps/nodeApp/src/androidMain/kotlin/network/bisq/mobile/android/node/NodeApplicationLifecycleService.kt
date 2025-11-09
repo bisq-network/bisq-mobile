@@ -276,7 +276,6 @@ class NodeApplicationLifecycleService(
                 // We block until Tor is ready, or timeout after 60 sec
                 withTimeout(TIMEOUT_SEC * 1000) {
                     kmpTorService.startTor()
-                    kmpTorService.awaitBootstrapped()
                 }
                 log.i { "Tor successfully started" }
                 result.complete(true)
