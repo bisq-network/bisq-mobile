@@ -122,18 +122,18 @@ class TrustedNodeSetupPresenter(
         }
     }.stateIn(presenterScope, SharingStarted.Lazily, "")
 
-    val torState =
+    val torState: StateFlow<KmpTorService.TorState> =
         kmpTorService.state.stateIn(
             presenterScope,
             SharingStarted.Lazily,
             KmpTorService.TorState.Stopped()
         )
 
-    val torProgress =
+    val torProgress: StateFlow<Int> =
         kmpTorService.bootstrapProgress.stateIn(
             presenterScope,
             SharingStarted.Lazily,
-            KmpTorService.TorState.Stopped()
+            0
         )
 
     private val _userExplicitlyChangedProxy = MutableStateFlow(false)
@@ -244,7 +244,13 @@ class TrustedNodeSetupPresenter(
                     BisqProxyOption.INTERNAL_TOR -> {
                         if (kmpTorService.state.value !is KmpTorService.TorState.Started) {
                             _status.value = "mobile.trustedNodeSetup.status.startingTor".i18n()
-                            kmpTorService.startTor()
+                            val started = kmpTorService.startTor()
+                            if (!started) {
+                                val startError =
+                                    (kmpTorService.state.value as? KmpTorService.TorState.Stopped)?.error
+                                        ?: IllegalStateException("Failed to start Tor")
+                                throw startError
+                            }
                         }
                         newProxyHost = "127.0.0.1"
                         newProxyPort = kmpTorService.socksPort.filterNotNull()
