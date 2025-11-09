@@ -60,11 +60,6 @@ class NodeApplicationLifecycleService(
     private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
     private val connectivityService: NodeConnectivityService,
 ) : BaseService() {
-
-    companion object Companion {
-        const val TIMEOUT_SEC: Long = 60
-    }
-
     private val alreadyKilled = AtomicBoolean(false)
     private val isRestarting = AtomicBoolean(false)
 
@@ -82,7 +77,7 @@ class NodeApplicationLifecycleService(
                 if (isTorSupported(networkServiceConfig)) {
                     // Block until tor is started to initialize or a timeout exception is thrown
                     // We handle bootstrap timeout of tor in ApplicationBootstrapFacade
-                    kmpTorService.startTor(TIMEOUT_SEC * 1000)
+                    kmpTorService.startTor()
                 }
 
                 log.i { "Start initializing applicationService" }
