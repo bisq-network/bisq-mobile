@@ -101,7 +101,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
 
             is TorState.Stopped -> {
                 try {
-                    var remainingTime = 0L
+                    var remainingTime = timeoutMs
                     controlMutex.withLock {
                         if (_state.value !is TorState.Stopped) {
                             return@withLock
