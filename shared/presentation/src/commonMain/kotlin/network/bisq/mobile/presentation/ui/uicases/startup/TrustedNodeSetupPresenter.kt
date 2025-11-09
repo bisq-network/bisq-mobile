@@ -364,7 +364,6 @@ class TrustedNodeSetupPresenter(
             } catch (e: Throwable) {
                 // Handles timeout error message
                 onConnectionError(e, newApiUrl.toNormalizedString())
-                throw e
             } finally {
                 _isLoading.value = false
             }
