@@ -3,9 +3,10 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
 import io.ktor.http.parseUrl
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.TimeoutCancellationException
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -225,16 +226,15 @@ class TrustedNodeSetupPresenter(
         val newApiUrl =
             parseAndNormalizeUrl(newApiUrlString)
 
-        if (newApiUrl == null) {
-            onConnectionError(
-                IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n()),
-                newApiUrlString
-            )
-            _isLoading.value = false
-            return
-        }
-
         launchUI {
+            if (newApiUrl == null) {
+                onConnectionError(
+                    IllegalArgumentException("mobile.trustedNodeSetup.apiUrl.invalid.format".i18n()),
+                    newApiUrlString
+                )
+                _isLoading.value = false
+                return@launchUI
+            }
             try {
                 val newProxyHost: String?
                 val newProxyPort: Int?
@@ -313,7 +313,7 @@ class TrustedNodeSetupPresenter(
 
                 if (error != null) {
                     _wsClientConnectionState.value = ConnectionState.Disconnected(error)
-                    onConnectionError(error, newApiUrl.toNormalizedString())
+                    throw error
                 } else {
                     // we only dispose client if we are sure new settings differ from the old one
                     // because it wont emit if they are the same, and new clients wont be instantiated
@@ -337,8 +337,7 @@ class TrustedNodeSetupPresenter(
                     val error = wsClientService.connect() // waits till new clients are initialized
                     if (error != null) {
                         _wsClientConnectionState.value = ConnectionState.Disconnected(error)
-                        onConnectionError(error, newApiUrl.toNormalizedString())
-                        return@launchUI
+                        throw error
                     }
                     // wait till connectionState is changed to a final state
                     wsClientService.connectionState.filter { it !is ConnectionState.Connecting }
@@ -363,7 +362,6 @@ class TrustedNodeSetupPresenter(
                     navigateToSplashScreen() // to trigger navigateToNextScreen again
                 }
             } catch (e: Throwable) {
-                // Handles timeout error message
                 onConnectionError(e, newApiUrl.toNormalizedString())
             } finally {
                 _isLoading.value = false
@@ -375,7 +373,7 @@ class TrustedNodeSetupPresenter(
         return "${this.protocol.name}://${this.host}:${this.port}"
     }
 
-    private fun onConnectionError(error: Throwable, newApiUrl: String) {
+    private suspend fun onConnectionError(error: Throwable, newApiUrl: String) {
         when (error) {
             is TimeoutCancellationException -> {
                 log.e(error) { "Connection test timed out" }
@@ -413,13 +411,9 @@ class TrustedNodeSetupPresenter(
                     }
                 }
                 _status.value = "mobile.trustedNodeSetup.status.failed".i18n()
-
-                if (error is CancellationException) {
-                    // Rethrow to allow proper coroutine cancellation
-                    throw error
-                }
             }
         }
+        currentCoroutineContext().ensureActive()
     }
 
     private fun navigateToSplashScreen() {

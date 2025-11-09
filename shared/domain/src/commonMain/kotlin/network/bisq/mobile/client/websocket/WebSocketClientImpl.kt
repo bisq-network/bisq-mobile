@@ -22,7 +22,9 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -148,9 +150,7 @@ class WebSocketClientImpl(
             } catch (e: Throwable) {
                 log.e(e) { "WS connection failed to connect" }
                 _webSocketClientStatus.value = ConnectionState.Disconnected(e)
-                if (e is CancellationException) {
-                    throw e
-                }
+                currentCoroutineContext().ensureActive()
                 return e
             }
             return null
@@ -363,6 +363,7 @@ class WebSocketClientImpl(
                 _webSocketClientStatus.value = ConnectionState.Disconnected(error)
             }
         }
+        currentCoroutineContext().ensureActive()
     }
 
     private suspend fun onWebSocketResponse(response: WebSocketResponse) {

@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.BaseService
@@ -46,7 +47,6 @@ import okio.SYSTEM
  *
  */
 class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
-
     sealed class TorState {
         protected abstract val i18nKey: String
 
@@ -83,21 +83,23 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
 
     private val bootstrapRegex = Regex("""Bootstrapped (\d+)%""")
 
-    suspend fun startTor(): Boolean {
+    suspend fun startTor(timeoutMs: Long = 60_000): Boolean {
         controlMutex.withLock {
             if (_state.value is TorState.Started || _state.value is TorState.Starting) return true
-            log.i("Start kmp-tor")
+            log.i("Starting kmp-tor")
             _state.value = TorState.Starting // Started will be set when bootstrap is 100%
 
             val runtime = getTorRuntime()
             try {
                 withContext(Dispatchers.IO) {
-                    runtime.startDaemonAsync()
-                    configTor()
+                    withTimeout(timeoutMs) {
+                        runtime.startDaemonAsync()
+                        configTor()
+                    }
                 }
+                log.i("Started kmp-tor initialization successfully")
                 return true
             } catch (error: Exception) {
-                log.e(error) { "Starting tor daemon failed" }
                 try {
                     withContext(Dispatchers.IO) {
                         runtime.stopDaemonAsync()
@@ -107,6 +109,13 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                 }
                 cleanupService()
                 _state.value = TorState.Stopped(error)
+
+                val errorMessage = listOfNotNull(
+                    error.message,
+                    error.cause?.message
+                ).firstOrNull() ?: "Unknown Tor error"
+                log.e(error) { "Starting kmp-tor daemon failed: $errorMessage" }
+
                 return false
             }
         }

@@ -8,12 +8,9 @@ import androidx.lifecycle.LifecycleOwner
 import bisq.common.network.TransportType
 import bisq.network.NetworkServiceConfig
 import com.jakewharton.processphoenix.ProcessPhoenix
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.android.node.service.AndroidMemoryReportService
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.service.BaseService
@@ -36,7 +33,6 @@ import network.bisq.mobile.presentation.MainActivity
 import network.bisq.mobile.presentation.service.OpenTradesNotificationService
 import java.io.File
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.system.exitProcess
 
 /**
@@ -84,8 +80,9 @@ class NodeApplicationLifecycleService(
 
                 val networkServiceConfig: NetworkServiceConfig = androidApplicationService.networkServiceConfig
                 if (isTorSupported(networkServiceConfig)) {
-                    // Block until tor is ready or a timeout exception is thrown
-                    initializeTor().await()
+                    // Block until tor is started to initialize or a timeout exception is thrown
+                    // We handle bootstrap timeout of tor in ApplicationBootstrapFacade
+                    kmpTorService.startTor(TIMEOUT_SEC * 1000)
                 }
 
                 log.i { "Start initializing applicationService" }
@@ -266,41 +263,6 @@ class NodeApplicationLifecycleService(
             Process.killProcess(Process.myPid())
             exitProcess(0)
         }
-    }
-
-    private fun initializeTor(): CompletableDeferred<Boolean> {
-        val result = CompletableDeferred<Boolean>()
-        launchIO {
-            try {
-                log.i { "Starting Tor" }
-                // We block until Tor is ready, or timeout after 60 sec
-                withTimeout(TIMEOUT_SEC * 1000) {
-                    kmpTorService.startTor()
-                }
-                log.i { "Tor successfully started" }
-                result.complete(true)
-            } catch (e: TimeoutCancellationException) {
-                log.e(e) { "Tor initialization not completed after $TIMEOUT_SEC seconds" }
-                result.completeExceptionally(e)
-            } catch (e: CancellationException) {
-                result.cancel(e)
-                throw e
-            } catch (e: Exception) {
-                val state = kmpTorService.state.value
-                val failure = if (state is KmpTorService.TorState.Stopped) {
-                    state.error
-                } else {
-                    null
-                }
-                val errorMessage = listOfNotNull(
-                    failure?.message,
-                    failure?.cause?.message
-                ).firstOrNull() ?: "Unknown Tor error"
-                result.completeExceptionally(e)
-                log.e(e) { "Tor initialization failed - $errorMessage" }
-            }
-        }
-        return result
     }
 
     private fun activateServiceFacades() {
