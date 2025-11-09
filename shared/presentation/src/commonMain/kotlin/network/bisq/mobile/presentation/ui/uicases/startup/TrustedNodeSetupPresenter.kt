@@ -18,7 +18,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.client.httpclient.BisqProxyOption
 import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
 import network.bisq.mobile.client.shared.BuildConfig
@@ -284,13 +283,6 @@ class TrustedNodeSetupPresenter(
                 val error = if (isExternalProxy && newProxyPort == null) {
                     IllegalArgumentException("mobile.trustedNodeSetup.proxyPort.invalid".i18n())
                 } else {
-                    if (newProxyOption == BisqProxyOption.INTERNAL_TOR && kmpTorService.state.value is KmpTorService.TorState.Starting) {
-                        withTimeout(30_000) {
-                            // wait till tor finish bootstrapping
-                            _status.value = "mobile.trustedNodeSetup.status.waitingForTor".i18n()
-                            kmpTorService.awaitBootstrapped()
-                        }
-                    }
                     val timeoutSecs = wsClientService.determineTimeout(newApiUrl.host) / 1000
                     val countdownJob = launchUI {
                         for (i in timeoutSecs downTo 0) {
