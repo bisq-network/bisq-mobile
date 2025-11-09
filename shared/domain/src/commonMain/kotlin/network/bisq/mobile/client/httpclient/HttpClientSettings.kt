@@ -5,7 +5,6 @@ import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.data.model.SensitiveSettings
 import network.bisq.mobile.domain.data.replicated.common.network.AddressVO
 import network.bisq.mobile.domain.getPlatformInfo
-import network.bisq.mobile.domain.service.network.KmpTorService
 
 
 data class HttpClientSettings(
@@ -16,17 +15,14 @@ data class HttpClientSettings(
     val password: String? = null,
 ) {
     companion object {
-        /**
-         * Warning: Suspends until [KmpTorService] is started if selected proxy option is [BisqProxyOption.INTERNAL_TOR]
-         */
-        suspend fun from(settings: SensitiveSettings, kmpTorService: KmpTorService): HttpClientSettings {
+        fun from(settings: SensitiveSettings, kmpTorSocksPort: Int?): HttpClientSettings {
             val selectedProxyOption = settings.selectedProxyOption
             var proxyUrl: String?
             val isTorProxy: Boolean
             when (selectedProxyOption) {
                 BisqProxyOption.INTERNAL_TOR -> {
-                    val socksPort = kmpTorService.awaitSocksPort()
-                    proxyUrl = "127.0.0.1:$socksPort"
+                    require(kmpTorSocksPort != null) { "Expected kmpTorSocksPort to be an integer value, found null instead" }
+                    proxyUrl = "127.0.0.1:$kmpTorSocksPort"
                     isTorProxy = true
                 }
 

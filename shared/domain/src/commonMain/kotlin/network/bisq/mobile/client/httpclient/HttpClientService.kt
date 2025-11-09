@@ -22,6 +22,7 @@ import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
@@ -63,8 +64,31 @@ class HttpClientService(
     override fun activate() {
         super.activate()
 
-        collectIO(sensitiveSettingsRepository.data) {
-            val newConfig = HttpClientSettings.from(it, kmpTorService)
+
+        collectIO(
+            // this combine allows waiting for kmp tor service to be initialized properly and listened to
+            // if BisqProxyOption.INTERNAL_TOR proxy option is used
+            combine(
+                sensitiveSettingsRepository.data,
+                kmpTorService.state
+            ) { settings, state ->
+                if (settings.selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
+                    val kmpTorSocksPort =
+                        if (state !is KmpTorService.TorState.Stopped) {
+                            kmpTorService.awaitSocksPort()
+                        } else {
+                            null
+                        }
+                    if (kmpTorSocksPort != null) {
+                        HttpClientSettings.from(settings, kmpTorSocksPort)
+                    } else {
+                        null
+                    }
+                } else {
+                    HttpClientSettings.from(settings, null)
+                }
+            }.filterNotNull()
+        ) { newConfig ->
             if (lastConfig != newConfig) {
                 lastConfig = newConfig
                 _httpClient.value?.close()
@@ -167,7 +191,8 @@ class HttpClientService(
                         val method = request.method.value
                         val timestamp = Clock.System.now().toEpochMilliseconds().toString()
                         val nonce = AuthUtils.generateNonce()
-                        val normalizedPathAndQuery = AuthUtils.getNormalizedPathAndQuery(request.url.build())
+                        val normalizedPathAndQuery =
+                            AuthUtils.getNormalizedPathAndQuery(request.url.build())
                         val bodySha256Hex = when (content) {
                             is OutgoingContent.ByteArrayContent -> {
                                 val bytes = content.bytes()

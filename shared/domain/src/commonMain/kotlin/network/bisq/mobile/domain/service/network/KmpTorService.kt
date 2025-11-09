@@ -11,6 +11,8 @@ import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,6 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -30,6 +33,7 @@ import network.bisq.mobile.i18n.i18n
 import okio.FileSystem
 import okio.Path
 import okio.SYSTEM
+import kotlin.coroutines.cancellation.CancellationException
 
 
 /**
@@ -127,9 +131,33 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
         }
     }
 
-    suspend fun awaitSocksPort() {
-        withContext(serviceScope.coroutineContext) {
-            socksPort.filterNotNull().first()
+    suspend fun awaitStopped(): TorState.Stopped {
+        return withContext(serviceScope.coroutineContext) {
+            state.filterNotNull().filter { it is TorState.Stopped }.first() as TorState.Stopped
+        }
+    }
+
+    /**
+     * Suspends until socks port is available or state is Stopped.
+     *
+     * Will return early with null if state is already Stopped
+     */
+    suspend fun awaitSocksPort(): Int? {
+        return coroutineScope {
+            // then we race for port or stop of service
+            val portDeferred = async {
+                withContext(serviceScope.coroutineContext) {
+                    socksPort.filterNotNull().first()
+                }
+            }
+            val stopDetectionJob = launch { awaitStopped(); portDeferred.cancel() }
+            try {
+                portDeferred.await()
+            } catch (e: CancellationException) {
+                null
+            } finally {
+                stopDetectionJob.cancel()
+            }
         }
     }
 
@@ -255,17 +283,13 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             // The FileObserver can miss the second operation, causing a deadlock.
             // See Bisq Easy tor implementation at: bisq.network.tor.process.control_port.ControlPortFilePoller
 
-            var iterations = 0
             val delay: Long = 100
-            val maxIterations = 30 * 1000 / delay // 30 seconds with 100ms delays
             val startTime = Clock.System.now().toEpochMilliseconds()
-            val timeoutMs = 60_000 // 60 second timeout
-            while (iterations < maxIterations) {
-                iterations++
+            val timeoutMs = 30_000 // 30 second timeout
+            while (true) {
                 if (Clock.System.now().toEpochMilliseconds() - startTime > timeoutMs) {
-                    throw KmpTorException("Timeout waiting for control port file")
+                    throw KmpTorException("Timed out waiting for control port file")
                 }
-
                 val currentMetadata = withContext(Dispatchers.IO) {
                     FileSystem.SYSTEM.metadataOrNull(controlPortFile)
                 }
@@ -274,7 +298,6 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                 }
                 delay(delay)
             }
-            throw KmpTorException("Failed to read control port after $iterations iterations")
         } catch (e: Exception) {
             log.e(e) { "Observing file controlPortFile failed" }
             throw e
