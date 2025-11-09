@@ -314,7 +314,8 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     private suspend fun configTor() {
         try {
             // Note: protected by outer withTimeout in startTor()
-            val socksPort = socksPort.filterNotNull().first()
+            val socksPort = awaitSocksPort()
+                ?: throw KmpTorException("Service stopped before SOCKS port available")
             val controlPort = readControlPort()
 
             writeExternalTorConfig(socksPort, controlPort)
