@@ -301,8 +301,11 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                 log.i { "Tor bootstrap progress: $percentage%" }
 
                 if (percentage == 100) {
-                    log.i("Started kmp-tor successfully  (100% bootstrapped)")
-                    _state.value = TorState.Started
+                    // Only transition to Started if we're still Starting
+                    if (_state.value is TorState.Starting) {
+                        log.i("Started kmp-tor successfully (100% bootstrapped)")
+                        _state.value = TorState.Started
+                    }
                 }
             }
         }
