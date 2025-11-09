@@ -102,10 +102,12 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             is TorState.Stopped -> {
                 try {
                     var remainingTime = timeoutMs
+                    var didAcquireStart = false
                     controlMutex.withLock {
                         if (_state.value !is TorState.Stopped) {
                             return@withLock
                         }
+                        didAcquireStart = true
                         log.i("Starting kmp-tor")
                         _state.value = TorState.Starting
                         val newStartDefer = serviceScope.async {
@@ -123,6 +125,12 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                         startDefer = newStartDefer
                         newStartDefer.await()
                     }
+                    // If another coroutine changed state while we waited for the lock, defer to it
+                    if (!didAcquireStart) {
+                        return _state.filter { it !is TorState.Starting }
+                            .first() is TorState.Started
+                    }
+
                     val bootstrapped = withTimeout(remainingTime) {
                         awaitBootstrapped()
                     }
