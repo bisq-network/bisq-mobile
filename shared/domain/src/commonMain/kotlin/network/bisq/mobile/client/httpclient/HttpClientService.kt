@@ -20,6 +20,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -63,31 +64,12 @@ class HttpClientService(
     private val _httpClientChangedFlow = MutableSharedFlow<HttpClientSettings>(1)
     val httpClientChangedFlow get() = _httpClientChangedFlow.asSharedFlow()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
+
     override fun activate() {
         super.activate()
 
 
-        collectIO(
-            // this combine allows waiting for kmp tor service to be initialized properly and listened to
-            // if BisqProxyOption.INTERNAL_TOR proxy option is used
-            combine(
-                sensitiveSettingsRepository.data,
-                kmpTorService.state
-            ) { settings, state -> settings to state }
-                .mapLatest { (settings, state) ->
-                    if (settings.selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
-                        if (state is KmpTorService.TorState.Stopped) {
-                            null
-                        } else {
-                            kmpTorService.awaitSocksPort()
-                                ?.let { HttpClientSettings.from(settings, it) }
-                        }
-                    } else {
-                        HttpClientSettings.from(settings, null)
-                    }
-                }.filterNotNull()
-        ) { newConfig ->
+        collectIO(getHttpClientSettingsFlow()) { newConfig ->
             if (lastConfig != newConfig) {
                 lastConfig = newConfig
                 _httpClient.value?.close()
@@ -101,6 +83,28 @@ class HttpClientService(
         super.deactivate()
 
         disposeClient()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun getHttpClientSettingsFlow(): Flow<HttpClientSettings> {
+        // this allows waiting for kmp tor service to be initialized properly and listened to
+        // if BisqProxyOption.INTERNAL_TOR proxy option is used
+        return combine(
+            sensitiveSettingsRepository.data,
+            kmpTorService.state
+        ) { settings, state -> settings to state }
+            .mapLatest { (settings, state) ->
+                if (settings.selectedProxyOption == BisqProxyOption.INTERNAL_TOR) {
+                    if (state is KmpTorService.TorState.Stopped) {
+                        null
+                    } else {
+                        kmpTorService.awaitSocksPort()
+                            ?.let { HttpClientSettings.from(settings, it) }
+                    }
+                } else {
+                    HttpClientSettings.from(settings, null)
+                }
+            }.filterNotNull()
     }
 
     /**

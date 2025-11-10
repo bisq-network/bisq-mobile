@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
 import io.ktor.http.parseUrl
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -225,6 +226,7 @@ class TrustedNodeSetupPresenter(
         val newApiUrl =
             parseAndNormalizeUrl(newApiUrlString)
 
+        var countdownJob: Job? = null
         launchUI {
             if (newApiUrl == null) {
                 onConnectionError(
@@ -284,7 +286,7 @@ class TrustedNodeSetupPresenter(
                     IllegalArgumentException("mobile.trustedNodeSetup.proxyPort.invalid".i18n())
                 } else {
                     val timeoutSecs = wsClientService.determineTimeout(newApiUrl.host) / 1000
-                    val countdownJob = launchUI {
+                    countdownJob = launchUI {
                         for (i in timeoutSecs downTo 0) {
                             _timeoutCounter.value = i
                             delay(1000)
@@ -357,6 +359,7 @@ class TrustedNodeSetupPresenter(
                 onConnectionError(e, newApiUrl.toNormalizedString())
                 currentCoroutineContext().ensureActive()
             } finally {
+                countdownJob?.cancel()
                 _isLoading.value = false
             }
         }
