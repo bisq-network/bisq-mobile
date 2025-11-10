@@ -26,9 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.withContext
 import kotlinx.datetime.Clock
 import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
@@ -38,6 +36,7 @@ import network.bisq.mobile.domain.createHttpClient
 import network.bisq.mobile.domain.data.repository.SensitiveSettingsRepository
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.network.KmpTorService
+import network.bisq.mobile.domain.utils.awaitOrCancel
 import kotlin.concurrent.Volatile
 
 /**
@@ -63,6 +62,7 @@ class HttpClientService(
     private var _httpClient: MutableStateFlow<HttpClient?> = MutableStateFlow(null)
     private val _httpClientChangedFlow = MutableSharedFlow<HttpClientSettings>(1)
     val httpClientChangedFlow get() = _httpClientChangedFlow.asSharedFlow()
+    private val stopFlow = MutableSharedFlow<Unit>(replay = 1) // signal to cancel waiters
 
 
     override fun activate() {
@@ -112,15 +112,17 @@ class HttpClientService(
      * to instantiate it's websocket client.
      */
     suspend fun getClient(): HttpClient {
-        return withContext(serviceScope.coroutineContext) {
-            _httpClient.filterNotNull().first()
-        }
+        return awaitOrCancel(
+            _httpClient.filterNotNull(),
+            stopFlow,
+        )
     }
 
     fun disposeClient() {
         _httpClient.value?.close()
         _httpClient.value = null
         lastConfig = null
+        stopFlow.tryEmit(Unit)
     }
 
     suspend fun get(block: HttpRequestBuilder.() -> Unit): HttpResponse {
@@ -236,7 +238,7 @@ class HttpClientService(
                             }
 
                             is String -> {
-                                // we modify the request in this case, but return null at the end as its not doing any transformation here
+                                // Compute hash for auth headers but dont set reconstructedBody to return null and let ktor know we did not transform anything
                                 if (content.isNotEmpty()) {
                                     getSha256(content.encodeToByteArray()).toHexString()
                                 } else {

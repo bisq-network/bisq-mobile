@@ -10,10 +10,7 @@ import io.matthewnelson.kmp.tor.runtime.core.OnEvent
 import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.ensureActive
@@ -23,7 +20,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -32,11 +29,11 @@ import kotlinx.datetime.Clock
 import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.awaitOrNull
 import network.bisq.mobile.i18n.i18n
 import okio.FileSystem
 import okio.Path
 import okio.SYSTEM
-import kotlin.coroutines.cancellation.CancellationException
 
 
 /**
@@ -113,7 +110,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                         val newStartDefer = serviceScope.async {
                             val runtime = getTorRuntime()
                             val startTime = Clock.System.now().toEpochMilliseconds()
-                            withContext(Dispatchers.IO) {
+                            withContext(IODispatcher) {
                                 withTimeout(timeoutMs) {
                                     runtime.startDaemonAsync()
                                     configTor()
@@ -153,31 +150,15 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     private suspend fun awaitBootstrapped(): Boolean {
-        return coroutineScope {
-            val bootstrapDeferred = async {
-                withContext(serviceScope.coroutineContext) {
-                    _bootstrapProgress.filter { it >= 100 }.first()
-                }
-            }
-            val stopDetectionJob = launch { awaitStopped(); bootstrapDeferred.cancel() }
-            try {
-                bootstrapDeferred.await()
-                true
-            } catch (_: CancellationException) {
-                currentCoroutineContext().ensureActive()
-                // If we reach here, cancellation was due to stopDetectionJob (service stopped)
-                log.i { "Tor bootstrap interrupted - service stopped" }
-                false
-            } finally {
-                stopDetectionJob.cancel()
-            }
+        val result = awaitOrNull(
+            _bootstrapProgress.filter { it >= 100 }.map { true },
+            _state.filter { it is TorState.Stopped }
+        )
+        if (result == null) {
+            log.i { "Tor bootstrap interrupted - service stopped" }
+            return false
         }
-    }
-
-    private suspend fun awaitStopped(): TorState.Stopped {
-        return withContext(serviceScope.coroutineContext) {
-            _state.filter { it is TorState.Stopped }.first() as TorState.Stopped
-        }
+        return true
     }
 
     /**
@@ -186,24 +167,10 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
      * Will return early with null if state is already Stopped
      */
     suspend fun awaitSocksPort(): Int? {
-        return coroutineScope {
-            // then we race for port or stop of service
-            val portDeferred = async {
-                withContext(serviceScope.coroutineContext) {
-                    socksPort.filterNotNull().first()
-                }
-            }
-            val stopDetectionJob = launch { awaitStopped(); portDeferred.cancel() }
-            try {
-                portDeferred.await()
-            } catch (_: CancellationException) {
-                currentCoroutineContext().ensureActive()
-                // If we reach here, cancellation was due to stopDetectionJob (service stopped)
-                null
-            } finally {
-                stopDetectionJob.cancel()
-            }
-        }
+        return awaitOrNull(
+            _socksPort.filterNotNull(),
+            _state.filter { it is TorState.Stopped }
+        )
     }
 
     suspend fun stopTor(reason: Throwable? = null) {
@@ -215,7 +182,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                     _state.value = TorState.Stopping
                     try {
                         val runtime = getTorRuntime()
-                        withContext(Dispatchers.IO) {
+                        withContext(IODispatcher) {
                             runtime.stopDaemonAsync()
                         }
                         log.i { "Tor daemon stopped successfully" }
@@ -344,7 +311,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                 if (Clock.System.now().toEpochMilliseconds() - startTime > timeoutMs) {
                     throw KmpTorException("Timed out waiting for control port file")
                 }
-                val currentMetadata = withContext(Dispatchers.IO) {
+                val currentMetadata = withContext(IODispatcher) {
                     FileSystem.SYSTEM.metadataOrNull(controlPortFile)
                 }
                 if (currentMetadata != null) {
@@ -361,7 +328,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     private suspend fun parsePortFromFile(file: Path): Int {
         try {
             // Expected string in file: `PORT=127.0.0.1:{port}`
-            val lines = withContext(Dispatchers.IO) {
+            val lines = withContext(IODispatcher) {
                 FileSystem.SYSTEM.read(file) {
                     readUtf8().lines()
                 }
@@ -441,7 +408,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     private suspend fun verifyControlPortAccessible(controlPort: Int) {
-        val selectorManager = SelectorManager(Dispatchers.IO)
+        val selectorManager = SelectorManager(IODispatcher)
         try {
             delay(500)
             repeat(3) { attempt ->
@@ -546,7 +513,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     private suspend fun waitForControlPortClosed(port: Int, timeoutMs: Long = 7_000) {
-        val selectorManager = SelectorManager(Dispatchers.IO)
+        val selectorManager = SelectorManager(IODispatcher)
         try {
             val start = Clock.System.now().toEpochMilliseconds()
             while (true) {

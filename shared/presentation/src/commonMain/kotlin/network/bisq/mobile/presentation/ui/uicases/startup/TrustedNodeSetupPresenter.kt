@@ -14,7 +14,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -245,7 +244,6 @@ class TrustedNodeSetupPresenter(
                 when (newProxyOption) {
                     BisqProxyOption.INTERNAL_TOR -> {
                         if (kmpTorService.state.value !is KmpTorService.TorState.Started) {
-                            _status.value = "mobile.trustedNodeSetup.status.startingTor".i18n()
                             val started = kmpTorService.startTor()
                             if (!started) {
                                 val startError =
@@ -255,8 +253,7 @@ class TrustedNodeSetupPresenter(
                             }
                         }
                         newProxyHost = "127.0.0.1"
-                        newProxyPort = kmpTorService.socksPort.filterNotNull()
-                            .first() // suspends till available
+                        newProxyPort = kmpTorService.awaitSocksPort()
                         newProxyIsTor = true
                     }
 

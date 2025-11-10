@@ -4,13 +4,13 @@ import io.ktor.http.Url
 import io.ktor.http.parseUrl
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.client.httpclient.HttpClientService
 import network.bisq.mobile.client.httpclient.HttpClientSettings
 import network.bisq.mobile.client.httpclient.exception.PasswordIncorrectOrMissingException
@@ -23,6 +23,7 @@ import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.utils.Logging
+import network.bisq.mobile.domain.utils.awaitOrCancel
 
 private data class SubscriptionType(val topic: Topic, val parameter: String?)
 
@@ -54,6 +55,8 @@ class WebSocketClientService(
     private val requestedSubscriptions = mutableMapOf<SubscriptionType, WebSocketEventObserver>()
     private var subscriptionsAreApplied = false
 
+    private val stopFlow = MutableSharedFlow<Unit>(replay = 1) // signal to cancel waiters
+
     override fun activate() {
         super.activate()
 
@@ -63,6 +66,9 @@ class WebSocketClientService(
     }
 
     override fun deactivate() {
+        serviceScope.launch {
+            stopFlow.emit(Unit)
+        }
         super.deactivate()
     }
 
@@ -148,9 +154,10 @@ class WebSocketClientService(
     }
 
     private suspend fun getWsClient(): WebSocketClient {
-        return withContext(serviceScope.coroutineContext) {
-            currentClient.filterNotNull().first()
-        }
+        return awaitOrCancel(
+            currentClient.filterNotNull(),
+            stopFlow,
+        )
     }
 
     suspend fun subscribe(
