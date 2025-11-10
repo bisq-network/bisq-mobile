@@ -46,7 +46,7 @@ class ClientApplicationBootstrapFacade(
 
             if (url.isBlank()) {
                 // fresh install scenario, let it proceed to onboarding
-                setState("mobile.bootstrap.connectedToTrustedNode".i18n())
+                setState("mobile.bootstrap.preparingInitialSetup".i18n())
                 setProgress(1.0f)
             } else {
                 setProgress(0.5f)
