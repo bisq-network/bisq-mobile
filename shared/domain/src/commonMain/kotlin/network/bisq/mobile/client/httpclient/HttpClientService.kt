@@ -235,6 +235,15 @@ class HttpClientService(
                                 }
                             }
 
+                            is String -> {
+                                // we modify the request in this case, but return null at the end as its not doing any transformation here
+                                if (content.isNotEmpty()) {
+                                    getSha256(content.encodeToByteArray()).toHexString()
+                                } else {
+                                    null
+                                }
+                            }
+
                             else -> null
                         }
 
@@ -252,7 +261,10 @@ class HttpClientService(
                         request.headers.append("AUTH-TS", timestamp)
                         request.headers.append("AUTH-NONCE", nonce)
                     }
-                    reconstructedBody ?: content as OutgoingContent?
+                    reconstructedBody ?: when (content) {
+                        is OutgoingContent -> content
+                        else -> null // transformation not applicable
+                    }
                 }
             })
         }
