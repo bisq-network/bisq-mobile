@@ -315,8 +315,11 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                     FileSystem.SYSTEM.metadataOrNull(controlPortFile)
                 }
                 if (currentMetadata != null) {
-                    return parsePortFromFile(controlPortFile)
+                    val parsedPort = parsePortFromFile(controlPortFile)
                         ?: throw IllegalStateException("Failed to read port from control port")
+                    // Rename the file so the observer doesn't pick up an old file
+                    moveControlPortFileToBackup()
+                    return parsedPort
                 }
                 delay(delay)
             }
@@ -340,13 +343,19 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             val port = portRegex.find(line)?.groupValues?.get(1)?.toInt()
                 ?: error("Failed to parse port from line: $line")
             log.i("Control port read from control.txt file: $port")
-            // Rename the file so the observer doesn't pick up an old file
-            val backup = getControlPortBackupFile()
-            FileSystem.SYSTEM.atomicMove(getControlPortFile(), backup)
             return port
         } catch (error: Exception) {
             log.e(error) { "Failed to read control port from control.txt file" }
             return null
+        }
+    }
+
+    private suspend fun moveControlPortFileToBackup() {
+        withContext(IODispatcher) {
+            FileSystem.SYSTEM.atomicMove(
+                getControlPortFile(),
+                getControlPortBackupFile(),
+            )
         }
     }
 
