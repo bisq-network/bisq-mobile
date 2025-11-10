@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
@@ -65,9 +66,11 @@ class HttpClientService(
     private val stopFlow = MutableSharedFlow<Unit>(replay = 1) // signal to cancel waiters
 
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun activate() {
         super.activate()
 
+        stopFlow.resetReplayCache()
 
         collectIO(getHttpClientSettingsFlow()) { newConfig ->
             if (lastConfig != newConfig) {
@@ -80,6 +83,10 @@ class HttpClientService(
     }
 
     override fun deactivate() {
+        serviceScope.launch {
+            stopFlow.emit(Unit)
+        }
+
         super.deactivate()
 
         disposeClient()
@@ -122,7 +129,6 @@ class HttpClientService(
         _httpClient.value?.close()
         _httpClient.value = null
         lastConfig = null
-        stopFlow.tryEmit(Unit)
     }
 
     suspend fun get(block: HttpRequestBuilder.() -> Unit): HttpResponse {

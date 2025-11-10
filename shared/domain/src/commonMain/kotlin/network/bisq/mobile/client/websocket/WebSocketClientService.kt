@@ -3,6 +3,7 @@ package network.bisq.mobile.client.websocket
 import io.ktor.http.Url
 import io.ktor.http.parseUrl
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,8 +58,11 @@ class WebSocketClientService(
 
     private val stopFlow = MutableSharedFlow<Unit>(replay = 1) // signal to cancel waiters
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     override fun activate() {
         super.activate()
+
+        stopFlow.resetReplayCache()
 
         collectIO(httpClientService.httpClientChangedFlow) {
             updateWebSocketClient(it)
