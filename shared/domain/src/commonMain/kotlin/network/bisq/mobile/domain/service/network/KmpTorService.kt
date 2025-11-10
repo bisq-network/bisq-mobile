@@ -316,6 +316,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                 }
                 if (currentMetadata != null) {
                     return parsePortFromFile(controlPortFile)
+                        ?: throw IllegalStateException("Failed to read port from control port")
                 }
                 delay(delay)
             }
@@ -325,7 +326,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
         }
     }
 
-    private suspend fun parsePortFromFile(file: Path): Int {
+    private suspend fun parsePortFromFile(file: Path): Int? {
         try {
             // Expected string in file: `PORT=127.0.0.1:{port}`
             val lines = withContext(IODispatcher) {
@@ -345,7 +346,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             return port
         } catch (error: Exception) {
             log.e(error) { "Failed to read control port from control.txt file" }
-            throw error
+            return null
         }
     }
 
@@ -455,24 +456,42 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
      * Deletes the Tor working directory (including cache) to allow a fresh start on next run.
      * Should be called only when Tor is fully stopped.
      */
-    private fun purgeWorkingDir() {
-        val fs = FileSystem.SYSTEM
+    private suspend fun purgeWorkingDir() {
         val torDir = getTorDir()
-        fun deleteRecursivelyFs(path: Path) {
-            // Try to list children; if fails, treat as file
-            val children = runCatching { fs.list(path) }.getOrNull()
-            children?.forEach { child -> deleteRecursivelyFs(child) }
-            runCatching { fs.delete(path) }
-        }
-        runCatching {
-            if (fs.exists(torDir)) {
-                deleteRecursivelyFs(torDir)
+        try {
+            if (withContext(IODispatcher) { FileSystem.SYSTEM.exists(torDir) }) {
+                deleteRecursively(torDir)
                 log.i { "Purged Tor working directory at $torDir" }
             } else {
                 log.i { "Tor working directory not found; nothing to purge" }
             }
-        }.onFailure { e ->
+        } catch (e: Exception) {
             log.w(e) { "Failed to purge Tor working directory" }
+        }
+    }
+
+    /**
+     * Best effort recursive directory delete
+     *
+     * @throws okio.IOException if dir does not exist or cannot be listed.
+     * A path cannot be listed if the current process doesn't have access to dir,
+     * or if there's a loop of symbolic links, or if any name is too long.
+     */
+    private suspend fun deleteRecursively(path: Path) {
+        // Try to list children; if fails, treat as file
+        val children = withContext(IODispatcher) {
+            try {
+                FileSystem.SYSTEM.list(path)
+            } catch (e: Exception) {
+                null
+            }
+        }
+        children?.forEach { child -> deleteRecursively(child) }
+        withContext(IODispatcher) {
+            try {
+                FileSystem.SYSTEM.delete(path)
+            } catch (_: Exception) {
+            }
         }
     }
 
@@ -482,11 +501,17 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
      */
     suspend fun stopAndPurgeWorkingDir(timeoutMs: Long = 7_000) {
         // Attempt graceful stop if we own a runtime
-        runCatching { stopTor() }
-            .onFailure { e -> log.w(e) { "stopTorSync failed; will still wait for port to close and purge" } }
-
+        try {
+            stopTor()
+        } catch (e: Exception) {
+            log.w(e) { "stopTorSync failed; will still wait for port to close and purge" }
+        }
         // Try to read a last-known control port (backup first, then current)
-        val lastKnownPort = runCatching { readLastKnownControlPort() }.getOrNull()
+        val lastKnownPort = try {
+            readLastKnownControlPort()
+        } catch (_: Exception) {
+            null
+        }
         if (lastKnownPort != null) {
             waitForControlPortClosed(lastKnownPort, timeoutMs)
         }
@@ -495,21 +520,10 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
         purgeWorkingDir()
     }
 
-    private fun readLastKnownControlPort(): Int? {
-        val fs = FileSystem.SYSTEM
+    private suspend fun readLastKnownControlPort(): Int? {
         val backup = getControlPortBackupFile()
         val current = getControlPortFile()
-        fun parse(file: Path): Int? {
-            if (!fs.exists(file)) return null
-            return runCatching {
-                fs.read(file) { readUtf8() }
-                    .lineSequence()
-                    .firstOrNull { it.startsWith("PORT=127.0.0.1:") }
-                    ?.removePrefix("PORT=127.0.0.1:")
-                    ?.toInt()
-            }.getOrNull()
-        }
-        return parse(backup) ?: parse(current)
+        return parsePortFromFile(backup) ?: parsePortFromFile(current)
     }
 
     private suspend fun waitForControlPortClosed(port: Int, timeoutMs: Long = 7_000) {
@@ -517,10 +531,12 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
         try {
             val start = Clock.System.now().toEpochMilliseconds()
             while (true) {
-                val stillOpen = runCatching {
+                val stillOpen = try {
                     val socket = aSocket(selectorManager).tcp().connect("127.0.0.1", port)
                     socket.close(); true
-                }.getOrElse { false }
+                } catch (_: Exception) {
+                    false
+                }
                 if (!stillOpen) {
                     log.i { "Control port $port is closed" }
                     return
