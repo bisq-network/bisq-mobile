@@ -5,6 +5,7 @@ import io.ktor.http.parseUrl
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -56,7 +57,7 @@ class WebSocketClientService(
     private val requestedSubscriptions = mutableMapOf<SubscriptionType, WebSocketEventObserver>()
     private var subscriptionsAreApplied = false
 
-    private val stopFlow = MutableSharedFlow<Unit>(replay = 1) // signal to cancel waiters
+    private val stopFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST) // signal to cancel waiters
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun activate() {

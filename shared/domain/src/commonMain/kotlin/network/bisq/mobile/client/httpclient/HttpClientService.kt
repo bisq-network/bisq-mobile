@@ -20,6 +20,7 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.utils.io.ByteChannel
 import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -63,7 +64,7 @@ class HttpClientService(
     private var _httpClient: MutableStateFlow<HttpClient?> = MutableStateFlow(null)
     private val _httpClientChangedFlow = MutableSharedFlow<HttpClientSettings>(1)
     val httpClientChangedFlow get() = _httpClientChangedFlow.asSharedFlow()
-    private val stopFlow = MutableSharedFlow<Unit>(replay = 1) // signal to cancel waiters
+    private val stopFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST) // signal to cancel waiters
 
 
     @OptIn(ExperimentalCoroutinesApi::class)
