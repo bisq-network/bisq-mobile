@@ -2,6 +2,8 @@ package network.bisq.mobile.client.service.user_profile
 
 import io.ktor.util.decodeBase64Bytes
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -17,7 +19,6 @@ import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventPayload
 import network.bisq.mobile.domain.PlatformImage
 import network.bisq.mobile.domain.createEmptyImage
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.ServiceFacade
@@ -234,7 +235,7 @@ class ClientUserProfileServiceFacade(
         return try {
             // In case we create the image we want to run it in IO context.
             // We cache the images in the catHashService if its <=120 px
-            withContext(IODispatcher) {
+            withContext(Dispatchers.IO) {
                 val ts = Clock.System.now().toEpochMilliseconds()
                 clientCatHashService.getImage(userProfile, size.toInt()).also {
                     log.d {

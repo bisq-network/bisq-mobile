@@ -1,7 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.replicated.account.payment_method.BitcoinPaymentRailEnum
 import network.bisq.mobile.domain.data.replicated.account.payment_method.FiatPaymentRailUtil
@@ -222,7 +223,7 @@ class CreateOfferPresenter(
     suspend fun createOffer(): Result<String> {
         return try {
             val params = prepareOfferParameters()
-            withContext(IODispatcher) {
+            withContext(Dispatchers.IO) {
                 offersServiceFacade.createOffer(
                     params.direction, params.market, params.bitcoinPaymentMethods,
                     params.fiatPaymentMethods, params.amountSpec, params.priceSpec,

@@ -1,10 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -42,7 +43,7 @@ abstract class State4Presenter(
                 GenericErrorHandler.handleGenericError("No trade selected for closure")
                 return@launchUI
             }
-            val result = withContext(IODispatcher) { tradesServiceFacade.closeTrade() }
+            val result = withContext(Dispatchers.IO) { tradesServiceFacade.closeTrade() }
 
             when {
                 result.isFailure -> {

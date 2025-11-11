@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -8,7 +10,6 @@ import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
 import network.bisq.mobile.domain.data.replicated.trade.bisq_easy.protocol.BisqEasyTradeStateEnum
@@ -258,7 +259,7 @@ class TradeDetailsHeaderPresenter(
         require(selectedTrade.value != null)
 
         launchUI {
-            val result: Result<Unit>? = withContext(IODispatcher) {
+            val result: Result<Unit>? = withContext(Dispatchers.IO) {
                 when (tradeCloseType.value) {
                     TradeCloseType.REJECT -> {
                         tradesServiceFacade.rejectTrade()

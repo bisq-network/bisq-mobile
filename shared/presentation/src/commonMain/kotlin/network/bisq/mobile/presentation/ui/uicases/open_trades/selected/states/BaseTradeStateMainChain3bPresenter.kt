@@ -1,11 +1,12 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.states
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory.from
 import network.bisq.mobile.domain.data.replicated.presentation.open_trades.TradeItemPresentationModel
@@ -141,7 +142,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
 
         _blockExplorer.value = EMPTY_STRING
         launchUI {
-            val result = withContext(IODispatcher) {
+            val result = withContext(Dispatchers.IO) {
                 explorerServiceFacade.getSelectedBlockExplorer()
             }
             if (result.isSuccess) {
@@ -164,7 +165,7 @@ abstract class BaseTradeStateMainChain3bPresenter(
         _errorMessage.value = null
         _balanceFromTx.value = EMPTY_STRING
         launchUI {
-            val explorerResult = withContext(IODispatcher) {
+            val explorerResult = withContext(Dispatchers.IO) {
                 explorerServiceFacade.requestTx(txId, address)
             }
 

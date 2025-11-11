@@ -1,14 +1,9 @@
 package network.bisq.mobile.crypto
 
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.addressOf
-import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.suspendCancellableCoroutine
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.ios.toByteArray
 import network.bisq.mobile.ios.toNSData
-import platform.Foundation.NSData
-import platform.Foundation.NSError
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 

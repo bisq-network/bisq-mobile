@@ -3,6 +3,8 @@ package network.bisq.mobile.presentation.ui.uicases.startup
 import io.ktor.http.URLProtocol
 import io.ktor.http.Url
 import io.ktor.http.parseUrl
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.currentCoroutineContext
@@ -24,7 +26,6 @@ import network.bisq.mobile.client.shared.BuildConfig
 import network.bisq.mobile.client.websocket.ConnectionState
 import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.client.websocket.exception.IncompatibleHttpApiVersionException
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.repository.SensitiveSettingsRepository
 import network.bisq.mobile.domain.data.repository.UserRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
@@ -156,7 +157,7 @@ class TrustedNodeSetupPresenter(
 
         launchUI {
             try {
-                val settings = withContext(IODispatcher) {
+                val settings = withContext(Dispatchers.IO) {
                     sensitiveSettingsRepository.fetch()
                 }
                 _password.value = settings.bisqApiPassword

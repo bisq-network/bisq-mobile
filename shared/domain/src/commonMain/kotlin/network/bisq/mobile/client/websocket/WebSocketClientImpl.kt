@@ -18,7 +18,9 @@ import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
@@ -57,7 +59,6 @@ import network.bisq.mobile.client.websocket.subscription.ModificationType
 import network.bisq.mobile.client.websocket.subscription.Topic
 import network.bisq.mobile.client.websocket.subscription.WebSocketEventObserver
 import network.bisq.mobile.crypto.getSha256
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.settings.ApiVersionSettingsVO
 import network.bisq.mobile.domain.utils.DateUtils
 import network.bisq.mobile.domain.utils.Logging
@@ -86,7 +87,7 @@ class WebSocketClientImpl(
     private val connectionMutex = Mutex()
     private val requestResponseHandlersMutex = Mutex()
 
-    private val ioScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(Dispatchers.IO)
 
     private val _webSocketClientStatus =
         MutableStateFlow<ConnectionState>(ConnectionState.Disconnected())
@@ -108,7 +109,7 @@ class WebSocketClientImpl(
                 log.d { "WS connecting.." }
                 _webSocketClientStatus.value = ConnectionState.Connecting
                 val startTime = DateUtils.now()
-                val newSession = withContext(IODispatcher) {
+                val newSession = withContext(Dispatchers.IO) {
                     withTimeout(timeout) {
                         httpClient.webSocketSession {
                             url {
@@ -129,7 +130,7 @@ class WebSocketClientImpl(
                     log.d { "WS connected successfully" }
                     listenerJob = ioScope.launch { startListening(newSession) }
 
-                    withContext(IODispatcher) {
+                    withContext(Dispatchers.IO) {
                         withTimeout(remainingTime) {
                             val nodeApiVersion = getApiVersion()
                             if (!isApiCompatible(nodeApiVersion)) {

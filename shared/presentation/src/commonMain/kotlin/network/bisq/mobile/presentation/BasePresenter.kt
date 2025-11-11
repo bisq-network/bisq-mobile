@@ -6,6 +6,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.navigation.NavOptionsBuilder
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
@@ -18,7 +19,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.BaseModel
 import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.utils.CoroutineJobsManager
@@ -323,7 +323,7 @@ abstract class BasePresenter(private val rootPresenter: MainPresenter?) :
     @CallSuper
     override fun onViewUnattaching() {
         // Presenter level support for auto disposal
-        CoroutineScope(IODispatcher).launch { jobsManager.dispose() }
+        CoroutineScope(Dispatchers.IO).launch { jobsManager.dispose() }
     }
 
     @CallSuper

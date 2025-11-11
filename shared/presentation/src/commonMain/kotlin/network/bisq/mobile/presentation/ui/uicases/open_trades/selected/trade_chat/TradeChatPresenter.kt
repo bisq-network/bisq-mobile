@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.open_trades.selected.trade_chat
 
 import androidx.compose.material3.SnackbarDuration
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -11,7 +13,6 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.replicated.chat.CitationVO
 import network.bisq.mobile.domain.data.replicated.chat.bisq_easy.open_trades.BisqEasyOpenTradeMessageModel
@@ -142,7 +143,7 @@ class TradeChatPresenter(
             }) { messages ->
                 _sortedChatMessages.value = messages
                 messages.forEach { message ->
-                    withContext(IODispatcher) {
+                    withContext(Dispatchers.IO) {
                         val userProfile = message.senderUserProfile
                         if (_userProfileIconByProfileId.value[userProfile.id] == null) {
                             val image = userProfileServiceFacade.getUserProfileIcon(

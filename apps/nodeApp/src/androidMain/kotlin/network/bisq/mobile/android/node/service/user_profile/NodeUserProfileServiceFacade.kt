@@ -21,14 +21,12 @@ import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.service.AndroidNodeCatHashService
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.ServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import java.security.KeyPair
 import java.util.Random
-import kotlin.IllegalArgumentException
 import kotlin.math.max
 import kotlin.math.min
 
@@ -196,7 +194,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
         return try {
             // In case we create the image we want to run it in IO context.
             // We cache the images in the catHashService if its <=120 px
-            withContext(IODispatcher) {
+            withContext(Dispatchers.IO) {
                 val ts = System.currentTimeMillis()
                 catHashService.getImage(
                     Mappings.UserProfileMapping.toBisq2Model(userProfile),

@@ -1,9 +1,10 @@
 package network.bisq.mobile.domain.utils
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVO
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOFactory
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
@@ -97,7 +98,7 @@ object BisqEasyTradeAmountLimits {
 
         // Safely get seller's reputation score with proper error handling
         val myScore: Long = runCatching {
-            withContext(IODispatcher) {
+            withContext(Dispatchers.IO) {
                 reputationServiceFacade.getReputation(userProfileId)
             }.fold(
                 onSuccess = { it.totalScore },

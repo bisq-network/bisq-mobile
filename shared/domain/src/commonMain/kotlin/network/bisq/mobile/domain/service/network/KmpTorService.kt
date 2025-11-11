@@ -10,6 +10,8 @@ import io.matthewnelson.kmp.tor.runtime.core.OnEvent
 import io.matthewnelson.kmp.tor.runtime.core.TorEvent
 import io.matthewnelson.kmp.tor.runtime.core.config.TorOption
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.async
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
@@ -26,7 +28,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.datetime.Clock
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.utils.Logging
 import network.bisq.mobile.domain.utils.awaitOrNull
@@ -110,7 +111,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                         val newStartDefer = serviceScope.async {
                             val runtime = getTorRuntime()
                             val startTime = Clock.System.now().toEpochMilliseconds()
-                            withContext(IODispatcher) {
+                            withContext(Dispatchers.IO) {
                                 withTimeout(timeoutMs) {
                                     runtime.startDaemonAsync()
                                     configTor()
@@ -182,7 +183,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                     _state.value = TorState.Stopping
                     try {
                         val runtime = getTorRuntime()
-                        withContext(IODispatcher) {
+                        withContext(Dispatchers.IO) {
                             runtime.stopDaemonAsync()
                         }
                         log.i { "Tor daemon stopped successfully" }
@@ -311,7 +312,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
                 if (Clock.System.now().toEpochMilliseconds() - startTime > timeoutMs) {
                     throw KmpTorException("Timed out waiting for control port file")
                 }
-                val currentMetadata = withContext(IODispatcher) {
+                val currentMetadata = withContext(Dispatchers.IO) {
                     FileSystem.SYSTEM.metadataOrNull(controlPortFile)
                 }
                 if (currentMetadata != null) {
@@ -332,7 +333,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     private suspend fun parsePortFromFile(file: Path): Int? {
         try {
             // Expected string in file: `PORT=127.0.0.1:{port}`
-            val lines = withContext(IODispatcher) {
+            val lines = withContext(Dispatchers.IO) {
                 FileSystem.SYSTEM.read(file) {
                     readUtf8().lines()
                 }
@@ -351,7 +352,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     private suspend fun moveControlPortFileToBackup() {
-        withContext(IODispatcher) {
+        withContext(Dispatchers.IO) {
             FileSystem.SYSTEM.atomicMove(
                 getControlPortFile(),
                 getControlPortBackupFile(),
@@ -372,7 +373,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             }
 
             val configFile = torDir / "external_tor.config"
-            withContext(IODispatcher) {
+            withContext(Dispatchers.IO) {
                 FileSystem.SYSTEM.write(configFile) {
                     writeUtf8(configContent)
                     flush()
@@ -395,7 +396,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
         expectedControlPort: Int
     ) {
         try {
-            withContext(IODispatcher) {
+            withContext(Dispatchers.IO) {
                 if (!FileSystem.SYSTEM.exists(configFile)) {
                     throw KmpTorException("external_tor.config file does not exist after writing")
                 }
@@ -418,7 +419,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     private suspend fun verifyControlPortAccessible(controlPort: Int) {
-        val selectorManager = SelectorManager(IODispatcher)
+        val selectorManager = SelectorManager(Dispatchers.IO)
         try {
             delay(500)
             repeat(3) { attempt ->
@@ -468,7 +469,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     private suspend fun purgeWorkingDir() {
         val torDir = getTorDir()
         try {
-            if (withContext(IODispatcher) { FileSystem.SYSTEM.exists(torDir) }) {
+            if (withContext(Dispatchers.IO) { FileSystem.SYSTEM.exists(torDir) }) {
                 deleteRecursively(torDir)
                 log.i { "Purged Tor working directory at $torDir" }
             } else {
@@ -488,7 +489,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
      */
     private suspend fun deleteRecursively(path: Path) {
         // Try to list children; if fails, treat as file
-        val children = withContext(IODispatcher) {
+        val children = withContext(Dispatchers.IO) {
             try {
                 FileSystem.SYSTEM.list(path)
             } catch (e: Exception) {
@@ -496,7 +497,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
             }
         }
         children?.forEach { child -> deleteRecursively(child) }
-        withContext(IODispatcher) {
+        withContext(Dispatchers.IO) {
             try {
                 FileSystem.SYSTEM.delete(path)
             } catch (_: Exception) {
@@ -536,7 +537,7 @@ class KmpTorService(private val baseDir: Path) : BaseService(), Logging {
     }
 
     private suspend fun waitForControlPortClosed(port: Int, timeoutMs: Long = 7_000) {
-        val selectorManager = SelectorManager(IODispatcher)
+        val selectorManager = SelectorManager(Dispatchers.IO)
         try {
             val start = Clock.System.now().toEpochMilliseconds()
             while (true) {

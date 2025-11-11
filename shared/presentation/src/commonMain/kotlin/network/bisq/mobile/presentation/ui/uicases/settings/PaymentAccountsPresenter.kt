@@ -1,10 +1,11 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountPayloadVO
 import network.bisq.mobile.domain.data.replicated.account.UserDefinedFiatAccountVO
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
@@ -44,7 +45,7 @@ open class PaymentAccountsPresenter(
         disableInteractive()
         launchUI {
             try {
-                withContext(IODispatcher) {
+                withContext(Dispatchers.IO) {
                     accountsServiceFacade.setSelectedAccount(account)
                 }
             } finally {

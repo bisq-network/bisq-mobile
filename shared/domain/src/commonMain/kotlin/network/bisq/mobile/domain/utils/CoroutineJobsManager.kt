@@ -3,6 +3,7 @@ package network.bisq.mobile.domain.utils
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
@@ -11,7 +12,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.domain.PlatformType
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.getPlatformInfo
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -89,7 +89,7 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
     private val jobsMutex = Mutex()
 
     // Dedicated scope for job management operations - independent of user scopes
-    private var jobManagementScope = CoroutineScope(IODispatcher + SupervisorJob())
+    private var jobManagementScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     private val exceptionHandler = CoroutineExceptionHandler { _, exception ->
         log.e(exception) { "Uncaught coroutine exception" }
@@ -111,9 +111,9 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
         CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler)
     }
     private var ioScope = if (isIOS) {
-        CoroutineScope(IODispatcher + SupervisorJob())
+        CoroutineScope(Dispatchers.IO + SupervisorJob())
     } else {
-        CoroutineScope(IODispatcher + SupervisorJob() + exceptionHandler)
+        CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
     }
 
     // Callback for handling coroutine exceptions
@@ -204,14 +204,14 @@ class DefaultCoroutineJobsManager : CoroutineJobsManager, Logging {
     private fun recreateScopes() {
         runCatching {
             uiScope = CoroutineScope(Dispatchers.Main + SupervisorJob() + exceptionHandler)
-            ioScope = CoroutineScope(IODispatcher + SupervisorJob() + exceptionHandler)
-            jobManagementScope = CoroutineScope(IODispatcher + SupervisorJob())
+            ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
+            jobManagementScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         }.onFailure {
             log.e(it) { "Failed to recreate coroutine scopes" }
             // Fallback: create basic scopes without exception handler
             uiScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
-            ioScope = CoroutineScope(IODispatcher + SupervisorJob())
-            jobManagementScope = CoroutineScope(IODispatcher + SupervisorJob())
+            ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+            jobManagementScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
         }
     }
 }

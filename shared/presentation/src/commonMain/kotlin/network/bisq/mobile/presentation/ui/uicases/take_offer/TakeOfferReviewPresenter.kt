@@ -127,7 +127,7 @@ class TakeOfferReviewPresenter(
                 if (isDemo()) {
                     showSnackbar("Take offer is disabled in demo mode")
                 } else {
-                    // takeOffer use withContext(IODispatcher) for calling the service
+                    // takeOffer use withContext(Dispatchers.IO) for calling the service
                     val (statusFlow, errorFlow) = takeOfferPresenter.takeOffer()
 
                     // The stateFlow objects are set in the ioScope in the service. Thus we need to map them to the presenterScope.

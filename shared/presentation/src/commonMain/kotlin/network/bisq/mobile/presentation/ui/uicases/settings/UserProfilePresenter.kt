@@ -1,6 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -14,7 +16,6 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVO
 import network.bisq.mobile.domain.data.replicated.user.profile.UserProfileVOExtension.id
 import network.bisq.mobile.domain.service.reputation.ReputationServiceFacade
@@ -56,7 +57,7 @@ class UserProfilePresenter(
                     .getOrNull()?.totalScore?.toString()
             }
         }
-        .flowOn(IODispatcher)
+        .flowOn(Dispatchers.IO)
         .catch { emit(null) }
         .map { it ?: getLocalizedNA() }.stateIn(
             presenterScope,
@@ -87,7 +88,7 @@ class UserProfilePresenter(
                     .getOrNull()
             }
         }
-        .flowOn(IODispatcher)
+        .flowOn(Dispatchers.IO)
         .catch { emit(null) }
         .map { age ->
             if (age != null) {
@@ -157,7 +158,7 @@ class UserProfilePresenter(
                 val na = getLocalizedNA()
                 val safeStatement = statement.value.takeUnless { it == na } ?: ""
                 val safeTerms = tradeTerms.value.takeUnless { it == na } ?: ""
-                val result = withContext(IODispatcher) {
+                val result = withContext(Dispatchers.IO) {
                     userProfileServiceFacade.updateAndPublishUserProfile(
                         safeStatement,
                         safeTerms
@@ -192,7 +193,7 @@ class UserProfilePresenter(
     private fun initEditableFields() {
         launchUI {
             runCatching {
-                withContext(IODispatcher) { userProfileServiceFacade.getSelectedUserProfile() }
+                withContext(Dispatchers.IO) { userProfileServiceFacade.getSelectedUserProfile() }
             }.onSuccess { profile ->
                 profile?.let {
                     _statement.value = it.statement

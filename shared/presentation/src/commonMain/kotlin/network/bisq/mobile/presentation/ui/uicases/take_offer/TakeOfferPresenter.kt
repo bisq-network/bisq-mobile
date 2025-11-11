@@ -1,8 +1,9 @@
 package network.bisq.mobile.presentation.ui.uicases.take_offer
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVOFactory
@@ -139,7 +140,7 @@ class TakeOfferPresenter(
         val takeOfferStatus = MutableStateFlow<TakeOfferStatus?>(null)
         val takeOfferErrorMessage = MutableStateFlow<String?>(null)
 
-        withContext(IODispatcher) {
+        withContext(Dispatchers.IO) {
             val result = tradesServiceFacade.takeOffer(
                 takeOfferModel.offerItemPresentationVO.bisqEasyOffer,
                 takeOfferModel.baseAmount,

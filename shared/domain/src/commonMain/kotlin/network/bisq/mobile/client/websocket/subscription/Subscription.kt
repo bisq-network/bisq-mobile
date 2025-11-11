@@ -1,11 +1,12 @@
 package network.bisq.mobile.client.websocket.subscription
 
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.Json
 import network.bisq.mobile.client.websocket.WebSocketClientService
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.utils.Logging
 
 class Subscription<T>(
@@ -16,7 +17,7 @@ class Subscription<T>(
 ) : Logging {
 
     // Misc
-    private val ioScope = CoroutineScope(IODispatcher)
+    private val ioScope = CoroutineScope(Dispatchers.IO)
     private var job: Job? = null
 
     fun subscribe() {

@@ -3,9 +3,10 @@ package network.bisq.mobile.domain.service
 import androidx.annotation.CallSuper
 import kotlinx.atomicfu.atomic
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.launch
 import network.bisq.mobile.domain.LifeCycleAware
-import network.bisq.mobile.domain.data.IODispatcher
 
 /**
  * Base class for lifecycle-aware service components that require coroutine-based background execution.
@@ -40,7 +41,7 @@ abstract class ServiceFacade : BaseService(), LifeCycleAware {
             log.i { "Deactivating service ${this::class.simpleName}" }
 
             // Clean up all jobs managed by the jobsManager in a new scope because this will be killed
-            CoroutineScope(IODispatcher).launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 jobsManager.dispose()
             }
         }

@@ -1,5 +1,7 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -7,7 +9,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import network.bisq.mobile.domain.data.IODispatcher
 import network.bisq.mobile.domain.data.replicated.common.monetary.CoinVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVO
 import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
@@ -478,7 +479,7 @@ class CreateOfferAmountPresenter(
         _requiredReputation.value = requiredReputation
 
         launchUI {
-            val peersScoreByUserProfileId = withContext(IODispatcher) {
+            val peersScoreByUserProfileId = withContext(Dispatchers.IO) {
                 getPeersScoreByUserProfileId()
             }
             val numPotentialTakers =
@@ -517,11 +518,11 @@ class CreateOfferAmountPresenter(
     private fun updateSellerAmountLimitInfo(firstLoad: Boolean = false) {
         val range = maxAmount - minAmount
         launchUI {
-            val userProfile: UserProfileVO = withContext(IODispatcher) {
+            val userProfile: UserProfileVO = withContext(Dispatchers.IO) {
                 userProfileServiceFacade.getSelectedUserProfile()
             } ?: return@launchUI
 
-            val reputationScore: ReputationScoreVO = withContext(IODispatcher) {
+            val reputationScore: ReputationScoreVO = withContext(Dispatchers.IO) {
                 reputationServiceFacade.getReputation(userProfile.id).getOrNull()
             } ?: return@launchUI
 
