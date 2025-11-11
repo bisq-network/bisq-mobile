@@ -83,10 +83,7 @@ class HttpClientService(
     }
 
     override fun deactivate() {
-        serviceScope.launch {
-            stopFlow.emit(Unit)
-        }
-
+        stopFlow.tryEmit(Unit)
         super.deactivate()
 
         disposeClient()

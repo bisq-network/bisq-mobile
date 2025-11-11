@@ -70,9 +70,7 @@ class WebSocketClientService(
     }
 
     override fun deactivate() {
-        serviceScope.launch {
-            stopFlow.emit(Unit)
-        }
+        stopFlow.tryEmit(Unit)
         super.deactivate()
     }
 
