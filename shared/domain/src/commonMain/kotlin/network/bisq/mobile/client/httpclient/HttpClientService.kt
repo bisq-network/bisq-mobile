@@ -28,7 +28,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.mapLatest
-import kotlinx.coroutines.launch
 import kotlinx.datetime.Clock
 import kotlinx.io.readByteArray
 import kotlinx.serialization.json.Json
@@ -242,11 +241,16 @@ class HttpClientService(
                             }
 
                             is String -> {
-                                // Compute hash for auth headers but dont set reconstructedBody to return null and let ktor know we did not transform anything
-                                if (content.isNotEmpty()) {
-                                    getSha256(content.encodeToByteArray()).toHexString()
-                                } else {
+                                if (content.isEmpty()) {
                                     null
+                                } else {
+                                    val bytes = content.encodeToByteArray()
+                                    if (bytes.size > MAX_BODY_SIZE_BYTES) {
+                                        throw IllegalArgumentException(
+                                            "Request body exceeds maximum size of $MAX_BODY_SIZE_BYTES bytes"
+                                        )
+                                    }
+                                    getSha256(bytes).toHexString()
                                 }
                             }
 
