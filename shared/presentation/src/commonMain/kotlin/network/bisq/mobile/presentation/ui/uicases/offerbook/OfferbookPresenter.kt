@@ -184,9 +184,9 @@ class OfferbookPresenter(
                         availablePayments.addAll(item.quoteSidePaymentMethods)
                         availableSettlements.addAll(item.baseSidePaymentMethods)
 
-                        // Method filter: empty selections mean "filter none" (explicit NONE in UI hides all)
-                        val paymentOk = if (payments.isEmpty()) false else item.quoteSidePaymentMethods.any { it in payments }
-                        val settlementOk = if (settlements.isEmpty()) false else item.baseSidePaymentMethods.any { it in settlements }
+                        // Method filter: empty selections mean "no filter" unless the user manually customized this filter
+                        val paymentOk = if (payments.isEmpty() && !hasManualPaymentFilter) true else item.quoteSidePaymentMethods.any { it in payments }
+                        val settlementOk = if (settlements.isEmpty() && !hasManualSettlementFilter) true else item.baseSidePaymentMethods.any { it in settlements }
                         if (!paymentOk || !settlementOk) {
                             methodFilteredCount++
                             log.v { "Offer ${item.offerId} filtered out (methods) payOk=$paymentOk setOk=$settlementOk" }
