@@ -33,8 +33,12 @@ class ClientOffersServiceFacade(
     private val json: Json,
     private val webSocketClientService: WebSocketClientService,
 ) : OffersServiceFacade() {
-
+    private companion object {
+        private const val LOADING_TIMEOUT_MS = 12000L
+    }
     private var marketPriceUpdateJob: Job? = null
+
+    private var loadingTimeoutJob: Job? = null
 
     // Misc
     private val offersMutex = Mutex()
@@ -70,6 +74,7 @@ class ClientOffersServiceFacade(
         val hasCache = offerbookListItemsByMarket[code]?.isNotEmpty() == true
         if (!hasCache) {
             _isOfferbookLoading.value = true
+            startLoadingTimeout()
         }
 
         if (hasSubscribedToOffers.compareAndSet(expect = false, update = true)) {
@@ -77,7 +82,15 @@ class ClientOffersServiceFacade(
             subscribeOffers()
         } else {
             log.d { "Already subscribed to offers, applying filters for market ${marketListItem.market.quoteCurrencyCode}" }
-            serviceScope.launch { applyOffersToSelectedMarket() }
+            serviceScope.launch {
+                try {
+                    applyOffersToSelectedMarket()
+                } catch (t: Throwable) {
+                    log.e(t) { "Error applying offers to selected market" }
+                    _isOfferbookLoading.value = false
+                    loadingTimeoutJob?.cancel()
+                }
+            }
         }
     }
 
@@ -195,6 +208,8 @@ class ClientOffersServiceFacade(
                     applyOffersToSelectedMarket()
                 }.onFailure { e ->
                     log.e(e) { "Error processing offers WebSocket event (seq=${webSocketEvent.sequenceNumber})" }
+                    _isOfferbookLoading.value = false
+                    loadingTimeoutJob?.cancel()
                 }
             }
         }
@@ -269,6 +284,7 @@ class ClientOffersServiceFacade(
 
         _offerbookListItems.value = list ?: emptyList()
         _isOfferbookLoading.value = false
+        loadingTimeoutJob?.cancel()
     }
 
     private fun scheduleOffersPriceRefresh() {
@@ -290,6 +306,21 @@ class ClientOffersServiceFacade(
         if (currentOffers.isEmpty()) return
 
         OfferFormattingUtil.updateOffersFormattedValues(currentOffers, marketItem)
+    }
+
+    private fun startLoadingTimeout() {
+        loadingTimeoutJob?.cancel()
+        loadingTimeoutJob = serviceScope.launch {
+            try {
+                delay(LOADING_TIMEOUT_MS)
+            } catch (_: Exception) {
+                // job cancelled
+            }
+            if (_isOfferbookLoading.value) {
+                log.w { "Offerbook loading timed out for market ${selectedOfferbookMarket.value.market.quoteCurrencyCode}" }
+                _isOfferbookLoading.value = false
+            }
+        }
     }
 
     private fun fillMarketListItems(markets: List<MarketVO>) {

@@ -26,7 +26,7 @@ abstract class OffersServiceFacade : ServiceFacade(), LifeCycleAware {
 
     protected val _offerbookMarketItems = MutableStateFlow<List<MarketListItem>>(emptyList())
     val offerbookMarketItems: StateFlow<List<MarketListItem>> get() = _offerbookMarketItems
-    // Loading indicator for offerbook fetch/select cycles
+    // Loading indicator for offerbook data fetch/select cycles
     protected val _isOfferbookLoading = MutableStateFlow(false)
     val isOfferbookLoading: StateFlow<Boolean> get() = _isOfferbookLoading
 
