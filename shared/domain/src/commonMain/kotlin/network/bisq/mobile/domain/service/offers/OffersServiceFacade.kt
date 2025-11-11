@@ -26,6 +26,10 @@ abstract class OffersServiceFacade : ServiceFacade(), LifeCycleAware {
 
     protected val _offerbookMarketItems = MutableStateFlow<List<MarketListItem>>(emptyList())
     val offerbookMarketItems: StateFlow<List<MarketListItem>> get() = _offerbookMarketItems
+    // Loading indicator for offerbook fetch/select cycles
+    protected val _isOfferbookLoading = MutableStateFlow(false)
+    val isOfferbookLoading: StateFlow<Boolean> get() = _isOfferbookLoading
+
 
     val sortedOfferbookMarketItems: StateFlow<List<MarketListItem>> = offerbookMarketItems.map { list -> list.sortedWith(
         compareByDescending<MarketListItem> { it.numOffers }

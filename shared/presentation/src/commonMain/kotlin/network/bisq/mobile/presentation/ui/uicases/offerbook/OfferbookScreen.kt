@@ -20,9 +20,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
-import kotlinx.coroutines.delay
 import androidx.compose.ui.unit.dp
 
 
@@ -47,8 +45,6 @@ import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 
-const val MAX_LOADING_TIME_MS = 2500L
-
 @Composable
 fun OfferbookScreen() {
     val presenter: OfferbookPresenter = koinInject()
@@ -61,22 +57,8 @@ fun OfferbookScreen() {
     val isInteractive by presenter.isInteractive.collectAsState()
     val selectedMarket by presenter.selectedMarket.collectAsState()
 
-    // Show a loading overlay while offers are being fetched (per market, direction)
-    var showLoading by remember { mutableStateOf(sortedFilteredOffers.isEmpty()) }
-
-    // Reset and start a short grace period every time market or tab (direction) changes; hide early if data arrives.
-    // Important: use a stable market identity (quote code) to avoid retriggering on reactive price updates.
-    val marketKey = selectedMarket?.market?.quoteCurrencyCode
-    LaunchedEffect(marketKey, selectedDirection) {
-        showLoading = true
-        // Allow data to arrive; if still empty after the delay, fall back to real empty state.
-        delay(MAX_LOADING_TIME_MS)
-        showLoading = false
-    }
-    // If offers arrive sooner, immediately hide the loading overlay.
-    LaunchedEffect(sortedFilteredOffers) {
-        if (sortedFilteredOffers.isNotEmpty()) showLoading = false
-    }
+    // Show a loading overlay only while data is being fetched for the selected market
+    val showLoading by presenter.isLoading.collectAsState()
 
     BisqStaticScaffold(
         topBar = {

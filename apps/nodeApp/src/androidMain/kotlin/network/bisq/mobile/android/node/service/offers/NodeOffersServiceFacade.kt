@@ -266,6 +266,7 @@ class NodeOffersServiceFacade(
                 if (channel == null) {
                     selectedChannel = channel
                     chatMessagesPin?.unbind()
+                    _isOfferbookLoading.value = false
                 } else if (channel is BisqEasyOfferbookChannel) {
                     selectedChannel = channel
                     marketPriceService.setSelectedMarket(channel.market)
@@ -286,6 +287,7 @@ class NodeOffersServiceFacade(
     /////////////////////////////////////////////////////////////////////////////
 
     private fun observeChatMessages(channel: BisqEasyOfferbookChannel) {
+        _isOfferbookLoading.value = true
         _offerbookListItems.update { emptyList() }
 
         val chatMessages: ObservableSet<BisqEasyOfferbookMessage> = channel.chatMessages
@@ -299,6 +301,7 @@ class NodeOffersServiceFacade(
                         .filter { isValidOfferbookMessage(it) }
                         .map { createOfferItemPresentationModel(it) }
                     _offerbookListItems.update { current -> (current + listItems).distinctBy { it.bisqEasyOffer.id } }
+                    _isOfferbookLoading.value = false
                 }
 
                 // Newly added messages

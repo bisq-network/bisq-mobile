@@ -102,6 +102,8 @@ class OfferbookPresenter(
     private var selectedOffer: OfferItemPresentationModel? = null
 
     val selectedUserProfile get() = userProfileServiceFacade.selectedUserProfile
+    val isLoading get() = offersServiceFacade.isOfferbookLoading
+
 
     @OptIn(ExperimentalCoroutinesApi::class)
     override fun onViewAttached() {

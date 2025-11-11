@@ -65,6 +65,13 @@ class ClientOffersServiceFacade(
         marketPriceServiceFacade.selectMarket(marketListItem)
         _selectedOfferbookMarket.value = OfferbookMarket(marketListItem.market)
 
+        // If we don't have cached offers for the selected market yet, mark loading
+        val code = marketListItem.market.quoteCurrencyCode
+        val hasCache = offerbookListItemsByMarket[code]?.isNotEmpty() == true
+        if (!hasCache) {
+            _isOfferbookLoading.value = true
+        }
+
         if (hasSubscribedToOffers.compareAndSet(expect = false, update = true)) {
             log.d { "First time subscribing to offers for market ${marketListItem.market.quoteCurrencyCode}" }
             subscribeOffers()
@@ -261,6 +268,7 @@ class ClientOffersServiceFacade(
         }
 
         _offerbookListItems.value = list ?: emptyList()
+        _isOfferbookLoading.value = false
     }
 
     private fun scheduleOffersPriceRefresh() {
