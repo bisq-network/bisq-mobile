@@ -344,7 +344,7 @@ class TrustedNodeSetupPresenter(
                     if (newProxyOption != BisqProxyOption.INTERNAL_TOR) {
                         try {
                             kmpTorService.stopTor()
-                        } catch (e: Throwable) {
+                        } catch (e: Exception) {
                             log.w(e) { "Failed to stop Tor after switching proxy option" }
                         }
                     }
