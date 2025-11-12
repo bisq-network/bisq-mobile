@@ -1,9 +1,9 @@
 package network.bisq.mobile.client
 
 import network.bisq.mobile.client.service.network.ClientConnectivityService
-import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
+import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -19,7 +19,7 @@ class AndroidClientMainPresenter(
     userProfileServiceFacade: UserProfileServiceFacade,
     tradeReadStateRepository: TradeReadStateRepository,
     openTradesNotificationService: OpenTradesNotificationService,
-    webSocketClientService: WebSocketClientService,
+    applicationLifecycleService: ApplicationLifecycleService,
     urlLauncher: UrlLauncher
 ) : ClientMainPresenter(
     connectivityService,
@@ -28,6 +28,6 @@ class AndroidClientMainPresenter(
     userProfileServiceFacade,
     openTradesNotificationService,
     tradeReadStateRepository,
-    webSocketClientService,
+    applicationLifecycleService,
     urlLauncher
 )

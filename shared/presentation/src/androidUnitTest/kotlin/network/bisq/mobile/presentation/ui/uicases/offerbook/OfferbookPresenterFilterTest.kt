@@ -168,7 +168,8 @@ class OfferbookPresenterFilterTest {
             openTradesNotificationService,
             settingsService,
             tradeReadStateRepository,
-            urlLauncher
+            urlLauncher,
+            network.bisq.mobile.presentation.testutils.TestApplicationLifecycleService()
         )
         // --- Dependencies for OfferbookPresenter ---
         val offersFlow = MutableStateFlow<List<OfferItemPresentationModel>>(emptyList())
