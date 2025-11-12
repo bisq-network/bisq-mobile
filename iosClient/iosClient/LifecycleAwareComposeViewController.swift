@@ -5,14 +5,14 @@ import ClientApp
 class LifecycleAwareComposeViewController: UIViewController {
     private let presenter: MainPresenter
     private let notificationServiceWrapper: NotificationServiceWrapper
-    private let clientApplicationLifecycleService: ClientApplicationLifecycleService
+    private let clientApplicationLifecycleService: ApplicationLifecycleService
 
     init(presenter: MainPresenter, notificationServiceWrapper: NotificationServiceWrapper) {
         self.presenter = presenter
         self.notificationServiceWrapper = notificationServiceWrapper
         GenericErrorHandler.companion.doInit()
 
-        self.clientApplicationLifecycleService = get(ClientApplicationLifecycleService.self)
+        self.clientApplicationLifecycleService = get(ApplicationLifecycleService.self)
         self.clientApplicationLifecycleService.initialize()
 
         super.init(nibName: nil, bundle: nil)
