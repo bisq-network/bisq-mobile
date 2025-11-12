@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.uicases.create_offer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import network.bisq.mobile.domain.data.model.MarketPriceItem
 import network.bisq.mobile.domain.data.replicated.account.payment_method.BitcoinPaymentRailEnum
 import network.bisq.mobile.domain.data.replicated.account.payment_method.FiatPaymentRailUtil
@@ -29,6 +30,7 @@ import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
+import kotlin.time.Duration.Companion.seconds
 
 class CreateOfferPresenter(
     mainPresenter: MainPresenter,
@@ -222,15 +224,17 @@ class CreateOfferPresenter(
 
     suspend fun createOffer(): Result<String> {
         return try {
-            val params = prepareOfferParameters()
-            withContext(Dispatchers.IO) {
-                offersServiceFacade.createOffer(
-                    params.direction, params.market, params.bitcoinPaymentMethods,
-                    params.fiatPaymentMethods, params.amountSpec, params.priceSpec,
-                    params.supportedLanguageCodes
-                )
+            withTimeout(30.seconds) {
+                withContext(Dispatchers.IO) {
+                    val params = prepareOfferParameters()
+                    offersServiceFacade.createOffer(
+                        params.direction, params.market, params.bitcoinPaymentMethods,
+                        params.fiatPaymentMethods, params.amountSpec, params.priceSpec,
+                        params.supportedLanguageCodes
+                    )
+                }
             }
-        } catch (e: IllegalStateException) {
+        } catch (e: Exception) {
             Result.failure(e)
         }
     }

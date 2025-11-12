@@ -75,6 +75,9 @@ class TradeDetailsHeaderPresenter(
     private val _isShowDetails: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isShowDetails: StateFlow<Boolean> get() = this._isShowDetails.asStateFlow()
 
+    private val _showLoadingDialog = MutableStateFlow(false)
+    val showLoadingDialog = _showLoadingDialog.asStateFlow()
+
     val userProfileIconProvider: suspend (UserProfileVO) -> PlatformImage get() = userProfileServiceFacade::getUserProfileIcon
 
     override fun onViewAttached() {
@@ -208,8 +211,8 @@ class TradeDetailsHeaderPresenter(
 
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
 
-            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_DID_NOT_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS_,
+            BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             BisqEasyTradeStateEnum.MAKER_SENT_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_RECEIVED_BTC_ADDRESS,
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS,
             BisqEasyTradeStateEnum.TAKER_RECEIVED_TAKE_OFFER_RESPONSE__SELLER_SENT_ACCOUNT_DATA__SELLER_DID_NOT_RECEIVED_BTC_ADDRESS_,
@@ -256,10 +259,14 @@ class TradeDetailsHeaderPresenter(
     }
 
     fun onInterruptTrade() {
-        require(selectedTrade.value != null)
-
+        _showInterruptionConfirmationDialog.value = false
+        val selectedTrade = selectedTrade.value
+        if (selectedTrade == null) {
+            return
+        }
+        _showLoadingDialog.value = true
         launchUI {
-            val result: Result<Unit>? = withContext(Dispatchers.IO) {
+            withContext(Dispatchers.IO) {
                 when (tradeCloseType.value) {
                     TradeCloseType.REJECT -> {
                         tradesServiceFacade.rejectTrade()
@@ -269,18 +276,11 @@ class TradeDetailsHeaderPresenter(
                         tradesServiceFacade.cancelTrade()
                     }
 
-                    else -> {
-                        null
-                    }
+                    else -> Unit
                 }
             }
-
-            if (result != null) {
-                when {
-                    result.isFailure -> _showInterruptionConfirmationDialog.value = false
-                    result.isSuccess -> _showInterruptionConfirmationDialog.value = false
-                }
-            }
+            _showInterruptionConfirmationDialog.value = false
+            _showLoadingDialog.value = false
         }
     }
 
@@ -293,15 +293,14 @@ class TradeDetailsHeaderPresenter(
     }
 
     fun onOpenMediation() {
-        if (!isInteractive.value) return
-        _showMediationConfirmationDialog.value = false
         val trade = selectedTrade.value
         if (trade == null) {
             _mediationError.value = "mobile.bisqEasy.tradeState.mediationFailed".i18n()
             return
         }
+        _showMediationConfirmationDialog.value = false
+        _showLoadingDialog.value = true
         launchIO {
-            disableInteractive()
             mediationServiceFacade.reportToMediator(trade)
                 .onFailure { exception ->
                     when (exception) {
@@ -316,7 +315,7 @@ class TradeDetailsHeaderPresenter(
                         }
                     }
                 }
-            enableInteractive()
+            _showLoadingDialog.value = false
         }
     }
 

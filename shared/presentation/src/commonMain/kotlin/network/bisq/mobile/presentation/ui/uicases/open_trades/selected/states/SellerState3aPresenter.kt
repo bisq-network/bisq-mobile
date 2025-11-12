@@ -40,6 +40,9 @@ class SellerState3aPresenter(
     private val _isLightning: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val isLightning: StateFlow<Boolean> get() = _isLightning.asStateFlow()
 
+    private val _showLoadingDialog = MutableStateFlow(false)
+    val showLoadingDialog = _showLoadingDialog.asStateFlow()
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -73,21 +76,17 @@ class SellerState3aPresenter(
     }
 
     fun confirmSend() {
-        try {
-            // For non-Lightning transactions, ensure payment proof is provided
-            if (!isLightning.value && paymentProof.value == null) {
-                _showInvalidAddressDialog.value = true
-                return
+        // For non-Lightning transactions, ensure payment proof is provided
+        if (!isLightning.value && paymentProof.value == null) {
+            _showInvalidAddressDialog.value = true
+            return
+        }
+        launchUI {
+            _showLoadingDialog.value = true
+            withContext(Dispatchers.IO) {
+                tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
             }
-
-            launchUI {
-                withContext(Dispatchers.IO) {
-                    tradesServiceFacade.sellerConfirmBtcSent(paymentProof.value)
-                }
-            }
-        } catch (e: Exception) {
-            log.e(e) { "Failed to confirm BTC sent" }
-        } finally {
+            _showLoadingDialog.value = false
             setShowInvalidAddressDialog(false)
         }
     }

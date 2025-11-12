@@ -245,7 +245,7 @@ fun OpenTradeScreen(tradeId: String) {
     if (buyerState1aShowInvalidAddressDialog) {
         InvalidAddressConfirmationDialog(
             addressType = buyerState1aAddressFieldType,
-            onConfirm = buyerState1aPresenter::onSend,
+            onConfirm = buyerState1aPresenter::sendBitcoinPaymentData,
             onDismiss = { buyerState1aPresenter.setShowInvalidAddressDialog(false) },
         )
     }

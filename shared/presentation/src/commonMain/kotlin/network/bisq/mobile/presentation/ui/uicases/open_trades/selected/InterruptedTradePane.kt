@@ -22,6 +22,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import org.koin.compose.koinInject
@@ -36,6 +37,7 @@ fun InterruptedTradePane() {
     val errorMessageVisible by presenter.errorMessageVisible.collectAsState()
     val isInMediation by presenter.isInMediation.collectAsState()
     val reportToMediatorButtonVisible by presenter.reportToMediatorButtonVisible.collectAsState()
+    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
 
     Column(
         modifier = Modifier
@@ -91,6 +93,10 @@ fun InterruptedTradePane() {
                 onClick = { presenter.onCloseTrade() },
             )
         }
+    }
+
+    if (showLoadingDialog) {
+        LoadingDialog()
     }
 }
 

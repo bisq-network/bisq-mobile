@@ -6,8 +6,8 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.PlatformImage
@@ -35,6 +35,7 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.BasePresenter
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.BisqLinks
+import network.bisq.mobile.presentation.ui.helpers.EMPTY_STRING
 import network.bisq.mobile.presentation.ui.navigation.NavRoute
 import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter
 import network.bisq.mobile.presentation.ui.uicases.take_offer.TakeOfferPresenter
@@ -90,6 +91,9 @@ class OfferbookPresenter(
 
     private val _showNotEnoughReputationDialog = MutableStateFlow(false)
     val showNotEnoughReputationDialog: StateFlow<Boolean> get() = _showNotEnoughReputationDialog.asStateFlow()
+
+    private val _showLoadingDialog = MutableStateFlow(false)
+    val showLoadingDialog = _showLoadingDialog.asStateFlow()
 
     val selectedMarket get() = marketPriceServiceFacade.selectedMarketPriceItem
 
@@ -364,28 +368,39 @@ class OfferbookPresenter(
 
 
     fun onConfirmedDeleteOffer() {
+        val selectedOffer = this.selectedOffer
+        if (selectedOffer == null) {
+            _showDeleteConfirmation.value = false
+            showSnackbar("mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(EMPTY_STRING), true)
+            return
+        }
         runCatching {
-            selectedOffer?.let { item ->
-                require(item.isMyOffer)
-                launchUI {
-                    withContext(Dispatchers.IO) {
-                        val result = offersServiceFacade.deleteOffer(item.offerId)
-                            .getOrDefault(false)
-                        log.d { "delete offer success $result" }
-                        if (result) {
-                            _showDeleteConfirmation.value = false
-                            deselectOffer()
-                        } else {
-                            log.w { "Failed to delete offer ${item.offerId}" }
-                            showSnackbar("mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(item.offerId), true)
-                        }
+            _showLoadingDialog.value = true
+            _showDeleteConfirmation.value = false
+            require(selectedOffer.isMyOffer)
+            launchUI {
+                withContext(Dispatchers.IO) {
+                    val result = offersServiceFacade.deleteOffer(selectedOffer.offerId)
+                        .getOrDefault(false)
+                    log.d { "delete offer success $result" }
+                    _showLoadingDialog.value = false
+                    if (result) {
+                        deselectOffer()
+                    } else {
+                        log.w { "Failed to delete offer ${selectedOffer.offerId}" }
+                        showSnackbar(
+                            "mobile.bisqEasy.offerbook.failedToDeleteOffer".i18n(
+                                selectedOffer.offerId
+                            ), true
+                        )
                     }
                 }
             }
         }.onFailure {
-            log.e(it) { "Failed to delete offer ${selectedOffer?.offerId}" }
+            _showLoadingDialog.value = false
+            log.e(it) { "Failed to delete offer ${selectedOffer.offerId}" }
             showSnackbar(
-                "mobile.bisqEasy.offerbook.unableToDeleteOffer".i18n(selectedOffer?.offerId ?: ""),
+                "mobile.bisqEasy.offerbook.unableToDeleteOffer".i18n(selectedOffer.offerId),
                 true
             )
             deselectOffer()

@@ -56,7 +56,7 @@ fun PaymentAccountsScreen() {
     val presenter: PaymentAccountsPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isBlockingLoading by presenter.isBlockingLoading.collectAsState()
+    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
     val accounts by presenter.accounts.collectAsState()
     val selectedAccount by presenter.selectedAccount.collectAsState()
     val isLoading by presenter.isLoading.collectAsState()
@@ -233,7 +233,7 @@ fun PaymentAccountsScreen() {
         )
     }
 
-    if (isBlockingLoading) {
+    if (showLoadingDialog) {
         LoadingDialog()
     }
 }

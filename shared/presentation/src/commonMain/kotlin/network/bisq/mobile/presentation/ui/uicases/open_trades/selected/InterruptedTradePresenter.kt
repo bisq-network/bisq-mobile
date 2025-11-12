@@ -41,6 +41,9 @@ class InterruptedTradePresenter(
     private val _reportToMediatorButtonVisible: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val reportToMediatorButtonVisible: StateFlow<Boolean> get() = _reportToMediatorButtonVisible.asStateFlow()
 
+    private val _showLoadingDialog = MutableStateFlow(false)
+    val showLoadingDialog = _showLoadingDialog.asStateFlow()
+
     override fun onViewAttached() {
         super.onViewAttached()
         require(tradesServiceFacade.selectedTrade.value != null)
@@ -148,20 +151,25 @@ class InterruptedTradePresenter(
 
     fun onCloseTrade() {
         val trade = selectedTrade.value
-        if (trade != null) {
-            launchUI {
-                tradeReadStateRepository.clearId(trade.tradeId)
-                withContext(Dispatchers.IO) {
-                    tradesServiceFacade.closeTrade()
-                }
-                navigateBack()
+        if (trade == null) return
+        launchUI {
+            _showLoadingDialog.value = true
+            tradeReadStateRepository.clearId(trade.tradeId)
+            withContext(Dispatchers.IO) {
+                tradesServiceFacade.closeTrade()
             }
+            navigateBack()
+            _showLoadingDialog.value = false
         }
     }
 
     fun onReportToMediator() {
+        val trade = selectedTrade.value
+        if (trade == null) return
         launchIO {
-            mediationServiceFacade.reportToMediator(selectedTrade.value!!)
+            _showLoadingDialog.value = true
+            mediationServiceFacade.reportToMediator(trade)
+            _showLoadingDialog.value = false
         }
     }
 

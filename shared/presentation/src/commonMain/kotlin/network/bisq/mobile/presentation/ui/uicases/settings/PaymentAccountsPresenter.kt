@@ -22,8 +22,8 @@ open class PaymentAccountsPresenter(
 
     override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = accountsServiceFacade.selectedAccount
 
-    private val _isBlockingLoading = MutableStateFlow(false)
-    val isBlockingLoading: StateFlow<Boolean> get() = _isBlockingLoading.asStateFlow()
+    private val _showLoadingDialog = MutableStateFlow(false)
+    val showLoadingDialog = _showLoadingDialog.asStateFlow()
 
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> get() = _isLoading.asStateFlow()
@@ -59,7 +59,7 @@ open class PaymentAccountsPresenter(
             showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n())
             return
         }
-        _isBlockingLoading.value = true
+        _showLoadingDialog.value = true
         launchIO {
             try {
                 val newAccount = UserDefinedFiatAccountVO(
@@ -71,7 +71,7 @@ open class PaymentAccountsPresenter(
                 accountsServiceFacade.addAccount(newAccount)
                 showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountCreated".i18n())
             } finally {
-                _isBlockingLoading.value = false
+                _showLoadingDialog.value = false
             }
         }
     }
@@ -81,7 +81,7 @@ open class PaymentAccountsPresenter(
             showSnackbar("mobile.user.paymentAccounts.createAccount.validations.name.alreadyExists".i18n())
             return
         }
-        _isBlockingLoading.value = true
+        _showLoadingDialog.value = true
         if (selectedAccount.value != null) {
             launchIO {
                 try {
@@ -94,17 +94,17 @@ open class PaymentAccountsPresenter(
                     accountsServiceFacade.saveAccount(newAccount)
                     showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.accountUpdated".i18n())
                 } finally {
-                    _isBlockingLoading.value = false
+                    _showLoadingDialog.value = false
                 }
             }
         } else {
-            _isBlockingLoading.value = false
+            _showLoadingDialog.value = false
         }
     }
 
     override fun deleteCurrentAccount() {
         if (selectedAccount.value != null) {
-            _isBlockingLoading.value = true
+            _showLoadingDialog.value = true
             launchIO {
                 try {
                     accountsServiceFacade.removeAccount(selectedAccount.value!!)
@@ -114,7 +114,7 @@ open class PaymentAccountsPresenter(
                     showSnackbar("mobile.user.paymentAccounts.createAccount.notifications.name.unableToDelete".i18n(selectedAccount.value?.accountName ?: ""))
 
                 } finally {
-                    _isBlockingLoading.value = false
+                    _showLoadingDialog.value = false
                 }
             }
         }

@@ -1,11 +1,8 @@
 package network.bisq.mobile.presentation.ui.uicases.create_offer
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.withContext
 import network.bisq.mobile.domain.data.replicated.common.currency.MarketVOExtensions.marketCodes
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnum
 import network.bisq.mobile.domain.data.replicated.offer.DirectionEnumExtensions.isBuy
@@ -41,8 +38,8 @@ class CreateOfferReviewPresenter(
 
     private lateinit var createOfferModel: CreateOfferPresenter.CreateOfferModel
 
-    private val _isLoading = MutableStateFlow(false)
-    val isLoading: StateFlow<Boolean> get() = _isLoading.asStateFlow()
+    private val _showLoadingDialog = MutableStateFlow(false)
+    val showLoadingDialog = _showLoadingDialog.asStateFlow()
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -153,24 +150,22 @@ class CreateOfferReviewPresenter(
     }
 
     fun onCreateOffer() {
-        _isLoading.value = true
+        _showLoadingDialog.value = true
         launchUI {
-            try {
-                val result = withContext(Dispatchers.IO) {
-                    createOfferPresenter.createOffer()
-                }
-
-                if (result.isSuccess) {
+            createOfferPresenter.createOffer()
+                .onSuccess {
                     navigateToOfferbookTab()
-                } else {
-                    showSnackbar("mobile.bisqEasy.createOffer.failed".i18n())
                 }
-            } catch (e: Exception) {
-                log.e(e) { "Failed to create offer: ${e.message}" }
-                showSnackbar("mobile.bisqEasy.createOffer.failed".i18n())
-            } finally {
-                _isLoading.value = false
-            }
+                .onFailure { exception ->
+                    if (exception is TimeoutCancellationException) {
+                        log.e(exception) { "Create offer timed out: ${exception.message}" }
+                        showSnackbar("mobile.bisqEasy.createOffer.timedOut".i18n())
+                    } else {
+                        log.e(exception) { "Failed to create offer: ${exception.message}" }
+                        showSnackbar("mobile.bisqEasy.createOffer.failed".i18n())
+                    }
+                }
+            _showLoadingDialog.value = false
         }
     }
 }

@@ -24,6 +24,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.icons.WarningIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofField
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -51,6 +52,7 @@ fun BuyerStateMainChain3b(
     val txId = tradeItemModel.bisqEasyTradeModel.paymentProof.value ?: "data.na".i18n()
     val skip by presenter.skip.collectAsState()
     val amountNotMatchingDialogText by presenter.amountNotMatchingDialogText.collectAsState()
+    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
 
     val role = if (tradeItemModel.bisqEasyTradeModel.isBuyer) "buyer" else "seller"
     val waitingText =
@@ -185,5 +187,9 @@ fun BuyerStateMainChain3b(
                 onDismiss = { presenter.onAmountNotMatchingDialogDismiss() }
             )
         }
+    }
+
+    if (showLoadingDialog) {
+        LoadingDialog()
     }
 }

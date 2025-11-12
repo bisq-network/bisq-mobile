@@ -53,6 +53,9 @@ abstract class BaseTradeStateMainChain3bPresenter(
         MutableStateFlow(null)
     val amountNotMatchingDialogText: StateFlow<String?> get() = _amountNotMatchingDialogText.asStateFlow()
 
+    private val _showLoadingDialog = MutableStateFlow(false)
+    val showLoadingDialog = _showLoadingDialog.asStateFlow()
+
     private var txAmount: Long? = null
     private var txAmountFormatted: String? = null
     private val openTradeItemModel = tradesServiceFacade.selectedTrade.value
@@ -125,7 +128,9 @@ abstract class BaseTradeStateMainChain3bPresenter(
 
     private fun completeTrade() {
         launchIO {
+            _showLoadingDialog.value = true
             tradesServiceFacade.btcConfirmed()
+            _showLoadingDialog.value = false
         }
     }
 

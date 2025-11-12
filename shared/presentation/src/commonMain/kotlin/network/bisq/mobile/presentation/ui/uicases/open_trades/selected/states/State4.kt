@@ -20,6 +20,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsStyle
 import network.bisq.mobile.presentation.ui.components.atoms.BtcSatsText
 import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 
 @Composable
@@ -27,6 +28,7 @@ fun State4(
     presenter: State4Presenter,
 ) {
     RememberPresenterLifecycle(presenter)
+    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
 
     val tradeItemModel by presenter.selectedTrade.collectAsState()
     val trade = tradeItemModel ?: return
@@ -80,4 +82,7 @@ fun State4(
         }
     }
 
+    if (showLoadingDialog) {
+        LoadingDialog()
+    }
 }

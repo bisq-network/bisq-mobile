@@ -29,6 +29,9 @@ class SellerState1Presenter(
     private var _paymentAccountName = MutableStateFlow("")
     val paymentAccountName: StateFlow<String> get() = _paymentAccountName.asStateFlow()
 
+    private val _showLoadingDialog = MutableStateFlow(false)
+    val showLoadingDialog = _showLoadingDialog.asStateFlow()
+
     override fun onViewAttached() {
         super.onViewAttached()
 
@@ -59,9 +62,12 @@ class SellerState1Presenter(
     }
 
     fun onSendPaymentData() {
-        require(paymentAccountData.value.isNotEmpty())
+        val paymentAccountData = paymentAccountData.value
+        if (paymentAccountData.isEmpty()) return
         launchIO {
-            tradesServiceFacade.sellerSendsPaymentAccount(paymentAccountData.value)
+            _showLoadingDialog.value = true
+            tradesServiceFacade.sellerSendsPaymentAccount(paymentAccountData)
+            _showLoadingDialog.value = false
         }
     }
 }

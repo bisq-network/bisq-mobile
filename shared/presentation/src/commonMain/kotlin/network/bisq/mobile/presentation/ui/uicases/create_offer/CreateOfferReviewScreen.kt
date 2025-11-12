@@ -32,7 +32,7 @@ fun CreateOfferReviewOfferScreen() {
     val createPresenter: CreateOfferPresenter = koinInject()
     RememberPresenterLifecycle(presenter)
 
-    val isLoading by presenter.isLoading.collectAsState()
+    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
 
     MultiScreenWizardScaffold(
         "bisqEasy.tradeWizard.review.headline.maker".i18n(),
@@ -44,6 +44,7 @@ fun CreateOfferReviewOfferScreen() {
         showUserAvatar = false,
         closeAction = true,
         onConfirmedClose = presenter::onClose,
+        snackbarHostState = presenter.getSnackState()
     ) {
         BisqGap.V1()
         Column(verticalArrangement = Arrangement.spacedBy(BisqUIConstants.ScreenPadding2X)) {
@@ -177,7 +178,7 @@ fun CreateOfferReviewOfferScreen() {
         }
     }
 
-    if (isLoading) {
+    if (showLoadingDialog) {
         LoadingDialog()
     }
 }

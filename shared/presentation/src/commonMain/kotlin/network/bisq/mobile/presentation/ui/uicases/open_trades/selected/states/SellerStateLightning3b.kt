@@ -17,6 +17,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.icons.CheckCircleIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 
@@ -27,6 +28,7 @@ fun SellerStateLightning3b(
     RememberPresenterLifecycle(presenter)
 
     val buyerHasConfirmedBitcoinReceipt by presenter.buyerHasConfirmedBitcoinReceipt.collectAsState()
+    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
 
     if (buyerHasConfirmedBitcoinReceipt) {
         SellerStateLightning3bPaymentConfirmed(presenter)
@@ -34,6 +36,9 @@ fun SellerStateLightning3b(
         SellerStateLightning3bWaitingForPayment(presenter)
     }
 
+    if (showLoadingDialog) {
+        LoadingDialog()
+    }
 }
 
 @Composable

@@ -15,6 +15,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.CircularLoadingImage
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofField
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.PaymentProofType
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
@@ -28,6 +29,7 @@ fun BuyerStateLightning3b(
     val selectedTrade by presenter.selectedTrade.collectAsState()
     val trade = selectedTrade ?: return
     val preImage by trade.bisqEasyTradeModel.paymentProof.collectAsState()
+    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
 
     Column {
         BisqGap.V1()
@@ -67,5 +69,9 @@ fun BuyerStateLightning3b(
                 onClick = { presenter.onCompleteTrade() },
             )
         }
+    }
+
+    if (showLoadingDialog) {
+        LoadingDialog()
     }
 }

@@ -15,6 +15,9 @@ class SellerStateLightning3bPresenter(
     private val tradesServiceFacade: TradesServiceFacade,
 ) : BasePresenter(mainPresenter) {
 
+    private val _showLoadingDialog = MutableStateFlow(false)
+    val showLoadingDialog = _showLoadingDialog.asStateFlow()
+
     private val _buyerHasConfirmedBitcoinReceipt: MutableStateFlow<Boolean> = MutableStateFlow(false)
     val buyerHasConfirmedBitcoinReceipt: StateFlow<Boolean> get() = _buyerHasConfirmedBitcoinReceipt.asStateFlow()
     fun setBuyerHasConfirmedBitcoinReceipt(value: Boolean) {
@@ -48,7 +51,9 @@ class SellerStateLightning3bPresenter(
 
     fun skipWaiting() {
         launchIO {
+            _showLoadingDialog.value = true
             tradesServiceFacade.btcConfirmed()
+            _showLoadingDialog.value = false
         }
     }
 

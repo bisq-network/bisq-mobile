@@ -17,6 +17,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.BisqButton
 import network.bisq.mobile.presentation.ui.components.atoms.BisqButtonType
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.components.molecules.inputfield.BitcoinLnAddressField
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.helpers.spaceBetweenWithMin
@@ -34,6 +35,7 @@ fun BuyerState1a(
     val bitcoinPaymentData by presenter.bitcoinPaymentData.collectAsState()
     val addressFieldType by presenter.bitcoinLnAddressFieldType.collectAsState()
     val triggerBitcoinLnAddressValidation by presenter.triggerBitcoinLnAddressValidation.collectAsState()
+    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
 
     Column {
         BisqGap.V1()
@@ -60,7 +62,7 @@ fun BuyerState1a(
         ) {
             BisqButton(
                 text = "bisqEasy.tradeState.info.buyer.phase1a.send".i18n(), // Send to seller
-                onClick = { presenter.onSendClick() },
+                onClick = { presenter.onSendBitcoinPaymentDataClick() },
                 disabled = bitcoinPaymentData.isEmpty(),
                 modifier = Modifier.fillMaxHeight(),
             )
@@ -76,6 +78,10 @@ fun BuyerState1a(
                 modifier = Modifier.fillMaxHeight(),
             )
         }
+    }
+
+    if (showLoadingDialog) {
+        LoadingDialog()
     }
 
 }

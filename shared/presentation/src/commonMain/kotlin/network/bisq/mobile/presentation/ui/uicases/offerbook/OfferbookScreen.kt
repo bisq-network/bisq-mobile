@@ -39,6 +39,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.layout.BisqStaticScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.ConfirmationDialog
+import network.bisq.mobile.presentation.ui.components.molecules.dialog.LoadingDialog
 import network.bisq.mobile.presentation.ui.components.molecules.dialog.WebLinkConfirmationDialog
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -56,6 +57,7 @@ fun OfferbookScreen() {
     val showNotEnoughReputationDialog by presenter.showNotEnoughReputationDialog.collectAsState()
     val isInteractive by presenter.isInteractive.collectAsState()
     val selectedMarket by presenter.selectedMarket.collectAsState()
+    val showLoadingDialog by presenter.showLoadingDialog.collectAsState()
 
     // Show a loading overlay only while data is being fetched for the selected market
     val showLoading by presenter.isLoading.collectAsState()
@@ -74,7 +76,8 @@ fun OfferbookScreen() {
             )
         },
         isInteractive = isInteractive,
-        shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog
+        shouldBlurBg = showDeleteConfirmation || showNotEnoughReputationDialog,
+        snackbarHostState = presenter.getSnackState()
     ) {
         DirectionToggle(
             selectedDirection,
@@ -187,6 +190,10 @@ fun OfferbookScreen() {
             onConfirm = { presenter.onConfirmedDeleteOffer() },
             onDismiss = { presenter.onDismissDeleteOffer() }
         )
+    }
+
+    if (showLoadingDialog) {
+        LoadingDialog()
     }
 
     if (showNotEnoughReputationDialog) {

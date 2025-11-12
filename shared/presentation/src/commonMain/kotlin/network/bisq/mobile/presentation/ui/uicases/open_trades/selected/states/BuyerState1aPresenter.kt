@@ -46,6 +46,9 @@ class BuyerState1aPresenter(
     private val _triggerBitcoinLnAddressValidation = MutableStateFlow(0)
     val triggerBitcoinLnAddressValidation = _triggerBitcoinLnAddressValidation.asStateFlow()
 
+    private val _showLoadingDialog = MutableStateFlow(false)
+    val showLoadingDialog = _showLoadingDialog.asStateFlow()
+
     fun setShowInvalidAddressDialog(value: Boolean) {
         _showInvalidAddressDialog.value = value
     }
@@ -72,11 +75,11 @@ class BuyerState1aPresenter(
         _bitcoinPaymentDataValid.value = isValid
     }
 
-    fun onSendClick() {
+    fun onSendBitcoinPaymentDataClick() {
         if (!bitcoinPaymentDataValid.value) {
             setShowInvalidAddressDialog(true)
         } else {
-            onSend()
+            sendBitcoinPaymentData()
         }
     }
 
@@ -105,13 +108,15 @@ class BuyerState1aPresenter(
         _triggerBitcoinLnAddressValidation.value++
     }
 
-    fun onSend() {
-        require(bitcoinPaymentData.value.isNotEmpty())
+    fun sendBitcoinPaymentData() {
+        val bitcoinPaymentData = bitcoinPaymentData.value
+        if (bitcoinPaymentData.isEmpty()) return
         setShowInvalidAddressDialog(false)
-
         launchUI {
             withContext(Dispatchers.IO) {
-                tradesServiceFacade.buyerSendBitcoinPaymentData(bitcoinPaymentData.value)
+                _showLoadingDialog.value = true
+                tradesServiceFacade.buyerSendBitcoinPaymentData(bitcoinPaymentData)
+                _showLoadingDialog.value = false
             }
         }
     }

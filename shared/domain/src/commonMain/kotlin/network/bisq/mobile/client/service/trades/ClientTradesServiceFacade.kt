@@ -110,13 +110,11 @@ class ClientTradesServiceFacade(
     }
 
     override suspend fun rejectTrade(): Result<Unit> {
-        val result = apiGateway.rejectTrade(requireNotNull(tradeId))
-        return result
+        return apiGateway.rejectTrade(requireNotNull(tradeId))
     }
 
     override suspend fun cancelTrade(): Result<Unit> {
-        val result = apiGateway.cancelTrade(requireNotNull(tradeId))
-        return result
+        return apiGateway.cancelTrade(requireNotNull(tradeId))
     }
 
     override suspend fun closeTrade(): Result<Unit> {
