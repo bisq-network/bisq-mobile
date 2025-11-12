@@ -48,6 +48,12 @@ abstract class ApplicationBootstrapFacade(
         _isBootstrapFailed.value = failed
     }
 
+    private val _torBootstrapFailed = MutableStateFlow(false)
+    val torBootstrapFailed: StateFlow<Boolean> = _torBootstrapFailed.asStateFlow()
+    fun setTorBootstrapFailed(failed: Boolean) {
+        _torBootstrapFailed.value = failed
+    }
+
     private val _currentBootstrapStage = MutableStateFlow("")
     val currentBootstrapStage: StateFlow<String> get() = _currentBootstrapStage.asStateFlow()
     fun setCurrentBootstrapStage(stage: String) {
@@ -99,7 +105,7 @@ abstract class ApplicationBootstrapFacade(
                             ).firstOrNull() ?: "Unknown Tor error"
                             setState("mobile.bootstrap.tor.failed".i18n() + ": $errorMessage")
                             cancelTimeout(showProgressToast = false) // Don't show progress toast on failure
-                            setBootstrapFailed(true)
+                            setTorBootstrapFailed(true)
                             log.e { "Bootstrap: Tor initialization failed - $errorMessage" }
                         }
                     }
@@ -171,4 +177,14 @@ abstract class ApplicationBootstrapFacade(
     }
 
     protected open fun onTorStarted() {}
+
+    fun startTor(purgeTorDir: Boolean) {
+        serviceScope.launch {
+            setTorBootstrapFailed(false)
+            if (purgeTorDir) {
+                kmpTorService.stopAndPurgeWorkingDir()
+            }
+            kmpTorService.startTor()
+        }
+    }
 }

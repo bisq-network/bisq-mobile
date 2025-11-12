@@ -1,10 +1,8 @@
 package network.bisq.mobile.client
 
-import network.bisq.mobile.client.httpclient.HttpClientService
-import network.bisq.mobile.client.websocket.WebSocketClientService
-import network.bisq.mobile.domain.service.BaseService
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
@@ -22,8 +20,6 @@ import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 
 class ClientApplicationLifecycleService(
     private val kmpTorService: KmpTorService,
-    private val httpClientService: HttpClientService,
-    private val webSocketClientService: WebSocketClientService,
     private val accountsServiceFacade: AccountsServiceFacade,
     private val applicationBootstrapFacade: ApplicationBootstrapFacade,
     private val tradeChatMessagesServiceFacade: TradeChatMessagesServiceFacade,
@@ -39,41 +35,11 @@ class ClientApplicationLifecycleService(
     private val networkServiceFacade: NetworkServiceFacade,
     private val messageDeliveryServiceFacade: MessageDeliveryServiceFacade,
     private val connectivityService: ConnectivityService,
-) : BaseService() {
+) : ApplicationLifecycleService(applicationBootstrapFacade, kmpTorService) {
 
-    companion object {
-        const val TIMEOUT_SEC: Long = 60
-    }
-
-    fun initialize() {
-        log.i { "Initialize core services and Tor" }
-
-        launchIO {
-            runCatching {
-                applicationBootstrapFacade.activate() // sets bootstraps states and listeners
-                networkServiceFacade.activate()
-                httpClientService.activate()
-                webSocketClientService.activate()
-                activateServiceFacades()
-            }.onFailure { e ->
-                log.e("Error at ClientApplicationLifecycleService.initialize", e)
-                runCatching { networkServiceFacade.deactivate() }
-                applicationBootstrapFacade.handleBootstrapFailure(e)
-            }.also {
-                // TODO implement the bootstrap in applicationBootstrapFacade and networkServiceFacade
-                // ApplicationBootstrapFacade life cycle ends here in success and failure case.
-                //applicationBootstrapFacade.deactivate()
-            }
-        }
-    }
-
-    suspend fun shutdown() {
-        log.i { "Destroying NodeMainPresenter" }
-        deactivateServiceFacades()
-    }
-
-
-    private suspend fun activateServiceFacades() {
+    override suspend fun activateServiceFacades() {
+        applicationBootstrapFacade.activate() // sets bootstraps states and listeners
+        networkServiceFacade.activate()
         settingsServiceFacade.activate()
         connectivityService.activate()
         offersServiceFacade.activate()
@@ -90,22 +56,24 @@ class ClientApplicationLifecycleService(
         messageDeliveryServiceFacade.activate()
     }
 
-    private suspend fun deactivateServiceFacades() {
+    override suspend fun deactivateServiceFacades() {
+        // deactivation should happen in the opposite direction of activation
+        messageDeliveryServiceFacade.deactivate()
+        userProfileServiceFacade.deactivate()
+        reputationServiceFacade.deactivate()
+        mediationServiceFacade.deactivate()
+        explorerServiceFacade.deactivate()
+        accountsServiceFacade.deactivate()
+
+        languageServiceFacade.deactivate()
+        tradeChatMessagesServiceFacade.deactivate()
+        tradesServiceFacade.deactivate()
+        marketPriceServiceFacade.deactivate()
+        offersServiceFacade.deactivate()
         connectivityService.deactivate()
+        settingsServiceFacade.deactivate()
+
         networkServiceFacade.deactivate()
         applicationBootstrapFacade.deactivate()
-        settingsServiceFacade.deactivate()
-        offersServiceFacade.deactivate()
-        marketPriceServiceFacade.deactivate()
-        tradesServiceFacade.deactivate()
-        tradeChatMessagesServiceFacade.deactivate()
-        languageServiceFacade.deactivate()
-
-        accountsServiceFacade.deactivate()
-        explorerServiceFacade.deactivate()
-        mediationServiceFacade.deactivate()
-        reputationServiceFacade.deactivate()
-        userProfileServiceFacade.deactivate()
-        messageDeliveryServiceFacade.deactivate()
     }
 }

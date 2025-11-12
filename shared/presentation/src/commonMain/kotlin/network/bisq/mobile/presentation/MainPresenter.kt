@@ -22,6 +22,7 @@ import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.replicated.chat.ChatMessageTypeEnum
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.getDeviceLanguageCode
+import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -42,6 +43,7 @@ open class MainPresenter(
     private val settingsService: SettingsServiceFacade,
     private val tradeReadStateRepository: TradeReadStateRepository,
     private val urlLauncher: UrlLauncher,
+    private val applicationLifecycleService: ApplicationLifecycleService,
 ) : BasePresenter(null), AppPresenter {
 
     // Observable state
@@ -156,11 +158,11 @@ open class MainPresenter(
     }
 
     override fun onRestartApp() {
-        //TODO not implemented for client mode yet
+        applicationLifecycleService.restartApp(view)
     }
 
     override fun onTerminateApp() {
-        //TODO not implemented for client mode yet
+        applicationLifecycleService.terminateApp(view)
     }
 
     override fun isDemo(): Boolean = false

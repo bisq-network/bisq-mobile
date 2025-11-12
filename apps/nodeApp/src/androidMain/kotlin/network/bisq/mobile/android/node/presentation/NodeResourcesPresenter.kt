@@ -2,23 +2,21 @@ package network.bisq.mobile.android.node.presentation
 
 import android.content.Context
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.delay
-
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-
 import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.utils.copyDirectory
-import network.bisq.mobile.domain.utils.decrypt
 import network.bisq.mobile.android.node.utils.deleteFileInDirectory
-import network.bisq.mobile.domain.utils.encrypt
 import network.bisq.mobile.android.node.utils.getShareableUriForFile
+import network.bisq.mobile.android.node.utils.saveToDownloads
 import network.bisq.mobile.android.node.utils.shareBackup
 import network.bisq.mobile.android.node.utils.unzipToDirectory
 import network.bisq.mobile.android.node.utils.zipDirectory
-import network.bisq.mobile.android.node.utils.saveToDownloads
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
+import network.bisq.mobile.domain.utils.decrypt
+import network.bisq.mobile.domain.utils.encrypt
 import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.MainPresenter
 import network.bisq.mobile.presentation.ui.uicases.settings.ResourcesPresenter
@@ -178,7 +176,7 @@ class NodeResourcesPresenter(
                     // 1500ms chosen as a pragmatic balance between user feedback and flow speed.
                     result.complete(null)
                     delay(1500)
-                    nodeApplicationLifecycleService.restartForRestoreDataDirectory(context)
+                    nodeApplicationLifecycleService.restartForRestoreDataDirectory(view) // onRestoreDataDir is called from UI, so view is not null here
                 } else {
                     val errorMessage = "mobile.resources.restore.error.missingBackupDir".i18n()
                     throw IOException(errorMessage)

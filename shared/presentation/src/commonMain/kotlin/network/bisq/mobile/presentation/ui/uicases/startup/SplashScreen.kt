@@ -33,6 +33,7 @@ fun SplashScreen() {
     val state by presenter.state.collectAsState()
     val isTimeoutDialogVisible by presenter.isTimeoutDialogVisible.collectAsState()
     val isBootstrapFailed by presenter.isBootstrapFailed.collectAsState()
+    val torBootstrapFailed by presenter.torBootstrapFailed.collectAsState()
     val currentBootstrapStage by presenter.currentBootstrapStage.collectAsState()
     val appNameAndVersion by presenter.appNameAndVersion.collectAsState()
 
@@ -70,27 +71,67 @@ fun SplashScreen() {
         }
 
         // Timeout dialog
-        if (isTimeoutDialogVisible && !isBootstrapFailed) {
+        if (isTimeoutDialogVisible && !torBootstrapFailed && !isBootstrapFailed) {
+            if (presenter.isIos) {
+                WarningConfirmationDialog(
+                    headline = "mobile.bootstrap.timeout.title".i18n(),
+                    message = "mobile.bootstrap.timeout.message".i18n(currentBootstrapStage),
+                    confirmButtonText = "mobile.bootstrap.timeout.restart".i18n(),
+                    dismissButtonText = "mobile.bootstrap.timeout.continue".i18n(),
+                    onConfirm = { presenter.onRestartApp() },
+                    onDismiss = { presenter.onTimeoutDialogContinue() }
+                )
+            } else {
+                WarningConfirmationDialog(
+                    headline = "mobile.bootstrap.timeout.title".i18n(),
+                    message = "mobile.bootstrap.timeout.message.ios".i18n(currentBootstrapStage),
+                    confirmButtonText = "mobile.bootstrap.timeout.continue".i18n(),
+                    dismissButtonText = "",
+                    onConfirm = { presenter.onTimeoutDialogContinue() },
+                    onDismiss = { }
+                )
+            }
+        }
+
+        // Restart tor dialog
+        if (torBootstrapFailed && !isBootstrapFailed) {
             WarningConfirmationDialog(
-                headline = "mobile.bootstrap.timeout.title".i18n(),
-                message = "mobile.bootstrap.timeout.message".i18n(currentBootstrapStage),
-                confirmButtonText = "mobile.bootstrap.timeout.restart".i18n(),
-                dismissButtonText = "mobile.bootstrap.timeout.continue".i18n(),
-                onConfirm = { presenter.onRestartApp() },
-                onDismiss = { presenter.onTimeoutDialogContinue() }
+                headline = "mobile.bootstrap.tor.failed.title".i18n(),
+                message = "mobile.bootstrap.tor.failed.message".i18n(),
+                confirmButtonText = "mobile.bootstrap.tor.failed.purgeRestart".i18n(),
+                dismissButtonText = "mobile.bootstrap.tor.failed.restart".i18n(),
+                onConfirm = presenter::onPurgeRestartTor,
+                onDismiss = presenter::onRestartTor,
+                verticalButtonPlacement = true,
             )
         }
 
-        // Restart dialog
+        // Bootstrap failure dialog
         if (isBootstrapFailed) {
-            WarningConfirmationDialog(
-                headline = "mobile.bootstrap.failed.title".i18n(),
-                message = "mobile.bootstrap.failed.message".i18n(currentBootstrapStage),
-                confirmButtonText = "mobile.bootstrap.failed.restart".i18n(),
-                dismissButtonText = "mobile.bootstrap.failed.shutdown".i18n(),
-                onConfirm = { presenter.onRestartApp() },
-                onDismiss = { presenter.onTerminateApp() }
-            )
+            if (presenter.isIos) {
+                // on iOS we cannot restart the app
+                // and It's discouraged to force close the app, as it looks like the app has crashed
+                // so we just have to let user know that we cannot recover from this error
+                // and give a hint that they must restart the app
+                WarningConfirmationDialog(
+                    headline = "mobile.bootstrap.failed.title".i18n(),
+                    message = "mobile.bootstrap.failed.message".i18n(currentBootstrapStage),
+                    confirmButtonText = "",
+                    dismissButtonText = "",
+                    onConfirm = { },
+                    onDismiss = { }
+                )
+            } else {
+                WarningConfirmationDialog(
+                    headline = "mobile.bootstrap.failed.title".i18n(),
+                    message = "mobile.bootstrap.failed.message".i18n(currentBootstrapStage),
+                    confirmButtonText = "mobile.bootstrap.failed.restart".i18n(),
+                    dismissButtonText = "mobile.bootstrap.failed.shutdown".i18n(),
+                    onConfirm = { presenter.onRestartApp() },
+                    onDismiss = { presenter.onTerminateApp() }
+                )
+            }
+
         }
     }
 }

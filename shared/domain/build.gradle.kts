@@ -1,10 +1,10 @@
 import com.android.build.gradle.tasks.factory.AndroidUnitTest
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.io.InputStreamReader
 import java.util.Properties
 import kotlin.io.path.Path
-import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget
 
 plugins {
     alias(libs.plugins.kotlin.multiplatform)
@@ -132,6 +132,7 @@ kotlin {
             implementation(libs.koin.core)
             implementation(libs.koin.android)
             implementation(libs.ktor.client.okhttp)
+            implementation(libs.process.phoenix)
         }
         androidUnitTest.dependencies {
             implementation(libs.mockk)

@@ -260,7 +260,6 @@ dependencies {
     // Android libraries
     implementation(libs.androidx.multidex)
     implementation(libs.androidx.core.splashscreen)
-    implementation(libs.process.phoenix)
     coreLibraryDesugaring(libs.desugar.jdk.libs)
 
     // Bisq2 core dependencies

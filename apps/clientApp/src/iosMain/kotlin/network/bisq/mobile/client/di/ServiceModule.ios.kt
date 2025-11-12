@@ -1,8 +1,9 @@
-package network.bisq.mobile.presentation.di
+package network.bisq.mobile.client.di
 
 import network.bisq.mobile.client.ClientApplicationLifecycleService
 import network.bisq.mobile.domain.service.AppForegroundController
 import network.bisq.mobile.domain.service.ForegroundDetector
+import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.presentation.notification.ForegroundServiceController
 import network.bisq.mobile.presentation.notification.ForegroundServiceControllerImpl
 import network.bisq.mobile.presentation.notification.NotificationController
@@ -19,7 +20,7 @@ val serviceModule = module {
         OpenTradesNotificationService(get(), get(), get(), get(), get())
     }
 
-    single<ClientApplicationLifecycleService> {
+    single<ApplicationLifecycleService> {
         ClientApplicationLifecycleService(
             get(),
             get(),

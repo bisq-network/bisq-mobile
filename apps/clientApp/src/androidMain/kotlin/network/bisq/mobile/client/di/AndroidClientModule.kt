@@ -7,6 +7,7 @@ import network.bisq.mobile.client.service.user_profile.ClientCatHashService
 import network.bisq.mobile.client.utils.ClientVersionProvider
 import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
+import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.domain.utils.AndroidDeviceInfoProvider
 import network.bisq.mobile.domain.utils.DeviceInfoProvider
 import network.bisq.mobile.domain.utils.VersionProvider
@@ -39,10 +40,8 @@ val androidClientModule = module {
 
     single<VersionProvider> { ClientVersionProvider() }
 
-    single<ClientApplicationLifecycleService> {
+    single<ApplicationLifecycleService> {
         ClientApplicationLifecycleService(
-            get(),
-            get(),
             get(),
             get(),
             get(),

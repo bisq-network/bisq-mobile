@@ -15,6 +15,7 @@ import network.bisq.mobile.android.node.di.serviceModule
 import network.bisq.mobile.android.node.presentation.backupFileName
 import network.bisq.mobile.android.node.utils.moveDirReplace
 import network.bisq.mobile.domain.di.domainModule
+import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.presentation.MainApplication
 import network.bisq.mobile.presentation.di.presentationModule
 import org.bouncycastle.jce.provider.BouncyCastleProvider
@@ -49,7 +50,7 @@ class NodeMainApplication : MainApplication() {
         // The lifecycle of those is tied to the lifecycle of the Application/Process not to the lifecycle of the MainActivity.
         // As Android does not provide any callback when the process gets terminated we cannot gracefully shutdown the services and tor.
         // Only if the user shutdown or restart we can do that.
-        val nodeApplicationLifecycleService: NodeApplicationLifecycleService = get()
+        val nodeApplicationLifecycleService: ApplicationLifecycleService = get()
         nodeApplicationLifecycleService.initialize()
 
         log.i { "Bisq Easy Node Application Created" }

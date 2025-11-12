@@ -173,7 +173,7 @@ val clientModule = module {
 
     single { ClientConnectivityService(get()) } bind ConnectivityService::class
 
-    single<NetworkServiceFacade> { ClientNetworkServiceFacade(get()) }
+    single<NetworkServiceFacade> { ClientNetworkServiceFacade(get(), get(), get(), get()) }
 
     single { MarketPriceApiGateway(get(), get()) }
     single<MarketPriceServiceFacade> { ClientMarketPriceServiceFacade(get(), get(), get()) }

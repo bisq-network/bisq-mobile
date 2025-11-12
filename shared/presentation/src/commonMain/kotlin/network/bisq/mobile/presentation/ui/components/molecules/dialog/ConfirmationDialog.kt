@@ -136,6 +136,22 @@ private fun ConfirmationDialogPreview_Default() {
 
 @Preview
 @Composable
+private fun ConfirmationDialogPreview_Default_single_button() {
+    BisqTheme.Preview {
+        ConfirmationDialog(
+            headline = "Unrecoverable error",
+            headlineColor = BisqTheme.colors.warning,
+            message = "You need to close and restart the app",
+            confirmButtonText = "Close",
+            dismissButtonText = "",
+            onConfirm = {},
+            onDismiss = {}
+        )
+    }
+}
+
+@Preview
+@Composable
 private fun ConfirmationDialogPreview_Warning() {
     BisqTheme.Preview {
         ConfirmationDialog(

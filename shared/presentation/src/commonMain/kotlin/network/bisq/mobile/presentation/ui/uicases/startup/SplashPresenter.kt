@@ -4,9 +4,11 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import network.bisq.mobile.domain.PlatformType
 import network.bisq.mobile.domain.data.model.Settings
 import network.bisq.mobile.domain.data.replicated.settings.SettingsVO
 import network.bisq.mobile.domain.data.repository.SettingsRepository
+import network.bisq.mobile.domain.getPlatformInfo
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -30,11 +32,15 @@ abstract class SplashPresenter(
     val progress: StateFlow<Float> get() = applicationBootstrapFacade.progress
     val isTimeoutDialogVisible: StateFlow<Boolean> get() = applicationBootstrapFacade.isTimeoutDialogVisible
     val isBootstrapFailed: StateFlow<Boolean> get() = applicationBootstrapFacade.isBootstrapFailed
+
+    val torBootstrapFailed: StateFlow<Boolean> get() = applicationBootstrapFacade.torBootstrapFailed
     val currentBootstrapStage: StateFlow<String> get() = applicationBootstrapFacade.currentBootstrapStage
     val shouldShowProgressToast: StateFlow<Boolean> get() = applicationBootstrapFacade.shouldShowProgressToast
 
     private val _appNameAndVersion: MutableStateFlow<String> = MutableStateFlow("")
     val appNameAndVersion: StateFlow<String> get() = _appNameAndVersion.asStateFlow()
+
+    val isIos = getPlatformInfo().type == PlatformType.IOS
 
     override fun onViewAttached() {
         super.onViewAttached()
@@ -120,6 +126,14 @@ abstract class SplashPresenter(
 
     fun onRestartApp() {
         restartApp()
+    }
+
+    fun onRestartTor() {
+        applicationBootstrapFacade.startTor(false)
+    }
+
+    fun onPurgeRestartTor() {
+        applicationBootstrapFacade.startTor(true)
     }
 
     fun onTerminateApp() {

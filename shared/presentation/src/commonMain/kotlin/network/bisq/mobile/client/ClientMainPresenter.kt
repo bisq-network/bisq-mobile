@@ -2,10 +2,10 @@ package network.bisq.mobile.client
 
 import network.bisq.mobile.client.service.network.ClientConnectivityService
 import network.bisq.mobile.client.shared.BuildConfig
-import network.bisq.mobile.client.websocket.WebSocketClientService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
 import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
@@ -17,12 +17,12 @@ import network.bisq.mobile.presentation.service.OpenTradesNotificationService
  */
 open class ClientMainPresenter(
     private val connectivityService: ClientConnectivityService,
-    private val settingsServiceFacade: SettingsServiceFacade,
+    settingsServiceFacade: SettingsServiceFacade,
     tradesServiceFacade: TradesServiceFacade,
     userProfileServiceFacade: UserProfileServiceFacade,
     openTradesNotificationService: OpenTradesNotificationService,
     tradeReadStateRepository: TradeReadStateRepository,
-    private val webSocketClientService: WebSocketClientService,
+    applicationLifecycleService: ApplicationLifecycleService,
     urlLauncher: UrlLauncher
 ) : MainPresenter(
     tradesServiceFacade,
@@ -31,6 +31,7 @@ open class ClientMainPresenter(
     settingsServiceFacade,
     tradeReadStateRepository,
     urlLauncher,
+    applicationLifecycleService,
 ) {
 
     override fun onViewAttached() {

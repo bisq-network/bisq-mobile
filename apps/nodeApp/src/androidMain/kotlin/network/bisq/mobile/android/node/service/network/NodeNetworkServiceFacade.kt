@@ -1,5 +1,6 @@
 package network.bisq.mobile.android.node.service.network
 
+import bisq.common.network.TransportType
 import bisq.common.observable.Pin
 import bisq.network.identity.NetworkId
 import bisq.network.p2p.ServiceNode
@@ -11,11 +12,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import network.bisq.mobile.android.node.AndroidApplicationService
+import network.bisq.mobile.domain.service.network.KmpTorService
 import network.bisq.mobile.domain.service.network.NetworkServiceFacade
 
 
-class NodeNetworkServiceFacade(private val provider: AndroidApplicationService.Provider) :
-    NetworkServiceFacade(), Node.Listener {
+class NodeNetworkServiceFacade(
+    private val provider: AndroidApplicationService.Provider,
+    kmpTorService: KmpTorService,
+) : NetworkServiceFacade(kmpTorService), Node.Listener {
     // While tor starts up we use -1 to flag as network not available yet
     private val _numConnections = MutableStateFlow(-1)
     override val numConnections: StateFlow<Int> get() = _numConnections.asStateFlow()
@@ -26,6 +30,11 @@ class NodeNetworkServiceFacade(private val provider: AndroidApplicationService.P
     private var defaultNode: Node? = null
     private var serviceNodeStatePin: Pin? = null
     private var allDataReceivedPin: Pin? = null
+
+    override suspend fun isTorEnabled(): Boolean {
+        val networkServiceConfig = provider.applicationService.networkServiceConfig
+        return networkServiceConfig.supportedTransportTypes.contains(TransportType.TOR)
+    }
 
     override suspend fun activate() {
         super.activate()

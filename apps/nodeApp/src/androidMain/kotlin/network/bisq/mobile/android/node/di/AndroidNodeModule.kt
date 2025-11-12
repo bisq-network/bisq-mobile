@@ -34,6 +34,7 @@ import network.bisq.mobile.domain.AndroidUrlLauncher
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.service.accounts.AccountsServiceFacade
 import network.bisq.mobile.domain.service.bootstrap.ApplicationBootstrapFacade
+import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.domain.service.chat.trade.TradeChatMessagesServiceFacade
 import network.bisq.mobile.domain.service.common.LanguageServiceFacade
 import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
@@ -95,7 +96,7 @@ val androidNodeModule = module {
 
     single<MessageDeliveryServiceFacade> { NodeMessageDeliveryServiceFacade(get()) }
 
-    single { NodeNetworkServiceFacade(get()) } bind NetworkServiceFacade::class
+    single { NodeNetworkServiceFacade(get(), get()) } bind NetworkServiceFacade::class
 
     single<KmpTorService> {
         val applicationService = get<AndroidApplicationService>()
@@ -130,7 +131,7 @@ val androidNodeModule = module {
 
     single<UrlLauncher> { AndroidUrlLauncher(androidContext()) }
 
-    single<NodeApplicationLifecycleService> {
+    single<ApplicationLifecycleService> {
         NodeApplicationLifecycleService(
             get(),
             get(),

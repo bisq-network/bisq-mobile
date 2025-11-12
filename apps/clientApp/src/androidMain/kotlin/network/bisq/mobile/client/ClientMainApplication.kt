@@ -4,6 +4,7 @@ import network.bisq.mobile.client.di.androidClientModule
 import network.bisq.mobile.client.di.clientModule
 import network.bisq.mobile.client.di.serviceModule
 import network.bisq.mobile.domain.di.domainModule
+import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.presentation.MainApplication
 import network.bisq.mobile.presentation.di.presentationModule
 import org.koin.android.ext.android.get
@@ -20,7 +21,7 @@ class ClientMainApplication : MainApplication() {
     override fun onCreated() {
         // We start here the initialisation (non blocking) of tor and the service facades.
         // The lifecycle of those is tied to the lifecycle of the Application/Process not to the lifecycle of the MainActivity.
-        val applicationLifecycleService: ClientApplicationLifecycleService = get()
+        val applicationLifecycleService: ApplicationLifecycleService = get()
         applicationLifecycleService.initialize()
         log.i { "Bisq Client Application Created" }
     }

@@ -1,11 +1,10 @@
 package network.bisq.mobile.android.node.presentation
 
-import android.app.Activity
 import network.bisq.mobile.android.node.BuildNodeConfig
-import network.bisq.mobile.android.node.NodeApplicationLifecycleService
 import network.bisq.mobile.android.node.service.network.NodeConnectivityService
 import network.bisq.mobile.domain.UrlLauncher
 import network.bisq.mobile.domain.data.repository.TradeReadStateRepository
+import network.bisq.mobile.domain.service.bootstrap.ApplicationLifecycleService
 import network.bisq.mobile.domain.service.network.ConnectivityService.ConnectivityStatus
 import network.bisq.mobile.domain.service.settings.SettingsServiceFacade
 import network.bisq.mobile.domain.service.trades.TradesServiceFacade
@@ -21,14 +20,15 @@ class NodeMainPresenter(
     tradesServiceFacade: TradesServiceFacade,
     userProfileServiceFacade: UserProfileServiceFacade,
     tradeReadStateRepository: TradeReadStateRepository,
-    private val nodeApplicationLifecycleService: NodeApplicationLifecycleService
+    applicationLifecycleService: ApplicationLifecycleService,
 ) : MainPresenter(
     tradesServiceFacade,
     userProfileServiceFacade,
     openTradesNotificationService,
     settingsServiceFacade,
     tradeReadStateRepository,
-    urlLauncher
+    urlLauncher,
+    applicationLifecycleService,
 ) {
 
     override fun onViewAttached() {
@@ -42,23 +42,5 @@ class NodeMainPresenter(
 
     override fun isDevMode(): Boolean {
         return isDemo() || BuildNodeConfig.IS_DEBUG
-    }
-
-    override fun onRestartApp() {
-        val activity = view as? Activity
-        if (activity == null) {
-            log.e { "onRestartApp: view is not an Activity" }
-            return
-        }
-        nodeApplicationLifecycleService.restartApp(activity)
-    }
-
-    override fun onTerminateApp() {
-        val activity = view as? Activity
-        if (activity == null) {
-            log.e { "onTerminateApp: view is not an Activity" }
-            return
-        }
-        nodeApplicationLifecycleService.terminateApp(activity)
     }
 }
