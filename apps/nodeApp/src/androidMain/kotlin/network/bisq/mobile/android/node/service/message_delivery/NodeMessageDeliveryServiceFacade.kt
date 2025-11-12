@@ -22,11 +22,11 @@ class NodeMessageDeliveryServiceFacade(private val applicationService: AndroidAp
     private val statusPins: MutableMap<String, Pin> = mutableMapOf()
     private val deliveryStatusMapPins: MutableMap<String, Pin> = mutableMapOf()
 
-    override fun activate() {
+    override suspend fun activate() {
         super.activate()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super.deactivate()
 
         statusPins.values.forEach { it.unbind() }

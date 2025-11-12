@@ -23,7 +23,7 @@ class ClientReputationServiceFacade(
     override val scoreByUserProfileId: Map<String, Long> get() = reputationByUserProfileId.value.mapValues { (_, v) -> v.totalScore }
 
     // Life cycle
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
         serviceScope.launch {
             runCatching {
@@ -34,7 +34,7 @@ class ClientReputationServiceFacade(
         }
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super<ServiceFacade>.deactivate()
     }
 

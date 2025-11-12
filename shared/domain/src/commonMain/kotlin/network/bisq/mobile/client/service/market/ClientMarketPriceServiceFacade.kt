@@ -25,7 +25,7 @@ class ClientMarketPriceServiceFacade(
     private var selectedMarket: MarketVO? = null
 
     // Life cycle
-    override fun activate() {
+    override suspend fun activate() {
         super.activate()
 
         restoreSelectedMarketFromSettings {

@@ -15,11 +15,11 @@ class NodeExplorerServiceFacade(applicationService: AndroidApplicationService.Pr
     private val explorerService: ExplorerService by lazy { applicationService.bondedRolesService.get().explorerService }
     private val cachedExplorerResults: MutableMap<String, ExplorerResult> = HashMap()
 
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super<ServiceFacade>.deactivate()
     }
 

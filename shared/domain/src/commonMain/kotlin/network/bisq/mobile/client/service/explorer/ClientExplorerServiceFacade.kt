@@ -7,11 +7,11 @@ import network.bisq.mobile.domain.service.explorer.ExplorerServiceFacade
 class ClientExplorerServiceFacade(private val apiGateway: ExplorerApiGateway) : ServiceFacade(), ExplorerServiceFacade {
     private val cachedExplorerResults: MutableMap<String, ExplorerResult> = HashMap()
 
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super<ServiceFacade>.deactivate()
     }
 

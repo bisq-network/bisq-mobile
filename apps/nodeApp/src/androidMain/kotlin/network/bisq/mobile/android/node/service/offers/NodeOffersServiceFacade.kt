@@ -21,24 +21,17 @@ import bisq.offer.amount.spec.AmountSpec
 import bisq.offer.bisq_easy.BisqEasyOffer
 import bisq.offer.price.spec.PriceSpec
 import bisq.user.banned.BannedUserService
-import network.bisq.mobile.domain.formatters.AmountFormatter
-import network.bisq.mobile.domain.formatters.PriceQuoteFormatter
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideFixedAmountSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.amount.spec.QuoteSideRangeAmountSpecVO
-import network.bisq.mobile.domain.data.replicated.common.monetary.FiatVOFactory
-import network.bisq.mobile.domain.data.replicated.common.monetary.PriceQuoteVOExtensions.toBaseSideMonetary
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.FixPriceSpecVO
-import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVOExtensions.getPriceQuoteVO
 import bisq.user.identity.UserIdentity
 import bisq.user.identity.UserIdentityService
 import bisq.user.profile.UserProfileService
 import bisq.user.reputation.ReputationService
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.launch
-import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.launch
 import network.bisq.mobile.android.node.AndroidApplicationService
 import network.bisq.mobile.android.node.mapping.Mappings
 import network.bisq.mobile.android.node.mapping.OfferItemPresentationVOFactory
@@ -50,10 +43,9 @@ import network.bisq.mobile.domain.data.replicated.offer.amount.spec.AmountSpecVO
 import network.bisq.mobile.domain.data.replicated.offer.price.spec.PriceSpecVO
 import network.bisq.mobile.domain.data.replicated.presentation.offerbook.OfferItemPresentationModel
 import network.bisq.mobile.domain.service.market_price.MarketPriceServiceFacade
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import network.bisq.mobile.domain.service.offers.OfferFormattingUtil
 import network.bisq.mobile.domain.service.offers.OffersServiceFacade
+import network.bisq.mobile.domain.service.user_profile.UserProfileServiceFacade
 import network.bisq.mobile.domain.utils.BisqEasyTradeAmountLimits
 import java.util.Date
 import java.util.Optional
@@ -84,7 +76,7 @@ class NodeOffersServiceFacade(
     private var marketPricePin: Pin? = null
 
     // Life cycle
-    override fun activate() {
+    override suspend fun activate() {
         super.activate()
 
         // We set channel to null to avoid that our _offerbookMarketItems gets filled initially
@@ -118,7 +110,7 @@ class NodeOffersServiceFacade(
         }
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         chatMessagesPin?.unbind()
         chatMessagesPin = null
         selectedChannelPin?.unbind()

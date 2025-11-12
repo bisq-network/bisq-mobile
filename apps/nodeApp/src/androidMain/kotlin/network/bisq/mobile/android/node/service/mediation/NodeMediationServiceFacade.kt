@@ -16,11 +16,11 @@ class NodeMediationServiceFacade(applicationService: AndroidApplicationService.P
     private val channelService: BisqEasyOpenTradeChannelService by lazy { applicationService.chatService.get().bisqEasyOpenTradeChannelService }
     private val mediationRequestService: MediationRequestService by lazy { applicationService.supportService.get().mediationRequestService }
 
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super<ServiceFacade>.deactivate()
     }
 

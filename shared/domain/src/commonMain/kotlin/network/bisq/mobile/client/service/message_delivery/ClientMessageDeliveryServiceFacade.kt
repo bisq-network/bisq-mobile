@@ -7,11 +7,11 @@ import network.bisq.mobile.domain.service.message_delivery.MessageDeliveryServic
 class ClientMessageDeliveryServiceFacade() :
     MessageDeliveryServiceFacade() {
 
-    override fun activate() {
+    override suspend fun activate() {
         super.activate()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super.deactivate()
     }
 

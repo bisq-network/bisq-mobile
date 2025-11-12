@@ -45,7 +45,7 @@ class ClientTradeChatMessagesServiceFacade(
     private var jobs: MutableSet<Job> = mutableSetOf()
 
     // Misc
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
 
         jobs.add(serviceScope.launch(Dispatchers.Default) {
@@ -71,7 +71,7 @@ class ClientTradeChatMessagesServiceFacade(
         })
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         jobs.forEach { it.cancel() }
         jobs.clear()
         super<ServiceFacade>.deactivate()

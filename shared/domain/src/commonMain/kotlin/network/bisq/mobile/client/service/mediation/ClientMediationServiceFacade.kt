@@ -9,11 +9,11 @@ import network.bisq.mobile.domain.service.offers.MediatorNotAvailableException
 class ClientMediationServiceFacade(val apiGateway: MediationApiGateway) :
     ServiceFacade(), MediationServiceFacade {
 
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super<ServiceFacade>.deactivate()
     }
 

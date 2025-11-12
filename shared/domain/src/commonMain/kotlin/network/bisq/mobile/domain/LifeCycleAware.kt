@@ -1,7 +1,7 @@
 package network.bisq.mobile.domain
 
 interface LifeCycleAware {
-    fun activate() {}
+    suspend fun activate() {}
 
-    fun deactivate() {}
+    suspend fun deactivate() {}
 }

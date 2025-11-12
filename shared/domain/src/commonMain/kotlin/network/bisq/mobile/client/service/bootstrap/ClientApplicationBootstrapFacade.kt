@@ -16,7 +16,7 @@ class ClientApplicationBootstrapFacade(
     private val kmpTorService: KmpTorService,
 ) : ApplicationBootstrapFacade(kmpTorService) {
 
-    override fun activate() {
+    override suspend fun activate() {
         super.activate()
 
         setState("mobile.clientApplicationBootstrap.bootstrapping".i18n())
@@ -69,7 +69,7 @@ class ClientApplicationBootstrapFacade(
         onTorStartedOrSkipped()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super.deactivate()
     }
 }

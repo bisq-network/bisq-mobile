@@ -122,7 +122,7 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
     // Misc
     private var tradeRulesConfirmedPin: Pin? = null
 
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
         settingsService.languageCode.addObserver { code ->
             _languageCode.value = code
@@ -153,7 +153,7 @@ class NodeSettingsServiceFacade(applicationService: AndroidApplicationService.Pr
         }
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         tradeRulesConfirmedPin?.unbind()
 
         super<ServiceFacade>.deactivate()

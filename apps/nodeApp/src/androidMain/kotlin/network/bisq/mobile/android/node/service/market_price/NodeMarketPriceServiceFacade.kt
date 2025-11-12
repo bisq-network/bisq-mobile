@@ -26,7 +26,7 @@ class NodeMarketPriceServiceFacade(
     private var marketPricePin: Pin? = null
 
     // Life cycle
-    override fun activate() {
+    override suspend fun activate() {
         super.activate()
 
         restoreSelectedMarketFromSettings { marketVO ->
@@ -38,7 +38,7 @@ class NodeMarketPriceServiceFacade(
         observeMarketPrice()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         selectedMarketPin?.unbind()
         selectedMarketPin = null
         marketPricePin?.unbind()

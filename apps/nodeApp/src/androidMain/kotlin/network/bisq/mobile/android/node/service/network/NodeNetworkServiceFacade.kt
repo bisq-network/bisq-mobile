@@ -27,7 +27,7 @@ class NodeNetworkServiceFacade(private val provider: AndroidApplicationService.P
     private var serviceNodeStatePin: Pin? = null
     private var allDataReceivedPin: Pin? = null
 
-    override fun activate() {
+    override suspend fun activate() {
         super.activate()
         val networkService = provider.applicationService.networkService
         val serviceNodesByTransport = networkService.serviceNodesByTransport.serviceNodesByTransport
@@ -52,7 +52,7 @@ class NodeNetworkServiceFacade(private val provider: AndroidApplicationService.P
         }
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super.deactivate()
         serviceNodeStatePin?.unbind()
         serviceNodeStatePin = null

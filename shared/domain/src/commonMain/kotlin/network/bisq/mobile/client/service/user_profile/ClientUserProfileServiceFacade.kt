@@ -61,7 +61,7 @@ class ClientUserProfileServiceFacade(
     private var isIgnoredUsersCacheInitialized = false
 
     // Misc
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
 
         collectIO(webSocketClientService.connectionState) {
@@ -96,7 +96,7 @@ class ClientUserProfileServiceFacade(
         observeNumUserProfiles()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         // Clear cache state on deactivation
         serviceScope.launch {
             ignoredUserIdsMutex.withLock {

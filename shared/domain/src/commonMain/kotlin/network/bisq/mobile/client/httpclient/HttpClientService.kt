@@ -67,7 +67,7 @@ class HttpClientService(
 
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun activate() {
+    override suspend fun activate() {
         super.activate()
 
         stopFlow.resetReplayCache()
@@ -82,7 +82,7 @@ class HttpClientService(
         }
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         stopFlow.tryEmit(Unit)
         super.deactivate()
 

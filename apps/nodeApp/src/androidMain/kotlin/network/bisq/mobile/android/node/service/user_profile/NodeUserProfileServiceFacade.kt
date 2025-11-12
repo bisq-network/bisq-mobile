@@ -68,7 +68,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
     private var proofOfWork: ProofOfWork? = null
     private var numUserProfilesPin: Pin? = null
 
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
 
         serviceScope.launch(Dispatchers.Default) {
@@ -89,7 +89,7 @@ class NodeUserProfileServiceFacade(private val applicationService: AndroidApplic
 
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         numUserProfilesPin?.unbind()
         numUserProfilesPin = null
         _numUserProfiles.value = 0

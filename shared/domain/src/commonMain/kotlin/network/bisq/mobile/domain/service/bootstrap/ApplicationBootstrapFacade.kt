@@ -60,11 +60,11 @@ abstract class ApplicationBootstrapFacade(
         _shouldShowProgressToast.value = show
     }
 
-    override fun activate() {
+    override suspend fun activate() {
         super.activate()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         cancelTimeout()
         super.deactivate()
     }

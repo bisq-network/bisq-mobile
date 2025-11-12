@@ -104,7 +104,7 @@ class NodeTradesServiceFacade(
     private var channelsPin: Pin? = null
     private val pinsByTradeId: MutableMap<String, MutableSet<Pin>> = mutableMapOf()
 
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
 
         tradesPin = bisqEasyTradeService.trades.addObserver(object : CollectionObserver<BisqEasyTrade?> {
@@ -144,7 +144,7 @@ class NodeTradesServiceFacade(
         })
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         channelsPin?.unbind()
         tradesPin?.unbind()
 

@@ -17,7 +17,7 @@ class NodeApplicationBootstrapFacade(
     private var applicationServiceStatePin: Pin? = null
 
 
-    override fun activate() {
+    override suspend fun activate() {
         super.activate()
         log.i { "Bootstrap: super.activate() completed, calling onInitializeAppState()" }
 
@@ -28,7 +28,7 @@ class NodeApplicationBootstrapFacade(
         setProgress(0f)
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         log.i { "Bootstrap: deactivate() called" }
         removeApplicationStateObserver()
 

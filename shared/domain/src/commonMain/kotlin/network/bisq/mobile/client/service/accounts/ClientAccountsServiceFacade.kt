@@ -17,11 +17,11 @@ class ClientAccountsServiceFacade(
     private val _selectedAccount = MutableStateFlow<UserDefinedFiatAccountVO?>(null)
     override val selectedAccount: StateFlow<UserDefinedFiatAccountVO?> get() = _selectedAccount.asStateFlow()
 
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super<ServiceFacade>.deactivate()
     }
 

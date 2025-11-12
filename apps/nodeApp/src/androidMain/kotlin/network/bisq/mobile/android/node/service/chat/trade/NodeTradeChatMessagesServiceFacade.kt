@@ -47,7 +47,7 @@ class NodeTradeChatMessagesServiceFacade(
     private val reactionsPinByMessageId: MutableMap<String, Pin> = mutableMapOf()
     private val pinsByTradeId: MutableMap<String, MutableSet<Pin>> = mutableMapOf()
 
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
 
         channelsPin = bisqEasyOpenTradeChannelService.channels.addObserver(object : CollectionObserver<BisqEasyOpenTradeChannel?> {
@@ -69,7 +69,7 @@ class NodeTradeChatMessagesServiceFacade(
         })
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         channelsPin?.unbind()
 
         unbindAllReactionsPins()

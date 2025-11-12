@@ -28,7 +28,7 @@ abstract class ServiceFacade : BaseService(), LifeCycleAware {
     private var isActivated = atomic(false)
 
     @CallSuper
-    override fun activate() {
+    override suspend fun activate() {
         require(!isActivated.value) { "activate called on ${this::class.simpleName} while service is already activated" }
 
         log.i { "${this::class.simpleName} activated" }
@@ -36,7 +36,7 @@ abstract class ServiceFacade : BaseService(), LifeCycleAware {
     }
 
     @CallSuper
-    override fun deactivate() {
+    override suspend fun deactivate() {
         if (isActivated.compareAndSet(expect = true, update = false)) {
             log.i { "Deactivating service ${this::class.simpleName}" }
 
@@ -45,10 +45,5 @@ abstract class ServiceFacade : BaseService(), LifeCycleAware {
                 jobsManager.dispose()
             }
         }
-    }
-
-    protected fun reactivate() {
-        deactivate()
-        activate()
     }
 }

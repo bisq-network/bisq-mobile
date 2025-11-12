@@ -15,11 +15,11 @@ class NodeReputationServiceFacade(private val applicationService: AndroidApplica
     override val scoreByUserProfileId: Map<String, Long> get() = reputationService.scoreByUserProfileId
 
     // Life cycle
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super<ServiceFacade>.deactivate()
     }
 

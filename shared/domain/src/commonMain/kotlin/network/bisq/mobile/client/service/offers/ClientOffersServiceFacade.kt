@@ -49,14 +49,14 @@ class ClientOffersServiceFacade(
 
 
     // Life cycle
-    override fun activate() {
+    override suspend fun activate() {
         super<OffersServiceFacade>.activate()
 
         observeMarketPrice()
         observeAvailableMarkets()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         _offerbookMarketItems.value = emptyList()
         hasSubscribedToOffers.value = false
         super<OffersServiceFacade>.deactivate()

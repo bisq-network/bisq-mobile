@@ -93,7 +93,7 @@ class MarketPriceServiceFacadeTest : KoinTest {
         var restoredMarket: MarketVO? = null
         private val testMarketPriceItem = MutableStateFlow<MarketPriceItem?>(null)
         
-        override fun activate() {
+        override suspend fun activate() {
             super.activate()
             restoreSelectedMarketFromSettings { marketVO ->
                 restoredMarket = marketVO

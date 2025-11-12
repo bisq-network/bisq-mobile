@@ -66,14 +66,14 @@ class ClientTradesServiceFacade(
     private val tradePropertiesSubscription: Subscription<Map<String, TradePropertiesDto>> =
         Subscription(webSocketClientService, json, Topic.TRADE_PROPERTIES, this::handleTradePropertiesChange)
 
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
 
         openTradesSubscription.subscribe()
         tradePropertiesSubscription.subscribe()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         openTradesSubscription.dispose()
         tradePropertiesSubscription.dispose()
 

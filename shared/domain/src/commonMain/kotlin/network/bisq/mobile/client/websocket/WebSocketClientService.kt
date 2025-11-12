@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import network.bisq.mobile.client.httpclient.HttpClientService
@@ -60,7 +59,7 @@ class WebSocketClientService(
     private val stopFlow = MutableSharedFlow<Unit>(replay = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST) // signal to cancel waiters
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    override fun activate() {
+    override suspend fun activate() {
         super.activate()
 
         stopFlow.resetReplayCache()
@@ -70,7 +69,7 @@ class WebSocketClientService(
         }
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         stopFlow.tryEmit(Unit)
         super.deactivate()
     }

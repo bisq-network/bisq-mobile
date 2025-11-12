@@ -116,11 +116,11 @@ class ClientSettingsServiceFacade(private val apiGateway: SettingsApiGateway) : 
         // Not applicable for xClients
     }
 
-    override fun activate() {
+    override suspend fun activate() {
         super<ServiceFacade>.activate()
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super<ServiceFacade>.deactivate()
     }
 

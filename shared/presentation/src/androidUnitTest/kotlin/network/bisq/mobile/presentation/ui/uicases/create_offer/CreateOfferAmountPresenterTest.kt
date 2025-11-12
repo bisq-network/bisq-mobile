@@ -154,8 +154,8 @@ class CreateOfferAmountPresenterTest {
         override suspend fun getReputation(userProfileId: String): Result<network.bisq.mobile.domain.data.replicated.user.reputation.ReputationScoreVO> =
             Result.failure(Exception("unused in buyer path"))
         override suspend fun getProfileAge(userProfileId: String) = Result.success(null)
-        override fun activate() {}
-        override fun deactivate() {}
+        override suspend fun activate() {}
+        override suspend fun deactivate() {}
     }
 
     private class FakeTradesServiceFacade : TradesServiceFacade {
@@ -182,8 +182,8 @@ class CreateOfferAmountPresenterTest {
         override suspend fun btcConfirmed() = Result.success(Unit)
         override suspend fun exportTradeDate() = Result.success(Unit)
         override fun resetSelectedTradeToNull() {}
-        override fun activate() {}
-        override fun deactivate() {}
+        override suspend fun activate() {}
+        override suspend fun deactivate() {}
     }
 
     private class FakeTradeReadStateRepository : TradeReadStateRepository {

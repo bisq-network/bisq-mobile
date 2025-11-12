@@ -263,7 +263,7 @@ class NodeApplicationLifecycleService(
         }
     }
 
-    private fun activateServiceFacades() {
+    private suspend fun activateServiceFacades() {
         settingsServiceFacade.activate()
         connectivityService.activate()
         offersServiceFacade.activate()
@@ -280,7 +280,7 @@ class NodeApplicationLifecycleService(
         messageDeliveryServiceFacade.activate()
     }
 
-    private fun deactivateServiceFacades() {
+    private suspend fun deactivateServiceFacades() {
         connectivityService.deactivate()
         networkServiceFacade.deactivate()
         applicationBootstrapFacade.deactivate()

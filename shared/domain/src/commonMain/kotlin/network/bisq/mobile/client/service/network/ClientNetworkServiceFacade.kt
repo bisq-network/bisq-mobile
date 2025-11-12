@@ -15,12 +15,12 @@ class ClientNetworkServiceFacade(private val webSocketClientService: WebSocketCl
     private val _allDataReceived = MutableStateFlow(false)
     override val allDataReceived: StateFlow<Boolean> get() = _allDataReceived.asStateFlow()
 
-    override fun activate() {
+    override suspend fun activate() {
         super.activate()
         // TODO implement gateway and endpoints to subscribe to number of connections of backend
     }
 
-    override fun deactivate() {
+    override suspend fun deactivate() {
         super.deactivate()
     }
 }

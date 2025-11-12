@@ -67,13 +67,13 @@ class ClientApplicationLifecycleService(
         }
     }
 
-    fun shutdown() {
+    suspend fun shutdown() {
         log.i { "Destroying NodeMainPresenter" }
         deactivateServiceFacades()
     }
 
 
-    private fun activateServiceFacades() {
+    private suspend fun activateServiceFacades() {
         settingsServiceFacade.activate()
         connectivityService.activate()
         offersServiceFacade.activate()
@@ -90,7 +90,7 @@ class ClientApplicationLifecycleService(
         messageDeliveryServiceFacade.activate()
     }
 
-    private fun deactivateServiceFacades() {
+    private suspend fun deactivateServiceFacades() {
         connectivityService.deactivate()
         networkServiceFacade.deactivate()
         applicationBootstrapFacade.deactivate()
