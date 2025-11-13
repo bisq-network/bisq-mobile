@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,15 +24,19 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.BisqText
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import network.bisq.mobile.presentation.ui.uicases.create_offer.CreateOfferPresenter.AmountType
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 fun <T> ToggleTab(
@@ -83,66 +86,82 @@ fun <T> ToggleTab(
     val maxHeightPx = optionHeights.values.maxOrNull() ?: 0
     val maxHeightDp = with(density) { maxHeightPx.toDp() }
 
-    Surface(
-        shape = RoundedCornerShape(6.dp),
-        modifier = Modifier.wrapContentSize().then(
-            other = modifier
-        )
+    Box(
+        modifier = Modifier.wrapContentSize()
+            .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
+            .background(BisqTheme.colors.dark_grey40)
+            .padding(6.dp).then(modifier)
     ) {
+
         Box(
             modifier = Modifier
-                .background(BisqTheme.colors.dark_grey40)
-                .padding(6.dp)
-        ) {
-
-            Box(
-                modifier = Modifier
-                    .offset(x = animatedOffset)
-                    .width(animatedWidth)
-                    .height(maxHeightDp)
-                    .background(BisqTheme.colors.primaryDim, RoundedCornerShape(4.dp))
-                    .wrapContentSize()
-            ) {
-                BisqText.baseRegular(
-                    text = getDisplayString(selectedOption),
-                    modifier = Modifier
-                        .padding(horizontal = hPadding, vertical = vPadding)
-                        .alpha(0f)
-                        .clearAndSetSemantics { },
-                    singleLine = singleLine
+                .offset(x = animatedOffset)
+                .width(animatedWidth)
+                .height(maxHeightDp)
+                .background(
+                    BisqTheme.colors.primaryDim,
+                    RoundedCornerShape(BisqUIConstants.BorderRadiusSmall)
                 )
-            }
+                .wrapContentSize()
+        ) {
+            BisqText.baseRegular(
+                text = getDisplayString(selectedOption),
+                modifier = Modifier
+                    .padding(horizontal = hPadding, vertical = vPadding)
+                    .alpha(0f)
+                    .clearAndSetSemantics { },
+                singleLine = singleLine
+            )
+        }
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                options.forEach { option ->
-                    Box(
-                        modifier = Modifier
-                            .onGloballyPositioned { coordinates ->
-                                optionWidths[option] = coordinates.size.width
-                                optionHeights[option] = coordinates.size.height
-                                optionOffsets[option] = coordinates.positionInParent().x.toInt()
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            options.forEach { option ->
+                Box(
+                    modifier = Modifier
+                        .onGloballyPositioned { coordinates ->
+                            optionWidths[option] = coordinates.size.width
+                            optionHeights[option] = coordinates.size.height
+                            optionOffsets[option] = coordinates.positionInParent().x.toInt()
+                        }
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = {
+                                onOptionSelected(option)
                             }
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = {
-                                    onOptionSelected(option)
-                                }
-                            )
-                            .padding(horizontal = hPadding, vertical = vPadding)
-                            .weight(1f),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        BisqText.baseRegular(
-                            text = getDisplayString(option),
-                            textAlign = TextAlign.Center,
-                            singleLine = singleLine
                         )
-                    }
+                        .padding(horizontal = hPadding, vertical = vPadding)
+                        .weight(1f),
+                    contentAlignment = Alignment.Center
+                ) {
+                    BisqText.baseRegular(
+                        text = getDisplayString(option),
+                        textAlign = TextAlign.Center,
+                        singleLine = singleLine
+                    )
                 }
             }
         }
+    }
+
+}
+
+@Preview
+@Composable
+private fun ToggleTabPreview() {
+    BisqTheme.Preview {
+        ToggleTab(
+            options = AmountType.entries.toList(),
+            selectedOption = AmountType.FIXED_AMOUNT,
+            onOptionSelected = { },
+            getDisplayString = { direction ->
+                if (direction == AmountType.FIXED_AMOUNT)
+                    "bisqEasy.tradeWizard.amount.amountModel.fixedAmount".i18n()
+                else
+                    "bisqEasy.tradeWizard.amount.amountModel.rangeAmount".i18n()
+            },
+        )
     }
 }

@@ -1,13 +1,19 @@
 package network.bisq.mobile.presentation.ui.uicases.settings
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.StateFlow
 import network.bisq.mobile.domain.toDoubleOrNullLocaleAware
 import network.bisq.mobile.i18n.i18n
@@ -23,15 +29,7 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqHDivider
 import network.bisq.mobile.presentation.ui.components.layout.BisqScrollScaffold
 import network.bisq.mobile.presentation.ui.components.molecules.TopBar
 import network.bisq.mobile.presentation.ui.helpers.RememberPresenterLifecycle
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.unit.dp
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
-
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.ui.Modifier
-
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.koin.compose.koinInject
 

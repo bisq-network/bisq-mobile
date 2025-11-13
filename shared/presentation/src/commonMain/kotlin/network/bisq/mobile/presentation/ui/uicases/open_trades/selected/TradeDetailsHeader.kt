@@ -99,7 +99,7 @@ fun TradeDetailsHeader(presenter: TradeDetailsHeaderPresenter = koinInject()) {
     val isSell = presenter.directionEnum.isSell
 
     item?.let { item ->
-        Row(modifier = Modifier.clip(shape = RoundedCornerShape(12.dp))) {
+        Row(modifier = Modifier.clip(RoundedCornerShape(BisqUIConstants.BorderRadius))) {
             Column(
                 modifier = Modifier.fillMaxWidth()
                     .background(color = BisqTheme.colors.dark_grey40)

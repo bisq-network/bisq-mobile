@@ -286,7 +286,6 @@ fun DashBoardCard(
 fun HomeInfoCard(modifier: Modifier = Modifier, price: String, text: String) {
     BisqCard(
         modifier = modifier,
-        borderRadius = BisqUIConstants.ScreenPaddingQuarter,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         AmountWithCurrency(price) // TODO should be generic

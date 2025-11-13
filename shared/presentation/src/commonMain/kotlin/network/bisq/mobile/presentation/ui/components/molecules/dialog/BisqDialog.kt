@@ -14,7 +14,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
@@ -41,7 +40,7 @@ fun BisqDialog(
                 disabledContainerColor = Color.Unspecified,
                 disabledContentColor = Color.Unspecified,
             ),
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
         ) {
             Column(
                 modifier = Modifier

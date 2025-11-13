@@ -23,7 +23,7 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 fun OpenTradeCard(
     modifier: Modifier = Modifier,
     padding: Dp = BisqUIConstants.ScreenPadding,
-    borderRadius: Dp = BisqUIConstants.ScreenPaddingHalf,
+    borderRadius: Dp = BisqUIConstants.BorderRadius,
     borderWidth: Dp = 4.dp,
     borderColor: Color = Color.Transparent,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,

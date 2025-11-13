@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -26,7 +25,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -34,8 +32,11 @@ import network.bisq.mobile.i18n.i18n
 import network.bisq.mobile.presentation.ui.components.atoms.icons.ExpandAllIcon
 import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.molecules.bottom_sheet.BisqBottomSheet
+import network.bisq.mobile.presentation.ui.helpers.rememberBlurTriggerSetup
+import network.bisq.mobile.presentation.ui.helpers.setBlurTrigger
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -207,54 +208,28 @@ fun <T> BisqSelect(
             .let { if (it.isNotEmpty()) it.values.first().second else placeholder }
     }
 
-    Column(modifier = modifier) {
-        if (label.isNotEmpty()) {
-            BisqText.baseLight(label)
-            BisqGap.VQuarter()
-        }
+    val blurTriggerSetup = rememberBlurTriggerSetup()
 
-        BisqButton(
+    Column(modifier = modifier) {
+        BisqTextField(
+            label = label,
+            readOnly = true,
+            value = selectedLabel,
+            helperText = helpText,
+            rightSuffix = {
+                ExpandAllIcon()
+            },
+            validation = { errorText },
             disabled = disabled,
-            onClick = {
+            modifier = Modifier.setBlurTrigger(blurTriggerSetup),
+            onFocus = {
                 val newExpand = onTriggerClicked() ?: true
                 expanded = newExpand
-            },
-            fullWidth = true,
-            padding = PaddingValues(
-                horizontal = BisqUIConstants.ScreenPadding,
-                vertical = BisqUIConstants.ScreenPaddingHalf
-            ),
-            backgroundColor = BisqTheme.colors.secondary,
-            text = selectedLabel,
-            textAlign = TextAlign.Start,
-            rightIcon = { ExpandAllIcon() }
-        )
-
-        BisqGap.VHalf()
-
-        if (errorText.isNullOrBlank()) {
-            if (helpText.isNotBlank()) {
-                BisqText.smallLight(
-                    text = helpText,
-                    modifier = Modifier.padding(
-                        start = BisqUIConstants.ScreenPaddingQuarter,
-                        top = BisqUIConstants.ScreenPadding1,
-                        bottom = BisqUIConstants.ScreenPaddingQuarter
-                    ),
-                )
+                if (!newExpand) {
+                    blurTriggerSetup.triggerBlur()
+                }
             }
-        } else {
-            BisqText.smallLight(
-                text = errorText,
-                modifier = Modifier.padding(
-                    start = BisqUIConstants.ScreenPaddingQuarter,
-                    top = BisqUIConstants.ScreenPadding1,
-                    bottom = BisqUIConstants.ScreenPaddingQuarter
-                ),
-                color = BisqTheme.colors.danger
-            )
-        }
-
+        )
         extraContent(keyLabelOptionEntries)
     }
 
@@ -298,3 +273,35 @@ fun <T> BisqSelect(
         }
     }
 }
+
+@Preview
+@Composable
+private fun BisqSelectPreview() {
+    BisqTheme.Preview {
+        BisqSelect(
+            label = "settings.language.headline".i18n(),
+            options = listOf("English", "Spanish"),
+            optionKey = { it },
+            optionLabel = { it },
+            selectedKey = "English",
+            helpText = "random help text"
+        )
+    }
+}
+
+@Preview
+@Composable
+private fun BisqSelectErrorPreview() {
+    BisqTheme.Preview {
+        BisqSelect(
+            label = "settings.language.headline".i18n(),
+            options = listOf("English", "Spanish"),
+            optionKey = { it },
+            optionLabel = { it },
+            selectedKey = "English",
+            helpText = "random help text",
+            errorText = "random error text"
+        )
+    }
+}
+

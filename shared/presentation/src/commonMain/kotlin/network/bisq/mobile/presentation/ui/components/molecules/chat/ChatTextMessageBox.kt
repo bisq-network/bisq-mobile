@@ -97,7 +97,7 @@ fun ChatTextMessageBox(
             ) {
                 Surface(
                     color = bubbleBGColor,
-                    shape = RoundedCornerShape(BisqUIConstants.ScreenPadding),
+                    shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
                     modifier = Modifier
                         .padding(chatPadding)
                         .wrapContentSize(contentAlign)

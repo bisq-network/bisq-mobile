@@ -1,6 +1,7 @@
 package network.bisq.mobile.presentation.ui.components.organisms
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -49,6 +50,7 @@ fun BisqSnackbar(snackbarHostState: SnackbarHostState) {
                 contentColor = contentColor,
                 dismissActionContentColor = contentColor,
                 modifier = Modifier.padding(bottom = BisqUIConstants.ScreenPadding2X),
+                shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
             )
         }
     )

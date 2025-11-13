@@ -32,6 +32,7 @@ import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFil
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketFilters
 import network.bisq.mobile.presentation.ui.components.organisms.market.MarketSortBy
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
+import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 const val MAX_SHEET_HEIGHT = 500
@@ -63,7 +64,7 @@ fun BisqBottomSheet(
     } else {
         ModalBottomSheet(
             onDismissRequest = onDismissRequest,
-            shape = RoundedCornerShape(16.dp),
+            shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
             sheetState = rememberModalBottomSheetState(
                 skipPartiallyExpanded = true,
             ),
@@ -123,7 +124,7 @@ private fun NonDialogBottomSheet(
                 Surface(
                     modifier = Modifier.fillMaxWidth(),
                     color = containerColor,
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
                 ) {
                     Column(
                         modifier = Modifier.heightIn(max = MAX_SHEET_HEIGHT.dp)
@@ -147,7 +148,10 @@ private fun NonDialogBottomSheet(
 @Composable
 private fun ModalBottomSheetPreview() {
     BisqTheme.Preview {
-        ModalBottomSheet({}, containerColor = BisqTheme.colors.dark_grey50) {
+        ModalBottomSheet(
+            {}, containerColor = BisqTheme.colors.dark_grey50,
+            shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
+        ) {
             MarketFilters(
                 sortBy = MarketSortBy.MostOffers,
                 filter = MarketFilter.All,
@@ -163,7 +167,11 @@ private fun ModalBottomSheetPreview() {
 @Composable
 private fun ModalBottomSheetMaxHeightPreview() {
     BisqTheme.Preview {
-        ModalBottomSheet({}, containerColor = BisqTheme.colors.dark_grey50) {
+        ModalBottomSheet(
+            {},
+            containerColor = BisqTheme.colors.dark_grey50,
+            shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
+        ) {
             MarketFilters(
                 sortBy = MarketSortBy.MostOffers,
                 filter = MarketFilter.All,
@@ -203,7 +211,7 @@ private fun InlinePreviewBottomSheet(
         Surface(
             modifier = Modifier.fillMaxWidth(),
             color = containerColor,
-            shape = RoundedCornerShape(16.dp)
+            shape = RoundedCornerShape(BisqUIConstants.BorderRadius),
         ) {
             Column(
                 modifier = Modifier.heightIn(max = MAX_SHEET_HEIGHT.dp).padding(bottom = 16.dp),

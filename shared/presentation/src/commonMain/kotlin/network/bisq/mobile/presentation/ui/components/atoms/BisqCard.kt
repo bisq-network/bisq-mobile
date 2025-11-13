@@ -20,7 +20,6 @@ import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
 fun BisqCard(
     modifier: Modifier = Modifier,
     padding: Dp = BisqUIConstants.ScreenPadding,
-    borderRadius: Dp = BisqUIConstants.ScreenPaddingHalf,
     horizontalAlignment: Alignment.Horizontal = Alignment.Start,
     verticalArrangement: Arrangement.Vertical = Arrangement.Top,
     backgroundColor: Color = BisqTheme.colors.dark_grey40,
@@ -28,7 +27,7 @@ fun BisqCard(
 ) {
     Column(
         modifier = modifier
-            .clip(RoundedCornerShape(borderRadius))
+            .clip(RoundedCornerShape(BisqUIConstants.BorderRadius))
             .background(backgroundColor)
             .padding(padding)
             .fillMaxWidth(),

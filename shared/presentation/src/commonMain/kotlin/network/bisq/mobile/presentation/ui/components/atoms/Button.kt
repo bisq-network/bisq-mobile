@@ -59,7 +59,7 @@ fun BisqButton(
     rightIcon: (@Composable () -> Unit)? = null,
     textComponent: (@Composable () -> Unit)? = null,
     modifier: Modifier = Modifier,
-    cornerRadius: Dp = 8.dp,
+    cornerRadius: Dp = BisqUIConstants.BorderRadius,
     disabled: Boolean = false,
     isLoading: Boolean = false,
     border: BorderStroke? = null,

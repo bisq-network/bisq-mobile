@@ -74,7 +74,6 @@ private fun ItemButton(
         onClick = onClick,
         fullWidth = true,
         backgroundColor = BisqTheme.colors.dark_grey40,
-        cornerRadius = BisqUIConstants.Zero,
         leftIcon = {
             if (icon != null) {
                 Image(

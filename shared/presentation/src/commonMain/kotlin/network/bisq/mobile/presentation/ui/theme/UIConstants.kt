@@ -24,4 +24,7 @@ object BisqUIConstants {
 
     val topBarAvatarSize = 38.dp
     val textFieldBorderRadius = 6.dp
+
+    val BorderRadius = 9.dp
+    val BorderRadiusSmall = 7.dp
 }

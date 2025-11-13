@@ -180,7 +180,8 @@ fun OpenTradeScreen(tradeId: String) {
                     BisqGap.V2()
 
                     TradeChatRow(
-                        presenter = presenter,
+                        selectedTrade = selectedTrade,
+                        onOpenChat = presenter::onOpenChat,
                         lastChatMsg = lastChatMsg,
                         newMsgCount = newMsgCount,
                         enabled = isInteractive,

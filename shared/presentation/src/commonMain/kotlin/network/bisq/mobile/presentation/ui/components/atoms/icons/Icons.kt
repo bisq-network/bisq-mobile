@@ -29,6 +29,7 @@ import bisqapps.shared.presentation.generated.resources.icon_arrow_down
 import bisqapps.shared.presentation.generated.resources.icon_arrow_down_dark
 import bisqapps.shared.presentation.generated.resources.icon_arrow_right
 import bisqapps.shared.presentation.generated.resources.icon_bell
+import bisqapps.shared.presentation.generated.resources.icon_chat
 import bisqapps.shared.presentation.generated.resources.icon_chat_outlined
 import bisqapps.shared.presentation.generated.resources.icon_closed_eye
 import bisqapps.shared.presentation.generated.resources.icon_copy
@@ -139,8 +140,13 @@ fun BellIcon(modifier: Modifier = Modifier.size(30.dp)) {
 }
 
 @Composable
+fun ChatIconOutlined(modifier: Modifier = Modifier.size(24.dp)) {
+    Image(painterResource(Res.drawable.icon_chat_outlined), "Chat icon outlined", modifier = modifier)
+}
+
+@Composable
 fun ChatIcon(modifier: Modifier = Modifier.size(24.dp)) {
-    Image(painterResource(Res.drawable.icon_chat_outlined), "Chat icon", modifier = modifier)
+    Image(painterResource(Res.drawable.icon_chat), "Chat icon", modifier = modifier)
 }
 
 @Composable

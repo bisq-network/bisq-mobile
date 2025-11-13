@@ -3,6 +3,7 @@ package network.bisq.mobile.presentation.ui.components.atoms
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -48,8 +49,6 @@ import network.bisq.mobile.presentation.ui.components.atoms.layout.BisqGap
 import network.bisq.mobile.presentation.ui.components.context.LocalAnimationsEnabled
 import network.bisq.mobile.presentation.ui.theme.BisqTheme
 import network.bisq.mobile.presentation.ui.theme.BisqUIConstants
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants.Zero
-import network.bisq.mobile.presentation.ui.theme.BisqUIConstants.textFieldBorderRadius
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 enum class BisqTextFieldType {
@@ -67,6 +66,8 @@ enum class BisqTextFieldType {
 @Composable
 fun BisqTextField(
     label: String = "",
+    readOnly: Boolean = false,
+    interactionSource: MutableInteractionSource? = null,
     value: String = "",
     onValueChange: ((String, Boolean) -> Unit)? = null,
     placeholder: String = "",
@@ -117,16 +118,6 @@ fun BisqTextField(
             visualTransformation = PasswordVisualTransformation()
         } else {
             visualTransformation = VisualTransformation.None
-        }
-    }
-
-    @Composable
-    fun CharacterCounter() {
-        if (showCharacterCounter && maxLength > 0) {
-            BisqText.smallLightGrey(
-                text = "${value.length} / $maxLength",
-                modifier = Modifier.padding(end = 4.dp, top = 1.dp, bottom = 4.dp),
-            )
         }
     }
 
@@ -215,10 +206,6 @@ fun BisqTextField(
         validationError = result
     }
 
-    val finalBorderRadius by remember(isFocused) {
-        derivedStateOf { if (isFocused) Zero else textFieldBorderRadius }
-    }
-
     val decimalSeparator = remember { getDecimalSeparator().toString() }
     val decimalLoosePattern = remember(decimalSeparator) {
         Regex("^[-]?\\d*(${Regex.escape(decimalSeparator)}\\d{0,})?$")
@@ -227,6 +214,8 @@ fun BisqTextField(
 
     BasicTextField(
         value = finalTextValue,
+        readOnly = readOnly,
+        interactionSource = interactionSource,
         visualTransformation = visualTransformation,
         onValueChange = { newTextValue ->
             val processedValue = processText(
@@ -289,8 +278,8 @@ fun BisqTextField(
                         .fillMaxWidth()
                         .clip(
                             RoundedCornerShape(
-                                topStart = finalBorderRadius,
-                                topEnd = finalBorderRadius
+                                topStart = BisqUIConstants.BorderRadius,
+                                topEnd = BisqUIConstants.BorderRadius,
                             )
                         )
                         .background(finalBackgroundColor)
@@ -379,7 +368,7 @@ fun BisqTextField(
                                 .weight(1f),
                             color = BisqTheme.colors.danger
                         )
-                        CharacterCounter()
+                        CharacterCounter(showCharacterCounter, value.length, maxLength)
                     }
                 } else if (helperText.isNotEmpty()) {
                     BisqGap.VQuarter()
@@ -394,7 +383,7 @@ fun BisqTextField(
                                 .padding(start = 4.dp, top = 1.dp, bottom = 4.dp)
                                 .weight(1f),
                         )
-                        CharacterCounter()
+                        CharacterCounter(showCharacterCounter, value.length, maxLength)
                     }
                 } else if (showCharacterCounter && maxLength > 0) {
                     BisqGap.VQuarter()
@@ -402,7 +391,7 @@ fun BisqTextField(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End
                     ) {
-                        CharacterCounter()
+                        CharacterCounter(showCharacterCounter, value.length, maxLength)
                     }
                 }
             }
@@ -451,6 +440,16 @@ fun processText(
         return trimmedValue
     } else {
         return cleanValue
+    }
+}
+
+@Composable
+private fun CharacterCounter(showCharacterCounter: Boolean, valueLength: Int, maxLength: Int) {
+    if (showCharacterCounter && maxLength > 0) {
+        BisqText.smallLightGrey(
+            text = "$valueLength / $maxLength",
+            modifier = Modifier.padding(end = 4.dp, top = 1.dp, bottom = 4.dp),
+        )
     }
 }
 
