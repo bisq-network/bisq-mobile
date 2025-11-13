@@ -75,20 +75,20 @@ fun SplashScreen() {
             if (presenter.isIos) {
                 WarningConfirmationDialog(
                     headline = "mobile.bootstrap.timeout.title".i18n(),
-                    message = "mobile.bootstrap.timeout.message".i18n(currentBootstrapStage),
-                    confirmButtonText = "mobile.bootstrap.timeout.restart".i18n(),
-                    dismissButtonText = "mobile.bootstrap.timeout.continue".i18n(),
-                    onConfirm = { presenter.onRestartApp() },
-                    onDismiss = { presenter.onTimeoutDialogContinue() }
-                )
-            } else {
-                WarningConfirmationDialog(
-                    headline = "mobile.bootstrap.timeout.title".i18n(),
                     message = "mobile.bootstrap.timeout.message.ios".i18n(currentBootstrapStage),
                     confirmButtonText = "mobile.bootstrap.timeout.continue".i18n(),
                     dismissButtonText = "",
                     onConfirm = { presenter.onTimeoutDialogContinue() },
                     onDismiss = { }
+                )
+            } else {
+                WarningConfirmationDialog(
+                    headline = "mobile.bootstrap.timeout.title".i18n(),
+                    message = "mobile.bootstrap.timeout.message".i18n(currentBootstrapStage),
+                    confirmButtonText = "mobile.bootstrap.timeout.restart".i18n(),
+                    dismissButtonText = "mobile.bootstrap.timeout.continue".i18n(),
+                    onConfirm = { presenter.onRestartApp() },
+                    onDismiss = { presenter.onTimeoutDialogContinue() }
                 )
             }
         }
