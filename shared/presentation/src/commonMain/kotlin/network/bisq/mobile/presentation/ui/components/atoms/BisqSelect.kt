@@ -205,7 +205,7 @@ fun <T> BisqSelect(
 
     val selectedLabel = remember(optionKey, selectedKey, keyLabelOptionEntries) {
         keyLabelOptionEntries.filter { it.key == selectedKey }
-            .let { if (it.isNotEmpty()) it.values.first().second else placeholder }
+            .let { if (it.isNotEmpty()) it.values.first().second else "" }
     }
 
     val blurTriggerSetup = rememberBlurTriggerSetup()
@@ -215,6 +215,7 @@ fun <T> BisqSelect(
             label = label,
             readOnly = true,
             value = selectedLabel,
+            placeholder = placeholder,
             helperText = helpText,
             rightSuffix = {
                 ExpandAllIcon()
@@ -284,6 +285,21 @@ private fun BisqSelectPreview() {
             optionKey = { it },
             optionLabel = { it },
             selectedKey = "English",
+            helpText = "random help text"
+        )
+    }
+}
+@Preview
+@Composable
+private fun BisqSelectPlaceholderPreview() {
+    BisqTheme.Preview {
+        BisqSelect(
+            label = "settings.language.headline".i18n(),
+            options = listOf("English", "Spanish"),
+            placeholder = "English",
+            optionKey = { it },
+            optionLabel = { it },
+            selectedKey = "",
             helpText = "random help text"
         )
     }
